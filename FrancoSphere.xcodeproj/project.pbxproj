@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		23423DE62D73B4D400AACE3E /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23423DE52D73B4D400AACE3E /* SQLite */; };
+		2354B9E12D7425EE0050C53D /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 2354B9E02D7425EE0050C53D /* OpenMeteoSdk */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		23423DC82D739D6900AACE3E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -30,11 +35,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		23423DB92D739D6800AACE3E /* FrancoSphere */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FrancoSphere;
-			sourceTree = "<group>";
-		};
 		23423DCA2D739D6900AACE3E /* FrancoSphereTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FrancoSphereTests;
@@ -45,6 +45,14 @@
 			path = FrancoSphereUITests;
 			sourceTree = "<group>";
 		};
+		2354B95E2D73DBDE0050C53D /* FrancoSphere */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFolders = (
+				Assets.xassets,
+			);
+			path = FrancoSphere;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +60,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2354B9E12D7425EE0050C53D /* OpenMeteoSdk in Frameworks */,
+				23423DE62D73B4D400AACE3E /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,7 +85,7 @@
 		23423DAE2D739D6800AACE3E = {
 			isa = PBXGroup;
 			children = (
-				23423DB92D739D6800AACE3E /* FrancoSphere */,
+				2354B95E2D73DBDE0050C53D /* FrancoSphere */,
 				23423DCA2D739D6900AACE3E /* FrancoSphereTests */,
 				23423DD42D739D6A00AACE3E /* FrancoSphereUITests */,
 				23423DB82D739D6800AACE3E /* Products */,
@@ -108,10 +118,12 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				23423DB92D739D6800AACE3E /* FrancoSphere */,
+				2354B95E2D73DBDE0050C53D /* FrancoSphere */,
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
+				23423DE52D73B4D400AACE3E /* SQLite */,
+				2354B9E02D7425EE0050C53D /* OpenMeteoSdk */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -195,6 +207,10 @@
 			);
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				23423DE42D73B4D400AACE3E /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				2354B9DF2D7425EE0050C53D /* XCRemoteSwiftPackageReference "sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
 			projectDirPath = "";
@@ -558,6 +574,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		23423DE42D73B4D400AACE3E /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.3;
+			};
+		};
+		2354B9DF2D7425EE0050C53D /* XCRemoteSwiftPackageReference "sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/open-meteo/sdk.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		23423DE52D73B4D400AACE3E /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23423DE42D73B4D400AACE3E /* XCRemoteSwiftPackageReference "SQLite.swift" */;
+			productName = SQLite;
+		};
+		2354B9E02D7425EE0050C53D /* OpenMeteoSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2354B9DF2D7425EE0050C53D /* XCRemoteSwiftPackageReference "sdk" */;
+			productName = OpenMeteoSdk;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 23423DAF2D739D6800AACE3E /* Project object */;
 }
