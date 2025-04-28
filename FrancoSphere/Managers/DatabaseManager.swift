@@ -8,11 +8,11 @@ class DatabaseManager {
 
     private let users = Table("users")
     
-    // Correct expressions WITH the 'value:' label
-    private let id = Expression<Int64>(value: "id")
-    private let name = Expression<String>(value: "name")
-    private let email = Expression<String>(value: "email")
-    private let password = Expression<String>(value: "password")
+    // Expressions without the 'value:' label
+    private let id = Expression<Int64>("id")
+    private let name = Expression<String>("name")
+    private let email = Expression<String>("email")
+    private let password = Expression<String>("password")
 
     private init() {
         setupDatabase()
