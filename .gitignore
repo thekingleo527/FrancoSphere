@@ -1,0 +1,12 @@
+# Xcode & Swift build artefacts
+DerivedData/
+build/
+*.xcworkspace/xcuserdata
+*.xcuserstate
+xcuserdata/
+# Swift Package caches
+.swiftpm/
+# Tests & snapshots (if generated)
+*.xcresult
+# Personal secrets or config files
+Secrets.plist
