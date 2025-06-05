@@ -1,50 +1,61 @@
+// AIAvatarOverlayView.swift
+// ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+// Displays the little avatar “bubble” in bottom-right corner.
+
 import SwiftUI
 
 struct AIAvatarOverlayView: View {
     @ObservedObject private var aiManager = AIAssistantManager.shared
     @State private var isExpanded = false
     @State private var isPulsing = false
-    
+
     var body: some View {
         VStack {
             Spacer()
             HStack {
                 Spacer()
                 ZStack {
-                    // Message bubble (when expanded)
-                    if isExpanded && aiManager.currentScenario != nil {
-                        assistantMessageView
+                    // If expanded and there’s a scenario, show the bubble:
+                    if isExpanded, let scenario = aiManager.currentScenario {
+                        assistantMessageView(for: scenario)
                             .offset(y: -120)
-                            .transition(.scale.combined(with: .opacity))
+                            .transition(
+                                AnyTransition
+                                    .scale
+                                    .combined(with: .opacity)
+                            )
                     }
-                    
-                    // Avatar button (always visible)
+
+                    // Always-visible avatar button:
                     Button(action: {
                         withAnimation(.spring()) {
                             isExpanded.toggle()
                         }
                     }) {
                         ZStack {
-                            // Pulsing background for attention
-                            if aiManager.currentScenario != nil && !isExpanded {
+                            // Pulsing ring when there’s an active scenario (and not expanded):
+                            if aiManager.currentScenario != nil, !isExpanded {
                                 Circle()
-                                    .fill(FrancoSphereColors.deepNavy.opacity(0.4))
-                                    .frame(width: isPulsing ? 70 : 60, height: isPulsing ? 70 : 60)
+                                    .fill(Color.blue.opacity(0.4))
+                                    .frame(
+                                        width: isPulsing ? 70 : 60,
+                                        height: isPulsing ? 70 : 60
+                                    )
                                     .animation(
-                                        Animation.easeInOut(duration: 1.0)
+                                        Animation
+                                            .easeInOut(duration: 1.0)
                                             .repeatForever(autoreverses: true),
                                         value: isPulsing
                                     )
                             }
-                            
-                            // Main avatar image
+
+                            // Main avatar circle:
                             Circle()
-                                .fill(FrancoSphereColors.deepNavy)
+                                .fill(Color.blue)
                                 .frame(width: 60, height: 60)
                                 .shadow(color: Color.black.opacity(0.3), radius: 5)
                                 .overlay(
-                                    // The assistant image - using the human image provided
-                                    Image("AIAssistant") // Make sure the image is added to Assets
+                                    Image("AIAssistant")
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
                                         .frame(width: 56, height: 56)
@@ -53,7 +64,6 @@ struct AIAvatarOverlayView: View {
                         }
                     }
                     .onAppear {
-                        // Start pulsing animation
                         isPulsing = true
                     }
                 }
@@ -62,37 +72,34 @@ struct AIAvatarOverlayView: View {
             }
         }
         .animation(.spring(), value: isExpanded)
-        .zIndex(100) // Ensure it stays on top
-        // Debug trigger to test the AI assistant (comment out for production)
+        .zIndex(100)
         .onAppear {
             #if DEBUG
-            let debugMode = true // Set to false to disable debug trigger
-            if debugMode {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    AIAssistantManager.trigger(for: .pendingTasks)
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                AIAssistantManager.trigger(for: .pendingTasks)
             }
             #endif
         }
     }
-    
-    private var assistantMessageView: some View {
+
+    /// Renders the “speech bubble” for a given scenario.
+    @ViewBuilder
+    private func assistantMessageView(for scenario: AIScenario) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                // Small avatar image in message bubble
                 Image("AIAssistant")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 32, height: 32)
                     .clipShape(Circle())
                     .padding(.trailing, 4)
-                
-                Text(aiManager.currentScenario?.title ?? "Assistant")
+
+                Text(scenario.title)
                     .font(.headline)
-                    .foregroundColor(FrancoSphereColors.textPrimary)
-                
+                    .foregroundColor(.white)
+
                 Spacer()
-                
+
                 Button(action: {
                     withAnimation {
                         isExpanded = false
@@ -100,44 +107,62 @@ struct AIAvatarOverlayView: View {
                     }
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(FrancoSphereColors.textSecondary)
+                        .foregroundColor(.white.opacity(0.8))
                 }
             }
-            
-            Text(aiManager.currentScenario?.message ?? "")
+
+            Text(scenario.message)
                 .font(.body)
-                .foregroundColor(FrancoSphereColors.textPrimary)
+                .foregroundColor(.white)
                 .padding(.vertical, 8)
-            
-            if let scenario = aiManager.currentScenario {
-                Button(action: {
-                    aiManager.performAction()
-                    withAnimation {
-                        isExpanded = false
-                    }
-                }) {
-                    Text(scenario.actionText)
-                        .fontWeight(.medium)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(FrancoSphereColors.accentBlue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+
+            Button(action: {
+                aiManager.performAction()
+                withAnimation {
+                    isExpanded = false
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
+            }) {
+                Text(actionText(for: scenario))
+                    .fontWeight(.medium)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding()
-        .background(FrancoSphereColors.cardBackground)
+        .background(Color.black.opacity(0.8))
         .cornerRadius(16)
         .shadow(radius: 5)
         .frame(width: UIScreen.main.bounds.width - 60)
     }
-}
 
-#Preview {
-    ZStack {
-        Color.black.edgesIgnoringSafeArea(.all) // Dark background for preview
-        AIAvatarOverlayView()
+    /// Maps each `AIScenario` case to a button label.
+    private func actionText(for scenario: AIScenario) -> String {
+        switch scenario {
+        case .routineIncomplete:
+            return "Complete Routine"
+        case .pendingTasks:
+            return "View Tasks"
+        case .missingPhoto:
+            return "Upload Photo"
+        case .clockOutReminder:
+            return "Clock Out"
+        case .weatherAlert:
+            return "Check Weather"
+        }
     }
 }
+
+#if DEBUG
+struct AIAvatarOverlayView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.gray.edgesIgnoringSafeArea(.all)
+            AIAvatarOverlayView()
+        }
+    }
+}
+#endif

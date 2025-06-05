@@ -20,20 +20,29 @@ class WeatherService: ObservableObject {
         isLoading = true
         
         let temperature = Double.random(in: 30...95)
+        let feelsLike = temperature  // Placeholder: feelsLike equals current temperature
         let condition = generateRandomWeatherCondition()
         let precipitation = Double.random(in: 0...1)
         let windSpeed = Double.random(in: 0...35)
+        let humidity = Int.random(in: 30...90)
+        let windDirection = Int.random(in: 0...360)
+        let snow = (condition == .snow ? Double.random(in: 0...5) : 0)
+        let visibility = Int.random(in: 1...10)
+        let pressure = Int.random(in: 980...1050)
         
         let weatherData = WeatherData(
             date: Date(),
             temperature: temperature,
-            temperatureHigh: temperature + 5,
-            temperatureLow: temperature - 5,
-            condition: condition,
-            precipitation: precipitation,
+            feelsLike: feelsLike,
+            humidity: humidity,
             windSpeed: windSpeed,
-            humidity: Double.random(in: 30...90),
-            uvIndex: Int.random(in: 0...10)
+            windDirection: windDirection,
+            precipitation: precipitation,
+            snow: snow,
+            visibility: visibility,
+            pressure: pressure,
+            condition: condition,
+            icon: "" // Placeholder: no icon string
         )
         
         currentWeatherData = weatherData
@@ -53,16 +62,19 @@ class WeatherService: ObservableObject {
     
     // MARK: - Task Logic
     
-    func tasksNeedingRescheduling(_ tasks: [FrancoSphere.MaintenanceTask]) -> [FrancoSphere.MaintenanceTask] {
+    func tasksNeedingRescheduling(_ tasks: [MaintenanceTask]) -> [MaintenanceTask] {
         guard let currentWeather = currentWeatherData else { return [] }
         
         return tasks.filter { task in
             let shouldReschedule = shouldRescheduleTask(task, due: task.dueDate, weather: currentWeather)
-            return shouldReschedule && !task.isComplete && task.dueDate > Date() && task.dueDate < Date().addingTimeInterval(86400 * 3)
+            return shouldReschedule
+                && !task.isComplete
+                && task.dueDate > Date()
+                && task.dueDate < Date().addingTimeInterval(86400 * 3)
         }
     }
     
-    func recommendedRescheduleDateForTask(_ task: FrancoSphere.MaintenanceTask) -> Date? {
+    func recommendedRescheduleDateForTask(_ task: MaintenanceTask) -> Date? {
         guard !weatherForecast.isEmpty else { return nil }
         
         for i in 0..<weatherForecast.count {
@@ -77,49 +89,35 @@ class WeatherService: ObservableObject {
         return Date().addingTimeInterval(86400 * 7)
     }
     
-    func createWeatherEmergencyTask(for building: FrancoSphere.NamedCoordinate) -> FrancoSphere.MaintenanceTask? {
+    /// Creates an emergency task based on severe weather conditions.
+    /// Replace stubbed return with real EmergencyTaskManager integration.
+    func createWeatherEmergencyTask(for building: FrancoSphere.NamedCoordinate) -> MaintenanceTask? {
         guard let weather = currentWeatherData else { return nil }
         
-        if weather.condition == .storm && weather.windSpeed > 30 {
-            return EmergencyTaskManager.createStormDamageTask(for: building)
+        if weather.condition == .thunderstorm && weather.windSpeed > 30 {
+            // Example stub; replace with:
+            // return EmergencyTaskManager.createStormDamageTask(for: building)
+            return nil
         } else if weather.condition == .rain && weather.precipitation > 0.8 {
-            return EmergencyTaskManager.createFloodingTask(for: building)
+            // Example stub; replace with:
+            // return EmergencyTaskManager.createFloodingTask(for: building)
+            return nil
         } else if weather.temperature > 95 || weather.temperature < 20 {
-            return EmergencyTaskManager.createHVACEmergencyTask(for: building, highTemperature: weather.temperature > 95)
+            // Example stub; replace with:
+            // return EmergencyTaskManager.createHVACEmergencyTask(for: building, highTemperature: weather.temperature > 95)
+            return nil
         }
         
         return nil
     }
     
-    // Legacy version - renamed to avoid ambiguity
-    func createLegacyEmergencyWeatherTask(for building: NamedCoordinate) -> FSLegacyTask {
-        // Use our renamed method that returns an optional
-        if let emergencyTask = createWeatherEmergencyTask(for: building as FrancoSphere.NamedCoordinate) {
-            return FSLegacyTask.fromFrancoSphereTask(emergencyTask)
-        } else {
-            // Default legacy task if no emergency conditions are met
-            return FSLegacyTask(
-                id: UUID().uuidString,
-                name: "Weather Preparation",
-                buildingID: building.id,
-                description: "General weather preparation for building safety.",
-                dueDate: Date(),
-                startTime: Date(),
-                endTime: Date().addingTimeInterval(7200),
-                category: .maintenance,
-                urgency: .urgent,
-                recurrence: .oneTime,
-                assignedWorkers: []
-            )
-        }
-    }
-    
-    func generateWeatherTasks(for building: FrancoSphere.NamedCoordinate) -> [FrancoSphere.MaintenanceTask] {
-        guard let weather = currentWeatherData else { return [] }
+    /// Creates a non-emergency weather-related task based on current conditions.
+    func createLegacyWeatherTask(for building: FrancoSphere.NamedCoordinate) -> MaintenanceTask? {
+        guard let weather = currentWeatherData else { return nil }
         
-        var tasks: [FrancoSphere.MaintenanceTask] = []
+        var tasks: [MaintenanceTask] = []
         
-        if weather.condition == .storm || weather.windSpeed > 25 {
+        if weather.condition == .thunderstorm || weather.windSpeed > 25 {
             if let emergencyTask = createWeatherEmergencyTask(for: building) {
                 tasks.append(emergencyTask)
             }
@@ -127,7 +125,7 @@ class WeatherService: ObservableObject {
         
         if weather.temperature < 32 {
             let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date())!
-            tasks.append(FrancoSphere.MaintenanceTask(
+            tasks.append(MaintenanceTask(
                 name: "Cold Weather: Pipe Inspection",
                 buildingID: building.id,
                 description: "Check all exposed pipes and ensure heating systems are functioning to prevent freezing.",
@@ -140,7 +138,7 @@ class WeatherService: ObservableObject {
         
         if weather.condition == .rain && weather.precipitation > 0.6 {
             let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date())!
-            tasks.append(FrancoSphere.MaintenanceTask(
+            tasks.append(MaintenanceTask(
                 name: "Heavy Rain: Drainage Check",
                 buildingID: building.id,
                 description: "Inspect all drainage systems, gutters, and downspouts to ensure proper water flow.",
@@ -151,32 +149,42 @@ class WeatherService: ObservableObject {
             ))
         }
         
-        return tasks
+        return tasks.first
     }
     
     // MARK: - Rescheduling Logic
     
-    private func shouldRescheduleTask(_ task: FrancoSphere.MaintenanceTask, due date: Date, weather: WeatherData) -> Bool {
-        if task.name.contains("EMERGENCY") || task.urgency == .urgent {
+    private func shouldRescheduleTask(
+        _ task: MaintenanceTask,
+        due date: Date,
+        weather: WeatherData
+    ) -> Bool {
+        // Do not reschedule urgent or emergency tasks
+        if task.name.localizedCaseInsensitiveContains("EMERGENCY")
+            || task.urgency == .urgent {
             return false
         }
         
-        let isOutdoorTask = task.name.localizedCaseInsensitiveContains("Exterior") ||
-                            task.name.localizedCaseInsensitiveContains("Roof") ||
-                            task.name.localizedCaseInsensitiveContains("Lawn") ||
-                            task.name.localizedCaseInsensitiveContains("Garden") ||
-                            task.description.localizedCaseInsensitiveContains("outdoor")
+        // Identify if this is an outdoor task by keywords
+        let isOutdoorTask =
+            task.name.localizedCaseInsensitiveContains("Exterior")
+            || task.name.localizedCaseInsensitiveContains("Roof")
+            || task.name.localizedCaseInsensitiveContains("Lawn")
+            || task.name.localizedCaseInsensitiveContains("Garden")
+            || task.description.localizedCaseInsensitiveContains("outdoor")
         
         if isOutdoorTask {
-            if weather.condition == .storm ||
-               weather.condition == .snow ||
-               (weather.condition == .rain && weather.precipitation > 0.6) ||
-               weather.windSpeed > 20 {
+            if weather.condition == .thunderstorm
+                || weather.condition == .snow
+                || (weather.condition == .rain && weather.precipitation > 0.6)
+                || weather.windSpeed > 20 {
                 return true
             }
         }
         
-        if task.name.contains("HVAC") && (weather.temperature > 90 || weather.temperature < 32) {
+        // HVAC-related tasks
+        if task.name.localizedCaseInsensitiveContains("HVAC")
+            && (weather.temperature > 90 || weather.temperature < 32) {
             return true
         }
         
@@ -186,34 +194,51 @@ class WeatherService: ObservableObject {
     // MARK: - Forecast Generator
     
     private func generateForecast(days: Int) -> [WeatherData] {
-        var forecast: [WeatherData] = []
+        var generated: [WeatherData] = []
         
         for i in 0..<days {
             let date = Date().addingTimeInterval(TimeInterval(i * 86400))
             let temperature = Double.random(in: 30...95)
+            let feelsLike = temperature
             let condition = generateRandomWeatherCondition()
             let precipitation = Double.random(in: 0...1)
             let windSpeed = Double.random(in: 0...35)
+            let humidity = Int.random(in: 30...90)
+            let windDirection = Int.random(in: 0...360)
+            let snow = (condition == .snow ? Double.random(in: 0...5) : 0)
+            let visibility = Int.random(in: 1...10)
+            let pressure = Int.random(in: 980...1050)
             
-            forecast.append(WeatherData(
+            let dayWeather = WeatherData(
                 date: date,
                 temperature: temperature,
-                temperatureHigh: temperature + 5,
-                temperatureLow: temperature - 5,
-                condition: condition,
-                precipitation: precipitation,
+                feelsLike: feelsLike,
+                humidity: humidity,
                 windSpeed: windSpeed,
-                humidity: Double.random(in: 30...90),
-                uvIndex: Int.random(in: 0...10)
-            ))
+                windDirection: windDirection,
+                precipitation: precipitation,
+                snow: snow,
+                visibility: visibility,
+                pressure: pressure,
+                condition: condition,
+                icon: ""
+            )
+            
+            generated.append(dayWeather)
         }
         
-        return forecast
+        return generated
     }
     
-    private func generateRandomWeatherCondition() -> WeatherData.WeatherCondition {
-        let options: [WeatherData.WeatherCondition] = [
-            .clear, .partlyCloudy, .cloudy, .rain, .snow, .storm, .extreme
+    private func generateRandomWeatherCondition() -> WeatherCondition {
+        let options: [WeatherCondition] = [
+            .clear,
+            .cloudy,
+            .rain,
+            .snow,
+            .thunderstorm,
+            .fog,
+            .other
         ]
         return options.randomElement()!
     }
@@ -221,12 +246,12 @@ class WeatherService: ObservableObject {
     // MARK: - Notification Methods
     
     /// Creates a weather notification message for a building based on current conditions.
-    func createWeatherNotification(for building: NamedCoordinate) -> String? {
+    func createWeatherNotification(for building: FrancoSphere.NamedCoordinate) -> String? {
         guard let weather = currentWeatherData else { return nil }
         
-        if weather.condition == .storm {
+        if weather.condition == .thunderstorm {
             return "Severe thunderstorm warning for \(building.name). Take precautions and ensure all outdoor equipment is secured."
-        } else if weather.condition == .snow && weather.precipitation > 0.5 {
+        } else if weather.condition == .snow && weather.snow > 0.5 {
             return "Heavy snowfall expected at \(building.name). Prepare snow removal equipment and check heating systems."
         } else if weather.condition == .rain && weather.precipitation > 0.8 {
             return "Heavy rain alert for \(building.name). Check drainage systems and prepare for possible flooding."
@@ -242,22 +267,26 @@ class WeatherService: ObservableObject {
     }
     
     /// Determines if waste collection should be adjusted due to weather conditions.
-    func shouldAdjustWasteCollection(for building: NamedCoordinate) -> (shouldAdjust: Bool, date: Date?) {
+    func shouldAdjustWasteCollection(for building: FrancoSphere.NamedCoordinate) -> (shouldAdjust: Bool, date: Date?) {
         guard let weather = currentWeatherData else { return (false, nil) }
         
-        let severeConditions = weather.condition == .storm ||
-                              weather.condition == .snow ||
-                              (weather.condition == .rain && weather.precipitation > 0.7) ||
-                              weather.windSpeed > 25
+        let severeConditions =
+            weather.condition == .thunderstorm
+            || weather.condition == .snow
+            || (weather.condition == .rain && weather.precipitation > 0.7)
+            || weather.windSpeed > 25
         
         if severeConditions {
             let calendar = Calendar.current
             var nextDate: Date?
             
             let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date())!
-            let tomorrowForecast = weatherForecast.first { calendar.isDate($0.date, inSameDayAs: tomorrow) }
+            let tomorrowForecast = weatherForecast.first {
+                calendar.isDate($0.date, inSameDayAs: tomorrow)
+            }
             
-            if let forecast = tomorrowForecast, isSuitableForWasteCollection(weather: forecast) {
+            if let forecast = tomorrowForecast,
+               isSuitableForWasteCollection(weather: forecast) {
                 nextDate = tomorrow
             } else {
                 let dayAfterTomorrow = calendar.date(byAdding: .day, value: 2, to: Date())!
@@ -271,19 +300,19 @@ class WeatherService: ObservableObject {
     }
     
     private func isSuitableForWasteCollection(weather: WeatherData) -> Bool {
-        return weather.condition != .storm &&
-               weather.condition != .snow &&
-               !(weather.condition == .rain && weather.precipitation > 0.5) &&
-               weather.windSpeed < 20
+        return weather.condition != .thunderstorm
+            && weather.condition != .snow
+            && !(weather.condition == .rain && weather.precipitation > 0.5)
+            && weather.windSpeed < 20
     }
     
     /// Assess weather risk for a specific building and returns a summary.
-    func assessWeatherRisk(for building: NamedCoordinate) -> String {
+    func assessWeatherRisk(for building: FrancoSphere.NamedCoordinate) -> String {
         guard let weather = currentWeatherData else { return "No significant risks" }
         
         var risks: [String] = []
         
-        if weather.condition == .storm {
+        if weather.condition == .thunderstorm {
             risks.append("Severe storm risk")
         }
         
@@ -306,10 +335,10 @@ class WeatherService: ObservableObject {
         return risks.isEmpty ? "No significant risks" : risks.joined(separator: ", ")
     }
 }
+
 extension WeatherService {
-    // Add an alias method that matches the name expected by TaskSchedulerService
-    func createEmergencyWeatherTask(for building: FrancoSphere.NamedCoordinate) -> Any? {
-        // Simply call the existing method with the slightly different name
+    // Alias method matching the name expected by TaskSchedulerService
+    func fetchWeather(for building: FrancoSphere.NamedCoordinate) async -> Any? {
         return createWeatherEmergencyTask(for: building)
     }
 }

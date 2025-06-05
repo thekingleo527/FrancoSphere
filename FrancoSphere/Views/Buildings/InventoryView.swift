@@ -172,7 +172,9 @@ struct InventoryView: View {
     private var inventoryListView: some View {
         List {
             ForEach(filteredItems) { item in
-                NavigationLink(destination: InventoryItemDetailView(item: item)) {
+                NavigationLink(destination: InventoryItemDetailView(item: item, onUpdate: {
+                    loadInventory() // Refresh when item is updated
+                })) {
                     InventoryItemRow(item: item)
                 }
                 .swipeActions {
@@ -250,20 +252,19 @@ struct InventoryView: View {
         isLoading = true
         errorMessage = nil
         
-        // Add a small delay to show loading state
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            if SQLiteManager.shared.isInventoryReady(forBuilding: buildingID) {
-                inventoryItems = SQLiteManager.shared.getInventoryItemsSafe(forBuilding: buildingID)
-                isLoading = false
-            } else {
-                isLoading = false
-                errorMessage = "The inventory database needs to be set up. This may be because this is a new installation or the database needs to be migrated."
-            }
+        // FIXED: Use InventoryManager instead of SQLiteManager
+        do {
+            inventoryItems = InventoryManager.shared.getInventoryItems(forBuilding: buildingID)
+            isLoading = false
+        } catch {
+            isLoading = false
+            errorMessage = "Failed to load inventory: \(error.localizedDescription)"
         }
     }
     
     private func deleteItem(_ item: FrancoSphere.InventoryItem) {
-        if SQLiteManager.shared.deleteInventoryItem(itemId: item.id) {
+        // FIXED: Use InventoryManager instead of SQLiteManager
+        if InventoryManager.shared.deleteInventoryItem(itemId: item.id) {
             // Remove item from local array
             if let index = inventoryItems.firstIndex(where: { $0.id == item.id }) {
                 inventoryItems.remove(at: index)
@@ -338,13 +339,16 @@ struct InventoryItemRow: View {
 
 struct InventoryItemDetailView: View {
     let item: FrancoSphere.InventoryItem
+    let onUpdate: () -> Void
     @State private var newQuantity: Int
     @State private var isEditing = false
     @State private var showUpdateSuccess = false
+    @State private var isUpdating = false
     @Environment(\.presentationMode) var presentationMode
     
-    init(item: FrancoSphere.InventoryItem) {
+    init(item: FrancoSphere.InventoryItem, onUpdate: @escaping () -> Void = {}) {
         self.item = item
+        self.onUpdate = onUpdate
         _newQuantity = State(initialValue: item.quantity)
     }
     
@@ -384,6 +388,7 @@ struct InventoryItemDetailView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .foregroundColor(.blue)
+                    .disabled(isUpdating)
                     
                     Button("Cancel") {
                         newQuantity = item.quantity
@@ -391,6 +396,7 @@ struct InventoryItemDetailView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .foregroundColor(.red)
+                    .disabled(isUpdating)
                 }
             }
         }
@@ -429,12 +435,24 @@ struct InventoryItemDetailView: View {
     }
     
     private func saveQuantityChange() {
-        if SQLiteManager.shared.updateInventoryItemQuantity(itemId: item.id, newQuantity: newQuantity) {
+        isUpdating = true
+        
+        // FIXED: Use InventoryManager with proper parameters
+        let success = InventoryManager.shared.updateItemQuantity(
+            itemId: item.id,
+            newQuantity: newQuantity,
+            workerId: "system" // You might want to get the actual worker ID
+        )
+        
+        if success {
             isEditing = false
+            onUpdate() // Notify parent to refresh
             withAnimation {
                 showUpdateSuccess = true
             }
         }
+        
+        isUpdating = false
     }
     
     // Updated to handle Date instead of String
@@ -457,8 +475,11 @@ public struct AddInventoryItemView: View {
     @State private var unit = "pcs"
     @State private var minimumQuantity = 1
     @State private var selectedCategory: FrancoSphere.InventoryCategory = .other
+    @State private var location = ""
+    @State private var notes = ""
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var isSubmitting = false
     
     private var unitOptions = ["pcs", "bottles", "rolls", "boxes", "gallons", "liters", "feet", "inches", "lbs", "kg", "units"]
     
@@ -493,6 +514,12 @@ public struct AddInventoryItemView: View {
                             }.tag(category)
                         }
                     }
+                    
+                    TextField("Location (optional)", text: $location)
+                        .autocapitalization(.words)
+                    
+                    TextField("Notes (optional)", text: $notes)
+                        .autocapitalization(.sentences)
                 }
                 
                 Section {
@@ -501,7 +528,16 @@ public struct AddInventoryItemView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .foregroundColor(.blue)
-                    .disabled(itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
+                    
+                    if isSubmitting {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Adding item...")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
             }
             .navigationTitle("Add Inventory Item")
@@ -511,6 +547,7 @@ public struct AddInventoryItemView: View {
                     Button("Cancel") {
                         onComplete(false)
                     }
+                    .disabled(isSubmitting)
                 }
             }
             .alert(isPresented: $showError) {
@@ -532,14 +569,25 @@ public struct AddInventoryItemView: View {
             return
         }
         
-        let success = SQLiteManager.shared.addInventoryItem(
-            buildingId: buildingID,
+        isSubmitting = true
+        
+        // FIXED: Create InventoryItem and use InventoryManager
+        let newItem = FrancoSphere.InventoryItem(
             name: trimmedName,
+            buildingID: buildingID,
+            category: selectedCategory,
             quantity: quantity,
             unit: unit,
             minimumQuantity: minimumQuantity,
-            category: selectedCategory
+            needsReorder: quantity <= minimumQuantity,
+            lastRestockDate: Date(),
+            location: location.isEmpty ? "Unknown" : location,
+            notes: notes.isEmpty ? nil : notes
         )
+        
+        let success = InventoryManager.shared.saveInventoryItem(newItem)
+        
+        isSubmitting = false
         
         if success {
             onComplete(true)

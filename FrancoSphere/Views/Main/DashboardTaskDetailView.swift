@@ -11,15 +11,11 @@ struct DashboardTaskDetailView: View {
     let task: MaintenanceTask
     @State private var isComplete: Bool
     @State private var buildingName: String = "Unknown Building"
+    @State private var isUpdatingStatus = false
     
     init(task: MaintenanceTask) {
         self.task = task
         self._isComplete = State(initialValue: task.isComplete)
-        
-        // Get the building name if possible
-        if let building = NamedCoordinate.allBuildings.first(where: { $0.id == task.buildingID }) {
-            self._buildingName = State(initialValue: building.name)
-        }
     }
     
     var body: some View {
@@ -38,73 +34,182 @@ struct DashboardTaskDetailView: View {
                     .font(.headline)
             }
             
+            // Task status badge
+            HStack {
+                Circle()
+                    .fill(task.statusColor)
+                    .frame(width: 12, height: 12)
+                
+                Text(task.statusText)
+                    .font(.subheadline)
+                    .foregroundColor(task.statusColor)
+                
+                Spacer()
+                
+                // Task category badge
+                Text(task.category.rawValue)
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(task.category == .maintenance ? Color.orange.opacity(0.2) : Color.blue.opacity(0.2))
+                    .cornerRadius(8)
+            }
+            
             Divider()
             
             // Task description
-            Text("Task Description:")
-                .font(.headline)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Task Description:")
+                    .font(.headline)
+                
+                Text(task.description)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+            }
             
-            Text(task.description)
-                .padding(.bottom)
+            // Due date and timing info
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Schedule:")
+                    .font(.headline)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Image(systemName: "calendar")
+                            .foregroundColor(.blue)
+                        Text("Due: \(task.dueDate.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.subheadline)
+                    }
+                    
+                    if let startTime = task.startTime {
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundColor(.green)
+                            Text("Start: \(startTime.formatted(date: .omitted, time: .shortened))")
+                                .font(.subheadline)
+                        }
+                    }
+                    
+                    if let endTime = task.endTime {
+                        HStack {
+                            Image(systemName: "clock.badge.checkmark")
+                                .foregroundColor(.orange)
+                            Text("End: \(endTime.formatted(date: .omitted, time: .shortened))")
+                                .font(.subheadline)
+                        }
+                    }
+                    
+                    if task.recurrence != .oneTime {
+                        HStack {
+                            Image(systemName: "repeat")
+                                .foregroundColor(.purple)
+                            Text("Recurrence: \(task.recurrence.rawValue)")
+                                .font(.subheadline)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+            }
             
-            // Due date
-            Text("Due: \(task.dueDate.formatted(date: .abbreviated, time: .shortened))")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            // Urgency level
+            HStack {
+                Text("Priority:")
+                    .font(.headline)
+                
+                Spacer()
+                
+                HStack {
+                    Circle()
+                        .fill(task.urgency.color)
+                        .frame(width: 10, height: 10)
+                    
+                    Text(task.urgency.rawValue)
+                        .font(.subheadline)
+                        .foregroundColor(task.urgency.color)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(task.urgency.color.opacity(0.1))
+                .cornerRadius(12)
+            }
             
             Spacer()
             
             // Complete button
             Button {
-                // Toggle the completion state
-                isComplete.toggle()
-                
-                // Update in database
-                TaskManager.shared.toggleTaskCompletion(taskID: task.id)
+                toggleTaskCompletion()
             } label: {
-                Label(
-                    isComplete ? "Completed" : "Mark as Complete",
-                    systemImage: isComplete ? "checkmark.circle.fill" : "circle"
-                )
+                HStack {
+                    if isUpdatingStatus {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: isComplete ? "checkmark.circle.fill" : "circle")
+                    }
+                    
+                    Text(isComplete ? "Task Completed" : "Mark as Complete")
+                        .fontWeight(.medium)
+                }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(isComplete ? Color.green.opacity(0.2) : Color.blue.opacity(0.2))
-                .foregroundColor(isComplete ? .green : .blue)
+                .background(isComplete ? Color.green : Color.blue)
+                .foregroundColor(.white)
                 .cornerRadius(10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(isComplete ? Color.green : Color.blue, lineWidth: 1)
-                )
             }
+            .disabled(isUpdatingStatus)
+            .animation(.easeInOut(duration: 0.2), value: isComplete)
         }
         .padding()
         .navigationTitle("Task Details")
-        .onAppear {
-            // Get the most up-to-date status from database
-            updateBuildingInfo()
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadBuildingInfo()
         }
     }
     
-    private func updateBuildingInfo() {
-        // In a real app, you'd fetch the building info from your database
-        if let buildingId = Int64(task.buildingID) {
+    // MARK: - Private Methods
+    
+    private func toggleTaskCompletion() {
+        guard !isUpdatingStatus else { return }
+        
+        isUpdatingStatus = true
+        
+        Task {
             do {
-                guard let db = SQLiteManager.shared.db else { return }
+                // Update the completion state
+                await TaskManager.shared.toggleTaskCompletionAsync(taskID: task.id, completedBy: "Current User")
                 
-                let query = "SELECT name FROM buildings WHERE id = ?"
-                let rows = try db.prepare(query, [buildingId])
-                
-                if let row = rows.next() {
-                    buildingName = row[0] as! String
+                await MainActor.run {
+                    isComplete.toggle()
+                    isUpdatingStatus = false
                 }
             } catch {
-                print("Error fetching building info: \(error)")
+                await MainActor.run {
+                    isUpdatingStatus = false
+                    print("Error updating task completion: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func loadBuildingInfo() async {
+        do {
+            // Use BuildingRepository to get building name
+            let buildingName = await BuildingRepository.shared.name(forId: task.buildingID)
+            
+            await MainActor.run {
+                self.buildingName = buildingName
             }
         }
     }
 }
 
-// Preview
+// MARK: - Preview
+
 struct DashboardTaskDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
@@ -124,5 +229,6 @@ struct DashboardTaskDetailView_Previews: PreviewProvider {
                 )
             )
         }
+        .preferredColorScheme(.dark)
     }
 }

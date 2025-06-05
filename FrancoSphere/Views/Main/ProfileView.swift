@@ -213,47 +213,74 @@ struct SettingsRowView: View {
 // MARK: - Detail Views
 
 struct MyAssignedBuildingsView: View {
-    // Sample assigned buildings - using BuildingRepository
-    let assignedBuildings = BuildingRepository.shared.getFirstNBuildings(4)
+    // FIXED: Use @State and load async data in onAppear
+    @State private var assignedBuildings: [FrancoSphere.NamedCoordinate] = []
+    @State private var isLoading = true
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(assignedBuildings) { building in
-                    NavigationLink(destination: BuildingDetailView(building: building)) {
-                        HStack {
-                            // Building image loaded directly via imageAssetName
-                            if let uiImage = UIImage(named: building.imageAssetName) {
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            } else {
-                                Image(systemName: "building.2.fill")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.blue)
-                                    .frame(width: 60, height: 60)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(building.name)
-                                    .font(.headline)
-                                
-                                Text("Status: Operational")
-                                    .font(.caption)
-                                    .foregroundColor(.green)
-                                
-                                Text("Location: \(String(format: "%.4f, %.4f", building.latitude, building.longitude))")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+            Group {
+                if isLoading {
+                    ProgressView("Loading buildings...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(assignedBuildings) { building in
+                            NavigationLink(destination: BuildingDetailView(building: building)) {
+                                HStack {
+                                    // Building image loaded directly via imageAssetName
+                                    if let uiImage = UIImage(named: building.imageAssetName) {
+                                        Image(uiImage: uiImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 60, height: 60)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    } else {
+                                        Image(systemName: "building.2.fill")
+                                            .font(.largeTitle)
+                                            .foregroundColor(.blue)
+                                            .frame(width: 60, height: 60)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(building.name)
+                                            .font(.headline)
+                                        
+                                        Text("Status: Operational")
+                                            .font(.caption)
+                                            .foregroundColor(.green)
+                                        
+                                        Text("Location: \(String(format: "%.4f, %.4f", building.latitude, building.longitude))")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 4)
                             }
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
             .navigationTitle("My Assigned Buildings")
+            .task {
+                await loadAssignedBuildings()
+            }
+        }
+    }
+    
+    // FIXED: Load buildings asynchronously
+    private func loadAssignedBuildings() async {
+        do {
+            let buildings = await BuildingRepository.shared.getFirstNBuildings(4)
+            await MainActor.run {
+                self.assignedBuildings = buildings
+                self.isLoading = false
+            }
+        } catch {
+            print("Error loading buildings: \(error)")
+            await MainActor.run {
+                self.isLoading = false
+            }
         }
     }
 }
@@ -387,9 +414,6 @@ struct TaskHistoryView: View {
         )
     ]
     
-    // Use BuildingRepository
-    let buildings = BuildingRepository.shared.buildings
-    
     var body: some View {
         NavigationView {
             List {
@@ -427,6 +451,7 @@ struct TaskHistoryView: View {
     
     // Helper function to get building name for a task
     private func getBuildingName(for buildingID: String) -> String {
+        // FIXED: Use the synchronous fallback method for now
         return BuildingRepository.shared.getBuildingName(forId: buildingID)
     }
 }

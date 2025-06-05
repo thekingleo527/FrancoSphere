@@ -8,67 +8,70 @@
 import SwiftUI
 import Foundation
 
-// This file helps diagnose image loading issues without using BuildingImageHelper.
+// --------------------------------------------------------------------
+//  Fixed type alias to match BuildingRepository return type
+// --------------------------------------------------------------------
+typealias DebugBuilding = FrancoSphere.NamedCoordinate   // This matches what BuildingRepository returns
 
-class AssetImageDebugger {
+/// Utility for verifying that every building points at a valid image
+/// asset and for listing the contents of the Assets catalogue.
+final class AssetImageDebugger {
+
     static let shared = AssetImageDebugger()
-    
-    func debugAllBuildingImages() {
-        let buildings = BuildingRepository.shared.buildings
-        
+    private init() {}
+
+    // MARK: – Console diagnostics
+    func debugAllBuildingImages() async {
+        let buildings = await BuildingRepository.shared.allBuildings
+
         print("🏢 DIAGNOSING BUILDING IMAGES:")
         print("==============================")
         print("Number of buildings: \(buildings.count)")
         print("==============================")
-        
+
         for building in buildings {
             debugBuildingImage(building)
         }
-        
+
         print("==============================")
         print("Diagnosis complete")
         print("==============================")
     }
-    
-    func debugBuildingImage(_ building: NamedCoordinate) {
+
+    private func debugBuildingImage(_ building: DebugBuilding) {
         print("🏢 Building: \(building.name) (ID: \(building.id))")
-        
-        // Check imageAssetName property
-        let assetName = building.imageAssetName
-        let exists = UIImage(named: assetName) != nil
-        print("   - imageAssetName: \"\(assetName)\" (Exists: \(exists ? "✅" : "❌"))")
-        
-        // Try standard format: replace spaces, dashes, parentheses, and commas with underscores or remove them
-        let standardName = building.name
-            .replacingOccurrences(of: " ", with: "_")
-            .replacingOccurrences(of: "-", with: "_")
-            .replacingOccurrences(of: "(", with: "")
-            .replacingOccurrences(of: ")", with: "")
-            .replacingOccurrences(of: ",", with: "")
-        let standardExists = UIImage(named: standardName) != nil
-        print("   - Standard format: \"\(standardName)\" (Exists: \(standardExists ? "✅" : "❌"))")
-        
+
+        // 1️⃣ imageAssetName specified on the model
+        let assetName     = building.imageAssetName
+        let assetExists   = UIImage(named: assetName) != nil
+        print("   • imageAssetName: \"\(assetName)\"  →  \(assetExists ? "✅ found" : "❌ missing")")
+
+        // 2️⃣ A "standardised" fallback asset name
+        let standardName  = building.name
+                            .replacingOccurrences(of: "[\\s,()\\-]", with: "_",
+                                                  options: .regularExpression)
+        let standardExist = UIImage(named: standardName) != nil
+        print("   • Standard name : \"\(standardName)\"  →  \(standardExist ? "✅ found" : "❌ missing")")
         print("")
     }
-    
+
+    // MARK: – Asset-catalogue listing
     func debugAllAssetNames() {
         let assets = listAllAssetNames()
-        
+
         print("📁 ASSETS CATALOG CONTENTS:")
         print("===========================")
         print("Number of assets: \(assets.count)")
         print("===========================")
-        
-        for assetName in assets.sorted() {
-            print("   - \(assetName)")
-        }
-        
+
+        for asset in assets.sorted() { print("   • \(asset)") }
+
         print("===========================")
     }
-    
+
     private func listAllAssetNames() -> [String] {
-        // Known asset names to test against.
-        let knownAssets = [
+        // **Only** the names you care about.  Add / remove as necessary.
+        let candidates = [
             "12_West_18th_Street",
             "29_31_East_20th_Street",
             "36_Walker_Street",
@@ -86,78 +89,138 @@ class AssetImageDebugger {
             "Rubin_Museum_17th_Street",
             "Stuyvesant_Cove_Park"
         ]
-        
-        return knownAssets.filter { UIImage(named: $0) != nil }
+
+        return candidates.filter { UIImage(named: $0) != nil }
+    }
+    
+    // MARK: - Synchronous Helper for Legacy Code
+    func debugAllBuildingImagesSync() {
+        Task {
+            await debugAllBuildingImages()
+        }
     }
 }
 
-// MARK: - View for Debugging Assets
-
+// MARK: – SwiftUI helper view
+/// A simple UI wrapper so you can eyeball which images resolve correctly.
 struct AssetDebuggerView: View {
-    @State private var buildingImages: [(building: NamedCoordinate, image: UIImage?)] = []
-    @Environment(\.presentationMode) var presentationMode
-    
+
+    @State private var buildingImages: [(building: DebugBuilding, image: UIImage?)] = []
+    @State private var isLoading = true
+    @Environment(\.presentationMode) private var presentationMode
+
     var body: some View {
         NavigationView {
-            List {
-                Section(header: Text("Building Assets")) {
-                    ForEach(buildingImages, id: \.building.id) { item in
-                        HStack {
-                            // Building name and ID
-                            VStack(alignment: .leading) {
-                                Text(item.building.name)
-                                    .font(.headline)
-                                Text("ID: \(item.building.id)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+            Group {
+                if isLoading {
+                    ProgressView("Loading buildings...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        Section("Building Assets") {
+                            ForEach(buildingImages, id: \.building.id) { item in
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(item.building.name).font(.headline)
+                                        Text("ID: \(item.building.id)")
+                                            .font(.caption).foregroundColor(.secondary)
+                                        Text("Asset: \(item.building.imageAssetName)")
+                                            .font(.caption2).foregroundColor(.blue)
+                                    }
+
+                                    Spacer()
+
+                                    if let image = item.image {
+                                        Image(uiImage: image)
+                                            .resizable().scaledToFill()
+                                            .frame(width: 40, height: 40)
+                                            .clipShape(Circle())
+                                            .overlay(Circle().stroke(Color.green, lineWidth: 2))
+                                    } else {
+                                        Image(systemName: "xmark.circle")
+                                            .font(.system(size: 24)).foregroundColor(.red)
+                                    }
+                                }
+                            }
+                        }
+
+                        Section("Debug Actions") {
+                            Button("Print Diagnostics to Console") {
+                                Task {
+                                    await AssetImageDebugger.shared.debugAllBuildingImages()
+                                    AssetImageDebugger.shared.debugAllAssetNames()
+                                }
                             }
                             
-                            Spacer()
+                            Button("Reload Building Images") {
+                                Task {
+                                    await loadBuildingImages()
+                                }
+                            }
+                        }
+                        
+                        Section("Statistics") {
+                            HStack {
+                                Text("Total Buildings:")
+                                Spacer()
+                                Text("\(buildingImages.count)")
+                                    .foregroundColor(.blue)
+                            }
                             
-                            // Display the image if available, otherwise show an error icon
-                            if let image = item.image {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 40, height: 40)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.green, lineWidth: 2))
-                            } else {
-                                Image(systemName: "xmark.circle")
+                            HStack {
+                                Text("Images Found:")
+                                Spacer()
+                                Text("\(buildingImages.filter { $0.image != nil }.count)")
+                                    .foregroundColor(.green)
+                            }
+                            
+                            HStack {
+                                Text("Missing Images:")
+                                Spacer()
+                                Text("\(buildingImages.filter { $0.image == nil }.count)")
                                     .foregroundColor(.red)
-                                    .font(.system(size: 24))
                             }
                         }
                     }
                 }
-                
-                Section(header: Text("Debug Actions")) {
-                    Button("Print Debug Info to Console") {
-                        AssetImageDebugger.shared.debugAllBuildingImages()
-                        AssetImageDebugger.shared.debugAllAssetNames()
-                    }
-                }
             }
             .navigationTitle("Asset Debugger")
-            .navigationBarItems(trailing: Button("Done") {
-                presentationMode.wrappedValue.dismiss()
-            })
-            .onAppear {
-                loadBuildingImages()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { presentationMode.wrappedValue.dismiss() }
+                }
+            }
+            .task {
+                await loadBuildingImages()
             }
         }
     }
-    
-    private func loadBuildingImages() {
-        let buildings = BuildingRepository.shared.buildings
-        buildingImages = buildings.map { building in
-            (building, UIImage(named: building.imageAssetName))
+
+    private func loadBuildingImages() async {
+        isLoading = true
+        let buildings = await BuildingRepository.shared.allBuildings
+        let images = buildings.map { ($0, UIImage(named: $0.imageAssetName)) }
+        
+        await MainActor.run {
+            self.buildingImages = images
+            self.isLoading = false
+        }
+    }
+}
+
+// MARK: - Legacy Compatibility Extension
+extension AssetImageDebugger {
+    /// For calling from non-async contexts
+    func debugSync() {
+        Task.detached {
+            await self.debugAllBuildingImages()
+            await MainActor.run {
+                self.debugAllAssetNames()
+            }
         }
     }
 }
 
 struct AssetDebuggerView_Previews: PreviewProvider {
-    static var previews: some View {
-        AssetDebuggerView()
-    }
+    static var previews: some View { AssetDebuggerView() }
 }

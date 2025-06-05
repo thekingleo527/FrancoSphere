@@ -1,11 +1,12 @@
 import SwiftUI
 import MapKit
+import CoreLocation
 
-// RENAME: Changed struct name to avoid conflict with the one in DashboardView.swift
-struct MainBuildingSelectionView: View {
-    // Using NamedCoordinate declared in FrancoSphereModels.swift
-    let buildings: [NamedCoordinate]
-    let onSelect: (NamedCoordinate) -> Void
+// Renamed to avoid conflicts - this is the building selection view used for clock-in
+struct ClockInBuildingSelectionView: View {
+    // Import the NamedCoordinate type from FrancoSphereModels
+    let buildings: [FrancoSphere.NamedCoordinate]
+    let onSelect: (FrancoSphere.NamedCoordinate) -> Void
     
     @Environment(\.presentationMode) var presentationMode
     @State private var searchText = ""
@@ -14,12 +15,15 @@ struct MainBuildingSelectionView: View {
         center: CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
-    @State private var selectedBuilding: NamedCoordinate? = nil
+    @State private var selectedBuilding: FrancoSphere.NamedCoordinate? = nil
     @State private var userLocation: CLLocationCoordinate2D? = nil
     @State private var sortMode: SortMode = .alphabetical
     @State private var currentTab: BuildingTab = .assigned
     @State private var assignedBuildings: [String] = []
     @State private var hasLocationAccess = false
+    
+    // Type alias for convenience
+    private typealias NamedCoordinate = FrancoSphere.NamedCoordinate
     
     // Enums for view states
     enum ViewMode {
@@ -143,10 +147,7 @@ struct MainBuildingSelectionView: View {
     }
     
     private var buildingListView: some View {
-        // Use a local variable to store filtered buildings
-        let displayBuildings = filteredBuildings
-        
-        return List(displayBuildings, id: \.id) { building in
+        List(filteredBuildings) { building in
             Button {
                 selectedBuilding = building
             } label: {
@@ -195,17 +196,12 @@ struct MainBuildingSelectionView: View {
         .listStyle(PlainListStyle())
     }
     
-    // FIX: Break the map view into smaller, simpler parts
-    // Just replace the complex map part with a pre-computed variable
     private var buildingMapView: some View {
         ZStack(alignment: .bottom) {
-            // Pre-compute the filtered buildings list before using in Map
-            let buildingsToShow = filteredBuildings
-            
             Map(
                 coordinateRegion: $region,
                 showsUserLocation: hasLocationAccess,
-                annotationItems: buildingsToShow
+                annotationItems: filteredBuildings
             ) { building in
                 MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)) {
                     Button(action: {
@@ -241,7 +237,7 @@ struct MainBuildingSelectionView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
-                    ForEach(buildingsToShow, id: \.id) { building in
+                    ForEach(filteredBuildings) { building in
                         Button(action: { selectedBuilding = building }) {
                             buildingMapCard(building)
                         }
@@ -255,6 +251,7 @@ struct MainBuildingSelectionView: View {
             .frame(height: 160)
         }
     }
+    
     // MARK: - Helper Views
     
     private func buildingMapCard(_ building: NamedCoordinate) -> some View {
@@ -306,7 +303,7 @@ struct MainBuildingSelectionView: View {
     }
     
     private struct BuildingMapMarker: View {
-        let building: NamedCoordinate
+        let building: FrancoSphere.NamedCoordinate
         let isAssigned: Bool
         let isSelected: Bool
         
@@ -421,9 +418,9 @@ struct MainBuildingSelectionView: View {
     }
     
     private func loadAssignedBuildings() {
-        // Placeholder: since WorkerAssignmentManager doesn't expose getBuildingsForWorker,
-        // we assign an empty array here.
-        assignedBuildings = []
+        // Load assigned buildings from AuthManager's worker ID
+        // For now, using placeholder data
+        assignedBuildings = ["1", "3", "5", "7"]
     }
     
     private func isAssignedBuilding(_ building: NamedCoordinate) -> Bool {
@@ -476,23 +473,14 @@ struct MainBuildingSelectionView: View {
 }
 
 // MARK: - Preview
-struct MainBuildingSelectionView_Previews: PreviewProvider {
+struct ClockInBuildingSelectionView_Previews: PreviewProvider {
     static var previews: some View {
-        MainBuildingSelectionView(
-            buildings: [
-                NamedCoordinate(
-                    id: "1",
-                    name: "Sample Building",
-                    latitude: 40.7308,
-                    longitude: -73.9973,
-                    address: "123 Main St",
-                    imageAssetName: ""
-                )
-            ],
+        ClockInBuildingSelectionView(
+            buildings: FrancoSphere.NamedCoordinate.allBuildings,
             onSelect: { _ in }
         )
     }
 }
 
-// Add this type alias to help with existing code that references BuildingSelectionView
-typealias BuildingSelectionView = MainBuildingSelectionView
+// Type aliases for compatibility with existing code
+typealias BuildingSelectionView = ClockInBuildingSelectionView

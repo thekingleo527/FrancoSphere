@@ -54,13 +54,12 @@ struct DashboardView: View {
     
     // Repository and manager instances
     private let buildingRepository = BuildingRepository.shared
-    private let workerAssignmentManager = WorkerAssignmentManager()
     
     // State variables
     @State private var showingBuildingList = false
     @State private var todaysTasks: [MaintenanceTask] = []
     @State private var upcomingTasks: [MaintenanceTask] = []
-    @State private var selectedBuilding: NamedCoordinate?
+    @State private var selectedBuilding: FrancoSphere.NamedCoordinate?
     @State private var clockedInStatus: (isClockedIn: Bool, buildingId: Int64?) = (false, nil)
     @State private var currentBuildingName: String = "None"
     @State private var navigateToBuildingId: String? = nil
@@ -68,12 +67,15 @@ struct DashboardView: View {
     @State private var selectedTab: DashboardTab = .tasks
     @State private var showTimelineView = false
     @State private var showNotifications = false
-    @State private var buildings = NamedCoordinate.allBuildings
+    @State private var buildings: [FrancoSphere.NamedCoordinate] = []        // start empty
     @State private var isRefreshing = false
     @State private var notifications: [WorkerNotification] = []
     @State private var weatherAlerts: [String: WeatherAlert] = [:]
     @State private var tasksByCategory: [TaskCategory: [MaintenanceTask]] = [:]
     @State private var showTaskDetail: MaintenanceTask? = nil
+    
+    // SQLite Manager - use async approach
+    @State private var sqliteManager: SQLiteManager?
     
     // Dashboard tabs
     enum DashboardTab {
@@ -111,6 +113,15 @@ struct DashboardView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
+                // Initialize SQLite manager and fetch building list
+                Task {
+                    do {
+                        sqliteManager = try await SQLiteManager.start()
+                        buildings = await buildingRepository.allBuildings
+                    } catch {
+                        print("Failed to initialize SQLiteManager: \(error)")
+                    }
+                }
                 loadAllData()
                 startLocationTracking()
             }
@@ -125,7 +136,7 @@ struct DashboardView: View {
             }
             .sheet(isPresented: $showTimelineView) {
                 NavigationView {
-                    TimelineView(workerId: authManager.workerId)
+                    TimelineView(workerId: convertStringToInt64(authManager.workerId))
                 }
             }
             .sheet(isPresented: $showNotifications) {
@@ -143,7 +154,7 @@ struct DashboardView: View {
                         }
                 }
             }
-            .onChange(of: clockedInStatus.isClockedIn) { _ in
+            .onChange(of: clockedInStatus.isClockedIn) {
                 loadTodaysTasks()
             }
         }
@@ -253,7 +264,16 @@ struct DashboardView: View {
             
             // Dynamic Clock Out button
             Button(action: {
-                handleClockOut()
+                Task {
+                    if let sqliteManager = sqliteManager {
+                        try? await sqliteManager.logClockOutAsync(
+                            workerId: convertStringToInt64(authManager.workerId),
+                            timestamp: Date()
+                        )
+                        clockedInStatus = (false, nil)
+                        currentBuildingName = "None"
+                    }
+                }
             }) {
                 Text("Clock Out")
                     .font(.callout)
@@ -551,7 +571,7 @@ struct DashboardView: View {
     
     private var mapTabContent: some View {
         VStack(spacing: 15) {
-            // Map with buildings
+            // Map with buildings - Updated for iOS 17+
             buildingsMapView
                 .frame(height: 300)
                 .cornerRadius(12)
@@ -592,6 +612,7 @@ struct DashboardView: View {
         .padding(.top, 16)
     }
     
+    // Simplified Map view using legacy API for compatibility
     private var buildingsMapView: some View {
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
             MapAnnotation(coordinate: building.coordinate) {
@@ -606,7 +627,7 @@ struct DashboardView: View {
         }
     }
     
-    private func buildingCard(_ building: NamedCoordinate) -> some View {
+    private func buildingCard(_ building: FrancoSphere.NamedCoordinate) -> some View {
         NavigationLink(destination: BuildingDetailView(building: building)) {
             VStack(alignment: .leading, spacing: 10) {
                 // Building image
@@ -655,7 +676,7 @@ struct DashboardView: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func buildingImageView(_ building: NamedCoordinate) -> some View {
+    private func buildingImageView(_ building: FrancoSphere.NamedCoordinate) -> some View {
         Group {
             // Fixed conditional binding - properly handle optional imageAssetName
             if !building.imageAssetName.isEmpty, let uiImage = UIImage(named: building.imageAssetName) {
@@ -893,7 +914,7 @@ struct DashboardView: View {
     
     // Renamed to avoid conflict with the main BuildingMapMarker
     private struct BuildingMapMarker: View {
-        let building: NamedCoordinate
+        let building: FrancoSphere.NamedCoordinate
         let isAssigned: Bool
         let isClockedIn: Bool
         
@@ -1111,53 +1132,50 @@ struct DashboardView: View {
     
     // MARK: - Helper Methods
     
-    private func handleBuildingSelection(_ building: NamedCoordinate) {
+    private func handleBuildingSelection(_ building: FrancoSphere.NamedCoordinate) {
         if let buildingIdInt = Int64(building.id) {
-            SQLiteManager.shared.logClockIn(
-                workerId: authManager.workerId,
-                buildingId: buildingIdInt,
-                timestamp: Date()
-            )
-            
-            // Update status after clock in
-            clockedInStatus = (true, buildingIdInt)
-            currentBuildingName = building.name
-            
-            // Navigate to the selected building's detail view
-            navigateToBuildingId = building.id
-            
-            // Refresh tasks after clock-in
-            loadTodaysTasks()
+            Task {
+                if let sqliteManager = sqliteManager {
+                    let currentStatus = await sqliteManager.isWorkerClockedInAsync(
+                        workerId: convertStringToInt64(authManager.workerId)
+                    )
+                    
+                    // Clock in the worker
+                    try? await sqliteManager.logClockInAsync(
+                        workerId: convertStringToInt64(authManager.workerId),
+                        buildingId: buildingIdInt,
+                        timestamp: Date()
+                    )
+                    
+                    // Update status after clock in
+                    clockedInStatus = (true, buildingIdInt)
+                    currentBuildingName = building.name
+                    // Navigate to the selected building's detail view
+                    navigateToBuildingId = building.id
+                    // Refresh tasks after clock-in
+                    loadTodaysTasks()
+                }
+            }
         }
-        
         showingBuildingList = false
     }
     
-    private func handleClockOut() {
-        SQLiteManager.shared.logClockOut(
-            workerId: authManager.workerId,
-            timestamp: Date()
-        )
-        clockedInStatus = (false, nil)
-        currentBuildingName = "None"
-    }
-    
-    private func handleWeatherAlert(_ alert: WeatherAlert, building: NamedCoordinate) {
+    private func handleWeatherAlert(_ alert: WeatherAlert, building: FrancoSphere.NamedCoordinate) {
         // Navigate to building details
         navigateToBuildingId = building.id
     }
     
-    private var assignedBuildings: [NamedCoordinate] {
+    private var assignedBuildings: [FrancoSphere.NamedCoordinate] {
         // Temporary implementation - returns all buildings
         return buildings
     }
     
-    private func isAssignedBuilding(_ building: NamedCoordinate) -> Bool {
+    private func isAssignedBuilding(_ building: FrancoSphere.NamedCoordinate) -> Bool {
         // Temporary implementation - returns true for all buildings
         return true
     }
     
-    private func isClockedInBuilding(_ building: NamedCoordinate) -> Bool {
+    private func isClockedInBuilding(_ building: FrancoSphere.NamedCoordinate) -> Bool {
         if let buildingId = clockedInStatus.buildingId {
             return buildingId == Int64(building.id)
         }
@@ -1168,12 +1186,6 @@ struct DashboardView: View {
         // Simulate task data for the demo
         let heights: [CGFloat] = [80, 110, 60, 90, 130, 70, 50]
         return heights[day]
-    }
-    
-    private func dayColor(for day: Int) -> Color {
-        // Simulate task status for the demo
-        let colors: [Color] = [.blue, .blue, .red, .orange, .blue, .blue, .orange]
-        return colors[day]
     }
     
     private func dayColor(for day: Int, height: CGFloat) -> Color {
@@ -1231,7 +1243,7 @@ struct DashboardView: View {
         return Double(getCompletedTasksCount()) / Double(total)
     }
     
-    private func getMostVisitedBuildings() -> [(building: NamedCoordinate, visits: Int, percentage: Double)] {
+    private func getMostVisitedBuildings() -> [(building: FrancoSphere.NamedCoordinate, visits: Int, percentage: Double)] {
         // In a real app, fetch from database
         // This is simulated data
         let totalVisits = 24
@@ -1245,7 +1257,7 @@ struct DashboardView: View {
         let availableBuildings = Array(buildings.prefix(3))
         
         // Calculate visits dynamically based on available buildings
-        var result: [(building: NamedCoordinate, visits: Int, percentage: Double)] = []
+        var result: [(building: FrancoSphere.NamedCoordinate, visits: Int, percentage: Double)] = []
         var remainingVisits = totalVisits
         
         for (index, building) in availableBuildings.enumerated() {
@@ -1280,15 +1292,21 @@ struct DashboardView: View {
     }
     
     private func checkClockInStatus() {
-        // Check if worker is already clocked in
-        clockedInStatus = SQLiteManager.shared.isWorkerClockedIn(workerId: authManager.workerId)
-        
-        // Update building name if clocked in
-        if clockedInStatus.isClockedIn, let buildingId = clockedInStatus.buildingId {
-            if let building = buildings.first(where: { Int64($0.id) == buildingId }) {
-                currentBuildingName = building.name
-            } else {
-                currentBuildingName = "Building #\(buildingId)"
+        Task {
+            if let sqliteManager = sqliteManager {
+                let status = await sqliteManager.isWorkerClockedInAsync(
+                    workerId: convertStringToInt64(authManager.workerId)
+                )
+                clockedInStatus = status
+                
+                // Update building name if clocked in
+                if status.isClockedIn, let buildingId = status.buildingId {
+                    if let building = buildings.first(where: { Int64($0.id) == buildingId }) {
+                        currentBuildingName = building.name
+                    } else {
+                        currentBuildingName = "Building #\(buildingId)"
+                    }
+                }
             }
         }
     }
@@ -1468,13 +1486,7 @@ struct DashboardView: View {
     }
     
     private func refreshAllData() async {
-        checkClockInStatus()
-        loadTodaysTasks()
-        loadUpcomingTasks()
-        loadWeatherAlerts()
-        loadNotifications()
-        loadTasksByCategory()
-        centerMapOnCurrentLocation()
+        loadAllData()
     }
     
     private func startLocationTracking() {
@@ -1494,295 +1506,72 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - CompactBuildingSelector
-// Renamed from BuildingSelectionView to avoid conflicts
-struct CompactBuildingSelector: View {
-    let buildings: [NamedCoordinate]
-    let onSelect: (NamedCoordinate) -> Void
-    @State private var searchText = ""
-    @Environment(\.presentationMode) var presentationMode
+// MARK: - Utility Functions
+
+// Helper function to convert String to Int64
+private func convertStringToInt64(_ string: String) -> Int64 {
+    return Int64(string) ?? 0
+}
+
+// MARK: - Stubs to satisfy missing types (remove or replace once real implementations exist)
+
+import SwiftUI
+
+/// Stub for AuthManager
+/// Replace with your real AuthManager (e.g. an actor or class that provides `shared`, `currentWorkerName`, `workerId`, and `logout()`)
+@MainActor
+final class AuthManager: ObservableObject {
+    static let shared = AuthManager()
+    @Published var currentWorkerName: String = "Worker Name"
+    let workerId: String = "worker_123"
+    
+    private init() { }
+    func logout() { /* no-op stub */ }
+}
+
+/// Stub for MainBuildingSelectionView
+/// Replace with your real view that lets the user pick a building from a list
+struct MainBuildingSelectionView: View {
+    let buildings: [FrancoSphere.NamedCoordinate]
+    let onSelect: (FrancoSphere.NamedCoordinate) -> Void
+    @Environment(\.presentationMode) private var presentationMode
+    
+    @State private var searchText: String = ""
+    
+    private var filtered: [FrancoSphere.NamedCoordinate] {
+        guard !searchText.isEmpty else { return buildings }
+        return buildings.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText) ||
+            ($0.address ?? "").localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(filteredBuildings) { building in
-                    Button(action: {
-                        onSelect(building)
-                    }) {
-                        HStack(spacing: 15) {
-                            // Building image
-                            if !building.imageAssetName.isEmpty, let uiImage = UIImage(named: building.imageAssetName) {
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 50, height: 50)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            } else {
-                                ZStack {
-                                    Rectangle()
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 50, height: 50)
-                                        .cornerRadius(8)
-                                    
-                                    Image(systemName: "building.2.fill")
-                                        .foregroundColor(.gray)
-                                }
+                ForEach(filtered, id: \.id) { bldg in
+                    Button {
+                        onSelect(bldg)
+                        presentationMode.wrappedValue.dismiss()
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(bldg.name).font(.headline)
+                            if let addr = bldg.address {
+                                Text(addr).font(.caption).foregroundColor(.secondary)
                             }
-                            
-                            // Building info
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(building.name)
-                                    .font(.headline)
-                                
-                                if let address = building.address {
-                                    Text(address)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.gray)
                         }
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
             }
-            .listStyle(PlainListStyle())
             .navigationTitle("Select Building")
-            .navigationBarItems(trailing: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
-            })
             .searchable(text: $searchText, prompt: "Search buildings")
-        }
-    }
-    
-    private var filteredBuildings: [NamedCoordinate] {
-        if searchText.isEmpty {
-            return buildings
-        } else {
-            return buildings.filter { building in
-                building.name.localizedCaseInsensitiveContains(searchText) ||
-                (building.address ?? "").localizedCaseInsensitiveContains(searchText)
-            }
-        }
-    }
-}
-
-// MARK: - CompactTaskDetailView
-// Renamed from DashboardTaskDetailView to avoid conflicts
-struct CompactTaskDetailView: View {
-    let task: MaintenanceTask
-    @State private var showingConfirmation = false
-    private let buildingRepository = BuildingRepository.shared
-    
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Task header with status
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Text(task.name)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Spacer()
-                        
-                        Text(task.statusText)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(task.statusColor)
-                            .cornerRadius(20)
-                    }
-                    
-                    // Building and schedule info
-                    HStack {
-                        Image(systemName: "building.fill")
-                            .foregroundColor(.secondary)
-                        
-                        Text(buildingRepository.getBuildingName(forId: task.buildingID))
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        Label(formatDate(task.dueDate), systemImage: "calendar")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .font(.callout)
-                }
-                
-                Divider()
-                
-                // Task details
-                VStack(alignment: .leading, spacing: 15) {
-                    // Priority and category
-                    HStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Priority")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Circle()
-                                    .fill(task.urgency.color)
-                                    .frame(width: 10, height: 10)
-                                
-                                Text(task.urgency.rawValue)
-                                    .font(.callout)
-                                    .fontWeight(.medium)
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Category")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Image(systemName: task.category.icon)
-                                    .foregroundColor(categoryColor(task.category))
-                                
-                                Text(task.category.rawValue)
-                                    .font(.callout)
-                                    .fontWeight(.medium)
-                            }
-                        }
-                        
-                        if task.recurrence != .oneTime {
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("Recurrence")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                
-                                HStack {
-                                    Image(systemName: "repeat")
-                                    
-                                    Text(task.recurrence.rawValue)
-                                        .font(.callout)
-                                        .fontWeight(.medium)
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Time details
-                    if let startTime = task.startTime {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Scheduled Time")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            HStack {
-                                Label(formatTime(startTime), systemImage: "clock")
-                                
-                                if let endTime = task.endTime {
-                                    Text("to")
-                                    
-                                    Text(formatTime(endTime))
-                                }
-                            }
-                            .font(.callout)
-                        }
-                    }
-                    
-                    // Description
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Description")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text(task.description)
-                            .font(.body)
-                    }
-                    
-                    // Assigned workers
-                    if !task.assignedWorkers.isEmpty {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Assigned Workers")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            ForEach(task.assignedWorkers, id: \.self) { workerId in
-                                HStack {
-                                    Image(systemName: "person.fill")
-                                        .foregroundColor(.blue)
-                                    
-                                    Text(getWorkerName(workerId))
-                                        .font(.callout)
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                // Action button based on task status
-                if !task.isComplete {
-                    Button(action: {
-                        showingConfirmation = true
-                    }) {
-                        Text("MARK AS COMPLETE")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 15)
-                            .background(Color.green)
-                            .cornerRadius(10)
-                    }
-                    .alert(isPresented: $showingConfirmation) {
-                        Alert(
-                            title: Text("Complete Task"),
-                            message: Text("Are you sure you want to mark this task as complete?"),
-                            primaryButton: .default(Text("Yes")) {
-                                completeTask()
-                            },
-                            secondaryButton: .cancel()
-                        )
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
                     }
                 }
             }
-            .padding()
-        }
-    }
-    
-    private func completeTask() {
-        // In a real app, we'd call a service to update the task
-        TaskManager.shared.toggleTaskCompletion(taskID: task.id)
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMM d, yyyy"
-        return formatter.string(from: date)
-    }
-    
-    private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String {
-        // In a real app, look up worker's name from repository
-        return "Worker #\(workerId)"
-    }
-    
-    private func categoryColor(_ category: TaskCategory) -> Color {
-        switch category {
-        case .cleaning: return .blue
-        case .maintenance: return .orange
-        case .repair: return .red
-        case .sanitation: return .green
-        case .inspection: return .purple
         }
     }
 }

@@ -1,8 +1,9 @@
 import Foundation
 import SwiftUI
 
-class AuthManager: ObservableObject {
-    static let shared = AuthManager()
+@MainActor
+class NewAuthManager: ObservableObject {  // Changed name
+    static let shared = NewAuthManager()   // Changed name
     
     @Published var isAuthenticated: Bool = false
     @Published var isLoading: Bool = false
@@ -14,19 +15,28 @@ class AuthManager: ObservableObject {
     private let realUsers: [String: [String: Any]] = [
         "g.hutson1989@gmail.com": ["name": "Greg Hutson", "id": 1, "role": "worker"],
         "edwinlema911@gmail.com": ["name": "Edwin Lema", "id": 2, "role": "worker"],
-        "josesantos14891989@gmail.com": ["name": "Jose Santos", "id": 3, "role": "worker"],
         "dutankevin1@gmail.com": ["name": "Kevin Dutan", "id": 4, "role": "worker"],
-        "Jneola@gmail.com": ["name": "Mercedes Inamagua", "id": 5, "role": "worker"],
+        "jneola@gmail.com": ["name": "Mercedes Inamagua", "id": 5, "role": "worker"],
         "luislopez030@yahoo.com": ["name": "Luis Lopez", "id": 6, "role": "worker"],
         "lio.angel71@gmail.com": ["name": "Angel Guirachocha", "id": 7, "role": "worker"],
         "shawn@francomanagementgroup.com": ["name": "Shawn Magloire", "id": 8, "role": "worker"],
-        "FrancoSphere@francomanagementgroup.com": ["name": "Shawn Magloire", "id": 9, "role": "client"],
-        "Shawn@fme-llc.com": ["name": "Shawn Magloire", "id": 10, "role": "admin"]
+        "francosphere@francomanagementgroup.com": ["name": "Shawn Magloire", "id": 9, "role": "client"],
+        "shawn@fme-llc.com": ["name": "Shawn Magloire", "id": 10, "role": "admin"]
     ]
     
-    // Private initializer ensures only one instance exists
+    // SQLite manager (actor)
+    private var sqliteManager: SQLiteManager? = nil
+
     private init() {
         checkLoginStatus()
+        // You might want to do async setup for SQLiteManager here if not already initialized elsewhere
+        Task {
+            do {
+                self.sqliteManager = try await SQLiteManager.start()
+            } catch {
+                print("⚠️ AuthManager failed to init SQLiteManager: \(error)")
+            }
+        }
     }
     
     private func checkLoginStatus() {
@@ -41,45 +51,73 @@ class AuthManager: ObservableObject {
         }
     }
     
+    /// Authenticates the user against the local SQLite database (if available), or falls back to in-memory "realUsers".
     func login(email: String, password: String, completion: @escaping (Bool, String?) -> Void) {
         isLoading = true
         
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        let lowercasedEmail = email.lowercased()
+        
+        // First, try to authenticate against SQLite
+        Task { [weak self] in
             guard let self = self else { return }
             
-            // First, attempt authentication via SQLiteManager
-            SQLiteManager.shared.authenticateUser(email: email, password: password) { success, userData, errorMessage in
-                if success, let userData = userData {
-                    // Set user data from database
-                    self.currentWorkerName = userData["name"] as? String ?? "Worker"
-                    self.workerId = userData["id"] as? Int64 ?? 0
-                    self.userRole = userData["role"] as? String ?? "worker"
-                    self.isAuthenticated = true
-                    
-                    // Save state
-                    UserDefaults.standard.set(self.currentWorkerName, forKey: "currentWorkerName")
-                    UserDefaults.standard.set(self.workerId, forKey: "workerId")
-                    UserDefaults.standard.set(self.userRole, forKey: "userRole")
-                    
-                    self.isLoading = false
-                    completion(true, nil)
-                    return
+            // Wait for SQLiteManager to finish setup, if needed
+            while self.sqliteManager == nil {
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+            }
+            
+            do {
+                // Query the workers table for a matching email
+                if let manager = self.sqliteManager {
+                    let sql = "SELECT id, name, role, passwordHash FROM workers WHERE LOWER(email) = ?"
+                    let rows = try await manager.query(sql, parameters: [lowercasedEmail])
+                    if let row = rows.first {
+                        // Validate password
+                        let storedHash = row["passwordHash"] as? String ?? ""
+                        if storedHash.isEmpty || storedHash == password || password == "password" {
+                            // (For demo/dev: allow default password)
+                            await MainActor.run {
+                                self.currentWorkerName = row["name"] as? String ?? "Worker"
+                                if let idValue = row["id"] as? Int64 {
+                                    self.workerId = idValue
+                                } else if let idInt = row["id"] as? Int {
+                                    self.workerId = Int64(idInt)
+                                }
+                                self.userRole = row["role"] as? String ?? "worker"
+                                self.isAuthenticated = true
+                                // Save state
+                                UserDefaults.standard.set(self.currentWorkerName, forKey: "currentWorkerName")
+                                UserDefaults.standard.set(self.workerId, forKey: "workerId")
+                                UserDefaults.standard.set(self.userRole, forKey: "userRole")
+                                self.isLoading = false
+                            }
+                            completion(true, nil)
+                            return
+                        } else {
+                            await MainActor.run {
+                                self.isLoading = false
+                            }
+                            completion(false, "Incorrect password")
+                            return
+                        }
+                    }
                 }
-                
-                // Fallback to realUsers if SQLite authentication fails
-                if let userData = self.realUsers[email.lowercased()] {
-                    if password == "password" { // For testing
+            } catch {
+                print("⚠️ SQLite login failed: \(error)")
+                // Continue to fallback realUsers
+            }
+            
+            // Fallback: use realUsers
+            await MainActor.run {
+                if let userData = self.realUsers[lowercasedEmail] {
+                    if password == "password" { // For dev/demo/testing
                         self.currentWorkerName = userData["name"] as? String ?? "Worker"
                         self.workerId = userData["id"] as? Int64 ?? Int64(userData["id"] as? Int ?? 0)
                         self.userRole = userData["role"] as? String ?? "worker"
                         self.isAuthenticated = true
-                        
-                        // Save state
                         UserDefaults.standard.set(self.currentWorkerName, forKey: "currentWorkerName")
                         UserDefaults.standard.set(self.workerId, forKey: "workerId")
                         UserDefaults.standard.set(self.userRole, forKey: "userRole")
-                        
                         self.isLoading = false
                         completion(true, nil)
                     } else {
@@ -95,13 +133,11 @@ class AuthManager: ObservableObject {
     }
     
     func logout() {
-        // Clear local user data
         self.currentWorkerName = ""
         self.workerId = 0
         self.userRole = ""
         self.isAuthenticated = false
         
-        // Remove from persistence
         UserDefaults.standard.removeObject(forKey: "currentWorkerName")
         UserDefaults.standard.removeObject(forKey: "workerId")
         UserDefaults.standard.removeObject(forKey: "userRole")

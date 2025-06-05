@@ -1,22 +1,27 @@
+// TaskDetailView.swift
+// FrancoSphere
+
 import SwiftUI
+import PhotosUI
 
 struct TaskDetailView: View {
-    let task: TaskItem
+    let task: FSTaskItem
     @State private var isCompleted: Bool
     @State private var showingCompletionDialog = false
-    @State private var image: UIImage?
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var imageData: Data?
     @State private var isSubmitting = false
     @State private var showCompletionSuccess = false
     
     // Define verification status locally
-    enum VerificationStatus: String {
-        case pending = "Pending Verification"
+    enum LocalVerificationStatus: String {
+        case pending  = "Pending Verification"
         case verified = "Verified"
         case rejected = "Verification Failed"
         
         var color: Color {
             switch self {
-            case .pending: return .orange
+            case .pending:  return .orange
             case .verified: return .green
             case .rejected: return .red
             }
@@ -24,20 +29,19 @@ struct TaskDetailView: View {
         
         var icon: String {
             switch self {
-            case .pending: return "clock.fill"
+            case .pending:  return "clock.fill"
             case .verified: return "checkmark.seal.fill"
             case .rejected: return "xmark.seal.fill"
             }
         }
     }
     
-    @State private var verificationStatus: VerificationStatus = .pending
+    @State private var verificationStatus: LocalVerificationStatus = .pending
     @Environment(\.presentationMode) var presentationMode
     
-    init(task: TaskItem) {
+    init(task: FSTaskItem) {
         self.task = task
-        // Use the task's isCompleted property if it exists, otherwise default to false
-        _isCompleted = State(initialValue: false)
+        _isCompleted = State(initialValue: task.isCompleted)
     }
     
     var body: some View {
@@ -55,7 +59,7 @@ struct TaskDetailView: View {
                 // Task location and assignment info
                 locationAndAssignmentSection
                 
-                // Photo upload section (only shown when completing a task)
+                // Photo upload section (only shown when marking complete)
                 if showingCompletionDialog && !isCompleted {
                     photoUploadSection
                 }
@@ -69,17 +73,17 @@ struct TaskDetailView: View {
                 actionButtonsSection
             }
             .padding()
-            .background(FrancoSphereColors.primaryBackground)
+            .background(Color(.systemBackground))
         }
         .navigationTitle("Task Details")
-        .background(FrancoSphereColors.primaryBackground)
+        .background(Color(.systemBackground).ignoresSafeArea())
         .alert("Complete Task", isPresented: $showingCompletionDialog) {
             Button("Cancel", role: .cancel) {
                 showingCompletionDialog = false
-                image = nil
+                imageData = nil
             }
             Button("Submit", action: submitTaskCompletion)
-                .disabled(image == nil)
+                .disabled(imageData == nil)
         } message: {
             Text("Please add a photo to verify task completion.")
         }
@@ -100,7 +104,7 @@ struct TaskDetailView: View {
                 Text(task.name)
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(FrancoSphereColors.textPrimary)
+                    .foregroundColor(.primary)
                 
                 Spacer()
                 
@@ -109,20 +113,19 @@ struct TaskDetailView: View {
             
             HStack {
                 Image(systemName: "building.2.fill")
-                    .foregroundColor(FrancoSphereColors.accentBlue)
+                    .foregroundColor(.blue)
                 Text(getBuildingName())
                     .font(.subheadline)
-                    .foregroundColor(FrancoSphereColors.textSecondary)
+                    .foregroundColor(.secondary)
                 
                 Spacer()
                 
-                // Use a default label if recurrence doesn't exist
                 Label("Scheduled", systemImage: "calendar")
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(FrancoSphereColors.deepNavy)
-                    .foregroundColor(FrancoSphereColors.accentBlue)
+                    .background(Color.blue.opacity(0.2))
+                    .foregroundColor(.blue)
                     .cornerRadius(8)
             }
         }
@@ -143,13 +146,12 @@ struct TaskDetailView: View {
         .cornerRadius(20)
     }
     
-    // Helper functions to get status info
     private func getStatusColor() -> Color {
         if isCompleted {
             return .green
         } else if isPastDue() {
             return .red
-        } else if isHighPriority() {
+        } else if isDueSoon() {
             return .orange
         } else {
             return .blue
@@ -169,26 +171,12 @@ struct TaskDetailView: View {
     }
     
     private func isPastDue() -> Bool {
-        // If the task is completed, it's not past due
-        if isCompleted {
-            return false
-        }
-        // Otherwise, check if current date is past the scheduled date
+        guard !isCompleted else { return false }
         return Date() > task.scheduledDate
     }
     
     private func isDueSoon() -> Bool {
-        // If scheduledDate is nil, it's not due soon
-        if task.scheduledDate == nil {
-            return false
-        }
-        // Otherwise, check if scheduled within the next hour
         return Date().addingTimeInterval(3600) > task.scheduledDate
-    }
-    
-    private func isHighPriority() -> Bool {
-        // Adjust to match your priority naming/structure
-        return false  // Default to false if no priority field
     }
     
     // MARK: - Task Details Section
@@ -196,28 +184,27 @@ struct TaskDetailView: View {
     private var taskDetailsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 20) {
-                // Use dummy badges if your model doesn't have category/priority
                 categoryBadge
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Description")
                     .font(.headline)
-                    .foregroundColor(FrancoSphereColors.textPrimary)
+                    .foregroundColor(.primary)
                 
                 Text(task.description)
                     .font(.body)
-                    .foregroundColor(FrancoSphereColors.textSecondary)
+                    .foregroundColor(.secondary)
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(FrancoSphereColors.cardBackground)
+                    .background(Color(.systemGray6))
                     .cornerRadius(8)
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Schedule")
                     .font(.headline)
-                    .foregroundColor(FrancoSphereColors.textPrimary)
+                    .foregroundColor(.primary)
                 
                 scheduleContent
             }
@@ -228,7 +215,7 @@ struct TaskDetailView: View {
         HStack {
             Image(systemName: "wrench.fill")
                 .foregroundColor(.white)
-            Text("Maintenance")  // Default value if no category
+            Text("Maintenance")  // Static, since FSTaskItem has no category field
                 .font(.caption)
                 .foregroundColor(.white)
         }
@@ -245,52 +232,51 @@ struct TaskDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Scheduled Date")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereColors.textSecondary)
+                    .foregroundColor(.secondary)
                 Text(formatDate(task.scheduledDate))
                     .font(.body)
-                    .foregroundColor(FrancoSphereColors.textPrimary)
+                    .foregroundColor(.primary)
             }
             
             Spacer()
         }
         .padding()
-        .background(FrancoSphereColors.cardBackground)
+        .background(Color(.systemGray6))
         .cornerRadius(8)
     }
     
-    // MARK: - Location Section
+    // MARK: - Location and Assignment Section
     
     private var locationAndAssignmentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Location")
                 .font(.headline)
-                .foregroundColor(FrancoSphereColors.textPrimary)
+                .foregroundColor(.primary)
             
             Text("Building: \(getBuildingName())")
                 .font(.subheadline)
-                .foregroundColor(FrancoSphereColors.textSecondary)
+                .foregroundColor(.secondary)
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(FrancoSphereColors.cardBackground)
+                .background(Color(.systemGray6))
                 .cornerRadius(8)
             
-            // If you have worker assignment info
             Text("Assigned Worker")
                 .font(.headline)
-                .foregroundColor(FrancoSphereColors.textPrimary)
+                .foregroundColor(.primary)
                 .padding(.top, 4)
             
             HStack {
                 Image(systemName: "person.fill")
-                    .foregroundColor(FrancoSphereColors.accentBlue)
+                    .foregroundColor(.blue)
                 
                 Text("Worker #\(task.workerId)")
                     .font(.subheadline)
-                    .foregroundColor(FrancoSphereColors.textPrimary)
+                    .foregroundColor(.primary)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FrancoSphereColors.cardBackground)
+            .background(Color(.systemGray6))
             .cornerRadius(8)
         }
     }
@@ -301,12 +287,34 @@ struct TaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Verification Photo")
                 .font(.headline)
-                .foregroundColor(FrancoSphereColors.textPrimary)
+                .foregroundColor(.primary)
             
-            PhotoUploaderView(image: $image) { selectedImage in
-                self.image = selectedImage
+            PhotosPicker(selection: $selectedItem, matching: .images) {
+                HStack {
+                    Image(systemName: "photo.on.rectangle.angled")
+                    Text("Select Photo")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(8)
             }
-            .padding(.bottom, 8)
+            .onChange(of: selectedItem) { newItem in
+                Task {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                        imageData = data
+                    }
+                }
+            }
+            
+            if let imageData, let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 200)
+                    .cornerRadius(8)
+            }
         }
     }
     
@@ -316,7 +324,7 @@ struct TaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Verification Status")
                 .font(.headline)
-                .foregroundColor(FrancoSphereColors.textPrimary)
+                .foregroundColor(.primary)
             
             HStack {
                 Image(systemName: verificationStatus.icon)
@@ -339,12 +347,12 @@ struct TaskDetailView: View {
             .background(verificationStatus.color.opacity(0.1))
             .cornerRadius(8)
             
-            // Show completion photo if available
-            if let imagePath = getCompletionPhotoPath(), let uiImage = UIImage(contentsOfFile: imagePath) {
+            if let photoPath = getCompletionPhotoPath(),
+               let uiImage = UIImage(contentsOfFile: photoPath) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Completion Photo")
                         .font(.subheadline)
-                        .foregroundColor(FrancoSphereColors.textPrimary)
+                        .foregroundColor(.primary)
                     
                     Image(uiImage: uiImage)
                         .resizable()
@@ -373,7 +381,7 @@ struct TaskDetailView: View {
                     
                     Text("Completed on \(getCompletionDate())")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereColors.textSecondary)
+                        .foregroundColor(.secondary)
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -414,8 +422,7 @@ struct TaskDetailView: View {
     
     // MARK: - Helper Methods
     
-    private func formatDate(_ date: Date?) -> String {
-        guard let date = date else { return "Not scheduled" }
+    private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
@@ -423,13 +430,18 @@ struct TaskDetailView: View {
     }
     
     private func getBuildingName() -> String {
-        // Use BuildingRepository to get building name
         let buildingIdString = String(task.buildingId)
+        
+        // Try NamedCoordinate first
+        if let building = FrancoSphere.NamedCoordinate.getBuilding(byId: buildingIdString) {
+            return building.name
+        }
+        
+        // Fallback to BuildingRepository
         return BuildingRepository.shared.getBuildingName(forId: buildingIdString)
     }
     
     private func getCompletionDate() -> String {
-        // Fetch the completion timestamp or use the current date as fallback
         if let completionDate = getCompletionTimestamp() {
             return formatDate(completionDate)
         }
@@ -437,36 +449,31 @@ struct TaskDetailView: View {
     }
     
     private func submitTaskCompletion() {
-        guard let image = image else { return }
+        guard let imageData = imageData else { return }
         
         isSubmitting = true
         
         // Save the image to disk
-        if let imagePath = saveImage(image) {
-            // Log the task completion
+        if let imagePath = saveImageData(imageData) {
             logTaskCompletion(photoPath: imagePath)
             
-            // Update local state
             isCompleted = true
             verificationStatus = .pending
             
-            // Update the task status in the TaskManager
+            // Update in TaskManager if available
             let taskIdString = String(task.id)
             TaskManager.shared.toggleTaskCompletion(taskID: taskIdString)
             
-            // Show success message
             isSubmitting = false
             showingCompletionDialog = false
             showCompletionSuccess = true
         } else {
-            // Handle error saving image
             isSubmitting = false
             showingCompletionDialog = false
         }
     }
     
-    private func saveImage(_ image: UIImage) -> String? {
-        // Create a unique filename
+    private func saveImageData(_ data: Data) -> String? {
         let taskIdString = String(task.id)
         let fileName = "task_\(taskIdString)_\(Int(Date().timeIntervalSince1970)).jpg"
         
@@ -474,27 +481,19 @@ struct TaskDetailView: View {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
         
-        // Convert UIImage to JPEG data
-        if let data = image.jpegData(compressionQuality: 0.8) {
-            // Write to disk
-            do {
-                try data.write(to: fileURL)
-                return fileURL.path
-            } catch {
-                print("Error saving image: \(error)")
-                return nil
-            }
+        // Write to disk
+        do {
+            try data.write(to: fileURL)
+            return fileURL.path
+        } catch {
+            print("Error saving image: \(error)")
+            return nil
         }
-        
-        return nil
     }
     
     // MARK: - Task Completion Helpers
     
     private func logTaskCompletion(photoPath: String) {
-        // In a real app, this would use your TaskManager
-        
-        // Convert Int64 to String for UserDefaults
         let taskIdString = String(task.id)
         let timestamp = Date()
         
@@ -540,8 +539,7 @@ struct TaskDetailView: View {
 struct TaskDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            // Adjust this to match the constructor for your TaskItem
-            let previewTask = TaskItem(
+            let previewTask = FSTaskItem(
                 id: 1,
                 name: "Inspect HVAC System",
                 description: "Regular maintenance inspection of HVAC units",
@@ -553,6 +551,5 @@ struct TaskDetailView_Previews: PreviewProvider {
             
             TaskDetailView(task: previewTask)
         }
-        .preferredColorScheme(.dark)
     }
 }

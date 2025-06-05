@@ -382,37 +382,82 @@ class NotificationManager: ObservableObject {
     // MARK: - Weather Notifications
     
     /// Generate weather-related notifications for a building
-    func generateWeatherNotifications(for building: NamedCoordinate) {
-        if let weatherAlert = WeatherService.shared.createWeatherNotification(for: building) {
-            addNotification(
-                title: "Weather Alert",
-                message: weatherAlert,
-                type: .weather,
-                buildingId: building.id
-            )
+    func generateWeatherNotifications(for building: FrancoSphere.NamedCoordinate) {
+        // Use Task to handle async/main actor calls properly
+        Task { @MainActor in
+            // Access weather adapter on main actor
+            let weatherAdapter = WeatherDataAdapter.shared
             
-            NotificationCenter.default.post(
-                name: Notification.Name("WeatherAlert"),
-                object: nil,
-                userInfo: [
-                    "buildingId": building.id,
-                    "alert": weatherAlert
-                ]
-            )
+            if let weatherAlert = weatherAdapter.createWeatherNotification(for: building) {
+                await self.addNotificationAsync(
+                    title: "Weather Alert",
+                    message: weatherAlert,
+                    type: .weather,
+                    buildingId: building.id
+                )
+                
+                NotificationCenter.default.post(
+                    name: Notification.Name("WeatherAlert"),
+                    object: nil,
+                    userInfo: [
+                        "buildingId": building.id,
+                        "alert": weatherAlert
+                    ]
+                )
+            }
+            
+            // Check if tasks should be rescheduled due to weather
+            await self.checkTaskRescheduling(for: building, weatherAdapter: weatherAdapter)
+        }
+    }
+    
+    /// Helper method to check task rescheduling (main actor isolated)
+    @MainActor
+    private func checkTaskRescheduling(for building: FrancoSphere.NamedCoordinate, weatherAdapter: WeatherDataAdapter) async {
+        // Use TaskManager in an async context
+        let tasksForBuilding = await withCheckedContinuation { continuation in
+            Task.detached {
+                let tasks = await TaskManager.shared.fetchTasks(forBuilding: building.id, includePastTasks: false)
+                continuation.resume(returning: tasks)
+            }
         }
         
-        let wasteAdjustment = WeatherService.shared.shouldAdjustWasteCollection(for: building)
-        if wasteAdjustment.shouldAdjust, let adjustedDate = wasteAdjustment.date {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateStyle = .medium
-            let dateString = dateFormatter.string(from: adjustedDate)
-            
-            addNotification(
-                title: "Waste Collection Schedule Change",
-                message: "Due to weather conditions, waste collection for \(building.name) should be rescheduled to \(dateString).",
+        let tasksNeedingReschedule = tasksForBuilding.filter { task in
+            weatherAdapter.shouldRescheduleTask(task)
+        }
+        
+        if !tasksNeedingReschedule.isEmpty {
+            await addNotificationAsync(
+                title: "Weather Impact on Tasks",
+                message: "\(tasksNeedingReschedule.count) task(s) at \(building.name) may need rescheduling due to weather conditions.",
                 type: .weather,
                 buildingId: building.id,
                 requiresAction: true
+            )
+        }
+    }
+    
+    /// Async version of addNotification for use within async contexts
+    private func addNotificationAsync(
+        title: String,
+        message: String,
+        type: NotificationType,
+        buildingId: String? = nil,
+        taskId: String? = nil,
+        workerId: String? = nil,
+        requiresAction: Bool = false,
+        shouldSendLocalNotification: Bool = true
+    ) async {
+        await MainActor.run {
+            addNotification(
+                title: title,
+                message: message,
+                type: type,
+                buildingId: buildingId,
+                taskId: taskId,
+                workerId: workerId,
+                requiresAction: requiresAction,
+                shouldSendLocalNotification: shouldSendLocalNotification
             )
         }
     }

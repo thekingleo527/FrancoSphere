@@ -1,35 +1,655 @@
+
 // SQLiteManager.swift
-// SQLite database manager for the FrancoSphere application
+// Refactored with migration system and O3 audit improvements
+// FrancoSphere v1.1
 
 import Foundation
 import SQLite
 import SwiftUI
+import CommonCrypto
 
-class SQLiteManager {
-    static let shared = SQLiteManager()
-    var db: Connection!
+// MARK: - Database Errors (Must be declared before use)
 
-    private init() {
-        do {
-            let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            db = try Connection("\(path)/FrancoSphere.sqlite3")
-            createTables()
-        } catch {
-            print("SQLite connection error: \(error)")
+public enum DatabaseError: LocalizedError {
+    case notInitialized
+    case connectionFailed
+    case migrationFailed(String)
+    case invalidData(String)
+    case databaseBusy
+    case rollbackDisabled
+    
+    public var errorDescription: String? {
+        switch self {
+        case .notInitialized:
+            return "Database not initialized. Call SQLiteManager.start() first."
+        case .connectionFailed:
+            return "Failed to connect to database"
+        case .migrationFailed(let reason):
+            return "Migration failed: \(reason)"
+        case .invalidData(let reason):
+            return "Invalid data: \(reason)"
+        case .databaseBusy:
+            return "Database is busy. Please try again."
+        case .rollbackDisabled:
+            return "Database rollback is disabled in production"
         }
     }
+}
 
-    private func createTables() {
-        createTasksTable()
-        createWorkersTable()
-        createBuildingsTable()
-        createTimeLogsTable()
-        createInventoryTable()
+// MARK: - Placeholder Services (Must be declared before use)
+
+enum FeatureFlagService {
+    static let shared = FeatureFlagService.self
+    
+    static func isEnabled(_ key: String) -> Bool {
+        // In real implementation, check database
+        return UserDefaults.standard.bool(forKey: "ff_\(key)")
     }
+}
 
-    private func createTasksTable() {
+enum TelemetryService {
+    static let shared = TelemetryService.self
+    
+    static func logEvent(_ event: String, metadata: [String: Any]) {
+        // In real implementation, queue to database
+        print("📊 Telemetry: \(event) - \(metadata)")
+    }
+}
+
+// MARK: - Extensions (Must be declared before use)
+
+extension Data {
+    func sha256Hash() -> String {
+        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        self.withUnsafeBytes {
+            _ = CC_SHA256($0.baseAddress, CC_LONG(self.count), &hash)
+        }
+        return hash.map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+// MARK: - Migration Protocol
+
+public protocol DatabaseMigration {
+    var version: Int { get }
+    var name: String { get }
+    var checksum: String { get } // Added for integrity
+    func up(_ db: Connection) throws
+    func down(_ db: Connection) throws
+}
+
+// MARK: - Migration Runner
+
+public final class DatabaseMigrator {
+    private let db: Connection
+    
+    init(db: Connection) {
+        self.db = db
+    }
+    
+    func getCurrentVersion() throws -> Int {
+        // Create migrations table with checksum column
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                checksum TEXT,
+                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        // Get the highest version
+        let query = "SELECT MAX(version) FROM schema_migrations"
+        if let maxVersion = try db.scalar(query) as? Int64 {
+            return Int(maxVersion)
+        }
+        return 0
+    }
+    
+    func migrate(migrations: [DatabaseMigration]) throws {
+        let currentVersion = try getCurrentVersion()
+        
+        // Sort migrations by version
+        let sortedMigrations = migrations.sorted { $0.version < $1.version }
+        
+        for migration in sortedMigrations where migration.version > currentVersion {
+            try runMigration(migration)
+        }
+    }
+    
+    private func runMigration(_ migration: DatabaseMigration) throws {
+        print("🔄 Running migration \(migration.version): \(migration.name)")
+        
+        try db.transaction {
+            // Run the migration
+            try migration.up(db)
+            
+            // Record it with checksum
+            try db.run("""
+                INSERT INTO schema_migrations (version, name, checksum)
+                VALUES (?, ?, ?)
+            """, migration.version, migration.name, migration.checksum)
+        }
+        
+        print("✅ Migration \(migration.version) completed")
+    }
+    
+    func rollback(to version: Int, migrations: [DatabaseMigration]) throws {
+        // Safety gate for production
+        guard FeatureFlagService.shared.isEnabled("allow_schema_rollback") else {
+            throw DatabaseError.rollbackDisabled
+        }
+        
+        let currentVersion = try getCurrentVersion()
+        guard version < currentVersion else { return }
+        
+        // Log rollback attempt
+        TelemetryService.shared.logEvent("migration_rollback", metadata: [
+            "from_version": currentVersion,
+            "to_version": version
+        ])
+        
+        // Get migrations to rollback in reverse order
+        let migrationsToRollback = migrations
+            .filter { $0.version > version && $0.version <= currentVersion }
+            .sorted { $0.version > $1.version }
+        
+        for migration in migrationsToRollback {
+            try db.transaction {
+                try migration.down(db)
+                try db.run("DELETE FROM schema_migrations WHERE version = ?", migration.version)
+            }
+            print("↩️ Rolled back migration \(migration.version)")
+        }
+    }
+}
+
+// MARK: - Actor-based SQLiteManager
+
+public actor SQLiteManager {
+    // Static instance - DEPRECATED
+    @available(*, deprecated, message: "Use SQLiteManager.start() instead")
+    public static let shared = SQLiteManager()
+    
+    // Database connection
+    private var db: Connection?
+    private var migrator: DatabaseMigrator?
+    
+    // Prepared statements cache
+    private var preparedStatements: [String: Statement] = [:]
+    
+    // Migration status
+    private var isInitialized = false
+    
+    // Date formatters (reused for performance)
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter
+    }()
+    
+    private static let iso8601Formatter = ISO8601DateFormatter()
+    
+    // MARK: - Initialization
+    
+    private init() {
+        // Empty init - actual setup happens in initialize()
+    }
+    
+    /// Async factory method - PREFERRED
+    public static func start(inMemory: Bool = false) async throws -> SQLiteManager {
+        let manager = SQLiteManager()
+        try await manager.initialize(inMemory: inMemory)
+        return manager
+    }
+    
+    /// Initialize the database with migrations
+    public func initialize(inMemory: Bool = false) async throws {
+        guard !isInitialized else { return }
+        
+        // Setup connection
+        if inMemory {
+            // For testing
+            db = try Connection(":memory:")
+        } else {
+            let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+            let dbPath = "\(path)/FrancoSphere.sqlite3"
+            
+            // Backup existing database before migrations
+            if FileManager.default.fileExists(atPath: dbPath) {
+                do {
+                    let backupPath = "\(path)/FrancoSphere_backup_\(Date().timeIntervalSince1970).sqlite3"
+                    try FileManager.default.copyItem(atPath: dbPath, toPath: backupPath)
+                } catch {
+                    // Log but don't block prod upgrades
+                    print("⚠️ Backup failed: \(error)")
+                }
+            }
+            
+            // Open with busy timeout
+            db = try Connection(dbPath)
+        }
+        
+        // Set critical pragmas
+        try db?.execute("PRAGMA journal_mode = WAL")
+        try db?.execute("PRAGMA busy_timeout = 5000")
+        try db?.execute("PRAGMA foreign_keys = ON")
+        try db?.execute("PRAGMA synchronous = NORMAL")
+        
+        // Setup migrator
+        guard let db = db else { throw DatabaseError.connectionFailed }
+        migrator = DatabaseMigrator(db: db)
+        
+        // Run migrations
+        try await runMigrations()
+        
+        // Prepare common statements
+        try await prepareStatements()
+        
+        // Schedule maintenance
+        scheduleMaintenanceTasks()
+        
+        isInitialized = true
+    }
+    
+    // MARK: - Migration System
+    
+    private func runMigrations() async throws {
+        guard let migrator = migrator else { return }
+        
+        let migrations: [DatabaseMigration] = [
+            V001_InitialSchema(),
+            V002_AddPasswordHash(),
+            V003_AddWeatherCache(),
+            V004_AddOutboxTables(),
+            V005_AddFeatureFlags(),
+            V006_AddTelemetry(),
+            V007_AddIndexes(),
+            V008_PhotoPathMigration()
+        ]
+        
+        try migrator.migrate(migrations: migrations)
+    }
+    
+    // MARK: - Maintenance
+    
+    private func scheduleMaintenanceTasks() {
+        // Weekly WAL checkpoint
+        Task {
+            while true {
+                try? await Task.sleep(for: .seconds(604800)) // 1 week
+                try? await performMaintenance()
+            }
+        }
+    }
+    
+    private func performMaintenance() async throws {
+        guard let db = db else { return }
+        
+        // WAL checkpoint
+        try db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        
+        // Vacuum on weekends
+        let calendar = Calendar.current
+        if calendar.component(.weekday, from: Date()) == 1 { // Sunday
+            try db.execute("VACUUM")
+        }
+    }
+    
+    // MARK: - Prepared Statements
+    
+    private func prepareStatements() async throws {
+        guard let db = db else { return }
+        
+        // Prepare common queries
+        preparedStatements["getWorker"] = try db.prepare(
+            "SELECT * FROM workers WHERE id = ?"
+        )
+        
+        preparedStatements["getBuilding"] = try db.prepare(
+            "SELECT * FROM buildings WHERE id = ?"
+        )
+        
+        preparedStatements["getInventory"] = try db.prepare(
+            "SELECT * FROM inventory WHERE buildingId = ? ORDER BY name"
+        )
+    }
+    
+    // MARK: - Thread-Safe Operations
+    
+    private func ensureInitialized() throws {
+        guard isInitialized, db != nil else {
+            throw DatabaseError.notInitialized
+        }
+    }
+    
+    /// Execute a non-returning SQL statement
+    public func execute(_ sql: String, parameters: [Any] = []) async throws {
+        try ensureInitialized()
+        guard let db = db else { throw DatabaseError.notInitialized }
+        
         do {
-            try db.execute("""
+            let stmt = try db.prepare(sql)
+            try bindParameters(stmt, parameters)
+            try stmt.run()
+        } catch {
+            if let sqliteError = error as? Result,
+               case .error(_, let code, _) = sqliteError,
+               code == 5 { // SQLITE_BUSY
+                throw DatabaseError.databaseBusy
+            }
+            throw error
+        }
+    }
+    
+    /// Execute a query returning results
+    public func query(_ sql: String, parameters: [Any] = []) async throws -> [[String: Any]] {
+        try ensureInitialized()
+        guard let db = db else { throw DatabaseError.notInitialized }
+        
+        var results: [[String: Any]] = []
+        
+        do {
+            let stmt = try db.prepare(sql)
+            try bindParameters(stmt, parameters)
+            
+            for row in stmt {
+                var dict: [String: Any] = [:]
+                for (idx, name) in stmt.columnNames.enumerated() {
+                    dict[name] = row[idx] ?? NSNull()
+                }
+                results.append(dict)
+            }
+        } catch {
+            if let sqliteError = error as? Result,
+               case .error(_, let code, _) = sqliteError,
+               code == 5 { // SQLITE_BUSY
+                throw DatabaseError.databaseBusy
+            }
+            throw error
+        }
+        
+        return results
+    }
+    
+    // MARK: - Photo Operations (v1.1 - File-based)
+    
+    public func saveTaskPhoto(taskId: String, imageData: Data) async throws -> String {
+        try ensureInitialized()
+        
+        // Generate unique filename
+        let photoId = UUID().uuidString
+        let photoPath = "photos/\(taskId)/\(photoId).jpg"
+        
+        // Calculate hash
+        let photoHash = imageData.sha256Hash()
+        
+        // Save to documents directory
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+        let fullPath = "\(documentsPath)/\(photoPath)"
+        let directoryPath = "\(documentsPath)/photos/\(taskId)"
+        
+        // Create directory if needed
+        try FileManager.default.createDirectory(
+            atPath: directoryPath,
+            withIntermediateDirectories: true
+        )
+        
+        // Write file
+        try imageData.write(to: URL(fileURLWithPath: fullPath))
+        
+        // Queue for upload
+        let sql = """
+            INSERT INTO photo_uploads (task_id, photo_path, photo_hash, retry_count, created_at)
+            VALUES (?, ?, ?, 0, ?)
+        """
+        
+        try await execute(sql, parameters: [taskId, photoPath, photoHash, Date()])
+        
+        return photoPath
+    }
+    
+    public func getPendingPhotoUploads(limit: Int = 10) async throws -> [(id: Int64, taskId: String, path: String)] {
+        let sql = """
+            SELECT id, task_id, photo_path 
+            FROM photo_uploads 
+            WHERE retry_count < 3 AND uploaded_at IS NULL
+            ORDER BY created_at ASC
+            LIMIT ?
+        """
+        
+        let rows = try await query(sql, parameters: [limit])
+        
+        return rows.compactMap { row in
+            guard let id = row["id"] as? Int64,
+                  let taskId = row["task_id"] as? String,
+                  let path = row["photo_path"] as? String else {
+                return nil
+            }
+            return (id, taskId, path)
+        }
+    }
+    
+    // MARK: - Weather Cache Operations (v1.1)
+    
+    public func cacheWeatherData(
+        buildingId: String,
+        forecastData: Data,
+        riskScore: Double,
+        expiresIn: TimeInterval = 14400 // 4 hours
+    ) async throws {
+        try ensureInitialized()
+        
+        let sql = """
+            INSERT OR REPLACE INTO weather_cache 
+            (building_id, forecast_data, risk_score, last_updated, expires_at)
+            VALUES (?, ?, ?, ?, ?)
+        """
+        
+        let now = Date()
+        let expiresAt = now.addingTimeInterval(expiresIn)
+        
+        try await execute(sql, parameters: [
+            buildingId,
+            forecastData,
+            riskScore,
+            now,
+            expiresAt
+        ])
+    }
+    
+    public func getCachedWeather(buildingId: String) async throws -> (data: Data, riskScore: Double)? {
+        try ensureInitialized()
+        
+        let sql = """
+            SELECT forecast_data, risk_score 
+            FROM weather_cache 
+            WHERE building_id = ? AND expires_at > ?
+        """
+        
+        let rows = try await query(sql, parameters: [buildingId, Date()])
+        
+        guard let row = rows.first,
+              let data = row["forecast_data"] as? Data,
+              let riskScore = row["risk_score"] as? Double else {
+            return nil
+        }
+        
+        return (data, riskScore)
+    }
+    
+    // MARK: - Feature Flags (v1.1)
+    
+    public func isFeatureEnabled(_ key: String) async throws -> Bool {
+        try ensureInitialized()
+        
+        let sql = "SELECT enabled FROM feature_flags WHERE key = ?"
+        let rows = try await query(sql, parameters: [key])
+        
+        if let row = rows.first,
+           let enabled = row["enabled"] as? Int64 {
+            return enabled == 1
+        }
+        
+        return false
+    }
+    
+    // MARK: - Clock In/Out Methods (Actor-isolated)
+    
+    /// Async version of clock-in (inside the actor)
+    public func logClockInAsync(workerId: Int64, buildingId: Int64, timestamp: Date) async throws {
+        try ensureInitialized()
+        
+        // Use the shared dateFormatter to convert timestamp → String
+        let dateFormatter = Self.dateFormatter
+        let clockInTime = dateFormatter.string(from: timestamp)
+        
+        let sql = """
+            INSERT INTO worker_time_logs (workerId, buildingId, clockInTime)
+            VALUES (?, ?, ?)
+        """
+        
+        try await execute(sql, parameters: [workerId, buildingId, clockInTime])
+    }
+    
+    /// Async version of clock-out (inside the actor)
+    public func logClockOutAsync(workerId: Int64, timestamp: Date) async throws {
+        try ensureInitialized()
+        
+        let dateFormatter = Self.dateFormatter
+        let clockOutTime = dateFormatter.string(from: timestamp)
+        
+        // Find the most recent "open" log (no clock‐out time yet) for this worker
+        let findSql = """
+            SELECT id FROM worker_time_logs
+            WHERE workerId = ? AND clockOutTime IS NULL
+            ORDER BY clockInTime DESC
+            LIMIT 1
+        """
+        
+        let rows = try await query(findSql, parameters: [workerId])
+        
+        if let row = rows.first,
+           let logId = row["id"] as? Int64
+        {
+            let updateSql = """
+                UPDATE worker_time_logs
+                SET clockOutTime = ?
+                WHERE id = ?
+            """
+            try await execute(updateSql, parameters: [clockOutTime, logId])
+        }
+    }
+    
+    /// Async version of "isWorkerClockedIn" (inside the actor)
+    public func isWorkerClockedInAsync(workerId: Int64) async -> (isClockedIn: Bool, buildingId: Int64?) {
+        do {
+            try ensureInitialized()
+            
+            let sql = """
+                SELECT buildingId FROM worker_time_logs
+                WHERE workerId = ? AND clockOutTime IS NULL
+                ORDER BY clockInTime DESC
+                LIMIT 1
+            """
+            
+            let rows = try await query(sql, parameters: [workerId])
+            if let row = rows.first,
+               let bId = row["buildingId"] as? Int64
+            {
+                return (true, bId)
+            }
+            return (false, nil)
+        } catch {
+            print("❌ Error checking clock-in status: \(error)")
+            return (false, nil)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func bindParameters(_ stmt: Statement, _ parameters: [Any]) throws {
+        for (index, param) in parameters.enumerated() {
+            let position = index + 1
+            
+            switch param {
+            case let value as String:
+                _ = stmt.bind(position, value)
+            case let value as Int:
+                _ = stmt.bind(position, value)
+            case let value as Int64:
+                _ = stmt.bind(position, value)
+            case let value as Double:
+                _ = stmt.bind(position, value)
+            case let value as Bool:
+                _ = stmt.bind(position, value ? 1 : 0)
+            case let value as Date:
+                _ = stmt.bind(position, Self.dateFormatter.string(from: value))
+            case let value as Data:
+                _ = stmt.bind(position, SQLite.Blob(bytes: [UInt8](value)))
+            case is NSNull:
+                _ = stmt.bind(position, nil as String?)
+            default:
+                _ = stmt.bind(position, String(describing: param))
+            }
+        }
+    }
+}
+
+// MARK: - Non-Actor Wrappers for SQLiteManager
+
+extension SQLiteManager {
+    // MARK: – Clock In/Out Methods (Non-Actor Wrappers)
+    
+    /// Log clock-in for a worker (non-actor wrapper)
+    public func logClockIn(workerId: Int64, buildingId: Int64, timestamp: Date) {
+        Task {
+            do {
+                try await self.logClockInAsync(workerId: workerId, buildingId: buildingId, timestamp: timestamp)
+            } catch {
+                print("❌ Error logging clock in: \(error)")
+            }
+        }
+    }
+    
+    /// Log clock-out for a worker (non-actor wrapper)
+    public func logClockOut(workerId: Int64, timestamp: Date) {
+        Task {
+            do {
+                try await self.logClockOutAsync(workerId: workerId, timestamp: timestamp)
+            } catch {
+                print("❌ Error logging clock out: \(error)")
+            }
+        }
+    }
+    
+    /// Check if a worker is currently clocked in (non-actor wrapper)
+    /// Returns (isClockedIn: Bool, buildingId: Int64?)
+    public func isWorkerClockedIn(workerId: Int64) -> (isClockedIn: Bool, buildingId: Int64?) {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: (isClockedIn: Bool, buildingId: Int64?) = (false, nil)
+        
+        Task {
+            result = await self.isWorkerClockedInAsync(workerId: workerId)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
+    }
+}
+
+// MARK: - Migration Implementations
+
+struct V001_InitialSchema: DatabaseMigration {
+    let version = 1
+    let name = "Initial Schema"
+    var checksum: String { "a1b2c3d4e5f6" } // SHA-256 in real implementation
+    
+    func up(_ db: Connection) throws {
+        // Tasks table
+        try db.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -44,33 +664,20 @@ class SQLiteManager {
                 startTime TEXT,
                 endTime TEXT
             )
-            """)
-            print("Tasks table created successfully")
-        } catch {
-            print("Tasks table creation error: \(error)")
-        }
-    }
-
-    private func createWorkersTable() {
-        do {
-            try db.execute("""
+        """)
+        
+        // Workers table
+        try db.execute("""
             CREATE TABLE IF NOT EXISTS workers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 role TEXT NOT NULL
             )
-            """)
-            print("Workers table created successfully")
-            insertRealWorkers()
-        } catch {
-            print("Workers table creation error: \(error)")
-        }
-    }
-
-    private func createBuildingsTable() {
-        do {
-            try db.execute("""
+        """)
+        
+        // Buildings table
+        try db.execute("""
             CREATE TABLE IF NOT EXISTS buildings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -79,17 +686,10 @@ class SQLiteManager {
                 longitude REAL,
                 imageAssetName TEXT
             )
-            """)
-            print("Buildings table created successfully")
-            insertRealBuildings()
-        } catch {
-            print("Buildings table creation error: \(error)")
-        }
-    }
-    
-    private func createTimeLogsTable() {
-        do {
-            try db.execute("""
+        """)
+        
+        // Worker time logs
+        try db.execute("""
             CREATE TABLE IF NOT EXISTS worker_time_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 workerId INTEGER NOT NULL,
@@ -97,525 +697,238 @@ class SQLiteManager {
                 clockInTime TEXT NOT NULL,
                 clockOutTime TEXT
             )
-            """)
-            print("Worker time logs table created successfully")
-        } catch {
-            print("Worker time logs table creation error: \(error)")
-        }
-    }
-    
-    // MARK: - Inventory Table and Methods
-    
-    private func createInventoryTable() {
-        do {
-            try db.execute("""
+        """)
+        
+        // Inventory table
+        try db.execute("""
             CREATE TABLE IF NOT EXISTS inventory (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                building_id TEXT NOT NULL,
+                buildingId TEXT NOT NULL,
                 name TEXT NOT NULL,
                 quantity INTEGER NOT NULL DEFAULT 0,
                 unit TEXT NOT NULL DEFAULT 'unit',
-                minimum_quantity INTEGER NOT NULL DEFAULT 5,
+                minimumQuantity INTEGER NOT NULL DEFAULT 5,
                 category TEXT NOT NULL DEFAULT 'general',
-                last_restocked TEXT,
+                lastRestocked TEXT,
                 location TEXT DEFAULT '',
                 notes TEXT
             )
-            """)
-            print("Inventory table created successfully")
-            insertSampleInventoryItems()
-        } catch {
-            print("Inventory table creation error: \(error)")
-        }
-    }
-    
-    private func insertSampleInventoryItems() {
-        do {
-            let count = try db.scalar("SELECT COUNT(*) FROM inventory") as? Int64 ?? 0
-            
-            if count == 0 {
-                try db.transaction {
-                    let buildings = getAllBuildings()
-                    
-                    for building in buildings {
-                        let buildingId = building["id"] as! Int64
-                        let buildingIdString = String(buildingId)
-                        
-                        let currentDate = Date()
-                        let dateFormatter = DateFormatter()
-                        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                        let dateString = dateFormatter.string(from: currentDate)
-                        
-                        try db.run("INSERT INTO inventory (building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                  buildingIdString, "Light Bulbs", Int.random(in: 5...20), "pcs", 10, "electrical", dateString, "Storage Room 1")
-                        
-                        try db.run("INSERT INTO inventory (building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                  buildingIdString, "Air Filters", Int.random(in: 2...8), "pcs", 4, "hvac", dateString, "Storage Room 2")
-                        
-                        try db.run("INSERT INTO inventory (building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                  buildingIdString, "Cleaning Solution", Int.random(in: 1...5), "bottles", 2, "cleaning", dateString, "Janitor Closet")
-                        
-                        try db.run("INSERT INTO inventory (building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                  buildingIdString, "Toilet Paper", Int.random(in: 10...50), "rolls", 20, "other", dateString, "Bathroom Supply Closet")
-                        
-                        try db.run("INSERT INTO inventory (building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                  buildingIdString, "Plumbing Tape", Int.random(in: 1...5), "rolls", 2, "plumbing", dateString, "Tool Room")
-                    }
-                }
-                print("Sample inventory items inserted successfully")
-            }
-        } catch {
-            print("Error checking/inserting inventory: \(error)")
-        }
-    }
-    
-    func isInventoryReady(forBuilding id: String) -> Bool {
-        do {
-            let tableExists = try db.scalar("SELECT name FROM sqlite_master WHERE type='table' AND name='inventory'") as? String != nil
-            if !tableExists {
-                return false
-            }
-            let _ = try db.scalar("SELECT COUNT(*) FROM inventory WHERE building_id = ?", id) as? Int64
-            return true
-        } catch {
-            print("Inventory not ready: \(error.localizedDescription)")
-            return false
-        }
-    }
-    
-    func getInventoryItemsSafe(forBuilding id: String) -> [FrancoSphere.InventoryItem] {
-        if !isInventoryReady(forBuilding: id) {
-            return []
-        }
-        do {
-            return getInventoryItems(forBuilding: id)
-        } catch {
-            print("Error fetching inventory: \(error.localizedDescription)")
-            return []
-        }
-    }
-    
-    func getInventoryItems(forBuilding id: String) -> [FrancoSphere.InventoryItem] {
-        var inventoryItems: [FrancoSphere.InventoryItem] = []
-        do {
-            let query = """
-            SELECT id, building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location, notes
-            FROM inventory
-            WHERE building_id = ?
-            ORDER BY name
-            """
-            for row in try db.prepare(query, id) {
-                guard let rowId = row[0] as? Int64,
-                      let buildingId = row[1] as? String,
-                      let name = row[2] as? String,
-                      let quantity = row[3] as? Int64,
-                      let unit = row[4] as? String,
-                      let minimumQuantity = row[5] as? Int64,
-                      let categoryString = row[6] as? String,
-                      let lastRestockedString = row[7] as? String,
-                      let location = row[8] as? String else {
-                    continue
-                }
-                let notes = row[9] as? String
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                let lastRestockedDate = dateFormatter.date(from: lastRestockedString) ?? Date()
-                let category = FrancoSphere.InventoryCategory(rawValue: categoryString) ?? .other
-                let item = FrancoSphere.InventoryItem(
-                    id: String(rowId),
-                    name: name,
-                    buildingID: buildingId,
-                    category: category,
-                    quantity: Int(quantity),
-                    unit: unit,
-                    minimumQuantity: Int(minimumQuantity),
-                    needsReorder: Int(quantity) <= Int(minimumQuantity),
-                    lastRestockDate: lastRestockedDate,
-                    location: location,
-                    notes: notes
-                )
-                inventoryItems.append(item)
-            }
-        } catch {
-            print("Error fetching inventory items: \(error)")
-        }
-        return inventoryItems
-    }
-    
-    func updateInventoryItemQuantity(itemId: String, newQuantity: Int) -> Bool {
-        do {
-            let query = """
-            UPDATE inventory
-            SET quantity = ?, last_restocked = ?
-            WHERE id = ?
-            """
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            let currentDateString = dateFormatter.string(from: Date())
-            try db.run(query, newQuantity, currentDateString, itemId)
-            return true
-        } catch {
-            print("Error updating inventory item: \(error)")
-            return false
-        }
-    }
-    
-    func addInventoryItem(buildingId: String, name: String, quantity: Int, unit: String,
-                         minimumQuantity: Int, category: FrancoSphere.InventoryCategory) -> Bool {
-        do {
-            let query = """
-            INSERT INTO inventory (building_id, name, quantity, unit, minimum_quantity, category, last_restocked, location)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            let currentDateString = dateFormatter.string(from: Date())
-            try db.run(query, buildingId, name, quantity, unit, minimumQuantity,
-                     category.rawValue, currentDateString, "Storage Room")
-            return true
-        } catch {
-            print("Error adding inventory item: \(error)")
-            return false
-        }
-    }
-    
-    func deleteInventoryItem(itemId: String) -> Bool {
-        do {
-            let query = "DELETE FROM inventory WHERE id = ?"
-            try db.run(query, itemId)
-            return true
-        } catch {
-            print("Error deleting inventory item: \(error)")
-            return false
-        }
-    }
-    
-    // MARK: - Insert Real Data Methods
-    
-    private func insertRealWorkers() {
-        do {
-            try db.execute("""
-            INSERT OR IGNORE INTO workers (id, name, email, role)
-            VALUES 
-            (1, 'Greg Hutson', 'g.hutson1989@gmail.com', 'worker'),
-            (2, 'Edwin Lema', 'edwinlema911@gmail.com', 'worker'),
-            (3, 'Jose Santos', 'josesantos14891989@gmail.com', 'worker'),
-            (4, 'Kevin Dutan', 'dutankevin1@gmail.com', 'worker'),
-            (5, 'Mercedes Inamagua', 'Jneola@gmail.com', 'worker'),
-            (6, 'Luis Lopez', 'luislopez030@yahoo.com', 'worker'),
-            (7, 'Angel Guirachocha', 'lio.angel71@gmail.com', 'worker'),
-            (8, 'Shawn Magloire', 'shawn@francomanagementgroup.com', 'worker'),
-            (9, 'Shawn Magloire', 'FrancoSphere@francomanagementgroup.com', 'client'),
-            (10, 'Shawn Magloire', 'Shawn@fme-llc.com', 'admin')
-            """)
-            print("Real workers inserted successfully")
-        } catch {
-            print("Error inserting real workers: \(error)")
-        }
-    }
-    
-    private func insertRealBuildings() {
-        do {
-            try db.execute("""
-            INSERT OR IGNORE INTO buildings (id, name, address, latitude, longitude, imageAssetName)
-            VALUES 
-            (1, '12 West 18th Street', '12 W 18th St, New York, NY', 40.7390, -73.9930, '12_West_18th_Street'),
-            (2, '29-31 East 20th Street', '29-31 E 20th St, New York, NY', 40.7380, -73.9880, '29_31_East_20th_Street'),
-            (3, '36 Walker Street', '36 Walker St, New York, NY', 40.7190, -74.0050, '36_Walker_Street'),
-            (4, '41 Elizabeth Street', '41 Elizabeth St, New York, NY', 40.7170, -73.9970, '41_Elizabeth_Street'),
-            (5, '68 Perry Street', '68 Perry St, New York, NY', 40.7350, -74.0050, '68_Perry_Street'),
-            (6, '104 Franklin Street', '104 Franklin St, New York, NY', 40.7180, -74.0060, '104_Franklin_Street'),
-            (7, '112 West 18th Street', '112 W 18th St, New York, NY', 40.7400, -73.9940, '112_West_18th_Street'),
-            (8, '117 West 17th Street', '117 W 17th St, New York, NY', 40.7395, -73.9950, '117_West_17th_Street'),
-            (9, '123 1st Avenue', '123 1st Ave, New York, NY', 40.7270, -73.9850, '123_1st_Avenue'),
-            (10, '131 Perry Street', '131 Perry St, New York, NY', 40.7340, -74.0060, '131_Perry_Street'),
-            (11, '133 East 15th Street', '133 E 15th St, New York, NY', 40.7345, -73.9875, '133_East_15th_Street'),
-            (12, '135-139 West 17th Street', '135-139 W 17th St, New York, NY', 40.7400, -73.9960, '135-139_West_17th_Street'),
-            (13, '136 West 17th Street', '136 W 17th St, New York, NY', 40.7402, -73.9970, '136_West_17th_Street'),
-            (14, 'Rubin Museum (142-148 W 17th)', '142-148 W 17th St, New York, NY', 40.7405, -73.9980, 'Rubin_Museum_142_148_West_17th')
-            """)
-            print("Real buildings inserted successfully")
-        } catch {
-            print("Error inserting real buildings: \(error)")
-        }
-    }
-    
-    // MARK: - Helper Functions
-    
-    func getAllBuildings() -> [[String: Any]] {
-        var buildings: [[String: Any]] = []
-        do {
-            let query = "SELECT * FROM buildings"
-            for row in try db.prepare(query) {
-                let building: [String: Any] = [
-                    "id": row[0] as! Int64,
-                    "name": row[1] as! String,
-                    "address": row[2] as? String ?? "",
-                    "latitude": row[3] as! Double,
-                    "longitude": row[4] as! Double,
-                    "imageAssetName": row[5] as? String ?? ""
-                ]
-                buildings.append(building)
-            }
-        } catch {
-            print("Error fetching buildings: \(error)")
-        }
-        return buildings
-    }
-    
-    func authenticateUser(email: String, password: String, completion: @escaping (Bool, [String: Any]?, String?) -> Void) {
-        do {
-            let query = "SELECT id, name, email, role FROM workers WHERE email = ? COLLATE NOCASE"
-            var userData: [String: Any]? = nil
-            for row in try db.prepare(query, [email]) {
-                userData = [
-                    "id": row[0] as! Int64,
-                    "name": row[1] as! String,
-                    "email": row[2] as! String,
-                    "role": row[3] as! String
-                ]
-                break
-            }
-            if let userData = userData {
-                if password == "password" {
-                    completion(true, userData, nil)
-                } else {
-                    completion(false, nil, "Incorrect password")
-                }
-            } else {
-                completion(false, nil, "User not found")
-            }
-        } catch {
-            print("Error authenticating user: \(error)")
-            completion(false, nil, "Database error")
-        }
-    }
-    
-    func getTasksForBuilding(buildingId: Int64) -> [[String: Any]] {
-        var tasks: [[String: Any]] = []
-        do {
-            let query = "SELECT * FROM tasks WHERE buildingId = ?"
-            for row in try db.prepare(query, [buildingId]) {
-                let task: [String: Any] = [
-                    "id": row[0] as! Int64,
-                    "name": row[1] as! String,
-                    "description": row[2] as? String ?? "",
-                    "buildingId": row[3] as! Int64,
-                    "workerId": row[4] as! Int64,
-                    "isCompleted": ((row[5] as? Int64) ?? 0) == 1,
-                    "scheduledDate": row[6] as? String ?? ""
-                ]
-                tasks.append(task)
-            }
-        } catch {
-            print("Error fetching tasks: \(error)")
-        }
-        return tasks
-    }
-    
-    // MARK: - Worker Time Tracking
-    
-    func logClockIn(workerId: Int64, buildingId: Int64, timestamp: Date) {
-        do {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            let timeString = dateFormatter.string(from: timestamp)
-            
-            let checkQuery = "SELECT id FROM worker_time_logs WHERE workerId = ? AND clockOutTime IS NULL"
-            var activeLogId: Int64? = nil
-            
-            for row in try db.prepare(checkQuery, [workerId]) {
-                activeLogId = row[0] as? Int64
-                break
-            }
-            
-            if let id = activeLogId {
-                let updateQuery = "UPDATE worker_time_logs SET clockOutTime = ? WHERE id = ?"
-                try db.run(updateQuery, timeString, id)
-                print("Worker \(workerId) was already clocked in, automatically clocked out")
-            }
-            
-            let insertQuery = "INSERT INTO worker_time_logs (workerId, buildingId, clockInTime) VALUES (?, ?, ?)"
-            try db.run(insertQuery, workerId, buildingId, timeString)
-            
-            print("Successfully logged clock-in for worker \(workerId) at building \(buildingId)")
-        } catch {
-            print("Error logging clock-in: \(error)")
-        }
-    }
-    
-    func logClockOut(workerId: Int64, timestamp: Date) {
-        do {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            let timeString = dateFormatter.string(from: timestamp)
-            
-            let updateQuery = "UPDATE worker_time_logs SET clockOutTime = ? WHERE workerId = ? AND clockOutTime IS NULL ORDER BY id DESC LIMIT 1"
-            try db.run(updateQuery, timeString, workerId)
-            
-            print("Successfully logged clock-out for worker \(workerId)")
-        } catch {
-            print("Error logging clock-out: \(error)")
-        }
-    }
-    
-    func isWorkerClockedIn(workerId: Int64) -> (isClockedIn: Bool, buildingId: Int64?) {
-        do {
-            let query = "SELECT buildingId FROM worker_time_logs WHERE workerId = ? AND clockOutTime IS NULL ORDER BY id DESC LIMIT 1"
-            var buildingId: Int64? = nil
-            
-            for row in try db.prepare(query, [workerId]) {
-                buildingId = row[0] as? Int64
-                break
-            }
-            
-            if let buildingId = buildingId {
-                return (true, buildingId)
-            }
-        } catch {
-            print("Error checking worker clock-in status: \(error)")
-        }
+        """)
         
-        return (false, nil)
+        // Worker schedule
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS worker_schedule (
+                workerId TEXT NOT NULL,
+                buildingId TEXT NOT NULL,
+                weekdays TEXT NOT NULL,
+                startHour INTEGER NOT NULL,
+                endHour INTEGER NOT NULL,
+                PRIMARY KEY (workerId, buildingId, weekdays, startHour)
+            )
+        """)
     }
     
-    func getWorkerClockInHistory(workerId: Int64, limit: Int = 10) -> [[String: Any]] {
-        var history: [[String: Any]] = []
-        do {
-            let query = """
-            SELECT w.id, w.buildingId, b.name, w.clockInTime, w.clockOutTime
-            FROM worker_time_logs w
-            LEFT JOIN buildings b ON w.buildingId = b.id
-            WHERE w.workerId = ?
-            ORDER BY w.id DESC
-            LIMIT ?
-            """
-            for row in try db.prepare(query, [workerId, limit]) {
-                let entry: [String: Any] = [
-                    "id": row[0] as! Int64,
-                    "buildingId": row[1] as! Int64,
-                    "buildingName": (row[2] as? String) ?? "Unknown Building",
-                    "clockInTime": row[3] as! String,
-                    "clockOutTime": row[4] as? String ?? ""
-                ]
-                history.append(entry)
-            }
-        } catch {
-            print("Error fetching worker clock-in history: \(error)")
+    func down(_ db: Connection) throws {
+        // Drop all tables
+        try db.execute("DROP TABLE IF EXISTS worker_schedule")
+        try db.execute("DROP TABLE IF EXISTS inventory")
+        try db.execute("DROP TABLE IF EXISTS worker_time_logs")
+        try db.execute("DROP TABLE IF EXISTS buildings")
+        try db.execute("DROP TABLE IF EXISTS workers")
+        try db.execute("DROP TABLE IF EXISTS tasks")
+    }
+}
+
+struct V002_AddPasswordHash: DatabaseMigration {
+    let version = 2
+    let name = "Add Password Hash"
+    var checksum: String { "b2c3d4e5f6a7" }
+    
+    func up(_ db: Connection) throws {
+        try db.execute("""
+            ALTER TABLE workers 
+            ADD COLUMN passwordHash TEXT NOT NULL DEFAULT ''
+        """)
+    }
+    
+    func down(_ db: Connection) throws {
+        // SQLite doesn't support DROP COLUMN directly
+        // Irreversible; rollback will recreate table via backup restore
+        print("⚠️ V002 rollback requires backup restore")
+    }
+}
+
+struct V003_AddWeatherCache: DatabaseMigration {
+    let version = 3
+    let name = "Add Weather Cache"
+    var checksum: String { "c3d4e5f6a7b8" }
+    
+    func up(_ db: Connection) throws {
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS weather_cache (
+                building_id TEXT PRIMARY KEY,
+                forecast_data BLOB,
+                risk_score REAL,
+                last_updated TIMESTAMP,
+                expires_at TIMESTAMP
+            )
+        """)
+    }
+    
+    func down(_ db: Connection) throws {
+        try db.execute("DROP TABLE IF EXISTS weather_cache")
+    }
+}
+
+struct V004_AddOutboxTables: DatabaseMigration {
+    let version = 4
+    let name = "Add Outbox Tables"
+    var checksum: String { "d4e5f6a7b8c9" }
+    
+    func up(_ db: Connection) throws {
+        // DEPRECATED: Using photo_uploads instead
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS outbox_photos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id TEXT NOT NULL,
+                photo_data BLOB NOT NULL,
+                retry_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+    }
+    
+    func down(_ db: Connection) throws {
+        try db.execute("DROP TABLE IF EXISTS outbox_photos")
+    }
+}
+
+struct V005_AddFeatureFlags: DatabaseMigration {
+    let version = 5
+    let name = "Add Feature Flags"
+    var checksum: String { "e5f6a7b8c9d0" }
+    
+    func up(_ db: Connection) throws {
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS feature_flags (
+                key TEXT PRIMARY KEY,
+                enabled INTEGER DEFAULT 0,
+                metadata BLOB
+            )
+        """)
+        
+        // Insert default feature flags
+        let defaultFlags = [
+            "weather_intelligence_enabled": false,
+            "admin_commands_enabled": false,
+            "ai_suggestions_enabled": false,
+            "glass_ui_enabled": false,
+            "emergency_mode_enabled": false,
+            "allow_schema_rollback": false
+        ]
+        
+        for (key, enabled) in defaultFlags {
+            try db.run("""
+                INSERT OR IGNORE INTO feature_flags (key, enabled)
+                VALUES (?, ?)
+            """, key, enabled ? 1 : 0)
         }
-        return history
     }
     
-    func getWorkerName(for workerId: Int64) -> String {
-        do {
-            let query = "SELECT name FROM workers WHERE id = ?"
-            for row in try db.prepare(query, [workerId]) {
-                return row[0] as! String
-            }
-        } catch {
-            print("Error getting worker name: \(error)")
-        }
-        return "Unknown Worker"
+    func down(_ db: Connection) throws {
+        try db.execute("DROP TABLE IF EXISTS feature_flags")
+    }
+}
+
+struct V006_AddTelemetry: DatabaseMigration {
+    let version = 6
+    let name = "Add Telemetry"
+    var checksum: String { "f6a7b8c9d0e1" }
+    
+    func up(_ db: Connection) throws {
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS telemetry_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                user_id TEXT,
+                metadata BLOB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
     }
     
-    func getBuildingName(for buildingId: Int64) -> String {
-        do {
-            let query = "SELECT name FROM buildings WHERE id = ?"
-            for row in try db.prepare(query, [buildingId]) {
-                return row[0] as! String
-            }
-        } catch {
-            print("Error getting building name: \(error)")
-        }
-        return "Unknown Building"
+    func down(_ db: Connection) throws {
+        try db.execute("DROP TABLE IF EXISTS telemetry_events")
+    }
+}
+
+struct V007_AddIndexes: DatabaseMigration {
+    let version = 7
+    let name = "Add Performance Indexes"
+    var checksum: String { "a7b8c9d0e1f2" }
+    
+    func up(_ db: Connection) throws {
+        // Index for worker time logs queries
+        try db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_worker_time_logs_worker_clock
+            ON worker_time_logs(workerId, clockOutTime)
+        """)
+        
+        // Index for inventory queries
+        try db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_inventory_building
+            ON inventory(buildingId)
+        """)
+        
+        // Index for telemetry queries
+        try db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_telemetry_created
+            ON telemetry_events(created_at)
+        """)
+        
+        // Index for weather cache expiry
+        try db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_weather_expires
+            ON weather_cache(expires_at)
+        """)
     }
     
-    // MARK: - App Initialization
+    func down(_ db: Connection) throws {
+        try db.execute("DROP INDEX IF EXISTS idx_worker_time_logs_worker_clock")
+        try db.execute("DROP INDEX IF EXISTS idx_inventory_building")
+        try db.execute("DROP INDEX IF EXISTS idx_telemetry_created")
+        try db.execute("DROP INDEX IF EXISTS idx_weather_expires")
+    }
+}
+
+struct V008_PhotoPathMigration: DatabaseMigration {
+    let version = 8
+    let name = "Photo Path Migration"
+    var checksum: String { "b8c9d0e1f2a3" }
     
-    func ensureDatabaseStructure() {
-        createTables()
-        print("Database structure ensured")
+    func up(_ db: Connection) throws {
+        // New table for file-based photos
+        try db.execute("""
+            CREATE TABLE IF NOT EXISTS photo_uploads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id TEXT NOT NULL,
+                photo_path TEXT NOT NULL,
+                photo_hash TEXT NOT NULL,
+                retry_count INTEGER DEFAULT 0,
+                uploaded_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        // Index for pending uploads
+        try db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_photo_uploads_pending
+            ON photo_uploads(uploaded_at, retry_count)
+        """)
     }
     
-    // MARK: - New Parameterized SQL Methods
-    
-    func execute(_ sql: String, parameters: [Any] = []) throws {
-        do {
-            if parameters.isEmpty {
-                try db.execute(sql)
-            } else {
-                let stmt = try db.prepare(sql)
-                for (index, param) in parameters.enumerated() {
-                    switch param {
-                    case let value as String:
-                        try stmt.bind(index + 1, value)
-                    case let value as Int:
-                        try stmt.bind(index + 1, value)
-                    case let value as Int64:
-                        try stmt.bind(index + 1, value)
-                    case let value as Double:
-                        try stmt.bind(index + 1, value)
-                    case let value as Bool:
-                        try stmt.bind(index + 1, value ? 1 : 0)
-                    case let value as Date:
-                        let formatter = DateFormatter()
-                        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                        try stmt.bind(index + 1, formatter.string(from: value))
-                    case is NSNull:
-                        try stmt.bind(index + 1, nil)
-                    default:
-                        try stmt.bind(index + 1, String(describing: param))
-                    }
-                }
-                try stmt.run()
-            }
-        } catch {
-            print("SQL execute error: \(error)")
-            throw error
-        }
-    }
-    
-    func query(_ sql: String, parameters: [Any] = []) throws -> [[String: Any]] {
-        var results: [[String: Any]] = []
-        do {
-            let stmt = try db.prepare(sql)
-            for (index, param) in parameters.enumerated() {
-                switch param {
-                case let value as String:
-                    try stmt.bind(index + 1, value)
-                case let value as Int:
-                    try stmt.bind(index + 1, value)
-                case let value as Int64:
-                    try stmt.bind(index + 1, value)
-                case let value as Double:
-                    try stmt.bind(index + 1, value)
-                case let value as Bool:
-                    try stmt.bind(index + 1, value ? 1 : 0)
-                case let value as Date:
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                    try stmt.bind(index + 1, formatter.string(from: value))
-                case is NSNull:
-                    try stmt.bind(index + 1, nil)
-                default:
-                    try stmt.bind(index + 1, String(describing: param))
-                }
-            }
-            for row in stmt {
-                var dict: [String: Any] = [:]
-                for (idx, name) in stmt.columnNames.enumerated() {
-                    if let value = row[idx] {
-                        dict[name] = value
-                    } else {
-                        dict[name] = NSNull()
-                    }
-                }
-                results.append(dict)
-            }
-            return results
-        } catch {
-            print("SQL query error: \(error)")
-            throw error
-        }
+    func down(_ db: Connection) throws {
+        try db.execute("DROP INDEX IF EXISTS idx_photo_uploads_pending")
+        try db.execute("DROP TABLE IF EXISTS photo_uploads")
     }
 }

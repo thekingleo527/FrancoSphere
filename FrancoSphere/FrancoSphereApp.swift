@@ -2,99 +2,211 @@ import SwiftUI
 
 @main
 struct FrancoSphereApp: App {
-    @StateObject private var authManager = AuthManager.shared
-    
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                AppCoordinator()
-                    .environmentObject(authManager)
-            }
+            AppCoordinator()
         }
     }
 }
 
 struct AppCoordinator: View {
-    @EnvironmentObject var authManager: AuthManager
+    // ✅ Now using NewAuthManager instead of local state
+    @StateObject private var authManager = NewAuthManager.shared
     
     var body: some View {
         Group {
             if authManager.isAuthenticated {
-                // Use userRole string value to determine which view to show
+                // Route based on user role from NewAuthManager
                 if authManager.userRole == "admin" {
-                    AdminDashboardView()
+                    NavigationView {
+                        // Use the existing AdminDashboardView from elsewhere in the project
+                        AdminDashboardView()
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button("Logout") {
+                                        authManager.logout()
+                                    }
+                                }
+                            }
+                    }
                 } else if authManager.userRole == "client" {
                     ClientDashboardView()
                 } else {
-                    // Use the full WorkerDashboardView instead of the placeholder
-                    NavigationView {
-                        WorkerDashboardView()
-                    }
+                    // Worker dashboard - using the real one
+                    WorkerDashboardView()
                 }
             } else {
+                // ✅ Using LoginView from Views/Auth/LoginView.swift (NOT defined here)
                 LoginView()
             }
         }
         .onAppear {
-            // Initialize the database structure without test data
-            if UserDefaults.standard.bool(forKey: "isFirstLaunch") == false {
-                SQLiteManager.shared.ensureDatabaseStructure()
-                UserDefaults.standard.set(true, forKey: "isFirstLaunch")
-            }
+            print("🚀 FrancoSphere App Started")
+            print("📱 Initial state: isAuthenticated = \(authManager.isAuthenticated)")
+            print("👤 User role: \(authManager.userRole)")
+            print("👷 Worker name: \(authManager.currentWorkerName)")
+        }
+        // FIXED: Updated onChange syntax for iOS 17+
+        .onChange(of: authManager.isAuthenticated) {
+            print("🔐 Authentication changed to: \(authManager.isAuthenticated)")
+        }
+        .onChange(of: authManager.userRole) {
+            print("👤 User role changed to: \(authManager.userRole)")
         }
     }
 }
 
+// MARK: - Client Dashboard View
 struct ClientDashboardView: View {
-    @EnvironmentObject var authManager: AuthManager
+    @StateObject private var authManager = NewAuthManager.shared
     
     var body: some View {
         NavigationView {
-            VStack {
-                Text("Client Dashboard")
-                    .font(.largeTitle)
-                    .padding()
+            VStack(spacing: 30) {
+                // Header
+                VStack(spacing: 10) {
+                    Image(systemName: "building.2.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.blue)
+                    
+                    Text("FrancoSphere")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    
+                    Text("Client Portal")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                }
                 
-                Text("Welcome, \(authManager.currentWorkerName)")
-                    .font(.headline)
-                    .padding()
+                // Welcome message
+                VStack(spacing: 10) {
+                    Text("Welcome, \(authManager.currentWorkerName)")
+                        .font(.title)
+                        .fontWeight(.semibold)
+                    
+                    Text("Client Dashboard")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(12)
+                
+                // Client features section
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Available Features:")
+                        .font(.headline)
+                    
+                    FeatureRow(icon: "building.columns", title: "Property Overview", description: "View all managed properties")
+                    FeatureRow(icon: "chart.bar", title: "Reports & Analytics", description: "Access maintenance reports")
+                    FeatureRow(icon: "envelope", title: "Communications", description: "Message with property teams")
+                    FeatureRow(icon: "calendar", title: "Scheduled Maintenance", description: "View upcoming work")
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
                 
                 Spacer()
                 
-                Button("Logout") {
+                // Logout button
+                Button(action: {
                     authManager.logout()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.right.square")
+                        Text("Logout")
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
                 }
-                .padding()
             }
-            .navigationTitle("FrancoSphere Client")
+            .padding()
+            .navigationTitle("Client Portal")
+            .navigationBarHidden(true)
         }
     }
 }
 
-// This view is no longer needed since we're using the full WorkerDashboardView
-// If you need a placeholder for testing, you can keep it with a different name
-struct AppWorkerDashboardViewPlaceholder: View {
-    @EnvironmentObject var authManager: AuthManager
+// Helper view for client features
+struct FeatureRow: View {
+    let icon: String
+    let title: String
+    let description: String
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("Worker Dashboard")
-                    .font(.largeTitle)
-                    .padding()
-                
-                Text("Welcome, \(authManager.currentWorkerName)")
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.blue)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
                     .font(.headline)
-                    .padding()
-                
-                Spacer()
-                
-                Button("Logout") {
-                    authManager.logout()
-                }
-                .padding()
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            .navigationTitle("FrancoSphere Worker")
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.gray)
         }
+        .padding(.vertical, 5)
+    }
+}
+
+// REMOVED: AdminDashboardView - using the one defined elsewhere in the project
+
+// MARK: - Loading View
+struct LoadingView: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "building.2.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.blue)
+                .rotationEffect(.degrees(isAnimating ? 360 : 0))
+                .animation(
+                    Animation.linear(duration: 2)
+                        .repeatForever(autoreverses: false),
+                    value: isAnimating
+                )
+            
+            Text("FrancoSphere")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            Text("Initializing...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle())
+                .scaleEffect(1.5)
+        }
+        .onAppear {
+            isAnimating = true
+        }
+    }
+}
+
+// MARK: - Preview
+struct FrancoSphereApp_Previews: PreviewProvider {
+    static var previews: some View {
+        LoadingView()
+            .previewDisplayName("Loading Screen")
+        
+        AppCoordinator()
+            .previewDisplayName("App Coordinator")
+        
+        ClientDashboardView()
+            .previewDisplayName("Client Dashboard")
     }
 }

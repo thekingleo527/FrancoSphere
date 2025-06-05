@@ -12,7 +12,7 @@ extension FrancoSphere.MaintenanceTask {
         let intId = Int64(self.id) ?? 0
         let buildingIntId = Int64(self.buildingID) ?? 0
         let workerIntId = self.assignedWorkers.first.flatMap { Int64($0) } ?? 0
-        
+
         return FSTaskItem(
             id: intId,
             name: self.name,
@@ -23,12 +23,12 @@ extension FrancoSphere.MaintenanceTask {
             scheduledDate: self.dueDate
         )
     }
-    
+
     /// Returns true if the task needs verification
     var needsVerification: Bool {
         return isComplete && (verificationStatus == nil || verificationStatus == .pending)
     }
-    
+
     /// Returns the formatted completion date if available
     var formattedCompletionDate: String? {
         guard let date = completionInfo?.date else { return nil }
@@ -42,9 +42,9 @@ extension FrancoSphere.MaintenanceTask {
 // MARK: - Building Status Functions
 
 /// Determines a building's operational status based on task completion percentage
-func getVerificationStatusForBuilding(_ buildingId: String) -> FSBuildingStatus {
+func getVerificationStatusForBuilding(_ buildingId: String) -> FrancoSphere.BuildingStatus {
     let completionPercentage = computeCompletionPercentage(for: buildingId)
-    
+
     if completionPercentage >= 0.9 {
         return .operational
     } else if completionPercentage >= 0.6 {
@@ -86,23 +86,31 @@ struct TaskVerificationHelper {
         updatedTask.verificationStatus = FrancoSphere.VerificationStatus.verified
         return updatedTask
     }
-    
+
     /// Marks a task as rejected with a reason
-    static func rejectTask(_ task: FrancoSphere.MaintenanceTask, verifierId: String, reason: String) -> FrancoSphere.MaintenanceTask {
+    static func rejectTask(
+        _ task: FrancoSphere.MaintenanceTask,
+        verifierId: String,
+        reason: String
+    ) -> FrancoSphere.MaintenanceTask {
         var updatedTask = task
         updatedTask.verificationStatus = FrancoSphere.VerificationStatus.rejected
         return updatedTask
     }
-    
+
     /// Marks a task as pending verification
     static func pendingVerification(_ task: FrancoSphere.MaintenanceTask) -> FrancoSphere.MaintenanceTask {
         var updatedTask = task
         updatedTask.verificationStatus = FrancoSphere.VerificationStatus.pending
         return updatedTask
     }
-    
+
     /// Creates a verification record for a task
-    static func createVerificationRecord(task: FrancoSphere.MaintenanceTask, verifierId: String, status: FrancoSphere.VerificationStatus) -> FrancoSphere.TaskCompletionRecord {
+    static func createVerificationRecord(
+        task: FrancoSphere.MaintenanceTask,
+        verifierId: String,
+        status: FrancoSphere.VerificationStatus
+    ) -> FrancoSphere.TaskCompletionRecord {
         return FrancoSphere.TaskCompletionRecord(
             taskId: task.id,
             buildingID: task.buildingID,
@@ -115,19 +123,25 @@ struct TaskVerificationHelper {
             verificationDate: Date()
         )
     }
-    
+
     /// Returns tasks that need verification for a specific building
-    static func tasksNeedingVerification(for buildingId: String, from tasks: [FrancoSphere.MaintenanceTask]) -> [FrancoSphere.MaintenanceTask] {
+    static func tasksNeedingVerification(
+        for buildingId: String,
+        from tasks: [FrancoSphere.MaintenanceTask]
+    ) -> [FrancoSphere.MaintenanceTask] {
         return tasks.filter { task in
             task.buildingID == buildingId && task.needsVerification
         }
     }
-    
+
     /// Returns tasks that were recently verified
-    static func recentlyVerifiedTasks(from tasks: [FrancoSphere.MaintenanceTask], days: Int = 7) -> [FrancoSphere.MaintenanceTask] {
+    static func recentlyVerifiedTasks(
+        from tasks: [FrancoSphere.MaintenanceTask],
+        days: Int = 7
+    ) -> [FrancoSphere.MaintenanceTask] {
         let calendar = Calendar.current
         let cutoffDate = calendar.date(byAdding: .day, value: -days, to: Date()) ?? Date()
-        
+
         return tasks.filter { task in
             if let status = task.verificationStatus, status == .verified {
                 if let completionDate = task.completionInfo?.date {
@@ -141,28 +155,37 @@ struct TaskVerificationHelper {
 
 // MARK: - Building Status Extensions
 
-extension FSBuildingStatus {
-    /// Returns a user-friendly status text
+extension FrancoSphere.BuildingStatus {
+    /// Returns a user‐friendly status text
     func getStatusText() -> String {
         return self.rawValue
     }
-    
+
     /// Returns an appropriate icon name for the status
     func getIconName() -> String {
         switch self {
-        case .operational: return "checkmark.circle.fill"
-        case .underMaintenance: return "wrench.fill"
-        case .closed: return "xmark.circle.fill"
+        case .operational:
+            return "checkmark.circle.fill"
+        case .underMaintenance:
+            return "wrench.fill"
+        case .closed:
+            return "xmark.circle.fill"
+        @unknown default:
+            return "questionmark.circle"
         }
     }
-    
-    /// Returns true if the building is available for work
-    var isAvailableForWork: Bool {
+
+    /// Returns a “color” to use for this status badge
+    var color: Color {
         switch self {
         case .operational:
-            return true
-        case .underMaintenance, .closed:
-            return false
+            return .green
+        case .underMaintenance:
+            return .orange
+        case .closed:
+            return .red
+        @unknown default:
+            return .gray
         }
     }
 }
@@ -172,7 +195,7 @@ extension FSBuildingStatus {
 /// A view component for displaying verification status
 struct VerificationStatusBadge: View {
     let status: FrancoSphere.VerificationStatus?
-    
+
     var body: some View {
         if let status = status {
             HStack(spacing: 4) {
@@ -194,8 +217,8 @@ struct VerificationStatusBadge: View {
 
 /// A view component for displaying building status
 struct BuildingStatusBadge: View {
-    let status: FSBuildingStatus
-    
+    let status: FrancoSphere.BuildingStatus
+
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: status.getIconName())

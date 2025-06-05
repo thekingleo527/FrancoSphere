@@ -1,9 +1,24 @@
-import Foundation
-import SQLite
+// WorkerAssignmentManager.swift
+// FrancoSphere
+//
+// Manager for worker assignments and skill matching
 
-class WorkerAssignmentManager {
+import Foundation
+import SwiftUI
+
+// MARK: - WorkerAssignmentManager
+// Main manager for worker assignments
+
+final class WorkerAssignmentManager: ObservableObject {
+    // MARK: - Singleton
+    static let shared = WorkerAssignmentManager()
+    
+    // Private init to ensure singleton
+    private init() {}
+    
     // MARK: - Worker Management
     
+    /// Get workers assigned to a specific building
     func getWorkersForBuilding(buildingId: String) -> [FrancoSphere.WorkerProfile] {
         var workers: [FrancoSphere.WorkerProfile] = []
         
@@ -19,8 +34,9 @@ class WorkerAssignmentManager {
         return workers
     }
     
+    /// Get worker IDs assigned to a building
     private func getAssignedWorkerIds(for buildingId: String) -> [String] {
-        // Building to worker assignments based on updated, correct data
+        // Building to worker assignments based on updated data
         switch buildingId {
         case "1":  // 12 West 18th Street
             return ["1", "7", "8"]  // Greg Hutson, Angel Guirachocha, Shawn Magloire
@@ -50,13 +66,18 @@ class WorkerAssignmentManager {
             return ["6", "7"]       // Luis Lopez, Angel Guirachocha
         case "14": // Rubin Museum (142-148 W 17th)
             return ["8"]            // Shawn Magloire
+        case "15": // Stuyvesant Cove Park
+            return ["7"]            // Angel Guirachocha
+        case "16": // 138 West 17th Street
+            return ["4"]            // Kevin Dutan
         default:
             return []
         }
     }
     
+    /// Get worker by ID
     private func getWorkerById(_ workerId: String) -> FrancoSphere.WorkerProfile? {
-        // Real worker data based on provided emails and updated names
+        // Real worker data based on provided emails
         switch workerId {
         case "1":
             return FrancoSphere.WorkerProfile(
@@ -65,7 +86,8 @@ class WorkerAssignmentManager {
                 email: "g.hutson1989@gmail.com",
                 role: .worker,
                 skills: [.maintenance, .repair, .electrical],
-                assignedBuildings: ["1", "4", "7", "10", "12"]
+                assignedBuildings: ["1", "4", "7", "10", "12"],
+                skillLevel: .advanced
             )
         case "2":
             return FrancoSphere.WorkerProfile(
@@ -74,7 +96,8 @@ class WorkerAssignmentManager {
                 email: "edwinlema911@gmail.com",
                 role: .worker,
                 skills: [.cleaning, .sanitation, .inspection],
-                assignedBuildings: ["2", "5", "8", "11"]
+                assignedBuildings: ["2", "5", "8", "11"],
+                skillLevel: .intermediate
             )
         case "3":
             return FrancoSphere.WorkerProfile(
@@ -83,7 +106,8 @@ class WorkerAssignmentManager {
                 email: "josesantos14891989@gmail.com",
                 role: .worker,
                 skills: [.maintenance, .repair, .plumbing],
-                assignedBuildings: ["3", "6", "9", "12"]
+                assignedBuildings: ["3", "6", "9", "12"],
+                skillLevel: .intermediate
             )
         case "4":
             return FrancoSphere.WorkerProfile(
@@ -92,7 +116,8 @@ class WorkerAssignmentManager {
                 email: "dutankevin1@gmail.com",
                 role: .worker,
                 skills: [.hvac, .electrical, .technical],
-                assignedBuildings: ["3", "7", "11"]
+                assignedBuildings: ["3", "7", "11", "16"],
+                skillLevel: .advanced
             )
         case "5":
             return FrancoSphere.WorkerProfile(
@@ -101,7 +126,8 @@ class WorkerAssignmentManager {
                 email: "Jneola@gmail.com",
                 role: .worker,
                 skills: [.cleaning, .sanitation],
-                assignedBuildings: ["2", "6", "10"]
+                assignedBuildings: ["2", "6", "10"],
+                skillLevel: .intermediate
             )
         case "6":
             return FrancoSphere.WorkerProfile(
@@ -110,7 +136,8 @@ class WorkerAssignmentManager {
                 email: "luislopez030@yahoo.com",
                 role: .worker,
                 skills: [.maintenance, .manual, .inspection],
-                assignedBuildings: ["4", "8", "13"]
+                assignedBuildings: ["4", "8", "13"],
+                skillLevel: .intermediate
             )
         case "7":
             return FrancoSphere.WorkerProfile(
@@ -119,45 +146,61 @@ class WorkerAssignmentManager {
                 email: "lio.angel71@gmail.com",
                 role: .worker,
                 skills: [.cleaning, .sanitation, .manual],
-                assignedBuildings: ["1", "5", "9", "13"]
+                assignedBuildings: ["1", "5", "9", "13", "15"],
+                skillLevel: .intermediate
             )
         case "8":
             return FrancoSphere.WorkerProfile(
                 id: "8",
                 name: "Shawn Magloire",
                 email: "shawn@francomanagementgroup.com",
-                role: .worker,
+                role: .admin,
                 skills: [.management, .inspection, .maintenance, .hvac, .electrical, .plumbing],
-                assignedBuildings: ["1", "14"]
+                assignedBuildings: ["1", "14"],
+                skillLevel: .expert
             )
         default:
             return nil
         }
     }
     
-    // Get workers with a specific skill (for task assignment)
+    /// Get all workers
+    func getAllWorkers() -> [FrancoSphere.WorkerProfile] {
+        return (1...8).compactMap { getWorkerById(String($0)) }
+    }
+    
+    /// Get workers with specific skills for task assignment
     func getSkilledWorkers(category: FrancoSphere.TaskCategory, urgency: FrancoSphere.TaskUrgency) -> [String] {
         var skilledWorkers: [String] = []
         
         // Map task categories to worker skills
-        let requiredSkills: [FrancoSphere.WorkerSkill] = mapCategoryToSkills(category)
+        let requiredSkills = mapCategoryToSkills(category)
         
         // Get all workers
         let allWorkers = getAllWorkers()
         
-        // Filter workers by skills
+        // Filter workers by skills and urgency level
         for worker in allWorkers {
-            for skill in requiredSkills {
-                if worker.skills.contains(skill) {
-                    skilledWorkers.append(worker.id)
-                    break
-                }
+            // Check if worker has required skills
+            let hasRequiredSkill = worker.skills.contains { skill in
+                requiredSkills.contains(skill)
+            }
+            
+            // Check if worker's skill level matches urgency
+            let meetsUrgencyRequirement = isQualifiedForUrgency(
+                skillLevel: worker.skillLevel,
+                urgency: urgency
+            )
+            
+            if hasRequiredSkill && meetsUrgencyRequirement {
+                skilledWorkers.append(worker.id)
             }
         }
         
         return skilledWorkers
     }
     
+    /// Map task categories to required worker skills
     private func mapCategoryToSkills(_ category: FrancoSphere.TaskCategory) -> [FrancoSphere.WorkerSkill] {
         switch category {
         case .maintenance:
@@ -173,270 +216,63 @@ class WorkerAssignmentManager {
         }
     }
     
-    private func getAllWorkers() -> [FrancoSphere.WorkerProfile] {
-        // Return all real workers
-        return [
-            getWorkerById("1"), // Greg Hutson
-            getWorkerById("2"), // Edwin Lema
-            getWorkerById("3"), // Jose Santos
-            getWorkerById("4"), // Kevin Dutan
-            getWorkerById("5"), // Mercedes Inamagua
-            getWorkerById("6"), // Luis Lopez
-            getWorkerById("7"), // Angel Guirachocha
-            getWorkerById("8")  // Shawn Magloire
-        ].compactMap { $0 }
-    }
-    
-    // Get worker skills from local storage
-    func getWorkerSkills(workerId: String) -> [System.WorkerSkill] {
-        // Return skills for each real worker
-        switch workerId {
-        case "1": // Greg Hutson
-            return [
-                System.WorkerSkill(
-                    id: "1-1",
-                    name: "General Maintenance",
-                    category: .maintenance,
-                    level: 4,
-                    certifications: ["Building Maintenance Certification"],
-                    description: "General building maintenance and repairs"
-                ),
-                System.WorkerSkill(
-                    id: "1-2",
-                    name: "Electrical Systems",
-                    category: .electrical,
-                    level: 3,
-                    certifications: ["Basic Electrical Safety"],
-                    description: "Basic electrical repairs and troubleshooting"
-                ),
-                System.WorkerSkill(
-                    id: "1-3",
-                    name: "Repair Work",
-                    category: .repair,
-                    level: 4,
-                    certifications: [],
-                    description: "Various repair skills for building systems"
-                )
-            ]
-        case "2": // Edwin Lema
-            return [
-                System.WorkerSkill(
-                    id: "2-1",
-                    name: "Commercial Cleaning",
-                    category: .cleaning,
-                    level: 5,
-                    certifications: ["Commercial Cleaning Standards"],
-                    description: "Professional cleaning for commercial spaces"
-                ),
-                System.WorkerSkill(
-                    id: "2-2",
-                    name: "Sanitation",
-                    category: .sanitation,
-                    level: 4,
-                    certifications: ["Health & Safety"],
-                    description: "Sanitation procedures for public areas"
-                ),
-                System.WorkerSkill(
-                    id: "2-3",
-                    name: "Inspection",
-                    category: .inspection,
-                    level: 3,
-                    certifications: [],
-                    description: "Property inspections and reporting"
-                )
-            ]
-        case "3": // Jose Santos
-            return [
-                System.WorkerSkill(
-                    id: "3-1",
-                    name: "Plumbing Systems",
-                    category: .plumbing,
-                    level: 4,
-                    certifications: ["Plumbing Basics"],
-                    description: "Plumbing maintenance and repairs"
-                ),
-                System.WorkerSkill(
-                    id: "3-2",
-                    name: "Building Maintenance",
-                    category: .maintenance,
-                    level: 3,
-                    certifications: [],
-                    description: "General maintenance tasks"
-                ),
-                System.WorkerSkill(
-                    id: "3-3",
-                    name: "Repair Services",
-                    category: .repair,
-                    level: 4,
-                    certifications: [],
-                    description: "Building repair work"
-                )
-            ]
-        case "4": // Kevin Dutan
-            return [
-                System.WorkerSkill(
-                    id: "4-1",
-                    name: "HVAC Systems",
-                    category: .hvac,
-                    level: 5,
-                    certifications: ["HVAC Technician"],
-                    description: "Complete HVAC maintenance and repair"
-                ),
-                System.WorkerSkill(
-                    id: "4-2",
-                    name: "Electrical Work",
-                    category: .electrical,
-                    level: 4,
-                    certifications: ["Electrical Safety"],
-                    description: "Electrical system maintenance"
-                ),
-                System.WorkerSkill(
-                    id: "4-3",
-                    name: "Technical Support",
-                    category: .technical,
-                    level: 3,
-                    certifications: [],
-                    description: "Technical systems support"
-                )
-            ]
-        case "5": // Mercedes Inamagua
-            return [
-                System.WorkerSkill(
-                    id: "5-1",
-                    name: "Cleaning Services",
-                    category: .cleaning,
-                    level: 5,
-                    certifications: [],
-                    description: "Professional cleaning for properties"
-                ),
-                System.WorkerSkill(
-                    id: "5-2",
-                    name: "Sanitation Work",
-                    category: .sanitation,
-                    level: 4,
-                    certifications: ["Sanitation Standards"],
-                    description: "Sanitation procedures"
-                )
-            ]
-        case "6": // Luis Lopez
-            return [
-                System.WorkerSkill(
-                    id: "6-1",
-                    name: "Building Maintenance",
-                    category: .maintenance,
-                    level: 4,
-                    certifications: [],
-                    description: "Overall building maintenance"
-                ),
-                System.WorkerSkill(
-                    id: "6-2",
-                    name: "Manual Tasks",
-                    category: .manual,
-                    level: 5,
-                    certifications: ["Heavy Lifting"],
-                    description: "Physical maintenance tasks"
-                ),
-                System.WorkerSkill(
-                    id: "6-3",
-                    name: "Building Inspection",
-                    category: .inspection,
-                    level: 3,
-                    certifications: [],
-                    description: "Property inspection"
-                )
-            ]
-        case "7": // Angel Guirachocha
-            return [
-                System.WorkerSkill(
-                    id: "7-1",
-                    name: "Commercial Cleaning",
-                    category: .cleaning,
-                    level: 5,
-                    certifications: [],
-                    description: "Professional cleaning services"
-                ),
-                System.WorkerSkill(
-                    id: "7-2",
-                    name: "Sanitation",
-                    category: .sanitation,
-                    level: 4,
-                    certifications: [],
-                    description: "Building sanitation procedures"
-                ),
-                System.WorkerSkill(
-                    id: "7-3",
-                    name: "Manual Work",
-                    category: .manual,
-                    level: 4,
-                    certifications: [],
-                    description: "Manual maintenance tasks"
-                )
-            ]
-        case "8": // Shawn Magloire
-            return [
-                System.WorkerSkill(
-                    id: "8-1",
-                    name: "Building Management",
-                    category: .management,
-                    level: 5,
-                    certifications: ["Property Management"],
-                    description: "Overall property management"
-                ),
-                System.WorkerSkill(
-                    id: "8-2",
-                    name: "Maintenance Supervision",
-                    category: .maintenance,
-                    level: 4,
-                    certifications: [],
-                    description: "Supervise maintenance operations"
-                ),
-                System.WorkerSkill(
-                    id: "8-3",
-                    name: "HVAC Systems",
-                    category: .hvac,
-                    level: 4,
-                    certifications: [],
-                    description: "HVAC system knowledge"
-                ),
-                System.WorkerSkill(
-                    id: "8-4",
-                    name: "Electrical Systems",
-                    category: .electrical,
-                    level: 3,
-                    certifications: [],
-                    description: "Electrical system knowledge"
-                ),
-                System.WorkerSkill(
-                    id: "8-5",
-                    name: "Plumbing Systems",
-                    category: .plumbing,
-                    level: 3,
-                    certifications: [],
-                    description: "Plumbing system knowledge"
-                ),
-                System.WorkerSkill(
-                    id: "8-6",
-                    name: "Building Inspection",
-                    category: .inspection,
-                    level: 5,
-                    certifications: [],
-                    description: "Detailed building inspections"
-                )
-            ]
-        default:
-            return []
+    /// Check if worker's skill level qualifies for task urgency
+    private func isQualifiedForUrgency(skillLevel: FrancoSphere.SkillLevel, urgency: FrancoSphere.TaskUrgency) -> Bool {
+        switch urgency {
+        case .low:
+            return true // Any skill level can handle low urgency
+        case .medium:
+            return skillLevel != .basic
+        case .high:
+            return skillLevel == .advanced || skillLevel == .expert
+        case .urgent:
+            return skillLevel == .expert
         }
     }
-}
-
-// Simple namespace to avoid ambiguity until FrancoSphereModels is updated
-enum System {
-    struct WorkerSkill {
-        let id: String
-        let name: String
-        let category: FrancoSphere.WorkerSkill
-        let level: Int
-        let certifications: [String]
-        let description: String
+    
+    /// Get worker skills - returns generic WorkerSkill enum values
+    func getWorkerSkills(workerId: String) -> [FrancoSphere.WorkerSkill] {
+        guard let worker = getWorkerById(workerId) else { return [] }
+        return worker.skills
+    }
+    
+    /// Check if worker has required skills for a task
+    func workerHasRequiredSkills(workerId: String, taskCategory: FrancoSphere.TaskCategory, urgency: FrancoSphere.TaskUrgency) -> Bool {
+        guard let worker = getWorkerById(workerId) else { return false }
+        
+        let requiredSkills = mapCategoryToSkills(taskCategory)
+        let hasSkill = worker.skills.contains { skill in
+            requiredSkills.contains(skill)
+        }
+        
+        let meetsUrgency = isQualifiedForUrgency(
+            skillLevel: worker.skillLevel,
+            urgency: urgency
+        )
+        
+        return hasSkill && meetsUrgency
+    }
+    
+    /// Get workers for a specific building with optional skill filter
+    func getWorkersForBuilding(buildingId: String, withSkill skill: FrancoSphere.WorkerSkill? = nil) -> [FrancoSphere.WorkerProfile] {
+        let workers = getWorkersForBuilding(buildingId: buildingId)
+        
+        guard let requiredSkill = skill else { return workers }
+        
+        return workers.filter { $0.skills.contains(requiredSkill) }
+    }
+    
+    /// Get worker by email
+    func getWorkerByEmail(_ email: String) -> FrancoSphere.WorkerProfile? {
+        return getAllWorkers().first { $0.email.lowercased() == email.lowercased() }
+    }
+    
+    /// Get worker's assigned building names
+    func getAssignedBuildingNames(for workerId: String) -> [String] {
+        guard let worker = getWorkerById(workerId) else { return [] }
+        
+        return worker.assignedBuildings.compactMap { buildingId in
+            FrancoSphere.NamedCoordinate.getBuilding(byId: buildingId)?.name
+        }
     }
 }

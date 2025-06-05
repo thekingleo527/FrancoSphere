@@ -64,14 +64,16 @@ struct TimelineView: View {
                     }
             }
         }
-        .onAppear {
+        .task {
             generateWeekDays()
-            loadTasksForSelectedWeek()
+            await loadTasksForSelectedWeek()
         }
         // Fix for iOS 17 deprecation warnings
         .onChange(of: selectedDate) { _, _ in
             generateWeekDays()
-            loadTasksForSelectedWeek()
+            Task {
+                await loadTasksForSelectedWeek()
+            }
         }
         .onChange(of: filterOptions) { _, _ in
             applyFilters()
@@ -187,7 +189,11 @@ struct TimelineView: View {
                 .font(.callout)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-            Button(action: { showTaskDetail = createDummyTask() }) {
+            Button(action: {
+                Task {
+                    showTaskDetail = await createDummyTask()
+                }
+            }) {
                 Label("Create Task", systemImage: "plus.circle")
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -332,7 +338,10 @@ struct TimelineView: View {
     struct FilterView: View {
         @Binding var filterOptions: FilterOptions
         @Environment(\.presentationMode) var presentationMode
-        @State private var buildings = FrancoSphere.NamedCoordinate.allBuildings
+        
+        // FIXED: Load buildings asynchronously
+        @State private var buildings: [FrancoSphere.NamedCoordinate] = []
+        @State private var isLoadingBuildings = true
         
         var body: some View {
             NavigationView {
@@ -376,18 +385,26 @@ struct TimelineView: View {
                         }
                     }
                     Section(header: Text("Buildings")) {
-                        ForEach(buildings) { building in
-                            Button(action: { toggleBuilding(building.id) }) {
-                                HStack {
-                                    Text(building.name)
-                                    Spacer()
-                                    if filterOptions.selectedBuildings.isEmpty || filterOptions.selectedBuildings.contains(building.id) {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(.blue)
+                        if isLoadingBuildings {
+                            HStack {
+                                ProgressView()
+                                    .padding(.trailing, 10)
+                                Text("Loading buildings...")
+                            }
+                        } else {
+                            ForEach(buildings) { building in
+                                Button(action: { toggleBuilding(building.id) }) {
+                                    HStack {
+                                        Text(building.name)
+                                        Spacer()
+                                        if filterOptions.selectedBuildings.isEmpty || filterOptions.selectedBuildings.contains(building.id) {
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(.blue)
+                                        }
                                     }
                                 }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     Section {
@@ -400,6 +417,18 @@ struct TimelineView: View {
                 }
                 .navigationTitle("Filter Tasks")
                 .navigationBarItems(trailing: Button("Done") { presentationMode.wrappedValue.dismiss() })
+                .task {
+                    await loadBuildings()
+                }
+            }
+        }
+        
+        // FIXED: Load buildings asynchronously
+        private func loadBuildings() async {
+            let allBuildings = await BuildingRepository.shared.allBuildings
+            await MainActor.run {
+                self.buildings = allBuildings
+                self.isLoadingBuildings = false
             }
         }
         
@@ -442,6 +471,7 @@ struct TimelineView: View {
         private func resetFilters() {
             filterOptions = FilterOptions()
         }
+        
         private func categoryIcon(_ category: FrancoSphere.TaskCategory) -> String {
             switch category {
             case .cleaning: return "bubbles.and.sparkles"
@@ -451,6 +481,7 @@ struct TimelineView: View {
             case .inspection: return "checklist"
             }
         }
+        
         private func categoryColor(_ category: FrancoSphere.TaskCategory) -> Color {
             switch category {
             case .cleaning: return .blue
@@ -515,7 +546,7 @@ struct TimelineView: View {
     }
     
     private func getBuildingName(for buildingID: String) -> String {
-        FrancoSphere.NamedCoordinate.allBuildings.first(where: { $0.id == buildingID })?.name ?? "Unknown Building"
+        BuildingRepository.shared.getBuildingName(forId: buildingID)
     }
     
     private func categoryColor(_ category: FrancoSphere.TaskCategory) -> Color {
@@ -543,10 +574,14 @@ struct TimelineView: View {
         return (0..<14).compactMap { calendar.date(byAdding: .day, value: $0, to: startDate) }
     }
     
-    private func createDummyTask() -> FrancoSphere.MaintenanceTask {
-        FrancoSphere.MaintenanceTask(
+    // FIXED: Make createDummyTask async to handle building loading
+    private func createDummyTask() async -> FrancoSphere.MaintenanceTask {
+        let buildings = await BuildingRepository.shared.allBuildings
+        let firstBuildingId = buildings.first?.id ?? "1"
+        
+        return FrancoSphere.MaintenanceTask(
             name: "New Task",
-            buildingID: FrancoSphere.NamedCoordinate.allBuildings.first?.id ?? "1",
+            buildingID: firstBuildingId,
             description: "Enter task description",
             dueDate: selectedDate
         )
@@ -554,9 +589,13 @@ struct TimelineView: View {
     
     // MARK: - Data Loading
     
-    private func loadTasksForSelectedWeek() {
-        isLoading = true
-        tasksByDate = [:]
+    // FIXED: Make task loading async
+    private func loadTasksForSelectedWeek() async {
+        await MainActor.run {
+            isLoading = true
+            tasksByDate = [:]
+        }
+        
         var datesToFetch = selectedWeek
         let startDate = calendar.date(byAdding: .day, value: 1, to: selectedDate) ?? Date()
         for i in 0..<14 {
@@ -568,12 +607,19 @@ struct TimelineView: View {
         // Convert Int64 workerId to String for TaskManager
         let workerIdString = String(workerId)
         
+        var newTasksByDate: [String: [FrancoSphere.MaintenanceTask]] = [:]
+        
         for date in datesToFetch {
-            let tasks = TaskManager.shared.fetchTasks(forWorker: workerIdString, date: date)
-            tasksByDate[formatDateForKey(date)] = tasks.sorted { $0.dueDate < $1.dueDate }
+            // FIXED: Use async version of fetchTasks
+            let tasks = await TaskManager.shared.fetchTasksAsync(forWorker: workerIdString, date: date)
+            newTasksByDate[formatDateForKey(date)] = tasks.sorted { $0.dueDate < $1.dueDate }
         }
-        applyFilters()
-        isLoading = false
+        
+        await MainActor.run {
+            self.tasksByDate = newTasksByDate
+            self.applyFilters()
+            self.isLoading = false
+        }
     }
     
     private func applyFilters() {

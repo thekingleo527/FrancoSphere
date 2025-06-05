@@ -2,7 +2,7 @@ import SwiftUI
 
 // A ViewModifier to add weather-sensitive styling to task views
 struct WeatherSensitiveTaskModifier: ViewModifier {
-    let task: FrancoSphere.MaintenanceTask
+    let task: MaintenanceTask
     // Use StateObject for singleton access instead of ObservedObject to avoid conformance issues
     @StateObject private var weatherAdapter = WeatherDataAdapter.shared
     
@@ -50,7 +50,7 @@ struct WeatherSensitiveTaskModifier: ViewModifier {
 
 // Extension to make it easier to apply the modifier
 extension View {
-    func weatherSensitive(for task: FrancoSphere.MaintenanceTask) -> some View {
+    func weatherSensitive(for task: MaintenanceTask) -> some View {
         self.modifier(WeatherSensitiveTaskModifier(task: task))
     }
 }
@@ -92,21 +92,21 @@ struct WeatherStatusBuildingModifier: ViewModifier {
     }
     
     // Helper function to handle weather condition color
-    private func weatherIconColor(for condition: FSWeatherData.WeatherCondition) -> Color {
+    private func weatherIconColor(for condition: FrancoSphere.WeatherCondition) -> Color {
         switch condition {
         case .clear:
             return .yellow
-        case .partlyCloudy:
-            return .orange
         case .cloudy:
             return .gray
         case .rain:
             return .blue
         case .snow:
             return .cyan
-        case .storm:
+        case .thunderstorm:
             return .purple
-        case .extreme:
+        case .fog:
+            return .gray
+        case .other:
             return .red
         }
     }

@@ -1,4 +1,3 @@
-
 //
 //  TaskRequestView.swift
 //  FrancoSphere
@@ -33,30 +32,44 @@ struct TaskRequestView: View {
     @State private var showSuggestions = false
     @Environment(\.presentationMode) var presentationMode
     
-    private var buildingOptions = NamedCoordinate.allBuildings
+    // FIXED: Load buildings asynchronously instead of in property initializer
+    @State private var buildingOptions: [FrancoSphere.NamedCoordinate] = []
+    @State private var isLoadingBuildings = true
     
     var body: some View {
         NavigationView {
             Form {
-                basicTaskSection
-                
-                buildingAndCategorySection
-                
-                timingSection
-                
-                if !requiredInventory.isEmpty {
-                    inventorySection
-                }
-                
-                // Optional photo attachment
-                photoSection
-                
-                // Submit button
-                submitSection
-                
-                // Task suggestions (if available)
-                if !suggestions.isEmpty {
-                    suggestionsSection
+                if isLoadingBuildings {
+                    Section {
+                        HStack {
+                            ProgressView()
+                                .padding(.trailing, 10)
+                            Text("Loading buildings...")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
+                    }
+                } else {
+                    basicTaskSection
+                    
+                    buildingAndCategorySection
+                    
+                    timingSection
+                    
+                    if !requiredInventory.isEmpty {
+                        inventorySection
+                    }
+                    
+                    // Optional photo attachment
+                    photoSection
+                    
+                    // Submit button
+                    submitSection
+                    
+                    // Task suggestions (if available)
+                    if !suggestions.isEmpty {
+                        suggestionsSection
+                    }
                 }
             }
             .navigationTitle("New Task Request")
@@ -65,11 +78,14 @@ struct TaskRequestView: View {
                     presentationMode.wrappedValue.dismiss()
                 },
                 trailing: Button("Submit") {
-                    submitTaskRequest()
+                    Task {
+                        await submitTaskRequest()
+                    }
                 }
                 .disabled(!isFormValid || isSubmitting)
             )
-            .onAppear {
+            .task {
+                await loadBuildings()
                 loadSuggestions()
             }
             .alert(isPresented: $showCompletionAlert) {
@@ -191,9 +207,10 @@ struct TaskRequestView: View {
             if addEndTime {
                 DatePicker("End Time", selection: $endTime, displayedComponents: .hourAndMinute)
                     .disabled(!addStartTime)
-                    .onChange(of: startTime) { newValue in
-                        if endTime < newValue {
-                            endTime = newValue.addingTimeInterval(3600) // 1 hour later
+                    // FIXED: Updated onChange syntax for iOS 17+
+                    .onChange(of: startTime) {
+                        if endTime < startTime {
+                            endTime = startTime.addingTimeInterval(3600) // 1 hour later
                         }
                     }
             }
@@ -280,7 +297,9 @@ struct TaskRequestView: View {
             }
             
             Button(action: {
-                submitTaskRequest()
+                Task {
+                    await submitTaskRequest()
+                }
             }) {
                 if isSubmitting {
                     HStack {
@@ -398,6 +417,17 @@ struct TaskRequestView: View {
     
     // MARK: - Data Loading
     
+    // FIXED: Load buildings asynchronously
+    private func loadBuildings() async {
+        do {
+            let buildings = await BuildingRepository.shared.allBuildings
+            await MainActor.run {
+                self.buildingOptions = buildings
+                self.isLoadingBuildings = false
+            }
+        }
+    }
+    
     private func loadSuggestions() {
         Task {
             // In a real app, this would fetch from the server
@@ -458,11 +488,14 @@ struct TaskRequestView: View {
         }
     }
     
-    private func submitTaskRequest() {
+    // FIXED: Make task submission async
+    private func submitTaskRequest() async {
         guard isFormValid else { return }
         
-        isSubmitting = true
-        errorMessage = nil
+        await MainActor.run {
+            isSubmitting = true
+            errorMessage = nil
+        }
         
         // Calculate dates with timing information if specified
         let calendar = Calendar.current
@@ -498,25 +531,29 @@ struct TaskRequestView: View {
             isComplete: false
         )
         
-        // Save the task
-        if TaskManager.shared.createTask(task) {
-            // Record inventory requirements if specified
-            if !requiredInventory.isEmpty {
-                recordInventoryRequirements(for: task.id)
-            }
-            
-            // Save photo if attached
-            if attachPhoto, let photo = photo {
-                saveTaskPhoto(photo, for: task.id)
-            }
-            
-            // Show completion alert
-            showCompletionAlert = true
-        } else {
-            errorMessage = "Failed to create task. Please try again."
-        }
+        // FIXED: Use async version of createTask
+        let success = await TaskManager.shared.createTaskAsync(task)
         
-        isSubmitting = false
+        await MainActor.run {
+            if success {
+                // Record inventory requirements if specified
+                if !requiredInventory.isEmpty {
+                    recordInventoryRequirements(for: task.id)
+                }
+                
+                // Save photo if attached
+                if attachPhoto, let photo = photo {
+                    saveTaskPhoto(photo, for: task.id)
+                }
+                
+                // Show completion alert
+                showCompletionAlert = true
+            } else {
+                errorMessage = "Failed to create task. Please try again."
+            }
+            
+            isSubmitting = false
+        }
     }
     
     private func recordInventoryRequirements(for taskId: String) {
@@ -775,7 +812,6 @@ struct PhotoPickerView: View {
         }
     }
 }
-
 
 // MARK: - Supporting Models
 

@@ -102,32 +102,37 @@ struct FrancoTaskTemplate: Identifiable {
     ]
 }
 
-class TaskManager {
+// MARK: - TaskManager as Actor for thread safety
+actor TaskManager {
     static let shared = TaskManager()
     
+    private var sqliteManager: SQLiteManager?
+    
     private init() {
-        createRequiredTables()
-        initializeRealTasks()
+        Task {
+            await setupDatabase()
+            await initializeRealTasks()
+        }
     }
     
     // MARK: - Database Setup
     
-    private func createRequiredTables() {
+    private func setupDatabase() async {
         do {
-            try createTasksTable()
-            try createTaskAssignmentsTable()
-            try createMaintenanceHistoryTable()
+            self.sqliteManager = try await SQLiteManager.start()
+            try await createRequiredTables()
         } catch {
-            print("Error creating tables: \(error)")
+            print("❌ Error setting up database: \(error)")
         }
     }
     
-    private func createTasksTable() throws {
-        guard let db = SQLiteManager.shared.db else {
-            throw NSError(domain: "TaskManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Database connection not available"])
+    private func createRequiredTables() async throws {
+        guard let sqliteManager = sqliteManager else {
+            throw NSError(domain: "TaskManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "SQLite manager not initialized"])
         }
         
-        try db.execute("""
+        // Create tasks table
+        try await sqliteManager.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -143,14 +148,9 @@ class TaskManager {
             requiredSkillLevel TEXT DEFAULT 'Basic'
         )
         """)
-    }
-    
-    private func createTaskAssignmentsTable() throws {
-        guard let db = SQLiteManager.shared.db else {
-            throw NSError(domain: "TaskManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Database connection not available"])
-        }
         
-        try db.execute("""
+        // Create task assignments table
+        try await sqliteManager.execute("""
         CREATE TABLE IF NOT EXISTS task_assignments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             taskId INTEGER NOT NULL,
@@ -158,14 +158,9 @@ class TaskManager {
             UNIQUE(taskId, workerId)
         )
         """)
-    }
-    
-    private func createMaintenanceHistoryTable() throws {
-        guard let db = SQLiteManager.shared.db else {
-            throw NSError(domain: "TaskManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Database connection not available"])
-        }
         
-        try db.execute("""
+        // Create maintenance history table
+        try await sqliteManager.execute("""
         CREATE TABLE IF NOT EXISTS maintenance_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             buildingId TEXT NOT NULL,
@@ -180,16 +175,18 @@ class TaskManager {
     }
     
     // Initialize real tasks in the database
-    private func initializeRealTasks() {
+    private func initializeRealTasks() async {
+        guard let sqliteManager = sqliteManager else { return }
+        
         // Check if we already have tasks in the database
         do {
-            guard let db = SQLiteManager.shared.db else { return }
+            let countQuery = "SELECT COUNT(*) as count FROM tasks"
+            let rows = try await sqliteManager.query(countQuery)
             
-            let count = try db.scalar("SELECT COUNT(*) FROM tasks") as! Int64
-            
-            // Only add sample tasks if the database is empty
-            if count == 0 {
-                loadTasksFromCSVData()
+            if let firstRow = rows.first,
+               let count = firstRow["count"] as? Int64,
+               count == 0 {
+                await loadTasksFromCSVData()
             }
         } catch {
             print("Error checking task count: \(error)")
@@ -197,7 +194,7 @@ class TaskManager {
     }
     
     // Load real task data from mapped CSV data
-    private func loadTasksFromCSVData() {
+    private func loadTasksFromCSVData() async {
         // This method uses the mapping document to load real tasks into the database
         
         // Create tasks based on the "Updated_Task_Matrix.csv" data
@@ -257,7 +254,6 @@ class TaskManager {
         ]
         
         // Task templates from FrancoSphere_Master_Task_Table.csv to get descriptions and urgency levels
-        // This is a simplified representation of your master task table
         let taskTemplates: [String: (description: String, urgency: String)] = [
             "HVAC Filter Replacement": ("Replace all air filters in the HVAC system", "Medium"),
             "Lobby Floor Cleaning": ("Deep clean the lobby floor and entrance mats", "Low"),
@@ -287,7 +283,7 @@ class TaskManager {
             // Create a task with a due date within the next 30 days
             let dueOffset = index % 30 // Spread tasks over 30 days
             
-            createTaskFromCSVData(
+            await createTaskFromCSVData(
                 buildingName: taskData.buildingName,
                 taskName: taskData.taskName,
                 workerName: taskData.workerName,
@@ -314,13 +310,20 @@ class TaskManager {
         description: String,
         urgency: String,
         dueOffset: Int
-    ) {
+    ) async {
         // Map CSV data to model objects
-        guard let buildingID = FrancoSphere.NamedCoordinate.getBuildingId(byName: buildingName),
-              let workerID = FrancoSphere.WorkerProfile.getWorkerId(byName: workerName),
-              let taskCategory = FrancoSphere.TaskCategory(rawValue: category),
-              let taskRecurrence = FrancoSphere.TaskRecurrence(rawValue: recurrence),
-              let taskUrgency = FrancoSphere.TaskUrgency(rawValue: urgency) else {
+        let buildingID = await BuildingRepository.shared.id(forName: buildingName)
+        let workerID = FrancoSphere.WorkerProfile.getWorkerId(byName: workerName)
+        let taskCategory = FrancoSphere.TaskCategory(rawValue: category)
+        let taskRecurrence = FrancoSphere.TaskRecurrence(rawValue: recurrence)
+        let taskUrgency = FrancoSphere.TaskUrgency(rawValue: urgency)
+        
+        guard let buildingID = buildingID,
+              let workerID = workerID,
+              let taskCategory = taskCategory,
+              let taskRecurrence = taskRecurrence,
+              let taskUrgency = taskUrgency,
+              let sqliteManager = sqliteManager else {
             print("Error mapping CSV data for task: \(taskName)")
             return
         }
@@ -335,8 +338,6 @@ class TaskManager {
         let endDate = Calendar.current.date(byAdding: .hour, value: Int.random(in: 1...3), to: startDate) ?? dueDate
         
         do {
-            guard let db = SQLiteManager.shared.db else { return }
-            
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let dueDateStr = dateFormatter.string(from: dueDate)
@@ -353,17 +354,22 @@ class TaskManager {
             ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
             """
             
-            try db.run(insertQuery, taskName, description, buildingID, dueDateStr,
-                       recurrence, urgency, category, startTimeStr, endTimeStr, skillLevel)
+            try await sqliteManager.execute(insertQuery, parameters: [
+                taskName, description, buildingID, dueDateStr,
+                recurrence, urgency, category, startTimeStr, endTimeStr, skillLevel
+            ])
             
-            // Get task ID
-            let taskId = db.lastInsertRowid
+            // Get last insert rowid
+            let lastIdQuery = "SELECT last_insert_rowid() as id"
+            let rows = try await sqliteManager.query(lastIdQuery)
             
-            // Create worker assignment
-            let assignmentQuery = "INSERT INTO task_assignments (taskId, workerId) VALUES (?, ?)"
-            try db.run(assignmentQuery, taskId, workerID)
-            
-            print("Added task from CSV: \(taskName) for building \(buildingName) assigned to \(workerName)")
+            if let row = rows.first, let taskId = row["id"] as? Int64 {
+                // Create worker assignment
+                let assignmentQuery = "INSERT INTO task_assignments (taskId, workerId) VALUES (?, ?)"
+                try await sqliteManager.execute(assignmentQuery, parameters: [taskId, workerID])
+                
+                print("Added task from CSV: \(taskName) for building \(buildingName) assigned to \(workerName)")
+            }
         } catch {
             print("Error adding task from CSV \(taskName): \(error)")
         }
@@ -373,17 +379,33 @@ class TaskManager {
     
     /// Fetch tasks for a worker on a specific date
     func fetchTasks(forWorker workerId: String, date: Date) -> [FrancoSphere.MaintenanceTask] {
+        // This needs to be synchronous for backward compatibility
+        // Use a semaphore to wait for async result
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: [FrancoSphere.MaintenanceTask] = []
+        
+        Task {
+            result = await fetchTasksAsync(forWorker: workerId, date: date)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
+    }
+    
+    /// Async version of fetchTasks
+    func fetchTasksAsync(forWorker workerId: String, date: Date) async -> [FrancoSphere.MaintenanceTask] {
+        guard let sqliteManager = sqliteManager else {
+            print("SQLite manager not initialized")
+            return []
+        }
+        
         var tasks: [FrancoSphere.MaintenanceTask] = []
         
         do {
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let dateString = dateFormatter.string(from: date)
-            
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return []
-            }
             
             let query = """
             SELECT t.id, t.name, t.description, t.buildingId, t.scheduledDate, t.isCompleted,
@@ -394,21 +416,24 @@ class TaskManager {
             GROUP BY t.id
             """
             
-            let rows = try db.prepare(query, workerId, "\(dateString)%")
+            let rows = try await sqliteManager.query(query, parameters: [workerId, "\(dateString)%"])
             
             for row in rows {
-                let id = row[0] as! Int64
-                let name = row[1] as! String
-                let description = row[2] as? String ?? ""
-                let buildingId = row[3] as! String
-                let dateStr = row[4] as? String ?? dateString
-                let isCompleted = (row[5] as? Int64 ?? 0) == 1
+                guard let id = row["id"] as? Int64,
+                      let name = row["name"] as? String,
+                      let buildingId = row["buildingId"] as? String else {
+                    continue
+                }
                 
-                let recurrenceStr = row[6] as? String ?? "One Time"
-                let urgencyStr = row[7] as? String ?? "Medium"
-                let categoryStr = row[8] as? String ?? "Maintenance"
-                let startTimeStr = row[9] as? String
-                let endTimeStr = row[10] as? String
+                let description = row["description"] as? String ?? ""
+                let dateStr = row["scheduledDate"] as? String ?? dateString
+                let isCompleted = (row["isCompleted"] as? Int64 ?? 0) == 1
+                
+                let recurrenceStr = row["recurrence"] as? String ?? "One Time"
+                let urgencyStr = row["urgencyLevel"] as? String ?? "Medium"
+                let categoryStr = row["category"] as? String ?? "Maintenance"
+                let startTimeStr = row["startTime"] as? String
+                let endTimeStr = row["endTime"] as? String
                 
                 dateFormatter.dateFormat = "yyyy-MM-dd"
                 let dueDate = dateFormatter.date(from: dateStr) ?? Date()
@@ -428,7 +453,7 @@ class TaskManager {
                 let urgency = FrancoSphere.TaskUrgency(rawValue: urgencyStr) ?? .medium
                 let category = FrancoSphere.TaskCategory(rawValue: categoryStr) ?? .maintenance
                 
-                let assignedWorkers = fetchAssignedWorkers(taskId: id)
+                let assignedWorkers = await fetchAssignedWorkers(taskId: id)
                 
                 let task = FrancoSphere.MaintenanceTask(
                     id: "\(id)",
@@ -455,15 +480,16 @@ class TaskManager {
     }
     
     /// Fetch assigned workers for a task
-    private func fetchAssignedWorkers(taskId: Int64) -> [String] {
+    private func fetchAssignedWorkers(taskId: Int64) async -> [String] {
+        guard let sqliteManager = sqliteManager else { return [] }
+        
         var workers: [String] = []
         do {
-            guard let db = SQLiteManager.shared.db else { return [] }
             let query = "SELECT workerId FROM task_assignments WHERE taskId = ?"
+            let rows = try await sqliteManager.query(query, parameters: [taskId])
             
-            let rows = try db.prepare(query, taskId)
             for row in rows {
-                if let workerId = row[0] as? String {
+                if let workerId = row["workerId"] as? String {
                     workers.append(workerId)
                 }
             }
@@ -473,16 +499,30 @@ class TaskManager {
         return workers
     }
     
-    /// Fetch tasks for a building
+    /// Fetch tasks for a building (synchronous wrapper)
     func fetchTasks(forBuilding buildingId: String, includePastTasks: Bool = false) -> [FrancoSphere.MaintenanceTask] {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: [FrancoSphere.MaintenanceTask] = []
+        
+        Task {
+            result = await fetchTasksAsync(forBuilding: buildingId, includePastTasks: includePastTasks)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
+    }
+    
+    /// Async version of fetchTasks for building
+    func fetchTasksAsync(forBuilding buildingId: String, includePastTasks: Bool = false) async -> [FrancoSphere.MaintenanceTask] {
+        guard let sqliteManager = sqliteManager else {
+            print("SQLite manager not initialized")
+            return []
+        }
+        
         var tasks: [FrancoSphere.MaintenanceTask] = []
         
         do {
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return []
-            }
-            
             let dateFilter = includePastTasks ? "" : "AND (t.isCompleted = 0 OR t.scheduledDate >= date('now'))"
             
             let query = """
@@ -493,20 +533,24 @@ class TaskManager {
             ORDER BY t.scheduledDate ASC
             """
             
-            let rows = try db.prepare(query, buildingId)
+            let rows = try await sqliteManager.query(query, parameters: [buildingId])
+            
             for row in rows {
-                let id = row[0] as! Int64
-                let name = row[1] as! String
-                let description = row[2] as? String ?? ""
-                let buildingId = row[3] as! String
-                let dateStr = row[4] as? String ?? ""
-                let isCompleted = (row[5] as? Int64 ?? 0) == 1
+                guard let id = row["id"] as? Int64,
+                      let name = row["name"] as? String,
+                      let buildingId = row["buildingId"] as? String else {
+                    continue
+                }
                 
-                let recurrenceStr = row[6] as? String ?? "One Time"
-                let urgencyStr = row[7] as? String ?? "Medium"
-                let categoryStr = row[8] as? String ?? "Maintenance"
-                let startTimeStr = row[9] as? String
-                let endTimeStr = row[10] as? String
+                let description = row["description"] as? String ?? ""
+                let dateStr = row["scheduledDate"] as? String ?? ""
+                let isCompleted = (row["isCompleted"] as? Int64 ?? 0) == 1
+                
+                let recurrenceStr = row["recurrence"] as? String ?? "One Time"
+                let urgencyStr = row["urgencyLevel"] as? String ?? "Medium"
+                let categoryStr = row["category"] as? String ?? "Maintenance"
+                let startTimeStr = row["startTime"] as? String
+                let endTimeStr = row["endTime"] as? String
                 
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -527,7 +571,7 @@ class TaskManager {
                 let urgency = FrancoSphere.TaskUrgency(rawValue: urgencyStr) ?? .medium
                 let category = FrancoSphere.TaskCategory(rawValue: categoryStr) ?? .maintenance
                 
-                let assignedWorkers = fetchAssignedWorkers(taskId: id)
+                let assignedWorkers = await fetchAssignedWorkers(taskId: id)
                 
                 let task = FrancoSphere.MaintenanceTask(
                     id: "\(id)",
@@ -553,14 +597,28 @@ class TaskManager {
         return tasks
     }
     
-    /// Create a new task
+    /// Create a new task (synchronous wrapper)
     func createTask(_ task: FrancoSphere.MaintenanceTask) -> Bool {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result = false
+        
+        Task {
+            result = await createTaskAsync(task)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
+    }
+    
+    /// Async version of createTask
+    func createTaskAsync(_ task: FrancoSphere.MaintenanceTask) async -> Bool {
+        guard let sqliteManager = sqliteManager else {
+            print("SQLite manager not initialized")
+            return false
+        }
+        
         do {
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return false
-            }
-            
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let dueDateStr = dateFormatter.string(from: task.dueDate)
@@ -579,18 +637,24 @@ class TaskManager {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
-            try db.run(insertQuery, task.name, task.description, task.buildingID, dueDateStr, isCompleted,
-                       task.recurrence.rawValue, task.urgency.rawValue, task.category.rawValue,
-                       startTimeStr, endTimeStr)
+            try await sqliteManager.execute(insertQuery, parameters: [
+                task.name, task.description, task.buildingID, dueDateStr, isCompleted,
+                task.recurrence.rawValue, task.urgency.rawValue, task.category.rawValue,
+                startTimeStr ?? NSNull(), endTimeStr ?? NSNull()
+            ])
             
-            let taskId = db.lastInsertRowid
+            // Get last insert rowid
+            let lastIdQuery = "SELECT last_insert_rowid() as id"
+            let rows = try await sqliteManager.query(lastIdQuery)
             
-            if !task.assignedWorkers.isEmpty {
-                try createTaskAssignments(taskId: taskId, workerIds: task.assignedWorkers)
-            }
-            
-            if task.recurrence != .oneTime {
-                scheduleNextOccurrence(task: task)
+            if let row = rows.first, let taskId = row["id"] as? Int64 {
+                if !task.assignedWorkers.isEmpty {
+                    try await createTaskAssignments(taskId: taskId, workerIds: task.assignedWorkers)
+                }
+                
+                if task.recurrence != .oneTime {
+                    await scheduleNextOccurrence(task: task)
+                }
             }
             
             print("Successfully created task: \(task.name)")
@@ -603,63 +667,68 @@ class TaskManager {
     }
     
     /// Create task assignments for workers
-    func createTaskAssignments(taskId: Int64, workerIds: [String]) throws {
-        guard let db = SQLiteManager.shared.db else {
-            throw NSError(domain: "TaskManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Database connection not available"])
+    func createTaskAssignments(taskId: Int64, workerIds: [String]) async throws {
+        guard let sqliteManager = sqliteManager else {
+            throw NSError(domain: "TaskManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "SQLite manager not initialized"])
         }
         
-        try db.execute("BEGIN TRANSACTION")
+        try await sqliteManager.execute("BEGIN TRANSACTION")
         
         do {
-            try db.run("DELETE FROM task_assignments WHERE taskId = ?", taskId)
+            try await sqliteManager.execute("DELETE FROM task_assignments WHERE taskId = ?", parameters: [taskId])
             
             for workerId in workerIds {
-                try db.run("INSERT INTO task_assignments (taskId, workerId) VALUES (?, ?)", taskId, workerId)
+                try await sqliteManager.execute("INSERT INTO task_assignments (taskId, workerId) VALUES (?, ?)", parameters: [taskId, workerId])
             }
             
-            try db.execute("COMMIT")
+            try await sqliteManager.execute("COMMIT")
         } catch {
-            try db.execute("ROLLBACK")
+            try await sqliteManager.execute("ROLLBACK")
             throw error
         }
     }
     
-    /// Toggle task completion status
+    /// Toggle task completion status (synchronous wrapper)
     func toggleTaskCompletion(taskID: String, completedBy: String = "System") {
-        guard let taskIdInt = Int64(taskID) else {
-            print("Invalid task ID format")
+        Task {
+            await toggleTaskCompletionAsync(taskID: taskID, completedBy: completedBy)
+        }
+    }
+    
+    /// Async version of toggleTaskCompletion
+    func toggleTaskCompletionAsync(taskID: String, completedBy: String = "System") async {
+        guard let taskIdInt = Int64(taskID),
+              let sqliteManager = sqliteManager else {
+            print("Invalid task ID format or SQLite manager not initialized")
             return
         }
         
         do {
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return
-            }
-            
             // Get current completion status
-            let rows = try db.prepare("SELECT isCompleted FROM tasks WHERE id = ?", taskIdInt)
+            let statusQuery = "SELECT isCompleted FROM tasks WHERE id = ?"
+            let rows = try await sqliteManager.query(statusQuery, parameters: [taskIdInt])
             
-            if let row = rows.next() {
-                let currentStatus = row[0] as! Int64
+            if let row = rows.first {
+                let currentStatus = row["isCompleted"] as? Int64 ?? 0
                 let newStatus = currentStatus == 0 ? 1 : 0
                 
                 // Update task status
-                try db.run("UPDATE tasks SET isCompleted = ? WHERE id = ?", newStatus, taskIdInt)
+                try await sqliteManager.execute("UPDATE tasks SET isCompleted = ? WHERE id = ?", parameters: [newStatus, taskIdInt])
                 
                 // If task is being marked as complete, add to history and handle recurring tasks
                 if newStatus == 1 {
                     // Get task details for maintenance history
-                    let taskRows = try db.prepare("SELECT name, buildingId FROM tasks WHERE id = ?", taskIdInt)
+                    let taskQuery = "SELECT name, buildingId FROM tasks WHERE id = ?"
+                    let taskRows = try await sqliteManager.query(taskQuery, parameters: [taskIdInt])
                     
-                    if let taskRow = taskRows.next() {
-                        let taskName = taskRow[0] as! String
-                        let buildingId = taskRow[1] as! String
+                    if let taskRow = taskRows.first,
+                       let taskName = taskRow["name"] as? String,
+                       let buildingId = taskRow["buildingId"] as? String {
                         
                         // Get worker who completed the task
                         let workerQuery = "SELECT workerId FROM task_assignments WHERE taskId = ? LIMIT 1"
-                        let workerRows = try db.prepare(workerQuery, taskIdInt)
-                        let workerId = workerRows.next().flatMap { $0[0] as? String } ?? ""
+                        let workerRows = try await sqliteManager.query(workerQuery, parameters: [taskIdInt])
+                        let workerId = workerRows.first?["workerId"] as? String ?? ""
                         
                         // Add to maintenance history
                         let dateFormatter = DateFormatter()
@@ -672,12 +741,14 @@ class TaskManager {
                         ) VALUES (?, ?, ?, ?, ?, ?, ?)
                         """
                         
-                        try db.run(historyQuery, buildingId, "\(taskIdInt)", taskName, "Task marked as completed",
-                                   completionDate, completedBy, workerId)
+                        try await sqliteManager.execute(historyQuery, parameters: [
+                            buildingId, "\(taskIdInt)", taskName, "Task marked as completed",
+                            completionDate, completedBy, workerId
+                        ])
                     }
                     
                     // Handle recurring tasks
-                    scheduleNextOccurrenceForTask(taskId: taskIdInt)
+                    await scheduleNextOccurrenceForTask(taskId: taskIdInt)
                 }
                 
                 print("Successfully toggled completion status for task \(taskID) to \(newStatus)")
@@ -690,27 +761,27 @@ class TaskManager {
     }
     
     /// Schedule next occurrence for a completed recurring task
-    private func scheduleNextOccurrenceForTask(taskId: Int64) {
+    private func scheduleNextOccurrenceForTask(taskId: Int64) async {
+        guard let sqliteManager = sqliteManager else { return }
+        
         do {
-            guard let db = SQLiteManager.shared.db else { return }
-            
             let query = """
             SELECT name, description, buildingId, recurrence, urgencyLevel, category
             FROM tasks
             WHERE id = ? AND recurrence != ?
             """
             
-            let rows = try db.prepare(query, taskId, "One Time")
+            let rows = try await sqliteManager.query(query, parameters: [taskId, "One Time"])
             
-            if let row = rows.next() {
-                let name = row[0] as! String
-                let description = row[1] as? String ?? ""
-                let buildingId = row[2] as! String
-                let recurrenceStr = row[3] as! String
-                let urgencyStr = row[4] as! String
-                let categoryStr = row[5] as! String
+            if let row = rows.first,
+               let name = row["name"] as? String,
+               let buildingId = row["buildingId"] as? String,
+               let recurrenceStr = row["recurrence"] as? String,
+               let recurrence = FrancoSphere.TaskRecurrence(rawValue: recurrenceStr) {
                 
-                guard let recurrence = FrancoSphere.TaskRecurrence(rawValue: recurrenceStr) else { return }
+                let description = row["description"] as? String ?? ""
+                let urgencyStr = row["urgencyLevel"] as? String ?? "Medium"
+                let categoryStr = row["category"] as? String ?? "Maintenance"
                 
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -745,21 +816,27 @@ class TaskManager {
                 VALUES (?, ?, ?, ?, 0, ?, ?, ?)
                 """
                 
-                try db.run(insertQuery, name, description, buildingId, nextDateStr,
-                           recurrenceStr, urgencyStr, categoryStr)
+                try await sqliteManager.execute(insertQuery, parameters: [
+                    name, description, buildingId, nextDateStr,
+                    recurrenceStr, urgencyStr, categoryStr
+                ])
                 
-                let newTaskId = db.lastInsertRowid
+                // Get the new task ID
+                let lastIdQuery = "SELECT last_insert_rowid() as id"
+                let idRows = try await sqliteManager.query(lastIdQuery)
                 
-                // Copy worker assignments from the original task
-                let assignmentsQuery = """
-                INSERT INTO task_assignments (taskId, workerId)
-                SELECT ?, workerId FROM task_assignments
-                WHERE taskId = ?
-                """
-                
-                try db.run(assignmentsQuery, newTaskId, taskId)
-                
-                print("Scheduled next occurrence for task \(name) on \(nextDateStr)")
+                if let idRow = idRows.first, let newTaskId = idRow["id"] as? Int64 {
+                    // Copy worker assignments from the original task
+                    let assignmentsQuery = """
+                    INSERT INTO task_assignments (taskId, workerId)
+                    SELECT ?, workerId FROM task_assignments
+                    WHERE taskId = ?
+                    """
+                    
+                    try await sqliteManager.execute(assignmentsQuery, parameters: [newTaskId, taskId])
+                    
+                    print("Scheduled next occurrence for task \(name) on \(nextDateStr)")
+                }
             }
         } catch {
             print("Error scheduling next occurrence: \(error)")
@@ -767,33 +844,53 @@ class TaskManager {
     }
     
     /// Schedule next occurrence for a recurring task based on a MaintenanceTask object
-    private func scheduleNextOccurrence(task: FrancoSphere.MaintenanceTask) {
+    private func scheduleNextOccurrence(task: FrancoSphere.MaintenanceTask) async {
         guard task.recurrence != .oneTime,
               let nextTask = task.createNextOccurrence() else {
             return
         }
         
-        _ = createTask(nextTask)
+        _ = await createTaskAsync(nextTask)
     }
     
     /// Add weather-based tasks to the database
     func createWeatherBasedTasks(for buildingID: String, tasks: [FrancoSphere.MaintenanceTask]) {
+        Task {
+            await createWeatherBasedTasksAsync(for: buildingID, tasks: tasks)
+        }
+    }
+    
+    func createWeatherBasedTasksAsync(for buildingID: String, tasks: [FrancoSphere.MaintenanceTask]) async {
         for task in tasks {
-            _ = createTask(task)
+            _ = await createTaskAsync(task)
         }
         print("Successfully created \(tasks.count) weather-based tasks for building \(buildingID)")
     }
     
-    /// Fetch maintenance history for a building
+    /// Fetch maintenance history for a building (synchronous wrapper)
     func fetchMaintenanceHistory(forBuilding buildingId: String, limit: Int = 20) -> [FrancoSphere.MaintenanceRecord] {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: [FrancoSphere.MaintenanceRecord] = []
+        
+        Task {
+            result = await fetchMaintenanceHistoryAsync(forBuilding: buildingId, limit: limit)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
+    }
+    
+    /// Async version of fetchMaintenanceHistory
+    func fetchMaintenanceHistoryAsync(forBuilding buildingId: String, limit: Int = 20) async -> [FrancoSphere.MaintenanceRecord] {
+        guard let sqliteManager = sqliteManager else {
+            print("SQLite manager not initialized")
+            return []
+        }
+        
         var records: [FrancoSphere.MaintenanceRecord] = []
         
         do {
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return []
-            }
-            
             let query = """
             SELECT id, taskId, taskName, notes, completionDate, completedBy, workerId
             FROM maintenance_history
@@ -802,16 +899,19 @@ class TaskManager {
             LIMIT ?
             """
             
-            let rows = try db.prepare(query, buildingId, limit)
+            let rows = try await sqliteManager.query(query, parameters: [buildingId, limit])
             
             for row in rows {
-                let id = row[0] as! Int64
-                let taskId = row[1] as? String ?? ""
-                let taskName = row[2] as! String
-                let notes = row[3] as? String ?? ""
-                let dateStr = row[4] as! String
-                let completedBy = row[5] as! String
-                let workerId = row[6] as? String ?? ""
+                guard let id = row["id"] as? Int64,
+                      let taskName = row["taskName"] as? String,
+                      let dateStr = row["completionDate"] as? String,
+                      let completedBy = row["completedBy"] as? String else {
+                    continue
+                }
+                
+                let taskId = row["taskId"] as? String ?? ""
+                let notes = row["notes"] as? String ?? ""
+                let workerId = row["workerId"] as? String ?? ""
                 
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -887,16 +987,30 @@ class TaskManager {
         return createTask(taskWithWorkers)
     }
     
-    /// Fetch all tasks for a specific date range
+    /// Fetch all tasks for a specific date range (synchronous wrapper)
     func fetchTasks(fromDate: Date, toDate: Date) -> [FrancoSphere.MaintenanceTask] {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: [FrancoSphere.MaintenanceTask] = []
+        
+        Task {
+            result = await fetchTasksAsync(fromDate: fromDate, toDate: toDate)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
+    }
+    
+    /// Async version of fetchTasks for date range
+    func fetchTasksAsync(fromDate: Date, toDate: Date) async -> [FrancoSphere.MaintenanceTask] {
+        guard let sqliteManager = sqliteManager else {
+            print("SQLite manager not initialized")
+            return []
+        }
+        
         var tasks: [FrancoSphere.MaintenanceTask] = []
         
         do {
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return []
-            }
-            
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let fromDateStr = dateFormatter.string(from: fromDate)
@@ -910,21 +1024,24 @@ class TaskManager {
             ORDER BY t.scheduledDate ASC
             """
             
-            let rows = try db.prepare(query, fromDateStr, toDateStr)
+            let rows = try await sqliteManager.query(query, parameters: [fromDateStr, toDateStr])
             
             for row in rows {
-                let id = row[0] as! Int64
-                let name = row[1] as! String
-                let description = row[2] as? String ?? ""
-                let buildingId = row[3] as! String
-                let dateStr = row[4] as? String ?? ""
-                let isCompleted = (row[5] as? Int64 ?? 0) == 1
+                guard let id = row["id"] as? Int64,
+                      let name = row["name"] as? String,
+                      let buildingId = row["buildingId"] as? String else {
+                    continue
+                }
                 
-                let recurrenceStr = row[6] as? String ?? "One Time"
-                let urgencyStr = row[7] as? String ?? "Medium"
-                let categoryStr = row[8] as? String ?? "Maintenance"
-                let startTimeStr = row[9] as? String
-                let endTimeStr = row[10] as? String
+                let description = row["description"] as? String ?? ""
+                let dateStr = row["scheduledDate"] as? String ?? ""
+                let isCompleted = (row["isCompleted"] as? Int64 ?? 0) == 1
+                
+                let recurrenceStr = row["recurrence"] as? String ?? "One Time"
+                let urgencyStr = row["urgencyLevel"] as? String ?? "Medium"
+                let categoryStr = row["category"] as? String ?? "Maintenance"
+                let startTimeStr = row["startTime"] as? String
+                let endTimeStr = row["endTime"] as? String
                 
                 dateFormatter.dateFormat = "yyyy-MM-dd"
                 let dueDate = dateFormatter.date(from: dateStr) ?? Date()
@@ -944,7 +1061,7 @@ class TaskManager {
                 let urgency = FrancoSphere.TaskUrgency(rawValue: urgencyStr) ?? .medium
                 let category = FrancoSphere.TaskCategory(rawValue: categoryStr) ?? .maintenance
                 
-                let assignedWorkers = fetchAssignedWorkers(taskId: id)
+                let assignedWorkers = await fetchAssignedWorkers(taskId: id)
                 
                 let task = FrancoSphere.MaintenanceTask(
                     id: "\(id)",
@@ -971,90 +1088,12 @@ class TaskManager {
     }
     
     func retrieveTasks(forBuilding buildingId: String, includePastTasks: Bool = false) -> [FrancoSphere.MaintenanceTask] {
-        // This is the same implementation as the original fetchTasks method
-        var tasks: [FrancoSphere.MaintenanceTask] = []
-        
-        do {
-            guard let db = SQLiteManager.shared.db else {
-                print("Database connection not available")
-                return []
-            }
-            
-            let dateFilter = includePastTasks ? "" : "AND (t.isCompleted = 0 OR t.scheduledDate >= date('now'))"
-            
-            let query = """
-            SELECT t.id, t.name, t.description, t.buildingId, t.scheduledDate, t.isCompleted,
-                   t.recurrence, t.urgencyLevel, t.category, t.startTime, t.endTime
-            FROM tasks t
-            WHERE t.buildingId = ? \(dateFilter)
-            ORDER BY t.scheduledDate ASC
-            """
-            
-            let rows = try db.prepare(query, buildingId)
-            for row in rows {
-                let id = row[0] as! Int64
-                let name = row[1] as! String
-                let description = row[2] as? String ?? ""
-                let buildingId = row[3] as! String
-                let dateStr = row[4] as? String ?? ""
-                let isCompleted = (row[5] as? Int64 ?? 0) == 1
-                
-                let recurrenceStr = row[6] as? String ?? "One Time"
-                let urgencyStr = row[7] as? String ?? "Medium"
-                let categoryStr = row[8] as? String ?? "Maintenance"
-                let startTimeStr = row[9] as? String
-                let endTimeStr = row[10] as? String
-                
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd"
-                let dueDate = dateFormatter.date(from: dateStr) ?? Date()
-                
-                var startTime: Date? = nil
-                var endTime: Date? = nil
-                if let startStr = startTimeStr {
-                    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                    startTime = dateFormatter.date(from: startStr)
-                }
-                if let endStr = endTimeStr {
-                    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                    endTime = dateFormatter.date(from: endStr)
-                }
-                
-                let recurrence = FrancoSphere.TaskRecurrence(rawValue: recurrenceStr) ?? .oneTime
-                let urgency = FrancoSphere.TaskUrgency(rawValue: urgencyStr) ?? .medium
-                let category = FrancoSphere.TaskCategory(rawValue: categoryStr) ?? .maintenance
-                
-                let assignedWorkers = fetchAssignedWorkers(taskId: id)
-                
-                let task = FrancoSphere.MaintenanceTask(
-                    id: "\(id)",
-                    name: name,
-                    buildingID: buildingId,
-                    description: description,
-                    dueDate: dueDate,
-                    startTime: startTime,
-                    endTime: endTime,
-                    category: category,
-                    urgency: urgency,
-                    recurrence: recurrence,
-                    isComplete: isCompleted,
-                    assignedWorkers: assignedWorkers
-                )
-                tasks.append(task)
-            }
-            
-        } catch {
-            print("Error fetching tasks for building: \(error)")
-        }
-        
-        return tasks
+        // This is just a wrapper for fetchTasks to avoid ambiguity
+        return fetchTasks(forBuilding: buildingId, includePastTasks: includePastTasks)
     }
-    
-    // Update the two methods that are causing the ambiguity errors:
     
     /// Get tasks for a specific building and category
     func getTasks(forBuilding buildingId: String, category: FrancoSphere.TaskCategory? = nil) -> [FrancoSphere.MaintenanceTask] {
-        // Changed fetchTasks to retrieveTasks
         let allTasks = retrieveTasks(forBuilding: buildingId, includePastTasks: false)
         
         // If no category filter is provided, return all tasks
@@ -1068,7 +1107,6 @@ class TaskManager {
     
     /// Get maintenance statistics for a building
     func getMaintenanceStats(forBuilding buildingId: String, period: Int = 30) -> (completed: Int, pending: Int, overdue: Int) {
-        // Changed fetchTasks to retrieveTasks
         let allTasks = retrieveTasks(forBuilding: buildingId, includePastTasks: true)
         
         // Calculate date threshold for period
@@ -1083,4 +1121,5 @@ class TaskManager {
         let overdue = tasksInPeriod.filter { !$0.isComplete && $0.isPastDue }.count
         
         return (completed, pending, overdue)
-    }}
+    }
+}

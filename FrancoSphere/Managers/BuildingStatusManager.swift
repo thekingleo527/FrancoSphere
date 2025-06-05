@@ -5,33 +5,38 @@ import SwiftUI
 class BuildingStatusManager {
     static let shared = BuildingStatusManager()
     
-    /// Task-based statuses for buildings
+    /// Task‐based statuses for buildings
     enum TaskStatus: String {
         case complete = "Complete"
-        case partial = "Partial"
-        case pending = "Pending"
-        case overdue = "Overdue"
+        case partial  = "Partial"
+        case pending  = "Pending"
+        case overdue  = "Overdue"
         
         var color: Color {
             switch self {
             case .complete: return .green
-            case .partial: return .yellow
-            case .pending: return .blue
-            case .overdue: return .red
+            case .partial:  return .yellow
+            case .pending:  return .blue
+            case .overdue:  return .red
             }
         }
         
-        var buildingStatus: FSBuildingStatus {
+        /// Map each TaskStatus into the single FrancoSphere.BuildingStatus enum
+        var buildingStatus: FrancoSphere.BuildingStatus {
             switch self {
-            case .complete: return .operational // Fully operational
-            case .partial: return .underMaintenance // Partially maintained
-            case .pending: return .underMaintenance // Pending maintenance
-            case .overdue: return .closed // Requires immediate attention
+            case .complete:
+                return .operational             // fully operational
+            case .partial:
+                return .underMaintenance       // partially maintained
+            case .pending:
+                return .underMaintenance       // pending maintenance
+            case .overdue:
+                return .closed                 // needs immediate attention
             }
         }
     }
     
-    /// UI component for displaying task status
+    /// A small “chip” view that displays TaskStatus in UI
     struct StatusChipView: View {
         let status: TaskStatus
         
@@ -46,11 +51,9 @@ class BuildingStatusManager {
         }
     }
     
-    // Cache for building statuses
     private var buildingStatusCache: [String: TaskStatus] = [:]
     
     private init() {
-        // Subscribe to task completion notifications
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleTaskStatusChange),
@@ -63,62 +66,56 @@ class BuildingStatusManager {
         NotificationCenter.default.removeObserver(self)
     }
     
-    /// Evaluates the status of a building based on task completion
+    /// Evaluates a TaskStatus for this building ID (caches result)
     func evaluateStatus(for buildingID: String) -> TaskStatus {
-        // If cached, return from cache
-        if let cachedStatus = buildingStatusCache[buildingID] {
-            return cachedStatus
+        if let cached = buildingStatusCache[buildingID] {
+            return cached
         }
         
-        // Get all tasks for this building today
         let tasks = getAllTasks(for: buildingID)
+        let status: TaskStatus
         
         if tasks.isEmpty {
-            let status = TaskStatus.pending
-            buildingStatusCache[buildingID] = status
-            return status
-        }
-        
-        let completedTasks = tasks.filter { $0.isComplete }
-        
-        if completedTasks.count == tasks.count {
-            let status = TaskStatus.complete
-            buildingStatusCache[buildingID] = status
-            return status
-        } else if completedTasks.isEmpty {
-            // Check if end of day
-            if Calendar.current.component(.hour, from: Date()) >= 17 {
-                let status = TaskStatus.overdue
-                buildingStatusCache[buildingID] = status
-                return status
-            } else {
-                let status = TaskStatus.pending
-                buildingStatusCache[buildingID] = status
-                return status
-            }
+            status = .pending
         } else {
-            let status = TaskStatus.partial
-            buildingStatusCache[buildingID] = status
-            return status
+            let completedCount = tasks.filter { $0.isComplete }.count
+            
+            if completedCount == tasks.count {
+                status = .complete
+            } else if completedCount == 0 {
+                // after 5 PM, mark as overdue; else still pending
+                if Calendar.current.component(.hour, from: Date()) >= 17 {
+                    status = .overdue
+                } else {
+                    status = .pending
+                }
+            } else {
+                status = .partial
+            }
         }
+        
+        buildingStatusCache[buildingID] = status
+        return status
     }
     
-    /// Gets the color associated with a building's status
+    /// Returns the actual FrancoSphere.BuildingStatus enum for UI logic
+    func buildingStatus(for buildingID: String) -> FrancoSphere.BuildingStatus {
+        return evaluateStatus(for: buildingID).buildingStatus
+    }
+    
+    /// Returns the color for a building’s status
     func getStatusColor(for buildingID: String) -> Color {
         return evaluateStatus(for: buildingID).color
     }
     
-    /// Gets the text label for a building's status
+    /// Returns the raw text label for a building’s status
     func getStatusText(for buildingID: String) -> String {
         return evaluateStatus(for: buildingID).rawValue
     }
     
-    /// Recalculates status for a building after task status changes
+    /// Forces recalculation (removes cache) and emits a notification
     func recalculateStatus(for buildingID: String) {
-        // Remove from cache to force recalculation next time
         buildingStatusCache.removeValue(forKey: buildingID)
-        
-        // Notify any subscribers that the status has changed
         NotificationCenter.default.post(
             name: NSNotification.Name("BuildingStatusChanged"),
             object: nil,
@@ -126,15 +123,15 @@ class BuildingStatusManager {
         )
     }
     
-    /// Gets a StatusChipView for displaying a building's status
+    /// Provides a small chip view (SwiftUI) for the building’s TaskStatus
     func getStatusChip(for buildingID: String) -> StatusChipView {
-        let status = evaluateStatus(for: buildingID)
-        return StatusChipView(status: status)
+        let ts = evaluateStatus(for: buildingID)
+        return StatusChipView(status: ts)
     }
     
-    // MARK: - Private Methods
+    // MARK: – Private Helpers
     
-    /// Handles task status change notifications
+    /// Called when any task’s “completion status” changes
     @objc private func handleTaskStatusChange(notification: Notification) {
         if let taskID = notification.userInfo?["taskID"] as? String,
            let buildingID = getBuildingIDForTask(taskID) {
@@ -142,30 +139,19 @@ class BuildingStatusManager {
         }
     }
     
-    /// Gets building ID for a task
+    /// Stub: map a task ID to its building ID
     private func getBuildingIDForTask(_ taskID: String) -> String? {
-        // This would normally query your database
-        // For now, just return a placeholder
+        // In a real app, query your database. For now, return placeholder.
         return "1"
     }
     
-    /// Gets all tasks for a building - using FSLegacyTask
-    private func getAllTasks(for buildingID: String) -> [FSLegacyTask] {
-        // Convert from FrancoSphere.MaintenanceTask to FSLegacyTask
-        let francoSphereTasks = getAllFrancoSphereTasks(for: buildingID)
-        return francoSphereTasks.map { FSLegacyTask.fromFrancoSphereTask($0) }
-    }
-    
-    /// Gets all tasks for a building in FrancoSphere namespace format
+    /// Fetches all tasks (FrancoSphere.MaintenanceTask) for a given building
     private func getAllFrancoSphereTasks(for buildingID: String) -> [FrancoSphere.MaintenanceTask] {
-        // This would normally query your database
-        // For now, return a hardcoded list based on the building ID
-        
-        // For testing purposes, create different statuses for different buildings
+        // Replace with your real data‐fetch. Here, we stub two examples:
         switch buildingID {
         case "1":
             return [
-                FrancoSphere.MaintenanceTask(
+                .init(
                     id: UUID().uuidString,
                     name: "Daily Cleaning",
                     buildingID: buildingID,
@@ -179,7 +165,7 @@ class BuildingStatusManager {
             ]
         case "2":
             return [
-                FrancoSphere.MaintenanceTask(
+                .init(
                     id: UUID().uuidString,
                     name: "Inspect HVAC",
                     buildingID: buildingID,
@@ -190,7 +176,7 @@ class BuildingStatusManager {
                     recurrence: .monthly,
                     isComplete: false
                 ),
-                FrancoSphere.MaintenanceTask(
+                .init(
                     id: UUID().uuidString,
                     name: "Clean Lobby",
                     buildingID: buildingID,
@@ -205,5 +191,11 @@ class BuildingStatusManager {
         default:
             return []
         }
+    }
+    
+    /// Wraps each FrancoSphere.MaintenanceTask into a legacy FSLegacyTask
+    private func getAllTasks(for buildingID: String) -> [FSLegacyTask] {
+        let fsTasks = getAllFrancoSphereTasks(for: buildingID)
+        return fsTasks.map { FSLegacyTask.fromFrancoSphereTask($0) }
     }
 }

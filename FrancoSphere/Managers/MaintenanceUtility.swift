@@ -41,21 +41,36 @@ struct FSLegacyMaintenanceRecord: Identifiable, Codable, Hashable {
     }
 }
 
-// MARK: - TaskManager Extensions (File Scope)
+// MARK: - Helper Functions for TaskManager
 
-extension TaskManager {
-    // Convert and return legacy maintenance records
-    func fetchMaintenanceHistory(forBuilding buildingId: String) -> [FSLegacyMaintenanceRecord] {
-        // This would normally fetch from your database - for now using sample data
-        let records = self.fetchFrancoSphereRecords(forBuilding: buildingId)
-        return records.map { FSLegacyMaintenanceRecord.fromFrancoSphereRecord($0) }
+// Non-actor helper to fetch legacy maintenance history
+fileprivate func fetchLegacyMaintenanceHistory(forBuilding buildingId: String) -> [FSLegacyMaintenanceRecord] {
+    // Bridge actor isolation using Task
+    let semaphore = DispatchSemaphore(value: 0)
+    var result: [FrancoSphere.MaintenanceRecord] = []
+    
+    Task {
+        result = await TaskManager.shared.fetchMaintenanceHistoryAsync(forBuilding: buildingId)
+        semaphore.signal()
     }
     
-    // Helper method to fetch FrancoSphere records
-    private func fetchFrancoSphereRecords(forBuilding buildingId: String) -> [FrancoSphere.MaintenanceRecord] {
-        // This is a placeholder implementation
-        return []
+    semaphore.wait()
+    return result.map { FSLegacyMaintenanceRecord.fromFrancoSphereRecord($0) }
+}
+
+// Non-actor helper to fetch tasks
+fileprivate func fetchTasks(forBuilding buildingId: String, includePastTasks: Bool = false) -> [FrancoSphere.MaintenanceTask] {
+    // Bridge actor isolation using Task
+    let semaphore = DispatchSemaphore(value: 0)
+    var result: [FrancoSphere.MaintenanceTask] = []
+    
+    Task {
+        result = await TaskManager.shared.fetchTasksAsync(forBuilding: buildingId, includePastTasks: includePastTasks)
+        semaphore.signal()
     }
+    
+    semaphore.wait()
+    return result
 }
 
 // MARK: - Main Utility Class
@@ -68,8 +83,8 @@ class MaintenanceUtility {
     ///   - endDate: End date for the report
     /// - Returns: A maintenance report
     static func generateMaintenanceReport(buildingId: String, startDate: Date, endDate: Date) -> MaintenanceReport {
-        let taskManager = TaskManager.shared
-        let maintenanceHistory = taskManager.fetchMaintenanceHistory(forBuilding: buildingId)
+        // Use the helper function instead of calling TaskManager directly
+        let maintenanceHistory = fetchLegacyMaintenanceHistory(forBuilding: buildingId)
         let filteredHistory = maintenanceHistory.filter {
             $0.completionDate >= startDate && $0.completionDate <= endDate
         }
@@ -84,8 +99,8 @@ class MaintenanceUtility {
         let totalTasks = filteredHistory.count
         let averageCompletionTime: TimeInterval = 0 // Placeholder; add actual calculation if needed
         
-        // Get upcoming tasks - using the existing fetchTasks method directly
-        let upcomingTasks = taskManager.fetchTasks(forBuilding: buildingId)
+        // Get upcoming tasks - using our helper function
+        let upcomingTasks = fetchTasks(forBuilding: buildingId)
         
         // Count pending tasks
         let pendingTaskCount = upcomingTasks.filter { !$0.isComplete }.count
@@ -108,9 +123,8 @@ class MaintenanceUtility {
     static func generateMaintenanceRecommendations(buildingId: String) -> [MaintenanceRecommendation] {
         var recommendations: [MaintenanceRecommendation] = []
         
-        // Get maintenance history
-        let taskManager = TaskManager.shared
-        let history = taskManager.fetchMaintenanceHistory(forBuilding: buildingId)
+        // Get maintenance history using helper function
+        let history = fetchLegacyMaintenanceHistory(forBuilding: buildingId)
         
         // Check for HVAC maintenance
         let calendar = Calendar.current
@@ -198,14 +212,113 @@ class MaintenanceUtility {
     /// - Parameter buildingId: The building ID
     /// - Returns: Efficiency metrics
     static func calculateMaintenanceEfficiency(buildingId: String) -> MaintenanceEfficiency {
-        let taskManager = TaskManager.shared
-        
-        // Get all tasks - using the existing fetchTasks method directly
-        let allTasks = taskManager.fetchTasks(forBuilding: buildingId, includePastTasks: true)
+        // Get all tasks - using our helper function
+        let allTasks = fetchTasks(forBuilding: buildingId, includePastTasks: true)
         let completedTasks = allTasks.filter { $0.isComplete }
         
         // Calculate completion rate
-        let completionRate = completedTasks.count > 0 ?
+        let completionRate = allTasks.count > 0 ?
+            Double(completedTasks.count) / Double(allTasks.count) : 0
+        
+        // Calculate on-time completion rate
+        var onTimeCount = 0
+        for task in completedTasks {
+            if let endTime = task.endTime, endTime <= task.dueDate {
+                onTimeCount += 1
+            }
+        }
+        let onTimeRate = completedTasks.count > 0 ?
+            Double(onTimeCount) / Double(completedTasks.count) : 0
+        
+        return MaintenanceEfficiency(
+            completionRate: completionRate,
+            onTimeCompletionRate: onTimeRate,
+            averageDaysToComplete: 3.2, // Placeholder
+            costEfficiency: 0.85, // Placeholder
+            workerProductivity: 0.78 // Placeholder
+        )
+    }
+    
+    // MARK: - Async Versions (recommended for new code)
+    
+    /// Async version of generateMaintenanceReport - recommended for new code
+    static func generateMaintenanceReportAsync(buildingId: String, startDate: Date, endDate: Date) async -> MaintenanceReport {
+        // Use async methods directly on the actor
+        let maintenanceHistory = await TaskManager.shared.fetchMaintenanceHistoryAsync(forBuilding: buildingId)
+            .map { FSLegacyMaintenanceRecord.fromFrancoSphereRecord($0) }
+        
+        let filteredHistory = maintenanceHistory.filter {
+            $0.completionDate >= startDate && $0.completionDate <= endDate
+        }
+        
+        // Count tasks by category
+        var tasksByCategory: [FrancoSphere.TaskCategory: Int] = [:]
+        for category in FrancoSphere.TaskCategory.allCases {
+            tasksByCategory[category] = 0
+        }
+        
+        // Calculate statistics
+        let totalTasks = filteredHistory.count
+        let averageCompletionTime: TimeInterval = 0 // Placeholder
+        
+        // Get upcoming tasks
+        let upcomingTasks = await TaskManager.shared.fetchTasksAsync(forBuilding: buildingId)
+        
+        // Count pending tasks
+        let pendingTaskCount = upcomingTasks.filter { !$0.isComplete }.count
+        
+        return MaintenanceReport(
+            buildingId: buildingId,
+            startDate: startDate,
+            endDate: endDate,
+            completedTasks: filteredHistory,
+            taskCount: totalTasks,
+            tasksByCategory: tasksByCategory,
+            averageCompletionTime: averageCompletionTime,
+            pendingTaskCount: pendingTaskCount
+        )
+    }
+    
+    /// Async version of generateMaintenanceRecommendations
+    static func generateMaintenanceRecommendationsAsync(buildingId: String) async -> [MaintenanceRecommendation] {
+        var recommendations: [MaintenanceRecommendation] = []
+        
+        // Get maintenance history using async method
+        let history = await TaskManager.shared.fetchMaintenanceHistoryAsync(forBuilding: buildingId)
+            .map { FSLegacyMaintenanceRecord.fromFrancoSphereRecord($0) }
+        
+        // Check for HVAC maintenance
+        let calendar = Calendar.current
+        let threeMonthsAgo = calendar.date(byAdding: .month, value: -3, to: Date())!
+        let hvacMaintenance = history.first {
+            $0.taskName.contains("HVAC") && $0.completionDate > threeMonthsAgo
+        }
+        
+        if hvacMaintenance == nil {
+            recommendations.append(
+                MaintenanceRecommendation(
+                    title: "HVAC System Maintenance",
+                    description: "It's been over 3 months since the last HVAC maintenance.",
+                    priority: FrancoSphere.TaskUrgency.medium,
+                    category: FrancoSphere.TaskCategory.maintenance,
+                    suggestedTimeframe: "Within 2 weeks"
+                )
+            )
+        }
+        
+        // Add other recommendations (same logic as synchronous version)...
+        
+        return recommendations
+    }
+    
+    /// Async version of calculateMaintenanceEfficiency
+    static func calculateMaintenanceEfficiencyAsync(buildingId: String) async -> MaintenanceEfficiency {
+        // Get all tasks using async method
+        let allTasks = await TaskManager.shared.fetchTasksAsync(forBuilding: buildingId, includePastTasks: true)
+        let completedTasks = allTasks.filter { $0.isComplete }
+        
+        // Calculate completion rate
+        let completionRate = allTasks.count > 0 ?
             Double(completedTasks.count) / Double(allTasks.count) : 0
         
         // Calculate on-time completion rate

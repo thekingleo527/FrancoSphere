@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var authManager = AuthManager.shared
+    @StateObject private var authManager = NewAuthManager.shared
     
     var body: some View {
         Group {
@@ -31,7 +31,7 @@ struct ContentView_Previews: PreviewProvider {
 }
 
 struct MainTabView: View {
-    @StateObject private var authManager = AuthManager.shared
+    @StateObject private var authManager = NewAuthManager.shared
     
     var body: some View {
         TabView {

@@ -32,16 +32,16 @@ class BuildingCollectionScheduleHelper {
 
 // MARK: - Task Recurrence Helper
 class TaskRecurrenceHelper {
-    static func garbageCollectionRecurrence() -> FrancoSphere.TaskRecurrence {
+    static func garbageCollectionRecurrence() -> TaskRecurrence {
         return .weekly // Map garbageCollection to weekly for now
     }
 }
 
 // MARK: - Extension to MaintenanceTask for immutable property handling
-extension FrancoSphere.MaintenanceTask {
+extension MaintenanceTask {
     // Create a new task with an updated due date
-    func withUpdatedDueDate(_ newDate: Date) -> FrancoSphere.MaintenanceTask {
-        return FrancoSphere.MaintenanceTask(
+    func withUpdatedDueDate(_ newDate: Date) -> MaintenanceTask {
+        return MaintenanceTask(
             id: self.id,
             name: self.name,
             buildingID: self.buildingID,
@@ -58,216 +58,237 @@ extension FrancoSphere.MaintenanceTask {
     }
 }
 
-// Put TaskSchedulerService inside the FrancoSphere namespace to avoid redeclaration
-extension FrancoSphere {
-    // Implementation of TaskSchedulerService
-    class TaskSchedulerService: ObservableObject {
-        @Published var scheduledTasks: [MaintenanceTask] = []
-        @Published var weatherAdjustedTasks: [MaintenanceTask] = []
-        
-        static let shared = TaskSchedulerService()
-        
-        private var cancellables = Set<AnyCancellable>()
-        private let taskManager = TaskManager.shared
-        private let weatherService = WeatherService.shared
-        
-        init() {
-            setupObservers()
+// MARK: - Task Scheduler Helper Methods
+// These are standalone implementations that can be used by the existing TaskSchedulerService
+
+@MainActor
+class TaskSchedulerHelper {
+    
+    static func scheduleRecurringTasks(for buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) async -> [MaintenanceTask] {
+        // Use async version of fetchTasks
+        let existingTasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+            Task {
+                let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
+                continuation.resume(returning: tasks)
+            }
         }
         
-        // MARK: - Task Scheduling
+        // Check if we already have garbage collection and monthly inspection tasks
+        let hasGarbageCollection = existingTasks.contains { task in
+            return task.recurrence == TaskRecurrence.weekly && task.name.contains("Collection")
+        }
         
-        func scheduleRecurringTasks(for buildingID: String) {
-            // Fixed: Added includePastTasks parameter and explicit type
-            let existingTasks: [MaintenanceTask] = taskManager.fetchTasks(forBuilding: buildingID, includePastTasks: false)
-            
-            // Check if we already have garbage collection and monthly inspection tasks
-            // Fixed: Added explicit enum reference
-            let hasGarbageCollection = existingTasks.contains { task in
-                return task.recurrence == TaskRecurrence.weekly && task.name.contains("Collection")
-            }
-            
-            // Fixed: Breaking down complex expression
-            let monthlyInspectionTasks = existingTasks.filter { task in
-                return task.recurrence == TaskRecurrence.monthly && task.category == TaskCategory.inspection
-            }
-            let hasMonthlyInspection = !monthlyInspectionTasks.isEmpty
-            
-            var newTasks: [MaintenanceTask] = []
-            
-            if !hasGarbageCollection {
-                if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingID }) {
-                    // Create garbage collection tasks
-                    let garbageDays = BuildingCollectionScheduleHelper.garbageCollectionDays(for: building)
-                    for day in garbageDays {
-                        let nextDate = nextDateForWeekday(day)
-                        let task = MaintenanceTask(
-                            name: "Garbage Collection",
-                            buildingID: buildingID,
-                            description: "Take out trash bins for collection",
-                            dueDate: nextDate,
-                            category: .sanitation,
-                            urgency: .medium,
-                            recurrence: .weekly
-                        )
-                        newTasks.append(task)
-                    }
-                    
-                    // Create recycling collection tasks
-                    let recyclingDays = BuildingCollectionScheduleHelper.recyclingCollectionDays(for: building)
-                    for day in recyclingDays {
-                        let nextDate = nextDateForWeekday(day)
-                        let task = MaintenanceTask(
-                            name: "Recycling Collection",
-                            buildingID: buildingID,
-                            description: "Take out recycling bins for collection",
-                            dueDate: nextDate,
-                            category: .sanitation,
-                            urgency: .medium,
-                            recurrence: .weekly
-                        )
-                        newTasks.append(task)
-                    }
+        let monthlyInspectionTasks = existingTasks.filter { task in
+            return task.recurrence == TaskRecurrence.monthly && task.category == TaskCategory.inspection
+        }
+        let hasMonthlyInspection = !monthlyInspectionTasks.isEmpty
+        
+        var newTasks: [MaintenanceTask] = []
+        
+        if !hasGarbageCollection {
+            // Get all buildings from BuildingRepository
+            let allBuildings = await BuildingRepository.shared.allBuildings
+            if let building = allBuildings.first(where: { $0.id == buildingID }) {
+                // Create garbage collection tasks
+                let garbageDays = BuildingCollectionScheduleHelper.garbageCollectionDays(for: building)
+                for day in garbageDays {
+                    let nextDate = nextDateForWeekday(day)
+                    let task = MaintenanceTask(
+                        name: "Garbage Collection",
+                        buildingID: buildingID,
+                        description: "Take out trash bins for collection",
+                        dueDate: nextDate,
+                        category: .sanitation,
+                        urgency: .medium,
+                        recurrence: .weekly
+                    )
+                    newTasks.append(task)
+                }
+                
+                // Create recycling collection tasks
+                let recyclingDays = BuildingCollectionScheduleHelper.recyclingCollectionDays(for: building)
+                for day in recyclingDays {
+                    let nextDate = nextDateForWeekday(day)
+                    let task = MaintenanceTask(
+                        name: "Recycling Collection",
+                        buildingID: buildingID,
+                        description: "Take out recycling bins for collection",
+                        dueDate: nextDate,
+                        category: .sanitation,
+                        urgency: .medium,
+                        recurrence: .weekly
+                    )
+                    newTasks.append(task)
                 }
             }
-            
-            if !hasMonthlyInspection {
-                let calendar = Calendar.current
-                let today = Date()
-                let nextMonth = calendar.date(byAdding: .month, value: 1, to: today)!
-                let components = calendar.dateComponents([.year, .month], from: nextMonth)
-                let firstDayOfNextMonth = calendar.date(from: components)!
-                let task = MaintenanceTask(
-                    name: "Monthly Building Inspection",
-                    buildingID: buildingID,
-                    description: "Comprehensive inspection of building systems and common areas",
-                    dueDate: firstDayOfNextMonth,
-                    category: .inspection,
-                    urgency: .medium,
-                    recurrence: .monthly
-                )
-                newTasks.append(task)
-            }
-            
-            if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingID }) {
-                let weatherTasks = weatherService.generateWeatherTasks(for: building)
-                newTasks.append(contentsOf: weatherTasks)
-            }
-            
-            if !newTasks.isEmpty {
-                taskManager.createWeatherBasedTasks(for: buildingID, tasks: newTasks)
-                scheduledTasks.append(contentsOf: newTasks)
-            }
         }
         
-        private func nextDateForWeekday(_ weekday: Int) -> Date {
+        if !hasMonthlyInspection {
             let calendar = Calendar.current
-            let today = calendar.startOfDay(for: Date())
-            let todayWeekday = calendar.component(.weekday, from: today)
-            let calendarWeekday = weekday == 7 ? 1 : weekday + 1
-            let daysToAdd: Int = calendarWeekday > todayWeekday
-                ? (calendarWeekday - todayWeekday)
-                : (7 - (todayWeekday - calendarWeekday))
-            return calendar.date(byAdding: .day, value: daysToAdd, to: today)!
+            let today = Date()
+            let nextMonth = calendar.date(byAdding: .month, value: 1, to: today)!
+            let components = calendar.dateComponents([.year, .month], from: nextMonth)
+            let firstDayOfNextMonth = calendar.date(from: components)!
+            let task = MaintenanceTask(
+                name: "Monthly Building Inspection",
+                buildingID: buildingID,
+                description: "Comprehensive inspection of building systems and common areas",
+                dueDate: firstDayOfNextMonth,
+                category: .inspection,
+                urgency: .medium,
+                recurrence: .monthly
+            )
+            newTasks.append(task)
         }
         
-        func adjustTaskSchedules(for buildingID: String) {
-            // Fixed: Added includePastTasks parameter and explicit type
-            let tasks: [MaintenanceTask] = taskManager.fetchTasks(forBuilding: buildingID, includePastTasks: false)
-            adjustForWeather(tasks: tasks, buildingID: buildingID)
+        // Get building for weather tasks
+        let allBuildings = await BuildingRepository.shared.allBuildings
+        if let building = allBuildings.first(where: { $0.id == buildingID }) {
+            let weatherTasks = weatherAdapter.generateWeatherTasks(for: building)
+            newTasks.append(contentsOf: weatherTasks)
         }
         
-        private func adjustForWeather(tasks: [MaintenanceTask], buildingID: String) {
-            guard let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingID }) else {
-                return
+        if !newTasks.isEmpty {
+            await taskManager.createWeatherBasedTasksAsync(for: buildingID, tasks: newTasks)
+        }
+        
+        return newTasks
+    }
+    
+    static func nextDateForWeekday(_ weekday: Int) -> Date {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let todayWeekday = calendar.component(.weekday, from: today)
+        let calendarWeekday = weekday == 7 ? 1 : weekday + 1
+        let daysToAdd: Int = calendarWeekday > todayWeekday
+            ? (calendarWeekday - todayWeekday)
+            : (7 - (todayWeekday - calendarWeekday))
+        return calendar.date(byAdding: .day, value: daysToAdd, to: today)!
+    }
+    
+    static func adjustTaskSchedulesForWeather(buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) async -> [MaintenanceTask] {
+        let tasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+            Task {
+                let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
+                continuation.resume(returning: tasks)
             }
-            
-            // NOTE: These methods need to be implemented in the WeatherService class
-            weatherService.fetchWeather(latitude: building.latitude, longitude: building.longitude)
-            
-            let tasksToReschedule = weatherService.tasksNeedingRescheduling(tasks)
-            var adjustedTasks: [MaintenanceTask] = []
-            
-            for task in tasksToReschedule {
-                // Fixed: Added explicit cast to handle type mismatch
-                let maintenanceTask = task as MaintenanceTask
-                if let newDate = weatherService.recommendedRescheduleDateForTask(maintenanceTask) {
+        }
+        return await adjustForWeather(tasks: tasks, buildingID: buildingID, weatherAdapter: weatherAdapter)
+    }
+    
+    static func adjustForWeather(tasks: [MaintenanceTask], buildingID: String, weatherAdapter: WeatherDataAdapter) async -> [MaintenanceTask] {
+        // Get building from repository
+        let allBuildings = await BuildingRepository.shared.allBuildings
+        guard let building = allBuildings.first(where: { $0.id == buildingID }) else {
+            return []
+        }
+        
+        // Fetch weather for the building
+        await weatherAdapter.fetchWeatherForBuildingAsync(building)
+        
+        var adjustedTasks: [MaintenanceTask] = []
+        
+        for task in tasks {
+            if weatherAdapter.shouldRescheduleTask(task) {
+                if let newDate = weatherAdapter.recommendedRescheduleDateForTask(task) {
                     // Create a new task with updated date
-                    let adjustedTask = maintenanceTask.withUpdatedDueDate(newDate)
+                    let adjustedTask = task.withUpdatedDueDate(newDate)
                     adjustedTasks.append(adjustedTask)
                 }
             }
-            
-            weatherAdjustedTasks = adjustedTasks
-            
-            // Add an emergency task if applicable.
-            // Fixed: Handle casting differently
-            if let legacyEmergencyTask = weatherService.createEmergencyWeatherTask(for: building) {
-                if let emergencyTask = legacyEmergencyTask as? MaintenanceTask {
-                    weatherAdjustedTasks.append(emergencyTask)
-                }
-            }
         }
         
-        private func setupObservers() {
-            NotificationCenter.default.publisher(for: Notification.Name("TaskCompleted"))
-                .sink { [weak self] notification in
-                    guard let self = self,
-                          let userInfo = notification.userInfo,
-                          let buildingID = userInfo["buildingId"] as? String else { return }
-                    self.scheduleRecurringTasks(for: buildingID)
-                }
-                .store(in: &cancellables)
-            
-            NotificationCenter.default.publisher(for: Notification.Name("WeatherForecastUpdated"))
-                .sink { [weak self] notification in
-                    guard let self = self,
-                          let userInfo = notification.userInfo,
-                          let buildingID = userInfo["buildingId"] as? String else { return }
-                    self.adjustForWeather(tasks: self.scheduledTasks, buildingID: buildingID)
-                }
-                .store(in: &cancellables)
+        // Add an emergency task if applicable
+        if let emergencyTask = weatherAdapter.createEmergencyWeatherTask(for: building) {
+            adjustedTasks.append(emergencyTask)
         }
         
-        func suggestOptimalSchedule(for buildingID: String, category: TaskCategory, urgency: TaskUrgency) -> Date {
-            // Fixed: Added includePastTasks parameter and explicit type
-            let existingTasks: [MaintenanceTask] = taskManager.fetchTasks(forBuilding: buildingID, includePastTasks: false)
-            let now = Date()
-            let calendar = Calendar.current
-            
-            switch urgency {
-            case .urgent:
-                return now
-            case .high:
-                let tasksToday = existingTasks.filter { calendar.isDate($0.dueDate, inSameDayAs: now) }
-                return tasksToday.count < 5 ? now : calendar.date(byAdding: .day, value: 1, to: now)!
-            case .medium:
-                var dayCount: [Int: Int] = [:]
-                for i in 0..<7 { dayCount[i] = 0 }
-                for task in existingTasks {
-                    let dayDiff = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: task.dueDate)).day ?? 0
-                    if dayDiff >= 0 && dayDiff < 7 {
-                        dayCount[dayDiff, default: 0] += 1
-                    }
-                }
-                let optimalDay = dayCount.sorted { $0.value < $1.value }.first?.key ?? 3
-                return calendar.date(byAdding: .day, value: optimalDay, to: now)!
-            case .low:
-                return calendar.date(byAdding: .day, value: 7, to: now)!
+        return adjustedTasks
+    }
+    
+    static func suggestOptimalSchedule(for buildingID: String, category: TaskCategory, urgency: TaskUrgency, taskManager: TaskManager) async -> Date {
+        let existingTasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+            Task {
+                let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
+                continuation.resume(returning: tasks)
             }
+        }
+        let now = Date()
+        let calendar = Calendar.current
+        
+        switch urgency {
+        case .urgent:
+            return now
+        case .high:
+            let tasksToday = existingTasks.filter { calendar.isDate($0.dueDate, inSameDayAs: now) }
+            return tasksToday.count < 5 ? now : calendar.date(byAdding: .day, value: 1, to: now)!
+        case .medium:
+            var dayCount: [Int: Int] = [:]
+            for i in 0..<7 { dayCount[i] = 0 }
+            for task in existingTasks {
+                let dayDiff = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: task.dueDate)).day ?? 0
+                if dayDiff >= 0 && dayDiff < 7 {
+                    dayCount[dayDiff, default: 0] += 1
+                }
+            }
+            let optimalDay = dayCount.sorted { $0.value < $1.value }.first?.key ?? 3
+            return calendar.date(byAdding: .day, value: optimalDay, to: now)!
+        case .low:
+            return calendar.date(byAdding: .day, value: 7, to: now)!
+        }
+    }
+    
+    static func optimizeWorkerAssignments(for buildingID: String, taskManager: TaskManager) async -> [String: [MaintenanceTask]] {
+        let tasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+            Task {
+                let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
+                continuation.resume(returning: tasks)
+            }
+        }
+        var workerAssignments: [String: [MaintenanceTask]] = [:]
+        let workerIDs = ["1", "2", "3"]
+        
+        for (index, task) in tasks.enumerated() {
+            let workerID = workerIDs[index % workerIDs.count]
+            workerAssignments[workerID, default: []].append(task)
+        }
+        return workerAssignments
+    }
+}
+
+// MARK: - Convenience Extensions for non-async contexts
+
+extension TaskSchedulerHelper {
+    // Wrapper methods for use in synchronous contexts
+    static func scheduleRecurringTasksSync(for buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) -> [MaintenanceTask] {
+        let task = Task { @MainActor in
+            await scheduleRecurringTasks(for: buildingID, taskManager: taskManager, weatherAdapter: weatherAdapter)
         }
         
-        func optimizeWorkerAssignments(for buildingID: String) -> [String: [MaintenanceTask]] {
-            // Fixed: Added includePastTasks parameter and explicit type
-            let tasks: [MaintenanceTask] = taskManager.fetchTasks(forBuilding: buildingID, includePastTasks: false)
-            var workerAssignments: [String: [MaintenanceTask]] = [:]
-            let workerIDs = ["1", "2", "3"]
-            
-            for (index, task) in tasks.enumerated() {
-                let workerID = workerIDs[index % workerIDs.count]
-                workerAssignments[workerID, default: []].append(task)
-            }
-            return workerAssignments
+        // For synchronous context, we need to block and wait
+        // In production, consider using completion handlers instead
+        return []  // Return empty array for now, as we can't easily block
+    }
+    
+    static func adjustTaskSchedulesForWeatherSync(buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) -> [MaintenanceTask] {
+        let task = Task { @MainActor in
+            await adjustTaskSchedulesForWeather(buildingID: buildingID, taskManager: taskManager, weatherAdapter: weatherAdapter)
         }
+        
+        return []  // Return empty array for now
+    }
+    
+    static func suggestOptimalScheduleSync(for buildingID: String, category: TaskCategory, urgency: TaskUrgency, taskManager: TaskManager) -> Date {
+        // For synchronous context, return a default date
+        let calendar = Calendar.current
+        return calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+    }
+    
+    static func optimizeWorkerAssignmentsSync(for buildingID: String, taskManager: TaskManager) -> [String: [MaintenanceTask]] {
+        let task = Task { @MainActor in
+            await optimizeWorkerAssignments(for: buildingID, taskManager: taskManager)
+        }
+        
+        return [:]  // Return empty dictionary for now
     }
 }
