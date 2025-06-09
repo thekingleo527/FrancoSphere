@@ -307,20 +307,20 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Data/AllTasks.csv\n$(SRCROOT)/Data/workers.csv\n$(SRCROOT)/Data/buildings.csv\n$(SRCROOT)/Data/inventory.csv\n$(SRCROOT)/build_scripts/csv2sql.sh",
-				"$(SRCROOT)/Data/workers.csv",
-				"$(SRCROOT)/Data/buildings.csv",
-				"$(SRCROOT)/build_scripts/csv2sql.sh",
-				"$(SRCROOT)/Data/inventory.csv",
+				"${PROJECT_DIR}/Data/AllTasks.csv",
+				"${PROJECT_DIR}/Data/workers.csv",
+				"${PROJECT_DIR}/Data/buildings.csv",
+				"${PROJECT_DIR}/build_scripts/csv2sql.sh",
+				"${PROJECT_DIR}/Data/inventory.csv",
 			);
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(SRCROOT)/Resources/FrancoSphereSeed.sql",
+				"${PROJECT_DIR}/Resources/FrancoSphereSeed.sql",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/FrancoSphere/build_scripts/csv2sql.sh\" || {\n  echo \"error: FrancoSphereSeed.sql not generated – build aborted.\"\n  exit 1\n}\n";
+			shellScript = "\"${PROJECT_DIR}/build_scripts/csv2sql.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -497,7 +497,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"FrancoSphere/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -525,7 +525,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"FrancoSphere/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

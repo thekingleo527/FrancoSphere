@@ -1,116 +1,115 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#
-# 1) Find your project root by locating either:
-#      • Data/ & Resources/ sitting side-by-side, or
-#      • FrancoSphere/Data & FrancoSphere/Resources beneath it
-#
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-project_root="$script_dir"
-while [ "$project_root" != "/" ]; do
-  if [ -d "$project_root/Data" ] && [ -d "$project_root/Resources" ]; then
+# ───────────────────────────────────────────────────────────
+# 1️⃣  Locate the Data/ and Resources/ directories
+# ───────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DIR="$SCRIPT_DIR"
+while [ "$DIR" != "/" ]; do
+  if [ -d "$DIR/Data" ] && [ -d "$DIR/Resources" ]; then
     break
   fi
-  if [ -d "$project_root/FrancoSphere/Data" ] && [ -d "$project_root/FrancoSphere/Resources" ]; then
-    project_root="$project_root/FrancoSphere"
+  # Handle nested FrancoSphere/FrancoSphere/Data
+  if [ -d "$DIR/FrancoSphere/Data" ] && [ -d "$DIR/FrancoSphere/Resources" ]; then
+    DIR="$DIR/FrancoSphere"
     break
   fi
-  project_root="$(dirname "$project_root")"
+  DIR="$(dirname "$DIR")"
 done
 
-if [ "$project_root" = "/" ]; then
-  echo "❌ ERROR: Cannot find Data/ and Resources/ dirs. Aborting." >&2
+if [ "$DIR" = "/" ]; then
+  echo "❌ ERROR: Couldn't find Data/ and Resources/ folders." >&2
   exit 1
 fi
 
-data_dir="$project_root/Data"
-resources_dir="$project_root/Resources"
-output_sql="$resources_dir/FrancoSphereSeed.sql"
+DATA_DIR="$DIR/Data"
+RESOURCES_DIR="$DIR/Resources"
+OUTPUT_SQL="$RESOURCES_DIR/FrancoSphereSeed.sql"
 
-echo "🔍 Data dir      : $data_dir"
-echo "🔍 Resources dir : $resources_dir"
-echo "🔍 Output SQL    : $output_sql"
+echo "🔍 Data dir      : $DATA_DIR"
+echo "🔍 Resources dir : $RESOURCES_DIR"
+echo "🔍 Output SQL    : $OUTPUT_SQL"
 
-#
-# 2) Map each CSV → table name
-#
-declare -A csv_map=(
-  ["$data_dir/AllTasks.csv"]="routine_tasks"
-  ["$data_dir/buildings.csv"]="buildings"
-  ["$data_dir/workers.csv"]="workers"
-  ["$data_dir/inventory.csv"]="inventory"
+# ───────────────────────────────────────────────────────────
+# 2️⃣  Build a list of CSV→table pairs that actually exist
+# ───────────────────────────────────────────────────────────
+CSV_PAIRS=(
+  "$DATA_DIR/AllTasks.csv:routine_tasks"
+  "$DATA_DIR/buildings.csv:buildings"
+  "$DATA_DIR/workers.csv:workers"
+  "$DATA_DIR/inventory.csv:inventory"
 )
 
-found_any=false
-for csv in "${!csv_map[@]}"; do
-  if [ -f "$csv" ]; then
-    found_any=true
+VALID_PAIRS=()
+for pair in "${CSV_PAIRS[@]}"; do
+  path="${pair%%:*}"
+  table="${pair##*:}"
+  if [ -f "$path" ]; then
+    VALID_PAIRS+=("$path::$table")
   else
-    echo "⚠️  Missing CSV: $csv"
+    echo "⚠️  Skipping missing CSV: $path"
   fi
 done
 
-if ! $found_any; then
+if [ "${#VALID_PAIRS[@]}" -eq 0 ]; then
   echo "❌ ERROR: No CSV files found – aborting." >&2
   exit 1
 fi
 
-mkdir -p "$(dirname "$output_sql")"
+# ensure Resources folder exists
+mkdir -p "$(dirname "$OUTPUT_SQL")"
 
-#
-# 3) Build a small Python map for insertion
-#
-py_map_entries=""
-for path in "${!csv_map[@]}"; do
-  tbl="${csv_map[$path]}"
-  py_map_entries+="\"$path\": \"$tbl\",\n"
-done
+# ───────────────────────────────────────────────────────────
+# 3️⃣  Pass the pairs & output path into embedded Python
+# ───────────────────────────────────────────────────────────
+export _CSV_PAIRS="$(printf "%s;;" "${VALID_PAIRS[@]}")"
+export _OUT_SQL="$OUTPUT_SQL"
 
-#
-# 4) Generate the SQL via Python
-#
-python3 <<PYCODE
-import csv, hashlib, pathlib, sys
+python3 <<'PYCODE'
+import csv, hashlib, pathlib, os, sys
 
-csv_map = {
-$py_map_entries
-}
+# Read our environment variables
+csv_pairs = os.environ["_CSV_PAIRS"].split(";;")
+out_file  = pathlib.Path(os.environ["_OUT_SQL"])
+sha       = hashlib.sha256()
 
-out_file = pathlib.Path(r"$output_sql")
-sha = hashlib.sha256()
-
-# Compute checksum
-for p, tbl in csv_map.items():
-    path = pathlib.Path(p)
-    if path.exists():
-        sha.update(path.read_bytes())
+# Build map and checksum
+map_entries = []
+for pair in csv_pairs:
+    if not pair: continue
+    path, table = pair.split("::",1)
+    p = pathlib.Path(path)
+    if p.exists():
+        map_entries.append((p, table))
+        sha.update(p.read_bytes())
     else:
-        print(f"⚠️  Skipping missing file: {path}")
+        print(f"⚠️  (Python) skipping missing: {p}")
+
 checksum = sha.hexdigest()
 
+# Write the SQL
 with out_file.open("w", encoding="utf-8") as out:
     out.write(f"-- CHECKSUM:{checksum}\n")
-    out.write("-- Auto-generated – DO NOT EDIT.\n")
+    out.write("-- Auto-generated — DO NOT EDIT.\n")
     out.write("BEGIN IMMEDIATE;\n\n")
 
     CHUNK = 300
-    for p, tbl in csv_map.items():
+    for p, table in map_entries:
         rows = list(csv.DictReader(open(p, newline='', encoding='utf-8')))
         if not rows:
             continue
 
         cols = ",".join(f'"{c}"' for c in rows[0].keys())
         for i in range(0, len(rows), CHUNK):
-            chunk = rows[i:i+CHUNK]
-            values = []
-            for r in chunk:
+            batch = rows[i:i+CHUNK]
+            vals = []
+            for r in batch:
                 safe = [str(v).replace("'", "''") for v in r.values()]
-                values.append("(" + ",".join(f"'{v}'" for v in safe) + ")")
-            out.write(f"INSERT INTO {tbl} ({cols}) VALUES\n")
-            out.write(",\n".join(values))
-            out.write(";\n")
-        out.write(f"\n-- End of {tbl}\n\n")
+                vals.append("(" + ",".join(f"'{v}'" for v in safe) + ")")
+            out.write(f"INSERT INTO {table} ({cols}) VALUES\n")
+            out.write(",\n".join(vals) + ";\n")
+        out.write(f"\n-- End of {table}\n\n")
 
     out.write(
         f"INSERT OR REPLACE INTO app_settings (key,value) "
@@ -121,4 +120,4 @@ with out_file.open("w", encoding="utf-8") as out:
 print(f"✅ Generated SQL seed at {out_file}")
 PYCODE
 
-echo "✅  FrancoSphereSeed.sql regenerated."
+echo "✅ csv2sql.sh finished successfully."
