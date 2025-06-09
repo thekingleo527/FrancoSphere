@@ -109,6 +109,31 @@ struct TaskScheduleView: View {
         }
     }
     
+    // MARK: - Helper Functions
+    
+    private func taskStatusColor(_ task: MaintenanceTask) -> Color {
+        if task.isComplete {
+            return .gray
+        } else {
+            switch task.urgency {
+            case .low:    return .green
+            case .medium: return .yellow
+            case .high:   return .orange
+            case .urgent: return .red
+            }
+        }
+    }
+    
+    private func taskStatusText(_ task: MaintenanceTask) -> String {
+        if task.isComplete {
+            return "Completed"
+        } else if task.isPastDue {
+            return "Overdue"
+        } else {
+            return "Pending"
+        }
+    }
+    
     // MARK: - Calendar Header
     
     private var calendarHeader: some View {
@@ -239,7 +264,7 @@ struct TaskScheduleView: View {
                     VStack(spacing: 2) {
                         ForEach(tasksForDate.prefix(3), id: \.id) { task in
                             Circle()
-                                .fill(task.statusColor)
+                                .fill(taskStatusColor(task))
                                 .frame(width: 8, height: 8)
                         }
                         
@@ -256,7 +281,7 @@ struct TaskScheduleView: View {
                         HStack(spacing: 4) {
                             ForEach(0..<min(3, tasksForDate.count), id: \.self) { index in
                                 Circle()
-                                    .fill(tasksForDate[index].statusColor)
+                                    .fill(taskStatusColor(tasksForDate[index]))
                                     .frame(width: 6, height: 6)
                             }
                             
@@ -400,7 +425,7 @@ struct TaskScheduleView: View {
                             }) {
                                 HStack {
                                     Circle()
-                                        .fill(urgency.color)
+                                        .fill(urgencyColor(urgency))
                                         .frame(width: 10, height: 10)
                                     
                                     Text(urgency.rawValue)
@@ -468,6 +493,15 @@ struct TaskScheduleView: View {
             case .inspection: return .purple
             }
         }
+        
+        private func urgencyColor(_ urgency: TaskUrgency) -> Color {
+            switch urgency {
+            case .low:    return .green
+            case .medium: return .yellow
+            case .high:   return .orange
+            case .urgent: return .red
+            }
+        }
     }
     
     // MARK: - Task Row
@@ -480,11 +514,11 @@ struct TaskScheduleView: View {
                 // Task status indicator
                 ZStack {
                     Circle()
-                        .fill(task.statusColor.opacity(0.2))
+                        .fill(statusColor.opacity(0.2))
                         .frame(width: 40, height: 40)
                     
                     Image(systemName: task.isComplete ? "checkmark.circle.fill" : task.category.icon)
-                        .foregroundColor(task.statusColor)
+                        .foregroundColor(statusColor)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -519,18 +553,41 @@ struct TaskScheduleView: View {
                 Spacer()
                 
                 // Task status badge
-                Text(task.statusText)
+                Text(statusText)
                     .font(.caption)
-                    .foregroundColor(task.statusColor)
+                    .foregroundColor(statusColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(task.statusColor.opacity(0.1))
+                    .background(statusColor.opacity(0.1))
                     .cornerRadius(8)
             }
             .padding(12)
             .background(Color(.systemBackground))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        }
+        
+        private var statusColor: Color {
+            if task.isComplete {
+                return .gray
+            } else {
+                switch task.urgency {
+                case .low:    return .green
+                case .medium: return .yellow
+                case .high:   return .orange
+                case .urgent: return .red
+                }
+            }
+        }
+        
+        private var statusText: String {
+            if task.isComplete {
+                return "Completed"
+            } else if task.isPastDue {
+                return "Overdue"
+            } else {
+                return "Pending"
+            }
         }
         
         private func formatTime(_ date: Date) -> String {
@@ -606,7 +663,7 @@ struct TaskScheduleView: View {
                             ForEach(TaskUrgency.allCases, id: \.self) { urgency in
                                 HStack {
                                     Circle()
-                                        .fill(urgency.color)
+                                        .fill(urgencyColor(urgency))
                                         .frame(width: 10, height: 10)
                                     
                                     Text(urgency.rawValue)
@@ -707,6 +764,15 @@ struct TaskScheduleView: View {
             formatter.dateStyle = .medium
             formatter.timeStyle = .none
             return formatter.string(from: date)
+        }
+        
+        private func urgencyColor(_ urgency: TaskUrgency) -> Color {
+            switch urgency {
+            case .low:    return .green
+            case .medium: return .yellow
+            case .high:   return .orange
+            case .urgent: return .red
+            }
         }
     }
     

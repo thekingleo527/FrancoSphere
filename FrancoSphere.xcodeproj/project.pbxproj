@@ -28,10 +28,23 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		23AD7FAF2DF5A95D00BDF90A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		23423DB72D739D6800AACE3E /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		23AD7FB12DF5A95D00BDF90A /* SeedDatabase */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SeedDatabase; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,10 +60,12 @@
 		};
 		2354B95E2D73DBDE0050C53D /* FrancoSphere */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFolders = (
-				Assets.xassets,
-			);
 			path = FrancoSphere;
+			sourceTree = "<group>";
+		};
+		23AD7FB22DF5A95D00BDF90A /* SeedDatabase */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SeedDatabase;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +94,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		23AD7FAE2DF5A95D00BDF90A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -88,6 +110,7 @@
 				2354B95E2D73DBDE0050C53D /* FrancoSphere */,
 				23423DCA2D739D6900AACE3E /* FrancoSphereTests */,
 				23423DD42D739D6A00AACE3E /* FrancoSphereUITests */,
+				23AD7FB22DF5A95D00BDF90A /* SeedDatabase */,
 				23423DB82D739D6800AACE3E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -98,6 +121,7 @@
 				23423DB72D739D6800AACE3E /* FrancoSphere.app */,
 				23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */,
 				23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */,
+				23AD7FB12DF5A95D00BDF90A /* SeedDatabase */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,6 +135,7 @@
 			buildPhases = (
 				23423DB32D739D6800AACE3E /* Sources */,
 				23423DB42D739D6800AACE3E /* Frameworks */,
+				23AD81E52DF6A60900BDF90A /* ShellScript */,
 				23423DB52D739D6800AACE3E /* Resources */,
 			);
 			buildRules = (
@@ -175,6 +200,28 @@
 			productReference = 23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		23AD7FB02DF5A95D00BDF90A /* SeedDatabase */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23AD7FB52DF5A95D00BDF90A /* Build configuration list for PBXNativeTarget "SeedDatabase" */;
+			buildPhases = (
+				23AD7FAD2DF5A95D00BDF90A /* Sources */,
+				23AD7FAE2DF5A95D00BDF90A /* Frameworks */,
+				23AD7FAF2DF5A95D00BDF90A /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				23AD7FB22DF5A95D00BDF90A /* SeedDatabase */,
+			);
+			name = SeedDatabase;
+			packageProductDependencies = (
+			);
+			productName = SeedDatabase;
+			productReference = 23AD7FB12DF5A95D00BDF90A /* SeedDatabase */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -182,7 +229,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					23423DB62D739D6800AACE3E = {
@@ -195,6 +242,9 @@
 					23423DD02D739D6A00AACE3E = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 23423DB62D739D6800AACE3E;
+					};
+					23AD7FB02DF5A95D00BDF90A = {
+						CreatedOnToolsVersion = 16.4;
 					};
 				};
 			};
@@ -219,6 +269,7 @@
 				23423DB62D739D6800AACE3E /* FrancoSphere */,
 				23423DC62D739D6900AACE3E /* FrancoSphereTests */,
 				23423DD02D739D6A00AACE3E /* FrancoSphereUITests */,
+				23AD7FB02DF5A95D00BDF90A /* SeedDatabase */,
 			);
 		};
 /* End PBXProject section */
@@ -247,6 +298,32 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		23AD81E52DF6A60900BDF90A /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Data/AllTasks.csv\n$(SRCROOT)/Data/workers.csv\n$(SRCROOT)/Data/buildings.csv\n$(SRCROOT)/Data/inventory.csv\n$(SRCROOT)/build_scripts/csv2sql.sh",
+				"$(SRCROOT)/Data/workers.csv",
+				"$(SRCROOT)/Data/buildings.csv",
+				"$(SRCROOT)/build_scripts/csv2sql.sh",
+				"$(SRCROOT)/Data/inventory.csv",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Resources/FrancoSphereSeed.sql",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/FrancoSphere/build_scripts/csv2sql.sh\" || {\n  echo \"error: FrancoSphereSeed.sql not generated – build aborted.\"\n  exit 1\n}\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		23423DB32D739D6800AACE3E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -263,6 +340,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		23423DCD2D739D6A00AACE3E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23AD7FAD2DF5A95D00BDF90A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -530,6 +614,32 @@
 			};
 			name = Release;
 		};
+		23AD7FB62DF5A95D00BDF90A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X82DB5QT3S;
+				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		23AD7FB72DF5A95D00BDF90A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = X82DB5QT3S;
+				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -565,6 +675,15 @@
 			buildConfigurations = (
 				23423DE22D739D6A00AACE3E /* Debug */,
 				23423DE32D739D6A00AACE3E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23AD7FB52DF5A95D00BDF90A /* Build configuration list for PBXNativeTarget "SeedDatabase" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23AD7FB62DF5A95D00BDF90A /* Debug */,
+				23AD7FB72DF5A95D00BDF90A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

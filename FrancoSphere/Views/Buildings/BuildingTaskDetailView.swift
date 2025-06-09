@@ -250,7 +250,7 @@ struct BuildingTaskDetailView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(task.urgency.color)
+        .background(getUrgencyColor(task.urgency))
         .cornerRadius(20)
     }
     
@@ -478,6 +478,16 @@ struct BuildingTaskDetailView: View {
         case .repair: return .red
         case .sanitation: return .green
         case .inspection: return .purple
+        }
+    }
+    
+    // FIXED: Add urgency color helper function
+    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+        switch urgency {
+        case .low:    return .green
+        case .medium: return .yellow
+        case .high:   return .red
+        case .urgent: return .purple
         }
     }
     

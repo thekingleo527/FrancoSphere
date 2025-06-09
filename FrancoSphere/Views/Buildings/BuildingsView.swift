@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import MapKit   // MapKit is not used here yet, but often handy in detail views
+import MapKit
 
 struct BuildingsView: View {
     
@@ -77,8 +77,12 @@ struct BuildingsView: View {
                     List {
                         ForEach(filteredBuildings, id: \.id) { building in
                             NavigationLink {
-                                // BuildingDetailView now expects a FrancoSphere.NamedCoordinate
-                                BuildingDetailView(building: building)
+                                // Use TempBuildingDetailView if it exists, otherwise use placeholder
+                                if #available(iOS 15.0, *) {
+                                    TempBuildingDetailView(building: building)
+                                } else {
+                                    BuildingDetailPlaceholder(building: building)
+                                }
                             } label: {
                                 // Building row view
                                 buildingRow(for: building)
@@ -159,8 +163,6 @@ struct BuildingsView: View {
 }
 
 // MARK: - Alternative Implementation with AsyncContent
-// If you prefer, you can use this simpler approach with less state management:
-
 struct BuildingsViewAlternative: View {
     @State private var searchText = ""
     
@@ -205,7 +207,15 @@ struct BuildingsList: View {
     
     var body: some View {
         List(filteredBuildings, id: \.id) { building in
-            NavigationLink(destination: BuildingDetailView(building: building)) {
+            NavigationLink(destination:
+                Group {
+                    if #available(iOS 15.0, *) {
+                        TempBuildingDetailView(building: building)
+                    } else {
+                        BuildingDetailPlaceholder(building: building)
+                    }
+                }
+            ) {
                 HStack {
                     Image(systemName: "building.2.crop.circle")
                         .resizable()
@@ -227,6 +237,110 @@ struct BuildingsList: View {
         .task {
             buildings = await BuildingRepository.shared.allBuildings
         }
+    }
+}
+
+// MARK: - Temporary Building Detail Placeholder
+struct BuildingDetailPlaceholder: View {
+    let building: FrancoSphere.NamedCoordinate
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    Color(red: 0.05, green: 0.1, blue: 0.25),
+                    Color(red: 0.15, green: 0.2, blue: 0.35)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Building image placeholder
+                    if let image = UIImage(named: building.imageAssetName) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 250)
+                            .clipped()
+                            .overlay(
+                                LinearGradient(
+                                    colors: [.clear, .black.opacity(0.6)],
+                                    startPoint: .center,
+                                    endPoint: .bottom
+                                )
+                            )
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 250)
+                            .overlay(
+                                Image(systemName: "building.2.fill")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.white.opacity(0.5))
+                            )
+                    }
+                    
+                    // Building info card
+                    GlassCard(intensity: .regular) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text(building.name)
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            if let address = building.address {
+                                HStack {
+                                    Image(systemName: "location.fill")
+                                        .foregroundColor(.blue)
+                                    Text(address)
+                                        .font(.subheadline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                            }
+                            
+                            HStack {
+                                Image(systemName: "number")
+                                    .foregroundColor(.blue)
+                                Text("Building ID: \(building.id)")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Placeholder message
+                    GlassCard(intensity: .thin) {
+                        VStack(spacing: 12) {
+                            Image(systemName: "hammer.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(.orange)
+                            
+                            Text("Building Details Coming Soon")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            Text("The full building detail view with tasks, workers, and inventory is being prepared.")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                    }
+                    .padding(.horizontal)
+                    
+                    Spacer(minLength: 100)
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .preferredColorScheme(.dark)
     }
 }
 

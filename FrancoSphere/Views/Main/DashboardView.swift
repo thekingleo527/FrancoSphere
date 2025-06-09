@@ -3,12 +3,11 @@
 //
 //  Updated by Shawn Magloire on 3/3/25.
 //
-
 import SwiftUI
 import MapKit
 
-// MARK: - Local Type Definitions
-// Define these types here until they're properly accessible from FrancoSphereModels
+// MARK: - Helper Types (moved to top level)
+
 struct WorkerNotification: Identifiable {
     let id: String
     let type: NotificationType
@@ -34,19 +33,31 @@ struct WorkerNotification: Identifiable {
     }
 }
 
-struct WeatherAlert: Identifiable {
-    let id: String
-    let buildingId: String
-    let buildingName: String
-    let title: String
-    let message: String
-    let icon: String
-    let color: Color
-    let timestamp: Date
+// MARK: - Helper Functions (moved to top level)
+
+/// Helper function to convert WeatherAlert colorName to Color
+private func colorForWeatherAlert(_ alert: WeatherAlert) -> Color {
+    switch alert.colorName {
+    case "red":    return .red
+    case "orange": return .orange
+    case "yellow": return .yellow
+    case "green":  return .green
+    case "blue":   return .blue
+    case "purple": return .purple
+    case "gray":   return .gray
+    default:       return .blue
+    }
 }
 
+/// Helper function to convert String to Int64
+private func convertStringToInt64(_ string: String) -> Int64 {
+    return Int64(string) ?? 0
+}
+
+// MARK: - Main DashboardView (moved to top level, no longer nested)
+
 struct DashboardView: View {
-    @StateObject private var authManager = AuthManager.shared
+    @StateObject private var authManager = NewAuthManager.shared
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
@@ -67,7 +78,7 @@ struct DashboardView: View {
     @State private var selectedTab: DashboardTab = .tasks
     @State private var showTimelineView = false
     @State private var showNotifications = false
-    @State private var buildings: [FrancoSphere.NamedCoordinate] = []        // start empty
+    @State private var buildings: [FrancoSphere.NamedCoordinate] = []
     @State private var isRefreshing = false
     @State private var notifications: [WorkerNotification] = []
     @State private var weatherAlerts: [String: WeatherAlert] = [:]
@@ -616,7 +627,7 @@ struct DashboardView: View {
     private var buildingsMapView: some View {
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
             MapAnnotation(coordinate: building.coordinate) {
-                NavigationLink(destination: BuildingDetailView(building: building)) {
+                NavigationLink(destination: TempBuildingDetailView(building: building)) {
                     BuildingMapMarker(
                         building: building,
                         isAssigned: isAssignedBuilding(building),
@@ -628,7 +639,7 @@ struct DashboardView: View {
     }
     
     private func buildingCard(_ building: FrancoSphere.NamedCoordinate) -> some View {
-        NavigationLink(destination: BuildingDetailView(building: building)) {
+        NavigationLink(destination: TempBuildingDetailView(building: building)) {
             VStack(alignment: .leading, spacing: 10) {
                 // Building image
                 buildingImageView(building)
@@ -722,7 +733,7 @@ struct DashboardView: View {
                     .font(.title2)
                     .foregroundColor(.white)
                     .frame(width: 40, height: 40)
-                    .background(alert.color)
+                    .background(colorForWeatherAlert(alert))
                     .cornerRadius(10)
                 
                 Text(alert.title)
@@ -751,7 +762,7 @@ struct DashboardView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(alert.color)
+                    .background(colorForWeatherAlert(alert))
                     .cornerRadius(8)
             }
         }
@@ -761,153 +772,160 @@ struct DashboardView: View {
         .cornerRadius(12)
     }
     
-    // MARK: - Stats Tab Content
+    // MARK: - Stats Tab Content (FIXED COMPLEX EXPRESSION)
     
     private var statsTabContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            // Performance overview
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Task Completion")
-                    .font(.headline)
-                
-                HStack(spacing: 15) {
-                    // Completion rate circular progress
-                    ZStack {
-                        Circle()
-                            .stroke(Color.gray.opacity(0.2), lineWidth: 10)
-                            .frame(width: 100, height: 100)
-                        
-                        Circle()
-                            .trim(from: 0, to: CGFloat(getCompletionRate()))
-                            .stroke(Color.green, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                            .frame(width: 100, height: 100)
-                            .rotationEffect(.degrees(-90))
-                        
-                        VStack {
-                            Text("\(Int(getCompletionRate() * 100))%")
-                                .font(.title2)
-                                .bold()
-                            
-                            Text("Complete")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    // Task stats
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Circle()
-                                .fill(Color.blue)
-                                .frame(width: 8, height: 8)
-                            
-                            Text("Total Tasks: \(getAllTasksCount())")
-                                .font(.subheadline)
-                        }
-                        
-                        HStack {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 8, height: 8)
-                            
-                            Text("Completed: \(getCompletedTasksCount())")
-                                .font(.subheadline)
-                        }
-                        
-                        HStack {
-                            Circle()
-                                .fill(Color.orange)
-                                .frame(width: 8, height: 8)
-                            
-                            Text("Pending: \(getPendingTasksCount())")
-                                .font(.subheadline)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-            }
-            
-            // Weekly activity
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Weekly Activity")
-                    .font(.headline)
-                
-                HStack(alignment: .bottom, spacing: 5) {
-                    ForEach(0..<7, id: \.self) { day in
-                        VStack(spacing: 4) {
-                            // Activity bar
-                            Rectangle()
-                                .fill(dayColor(for: day, height: dayHeight(for: day)))
-                                .frame(height: dayHeight(for: day))
-                                .frame(maxWidth: .infinity)
-                                .cornerRadius(4)
-                            
-                            // Day label
-                            Text(dayLabel(for: day))
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-            }
-            
-            // Most visited buildings
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Most Visited Buildings")
-                    .font(.headline)
-                
-                VStack(spacing: 15) {
-                    ForEach(getMostVisitedBuildings(), id: \.building.id) { item in
-                        HStack {
-                            // Building image or icon
-                            buildingImageView(item.building)
-                                .frame(width: 40, height: 40)
-                                .cornerRadius(8)
-                            
-                            // Building info
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item.building.name)
-                                    .font(.callout)
-                                    .fontWeight(.medium)
-                                
-                                // Progress bar showing percentage of visits
-                                GeometryReader { geometry in
-                                    ZStack(alignment: .leading) {
-                                        Rectangle()
-                                            .fill(Color.gray.opacity(0.2))
-                                            .frame(width: geometry.size.width, height: 6)
-                                            .cornerRadius(3)
-                                        
-                                        Rectangle()
-                                            .fill(Color.blue)
-                                            .frame(width: geometry.size.width * CGFloat(item.percentage), height: 6)
-                                            .cornerRadius(3)
-                                    }
-                                }
-                                .frame(height: 6)
-                                
-                                Text("\(item.visits) visits")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-            }
-            
-            // Padding at the bottom for better scrolling
+            taskCompletionSection
+            weeklyActivitySection
+            mostVisitedBuildingsSection
             Color.clear.frame(height: 20)
         }
         .padding(.horizontal)
         .padding(.top, 16)
+    }
+    
+    // BROKEN DOWN INTO SMALLER COMPUTED PROPERTIES TO FIX COMPLEX EXPRESSION
+    
+    private var taskCompletionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Task Completion")
+                .font(.headline)
+            
+            taskCompletionCard
+        }
+    }
+    
+    private var taskCompletionCard: some View {
+        HStack(spacing: 15) {
+            circularProgressView
+            taskStatsColumn
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+    
+    private var circularProgressView: some View {
+        let completionRate = getCompletionRate()
+        let completionPercentage = Int(completionRate * 100)
+        
+        return ZStack {
+            Circle()
+                .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                .frame(width: 100, height: 100)
+            
+            Circle()
+                .trim(from: 0, to: CGFloat(completionRate))
+                .stroke(Color.green, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .frame(width: 100, height: 100)
+                .rotationEffect(.degrees(-90))
+            
+            VStack {
+                Text("\(completionPercentage)%")
+                    .font(.title2)
+                    .bold()
+                
+                Text("Complete")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    private var taskStatsColumn: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            taskStatRow(color: .blue, text: "Total Tasks: \(getAllTasksCount())")
+            taskStatRow(color: .green, text: "Completed: \(getCompletedTasksCount())")
+            taskStatRow(color: .orange, text: "Pending: \(getPendingTasksCount())")
+        }
+    }
+    
+    private func taskStatRow(color: Color, text: String) -> some View {
+        HStack {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            
+            Text(text)
+                .font(.subheadline)
+        }
+    }
+    
+    private var weeklyActivitySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Weekly Activity")
+                .font(.headline)
+            
+            HStack(alignment: .bottom, spacing: 5) {
+                ForEach(0..<7, id: \.self) { day in
+                    VStack(spacing: 4) {
+                        // Activity bar
+                        Rectangle()
+                            .fill(dayColor(for: day, height: dayHeight(for: day)))
+                            .frame(height: dayHeight(for: day))
+                            .frame(maxWidth: .infinity)
+                            .cornerRadius(4)
+                        
+                        // Day label
+                        Text(dayLabel(for: day))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+        }
+    }
+    
+    private var mostVisitedBuildingsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Most Visited Buildings")
+                .font(.headline)
+            
+            VStack(spacing: 15) {
+                ForEach(getMostVisitedBuildings(), id: \.building.id) { item in
+                    HStack {
+                        // Building image or icon
+                        buildingImageView(item.building)
+                            .frame(width: 40, height: 40)
+                            .cornerRadius(8)
+                        
+                        // Building info
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.building.name)
+                                .font(.callout)
+                                .fontWeight(.medium)
+                            
+                            // Progress bar showing percentage of visits
+                            GeometryReader { geometry in
+                                ZStack(alignment: .leading) {
+                                    Rectangle()
+                                        .fill(Color.gray.opacity(0.2))
+                                        .frame(width: geometry.size.width, height: 6)
+                                        .cornerRadius(3)
+                                    
+                                    Rectangle()
+                                        .fill(Color.blue)
+                                        .frame(width: geometry.size.width * CGFloat(item.percentage), height: 6)
+                                        .cornerRadius(3)
+                                }
+                            }
+                            .frame(height: 6)
+                            
+                            Text("\(item.visits) visits")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+        }
     }
     
     // MARK: - Supporting Views
@@ -1044,6 +1062,7 @@ struct DashboardView: View {
         }
     }
     
+    // FIXED: NotificationsView now uses helper function
     private struct NotificationsView: View {
         let notifications: [WorkerNotification]
         let weatherAlerts: [WeatherAlert]
@@ -1057,7 +1076,7 @@ struct DashboardView: View {
                             ForEach(weatherAlerts) { alert in
                                 HStack(alignment: .top) {
                                     Image(systemName: alert.icon)
-                                        .foregroundColor(alert.color)
+                                        .foregroundColor(colorForWeatherAlert(alert)) // FIXED: Use helper function
                                         .font(.title3)
                                         .frame(width: 24)
                                     
@@ -1506,19 +1525,46 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Utility Functions
-
-// Helper function to convert String to Int64
-private func convertStringToInt64(_ string: String) -> Int64 {
-    return Int64(string) ?? 0
+// MARK: - Temporary BuildingDetailView Stub
+struct TempBuildingDetailView: View {
+    let building: FrancoSphere.NamedCoordinate
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "building.2.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.blue)
+            
+            Text(building.name)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            if let address = building.address {
+                Text(address)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Text("Building Detail View")
+                .font(.title3)
+                .foregroundColor(.gray)
+            
+            Text("This will be replaced with the glassmorphic BuildingDetailView")
+                .font(.callout)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding()
+        }
+        .padding()
+        .navigationTitle(building.name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
 }
 
-// MARK: - Stubs to satisfy missing types (remove or replace once real implementations exist)
-
-import SwiftUI
+// MARK: - Stub Classes (moved to bottom)
 
 /// Stub for AuthManager
-/// Replace with your real AuthManager (e.g. an actor or class that provides `shared`, `currentWorkerName`, `workerId`, and `logout()`)
 @MainActor
 final class AuthManager: ObservableObject {
     static let shared = AuthManager()
@@ -1530,7 +1576,6 @@ final class AuthManager: ObservableObject {
 }
 
 /// Stub for MainBuildingSelectionView
-/// Replace with your real view that lets the user pick a building from a list
 struct MainBuildingSelectionView: View {
     let buildings: [FrancoSphere.NamedCoordinate]
     let onSelect: (FrancoSphere.NamedCoordinate) -> Void

@@ -103,7 +103,7 @@ actor InventoryManagerImpl {
             ORDER BY name
             """
             
-            let rows = try await sqliteManager.query(query, parameters: [buildingId])
+            let rows = try await sqliteManager.query(query, [buildingId])
             
             var items: [FrancoSphere.InventoryItem] = []
             
@@ -169,7 +169,8 @@ actor InventoryManagerImpl {
 
             // Check if item exists
             let checkQuery = "SELECT id FROM inventory_items WHERE id = ?"
-            let rows = try await sqliteManager.query(checkQuery, parameters: [item.id])
+            let rows = try await sqliteManager.query(checkQuery, [item.id])
+
             
             if !rows.isEmpty {
                 // Update existing item
@@ -181,7 +182,7 @@ actor InventoryManagerImpl {
                 WHERE id = ?
                 """
                 
-                try await sqliteManager.execute(updateQuery, parameters: [
+                try await sqliteManager.execute(updateQuery, [
                     item.name, item.category.rawValue, item.quantity, item.unit,
                     item.minimumQuantity, item.needsReorder ? 1 : 0, lastRestockDateStr,
                     item.location, item.notes ?? "", item.id
@@ -195,7 +196,7 @@ actor InventoryManagerImpl {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 
-                try await sqliteManager.execute(insertQuery, parameters: [
+                try await sqliteManager.execute(insertQuery, [
                     item.name, item.buildingID, item.category.rawValue, item.quantity, item.unit,
                     item.minimumQuantity, item.needsReorder ? 1 : 0, lastRestockDateStr,
                     item.location, item.notes ?? ""
@@ -229,7 +230,7 @@ actor InventoryManagerImpl {
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             
-            try await sqliteManager.execute(insertQuery, parameters: [
+            try await sqliteManager.execute(insertQuery, [
                 itemId, itemName, quantityUsed, workerId,
                 usageDateStr, unit, notes ?? ""
             ])
@@ -254,7 +255,7 @@ actor InventoryManagerImpl {
             LIMIT 100
             """
             
-            let rows = try await sqliteManager.query(query, parameters: [buildingId])
+            let rows = try await sqliteManager.query(query, [buildingId])
             
             var records: [FrancoSphere.InventoryUsageRecord] = []
             

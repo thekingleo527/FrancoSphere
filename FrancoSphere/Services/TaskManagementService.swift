@@ -242,7 +242,7 @@ actor TaskManagementService {
                 try await database.execute("""
                 INSERT OR IGNORE INTO master_tasks (taskID, name, category, skillRequired, recurrence, description, urgency)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, parameters: [
+                """, [
                     task.id, task.name, task.category, task.skillRequired,
                     task.recurrence, task.description, task.urgency
                 ])
@@ -318,7 +318,7 @@ actor TaskManagementService {
                 try await database.execute("""
                 INSERT OR IGNORE INTO task_assignments (id, buildingID, taskName, workerID, recurrence, dayOfWeek, category, skillLevel)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, parameters: [
+                """, [
                     assignment.id, assignment.buildingID, assignment.taskName, assignment.workerID,
                     assignment.recurrence, assignment.dayOfWeek, assignment.category, assignment.skillLevel
                 ])
@@ -348,7 +348,7 @@ actor TaskManagementService {
             FROM task_assignments ta
             JOIN master_tasks mt ON ta.taskName = mt.name
             WHERE ta.workerID = ? AND (ta.dayOfWeek = ? OR ta.dayOfWeek = 0)
-            """, parameters: [workerID, weekday])
+            """, [workerID, weekday])
             
             // Create a MaintenanceTask object for each assignment
             for row in result {
@@ -421,7 +421,7 @@ actor TaskManagementService {
             FROM task_assignments ta
             JOIN master_tasks mt ON ta.taskName = mt.name
             WHERE ta.buildingID = ? AND (ta.dayOfWeek = ? OR ta.dayOfWeek = 0)
-            """, parameters: [buildingID, weekday])
+            """, [buildingID, weekday])
             
             // Same logic as generateTasks, but filtered by building instead of worker
             for row in result {
@@ -490,7 +490,7 @@ actor TaskManagementService {
                 try await database.execute("""
                 INSERT INTO task_completion_log (id, taskID, workerID, buildingID, timestamp, isVerified)
                 VALUES (?, ?, ?, ?, ?, 0)
-                """, parameters: [completionID, taskID, workerID, buildingID, timestamp])
+                """, [completionID, taskID, workerID, buildingID, timestamp])
                 
                 print("Task \(taskID) marked as completed")
             } catch {
@@ -525,7 +525,7 @@ actor TaskManagementService {
             let result = try await database.query("""
             SELECT COUNT(*) as count FROM task_completion_log
             WHERE taskID = ? AND timestamp >= ? AND timestamp < ? AND isVerified >= 0
-            """, parameters: [taskID, startString, endString])
+            """, [taskID, startString, endString])
             
             let count = result.first?["count"] as? Int64 ?? 0
             return count > 0

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TaskRequestView: View {
-    @StateObject private var authManager = AuthManager.shared
+    @StateObject private var authManager = NewAuthManager.shared
     @State private var taskName: String = ""
     @State private var taskDescription: String = ""
     @State private var selectedBuildingID: String = ""
@@ -112,6 +112,18 @@ struct TaskRequestView: View {
         }
     }
     
+    // MARK: - Helper Functions
+    
+    // FIXED: Add urgency color helper function
+    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+        switch urgency {
+        case .low:    return .green
+        case .medium: return .yellow
+        case .high:   return .red
+        case .urgent: return .purple
+        }
+    }
+    
     // MARK: - Form Sections
     
     private var basicTaskSection: some View {
@@ -132,11 +144,12 @@ struct TaskRequestView: View {
                     .autocapitalization(.sentences)
             }
             
+            // FIXED: Simplified urgency picker
             Picker("Urgency", selection: $selectedUrgency) {
                 ForEach(TaskUrgency.allCases, id: \.self) { urgency in
                     HStack {
                         Circle()
-                            .fill(urgency.color)
+                            .fill(getUrgencyColor(urgency))
                             .frame(width: 10, height: 10)
                         
                         Text(urgency.rawValue)
@@ -346,7 +359,7 @@ struct TaskRequestView: View {
                                     
                                     if let iconName = getUrgencyIcon(suggestion.urgency) {
                                         Image(systemName: iconName)
-                                            .foregroundColor(getUrgencyColor(suggestion.urgency))
+                                            .foregroundColor(getUrgencyColorFromString(suggestion.urgency))
                                             .padding(.leading, 8)
                                     }
                                 }
@@ -408,9 +421,10 @@ struct TaskRequestView: View {
         }
     }
     
-    private func getUrgencyColor(_ urgency: String) -> Color {
+    // FIXED: Renamed to avoid confusion and use helper function
+    private func getUrgencyColorFromString(_ urgency: String) -> Color {
         if let urgency = TaskUrgency(rawValue: urgency) {
-            return urgency.color
+            return getUrgencyColor(urgency)
         }
         return .gray
     }

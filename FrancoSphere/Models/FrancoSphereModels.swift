@@ -1,12 +1,11 @@
 // FrancoSphereModels.swift
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-// “Source of truth” for all FrancoSphere-wide models.
+// "Source of truth" for all FrancoSphere-wide models.
 // All other files should reference exactly these definitions,
 // via either the namespace `FrancoSphere.<Type>` or the
 // top-level typealiases at the bottom.
 //
-// When you rebuild, there must be exactly one declaration
-// of each of these names. Remove any duplicates from other files.
+// Fixed compilation errors: duplicate color properties and WeatherAlert redeclaration
 
 import Foundation
 import SwiftUI
@@ -46,15 +45,15 @@ public enum AIScenario: String, CaseIterable {
     public var message: String {
         switch self {
         case .routineIncomplete:
-            return "Some of today’s routine tasks remain incomplete. Let me help you see what’s pending."
+            return "Some of today's routine tasks remain incomplete. Let me help you see what's pending."
         case .pendingTasks:
             return "You have tasks waiting—shall we review them now?"
         case .missingPhoto:
             return "One or more tasks require a before/after photo. Please attach an image to proceed."
         case .clockOutReminder:
-            return "Don’t forget to clock out before you leave. Tap here to do so now."
+            return "Don't forget to clock out before you leave. Tap here to do so now."
         case .weatherAlert:
-            return "There’s a weather event affecting this building. Review related maintenance tasks?"
+            return "There's a weather event affecting this building. Review related maintenance tasks?"
         }
     }
 
@@ -105,7 +104,7 @@ public enum FrancoSphere {
             .init(latitude: latitude, longitude: longitude)
         }
 
-        /// Full list of buildings, hard-coded stub (16 entries).
+        /// Full list of buildings (18 entries including missing ones)
         public static var allBuildings: [NamedCoordinate] {
             return [
                 NamedCoordinate(
@@ -124,19 +123,199 @@ public enum FrancoSphere {
                     address: "29-31 East 20th Street, New York, NY",
                     imageAssetName: "29_31_East_20th_Street"
                 ),
-                // … (other 14 entries omitted for brevity)
+                NamedCoordinate(
+                    id: "3",
+                    name: "36 Walker Street",
+                    latitude: 40.7190,
+                    longitude: -74.0050,
+                    address: "36 Walker St, New York, NY",
+                    imageAssetName: "36_Walker_Street"
+                ),
+                NamedCoordinate(
+                    id: "4",
+                    name: "41 Elizabeth Street",
+                    latitude: 40.7170,
+                    longitude: -73.9970,
+                    address: "41 Elizabeth St, New York, NY",
+                    imageAssetName: "41_Elizabeth_Street"
+                ),
+                NamedCoordinate(
+                    id: "5",
+                    name: "68 Perry Street",
+                    latitude: 40.7350,
+                    longitude: -74.0050,
+                    address: "68 Perry St, New York, NY",
+                    imageAssetName: "68_Perry_Street"
+                ),
+                NamedCoordinate(
+                    id: "6",
+                    name: "104 Franklin Street",
+                    latitude: 40.7180,
+                    longitude: -74.0060,
+                    address: "104 Franklin St, New York, NY",
+                    imageAssetName: "104_Franklin_Street"
+                ),
+                NamedCoordinate(
+                    id: "7",
+                    name: "112 West 18th Street",
+                    latitude: 40.7400,
+                    longitude: -73.9940,
+                    address: "112 W 18th St, New York, NY",
+                    imageAssetName: "112_West_18th_Street"
+                ),
+                NamedCoordinate(
+                    id: "8",
+                    name: "117 West 17th Street",
+                    latitude: 40.7395,
+                    longitude: -73.9950,
+                    address: "117 W 17th St, New York, NY",
+                    imageAssetName: "117_West_17th_Street"
+                ),
+                NamedCoordinate(
+                    id: "9",
+                    name: "123 1st Avenue",
+                    latitude: 40.7270,
+                    longitude: -73.9850,
+                    address: "123 1st Ave, New York, NY",
+                    imageAssetName: "123_1st_Avenue"
+                ),
+                NamedCoordinate(
+                    id: "10",
+                    name: "131 Perry Street",
+                    latitude: 40.7340,
+                    longitude: -74.0060,
+                    address: "131 Perry St, New York, NY",
+                    imageAssetName: "131_Perry_Street"
+                ),
+                NamedCoordinate(
+                    id: "11",
+                    name: "133 East 15th Street",
+                    latitude: 40.7345,
+                    longitude: -73.9875,
+                    address: "133 E 15th St, New York, NY",
+                    imageAssetName: "133_East_15th_Street"
+                ),
+                NamedCoordinate(
+                    id: "12",
+                    name: "135-139 West 17th Street",
+                    latitude: 40.7400,
+                    longitude: -73.9960,
+                    address: "135-139 W 17th St, New York, NY",
+                    imageAssetName: "135West17thStreet"
+                ),
+                NamedCoordinate(
+                    id: "13",
+                    name: "136 West 17th Street",
+                    latitude: 40.7402,
+                    longitude: -73.9970,
+                    address: "136 W 17th St, New York, NY",
+                    imageAssetName: "136_West_17th_Street"
+                ),
+                NamedCoordinate(
+                    id: "14",
+                    name: "138 West 17th Street",
+                    latitude: 40.7399,
+                    longitude: -73.9965,
+                    address: "138 W 17th St, New York, NY",
+                    imageAssetName: "138West17thStreet"
+                ),
+                NamedCoordinate(
+                    id: "15",
+                    name: "Rubin Museum (142-148 W 17th)",
+                    latitude: 40.7405,
+                    longitude: -73.9980,
+                    address: "142-148 W 17th St, New York, NY",
+                    imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
+                ),
+                NamedCoordinate(
+                    id: "16",
+                    name: "Stuyvesant Cove Park",
+                    latitude: 40.7318,
+                    longitude: -73.9740,
+                    address: "20 Waterside Plaza, New York, NY 10010",
+                    imageAssetName: "Stuyvesant_Cove_Park"
+                ),
+                NamedCoordinate(
+                    id: "17",
+                    name: "178 Spring Street",
+                    latitude: 40.7250,
+                    longitude: -74.0020,
+                    address: "178 Spring St, New York, NY",
+                    imageAssetName: "178_Spring_Street"
+                ),
+                NamedCoordinate(
+                    id: "18",
+                    name: "115 7th Avenue",
+                    latitude: 40.7390,
+                    longitude: -73.9990,
+                    address: "115 7th Ave, New York, NY",
+                    imageAssetName: "115_7th_Avenue"
+                )
             ]
         }
 
         public static func getBuilding(byId id: String) -> NamedCoordinate? {
             return allBuildings.first { $0.id == id }
         }
+        
         public static func getBuildingId(byName name: String) -> String? {
-            return allBuildings.first { $0.name.lowercased() == name.lowercased() }?.id
+            // Handle various name formats from CSV
+            let normalizedName = name.lowercased()
+                .replacingOccurrences(of: "–", with: "-")
+                .replacingOccurrences(of: "_", with: "-")
+            
+            // Direct matches
+            if let building = allBuildings.first(where: { $0.name.lowercased() == normalizedName }) {
+                return building.id
+            }
+            
+            // Handle special cases
+            switch name {
+            case "135–139 West 17th", "135_139 West 17th":
+                return "12"
+            case "29–31 East 20th", "29_31 East 20th":
+                return "2"
+            case "36 Walker":
+                return "3"
+            case "104 Franklin":
+                return "6"
+            case "123 1st Ave":
+                return "9"
+            case "Stuyvesant Cove", "Stuyvesant Cove Park":
+                return "16"
+            case "Rubin Museum", "Rubin Museum (142–148 W 17th)", "Rubin Museum (142-148 W 17th)":
+                return "15"
+            case "117 W 17th", "117 West 17th Street":
+                return "8"
+            case "112 W 18th", "112 West 18th Street":
+                return "7"
+            case "117 W 17th + 112 W 18th":
+                return "8" // Return first building for combined
+            case "138 W 17th", "138 West 17th Street":
+                return "14"
+            case "12 W 18th", "12 West 18th Street":
+                return "1"
+            case "68 Perry", "68 Perry Street":
+                return "5"
+            case "131 Perry", "131 Perry Street":
+                return "10"
+            case "41 Elizabeth", "41 Elizabeth Street":
+                return "4"
+            case "133 E 15th", "133 East 15th Street":
+                return "11"
+            case "136 W 17th", "136 West 17th", "136 West 17th Street":
+                return "13"
+            case "178 Spring":
+                return "17"
+            case "115 7th Ave":
+                return "18"
+            default:
+                return nil
+            }
         }
     }
 
-    /// Legacy “Building” struct for backward compatibility (no longer used for lookups).
+    /// Legacy "Building" struct for backward compatibility (no longer used for lookups).
     public struct Building: Identifiable, Codable, Hashable {
         public let id: String
         public let name: String
@@ -149,8 +328,6 @@ public enum FrancoSphere {
             .init(latitude: latitude, longitude: longitude)
         }
     }
-
-    // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     // MARK: — 2) Weather Models
 
     public enum WeatherCondition: String, Codable, CaseIterable, Hashable {
@@ -174,7 +351,7 @@ public enum FrancoSphere {
             }
         }
 
-        public var color: Color {   // ←←← Keep this one (only occurrence of “color” here)
+        public var conditionColor: Color {
             switch self {
             case .clear:        return .yellow
             case .cloudy:       return .gray
@@ -242,7 +419,7 @@ public enum FrancoSphere {
             case high     = "High Risk"
             case extreme  = "Extreme Risk"
 
-            public var color: Color {
+            public var riskColor: Color {
                 switch self {
                 case .low:      return .green
                 case .moderate: return .yellow
@@ -265,7 +442,7 @@ public enum FrancoSphere {
         }
     }
 
-    public struct WeatherAlert: Identifiable, Codable, Hashable {   // ←←← Keep this one (only occurrence)
+    public struct WeatherAlertModel: Identifiable, Codable, Hashable {
         public let id: String
         public let buildingId: String
         public let buildingName: String
@@ -275,7 +452,7 @@ public enum FrancoSphere {
         public let colorName: String  // Stored as a String
         public let timestamp: Date
 
-        public var color: Color {
+        public var alertColor: Color {
             switch colorName {
             case "red":    return .red
             case "orange": return .orange
@@ -327,7 +504,7 @@ public enum FrancoSphere {
         case high   = "High"
         case urgent = "Urgent"
 
-        public var color: Color {
+        public var urgencyColor: Color {
             switch self {
             case .low:    return .green
             case .medium: return .yellow
@@ -353,6 +530,16 @@ public enum FrancoSphere {
             case .sanitation:   return "trash"
             }
         }
+        
+        public var categoryColor: Color {
+            switch self {
+            case .maintenance: return .orange
+            case .cleaning:    return .blue
+            case .repair:      return .red
+            case .inspection:  return .purple
+            case .sanitation:  return .green
+            }
+        }
     }
 
     public enum TaskRecurrence: String, Codable, CaseIterable, Hashable {
@@ -371,7 +558,7 @@ public enum FrancoSphere {
         case verified = "Verified"
         case rejected = "Verification Failed"
 
-        public var color: Color {
+        public var statusColor: Color {
             switch self {
             case .pending:  return .orange
             case .verified: return .green
@@ -414,6 +601,7 @@ public enum FrancoSphere {
         public var requiredSkillLevel: String
         public var verificationStatusValue: VerificationStatus?
         public var completionInfo: TaskCompletionInfo?
+        public var externalId: String?
 
         public init(
             id: String = UUID().uuidString,
@@ -430,7 +618,8 @@ public enum FrancoSphere {
             assignedWorkers: [String] = [],
             requiredSkillLevel: String = "Basic",
             verificationStatus: VerificationStatus? = nil,
-            completionInfo: TaskCompletionInfo? = nil
+            completionInfo: TaskCompletionInfo? = nil,
+            externalId: String? = nil
         ) {
             self.id = id
             self.name = name
@@ -447,6 +636,7 @@ public enum FrancoSphere {
             self.requiredSkillLevel = requiredSkillLevel
             self.verificationStatusValue = verificationStatus
             self.completionInfo = completionInfo
+            self.externalId = externalId
         }
 
         public var verificationStatus: VerificationStatus? {
@@ -463,9 +653,9 @@ public enum FrancoSphere {
 
         public var statusColor: Color {
             if let status = verificationStatusValue {
-                return status.color
+                return status.statusColor
             }
-            return isComplete ? .gray : urgency.color
+            return isComplete ? .gray : urgency.urgencyColor
         }
 
         public var isPastDue: Bool {
@@ -628,6 +818,8 @@ public enum FrancoSphere {
         case hvac           = "HVAC"
         case security       = "Security"
         case management     = "Management"
+        case boiler         = "Boiler Operations"
+        case landscaping    = "Landscaping"
 
         public var icon: String {
             switch self {
@@ -644,10 +836,12 @@ public enum FrancoSphere {
             case .hvac:           return "fan"
             case .security:       return "lock.shield"
             case .management:     return "person.2"
+            case .boiler:         return "flame"
+            case .landscaping:    return "leaf"
             }
         }
 
-        public var color: Color {
+        public var skillColor: Color {
             switch self {
             case .technical:      return .blue
             case .manual:         return .orange
@@ -662,6 +856,8 @@ public enum FrancoSphere {
             case .hvac:           return .mint
             case .security:       return .red
             case .management:     return .purple
+            case .boiler:         return .orange
+            case .landscaping:    return .green
             }
         }
     }
@@ -677,12 +873,14 @@ public enum FrancoSphere {
         case admin   = "Admin"
         case worker  = "Worker"
         case manager = "Manager"
+        case client  = "Client"
 
         public var displayName: String {
             switch self {
             case .worker:  return "Maintenance Worker"
             case .admin:   return "System Administrator"
             case .manager: return "Manager"
+            case .client:  return "Client"
             }
         }
     }
@@ -714,43 +912,90 @@ public enum FrancoSphere {
             self.skillLevel = skillLevel
         }
 
+        /// Complete list of all workers from CSV data
         public static var allWorkers: [WorkerProfile] {
             return [
                 WorkerProfile(
                     id: "1",
-                    name: "Edwin Lema",
-                    email: "edwin@francosphere.com",
+                    name: "Greg Hutson",
+                    email: "g.hutson1989@gmail.com",
                     role: .worker,
-                    skills: [.maintenance, .cleaning, .repair],
-                    assignedBuildings: ["1", "2", "7", "8", "12", "13", "14"],
-                    skillLevel: .intermediate
+                    skills: [.maintenance, .repair, .plumbing, .electrical, .inspection],
+                    assignedBuildings: ["5", "7", "8", "10", "11", "15"],
+                    skillLevel: .advanced
                 ),
                 WorkerProfile(
                     id: "2",
-                    name: "Jose Rodriguez",
-                    email: "jose@francosphere.com",
+                    name: "Edwin Lema",
+                    email: "edwinlema911@gmail.com",
                     role: .worker,
-                    skills: [.maintenance, .cleaning, .sanitation],
-                    assignedBuildings: ["3", "4", "6", "9"],
+                    skills: [.maintenance, .cleaning, .repair, .inspection],
+                    assignedBuildings: ["1", "2", "4", "7", "8", "10", "12", "13", "14", "16", "18"],
                     skillLevel: .intermediate
                 ),
                 WorkerProfile(
                     id: "3",
-                    name: "Greg Hutson",
-                    email: "greg@francosphere.com",
+                    name: "Kevin Dutan",
+                    email: "dutankevin1@gmail.com",
                     role: .worker,
-                    skills: [.maintenance, .repair, .plumbing, .electrical],
-                    assignedBuildings: ["5", "10", "11"],
-                    skillLevel: .advanced
+                    skills: [.maintenance, .cleaning, .sanitation],
+                    assignedBuildings: ["2", "3", "4", "5", "6", "9", "10", "12", "15", "17"],
+                    skillLevel: .intermediate
                 ),
                 WorkerProfile(
                     id: "4",
                     name: "Angel Guirachocha",
-                    email: "angel@francosphere.com",
+                    email: "lio.angel71@gmail.com",
                     role: .worker,
                     skills: [.maintenance, .cleaning, .sanitation],
-                    assignedBuildings: ["15", "16"],
+                    assignedBuildings: ["1", "7", "8", "12", "13", "16", "18"],
                     skillLevel: .intermediate
+                ),
+                WorkerProfile(
+                    id: "5",
+                    name: "Mercedes Inamagua",
+                    email: "Jneola@gmail.com",
+                    role: .worker,
+                    skills: [.cleaning, .sanitation, .maintenance],
+                    assignedBuildings: ["1", "6", "7", "8", "12", "13", "14", "15"],
+                    skillLevel: .basic
+                ),
+                WorkerProfile(
+                    id: "6",
+                    name: "Luis Lopez",
+                    email: "luislopez030@yahoo.com",
+                    role: .worker,
+                    skills: [.maintenance, .cleaning, .inspection],
+                    assignedBuildings: ["1", "14"],
+                    skillLevel: .intermediate
+                ),
+                WorkerProfile(
+                    id: "7",
+                    name: "Shawn Magloire",
+                    email: "shawn@francomanagementgroup.com",
+                    role: .worker,
+                    skills: [.maintenance, .boiler, .hvac],
+                    assignedBuildings: ["7", "8", "11", "13", "14", "18"],
+                    skillLevel: .advanced
+                ),
+                // Shawn's additional accounts for testing
+                WorkerProfile(
+                    id: "8",
+                    name: "Shawn Magloire",
+                    email: "FrancoSphere@francomanagementgroup.com",
+                    role: .client,
+                    skills: [],
+                    assignedBuildings: [],
+                    skillLevel: .basic
+                ),
+                WorkerProfile(
+                    id: "9",
+                    name: "Shawn Magloire",
+                    email: "Shawn@fme-llc.com",
+                    role: .admin,
+                    skills: [.management],
+                    assignedBuildings: [], // Admin can access all buildings
+                    skillLevel: .expert
                 )
             ]
         }
@@ -758,8 +1003,22 @@ public enum FrancoSphere {
         public static func getWorker(byId id: String) -> WorkerProfile? {
             return allWorkers.first { $0.id == id }
         }
+        
         public static func getWorkerId(byName name: String) -> String? {
-            return allWorkers.first { $0.name.lowercased() == name.lowercased() }?.id
+            // Handle first name only cases
+            let searchName = name.lowercased()
+            
+            // Try exact match first
+            if let worker = allWorkers.first(where: { $0.name.lowercased() == searchName }) {
+                return worker.id
+            }
+            
+            // Handle first name only cases
+            if searchName == "angel" {
+                return "4"
+            }
+            
+            return nil
         }
     }
 
@@ -790,7 +1049,192 @@ public enum FrancoSphere {
             self.specialRole = specialRole
         }
     }
+    
+    // MARK: — 4b) Worker-Routine Models
 
+    public struct WorkerRoutineSummary: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let date: Date
+        public let totalTasks: Int
+        public let completedTasks: Int
+        public let totalDistance: Double   // metres
+        public let estimatedDuration: TimeInterval   // seconds
+        public let dailyTasks: Int
+        public let weeklyTasks: Int
+        public let monthlyTasks: Int
+        public let buildingCount: Int
+        public let estimatedDailyHours: Double
+        public let estimatedWeeklyHours: Double
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            date: Date = Date(),
+            totalTasks: Int = 0,
+            completedTasks: Int = 0,
+            totalDistance: Double = 0,
+            estimatedDuration: TimeInterval = 0,
+            dailyTasks: Int = 0,
+            weeklyTasks: Int = 0,
+            monthlyTasks: Int = 0,
+            buildingCount: Int = 0,
+            estimatedDailyHours: Double = 0,
+            estimatedWeeklyHours: Double = 0
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.date = date
+            self.totalTasks = totalTasks
+            self.completedTasks = completedTasks
+            self.totalDistance = totalDistance
+            self.estimatedDuration = estimatedDuration
+            self.dailyTasks = dailyTasks
+            self.weeklyTasks = weeklyTasks
+            self.monthlyTasks = monthlyTasks
+            self.buildingCount = buildingCount
+            self.estimatedDailyHours = estimatedDailyHours
+            self.estimatedWeeklyHours = estimatedWeeklyHours
+        }
+    }
+
+    public struct WorkerDailyRoute: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let date: Date
+        public let stops: [RouteStop]
+        public let totalDistance: Double   // metres
+        public let estimatedDuration: TimeInterval   // seconds
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            date: Date = Date(),
+            stops: [RouteStop] = [],
+            totalDistance: Double = 0,
+            estimatedDuration: TimeInterval = 0
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.date = date
+            self.stops = stops
+            self.totalDistance = totalDistance
+            self.estimatedDuration = estimatedDuration
+        }
+    }
+
+    public struct RouteStop: Identifiable, Codable, Hashable {
+        public let id: String
+        public let buildingId: String
+        public let buildingName: String
+        public let tasks: [MaintenanceTask]
+        public let estimatedDuration: TimeInterval   // seconds
+        public let estimatedTaskDuration: TimeInterval
+        public let arrivalTime: Date
+        public let departureTime: Date?
+        
+        // Store coordinate as separate properties for Codable
+        private let latitude: Double
+        private let longitude: Double
+        
+        public var coordinate: CLLocationCoordinate2D {
+            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        
+        public init(
+            id: String = UUID().uuidString,
+            buildingId: String,
+            buildingName: String,
+            coordinate: CLLocationCoordinate2D,
+            tasks: [MaintenanceTask] = [],
+            estimatedDuration: TimeInterval = 0,
+            estimatedTaskDuration: TimeInterval = 0,
+            arrivalTime: Date,
+            departureTime: Date? = nil
+        ) {
+            self.id = id
+            self.buildingId = buildingId
+            self.buildingName = buildingName
+            self.latitude = coordinate.latitude
+            self.longitude = coordinate.longitude
+            self.tasks = tasks
+            self.estimatedDuration = estimatedDuration
+            self.estimatedTaskDuration = estimatedTaskDuration
+            self.arrivalTime = arrivalTime
+            self.departureTime = departureTime
+        }
+        
+        // Implement Hashable
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+        
+        // Implement Equatable
+        public static func == (lhs: RouteStop, rhs: RouteStop) -> Bool {
+            lhs.id == rhs.id
+        }
+    }
+
+    public struct RouteOptimization: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: OptimizationType
+        public let description: String
+        public let timeSaved: TimeInterval   // seconds
+        public let estimatedTimeSaving: TimeInterval
+        
+        public enum OptimizationType: String, Codable {
+            case reorder = "Route Reorder"
+            case combine = "Task Combination"
+            case skip    = "Skip Low Priority"
+        }
+        
+        public init(
+            id: String = UUID().uuidString,
+            type: OptimizationType,
+            description: String,
+            timeSaved: TimeInterval = 0,
+            estimatedTimeSaving: TimeInterval = 0
+        ) {
+            self.id = id
+            self.type = type
+            self.description = description
+            self.timeSaved = timeSaved
+            self.estimatedTimeSaving = estimatedTimeSaving
+        }
+    }
+
+    public struct ScheduleConflict: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ConflictType
+        public let description: String
+        public let severity: Severity
+        public let suggestedResolution: String
+        
+        public enum ConflictType: String, Codable {
+            case overlap  = "Time Overlap"
+            case travel   = "Travel Time"
+            case skill    = "Skill Mismatch"
+        }
+        
+        public enum Severity: String, Codable {
+            case low, medium, high
+        }
+        
+        public init(
+            id: String = UUID().uuidString,
+            type: ConflictType,
+            description: String,
+            severity: Severity,
+            suggestedResolution: String = ""
+        ) {
+            self.id = id
+            self.type = type
+            self.description = description
+            self.severity = severity
+            self.suggestedResolution = suggestedResolution
+        }
+    }
+    
     // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     // MARK: — 5) Task Templates
 
@@ -849,6 +1293,24 @@ public enum FrancoSphere {
                     requiredSkillLevel: "Intermediate",
                     recurrence: .monthly,
                     urgency: .medium
+                ),
+                TaskTemplate(
+                    id: "4",
+                    name: "Boiler Blow Down",
+                    category: .maintenance,
+                    description: "Perform boiler blowdown maintenance",
+                    requiredSkillLevel: "Advanced",
+                    recurrence: .weekly,
+                    urgency: .high
+                ),
+                TaskTemplate(
+                    id: "5",
+                    name: "Fire Alarm Testing",
+                    category: .inspection,
+                    description: "Test all fire alarm systems",
+                    requiredSkillLevel: "Advanced",
+                    recurrence: .monthly,
+                    urgency: .high
                 )
             ]
         }
@@ -889,34 +1351,57 @@ public enum FrancoSphere {
             skillLevel: String,
             recurrence: String,
             dueDate: Date = Date().addingTimeInterval(86400 * 7)
-        ) -> MaintenanceTask? {
-            guard
-                let buildingID  = getBuildingID(fromName: buildingName),
-                let workerID    = getWorkerID(fromName: workerName),
-                let taskCategory = TaskCategory(rawValue: category),
-                let taskRecurrence = TaskRecurrence(rawValue: recurrence)
-            else {
-                return nil
+        ) -> [MaintenanceTask] {
+            // Handle combined buildings
+            let buildingNames = buildingName.contains("+")
+                ? buildingName.split(separator: "+").map { $0.trimmingCharacters(in: .whitespaces) }
+                : [buildingName]
+            
+            var tasks: [MaintenanceTask] = []
+            
+            for building in buildingNames {
+                guard
+                    let buildingID  = getBuildingID(fromName: building),
+                    let workerID    = getWorkerID(fromName: workerName),
+                    let taskCategory = TaskCategory(rawValue: category),
+                    let taskRecurrence = mapRecurrenceType(recurrence)
+                else {
+                    continue
+                }
+
+                let taskTemplate = TaskTemplate.allTaskTemplates
+                    .first { $0.name == taskName }
+
+                let task = MaintenanceTask(
+                    id: UUID().uuidString,
+                    name: taskName,
+                    buildingID: buildingID,
+                    description: taskTemplate?.description ?? "",
+                    dueDate: dueDate,
+                    category: taskCategory,
+                    urgency: taskTemplate?.urgency ?? .medium,
+                    recurrence: taskRecurrence,
+                    isComplete: false,
+                    assignedWorkers: [workerID],
+                    requiredSkillLevel: skillLevel
+                )
+                
+                tasks.append(task)
             }
 
-            let taskTemplate = TaskTemplate.allTaskTemplates
-                .first { $0.name == taskName }
-
-            let task = MaintenanceTask(
-                id: UUID().uuidString,
-                name: taskName,
-                buildingID: buildingID,
-                description: taskTemplate?.description ?? "",
-                dueDate: dueDate,
-                category: taskCategory,
-                urgency: taskTemplate?.urgency ?? .medium,
-                recurrence: taskRecurrence,
-                isComplete: false,
-                assignedWorkers: [workerID],
-                requiredSkillLevel: skillLevel
-            )
-
-            return task
+            return tasks
+        }
+        
+        public static func mapRecurrenceType(_ csvRecurrence: String) -> TaskRecurrence? {
+            switch csvRecurrence {
+            case "Daily": return .daily
+            case "Weekly": return .weekly
+            case "Bi-Weekly": return .biweekly
+            case "Tri-Weekly": return .weekly  // Map to weekly, handle in scheduling
+            case "Monthly": return .monthly
+            case "One Time": return .oneTime
+            default: return nil
+            }
         }
 
         public static func validateCSVData(
@@ -932,7 +1417,7 @@ public enum FrancoSphere {
             if TaskUrgency(rawValue: urgency) == nil {
                 errors.append("Invalid urgency level: \(urgency)")
             }
-            if TaskRecurrence(rawValue: recurrence) == nil {
+            if mapRecurrenceType(recurrence) == nil {
                 errors.append("Invalid recurrence pattern: \(recurrence)")
             }
             if SkillLevel(rawValue: skillLevel) == nil {
@@ -953,6 +1438,18 @@ public enum FrancoSphere {
         case routinePartial   = "Partial"
         case routinePending   = "Pending"
         case routineOverdue   = "Overdue"
+        
+        public var buildingStatusColor: Color {
+            switch self {
+            case .operational:      return .green
+            case .underMaintenance: return .orange
+            case .closed:           return .red
+            case .routineComplete:  return .cyan
+            case .routinePartial:   return .orange
+            case .routinePending:   return .gray
+            case .routineOverdue:   return .red
+            }
+        }
     }
 
     // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
@@ -991,7 +1488,7 @@ public enum FrancoSphere {
 
         public var systemImage: String { icon }
 
-        public var categoryColor: Color {
+        public var inventoryCategoryColor: Color {
             switch self {
             case .cleaning:     return .blue
             case .tools:        return .orange
@@ -1064,7 +1561,7 @@ public enum FrancoSphere {
             else { return "In Stock" }
         }
 
-        public var statusColor: Color {
+        public var inventoryStatusColor: Color {
             if quantity <= 0 { return .red }
             else if quantity <= minimumQuantity { return .orange }
             else { return .green }
@@ -1118,7 +1615,7 @@ public enum FrancoSphere {
         case rejected  = "Rejected"
         case fulfilled = "Fulfilled"
 
-        public var statusColor: Color {
+        public var restockStatusColor: Color {
             switch self {
             case .pending:   return .orange
             case .approved:  return .blue
@@ -1201,7 +1698,7 @@ public enum FrancoSphere {
                 .font(.caption)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(status.color)
+                .background(status.buildingStatusColor)
                 .foregroundColor(.white)
                 .cornerRadius(12)
         }
@@ -1240,18 +1737,17 @@ public enum FrancoSphere {
 
 } // — end namespace FrancoSphere
 
-
-
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 // MARK: — Top-Level Type Aliases
 //
 // Expose every FrancoSphere.<Type> at the top level so
-// that all other files can refer to “MaintenanceTask”
-// instead of “FrancoSphere.MaintenanceTask.”
+// that all other files can refer to "MaintenanceTask"
+// instead of "FrancoSphere.MaintenanceTask."
 
 public typealias Building             = FrancoSphere.Building
 public typealias WeatherCondition     = FrancoSphere.WeatherCondition
 public typealias WeatherData          = FrancoSphere.WeatherData
+public typealias WeatherAlert         = FrancoSphere.WeatherAlertModel  // Updated to use the renamed model
 public typealias TaskUrgency          = FrancoSphere.TaskUrgency
 public typealias TaskCategory         = FrancoSphere.TaskCategory
 public typealias MaintenanceTask      = FrancoSphere.MaintenanceTask
@@ -1280,5 +1776,9 @@ public typealias InventoryRestockRequest = FrancoSphere.InventoryRestockRequest
 
 public typealias StatusChipView       = FrancoSphere.StatusChipView
 public typealias FSTaskItem           = FrancoSphere.FSTaskItem
-
-// … (and no other top-level declarations in this file)
+public typealias WorkerRoutineSummary = FrancoSphere.WorkerRoutineSummary
+public typealias WorkerDailyRoute     = FrancoSphere.WorkerDailyRoute
+public typealias RouteStop            = FrancoSphere.RouteStop
+public typealias RouteOptimization    = FrancoSphere.RouteOptimization
+public typealias ScheduleConflict     = FrancoSphere.ScheduleConflict
+public typealias NamedCoordinate      = FrancoSphere.NamedCoordinate

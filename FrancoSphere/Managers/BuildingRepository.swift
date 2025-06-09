@@ -1,6 +1,6 @@
 // BuildingRepository.swift
 // FrancoSphere v1.1 - Fixed version with proper async/await and error handling
-// Converted to Actor pattern with async operations
+// Fixed SQLite type ambiguity issues
 
 import Foundation
 import SwiftUI
@@ -606,7 +606,7 @@ actor BuildingRepository {
                 WHERE building_id = ?
             """
             
-            let rows = try await sqliteManager.query(sql, parameters: [buildingId])
+            let rows = try await sqliteManager.query(sql, [buildingId])
             
             guard !rows.isEmpty else { return nil }
             
@@ -672,7 +672,7 @@ actor BuildingRepository {
                 ORDER BY display_order
             """
             
-            let rows = try await sqliteManager.query(sql, parameters: [buildingId])
+            let rows = try await sqliteManager.query(sql, [buildingId])
             
             guard !rows.isEmpty else { return nil }
             
@@ -696,12 +696,16 @@ actor BuildingRepository {
             VALUES (?, ?, ?, ?, ?)
         """
         
-        try await sqliteManager.execute(sql, parameters: [
+        // Handle optional values by providing explicit default values
+        let shiftValue = assignment.shift ?? ""
+        let specialRoleValue = assignment.specialRole ?? ""
+        
+        try await sqliteManager.execute(sql, [
             assignment.buildingId,
             assignment.workerId,
             assignment.workerName,
-            assignment.shift ?? NSNull(),
-            assignment.specialRole ?? NSNull()
+            shiftValue,
+            specialRoleValue
         ])
     }
     
@@ -717,7 +721,7 @@ actor BuildingRepository {
             WHERE building_id = ?
         """
         
-        let rows = try await sqliteManager.query(orderSql, parameters: [buildingId])
+        let rows = try await sqliteManager.query(orderSql, [buildingId])
         let nextOrder = rows.first?["next_order"] as? Int64 ?? 1
         
         // Insert new task
@@ -726,7 +730,7 @@ actor BuildingRepository {
             VALUES (?, ?, ?)
         """
         
-        try await sqliteManager.execute(sql, parameters: [buildingId, task, nextOrder])
+        try await sqliteManager.execute(sql, [buildingId, task, nextOrder])
     }
     
     // MARK: - Utility Functions

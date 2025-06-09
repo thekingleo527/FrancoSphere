@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - Maintenance Task Extensions
 
-extension FrancoSphere.MaintenanceTask {
+extension MaintenanceTask {  // Remove FrancoSphere.
     /// Converts a maintenance task to a legacy task item format
     func toVerificationTaskItem() -> FSTaskItem {
         let intId = Int64(self.id) ?? 0
@@ -42,7 +42,7 @@ extension FrancoSphere.MaintenanceTask {
 // MARK: - Building Status Functions
 
 /// Determines a building's operational status based on task completion percentage
-func getVerificationStatusForBuilding(_ buildingId: String) -> FrancoSphere.BuildingStatus {
+func getVerificationStatusForBuilding(_ buildingId: String) -> BuildingStatus {  // Remove FrancoSphere.
     let completionPercentage = computeCompletionPercentage(for: buildingId)
 
     if completionPercentage >= 0.9 {
@@ -81,37 +81,37 @@ private func computeCompletionPercentage(for buildingId: String) -> Double {
 /// Provides utility methods for task verification operations
 struct TaskVerificationHelper {
     /// Marks a task as verified
-    static func verifyTask(_ task: FrancoSphere.MaintenanceTask, verifierId: String) -> FrancoSphere.MaintenanceTask {
+    static func verifyTask(_ task: MaintenanceTask, verifierId: String) -> MaintenanceTask {  // Remove FrancoSphere.
         var updatedTask = task
-        updatedTask.verificationStatus = FrancoSphere.VerificationStatus.verified
+        updatedTask.verificationStatus = VerificationStatus.verified  // Remove FrancoSphere.
         return updatedTask
     }
 
     /// Marks a task as rejected with a reason
     static func rejectTask(
-        _ task: FrancoSphere.MaintenanceTask,
+        _ task: MaintenanceTask,  // Remove FrancoSphere.
         verifierId: String,
         reason: String
-    ) -> FrancoSphere.MaintenanceTask {
+    ) -> MaintenanceTask {  // Remove FrancoSphere.
         var updatedTask = task
-        updatedTask.verificationStatus = FrancoSphere.VerificationStatus.rejected
+        updatedTask.verificationStatus = VerificationStatus.rejected  // Remove FrancoSphere.
         return updatedTask
     }
 
     /// Marks a task as pending verification
-    static func pendingVerification(_ task: FrancoSphere.MaintenanceTask) -> FrancoSphere.MaintenanceTask {
+    static func pendingVerification(_ task: MaintenanceTask) -> MaintenanceTask {  // Remove FrancoSphere.
         var updatedTask = task
-        updatedTask.verificationStatus = FrancoSphere.VerificationStatus.pending
+        updatedTask.verificationStatus = VerificationStatus.pending  // Remove FrancoSphere.
         return updatedTask
     }
 
     /// Creates a verification record for a task
     static func createVerificationRecord(
-        task: FrancoSphere.MaintenanceTask,
+        task: MaintenanceTask,  // Remove FrancoSphere.
         verifierId: String,
-        status: FrancoSphere.VerificationStatus
-    ) -> FrancoSphere.TaskCompletionRecord {
-        return FrancoSphere.TaskCompletionRecord(
+        status: VerificationStatus  // Remove FrancoSphere.
+    ) -> TaskCompletionRecord {  // Remove FrancoSphere.
+        return TaskCompletionRecord(
             taskId: task.id,
             buildingID: task.buildingID,
             workerId: task.assignedWorkers.first ?? "",
@@ -127,8 +127,8 @@ struct TaskVerificationHelper {
     /// Returns tasks that need verification for a specific building
     static func tasksNeedingVerification(
         for buildingId: String,
-        from tasks: [FrancoSphere.MaintenanceTask]
-    ) -> [FrancoSphere.MaintenanceTask] {
+        from tasks: [MaintenanceTask]  // Remove FrancoSphere.
+    ) -> [MaintenanceTask] {  // Remove FrancoSphere.
         return tasks.filter { task in
             task.buildingID == buildingId && task.needsVerification
         }
@@ -136,9 +136,9 @@ struct TaskVerificationHelper {
 
     /// Returns tasks that were recently verified
     static func recentlyVerifiedTasks(
-        from tasks: [FrancoSphere.MaintenanceTask],
+        from tasks: [MaintenanceTask],  // Remove FrancoSphere.
         days: Int = 7
-    ) -> [FrancoSphere.MaintenanceTask] {
+    ) -> [MaintenanceTask] {  // Remove FrancoSphere.
         let calendar = Calendar.current
         let cutoffDate = calendar.date(byAdding: .day, value: -days, to: Date()) ?? Date()
 
@@ -153,16 +153,27 @@ struct TaskVerificationHelper {
     }
 }
 
+// MARK: - Color Helper Functions
+
+/// Returns the appropriate color for a verification status
+private func getVerificationStatusColor(_ status: VerificationStatus) -> Color {  // Remove FrancoSphere.
+    switch status {
+    case .pending:  return .orange
+    case .verified: return .green
+    case .rejected: return .red
+    }
+}
+
 // MARK: - Building Status Extensions
 
-extension FrancoSphere.BuildingStatus {
+extension BuildingStatus {  // Remove FrancoSphere.
     /// Returns a user‐friendly status text
     func getStatusText() -> String {
         return self.rawValue
     }
-
+    
     /// Returns an appropriate icon name for the status
-    func getIconName() -> String {
+    func getIconName() -> String {  // FIX: Changed 'unc' to 'func'
         switch self {
         case .operational:
             return "checkmark.circle.fill"
@@ -170,12 +181,20 @@ extension FrancoSphere.BuildingStatus {
             return "wrench.fill"
         case .closed:
             return "xmark.circle.fill"
+        case .routineComplete:
+            return "checkmark.seal.fill"
+        case .routinePartial:
+            return "clock.badge.checkmark.fill"
+        case .routinePending:
+            return "clock.fill"
+        case .routineOverdue:
+            return "exclamationmark.clock.fill"
         @unknown default:
             return "questionmark.circle"
         }
     }
-
-    /// Returns a “color” to use for this status badge
+    
+    /// Returns a "color" to use for this status badge
     var color: Color {
         switch self {
         case .operational:
@@ -183,6 +202,14 @@ extension FrancoSphere.BuildingStatus {
         case .underMaintenance:
             return .orange
         case .closed:
+            return .red
+        case .routineComplete:
+            return .green
+        case .routinePartial:
+            return .yellow
+        case .routinePending:
+            return .orange
+        case .routineOverdue:
             return .red
         @unknown default:
             return .gray
@@ -194,8 +221,8 @@ extension FrancoSphere.BuildingStatus {
 
 /// A view component for displaying verification status
 struct VerificationStatusBadge: View {
-    let status: FrancoSphere.VerificationStatus?
-
+    let status: VerificationStatus?  // Remove FrancoSphere.
+    
     var body: some View {
         if let status = status {
             HStack(spacing: 4) {
@@ -206,8 +233,8 @@ struct VerificationStatusBadge: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(status.color.opacity(0.2))
-            .foregroundColor(status.color)
+            .background(getVerificationStatusColor(status).opacity(0.2))
+            .foregroundColor(getVerificationStatusColor(status))
             .cornerRadius(8)
         } else {
             EmptyView()
@@ -217,8 +244,8 @@ struct VerificationStatusBadge: View {
 
 /// A view component for displaying building status
 struct BuildingStatusBadge: View {
-    let status: FrancoSphere.BuildingStatus
-
+    let status: BuildingStatus  // Remove FrancoSphere.
+    
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: status.getIconName())

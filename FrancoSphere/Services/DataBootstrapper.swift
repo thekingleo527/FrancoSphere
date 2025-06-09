@@ -73,7 +73,7 @@ enum DataBootstrapper {
             let imageAssetName = name.replacingOccurrences(of: " ", with: "_")
                 .replacingOccurrences(of: "-", with: "_")
             
-            try await manager.execute(sql, parameters: [id, name, address, lat, lon, imageAssetName])
+            try await manager.execute(sql, [id, name, address, lat, lon, imageAssetName])
         }
         print("✅ Seeded \(rows.count - 1) buildings")
     }
@@ -112,7 +112,7 @@ enum DataBootstrapper {
                 VALUES (?, ?, ?, ?, ?)
             """
             // Use default password for seeded workers
-            try await manager.execute(sql, parameters: [id, name, email, role, "password"])
+            try await manager.execute(sql, [id, name, email, role, "password"])
             
             print("📥 Seeded worker: \(name) (\(email))")
         }
@@ -150,7 +150,7 @@ enum DataBootstrapper {
                 INSERT OR REPLACE INTO worker_schedule (workerId, buildingId, weekdays, startHour, endHour)
                 VALUES (?, ?, ?, ?, ?)
             """
-            try await manager.execute(sql, parameters: [wid, bid, weekdaysStr, startHr, endHr])
+            try await manager.execute(sql, [wid, bid, weekdaysStr, startHr, endHr])
         }
         print("✅ Seeded \(rows.count - 1) schedules")
     }

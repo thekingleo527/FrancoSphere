@@ -1,0 +1,8 @@
+id,name,email,role,passwordHash,skillLevels,assignedBuildings,timezonePreference
+1,Greg Hutson,g.hutson1989@gmail.com,worker,,"[""plumbing""",electrical,hvac]
+2,Edwin Lema,edwinlema911@gmail.com,worker,,"[""cleaning""",sanitation,inspection]
+4,Kevin Dutan,dutankevin1@gmail.com,worker,,"[""hvac""",electrical,technical]
+5,Mercedes Inamagua,Jneola@gmail.com,worker,,"[""cleaning""",sanitation],"[""1"""
+6,Luis Lopez,luislopez030@yahoo.com,worker,,"[""maintenance""",manual,inspection]
+7,Angel Guirachocha,lio.angel71@gmail.com,worker,,"[""cleaning""",sanitation,manual]
+8,Shawn Magloire,shawn@francomanagementgroup.com,worker,,"[""management""",inspection,maintenance

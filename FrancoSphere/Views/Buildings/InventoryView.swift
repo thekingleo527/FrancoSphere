@@ -5,6 +5,17 @@
 
 import SwiftUI
 
+extension FrancoSphere.InventoryItem {
+    var statusColor: Color {
+        if quantity <= 0 {
+            return .red
+        } else if quantity <= minimumQuantity {
+            return .orange
+        } else {
+            return .green
+        }
+    }
+}
 /// Displays and manages inventory for a selected building.
 struct InventoryView: View {
     @State private var inventoryItems: [FrancoSphere.InventoryItem] = []

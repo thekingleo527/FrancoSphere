@@ -7,6 +7,15 @@
 
 import SwiftUI
 
+private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+    switch urgency {
+    case .low:    return .green
+    case .medium: return .yellow
+    case .high:   return .red
+    case .urgent: return .purple
+    }
+}
+
 struct DashboardTaskDetailView: View {
     let task: MaintenanceTask
     @State private var isComplete: Bool
@@ -123,16 +132,16 @@ struct DashboardTaskDetailView: View {
                 
                 HStack {
                     Circle()
-                        .fill(task.urgency.color)
+                        .fill(getUrgencyColor(task.urgency))  // ✅ Use helper function
                         .frame(width: 10, height: 10)
                     
                     Text(task.urgency.rawValue)
                         .font(.subheadline)
-                        .foregroundColor(task.urgency.color)
+                        .foregroundColor(getUrgencyColor(task.urgency))
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(task.urgency.color.opacity(0.1))
+                .background(getUrgencyColor(task.urgency))
                 .cornerRadius(12)
             }
             

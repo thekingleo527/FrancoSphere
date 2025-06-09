@@ -9,6 +9,16 @@ struct MaintenanceTaskView: View {
 
     private let buildingRepo = BuildingRepository.shared
 
+    // Helper function for urgency color
+    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+        switch urgency {
+        case .low:    return .green
+        case .medium: return .yellow
+        case .high:   return .red
+        case .urgent: return .purple
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -228,11 +238,21 @@ struct StatusBadge: View {
     let isCompleted: Bool
     let urgency: TaskUrgency
 
+    // Helper function for urgency color - Fixed the issue
+    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+        switch urgency {
+        case .low:    return .green
+        case .medium: return .yellow
+        case .high:   return .red
+        case .urgent: return .purple
+        }
+    }
+
     var body: some View {
         Text(isCompleted ? "Completed" : urgency.rawValue)
             .font(.caption).fontWeight(.bold)
             .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(isCompleted ? Color.gray : urgency.color)
+            .background(isCompleted ? Color.gray : getUrgencyColor(urgency)) // Fixed: Use helper function
             .foregroundColor(.white)
             .cornerRadius(20)
     }

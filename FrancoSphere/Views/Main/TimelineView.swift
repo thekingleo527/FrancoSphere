@@ -27,7 +27,18 @@ struct TimelineView: View {
     
     private let calendar = Calendar.current
     private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
-    
+    private func taskStatusColor(_ task: FrancoSphere.MaintenanceTask) -> Color {
+        if task.isComplete {
+            return .gray
+        } else {
+            switch task.urgency {
+            case .low:    return .green
+            case .medium: return .yellow
+            case .high:   return .orange
+            case .urgent: return .red
+            }
+        }
+    }
     var body: some View {
         VStack(spacing: 0) {
             monthYearHeader
@@ -273,7 +284,7 @@ struct TimelineView: View {
     private func verticalLine(for task: FrancoSphere.MaintenanceTask) -> some View {
         VStack(spacing: 0) {
             Circle()
-                .fill(task.statusColor)
+                .fill(taskStatusColor(task))
                 .frame(width: 10, height: 10)
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
@@ -294,7 +305,7 @@ struct TimelineView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(task.statusColor)
+                    .background(taskStatusColor(task))
                     .cornerRadius(20)
             }
             HStack {
@@ -371,7 +382,7 @@ struct TimelineView: View {
                             Button(action: { toggleUrgency(urgency) }) {
                                 HStack {
                                     Circle()
-                                        .fill(urgency.color)
+                                        .fill(urgencyColor(urgency))
                                         .frame(width: 10, height: 10)
                                     Text(urgency.rawValue)
                                     Spacer()
@@ -422,8 +433,14 @@ struct TimelineView: View {
                 }
             }
         }
-        
-        // FIXED: Load buildings asynchronously
+        private func urgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
+            switch urgency {
+            case .low:    return .green
+            case .medium: return .yellow
+            case .high:   return .orange
+            case .urgent: return .red
+            }
+        }        // FIXED: Load buildings asynchronously
         private func loadBuildings() async {
             let allBuildings = await BuildingRepository.shared.allBuildings
             await MainActor.run {

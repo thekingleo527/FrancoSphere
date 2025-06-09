@@ -17,7 +17,7 @@ struct FSLegacyTask: Identifiable {
     let dueDate: Date
     let startTime: Date?
     let endTime: Date?
-    let category: FrancoSphere.TaskCategory
+    let category: TaskCategory
     let urgency: FrancoSphere.TaskUrgency
     let recurrence: FrancoSphere.TaskRecurrence
     var assignedWorkers: [String]

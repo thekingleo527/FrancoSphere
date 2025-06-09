@@ -2,80 +2,90 @@
 //  LocationManager.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 3/13/25.
+//  Created by Shawn Magloire on 6/8/25.
 //
 
 
+//
+//  LocationManager.swift
+//  FrancoSphere
+//
+//  Handles location services and proximity detection
+//
+
 import Foundation
 import CoreLocation
-import SwiftUI
+import Combine
+
+// MARK: - Location Manager
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let manager = CLLocationManager()
+    private let locationManager = CLLocationManager()
     
     @Published var location: CLLocation?
-    @Published var locationStatus: LocationStatus = .unknown
-    
-    enum LocationStatus {
-        case unknown
-        case notDetermined
-        case denied
-        case authorized
-        case restricted
-    }
+    @Published var locationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var lastError: Error?
     
     override init() {
         super.init()
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.requestWhenInUseAuthorization()
-        manager.startUpdatingLocation()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = 10 // Update every 10 meters
     }
+    
+    // MARK: - Public Methods
     
     func requestLocation() {
-        manager.requestLocation()
+        switch locationStatus {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.requestLocation()
+        case .denied, .restricted:
+            print("Location access denied")
+        @unknown default:
+            break
+        }
     }
     
-    // MARK: - CLLocationManagerDelegate Methods
+    func startUpdatingLocation() {
+        guard locationStatus == .authorizedWhenInUse || locationStatus == .authorizedAlways else {
+            requestLocation()
+            return
+        }
+        locationManager.startUpdatingLocation()
+    }
+    
+    func stopUpdatingLocation() {
+        locationManager.stopUpdatingLocation()
+    }
+    
+    func isWithinRange(of coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) -> Bool {
+        guard let currentLocation = location else { return false }
+        
+        let targetLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let distance = currentLocation.distance(from: targetLocation)
+        
+        return distance <= radius
+    }
+    
+    // MARK: - CLLocationManagerDelegate
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        locationStatus = manager.authorizationStatus
+        
+        if locationStatus == .authorizedWhenInUse || locationStatus == .authorizedAlways {
+            locationManager.requestLocation()
+        }
+    }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        self.location = location
+        location = locations.last
+        lastError = nil
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location manager failed with error: \(error.localizedDescription)")
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        switch status {
-        case .notDetermined:
-            locationStatus = .notDetermined
-        case .restricted:
-            locationStatus = .restricted
-        case .denied:
-            locationStatus = .denied
-        case .authorizedAlways, .authorizedWhenInUse:
-            locationStatus = .authorized
-        @unknown default:
-            locationStatus = .unknown
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
-    func isWithinRange(of coordinate: CLLocationCoordinate2D, radius: Double) -> Bool {
-        guard let userLocation = location else {
-            return false
-        }
-        
-        let buildingLocation = CLLocation(
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude
-        )
-        
-        // Check if within specified radius (in meters)
-        let distance = userLocation.distance(from: buildingLocation)
-        return distance < radius
+        lastError = error
+        print("Location error: \(error.localizedDescription)")
     }
 }
