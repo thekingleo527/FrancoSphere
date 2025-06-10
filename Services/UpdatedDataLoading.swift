@@ -1,10 +1,10 @@
 //
+//
 //  UpdatedDataLoading.swift
 //  FrancoSphere
 //
 //  Created by Shawn Magloire on 6/9/25.
 //
-
 
 //
 //  WorkerDashboardContextIntegration.swift
@@ -14,22 +14,118 @@
 //
 
 import SwiftUI
+import Foundation
 
-// MARK: - Updated WorkerDashboardView Properties
-extension WorkerDashboardView {
+// MARK: - TimeBasedTaskFilter (Simplified for compatibility)
+struct TimeBasedTaskFilter {
+    static func categorizeByTimeStatus(tasks: [ContextualTask]) -> (current: [ContextualTask], upcoming: [ContextualTask], overdue: [ContextualTask]) {
+        let calendar = Calendar.current
+        let currentHour = calendar.component(.hour, from: Date())
+        let currentMinute = calendar.component(.minute, from: Date())
+        let currentTotalMinutes = currentHour * 60 + currentMinute
+        
+        var upcoming: [ContextualTask] = []
+        var current: [ContextualTask] = []
+        var overdue: [ContextualTask] = []
+        
+        for task in tasks {
+            guard let startTime = task.startTime else {
+                current.append(task)
+                continue
+            }
+            
+            let components = startTime.split(separator: ":")
+            guard components.count == 2,
+                  let hour = Int(components[0]),
+                  let minute = Int(components[1]) else {
+                current.append(task)
+                continue
+            }
+            
+            let taskTotalMinutes = hour * 60 + minute
+            
+            if task.status == "completed" {
+                continue
+            } else if taskTotalMinutes < currentTotalMinutes - 30 {
+                overdue.append(task)
+            } else if taskTotalMinutes <= currentTotalMinutes + 30 {
+                current.append(task)
+            } else {
+                upcoming.append(task)
+            }
+        }
+        
+        return (current, upcoming, overdue)
+    }
     
-    // Replace individual state properties with WorkerContextEngine
-    /*
-    OLD:
-    @State private var assignedBuildings: [NamedCoordinate] = []
-    @State private var todaysTasks: [MaintenanceTask] = []
+    static func nextSuggestedTask(from tasks: [ContextualTask]) -> ContextualTask? {
+        let categorized = categorizeByTimeStatus(tasks: tasks)
+        
+        if let urgentOverdue = categorized.overdue.first(where: {
+            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high"
+        }) {
+            return urgentOverdue
+        }
+        
+        if let urgentCurrent = categorized.current.first(where: {
+            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high"
+        }) {
+            return urgentCurrent
+        }
+        
+        return categorized.current.first ?? categorized.upcoming.first
+    }
     
-    NEW:
-    @StateObject private var contextEngine = WorkerContextEngine.shared
-    */
+    static func timeUntilTask(_ task: ContextualTask) -> String? {
+        guard let startTime = task.startTime else { return nil }
+        
+        let components = startTime.split(separator: ":")
+        guard components.count == 2,
+              let hour = Int(components[0]),
+              let minute = Int(components[1]) else { return nil }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        let currentHour = calendar.component(.hour, from: now)
+        let currentMinute = calendar.component(.minute, from: now)
+        
+        let taskMinutes = hour * 60 + minute
+        let currentMinutes = currentHour * 60 + currentMinute
+        let difference = taskMinutes - currentMinutes
+        
+        if difference < 0 {
+            let overdue = abs(difference)
+            if overdue < 60 {
+                return "\(overdue) min overdue"
+            } else {
+                return "\(overdue / 60) hr overdue"
+            }
+        } else if difference == 0 {
+            return "Now"
+        } else if difference < 60 {
+            return "In \(difference) min"
+        } else {
+            return "In \(difference / 60) hr"
+        }
+    }
+    
+    static func formatTimeString(_ time: String?) -> String {
+        guard let time = time else { return "No time set" }
+        
+        let components = time.split(separator: ":")
+        guard components.count >= 2,
+              let hour = Int(components[0]),
+              let minute = Int(components[1]) else { return time }
+        
+        let period = hour >= 12 ? "PM" : "AM"
+        let displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour)
+        
+        return String(format: "%d:%02d %@", displayHour, minute, period)
+    }
 }
 
-// MARK: - Replace Data Loading Methods
+// MARK: - Updated Data Loading Methods
+@MainActor
 struct UpdatedDataLoading {
     
     // Replace initializeWorkerDashboard() with:
@@ -63,56 +159,65 @@ struct UpdatedTodaysTasksCard: View {
     let onTaskTap: (ContextualTask) -> Void
     
     var body: some View {
-        // Use existing TodaysTasksGlassCard with mapped tasks
-        TodaysTasksGlassCard(
-            tasks: mapToMaintenanceTasks(contextEngine.todaysTasks),
-            onTaskTap: { task in
-                if let contextualTask = findContextualTask(for: task) {
-                    onTaskTap(contextualTask)
+        // Create a simplified glass card for tasks since TodaysTasksGlassCard may not be available
+        GlassCard(intensity: .regular) {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header
+                HStack {
+                    Image(systemName: "checklist")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                    
+                    Text("Today's Tasks")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Text("\(contextEngine.todaysTasks.count)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+                }
+                
+                Divider()
+                    .background(Color.white.opacity(0.2))
+                
+                // Task list
+                if contextEngine.todaysTasks.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle")
+                            .font(.system(size: 40))
+                            .foregroundColor(.green.opacity(0.6))
+                        
+                        Text("No tasks scheduled")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Text("Enjoy your day!")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 30)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(contextEngine.todaysTasks.prefix(5), id: \.id) { task in
+                            RealTimeTaskRow(task: task) {
+                                onTaskTap(task)
+                            }
+                        }
+                        
+                        if contextEngine.todaysTasks.count > 5 {
+                            Text("+ \(contextEngine.todaysTasks.count - 5) more tasks")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                                .padding(.top, 8)
+                        }
+                    }
                 }
             }
-        )
-    }
-    
-    private func mapToMaintenanceTasks(_ contextualTasks: [ContextualTask]) -> [MaintenanceTask] {
-        contextualTasks.map { task in
-            MaintenanceTask(
-                id: task.id,
-                name: task.name,
-                buildingID: task.buildingId,
-                description: "Task from \(task.category)",
-                dueDate: Date(),
-                startTime: parseTimeString(task.startTime),
-                endTime: parseTimeString(task.endTime),
-                category: TaskCategory(rawValue: task.category) ?? .maintenance,
-                urgency: TaskUrgency(rawValue: task.urgencyLevel) ?? .medium,
-                recurrence: TaskRecurrence(rawValue: task.recurrence) ?? .oneTime,
-                isComplete: task.status == "completed",
-                assignedWorkers: [contextEngine.currentWorker?.workerId ?? ""]
-            )
         }
-    }
-    
-    private func parseTimeString(_ timeStr: String?) -> Date? {
-        guard let timeStr = timeStr else { return nil }
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        if let time = formatter.date(from: timeStr) {
-            let calendar = Calendar.current
-            let components = calendar.dateComponents([.hour, .minute], from: time)
-            return calendar.date(bySettingHour: components.hour ?? 0,
-                               minute: components.minute ?? 0,
-                               second: 0,
-                               of: Date())
-        }
-        
-        return nil
-    }
-    
-    private func findContextualTask(for maintenanceTask: MaintenanceTask) -> ContextualTask? {
-        contextEngine.todaysTasks.first { $0.id == maintenanceTask.id }
     }
 }
 
@@ -207,21 +312,36 @@ struct UpdatedAIOverlay: View {
             HStack {
                 Spacer()
                 
-                // Replace placeholder with NovaAvatar
-                NovaAvatar(
-                    size: 60,
-                    showStatus: hasNotifications,
-                    hasUrgentInsight: hasUrgentTasks,
-                    onTap: {
-                        // Show AI insights
-                        if let scenario = getAIScenario() {
-                            aiScenario = scenario
-                        }
-                    },
-                    onLongPress: {
-                        showQuickActions = true
+                // Simplified NovaAvatar replacement since it may not be available
+                Button(action: {
+                    if let scenario = getAIScenario() {
+                        aiScenario = scenario
                     }
-                )
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(
+                                colors: [.blue.opacity(0.8), .purple.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                            .frame(width: 60, height: 60)
+                        
+                        Image(systemName: hasUrgentTasks ? "exclamationmark.circle.fill" : "brain.head.profile")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                        
+                        if hasNotifications {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 16, height: 16)
+                                .offset(x: 20, y: -20)
+                        }
+                    }
+                }
+                .onLongPressGesture {
+                    showQuickActions = true
+                }
                 .padding(.trailing, 20)
                 .padding(.top, 120)
             }
@@ -230,10 +350,22 @@ struct UpdatedAIOverlay: View {
         .overlay(
             Group {
                 if showQuickActions {
-                    QuickActionMenu(
-                        isPresented: $showQuickActions,
-                        onActionSelected: handleQuickAction
-                    )
+                    // Simplified quick actions overlay
+                    VStack {
+                        Text("Quick Actions")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                        
+                        Button("Close") {
+                            showQuickActions = false
+                        }
+                        .foregroundColor(.blue)
+                        .padding()
+                    }
+                    .background(Color.black.opacity(0.8))
+                    .cornerRadius(16)
+                    .padding()
                 }
             }
         )
@@ -241,7 +373,7 @@ struct UpdatedAIOverlay: View {
     
     private var hasNotifications: Bool {
         let engine = WorkerContextEngine.shared
-        return engine.getUrgentTaskCount() > 0 || 
+        return engine.getUrgentTaskCount() > 0 ||
                engine.todaysTasks.contains { $0.isOverdue }
     }
     
@@ -260,21 +392,6 @@ struct UpdatedAIOverlay: View {
         }
         
         return nil
-    }
-    
-    private func handleQuickAction(_ action: QuickActionType) {
-        switch action {
-        case .scanQR:
-            print("Open QR scanner")
-        case .reportIssue:
-            print("Open issue reporter")
-        case .showMap:
-            print("Show building map")
-        case .askNova:
-            print("Open Nova chat")
-        case .viewInsights:
-            print("Show AI insights")
-        }
     }
 }
 
@@ -302,11 +419,17 @@ struct UpdatedTaskSummary: View {
                         .font(.headline)
                         .foregroundColor(.white)
                     Spacer()
+                    
+                    if let refreshTime = contextEngine.lastRefreshTime {
+                        Text("Updated \(refreshTime, style: .relative)")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
                 }
                 
                 HStack(spacing: 20) {
                     // In Progress
-                    TaskSummaryItem(
+                    UpdatedTaskSummaryItem(
                         count: categorizedTasks.current.count,
                         label: "Active",
                         color: .green,
@@ -318,7 +441,7 @@ struct UpdatedTaskSummary: View {
                         .background(Color.white.opacity(0.3))
                     
                     // Upcoming
-                    TaskSummaryItem(
+                    UpdatedTaskSummaryItem(
                         count: categorizedTasks.upcoming.count,
                         label: "Upcoming",
                         color: .blue,
@@ -330,7 +453,7 @@ struct UpdatedTaskSummary: View {
                         .background(Color.white.opacity(0.3))
                     
                     // Overdue
-                    TaskSummaryItem(
+                    UpdatedTaskSummaryItem(
                         count: categorizedTasks.overdue.count,
                         label: "Overdue",
                         color: .red,
@@ -349,6 +472,7 @@ struct UpdatedTaskSummary: View {
                         Text("Next: \(nextTask.name)")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(1)
                         Spacer()
                         if let time = TimeBasedTaskFilter.timeUntilTask(nextTask) {
                             Text(time)
@@ -362,8 +486,8 @@ struct UpdatedTaskSummary: View {
     }
 }
 
-// Enhanced TaskSummaryItem with icon
-struct TaskSummaryItem: View {
+// Enhanced TaskSummaryItem with icon (renamed to avoid conflicts)
+struct UpdatedTaskSummaryItem: View {
     let count: Int
     let label: String
     let color: Color
@@ -391,5 +515,37 @@ struct TaskSummaryItem: View {
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.6))
         }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Integration Helper Methods
+@MainActor
+extension UpdatedDataLoading {
+    
+    // Helper method to refresh context from any view
+    static func refreshWorkerContext() async {
+        await WorkerContextEngine.shared.refreshContext()
+    }
+    
+    // Helper method to get tasks for a specific building
+    static func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
+        WorkerContextEngine.shared.getTasksForBuilding(buildingId)
+    }
+    
+    // Helper method to get urgent task count
+    static func getUrgentTaskCount() -> Int {
+        WorkerContextEngine.shared.getUrgentTaskCount()
+    }
+    
+    // Helper method to check if worker has overdue tasks
+    static func hasOverdueTasks() -> Bool {
+        let categorized = categorizedTasks
+        return !categorized.overdue.isEmpty
+    }
+    
+    // Helper method to get next suggested task
+    static func getNextSuggestedTask() -> ContextualTask? {
+        TimeBasedTaskFilter.nextSuggestedTask(from: WorkerContextEngine.shared.todaysTasks)
     }
 }

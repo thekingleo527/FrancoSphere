@@ -17,7 +17,8 @@
 		233F94DC2DF7B0EC00901707 /* TrackableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */; };
 		233F94E02DF7B67100901707 /* WorkerDashboardIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */; };
 		233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */; };
-		233F94E42DF7B96D00901707 /* WorkerDashboardView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E32DF7B96D00901707 /* WorkerDashboardView 2.swift */; };
+		233F94E42DF7B96D00901707 /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */; };
+		233F94E62DF7C3F300901707 /* EnhancedAdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E52DF7C3F300901707 /* EnhancedAdaptiveGlassModifier.swift */; };
 		23423DE62D73B4D400AACE3E /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23423DE52D73B4D400AACE3E /* SQLite */; };
 		2345812C2DF78E3D00355F0A /* 136_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F72DF78E3D00355F0A /* 136_West_17th_Street.jpg */; };
 		2345812D2DF78E3D00355F0A /* 29_31_East_20th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580EC2DF78E3D00355F0A /* 29_31_East_20th_Street.jpg */; };
@@ -193,7 +194,8 @@
 		233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
 		233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardIntegration.swift; sourceTree = "<group>"; };
 		233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatedDataLoading.swift; sourceTree = "<group>"; };
-		233F94E32DF7B96D00901707 /* WorkerDashboardView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerDashboardView 2.swift"; sourceTree = "<group>"; };
+		233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardView.swift; sourceTree = "<group>"; };
+		233F94E52DF7C3F300901707 /* EnhancedAdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedAdaptiveGlassModifier.swift; sourceTree = "<group>"; };
 		23423DB72D739D6800AACE3E /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -486,6 +488,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				233F94E52DF7C3F300901707 /* EnhancedAdaptiveGlassModifier.swift */,
 				233F94D92DF7B0AD00901707 /* QuickActionType.swift */,
 				233F94D72DF7AFFE00901707 /* AdaptiveGlassModifier.swift */,
 				233F94D52DF7AFEE00901707 /* NovaAvatar.swift */,
@@ -707,7 +710,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
-				233F94E32DF7B96D00901707 /* WorkerDashboardView 2.swift */,
+				233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */,
 				233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */,
 				2345811D2DF78E3D00355F0A /* AdminDashboardView.swift */,
 				2345811E2DF78E3D00355F0A /* DashboardTaskDetailView.swift */,
@@ -984,7 +987,7 @@
 				234581502DF78E3D00355F0A /* RealWorldDataSeeder.swift in Sources */,
 				234581512DF78E3D00355F0A /* WorkerAssignmentManager.swift in Sources */,
 				234581522DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift in Sources */,
-				233F94E42DF7B96D00901707 /* WorkerDashboardView 2.swift in Sources */,
+				233F94E42DF7B96D00901707 /* WorkerDashboardView.swift in Sources */,
 				234581532DF78E3D00355F0A /* TaskVerification.swift in Sources */,
 				234581542DF78E3D00355F0A /* BuildingsView.swift in Sources */,
 				234581552DF78E3D00355F0A /* MapRevealContainer.swift in Sources */,
@@ -1036,6 +1039,7 @@
 				234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */,
 				234581832DF78E3D00355F0A /* TimelineView.swift in Sources */,
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
+				233F94E62DF7C3F300901707 /* EnhancedAdaptiveGlassModifier.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,
 				234581872DF78E3D00355F0A /* LoginView.swift in Sources */,

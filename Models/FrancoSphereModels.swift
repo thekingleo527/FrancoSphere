@@ -11,14 +11,6 @@ import Foundation
 import SwiftUI
 import CoreLocation
 
-// MARK: — AI Scenario (for use by AIAvatarOverlayView, AIAssistantManager, etc.)
-public enum AIScenario: String, CaseIterable {
-    case routineIncomplete = "Routine Incomplete"
-    case pendingTasks     = "Pending Tasks"
-    case missingPhoto     = "Missing Photo"
-    case clockOutReminder = "Clock Out Reminder"
-    case weatherAlert     = "Weather Alert"
-
     /// Human-readable title in the bubble header
     public var title: String {
         switch self {
@@ -67,7 +59,7 @@ public enum AIScenario: String, CaseIterable {
         case .weatherAlert:      return "See Weather Tasks"
         }
     }
-}
+
 
 // MARK: — FrancoSphere Namespace
 public enum FrancoSphere {
@@ -312,20 +304,6 @@ public enum FrancoSphere {
             default:
                 return nil
             }
-        }
-    }
-
-    /// Legacy "Building" struct for backward compatibility (no longer used for lookups).
-    public struct Building: Identifiable, Codable, Hashable {
-        public let id: String
-        public let name: String
-        public let latitude: Double
-        public let longitude: Double
-        public let address: String?
-        public let imageAssetName: String
-
-        public var coordinate: CLLocationCoordinate2D {
-            .init(latitude: latitude, longitude: longitude)
         }
     }
     // MARK: — 2) Weather Models

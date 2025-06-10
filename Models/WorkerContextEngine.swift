@@ -5,17 +5,31 @@
 //  Created by Shawn Magloire on 6/8/25.
 //
 
-
-//
-//  WorkerContextEngine.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 6/8/25.
-//
-
 import Foundation
 import SwiftUI
 import CoreLocation
+import Combine
+
+// MARK: - Database Error (if not defined elsewhere)
+public enum DatabaseError: LocalizedError {
+    case notInitialized
+    case connectionFailed
+    case migrationFailed(String)
+    case invalidData(String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .notInitialized:
+            return "Database not initialized. Call SQLiteManager.start() first."
+        case .connectionFailed:
+            return "Failed to connect to database."
+        case .migrationFailed(let reason):
+            return "Migration failed: \(reason)"
+        case .invalidData(let reason):
+            return "Invalid data: \(reason)"
+        }
+    }
+}
 
 // MARK: - Data Models
 
@@ -83,10 +97,32 @@ class WorkerContextEngine: ObservableObject {
     @Published var upcomingTasks: [ContextualTask] = []
     @Published var isLoading = false
     @Published var lastError: Error?
+    @Published var lastRefreshTime: Date?
     
     private var sqliteManager: SQLiteManager?
     
+    // Auto-refresh properties
+    private var refreshTimer: Timer?
+    private static let refreshInterval: TimeInterval = 300 // 5 minutes
+    
     private init() {}
+    
+    // MARK: - Auto-Refresh Methods
+    
+    func startAutoRefresh() {
+        stopAutoRefresh()
+        
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: Self.refreshInterval, repeats: true) { _ in
+            Task { @MainActor in
+                await self.refreshContext()
+            }
+        }
+    }
+    
+    func stopAutoRefresh() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+    }
     
     // MARK: - Public Methods
     
@@ -122,6 +158,7 @@ class WorkerContextEngine: ObservableObject {
                     return task1.buildingName < task2.buildingName
                 }
                 self.upcomingTasks = upcoming
+                self.lastRefreshTime = Date()
                 self.isLoading = false
             }
             
@@ -202,9 +239,6 @@ class WorkerContextEngine: ObservableObject {
         guard let manager = sqliteManager else {
             throw DatabaseError.notInitialized
         }
-        
-        // FIX: Removed unused 'today' variable
-        // _ = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
         
         // Load both regular tasks and routine tasks for today
         let results = try await manager.query("""
@@ -305,5 +339,9 @@ class WorkerContextEngine: ObservableObject {
     func refreshContext() async {
         guard let workerId = currentWorker?.workerId else { return }
         await loadWorkerContext(workerId: workerId)
+    }
+    
+    deinit {
+        stopAutoRefresh()
     }
 }
