@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  Fully integrated dashboard with WorkerContextEngine, real weather, and all UI upgrades
-//  Location: /Views/Main/WorkerDashboardView_V2.swift
+//  CLEANED VERSION - No duplicate definitions
 //
 
 import SwiftUI
@@ -16,6 +16,16 @@ extension ContextualTask: Identifiable {}
 // MARK: - Local Building Type Definition
 // Use explicit type to avoid confusion with global Building typealias
 typealias DashboardBuilding = FrancoSphere.NamedCoordinate
+
+// MARK: - SQLiteManager Extension (Only if not already defined elsewhere)
+extension SQLiteManager {
+    func isWorkerClockedInAsync(workerId: Int64) async -> (isClockedIn: Bool, buildingId: Int64?) {
+        return await withCheckedContinuation { continuation in
+            let result = isWorkerClockedIn(workerId: workerId)
+            continuation.resume(returning: result)
+        }
+    }
+}
 
 struct WorkerDashboardView_V2: View {
     // MARK: - State Management
@@ -36,7 +46,7 @@ struct WorkerDashboardView_V2: View {
     @State private var clockedInStatus: (isClockedIn: Bool, buildingId: Int64?) = (false, nil)
     @State private var currentBuildingName: String = "None"
     
-    // Weather state - FIXED: Changed from WeatherCondition to WeatherData
+    // Weather state
     @State private var currentWeather: WeatherData?
     @State private var buildingWeatherMap: [String: WeatherData] = [:]
     
@@ -49,8 +59,10 @@ struct WorkerDashboardView_V2: View {
         contextEngine.currentWorker?.workerId ?? authManager.workerId
     }
     
+    // FIXED: Tuple shuffle warning
     private var categorizedTasks: (current: [ContextualTask], upcoming: [ContextualTask], overdue: [ContextualTask]) {
-        TimeBasedTaskFilter.categorizeByTimeStatus(tasks: contextEngine.todaysTasks)
+        let categorized = TimeBasedTaskFilter.categorizeByTimeStatus(tasks: contextEngine.todaysTasks)
+        return categorized
     }
     
     private var hasUrgentWork: Bool {
@@ -101,30 +113,52 @@ struct WorkerDashboardView_V2: View {
         .navigationBarHidden(true)
     }
     
-    // MARK: - Map Background
+    // MARK: - Map Background (FIXED for iOS 17)
+    @ViewBuilder
     private var mapBackgroundView: some View {
+        let region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 40.7590, longitude: -73.9845),
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
+        
         ZStack {
-            Map(coordinateRegion: .constant(
-                MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: 40.7590, longitude: -73.9845),
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                )
-            ), annotationItems: contextEngine.assignedBuildings) { building in
-                MapAnnotation(
-                    coordinate: CLLocationCoordinate2D(
-                        latitude: building.latitude,
-                        longitude: building.longitude
-                    )
-                ) {
-                    WorkerDashboardBuildingMapMarker(
-                        building: building,
-                        isClockedIn: isClockedInBuilding(building),
-                        weather: buildingWeatherMap[building.id]
-                    )
+            if #available(iOS 17.0, *) {
+                Map(initialPosition: .region(region)) {
+                    ForEach(contextEngine.assignedBuildings) { building in
+                        Annotation(building.name, coordinate: CLLocationCoordinate2D(
+                            latitude: building.latitude,
+                            longitude: building.longitude
+                        )) {
+                            WorkerDashboardBuildingMapMarker(
+                                building: building,
+                                isClockedIn: isClockedInBuilding(building),
+                                weather: buildingWeatherMap[building.id]
+                            )
+                        }
+                    }
                 }
+                .mapStyle(.standard)
+                .blur(radius: 1.5)
+                .opacity(0.7)
+            } else {
+                // iOS 16 and earlier
+                Map(coordinateRegion: .constant(region), annotationItems: contextEngine.assignedBuildings) { building in
+                    MapAnnotation(
+                        coordinate: CLLocationCoordinate2D(
+                            latitude: building.latitude,
+                            longitude: building.longitude
+                        )
+                    ) {
+                        WorkerDashboardBuildingMapMarker(
+                            building: building,
+                            isClockedIn: isClockedInBuilding(building),
+                            weather: buildingWeatherMap[building.id]
+                        )
+                    }
+                }
+                .blur(radius: 1.5)
+                .opacity(0.7)
             }
-            .blur(radius: 1.5)
-            .opacity(0.7)
             
             Color.black.opacity(0.3)
         }
@@ -331,9 +365,9 @@ struct WorkerDashboardView_V2: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Weather header
                         HStack {
-                            Image(systemName: weather.condition.icon)
+                            Image(systemName: weatherConditionIcon(weather.condition))
                                 .font(.title2)
-                                .foregroundColor(weather.condition.conditionColor)
+                                .foregroundColor(weatherConditionColor(weather.condition))
                             
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(weather.formattedTemperature)
@@ -367,14 +401,14 @@ struct WorkerDashboardView_V2: View {
                         if weather.outdoorWorkRisk != .low {
                             HStack(spacing: 8) {
                                 Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(weather.outdoorWorkRisk.riskColor)
-                                Text("Outdoor work: \(weather.outdoorWorkRisk.rawValue)")
+                                    .foregroundColor(outdoorWorkRiskColor(weather.outdoorWorkRisk))
+                                Text("Outdoor work: \(outdoorWorkRiskText(weather.outdoorWorkRisk))")
                                     .font(.caption)
                                     .foregroundColor(.white.opacity(0.8))
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(weather.outdoorWorkRisk.riskColor.opacity(0.2))
+                            .background(outdoorWorkRiskColor(weather.outdoorWorkRisk).opacity(0.2))
                             .cornerRadius(8)
                         }
                     }
@@ -405,7 +439,6 @@ struct WorkerDashboardView_V2: View {
     // MARK: - Today's Tasks Section
     private var todaysTasksSection: some View {
         VStack(spacing: 0) {
-            // FIXED: Correct function call syntax based on actual signature
             TodaysTasksGlassCard(
                 tasks: mapContextualTasksToMaintenanceTasks(contextEngine.todaysTasks),
                 onTaskTap: { task in
@@ -481,7 +514,7 @@ struct WorkerDashboardView_V2: View {
                     
                     Spacer()
                     
-                    // Last refresh time - FIXED: Access property directly
+                    // FIXED: lastRefreshTime is not optional
                     Text("Updated \(contextEngine.lastRefreshTime, style: .relative)")
                         .font(.caption2)
                         .foregroundColor(.white.opacity(0.5))
@@ -559,9 +592,9 @@ struct WorkerDashboardView_V2: View {
                 ) {
                     handleNovaTap()
                 }
-                .onLongPressGesture {
+                .onLongPressGesture(perform: {
                     showQuickActions = true
-                }
+                })
                 .padding(.trailing, 20)
                 .padding(.top, 120)
             }
@@ -589,10 +622,15 @@ struct WorkerDashboardView_V2: View {
         contextEngine.startAutoRefresh()
         
         // Load additional data in parallel
-        async let clockIn = checkClockInStatus()
-        async let weather = loadWeatherData()
-        
-        _ = await (clockIn, weather)
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                await self.checkClockInStatus()
+            }
+            
+            group.addTask {
+                await self.loadWeatherData()
+            }
+        }
     }
     
     private func refreshAllData() async {
@@ -602,8 +640,8 @@ struct WorkerDashboardView_V2: View {
     
     private func loadWeatherData() async {
         // Get current location or first building
-        if let firstBuilding = contextEngine.assignedBuildings.first {
-            // Create a mock WeatherData for now - you'll want to replace this with real weather API
+        if !contextEngine.assignedBuildings.isEmpty {
+            // Create a mock WeatherData for now
             currentWeather = createMockWeatherData()
         }
         
@@ -976,9 +1014,9 @@ struct WorkerDashboardView_V2: View {
                         VStack(spacing: 30) {
                             // Main weather display
                             VStack(spacing: 20) {
-                                Image(systemName: weather.condition.icon)
+                                Image(systemName: weatherConditionIcon(weather.condition))
                                     .font(.system(size: 80))
-                                    .foregroundColor(weather.condition.conditionColor)
+                                    .foregroundColor(weatherConditionColor(weather.condition))
                                 
                                 Text(weather.formattedTemperature)
                                     .font(.system(size: 72, weight: .thin))
@@ -1027,10 +1065,10 @@ struct WorkerDashboardView_V2: View {
                                 
                                 HStack(spacing: 12) {
                                     Circle()
-                                        .fill(weather.outdoorWorkRisk.riskColor)
+                                        .fill(outdoorWorkRiskColor(weather.outdoorWorkRisk))
                                         .frame(width: 12, height: 12)
                                     
-                                    Text(weather.outdoorWorkRisk.rawValue)
+                                    Text(outdoorWorkRiskText(weather.outdoorWorkRisk))
                                         .font(.subheadline)
                                         .foregroundColor(.white.opacity(0.8))
                                     
@@ -1153,6 +1191,49 @@ struct WorkerDashboardView_V2: View {
         
         return timeString
     }
+    
+    // MARK: - Weather Helper Functions
+    private func weatherConditionIcon(_ condition: FrancoSphere.WeatherCondition) -> String {
+        switch condition {
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .thunderstorm: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .other: return "questionmark.circle.fill"
+        }
+    }
+    
+    private func weatherConditionColor(_ condition: FrancoSphere.WeatherCondition) -> Color {
+        switch condition {
+        case .clear: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .snow: return .cyan
+        case .thunderstorm: return .purple
+        case .fog: return .gray.opacity(0.7)
+        case .other: return .gray
+        }
+    }
+    
+    private func outdoorWorkRiskText(_ risk: WeatherData.OutdoorWorkRisk) -> String {
+        switch risk {
+        case .low: return "Low Risk"
+        case .moderate: return "Moderate Risk"
+        case .high: return "High Risk"
+        case .extreme: return "Extreme Risk"
+        }
+    }
+    
+    private func outdoorWorkRiskColor(_ risk: WeatherData.OutdoorWorkRisk) -> Color {
+        switch risk {
+        case .low: return .green
+        case .moderate: return .yellow
+        case .high: return .orange
+        case .extreme: return .red
+        }
+    }
 }
 
 // MARK: - Supporting Components (Renamed to avoid conflicts)
@@ -1186,9 +1267,9 @@ struct WorkerDashboardBuildingMapMarker: View {
                             .fill(Color.black.opacity(0.5))
                             .frame(width: 20, height: 20)
                         
-                        Image(systemName: weather.condition.icon)
+                        Image(systemName: weatherConditionIcon(weather.condition))
                             .font(.system(size: 10))
-                            .foregroundColor(weather.condition.conditionColor)
+                            .foregroundColor(weatherConditionColor(weather.condition))
                     }
                 }
                 .frame(width: 44, height: 44)
@@ -1196,6 +1277,31 @@ struct WorkerDashboardBuildingMapMarker: View {
             }
         }
         .shadow(radius: 5)
+    }
+    
+    // Helper functions for weather icons
+    private func weatherConditionIcon(_ condition: FrancoSphere.WeatherCondition) -> String {
+        switch condition {
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .thunderstorm: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .other: return "questionmark.circle.fill"
+        }
+    }
+    
+    private func weatherConditionColor(_ condition: FrancoSphere.WeatherCondition) -> Color {
+        switch condition {
+        case .clear: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .snow: return .cyan
+        case .thunderstorm: return .purple
+        case .fog: return .gray.opacity(0.7)
+        case .other: return .gray
+        }
     }
 }
 
@@ -1244,9 +1350,9 @@ struct WorkerDashboardBuildingRowEnhanced: View {
                     
                     // Weather
                     if let weather = weather {
-                        Label(weather.formattedTemperature, systemImage: weather.condition.icon)
+                        Label(weather.formattedTemperature, systemImage: weatherConditionIcon(weather.condition))
                             .font(.caption)
-                            .foregroundColor(weather.condition.conditionColor.opacity(0.8))
+                            .foregroundColor(weatherConditionColor(weather.condition).opacity(0.8))
                     }
                 }
             }
@@ -1261,6 +1367,31 @@ struct WorkerDashboardBuildingRowEnhanced: View {
             }
         }
         .padding(.vertical, 4)
+    }
+    
+    // Helper functions
+    private func weatherConditionIcon(_ condition: FrancoSphere.WeatherCondition) -> String {
+        switch condition {
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .thunderstorm: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .other: return "questionmark.circle.fill"
+        }
+    }
+    
+    private func weatherConditionColor(_ condition: FrancoSphere.WeatherCondition) -> Color {
+        switch condition {
+        case .clear: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .snow: return .cyan
+        case .thunderstorm: return .purple
+        case .fog: return .gray.opacity(0.7)
+        case .other: return .gray
+        }
     }
 }
 
@@ -1310,9 +1441,9 @@ struct WorkerDashboardBuildingSelectionRowV2: View {
                         // Weather info
                         if let weather = weather {
                             HStack(spacing: 8) {
-                                Image(systemName: weather.condition.icon)
+                                Image(systemName: weatherConditionIcon(weather.condition))
                                     .font(.caption)
-                                    .foregroundColor(weather.condition.conditionColor)
+                                    .foregroundColor(weatherConditionColor(weather.condition))
                                 Text("\(weather.formattedTemperature) • \(weather.condition.rawValue)")
                                     .font(.caption2)
                                     .foregroundColor(.white.opacity(0.6))
@@ -1329,6 +1460,31 @@ struct WorkerDashboardBuildingSelectionRowV2: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    // Helper functions
+    private func weatherConditionIcon(_ condition: FrancoSphere.WeatherCondition) -> String {
+        switch condition {
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .thunderstorm: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .other: return "questionmark.circle.fill"
+        }
+    }
+    
+    private func weatherConditionColor(_ condition: FrancoSphere.WeatherCondition) -> Color {
+        switch condition {
+        case .clear: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .snow: return .cyan
+        case .thunderstorm: return .purple
+        case .fog: return .gray.opacity(0.7)
+        case .other: return .gray
+        }
     }
 }
 

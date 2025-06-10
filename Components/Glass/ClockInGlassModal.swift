@@ -5,14 +5,6 @@
 //  Created by Shawn Magloire on 6/7/25.
 //
 
-
-//
-//  ClockInGlassModal.swift
-//  FrancoSphere
-//
-//  Glass modal for clock-in/clock-out functionality with GPS verification
-//
-
 import SwiftUI
 import CoreLocation
 
@@ -34,7 +26,7 @@ struct ClockInGlassModal: View {
     }
     
     private var isClockedInCurrentBuilding: Bool {
-        clockedInStatus.isClockedIn && 
+        clockedInStatus.isClockedIn &&
         clockedInStatus.buildingId == Int64(building.id)
     }
     
@@ -53,27 +45,30 @@ struct ClockInGlassModal: View {
             VStack(spacing: 0) {
                 Spacer()
                 
-                GlassCard(intensity: .regular) {
-                    VStack(spacing: 24) {
-                        // Header with dismiss
-                        modalHeader
-                        
-                        // Building info section
-                        buildingInfoSection
-                        
-                        // Location status verification
-                        locationStatusSection
-                        
-                        // Action buttons
-                        actionButtonsSection
-                        
-                        // Admin override notice
-                        if isAdmin && !isAtLocation {
-                            adminOverrideNotice
-                        }
+                // Glass card content with manual glass effect
+                VStack(spacing: 24) {
+                    // Header with dismiss
+                    modalHeader
+                    
+                    // Building info section
+                    buildingInfoSection
+                    
+                    // Location status verification
+                    locationStatusSection
+                    
+                    // Action buttons
+                    actionButtonsSection
+                    
+                    // Admin override notice
+                    if isAdmin && !isAtLocation {
+                        adminOverrideNotice
                     }
-                    .padding(24)
                 }
+                .padding(24)
+                .background(glassBackground)
+                .overlay(glassBorder)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 40)
             }
@@ -82,6 +77,46 @@ struct ClockInGlassModal: View {
         .onAppear {
             resetModalState()
         }
+    }
+    
+    // MARK: - Glass Effect Components
+    
+    private var glassBackground: some View {
+        ZStack {
+            // Base material blur
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.regularMaterial)
+            
+            // Glass gradient overlay
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.05),
+                            Color.clear
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        }
+    }
+    
+    private var glassBorder: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .stroke(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.6),
+                        Color.white.opacity(0.2),
+                        Color.clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 1
+            )
     }
     
     // MARK: - Sub-components
@@ -130,17 +165,16 @@ struct ClockInGlassModal: View {
                     .foregroundColor(.white)
                     .multilineTextAlignment(.leading)
                 
-                if let address = building.address {
-                    HStack(spacing: 6) {
-                        Image(systemName: "location.fill")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        Text(address)
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                            .lineLimit(2)
-                    }
+                // Coordinates instead of address
+                HStack(spacing: 6) {
+                    Image(systemName: "location.fill")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Text("Lat: \(building.latitude, specifier: "%.4f"), Lng: \(building.longitude, specifier: "%.4f")")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
                 }
                 
                 // Building status
@@ -573,7 +607,8 @@ struct ClockInGlassModal: View {
 struct ClockInGlassModal_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            FrancoSphereColors.primaryBackground
+            // Dark background
+            Color(red: 0.07, green: 0.07, blue: 0.10)
                 .ignoresSafeArea()
             
             // Simulate background content
@@ -591,7 +626,6 @@ struct ClockInGlassModal_Previews: PreviewProvider {
                     name: "Rubin Museum (142-148 W 17th)",
                     latitude: 40.740370,
                     longitude: -73.998120,
-                    address: "142-148 W 17th St, New York, NY",
                     imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
                 ),
                 isAtLocation: true,

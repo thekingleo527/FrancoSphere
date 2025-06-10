@@ -2,264 +2,248 @@
 //  AIAvatarOverlayView.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/7/25.
+//  Fixed version - removed duplicate AIScenario and GlassButton references
 //
 
 import SwiftUI
 
 struct AIAvatarOverlayView: View {
-    @ObservedObject private var aiManager = AIAssistantManager.shared
+    @StateObject private var aiManager = AIAssistantManager.shared
     @State private var isExpanded = false
-    @State private var isPulsing = false
-    @State private var dragOffset: CGSize = .zero
+    @State private var avatarScale: CGFloat = 1.0
+    @State private var pulseAnimation = false
     
     var body: some View {
         VStack {
-            Spacer()
             HStack {
                 Spacer()
-                ZStack {
-                    // Glass speech bubble when expanded
-                    if isExpanded, let scenario = aiManager.currentScenario {
-                        glassAssistantBubble(for: scenario)
-                            .offset(y: -140)
-                            .offset(dragOffset)
-                            .transition(
-                                .asymmetric(
-                                    insertion: .scale(scale: 0.8, anchor: .bottomTrailing)
-                                        .combined(with: .opacity),
-                                    removal: .scale(scale: 0.8, anchor: .bottomTrailing)
-                                        .combined(with: .opacity)
-                                )
-                            )
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        dragOffset = value.translation
-                                    }
-                                    .onEnded { value in
-                                        if abs(value.translation.width) > 100 ||
-                                           abs(value.translation.height) > 100 {
-                                            withAnimation(.spring()) {
-                                                isExpanded = false
-                                                aiManager.dismissCurrentScenario()
-                                            }
-                                        } else {
-                                            withAnimation(.spring()) {
-                                                dragOffset = .zero
-                                            }
-                                        }
-                                    }
-                            )
+                
+                VStack(spacing: 12) {
+                    // Speech bubble (if scenario exists)
+                    if let scenario = aiManager.currentScenario, isExpanded {
+                        speechBubble(for: scenario)
+                            .transition(.asymmetric(
+                                insertion: .scale.combined(with: .opacity),
+                                removal: .scale.combined(with: .opacity)
+                            ))
                     }
                     
-                    // Glass avatar button
-                    Button(action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            isExpanded.toggle()
-                        }
-                    }) {
-                        ZStack {
-                            // Pulsing glass ring for notifications
-                            if aiManager.currentScenario != nil, !isExpanded {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.blue.opacity(0.3),
-                                                Color.blue.opacity(0.1)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(
-                                        width: isPulsing ? 75 : 65,
-                                        height: isPulsing ? 75 : 65
-                                    )
-                                    .blur(radius: isPulsing ? 2 : 0)
-                                    .animation(
-                                        Animation
-                                            .easeInOut(duration: 1.5)
-                                            .repeatForever(autoreverses: true),
-                                        value: isPulsing
-                                    )
-                            }
-                            
-                            // Glass avatar circle
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .frame(width: 60, height: 60)
-                                .overlay(
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.blue.opacity(0.3),
-                                                    Color.blue.opacity(0.1)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                )
-                                .overlay(
-                                    Circle()
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.5),
-                                                    Color.white.opacity(0.2)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-                                .overlay(
-                                    Image(systemName: "bubble.left.and.bubble.right.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.white)
-                                        .shadow(radius: 2)
-                                )
-                        }
-                        .scaleEffect(isExpanded ? 0.9 : 1.0)
-                    }
-                    .onAppear {
-                        isPulsing = true
-                    }
+                    // AI Avatar
+                    novaAvatar
                 }
-                .padding(.bottom, 100) // Account for tab bar
                 .padding(.trailing, 20)
             }
+            Spacer()
         }
-        .animation(.spring(), value: isExpanded)
-        .zIndex(100)
-    }
-    
-    // Glass-styled speech bubble
-    @ViewBuilder
-    private func glassAssistantBubble(for scenario: AIScenario) -> some View {
-        GlassCard(intensity: .regular, cornerRadius: 20, hasGlow: true, glowColor: .blue) {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header
-                HStack {
-                    // Avatar icon
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: 36, height: 36)
-                        
-                        Image(systemName: "bubble.left.and.bubble.right.fill")
-                            .font(.system(size: 18))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("FrancoSphere Assistant")
-                            .font(.caption.bold())
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        Text(scenario.title)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                    }
-                    
-                    Spacer()
-                    
-                    // Dismiss button
-                    Button(action: {
-                        withAnimation(.spring()) {
-                            isExpanded = false
-                            aiManager.dismissCurrentScenario()
-                        }
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
-                            .foregroundColor(.white.opacity(0.5))
-                    }
+        .onReceive(aiManager.$currentScenario) { scenario in
+            if scenario != nil {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                    isExpanded = true
+                    avatarScale = 1.1
                 }
                 
-                // Message with icon
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: scenario.icon)
-                        .font(.title2)
-                        .foregroundColor(iconColor(for: scenario))
-                        .frame(width: 40, height: 40)
-                        .background(
-                            Circle()
-                                .fill(iconColor(for: scenario).opacity(0.15))
-                        )
-                    
-                    Text(scenario.message)
-                        .font(.body)
-                        .foregroundColor(.white.opacity(0.9))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
-                // Action button
-                GlassButton(
-                    actionText(for: scenario),
-                    style: .primary,
-                    size: .medium,
-                    isFullWidth: true,
-                    icon: actionIcon(for: scenario)
-                ) {
-                    aiManager.performAction()
+                // Auto-collapse after 10 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                     withAnimation(.spring()) {
                         isExpanded = false
+                        avatarScale = 1.0
                     }
                 }
             }
         }
+    }
+    
+    private var novaAvatar: some View {
+        Button(action: {
+            if aiManager.currentScenario != nil {
+                withAnimation(.spring()) {
+                    isExpanded.toggle()
+                }
+            }
+        }) {
+            ZStack {
+                // Outer glow ring (when active)
+                if aiManager.hasActiveScenarios {
+                    Circle()
+                        .stroke(Color.blue.opacity(0.3), lineWidth: 3)
+                        .frame(width: 75, height: 75)
+                        .scaleEffect(pulseAnimation ? 1.2 : 1.0)
+                        .opacity(pulseAnimation ? 0.0 : 1.0)
+                        .animation(
+                            .easeInOut(duration: 2.0).repeatForever(autoreverses: false),
+                            value: pulseAnimation
+                        )
+                }
+                
+                // Main avatar circle
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.blue.opacity(0.8),
+                                Color.purple.opacity(0.6)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 60, height: 60)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                
+                // Nova icon
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(.white)
+                
+                // Notification badge
+                if aiManager.hasActiveScenarios {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 16, height: 16)
+                                .overlay(
+                                    Text("\(aiManager.scenarioQueue.count + (aiManager.currentScenario != nil ? 1 : 0))")
+                                        .font(.caption2)
+                                        .foregroundColor(.white)
+                                )
+                        }
+                        Spacer()
+                    }
+                    .frame(width: 60, height: 60)
+                }
+            }
+        }
+        .scaleEffect(avatarScale)
+        .onAppear {
+            pulseAnimation = true
+        }
+    }
+    
+    private func speechBubble(for scenario: FrancoSphere.AIScenario) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack(spacing: 12) {
+                Image(systemName: scenario.icon)
+                    .font(.title2)
+                    .foregroundColor(iconColor(for: scenario))
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(scenario.title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    
+                    Text("Nova AI Assistant")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                Spacer()
+                
+                Button(action: {
+                    withAnimation(.spring()) {
+                        aiManager.dismissCurrentScenario()
+                        isExpanded = false
+                    }
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(8)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+            }
+            
+            // Message
+            Text(scenario.message)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.9))
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            // Action button - Using standard Button instead of GlassButton
+            Button(action: {
+                aiManager.performAction()
+                withAnimation(.spring()) {
+                    isExpanded = false
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: actionIcon(for: scenario))
+                        .font(.subheadline)
+                    Text(scenario.actionText)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 2)
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+        )
         .frame(width: min(UIScreen.main.bounds.width - 40, 340))
         .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
     }
     
     // Helper functions
-    private func iconColor(for scenario: AIScenario) -> Color {
+    private func iconColor(for scenario: FrancoSphere.AIScenario) -> Color {
         switch scenario {
         case .routineIncomplete: return .orange
         case .pendingTasks: return .blue
         case .missingPhoto: return .purple
         case .clockOutReminder: return .red
         case .weatherAlert: return .yellow
-        default: return .blue // Handle any additional cases
+        case .buildingArrival: return .green
+        case .taskCompletion: return .green
+        case .inventoryLow: return .orange
         }
     }
     
-    private func actionIcon(for scenario: AIScenario) -> String {
+    private func actionIcon(for scenario: FrancoSphere.AIScenario) -> String {
         switch scenario {
         case .routineIncomplete: return "checklist"
         case .pendingTasks: return "list.bullet.rectangle"
         case .missingPhoto: return "camera.fill"
         case .clockOutReminder: return "clock.badge.checkmark.fill"
         case .weatherAlert: return "cloud.sun.fill"
-        default: return "checkmark.circle.fill" // Handle any additional cases
-        }
-    }
-    
-    private func actionText(for scenario: AIScenario) -> String {
-        switch scenario {
-        case .routineIncomplete: return "View Tasks"
-        case .pendingTasks: return "Check Tasks"
-        case .missingPhoto: return "Take Photo"
-        case .clockOutReminder: return "Clock Out"
-        case .weatherAlert: return "View Weather"
-        default: return "Continue" // Handle any additional cases
+        case .buildingArrival: return "building.2.circle.fill"
+        case .taskCompletion: return "checkmark.circle.fill"
+        case .inventoryLow: return "shippingbox.circle.fill"
         }
     }
 }
 
-// MARK: - Preview Provider
+// MARK: - Preview
 struct AIAvatarOverlayView_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             AIAvatarOverlayView()
         }
-        .preferredColorScheme(.dark)
     }
 }

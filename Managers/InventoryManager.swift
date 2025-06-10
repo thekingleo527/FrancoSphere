@@ -21,12 +21,11 @@ actor InventoryManagerImpl {
     // MARK: - Setup Methods
 
     private func setupDatabase() async {
-        do {
-            self.sqliteManager = try await SQLiteManager.start()
-            try await createInventoryTables()
-        } catch {
-            print("Error setting up InventoryManager database: \(error)")
-        }
+        // Change from:
+        // self.sqliteManager = try await SQLiteManager.start()
+        // To:
+        self.sqliteManager = SQLiteManager.shared
+        try? await createInventoryTables()
     }
 
     private func createInventoryTables() async throws {

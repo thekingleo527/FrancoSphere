@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  FrancoSphere
 //
-//  Fixed: Generic parameter inference and missing view imports
+//  Main entry point - routes to appropriate dashboard based on auth
 //
 
 import SwiftUI
@@ -18,10 +18,11 @@ struct ContentView: View {
                 case "admin", "client":
                     AdminDashboardPlaceholder()
                 case "worker":
-                    WorkerDashboardViewWrapper()
+                    // Use the actual WorkerDashboardView_V2 from your project
+                    WorkerDashboardView_V2()
                 default:
                     // Fallback to worker dashboard
-                    WorkerDashboardViewWrapper()
+                    WorkerDashboardView_V2()
                 }
             } else {
                 // Not authenticated, show login
@@ -29,17 +30,9 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // Ensure authentication state is current
-            authManager.checkAuthenticationStatus()
+            // Check authentication status synchronously (already handled in init)
+            print("ContentView appeared - Auth status: \(authManager.isAuthenticated)")
         }
-    }
-}
-
-// MARK: - Wrapper for WorkerDashboardView
-struct WorkerDashboardViewWrapper: View {
-    var body: some View {
-        // Use the main WorkerDashboardView from Views/Main/
-        WorkerDashboardView()
     }
 }
 
@@ -58,65 +51,46 @@ struct AdminDashboardPlaceholder: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
+                Text("Welcome, \(authManager.displayName)")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
                 Text("Admin features coming soon")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
-                Button("Switch to Worker View") {
-                    // Force switch to worker view for testing
-                    authManager.userRole = "worker"
-                }
-                .buttonStyle(.borderedProminent)
+                Divider()
+                    .padding(.vertical)
                 
-                Button("Logout") {
-                    authManager.logout()
+                // Quick stats
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("18 Buildings", systemImage: "building.2.fill")
+                    Label("7 Active Workers", systemImage: "person.3.fill")
+                    Label("120+ Tasks", systemImage: "checklist")
                 }
-                .buttonStyle(.bordered)
+                .font(.headline)
+                .padding()
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(12)
                 
                 Spacer()
+                
+                HStack(spacing: 20) {
+                    Button("Switch to Worker View") {
+                        // Temporarily switch role for testing
+                        authManager.userRole = "worker"
+                    }
+                    .buttonStyle(.borderedProminent)
+                    
+                    Button("Logout") {
+                        authManager.logout()
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.red)
+                }
             }
             .padding()
             .navigationTitle("FrancoSphere Admin")
-        }
-    }
-}
-
-// MARK: - Main Tab View (Alternative Navigation)
-struct MainTabView: View {
-    @StateObject private var authManager = NewAuthManager.shared
-    
-    var body: some View {
-        TabView {
-            WorkerDashboardViewWrapper()
-                .tabItem {
-                    Label("Dashboard", systemImage: "house")
-                }
-            
-            BuildingsListPlaceholder()
-                .tabItem {
-                    Label("Buildings", systemImage: "building.2")
-                }
-            
-            ProfileView()
-                .tabItem {
-                    Label("Profile", systemImage: "person")
-                }
-        }
-        .accentColor(Color(red: 0.34, green: 0.34, blue: 0.8))
-    }
-}
-
-// MARK: - Placeholder for BuildingsView
-struct BuildingsListPlaceholder: View {
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("Buildings List")
-                    .font(.largeTitle)
-                Text("Coming Soon")
-                    .foregroundColor(.secondary)
-            }
-            .navigationTitle("Buildings")
         }
     }
 }

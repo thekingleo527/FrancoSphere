@@ -5,7 +5,7 @@ struct V003_WorkerAssignments {
     
     func run() async throws {
         // Use SQLiteManager's public execute method instead
-        let manager = try await SQLiteManager.start()
+        let manager = SQLiteManager.shared
         
         // Create worker_assignments table
         try await manager.execute("""

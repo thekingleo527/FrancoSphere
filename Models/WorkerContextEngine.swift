@@ -10,6 +10,19 @@ import SwiftUI
 import CoreLocation
 import Combine
 
+enum DatabaseError: LocalizedError {
+    case notInitialized
+    case invalidData(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .notInitialized:
+            return "Database not initialized"
+        case .invalidData(let message):
+            return "Invalid data: \(message)"
+        }
+    }
+}
 // MARK: - Data Models
 
 struct WorkerContext {
@@ -88,8 +101,13 @@ class WorkerContextEngine: ObservableObject {
         lastError = nil
         
         do {
-            // Get SQLiteManager instance
-            sqliteManager = try await SQLiteManager.start()
+            // Use the shared singleton instead of start()
+            sqliteManager = SQLiteManager.shared
+            
+            // Ensure database is ready
+            if !SQLiteManager.shared.isDatabaseReady() {
+                throw DatabaseError.notInitialized
+            }
             
             // Load worker profile
             let worker = try await loadWorkerProfile(workerId)

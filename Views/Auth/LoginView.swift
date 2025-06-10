@@ -2,7 +2,7 @@
 //  LoginView.swift
 //  FrancoSphere
 //
-//  Glassmorphism-enhanced login with AbstractFrancoSphereLogo
+//  Glassmorphism-enhanced login with AbstractFrancoSphereLogo - FIXED
 //
 
 import SwiftUI
@@ -305,7 +305,7 @@ struct LoginView: View {
                                 .transition(.scale.combined(with: .opacity))
                             }
                             
-                            // Login button - FIXED PARAMETER ORDER
+                            // Login button - FIXED: action closure at the end
                             GlassButton(
                                 "LOG IN",
                                 style: .primary,

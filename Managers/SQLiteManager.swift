@@ -1,947 +1,750 @@
 // SQLiteManager.swift
-// Refactored to use SQLite.swift (no GRDB)
-// FrancoSphere v1.1 - FIXED VERSION
+// FrancoSphere - Complete Working Version
 
 import Foundation
 import SQLite
-import SwiftUI
-import CommonCrypto
 
-// MARK: - Database Errors
+// MARK: - Table Definitions
 
-public enum DatabaseError: LocalizedError {
-    case notInitialized
-    case connectionFailed
-    case migrationFailed(String)
-    case invalidData(String)
+// Workers table
+let workers = Table("workers")
+let workerId = Expression<Int64>("id")
+let workerName = Expression<String>("name")
+let workerEmail = Expression<String>("email")
+let workerPassword = Expression<String>("passwordHash")
+let workerRole = Expression<String>("role")
+let workerPhone = Expression<String?>("phone")
+let hourlyRate = Expression<Double?>("hourlyRate")
+let skills = Expression<String?>("skills")
+let isActive = Expression<Bool?>("isActive")
+let profileImagePath = Expression<String?>("profileImagePath")
+let address = Expression<String?>("address")
+let emergencyContact = Expression<String?>("emergencyContact")
+let notes = Expression<String?>("notes")
 
-    public var errorDescription: String? {
-        switch self {
-        case .notInitialized:
-            return "Database not initialized. Call SQLiteManager.start() first."
-        case .connectionFailed:
-            return "Failed to connect to database."
-        case .migrationFailed(let reason):
-            return "Migration failed: \(reason)"
-        case .invalidData(let reason):
-            return "Invalid data: \(reason)"
-        }
-    }
+// Buildings table
+let buildings = Table("buildings")
+let buildingId = Expression<Int64>("id")
+let buildingName = Expression<String>("name")
+let buildingAddress = Expression<String?>("address")
+let latitude = Expression<Double?>("latitude")
+let longitude = Expression<Double?>("longitude")
+let imageAssetName = Expression<String?>("imageAssetName")
+let numberOfUnits = Expression<Int?>("numberOfUnits")
+let yearBuilt = Expression<Int?>("yearBuilt")
+let squareFootage = Expression<Int?>("squareFootage")
+let managementCompany = Expression<String?>("managementCompany")
+let primaryContact = Expression<String?>("primaryContact")
+let contactPhone = Expression<String?>("contactPhone")
+let contactEmail = Expression<String?>("contactEmail")
+let specialNotes = Expression<String?>("specialNotes")
+
+// Maintenance History table
+let maintenanceHistory = Table("maintenance_history")
+let historyId = Expression<Int64>("id")
+let historyBuildingId = Expression<Int64>("buildingId")
+let historyTaskName = Expression<String>("taskName")
+let historyDescription = Expression<String?>("description")
+let historyCompletedDate = Expression<String>("completedDate")
+let historyCompletedBy = Expression<String>("completedBy")
+let historyCategory = Expression<String>("category")
+let historyUrgency = Expression<String>("urgency")
+let historyNotes = Expression<String?>("notes")
+let historyPhotoPaths = Expression<String?>("photoPaths")
+let historyDuration = Expression<Int?>("duration")
+let historyCost = Expression<Double?>("cost")
+
+// Time Clock Entries table
+let timeClockEntries = Table("time_clock_entries")
+let entryId = Expression<Int64>("id")
+let entryWorkerId = Expression<Int64>("workerId")
+let entryBuildingId = Expression<Int64>("buildingId")
+let clockInTime = Expression<String>("clockInTime")
+let clockOutTime = Expression<String?>("clockOutTime")
+let breakDuration = Expression<Int?>("breakDuration")
+let totalHours = Expression<Double?>("totalHours")
+let isApproved = Expression<Bool?>("isApproved")
+let approvedBy = Expression<String?>("approvedBy")
+let approvalDate = Expression<String?>("approvalDate")
+
+// Building Worker Assignments table
+let buildingWorkerAssignments = Table("building_worker_assignments")
+let assignmentId = Expression<Int64>("id")
+let assignmentBuildingId = Expression<Int64>("buildingId")
+let assignmentWorkerId = Expression<Int64>("workerId")
+let assignmentRole = Expression<String>("role")
+let assignedDate = Expression<String>("assignedDate")
+
+// MARK: - Database Path
+private var databasePath: String {
+    let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+    return "\(path)/FrancoSphere.sqlite3"
 }
 
-// MARK: - Placeholder Services
+// MARK: - Data Models
 
-enum FeatureFlagService {
-    static let shared = FeatureFlagService.self
-    static func isEnabled(_ key: String) -> Bool {
-        UserDefaults.standard.bool(forKey: "ff_\(key)")
-    }
+public struct Worker {
+    let id: Int64
+    let name: String
+    let email: String
+    let password: String
+    let role: String
+    let phone: String
+    let hourlyRate: Double
+    let skills: [String]
+    let isActive: Bool
+    let profileImagePath: String?
+    let address: String
+    let emergencyContact: String
+    let notes: String
+    let buildingIds: [String]?
 }
 
-enum TelemetryService {
-    static let shared = TelemetryService.self
-    static func logEvent(_ event: String, metadata: [String: Any]) {
-        print("📊 Telemetry: \(event) - \(metadata)")
-    }
+public struct BuildingWorkerAssignment {
+    let id: Int64
+    let buildingId: Int64
+    let workerId: Int64
+    let role: String
+    let assignedDate: Date
+    let isActive: Bool
 }
 
-// MARK: - Extensions
+// MARK: - SQLiteManager Class
 
-extension Data {
-    func sha256Hash() -> String {
-        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        self.withUnsafeBytes {
-            _ = CC_SHA256($0.baseAddress, CC_LONG(self.count), &hash)
-        }
-        return hash.map { String(format: "%02x", $0) }.joined()
-    }
-}
-
-// REMOVED: Duplicate Date extension for iso8601String
-// This is already defined elsewhere in your project
-
-// MARK: - Migration Protocol
-
-public protocol DatabaseMigration {
-    var version: Int { get }
-    var name: String { get }
-    var checksum: String { get }
-    func up(_ db: Connection) throws
-    func down(_ db: Connection) throws
-}
-
-// MARK: - Migration Runner
-
-public final class DatabaseMigrator {
-    private let db: Connection
-
-    init(db: Connection) {
-        self.db = db
-    }
-
-    func getCurrentVersion() throws -> Int {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS schema_migrations (
-                version INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                checksum TEXT NOT NULL,
-                applied_at TEXT NOT NULL
-            );
-            """)
-        let stmt = try db.prepare("SELECT MAX(version) AS maxv FROM schema_migrations;")
-        if let row = try stmt.run().makeIterator().next(),
-           let maxv = row[0] as? Int64 {
-            return Int(maxv)
-        }
-        return 0
-    }
-
-    func migrate(migrations: [DatabaseMigration]) throws {
-        let currentVersion = try getCurrentVersion()
-        let sorted = migrations.sorted { $0.version < $1.version }
-        for migration in sorted where migration.version > currentVersion {
-            try runMigration(migration)
-        }
-    }
-
-    private func runMigration(_ migration: DatabaseMigration) throws {
-        print("🔄 Running migration \(migration.version): \(migration.name)")
-        do {
-            try db.transaction {
-                try migration.up(db)
-                let timestamp = Date().iso8601String
-                try db.run(
-                    "INSERT INTO schema_migrations (version, name, checksum, applied_at) VALUES (?, ?, ?, ?);",
-                    [migration.version, migration.name, migration.checksum, timestamp]
-                )
-            }
-            print("✅ Migration \(migration.version) completed")
-        } catch {
-            throw DatabaseError.migrationFailed(error.localizedDescription)
-        }
-    }
-
-    func rollback(to version: Int, migrations: [DatabaseMigration]) throws {
-        guard FeatureFlagService.shared.isEnabled("allow_schema_rollback") else {
-            throw DatabaseError.migrationFailed("Rollback disabled")
-        }
-        let currentVersion = try getCurrentVersion()
-        guard version < currentVersion else { return }
-
-        TelemetryService.shared.logEvent("migration_rollback", metadata: [
-            "from_version": currentVersion,
-            "to_version": version
-        ])
-
-        let toRollback = migrations
-            .filter { $0.version > version && $0.version <= currentVersion }
-            .sorted { $0.version > $1.version }
-
-        for migration in toRollback {
-            try db.transaction {
-                try migration.down(db)
-                try db.run("DELETE FROM schema_migrations WHERE version = ?;", [migration.version])
-            }
-            print("↩️ Rolled back migration \(migration.version)")
-        }
-    }
-}
-
-// MARK: - SQLiteManager
-
-public actor SQLiteManager {
-    @available(*, deprecated, message: "Use SQLiteManager.start() instead")
+public class SQLiteManager {
     public static let shared = SQLiteManager()
-
+    
     private var db: Connection?
-    private var migrator: DatabaseMigrator?
-    private var preparedStatements: [String: Statement] = [:]
-    private var isInitialized = false
-
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter
     }()
-    private static let iso8601Formatter = ISO8601DateFormatter()
-
-    private init() {}
-
-    /// Async factory
-    public static func start(inMemory: Bool = false) async throws -> SQLiteManager {
-        let manager = SQLiteManager()
-        try await manager.initialize(inMemory: inMemory)
-        return manager
+    
+    private init() {
+        // Initialize database on creation
+        _ = initializeDatabase()
     }
-
-    /// Initialize the database
-    public func initialize(inMemory: Bool = false) async throws {
-        guard !isInitialized else { return }
-
-        let connection: Connection
-        if inMemory {
-            connection = try Connection(.inMemory)
-        } else {
-            let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            let dbPath = "\(path)/FrancoSphere.sqlite3"
-            if FileManager.default.fileExists(atPath: dbPath) {
-                let backupPath = "\(path)/FrancoSphere_backup_\(Date().timeIntervalSince1970).sqlite3"
-                do {
-                    try FileManager.default.copyItem(atPath: dbPath, toPath: backupPath)
-                } catch {
-                    print("⚠️ Backup failed: \(error)")
-                }
-            }
-            connection = try Connection(dbPath)
-        }
-
-        // Pragmas
-        try connection.run("PRAGMA journal_mode = WAL;")
-        try connection.run("PRAGMA busy_timeout = 5000;")
-        try connection.run("PRAGMA foreign_keys = ON;")
-        try connection.run("PRAGMA synchronous = NORMAL;")
-
-        self.db = connection
-        self.migrator = DatabaseMigrator(db: connection)
-
-        try await runMigrations()
-        try await prepareStatements()
-        scheduleMaintenanceTasks()
-
-        isInitialized = true
-    }
-
-    // MARK: - Migration System
-
-    private func runMigrations() async throws {
-            guard let db = db, let migrator = migrator else { return }
-
-            let migrations: [DatabaseMigration] = [
-                V001_InitialSchema(),
-                V002_AddPasswordHash(),
-                V003_AddWeatherCache(),
-                V004_AddOutboxTables(),
-                V005_AddFeatureFlags(),
-                V006_AddTelemetry(),
-                V007_AddIndexes(),
-                V008_PhotoPathMigration(),
-                V009_BuildingNameMapping(),
-                V010_TaskTemplateData(),
-                V011_BuildingInventory(),
-                V012_RoutineTasks()  // Adds worker_assignments, routine_tasks, worker_skills tables
-            ]
-
-            try migrator.migrate(migrations: migrations)
-        }
-    // MARK: - Maintenance
-
-    private func scheduleMaintenanceTasks() {
-        Task {
-            while true {
-                try? await Task.sleep(nanoseconds: 604_800_000_000_000) // 1 week
-                try? await performMaintenance()
-            }
-        }
-    }
-
-    private func performMaintenance() async throws {
-        guard let db = db else { return }
-        try db.run("PRAGMA wal_checkpoint(TRUNCATE);")
-        let calendar = Calendar.current
-        if calendar.component(.weekday, from: Date()) == 1 {
-            try db.run("VACUUM;")
-        }
-    }
-
-    // MARK: - Prepared Statements
-
-    private func prepareStatements() async throws {
-        guard let db = db else { return }
-        preparedStatements["getWorker"] = try db.prepare("SELECT * FROM workers WHERE id = ?;")
-        preparedStatements["getBuilding"] = try db.prepare("SELECT * FROM buildings WHERE id = ?;")
-        preparedStatements["getInventory"] = try db.prepare("SELECT * FROM inventory WHERE buildingId = ? ORDER BY name;")
-    }
-
-    private func ensureInitialized() throws {
-        guard isInitialized, db != nil else {
-            throw DatabaseError.notInitialized
-        }
-    }
-
-    /// Execute a non-returning SQL statement
-    public func execute(_ sql: String, _ parameters: [SQLite.Binding] = []) async throws {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
+    
+    // MARK: - Database Initialization
+    
+    private func initializeDatabase() -> Bool {
         do {
-            try db.run(sql, parameters)
+            db = try Connection(databasePath)
+            createTables()
+            print("✅ Database initialized successfully")
+            return true
         } catch {
-            throw error
+            print("❌ Database initialization failed: \(error)")
+            return false
         }
     }
-
-    /// Execute a query returning results
-    public func query(_ sql: String, _ parameters: [SQLite.Binding] = []) async throws -> [[String: Any]] {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        var rowsArray: [[String: Any]] = []
-        let statement = try db.prepare(sql, parameters)
-        for row in try statement.run() {
-            var dict: [String: Any] = [:]
-            for (idx, name) in statement.columnNames.enumerated() {
-                dict[name] = row[idx] ?? NSNull()
-            }
-            rowsArray.append(dict)
-        }
-        return rowsArray
-    }
-
-    // MARK: - Photo Operations
-
-    public func saveTaskPhoto(taskId: String, imageData: Data) async throws -> String {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        let photoId = UUID().uuidString
-        let photoPath = "photos/\(taskId)/\(photoId).jpg"
-        let photoHash = imageData.sha256Hash()
-
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-        let fullPath = "\(documentsPath)/\(photoPath)"
-        let directoryPath = "\(documentsPath)/photos/\(taskId)"
-
-        try FileManager.default.createDirectory(atPath: directoryPath, withIntermediateDirectories: true)
-        try imageData.write(to: URL(fileURLWithPath: fullPath))
-
-        let createdAt = Date().iso8601String
-        try db.run("""
-            INSERT INTO photo_uploads (task_id, photo_path, photo_hash, retry_count, created_at)
-            VALUES (?, ?, ?, 0, ?);
-            """, [taskId, photoPath, photoHash, createdAt]
-        )
-
-        return photoPath
-    }
-
-    public func getPendingPhotoUploads(limit: Int = 10) async throws -> [(id: Int64, taskId: String, path: String)] {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        var uploads: [(Int64, String, String)] = []
-        let statement = try db.prepare("""
-            SELECT id, task_id, photo_path
-            FROM photo_uploads
-            WHERE retry_count < 3 AND uploaded_at IS NULL
-            ORDER BY created_at ASC
-            LIMIT ?;
-            """, [limit]
-        )
-        for row in try statement.run() {
-            if let id = row[0] as? Int64,
-               let taskId = row[1] as? String,
-               let path = row[2] as? String
-            {
-                uploads.append((id, taskId, path))
-            }
-        }
-        return uploads
-    }
-
-    // MARK: - Weather Cache Operations
-
-    public func cacheWeatherData(
-        buildingId: String,
-        forecastData: Data,
-        riskScore: Double,
-        expiresIn: TimeInterval = 14_400
-    ) async throws {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        let nowStr = Date().iso8601String
-        let expiresAtStr = Date().addingTimeInterval(expiresIn).iso8601String
-        // FIXED: Use Blob(_:) instead of deprecated Blob(bytes:)
-        try db.run("""
-            INSERT OR REPLACE INTO weather_cache
-            (building_id, forecast_data, risk_score, last_updated, expires_at)
-            VALUES (?, ?, ?, ?, ?);
-            """, [buildingId, Blob(bytes: [UInt8](forecastData)), riskScore, nowStr, expiresAtStr]
-        )
-    }
-
-    public func getCachedWeather(buildingId: String) async throws -> (data: Data, riskScore: Double)? {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        let nowStr = Date().iso8601String
-        let stmt = try db.prepare("""
-            SELECT forecast_data, risk_score
-            FROM weather_cache
-            WHERE building_id = ? AND expires_at > ?;
-            """, [buildingId, nowStr])
+    
+    private func createTables() {
+        guard let db = db else { return }
         
-        if let row = try stmt.run().makeIterator().next() {
-            if let blob = row[0] as? Blob,
-               let riskScore = row[1] as? Double
-            {
-                return (Data(bytes: blob.bytes), riskScore)
-            }
+        do {
+            // Workers table
+            try db.run(workers.create(ifNotExists: true) { t in
+                t.column(workerId, primaryKey: .autoincrement)
+                t.column(workerName)
+                t.column(workerEmail, unique: true)
+                t.column(workerPassword)
+                t.column(workerRole)
+                t.column(workerPhone)
+                t.column(hourlyRate)
+                t.column(skills)
+                t.column(isActive)
+                t.column(profileImagePath)
+                t.column(address)
+                t.column(emergencyContact)
+                t.column(notes)
+            })
+            
+            // Buildings table
+            try db.run(buildings.create(ifNotExists: true) { t in
+                t.column(buildingId, primaryKey: .autoincrement)
+                t.column(buildingName)
+                t.column(buildingAddress)
+                t.column(latitude)
+                t.column(longitude)
+                t.column(imageAssetName)
+                t.column(numberOfUnits)
+                t.column(yearBuilt)
+                t.column(squareFootage)
+                t.column(managementCompany)
+                t.column(primaryContact)
+                t.column(contactPhone)
+                t.column(contactEmail)
+                t.column(specialNotes)
+            })
+            
+            // Maintenance History table
+            try db.run(maintenanceHistory.create(ifNotExists: true) { t in
+                t.column(historyId, primaryKey: .autoincrement)
+                t.column(historyBuildingId)
+                t.column(historyTaskName)
+                t.column(historyDescription)
+                t.column(historyCompletedDate)
+                t.column(historyCompletedBy)
+                t.column(historyCategory)
+                t.column(historyUrgency)
+                t.column(historyNotes)
+                t.column(historyPhotoPaths)
+                t.column(historyDuration)
+                t.column(historyCost)
+            })
+            
+            // Time Clock Entries table
+            try db.run(timeClockEntries.create(ifNotExists: true) { t in
+                t.column(entryId, primaryKey: .autoincrement)
+                t.column(entryWorkerId)
+                t.column(entryBuildingId)
+                t.column(clockInTime)
+                t.column(clockOutTime)
+                t.column(breakDuration)
+                t.column(totalHours)
+                t.column(notes)
+                t.column(isApproved)
+                t.column(approvedBy)
+                t.column(approvalDate)
+            })
+            
+            // Building Worker Assignments table
+            try db.run(buildingWorkerAssignments.create(ifNotExists: true) { t in
+                t.column(assignmentId, primaryKey: .autoincrement)
+                t.column(assignmentBuildingId)
+                t.column(assignmentWorkerId)
+                t.column(assignmentRole)
+                t.column(assignedDate)
+                t.column(isActive)
+            })
+            
+            // Additional tables
+            try db.run("""
+                CREATE TABLE IF NOT EXISTS worker_time_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    workerId INTEGER NOT NULL,
+                    buildingId INTEGER NOT NULL,
+                    clockInTime TEXT NOT NULL,
+                    clockOutTime TEXT
+                );
+                """)
+            
+            try db.run("""
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    buildingId INTEGER,
+                    workerId INTEGER,
+                    isCompleted INTEGER NOT NULL DEFAULT 0,
+                    scheduledDate TEXT,
+                    recurrence TEXT NOT NULL DEFAULT 'oneTime',
+                    urgencyLevel TEXT NOT NULL DEFAULT 'medium',
+                    category TEXT NOT NULL DEFAULT 'maintenance',
+                    startTime TEXT,
+                    endTime TEXT
+                );
+                """)
+            
+            try db.run("""
+                CREATE TABLE IF NOT EXISTS inventory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    buildingId TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    quantity INTEGER NOT NULL DEFAULT 0,
+                    unit TEXT NOT NULL DEFAULT 'unit',
+                    minimumQuantity INTEGER NOT NULL DEFAULT 5,
+                    category TEXT NOT NULL DEFAULT 'general',
+                    lastRestocked TEXT,
+                    location TEXT DEFAULT '',
+                    notes TEXT
+                );
+                """)
+            
+            try db.run("""
+                CREATE TABLE IF NOT EXISTS worker_schedule (
+                    workerId TEXT NOT NULL,
+                    buildingId TEXT NOT NULL,
+                    weekdays TEXT NOT NULL,
+                    startHour INTEGER NOT NULL,
+                    endHour INTEGER NOT NULL,
+                    PRIMARY KEY (workerId, buildingId, weekdays, startHour)
+                );
+                """)
+            
+            print("✅ All tables created successfully")
+        } catch {
+            print("❌ Table creation failed: \(error)")
         }
+    }
+    
+    // MARK: - Quick Initialize (for app startup)
+    
+    public func quickInitialize() {
+        print("🔧 Quick Database Initialization...")
+        
+        if !isDatabaseReady() {
+            _ = initializeDatabase()
+        }
+        
+        // Check if we need test data
+        if (try? countWorkers()) ?? 0 == 0 {
+            print("📊 No workers found, loading test data...")
+            loadMinimalTestData()
+        }
+        
+        print("✅ Database ready!")
+    }
+    
+    // MARK: - Helper Methods
+    
+    public func isDatabaseReady() -> Bool {
+        guard db != nil else { return false }
+        
+        do {
+            let count = try db?.scalar(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='workers'"
+            ) as? Int64 ?? 0
+            
+            return count > 0
+        } catch {
+            return false
+        }
+    }
+    
+    private func loadMinimalTestData() {
+        do {
+            guard let db = db else { return }
+            
+            // Insert test building
+            let buildingInsert = buildings.insert(
+                buildingName <- "12 West 18th Street",
+                buildingAddress <- "12 West 18th Street, New York, NY",
+                latitude <- 40.7390,
+                longitude <- -73.9936,
+                imageAssetName <- "12West18thStreet"
+            )
+            let buildingRowId = try db.run(buildingInsert)
+            
+            // Insert test worker
+            let workerInsert = workers.insert(
+                workerName <- "Edwin Lema",
+                workerEmail <- "edwinlema911@gmail.com",
+                workerPassword <- "password",
+                workerRole <- "worker"
+            )
+            let workerRowId = try db.run(workerInsert)
+            
+            // Create assignment
+            let assignmentInsert = buildingWorkerAssignments.insert(
+                assignmentBuildingId <- buildingRowId,
+                assignmentWorkerId <- workerRowId,
+                assignmentRole <- "Maintenance",
+                assignedDate <- dateFormatter.string(from: Date()),
+                isActive <- true
+            )
+            try db.run(assignmentInsert)
+            
+            print("✅ Test data loaded successfully")
+        } catch {
+            print("❌ Failed to load test data: \(error)")
+        }
+    }
+    
+    // MARK: - Query Methods
+    
+    public func query(_ sql: String, _ parameters: [Binding] = []) -> [[String: Any]] {
+        guard let db = db else { return [] }
+        
+        var results: [[String: Any]] = []
+        
+        do {
+            let statement = try db.prepare(sql, parameters)
+            for row in statement {
+                var dict: [String: Any] = [:]
+                for (idx, name) in statement.columnNames.enumerated() {
+                    dict[name] = row[idx] ?? NSNull()
+                }
+                results.append(dict)
+            }
+        } catch {
+            print("❌ Query error: \(error)")
+        }
+        
+        return results
+    }
+    
+    public func execute(_ sql: String, _ parameters: [Binding] = []) throws {
+        guard let db = db else {
+            throw NSError(domain: "SQLiteManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Database not initialized"])
+        }
+        
+        try db.run(sql, parameters)
+    }
+    
+    // MARK: - Worker Methods
+    
+    public func getWorker(byEmail email: String) throws -> Worker? {
+        guard let db = db else { return nil }
+        
+        let query = workers.filter(workerEmail == email)
+        
+        if let row = try db.pluck(query) {
+            return Worker(
+                id: row[workerId],
+                name: row[workerName],
+                email: row[workerEmail],
+                password: row[workerPassword],
+                role: row[workerRole],
+                phone: row[workerPhone] ?? "",
+                hourlyRate: row[hourlyRate] ?? 0.0,
+                skills: row[skills]?.components(separatedBy: ",") ?? [],
+                isActive: row[isActive] ?? true,
+                profileImagePath: row[profileImagePath],
+                address: row[address] ?? "",
+                emergencyContact: row[emergencyContact] ?? "",
+                notes: row[notes] ?? "",
+                buildingIds: nil
+            )
+        }
+        
         return nil
     }
-
-    // MARK: - Feature Flags
-
-    public func isFeatureEnabled(_ key: String) async throws -> Bool {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        let stmt = try db.prepare("SELECT enabled FROM feature_flags WHERE key = ?;", [key])
-        if let row = try stmt.run().makeIterator().next(),
-           let enabled = row[0] as? Int64
-        {
-            return enabled == 1
-        }
-        return false
-    }
-
-    // MARK: - Clock In/Out Methods
-
-    public func logClockInAsync(workerId: Int64, buildingId: Int64, timestamp: Date) async throws {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        let clockInTime = Self.dateFormatter.string(from: timestamp)
-        try db.run("""
-            INSERT INTO worker_time_logs (workerId, buildingId, clockInTime)
-            VALUES (?, ?, ?);
-            """, [workerId, buildingId, clockInTime]
+    
+    public func insertWorker(_ worker: Worker) throws -> Int64 {
+        guard let db = db else { throw NSError(domain: "SQLiteManager", code: 0) }
+        
+        let insert = workers.insert(
+            workerName <- worker.name,
+            workerEmail <- worker.email,
+            workerPassword <- worker.password,
+            workerRole <- worker.role,
+            workerPhone <- worker.phone,
+            hourlyRate <- worker.hourlyRate,
+            skills <- worker.skills.joined(separator: ","),
+            isActive <- worker.isActive,
+            profileImagePath <- worker.profileImagePath,
+            address <- worker.address,
+            emergencyContact <- worker.emergencyContact,
+            notes <- worker.notes
         )
+        
+        return try db.run(insert)
+    }
+    
+    public func getAllWorkers() throws -> [Worker] {
+        guard let db = db else { return [] }
+        
+        var workersList: [Worker] = []
+        
+        for row in try db.prepare(workers) {
+            let worker = Worker(
+                id: row[workerId],
+                name: row[workerName],
+                email: row[workerEmail],
+                password: row[workerPassword],
+                role: row[workerRole],
+                phone: row[workerPhone] ?? "",
+                hourlyRate: row[hourlyRate] ?? 0.0,
+                skills: row[skills]?.components(separatedBy: ",") ?? [],
+                isActive: row[isActive] ?? true,
+                profileImagePath: row[profileImagePath],
+                address: row[address] ?? "",
+                emergencyContact: row[emergencyContact] ?? "",
+                notes: row[notes] ?? "",
+                buildingIds: nil
+            )
+            workersList.append(worker)
+        }
+        
+        return workersList
+    }
+    
+    public func countWorkers() throws -> Int {
+        guard let db = db else { return 0 }
+        return try db.scalar(workers.count)
+    }
+    
+    // MARK: - Building Methods
+
+    // Method for your NamedCoordinate type
+    public func insertBuilding(_ building: Building) throws -> Int64 {
+        guard let db = db else { throw NSError(domain: "SQLiteManager", code: 0) }
+        
+        let insert = buildings.insert(
+            buildingName <- building.name,
+            buildingAddress <- building.name, // Use name as fallback
+            latitude <- building.latitude,
+            longitude <- building.longitude,
+            imageAssetName <- building.imageAssetName
+            // All other fields will use their default values (nil or 0)
+        )
+        
+        return try db.run(insert)
     }
 
-    public func logClockOutAsync(workerId: Int64, timestamp: Date) async throws {
-        try ensureInitialized()
-        guard let db = db else { throw DatabaseError.notInitialized }
-
-        let clockOutTime = Self.dateFormatter.string(from: timestamp)
-        let stmt = try db.prepare("""
-            SELECT id FROM worker_time_logs
+    // Method for manual insertion with all parameters
+    public func insertBuildingDetailed(
+        name: String,
+        address: String,
+        latitude: Double,
+        longitude: Double,
+        imageAssetName: String,
+        numberOfUnits: Int = 0,
+        yearBuilt: Int? = nil,
+        squareFootage: Int? = nil,
+        managementCompany: String? = nil,
+        primaryContact: String? = nil,
+        contactPhone: String? = nil,
+        contactEmail: String? = nil,
+        specialNotes: String? = nil
+    ) throws -> Int64 {
+        guard let db = db else { throw NSError(domain: "SQLiteManager", code: 0) }
+        
+        // Create the insert statement with proper <- operators
+        let insert = buildings.insert(
+            Expression<String>("name") <- name,
+            Expression<String?>("address") <- address,
+            Expression<Double?>("latitude") <- latitude,
+            Expression<Double?>("longitude") <- longitude,
+            Expression<String?>("imageAssetName") <- imageAssetName,
+            Expression<Int?>("numberOfUnits") <- numberOfUnits,
+            Expression<Int?>("yearBuilt") <- yearBuilt,
+            Expression<Int?>("squareFootage") <- squareFootage,
+            Expression<String?>("managementCompany") <- managementCompany,
+            Expression<String?>("primaryContact") <- primaryContact,
+            Expression<String?>("contactPhone") <- contactPhone,
+            Expression<String?>("contactEmail") <- contactEmail,
+            Expression<String?>("specialNotes") <- specialNotes
+        )
+        
+        return try db.run(insert)
+    }
+    
+    public func countBuildings() throws -> Int {
+        guard let db = db else { return 0 }
+        return try db.scalar(buildings.count)
+    }
+    
+    // MARK: - Assignment Methods
+    
+    public func insertBuildingWorkerAssignment(_ assignment: BuildingWorkerAssignment) throws {
+        guard let db = db else { throw NSError(domain: "SQLiteManager", code: 0) }
+        
+        let insert = buildingWorkerAssignments.insert(
+            assignmentBuildingId <- assignment.buildingId,
+            assignmentWorkerId <- assignment.workerId,
+            assignmentRole <- assignment.role,
+            assignedDate <- dateFormatter.string(from: assignment.assignedDate),
+            isActive <- assignment.isActive
+        )
+        
+        try db.run(insert)
+    }
+    
+    // MARK: - Clock In/Out Methods
+    
+    public func logClockIn(workerId: Int64, buildingId: Int64, timestamp: Date) {
+        do {
+            let clockInTimeStr = dateFormatter.string(from: timestamp)
+            try execute("""
+                INSERT INTO worker_time_logs (workerId, buildingId, clockInTime)
+                VALUES (?, ?, ?);
+                """, [workerId, buildingId, clockInTimeStr]
+            )
+            print("✅ Clock in recorded")
+        } catch {
+            print("❌ Clock in error: \(error)")
+        }
+    }
+    
+    public func logClockOut(workerId: Int64, timestamp: Date) {
+        do {
+            let clockOutTimeStr = dateFormatter.string(from: timestamp)
+            try execute("""
+                UPDATE worker_time_logs
+                SET clockOutTime = ?
+                WHERE workerId = ? AND clockOutTime IS NULL
+                ORDER BY clockInTime DESC
+                LIMIT 1;
+                """, [clockOutTimeStr, workerId]
+            )
+            print("✅ Clock out recorded")
+        } catch {
+            print("❌ Clock out error: \(error)")
+        }
+    }
+    
+    public func isWorkerClockedIn(workerId: Int64) -> (isClockedIn: Bool, buildingId: Int64?) {
+        let results = query("""
+            SELECT buildingId FROM worker_time_logs
             WHERE workerId = ? AND clockOutTime IS NULL
             ORDER BY clockInTime DESC
             LIMIT 1;
             """, [workerId])
         
-        if let row = try stmt.run().makeIterator().next() {
-            if let logId = row[0] as? Int64 {
-                try db.run("""
-                    UPDATE worker_time_logs
-                    SET clockOutTime = ?
-                    WHERE id = ?;
-                    """, [clockOutTime, logId]
-                )
-            }
+        if let firstRow = results.first,
+           let buildingId = firstRow["buildingId"] as? Int64 {
+            return (true, buildingId)
         }
+        
+        return (false, nil)
     }
-
-    public func isWorkerClockedInAsync(workerId: Int64) async -> (isClockedIn: Bool, buildingId: Int64?) {
-        do {
-            try ensureInitialized()
-            guard let db = db else { return (false, nil) }
-
-            let stmt = try db.prepare("""
-                SELECT buildingId FROM worker_time_logs
-                WHERE workerId = ? AND clockOutTime IS NULL
-                ORDER BY clockInTime DESC
-                LIMIT 1;
-                """, [workerId])
-            
-            if let row = try stmt.run().makeIterator().next() {
-                if let bId = row[0] as? Int64 {
-                    return (true, bId)
-                }
-            }
-            return (false, nil)
-        } catch {
-            print("❌ Error checking clock-in status: \(error)")
-            return (false, nil)
+    
+    // MARK: - Clear Data
+    
+    public func clearAllData() throws {
+        guard let db = db else { return }
+        
+        let tables = [
+            "workers", "buildings", "maintenance_history",
+            "time_clock_entries", "building_worker_assignments",
+            "worker_time_logs", "tasks", "inventory", "worker_schedule"
+        ]
+        
+        for table in tables {
+            _ = try? db.run("DELETE FROM \(table)")
         }
+        
+        print("✅ All data cleared from tables")
     }
 }
 
-// MARK: - Non-Actor Wrappers
+// MARK: - Async Extensions
 
 extension SQLiteManager {
-    public func logClockIn(workerId: Int64, buildingId: Int64, timestamp: Date) {
-        Task {
+    public func query(_ sql: String, _ parameters: [Binding] = []) async throws -> [[String: Any]] {
+        return await withCheckedContinuation { continuation in
+            let results = query(sql, parameters)
+            continuation.resume(returning: results)
+        }
+    }
+    
+    public func execute(_ sql: String, _ parameters: [Binding] = []) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
             do {
-                try await self.logClockInAsync(workerId: workerId, buildingId: buildingId, timestamp: timestamp)
+                try execute(sql, parameters)
+                continuation.resume()
             } catch {
-                print("❌ Error logging clock in: \(error)")
+                continuation.resume(throwing: error)
             }
         }
     }
+}
+// MARK: - V012 Migration
 
-    public func logClockOut(workerId: Int64, timestamp: Date) {
-        Task {
-            do {
-                try await self.logClockOutAsync(workerId: workerId, timestamp: timestamp)
-            } catch {
-                print("❌ Error logging clock out: \(error)")
+struct V012_RoutineTasks: DatabaseMigration {
+    let version = 12
+    let name = "Routine Tasks and Worker Assignments"
+    var checksum: String { "f2a3b4c5d6e7" }
+    
+    func up(_ db: Connection) throws {
+        // Check if worker_assignments table exists from V003
+        let tableCheck = try db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='worker_assignments'")
+        let tableExists = tableCheck.makeIterator().next() != nil
+        
+        if tableExists {
+            print("📝 Updating existing worker_assignments table...")
+            
+            // Check which columns already exist
+            let columns = try db.prepare("PRAGMA table_info(worker_assignments)")
+            var existingColumns = Set<String>()
+            for column in columns {
+                if let name = column[1] as? String {
+                    existingColumns.insert(name)
+                }
             }
+            
+            // Add missing columns WITHOUT default values first
+            if !existingColumns.contains("start_date") {
+                try db.run("ALTER TABLE worker_assignments ADD COLUMN start_date TEXT")
+                // Update existing rows with current timestamp
+                let currentTimestamp = ISO8601DateFormatter().string(from: Date())
+                try db.run("UPDATE worker_assignments SET start_date = ? WHERE start_date IS NULL", [currentTimestamp])
+            }
+            
+            if !existingColumns.contains("end_date") {
+                try db.run("ALTER TABLE worker_assignments ADD COLUMN end_date TEXT")
+            }
+            
+            if !existingColumns.contains("is_active") {
+                try db.run("ALTER TABLE worker_assignments ADD COLUMN is_active INTEGER DEFAULT 1")
+            }
+            
+            if !existingColumns.contains("days_of_week") {
+                try db.run("ALTER TABLE worker_assignments ADD COLUMN days_of_week TEXT")
+            }
+            
+            if !existingColumns.contains("start_hour") {
+                try db.run("ALTER TABLE worker_assignments ADD COLUMN start_hour INTEGER")
+            }
+            
+            if !existingColumns.contains("end_hour") {
+                try db.run("ALTER TABLE worker_assignments ADD COLUMN end_hour INTEGER")
+            }
+        } else {
+            // Create the table fresh with all columns
+            print("📝 Creating new worker_assignments table...")
+            try db.run("""
+                CREATE TABLE IF NOT EXISTS worker_assignments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    worker_id TEXT NOT NULL,
+                    building_id TEXT NOT NULL,
+                    start_date TEXT NOT NULL,
+                    end_date TEXT,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    days_of_week TEXT,
+                    start_hour INTEGER,
+                    end_hour INTEGER,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(worker_id, building_id)
+                );
+                """)
         }
-    }
-
-    public func isWorkerClockedIn(workerId: Int64) -> (isClockedIn: Bool, buildingId: Int64?) {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: (Bool, Int64?) = (false, nil)
-        Task {
-            result = await self.isWorkerClockedInAsync(workerId: workerId)
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return result
-    }
-}
-
-// MARK: - Migration Implementations
-
-struct V001_InitialSchema: DatabaseMigration {
-    let version = 1
-    let name = "Initial Schema"
-    var checksum: String { "a1b2c3d4e5f6" }
-
-    func up(_ db: Connection) throws {
+        
+        // Create routine_tasks table
         try db.run("""
-            CREATE TABLE IF NOT EXISTS tasks (
+            CREATE TABLE IF NOT EXISTS routine_tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                description TEXT,
-                buildingId INTEGER,
-                workerId INTEGER,
-                isCompleted INTEGER NOT NULL DEFAULT 0,
-                scheduledDate TEXT,
-                recurrence TEXT NOT NULL DEFAULT 'oneTime',
-                urgencyLevel TEXT NOT NULL DEFAULT 'medium',
-                category TEXT NOT NULL DEFAULT 'maintenance',
-                startTime TEXT,
-                endTime TEXT
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS workers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                role TEXT NOT NULL
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS buildings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                address TEXT,
-                latitude REAL,
-                longitude REAL,
-                imageAssetName TEXT
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS worker_time_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                workerId INTEGER NOT NULL,
-                buildingId INTEGER NOT NULL,
-                clockInTime TEXT NOT NULL,
-                clockOutTime TEXT
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS inventory (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                buildingId TEXT NOT NULL,
-                name TEXT NOT NULL,
-                quantity INTEGER NOT NULL DEFAULT 0,
-                unit TEXT NOT NULL DEFAULT 'unit',
-                minimumQuantity INTEGER NOT NULL DEFAULT 5,
-                category TEXT NOT NULL DEFAULT 'general',
-                lastRestocked TEXT,
-                location TEXT DEFAULT '',
-                notes TEXT
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS worker_schedule (
-                workerId TEXT NOT NULL,
-                buildingId TEXT NOT NULL,
-                weekdays TEXT NOT NULL,
-                startHour INTEGER NOT NULL,
-                endHour INTEGER NOT NULL,
-                PRIMARY KEY (workerId, buildingId, weekdays, startHour)
-            );
-            """)
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP TABLE IF EXISTS worker_schedule;")
-        try db.run("DROP TABLE IF EXISTS inventory;")
-        try db.run("DROP TABLE IF EXISTS worker_time_logs;")
-        try db.run("DROP TABLE IF EXISTS buildings;")
-        try db.run("DROP TABLE IF EXISTS workers;")
-        try db.run("DROP TABLE IF EXISTS tasks;")
-    }
-}
-
-struct V002_AddPasswordHash: DatabaseMigration {
-    let version = 2
-    let name = "Add Password Hash"
-    var checksum: String { "b2c3d4e5f6a7" }
-
-    func up(_ db: Connection) throws {
-        try db.run("ALTER TABLE workers ADD COLUMN passwordHash TEXT NOT NULL DEFAULT '';")
-    }
-
-    func down(_ db: Connection) throws {
-        print("⚠️ V002 rollback requires backup restore")
-    }
-}
-
-struct V003_AddWeatherCache: DatabaseMigration {
-    let version = 3
-    let name = "Add Weather Cache"
-    var checksum: String { "c3d4e5f6a7b8" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS weather_cache (
-                building_id TEXT PRIMARY KEY,
-                forecast_data BLOB,
-                risk_score REAL,
-                last_updated TEXT,
-                expires_at TEXT
-            );
-            """)
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP TABLE IF EXISTS weather_cache;")
-    }
-}
-
-struct V004_AddOutboxTables: DatabaseMigration {
-    let version = 4
-    let name = "Add Outbox Tables"
-    var checksum: String { "d4e5f6a7b8c9" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS outbox_photos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                task_id TEXT NOT NULL,
-                photo_data BLOB NOT NULL,
-                retry_count INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL DEFAULT '\(Date().iso8601String)'
-            );
-            """)
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP TABLE IF EXISTS outbox_photos;")
-    }
-}
-
-struct V005_AddFeatureFlags: DatabaseMigration {
-    let version = 5
-    let name = "Add Feature Flags"
-    var checksum: String { "e5f6a7b8c9d0" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS feature_flags (
-                key TEXT PRIMARY KEY,
-                enabled INTEGER NOT NULL DEFAULT 0,
-                metadata BLOB
-            );
-            """)
-        let defaultFlags: [(String, Bool)] = [
-            ("weather_intelligence_enabled", false),
-            ("admin_commands_enabled", false),
-            ("ai_suggestions_enabled", false),
-            ("glass_ui_enabled", false),
-            ("emergency_mode_enabled", false),
-            ("allow_schema_rollback", false)
-        ]
-        for (key, enabled) in defaultFlags {
-            try db.run(
-                "INSERT OR IGNORE INTO feature_flags (key, enabled) VALUES (?, ?);",
-                [key, enabled ? 1 : 0]
-            )
-        }
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP TABLE IF EXISTS feature_flags;")
-    }
-}
-
-struct V006_AddTelemetry: DatabaseMigration {
-    let version = 6
-    let name = "Add Telemetry"
-    var checksum: String { "f6a7b8c9d0e1" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS telemetry_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                event_type TEXT NOT NULL,
-                user_id TEXT,
-                metadata BLOB,
-                created_at TEXT NOT NULL DEFAULT '\(Date().iso8601String)'
-            );
-            """)
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP TABLE IF EXISTS telemetry_events;")
-    }
-}
-
-struct V007_AddIndexes: DatabaseMigration {
-    let version = 7
-    let name = "Add Performance Indexes"
-    var checksum: String { "a7b8c9d0e1f2" }
-
-    func up(_ db: Connection) throws {
-        try db.run("CREATE INDEX IF NOT EXISTS idx_worker_time_logs_worker_clock ON worker_time_logs(workerId, clockOutTime);")
-        try db.run("CREATE INDEX IF NOT EXISTS idx_inventory_building ON inventory(buildingId);")
-        try db.run("CREATE INDEX IF NOT EXISTS idx_telemetry_created ON telemetry_events(created_at);")
-        try db.run("CREATE INDEX IF NOT EXISTS idx_weather_expires ON weather_cache(expires_at);")
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP INDEX IF EXISTS idx_worker_time_logs_worker_clock;")
-        try db.run("DROP INDEX IF EXISTS idx_inventory_building;")
-        try db.run("DROP INDEX IF EXISTS idx_telemetry_created;")
-        try db.run("DROP INDEX IF EXISTS idx_weather_expires;")
-    }
-}
-
-struct V008_PhotoPathMigration: DatabaseMigration {
-    let version = 8
-    let name = "Photo Path Migration"
-    var checksum: String { "b8c9d0e1f2a3" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS photo_uploads (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                task_id TEXT NOT NULL,
-                photo_path TEXT NOT NULL,
-                photo_hash TEXT NOT NULL,
-                retry_count INTEGER NOT NULL DEFAULT 0,
-                uploaded_at TEXT,
-                created_at TEXT NOT NULL DEFAULT '\(Date().iso8601String)'
-            );
-            """)
-        try db.run("CREATE INDEX IF NOT EXISTS idx_photo_uploads_pending ON photo_uploads(uploaded_at, retry_count);")
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP INDEX IF EXISTS idx_photo_uploads_pending;")
-        try db.run("DROP TABLE IF EXISTS photo_uploads;")
-    }
-}
-
-// ────────────────────────────────────────────────────────────────────────────────
-// ─── NEW MIGRATIONS BEGIN HERE ─────────────────────────────────────────────────
-// ────────────────────────────────────────────────────────────────────────────────
-
-struct V009_BuildingNameMapping: DatabaseMigration {
-    let version = 9
-    let name = "Building Name Mapping"
-    var checksum: String { "c9d0e1f2a3b4" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS building_name_mappings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                csv_name TEXT NOT NULL UNIQUE,
-                canonical_name TEXT NOT NULL,
-                building_id TEXT NOT NULL
-            );
-            """)
-        let mappings: [(String, String, String)] = [
-            ("135–139 West 17th",    "135-139 West 17th Street",          "12"),
-            ("135_139 West 17th",    "135-139 West 17th Street",          "12"),
-            ("29–31 East 20th",      "29-31 East 20th Street",            "2"),
-            ("29_31 East 20th",      "29-31 East 20th Street",            "2"),
-            ("36 Walker",            "36 Walker Street",                  "3"),
-            ("104 Franklin",         "104 Franklin Street",               "6"),
-            ("123 1st Ave",          "123 1st Avenue",                    "9"),
-            ("Stuyvesant Cove",      "Stuyvesant Cove Park",              "16"),
-            ("Rubin Museum",         "Rubin Museum (142-148 W 17th)",     "15"),
-            ("142-148 W 17th",       "Rubin Museum (142-148 W 17th)",     "15"),
-            ("117 W 17th",           "117 West 17th Street",              "8"),
-            ("112 W 18th",           "112 West 18th Street",              "7"),
-            ("138 W 17th",           "138 West 17th Street",              "14"),
-            ("12 W 18th",            "12 West 18th Street",               "1"),
-            ("68 Perry",             "68 Perry Street",                   "5"),
-            ("131 Perry",            "131 Perry Street",                  "10"),
-            ("41 Elizabeth",         "41 Elizabeth Street",               "4"),
-            ("133 E 15th",           "133 East 15th Street",              "11"),
-            ("136 W 17th",           "136 West 17th Street",              "13"),
-            ("178 Spring",           "178 Spring Street",                 "17"),
-            ("115 7th Ave",          "115 7th Avenue",                    "18"),
-            ("Rubin Museum (142–148 W 17th)", "Rubin Museum (142-148 W 17th)", "15")
-        ]
-        for (csvName, canonicalName, buildingId) in mappings {
-            try db.run(
-                "INSERT OR IGNORE INTO building_name_mappings (csv_name, canonical_name, building_id) VALUES (?, ?, ?);",
-                [csvName, canonicalName, buildingId]
-            )
-        }
-
-        try db.run("ALTER TABLE buildings ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/New_York';")
-        try db.run("ALTER TABLE buildings ADD COLUMN has_outdoor_access INTEGER NOT NULL DEFAULT 1;")
-        try db.run("ALTER TABLE tasks ADD COLUMN external_id TEXT;")
-        try db.run("CREATE INDEX IF NOT EXISTS idx_tasks_external_id ON tasks(external_id);")
-        try db.run("""
-            UPDATE tasks
-            SET buildingId = (
-                SELECT building_id
-                FROM building_name_mappings
-                WHERE tasks.buildingId = building_name_mappings.csv_name
-            )
-            WHERE EXISTS (
-                SELECT 1
-                FROM building_name_mappings
-                WHERE tasks.buildingId = building_name_mappings.csv_name
-            );
-            """)
-    }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP INDEX IF EXISTS idx_tasks_external_id;")
-        try db.run("DROP TABLE IF EXISTS building_name_mappings;")
-    }
-}
-
-struct V010_TaskTemplateData: DatabaseMigration {
-    let version = 10
-    let name = "Task Template Data"
-    var checksum: String { "d0e1f2a3b4c5" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS task_templates (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
                 category TEXT NOT NULL,
-                description TEXT NOT NULL,
-                required_skill_level TEXT NOT NULL,
                 recurrence TEXT NOT NULL,
-                urgency TEXT NOT NULL,
-                estimated_duration INTEGER NOT NULL DEFAULT 3600
+                building_id TEXT NOT NULL,
+                start_hour INTEGER NOT NULL,
+                end_hour INTEGER NOT NULL,
+                days_of_week TEXT,
+                required_skill TEXT,
+                created_at TEXT NOT NULL
             );
             """)
-        let templates: [(String, String, String, String, String, String, Int)] = [
-            ("Put Mats Out", "Cleaning", "Place entrance mats outside building entrances", "Basic", "Daily", "Low", 900),
-            ("Remove Garbage to Curb", "Sanitation", "Move garbage bins to curb for collection", "Basic", "Daily", "Medium", 1800),
-            ("Check Mail and Packages", "Maintenance", "Collect and distribute mail and packages", "Basic", "Daily", "Low", 1200),
-            ("Sweep Front of Building", "Cleaning", "Sweep sidewalk and entrance areas", "Basic", "Weekly", "Low", 1800),
-            ("Clean Outside", "Cleaning", "Clean exterior surfaces and common areas", "Basic", "Weekly", "Low", 3600),
-            ("Mop and Clean Common Areas", "Cleaning", "Mop floors and clean all common areas", "Basic", "Weekly", "Medium", 5400),
-            ("Clean Garbage", "Sanitation", "Clean and sanitize garbage collection areas", "Basic", "Weekly", "Medium", 3600),
-            ("Mop and Vacuum Floors", "Cleaning", "Vacuum carpets and mop hard floors", "Basic", "Weekly", "Medium", 5400),
-            ("Dust All Common Areas", "Cleaning", "Dust all surfaces in common areas", "Basic", "Weekly", "Low", 3600),
-            ("Mop and Vacuum Floors (Lobby)", "Cleaning", "Deep clean lobby floors", "Basic", "Weekly", "Medium", 3600),
-            ("Clean Garbage and Common Areas", "Sanitation", "Comprehensive cleaning of garbage areas and common spaces", "Basic", "Weekly", "Medium", 5400),
-            ("Remove Old Boxes", "Sanitation", "Remove and dispose of old cardboard boxes", "Basic", "Weekly", "Low", 1800),
-            ("Clean Courtyard", "Cleaning", "Clean and maintain courtyard areas", "Basic", "Weekly", "Low", 3600),
-            ("Wipe Down Boiler", "Maintenance", "Clean and inspect boiler exterior", "Intermediate", "Weekly", "Medium", 1800),
-            ("Boiler Blow Down", "Maintenance", "Perform boiler blowdown maintenance", "Advanced", "Weekly", "High", 7200),
-            ("Replace All Light Bulbs", "Maintenance", "Check and replace all burned out light bulbs", "Basic", "Monthly", "Medium", 7200),
-            ("Sweep and Mop Stairwell", "Cleaning", "Deep clean all stairwells", "Basic", "Monthly", "Low", 5400),
-            ("Inspection Water Tank", "Inspection", "Inspect water tank for leaks and proper operation", "Advanced", "Monthly", "High", 3600),
-            ("Power Wash", "Cleaning", "Power wash exterior surfaces", "Intermediate", "Monthly", "Medium", 10800),
-            ("Check Plumbing and Drainage", "Inspection", "Inspect all plumbing fixtures and drainage systems", "Intermediate", "Monthly", "Medium", 7200)
-        ]
-        for (name, category, desc, skillLevel, recurrence, urgency, duration) in templates {
-            try db.run(
-                "INSERT OR IGNORE INTO task_templates (name, category, description, required_skill_level, recurrence, urgency, estimated_duration) VALUES (?, ?, ?, ?, ?, ?, ?);",
-                [name, category, desc, skillLevel, recurrence, urgency, duration]
-            )
-        }
+        
+        // Create indexes
+        try db.run("CREATE INDEX IF NOT EXISTS idx_worker_assignments_active ON worker_assignments(is_active, worker_id);")
+        try db.run("CREATE INDEX IF NOT EXISTS idx_routine_tasks_building ON routine_tasks(building_id);")
     }
-
+    
     func down(_ db: Connection) throws {
-        try db.run("DROP TABLE IF EXISTS task_templates;")
+        try db.run("DROP INDEX IF EXISTS idx_routine_tasks_building;")
+        try db.run("DROP INDEX IF EXISTS idx_worker_assignments_active;")
+        try db.run("DROP TABLE IF EXISTS routine_tasks;")
+        // Don't drop worker_assignments as it might have been created by V003
     }
 }
-
-struct V011_BuildingInventory: DatabaseMigration {
-    let version = 11
-    let name = "Building Inventory"
-    var checksum: String { "e1f2a3b4c5d6" }
-
-    func up(_ db: Connection) throws {
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS building_inventory_defaults (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                building_id TEXT NOT NULL,
-                item_name TEXT NOT NULL,
-                category TEXT NOT NULL,
-                default_quantity INTEGER NOT NULL DEFAULT 0,
-                unit TEXT NOT NULL,
-                minimum_quantity INTEGER NOT NULL DEFAULT 5,
-                location TEXT DEFAULT '',
-                UNIQUE(building_id, item_name)
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS inventory_audit_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                building_id TEXT NOT NULL,
-                item_id TEXT NOT NULL,
-                action TEXT NOT NULL,
-                quantity_change INTEGER NOT NULL,
-                performed_by TEXT NOT NULL,
-                timestamp TEXT NOT NULL DEFAULT '\(Date().iso8601String)',
-                notes TEXT
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS building_weather_settings (
-                building_id TEXT PRIMARY KEY,
-                temp_low_threshold REAL NOT NULL DEFAULT 32,
-                temp_high_threshold REAL NOT NULL DEFAULT 90,
-                wind_threshold REAL NOT NULL DEFAULT 25,
-                precipitation_threshold REAL NOT NULL DEFAULT 0.5,
-                auto_create_weather_tasks INTEGER NOT NULL DEFAULT 1
-            );
-            """)
-        try db.run("""
-            CREATE TABLE IF NOT EXISTS schedule_conflicts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                worker_id TEXT NOT NULL,
-                date TEXT NOT NULL,
-                conflict_type TEXT NOT NULL,
-                building_ids TEXT NOT NULL,
-                resolved INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL DEFAULT '\(Date().iso8601String)'
-            );
-            """)
-        try db.run("CREATE INDEX IF NOT EXISTS idx_inventory_defaults_building ON building_inventory_defaults(building_id);")
-        try db.run("CREATE INDEX IF NOT EXISTS idx_audit_log_building_timestamp ON inventory_audit_log(building_id, timestamp);")
-        try db.run("CREATE INDEX IF NOT EXISTS idx_conflicts_worker_date ON schedule_conflicts(worker_id, date, resolved);")
+extension SQLiteManager {
+    // Async wrapper for starting SQLiteManager
+    public static func start() async throws -> SQLiteManager {
+        return SQLiteManager.shared
     }
-
-    func down(_ db: Connection) throws {
-        try db.run("DROP INDEX IF EXISTS idx_conflicts_worker_date;")
-        try db.run("DROP INDEX IF EXISTS idx_audit_log_building_timestamp;")
-        try db.run("DROP INDEX IF EXISTS idx_inventory_defaults_building;")
-        try db.run("DROP TABLE IF EXISTS schedule_conflicts;")
-        try db.run("DROP TABLE IF EXISTS building_weather_settings;")
-        try db.run("DROP TABLE IF EXISTS inventory_audit_log;")
-        try db.run("DROP TABLE IF EXISTS building_inventory_defaults;")
+    
+    // These methods should already exist but ensure they're marked correctly:
+    public func logClockInAsync(workerId: Int64, buildingId: Int64, timestamp: Date) async throws {
+        logClockIn(workerId: workerId, buildingId: buildingId, timestamp: timestamp)
+    }
+    
+    public func logClockOutAsync(workerId: Int64, timestamp: Date) async throws {
+        logClockOut(workerId: workerId, timestamp: timestamp)
     }
 }

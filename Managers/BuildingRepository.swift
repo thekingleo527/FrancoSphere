@@ -1,24 +1,27 @@
 // BuildingRepository.swift
-// FrancoSphere v1.1 - Fixed version with proper async/await and error handling
-// Fixed SQLite type ambiguity issues
+// FrancoSphere v2.0 - Using real data from CSVDataImporter
+// No more hardcoded assignments - queries SQLite for actual worker schedules
 
 import Foundation
 import SwiftUI
 
 // MARK: - Type Aliases
 
-typealias FSBuilding = FrancoSphere.NamedCoordinate  // Using the correct type from FrancoSphereModels
+typealias FSBuilding = FrancoSphere.NamedCoordinate
 typealias WorkerAssignmentRec = FrancoWorkerAssignment
 
-// Import DatabaseError from SQLiteManager if it's in a separate module
-// If DatabaseError is not accessible, we'll define a local error type
+// MARK: - Error Types
+
 enum BuildingRepositoryError: LocalizedError {
     case databaseNotInitialized
+    case noAssignmentsFound
     
     var errorDescription: String? {
         switch self {
         case .databaseNotInitialized:
             return "Database manager not initialized"
+        case .noAssignmentsFound:
+            return "No worker assignments found"
         }
     }
 }
@@ -26,6 +29,7 @@ enum BuildingRepositoryError: LocalizedError {
 // MARK: - Building Repository Actor
 
 /// Thread-safe central store for all building metadata and worker assignments
+/// Now queries real data from SQLite instead of using hardcoded values
 actor BuildingRepository {
     
     // MARK: - Singleton
@@ -42,7 +46,7 @@ actor BuildingRepository {
     // MARK: - Initialization
     
     private init() {
-        // Initialize with hardcoded data
+        // Initialize with real building data
         self.buildings = Self.createBuildings()
         
         // Initialize SQLite manager asynchronously
@@ -76,7 +80,14 @@ actor BuildingRepository {
     
     /// Get building ID for name (case-insensitive)
     public func id(forName name: String) async -> String? {
-        buildings.first {
+        // Clean the name for matching
+        let cleanedName = name
+            .replacingOccurrences(of: "–", with: "-")
+            .replacingOccurrences(of: "—", with: "-")
+            .trimmingCharacters(in: .whitespaces)
+        
+        return buildings.first {
+            $0.name.compare(cleanedName, options: .caseInsensitive) == .orderedSame ||
             $0.name.compare(name, options: .caseInsensitive) == .orderedSame
         }?.id
     }
@@ -91,54 +102,47 @@ actor BuildingRepository {
         Array(buildings.prefix(n))
     }
     
-    /// Get worker assignments for building
+    /// Get worker assignments for building - NOW QUERIES REAL DATA
     public func assignments(for buildingId: String) async -> [WorkerAssignmentRec] {
         // Check cache first
         if let cached = assignmentsCache[buildingId] {
             return cached
         }
         
-        // Load from database if SQLiteManager is available
-        if sqliteManager != nil,
-           let dbAssignments = await loadAssignmentsFromDB(buildingId: buildingId) {
+        // Load from database
+        if let dbAssignments = await loadAssignmentsFromDB(buildingId: buildingId) {
             assignmentsCache[buildingId] = dbAssignments
             return dbAssignments
         }
         
-        // Fallback to hardcoded data
-        let assignments = getHardcodedAssignments(for: buildingId)
-        assignmentsCache[buildingId] = assignments
-        return assignments
+        // No assignments found
+        return []
     }
     
-    /// Get routine tasks for building
+    /// Get routine tasks for building - FROM REAL DATA
     public func routineTasks(for buildingId: String) async -> [String] {
         // Check cache first
         if let cached = routineTasksCache[buildingId] {
             return cached
         }
         
-        // Load from database if SQLiteManager is available
-        if sqliteManager != nil,
-           let dbTasks = await loadRoutineTasksFromDB(buildingId: buildingId) {
+        // Load from database
+        if let dbTasks = await loadRoutineTasksFromDB(buildingId: buildingId) {
             routineTasksCache[buildingId] = dbTasks
             return dbTasks
         }
         
-        // Fallback to hardcoded data
-        let tasks = getHardcodedRoutineTasks(for: buildingId)
-        routineTasksCache[buildingId] = tasks
-        return tasks
+        // No tasks found
+        return []
     }
     
-    /// Search buildings by name or address
+    /// Search buildings by name
     public func searchBuildings(query: String) async -> [FSBuilding] {
         guard !query.isEmpty else { return buildings }
         
         let lowercasedQuery = query.lowercased()
         return buildings.filter { building in
-            building.name.lowercased().contains(lowercasedQuery) ||
-            (building.address?.lowercased().contains(lowercasedQuery) ?? false)
+            building.name.lowercased().contains(lowercasedQuery)
         }
     }
     
@@ -201,18 +205,6 @@ actor BuildingRepository {
         }
     }
     
-    /// Legacy helper - use async version when possible
-    nonisolated public func getBuildingName(forId id: String) -> String {
-        // This is a temporary bridge for legacy code
-        // Should migrate to async version
-        let task = Task<String, Never> { @MainActor in
-            await BuildingRepository.shared.name(forId: id)
-        }
-        return task.synchronousResult ?? "Unknown Building"
-    }
-    
-    // MARK: - Legacy Extensions for Associated Buildings
-    
     /// Get formatted string of assigned workers for a building ID
     public func getAssignedWorkersFormatted(for buildingId: String) async -> String {
         let assignments = await self.assignments(for: buildingId)
@@ -220,6 +212,22 @@ actor BuildingRepository {
             return "No assigned workers"
         }
         return assignments.map { $0.description }.joined(separator: ", ")
+    }
+    
+    /// Legacy synchronous helper - use async version when possible
+    nonisolated public func getBuildingName(forId id: String) -> String {
+        // This is a temporary bridge for legacy code
+        // Should migrate to async version
+        var result = "Unknown Building"
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            result = await BuildingRepository.shared.name(forId: id)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
     }
     
     // MARK: - Private Methods
@@ -231,7 +239,6 @@ actor BuildingRepository {
                 name: "12 West 18th Street",
                 latitude: 40.7390,
                 longitude: -73.9930,
-                address: "12 W 18th St, New York, NY",
                 imageAssetName: "12_West_18th_Street"
             ),
             FSBuilding(
@@ -239,7 +246,6 @@ actor BuildingRepository {
                 name: "29-31 East 20th Street",
                 latitude: 40.7380,
                 longitude: -73.9880,
-                address: "29-31 E 20th St, New York, NY",
                 imageAssetName: "29_31_East_20th_Street"
             ),
             FSBuilding(
@@ -247,7 +253,6 @@ actor BuildingRepository {
                 name: "36 Walker Street",
                 latitude: 40.7190,
                 longitude: -74.0050,
-                address: "36 Walker St, New York, NY",
                 imageAssetName: "36_Walker_Street"
             ),
             FSBuilding(
@@ -255,7 +260,6 @@ actor BuildingRepository {
                 name: "41 Elizabeth Street",
                 latitude: 40.7170,
                 longitude: -73.9970,
-                address: "41 Elizabeth St, New York, NY",
                 imageAssetName: "41_Elizabeth_Street"
             ),
             FSBuilding(
@@ -263,7 +267,6 @@ actor BuildingRepository {
                 name: "68 Perry Street",
                 latitude: 40.7350,
                 longitude: -74.0050,
-                address: "68 Perry St, New York, NY",
                 imageAssetName: "68_Perry_Street"
             ),
             FSBuilding(
@@ -271,7 +274,6 @@ actor BuildingRepository {
                 name: "104 Franklin Street",
                 latitude: 40.7180,
                 longitude: -74.0060,
-                address: "104 Franklin St, New York, NY",
                 imageAssetName: "104_Franklin_Street"
             ),
             FSBuilding(
@@ -279,7 +281,6 @@ actor BuildingRepository {
                 name: "112 West 18th Street",
                 latitude: 40.7400,
                 longitude: -73.9940,
-                address: "112 W 18th St, New York, NY",
                 imageAssetName: "112_West_18th_Street"
             ),
             FSBuilding(
@@ -287,7 +288,6 @@ actor BuildingRepository {
                 name: "117 West 17th Street",
                 latitude: 40.7395,
                 longitude: -73.9950,
-                address: "117 W 17th St, New York, NY",
                 imageAssetName: "117_West_17th_Street"
             ),
             FSBuilding(
@@ -295,7 +295,6 @@ actor BuildingRepository {
                 name: "123 1st Avenue",
                 latitude: 40.7270,
                 longitude: -73.9850,
-                address: "123 1st Ave, New York, NY",
                 imageAssetName: "123_1st_Avenue"
             ),
             FSBuilding(
@@ -303,7 +302,6 @@ actor BuildingRepository {
                 name: "131 Perry Street",
                 latitude: 40.7340,
                 longitude: -74.0060,
-                address: "131 Perry St, New York, NY",
                 imageAssetName: "131_Perry_Street"
             ),
             FSBuilding(
@@ -311,7 +309,6 @@ actor BuildingRepository {
                 name: "133 East 15th Street",
                 latitude: 40.7345,
                 longitude: -73.9875,
-                address: "133 E 15th St, New York, NY",
                 imageAssetName: "133_East_15th_Street"
             ),
             FSBuilding(
@@ -319,7 +316,6 @@ actor BuildingRepository {
                 name: "135-139 West 17th Street",
                 latitude: 40.7400,
                 longitude: -73.9960,
-                address: "135-139 W 17th St, New York, NY",
                 imageAssetName: "135West17thStreet"
             ),
             FSBuilding(
@@ -327,7 +323,6 @@ actor BuildingRepository {
                 name: "136 West 17th Street",
                 latitude: 40.7402,
                 longitude: -73.9970,
-                address: "136 W 17th St, New York, NY",
                 imageAssetName: "136_West_17th_Street"
             ),
             FSBuilding(
@@ -335,7 +330,6 @@ actor BuildingRepository {
                 name: "Rubin Museum (142-148 W 17th)",
                 latitude: 40.7405,
                 longitude: -73.9980,
-                address: "142-148 W 17th St, New York, NY",
                 imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
             ),
             FSBuilding(
@@ -343,7 +337,6 @@ actor BuildingRepository {
                 name: "Stuyvesant Cove Park",
                 latitude: 40.7318,
                 longitude: -73.9740,
-                address: "20 Waterside Plaza, New York, NY 10010",
                 imageAssetName: "Stuyvesant_Cove_Park"
             ),
             FSBuilding(
@@ -351,219 +344,45 @@ actor BuildingRepository {
                 name: "138 West 17th Street",
                 latitude: 40.7399,
                 longitude: -73.9965,
-                address: "138 W 17th St, New York, NY",
                 imageAssetName: "138West17thStreet"
+            ),
+            FSBuilding(
+                id: "17",
+                name: "178 Spring Street",
+                latitude: 40.7250,
+                longitude: -74.0020,
+                imageAssetName: "178_Spring_Street"
+            ),
+            FSBuilding(
+                id: "18",
+                name: "115 7th Avenue",
+                latitude: 40.7380,
+                longitude: -73.9980,
+                imageAssetName: "115_7th_Avenue"
             )
         ]
     }
     
-    private func getHardcodedAssignments(for buildingId: String) -> [WorkerAssignmentRec] {
-        switch buildingId {
-        case "1":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "1", workerId: 1, workerName: "Greg Hutson",
-                    shift: "Day", specialRole: "Lead Maintenance"
-                ),
-                WorkerAssignmentRec(
-                    buildingId: "1", workerId: 7, workerName: "Angel Guirachocha",
-                    shift: "Day", specialRole: nil
-                ),
-                WorkerAssignmentRec(
-                    buildingId: "1", workerId: 8, workerName: "Shawn Magloire",
-                    shift: "Day", specialRole: nil
-                )
-            ]
-        case "2":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "2", workerId: 2, workerName: "Edwin Lema",
-                    shift: "Day", specialRole: "Lead Cleaning"
-                ),
-                WorkerAssignmentRec(
-                    buildingId: "2", workerId: 4, workerName: "Kevin Dutan",
-                    shift: "Day", specialRole: nil
-                )
-            ]
-        case "3":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "3", workerId: 4, workerName: "Kevin Dutan",
-                    shift: "Day", specialRole: nil
-                ),
-                WorkerAssignmentRec(
-                    buildingId: "3", workerId: 7, workerName: "Angel Guirachocha",
-                    shift: "Evening", specialRole: nil
-                )
-            ]
-        case "4":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "4", workerId: 5, workerName: "Carlos Mendez",
-                    shift: "Day", specialRole: "Lead"
-                )
-            ]
-        case "5":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "5", workerId: 3, workerName: "Maria Rodriguez",
-                    shift: "Day", specialRole: nil
-                )
-            ]
-        case "6":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "6", workerId: 2, workerName: "Edwin Lema",
-                    shift: "Day", specialRole: nil
-                )
-            ]
-        case "7", "8":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: buildingId, workerId: 1, workerName: "Greg Hutson",
-                    shift: "Day", specialRole: nil
-                )
-            ]
-        case "9":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "9", workerId: 6, workerName: "James Wilson",
-                    shift: "Day", specialRole: "Security"
-                )
-            ]
-        case "10":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "10", workerId: 3, workerName: "Maria Rodriguez",
-                    shift: "Day", specialRole: nil
-                ),
-                WorkerAssignmentRec(
-                    buildingId: "10", workerId: 7, workerName: "Angel Guirachocha",
-                    shift: "Evening", specialRole: "Garbage"
-                )
-            ]
-        case "11", "12", "13":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: buildingId, workerId: 2, workerName: "Edwin Lema",
-                    shift: "Day", specialRole: nil
-                )
-            ]
-        case "14":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "14", workerId: 1, workerName: "Greg Hutson",
-                    shift: "Day", specialRole: "Museum Specialist"
-                ),
-                WorkerAssignmentRec(
-                    buildingId: "14", workerId: 5, workerName: "Carlos Mendez",
-                    shift: "Evening", specialRole: nil
-                )
-            ]
-        case "15":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "15", workerId: 4, workerName: "Kevin Dutan",
-                    shift: "Day", specialRole: "Park Maintenance"
-                )
-            ]
-        case "16":
-            return [
-                WorkerAssignmentRec(
-                    buildingId: "16", workerId: 4, workerName: "Kevin Dutan",
-                    shift: "Day", specialRole: "Maintenance"
-                )
-            ]
-        default:
-            return [
-                WorkerAssignmentRec(
-                    buildingId: buildingId, workerId: 4, workerName: "Kevin Dutan",
-                    shift: "On Call", specialRole: nil
-                )
-            ]
-        }
-    }
-    
-    private func getHardcodedRoutineTasks(for buildingId: String) -> [String] {
-        switch buildingId {
-        case "1":
-            return [
-                "HVAC Filter Replacement",
-                "Lobby Cleaning",
-                "Garbage Collection",
-                "Security System Check",
-                "Elevator Maintenance"
-            ]
-        case "2":
-            return [
-                "Hallway Sweeping",
-                "Window Cleaning",
-                "Elevator Maintenance",
-                "Common Area Sanitizing",
-                "Fire Alarm Testing"
-            ]
-        case "3":
-            return [
-                "HVAC Inspection",
-                "Plumbing System Check",
-                "Exterior Cleaning",
-                "Pest Control",
-                "Emergency Light Testing"
-            ]
-        case "4":
-            return [
-                "Roof Inspection",
-                "Fire Safety Equipment Check",
-                "Landscaping",
-                "Utility Room Inspection",
-                "Water Heater Maintenance"
-            ]
-        case "5":
-            return [
-                "Mailbox Area Cleaning",
-                "Lighting Maintenance",
-                "Front Door Maintenance",
-                "Stairwell Cleaning",
-                "Intercom System Check"
-            ]
-        case "14": // Museum special tasks
-            return [
-                "Climate Control Monitoring",
-                "Security System Check",
-                "Gallery Floor Maintenance",
-                "Loading Dock Inspection",
-                "Visitor Area Sanitization"
-            ]
-        case "15": // Park special tasks
-            return [
-                "Pathway Maintenance",
-                "Trash Collection",
-                "Landscaping",
-                "Bench/Fixture Inspection",
-                "Drainage System Check"
-            ]
-        default:
-            return [
-                "General Maintenance",
-                "Cleaning",
-                "Inspection",
-                "Garbage Collection",
-                "Security Check"
-            ]
-        }
-    }
-    
-    // MARK: - Database Operations
+    // MARK: - Database Operations - REAL DATA QUERIES
     
     private func loadAssignmentsFromDatabase() async {
         guard let sqliteManager = sqliteManager else { return }
         
-        // Pre-load all assignments at startup
         do {
+            // Query for unique worker-building assignments from tasks table
             let sql = """
-                SELECT building_id, worker_id, worker_name, shift, special_role
-                FROM worker_assignments
-                ORDER BY building_id, worker_id
+                SELECT DISTINCT 
+                    t.buildingId,
+                    t.workerId,
+                    w.full_name as worker_name,
+                    t.category,
+                    MIN(t.startTime) as earliest_start,
+                    MAX(t.endTime) as latest_end
+                FROM tasks t
+                JOIN workers w ON t.workerId = w.id
+                WHERE t.workerId IS NOT NULL AND t.workerId != ''
+                GROUP BY t.buildingId, t.workerId
+                ORDER BY t.buildingId, t.workerId
             """
             
             let rows = try await sqliteManager.query(sql)
@@ -571,25 +390,45 @@ actor BuildingRepository {
             var assignments: [String: [WorkerAssignmentRec]] = [:]
             
             for row in rows {
-                guard let buildingId = row["building_id"] as? String,
-                      let workerId = row["worker_id"] as? Int64,
+                guard let buildingIdStr = row["buildingId"] as? String,
+                      let workerIdStr = row["workerId"] as? String,
                       let workerName = row["worker_name"] as? String else {
                     continue
                 }
                 
+                // Convert worker ID to Int64
+                guard let workerId = Int64(workerIdStr) else { continue }
+                
+                // Determine shift based on task times
+                var shift = "Day"
+                if let startTimeStr = row["earliest_start"] as? String,
+                   let startDate = ISO8601DateFormatter().date(from: startTimeStr) {
+                    let hour = Calendar.current.component(.hour, from: startDate)
+                    if hour >= 18 {
+                        shift = "Evening"
+                    } else if hour < 7 {
+                        shift = "Early Morning"
+                    }
+                }
+                
+                // Determine special role based on category
+                let category = row["category"] as? String ?? ""
+                let specialRole = determineSpecialRole(from: category, workerId: workerId)
+                
                 let assignment = WorkerAssignmentRec(
-                    buildingId: buildingId,
+                    buildingId: buildingIdStr,
                     workerId: workerId,
                     workerName: workerName,
-                    shift: row["shift"] as? String,
-                    specialRole: row["special_role"] as? String
+                    shift: shift,
+                    specialRole: specialRole
                 )
                 
-                assignments[buildingId, default: []].append(assignment)
+                assignments[buildingIdStr, default: []].append(assignment)
             }
             
             if !assignments.isEmpty {
                 self.assignmentsCache = assignments
+                print("✅ Loaded \(assignments.count) building assignments from database")
             }
         } catch {
             print("❌ Failed to load assignments from database: \(error)")
@@ -601,9 +440,16 @@ actor BuildingRepository {
         
         do {
             let sql = """
-                SELECT worker_id, worker_name, shift, special_role
-                FROM worker_assignments
-                WHERE building_id = ?
+                SELECT DISTINCT 
+                    t.workerId,
+                    w.full_name as worker_name,
+                    t.category,
+                    MIN(t.startTime) as earliest_start,
+                    MAX(t.endTime) as latest_end
+                FROM tasks t
+                JOIN workers w ON t.workerId = w.id
+                WHERE t.buildingId = ? AND t.workerId IS NOT NULL AND t.workerId != ''
+                GROUP BY t.workerId
             """
             
             let rows = try await sqliteManager.query(sql, [buildingId])
@@ -611,17 +457,33 @@ actor BuildingRepository {
             guard !rows.isEmpty else { return nil }
             
             return rows.compactMap { row in
-                guard let workerId = row["worker_id"] as? Int64,
-                      let workerName = row["worker_name"] as? String else {
+                guard let workerIdStr = row["workerId"] as? String,
+                      let workerName = row["worker_name"] as? String,
+                      let workerId = Int64(workerIdStr) else {
                     return nil
                 }
+                
+                // Determine shift
+                var shift = "Day"
+                if let startTimeStr = row["earliest_start"] as? String,
+                   let startDate = ISO8601DateFormatter().date(from: startTimeStr) {
+                    let hour = Calendar.current.component(.hour, from: startDate)
+                    if hour >= 18 {
+                        shift = "Evening"
+                    } else if hour < 7 {
+                        shift = "Early Morning"
+                    }
+                }
+                
+                let category = row["category"] as? String ?? ""
+                let specialRole = determineSpecialRole(from: category, workerId: workerId)
                 
                 return WorkerAssignmentRec(
                     buildingId: buildingId,
                     workerId: workerId,
                     workerName: workerName,
-                    shift: row["shift"] as? String,
-                    specialRole: row["special_role"] as? String
+                    shift: shift,
+                    specialRole: specialRole
                 )
             }
         } catch {
@@ -635,9 +497,12 @@ actor BuildingRepository {
         
         do {
             let sql = """
-                SELECT building_id, task_name
-                FROM routine_tasks
-                ORDER BY building_id, display_order
+                SELECT DISTINCT 
+                    buildingId,
+                    name as task_name
+                FROM tasks
+                WHERE recurrence IN ('Daily', 'Weekly')
+                ORDER BY buildingId, name
             """
             
             let rows = try await sqliteManager.query(sql)
@@ -645,7 +510,7 @@ actor BuildingRepository {
             var tasks: [String: [String]] = [:]
             
             for row in rows {
-                guard let buildingId = row["building_id"] as? String,
+                guard let buildingId = row["buildingId"] as? String,
                       let taskName = row["task_name"] as? String else {
                     continue
                 }
@@ -666,10 +531,10 @@ actor BuildingRepository {
         
         do {
             let sql = """
-                SELECT task_name
-                FROM routine_tasks
-                WHERE building_id = ?
-                ORDER BY display_order
+                SELECT DISTINCT name
+                FROM tasks
+                WHERE buildingId = ? AND recurrence IN ('Daily', 'Weekly')
+                ORDER BY name
             """
             
             let rows = try await sqliteManager.query(sql, [buildingId])
@@ -677,7 +542,7 @@ actor BuildingRepository {
             guard !rows.isEmpty else { return nil }
             
             return rows.compactMap { row in
-                row["task_name"] as? String
+                row["name"] as? String
             }
         } catch {
             print("❌ Failed to load routine tasks for building \(buildingId): \(error)")
@@ -690,23 +555,9 @@ actor BuildingRepository {
             throw BuildingRepositoryError.databaseNotInitialized
         }
         
-        let sql = """
-            INSERT OR REPLACE INTO worker_assignments 
-            (building_id, worker_id, worker_name, shift, special_role)
-            VALUES (?, ?, ?, ?, ?)
-        """
-        
-        // Handle optional values by providing explicit default values
-        let shiftValue = assignment.shift ?? ""
-        let specialRoleValue = assignment.specialRole ?? ""
-        
-        try await sqliteManager.execute(sql, [
-            assignment.buildingId,
-            assignment.workerId,
-            assignment.workerName,
-            shiftValue,
-            specialRoleValue
-        ])
+        // Worker assignments are derived from tasks, so we don't save them separately
+        // This method is kept for API compatibility but doesn't need to do anything
+        print("ℹ️ Worker assignments are managed through task assignments")
     }
     
     private func saveRoutineTaskToDB(buildingId: String, task: String) async throws {
@@ -714,23 +565,42 @@ actor BuildingRepository {
             throw BuildingRepositoryError.databaseNotInitialized
         }
         
-        // Get current max display order
-        let orderSql = """
-            SELECT COALESCE(MAX(display_order), 0) + 1 as next_order
-            FROM routine_tasks
-            WHERE building_id = ?
-        """
-        
-        let rows = try await sqliteManager.query(orderSql, [buildingId])
-        let nextOrder = rows.first?["next_order"] as? Int64 ?? 1
-        
-        // Insert new task
-        let sql = """
-            INSERT INTO routine_tasks (building_id, task_name, display_order)
-            VALUES (?, ?, ?)
-        """
-        
-        try await sqliteManager.execute(sql, [buildingId, task, nextOrder])
+        // Tasks should be added through CSVDataImporter or task management
+        print("ℹ️ Tasks should be added through task management system")
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Determine special role based on task category and worker
+    private func determineSpecialRole(from category: String, workerId: Int64) -> String? {
+        // Map categories to special roles
+        switch category.lowercased() {
+        case "maintenance":
+            if workerId == 1 { return "Lead Maintenance" }
+            if workerId == 8 { return "Maintenance Specialist" }
+            return "Maintenance"
+            
+        case "cleaning":
+            if workerId == 2 { return "Lead Cleaning" }
+            return nil
+            
+        case "sanitation":
+            if workerId == 7 { return "Evening Garbage" }
+            return "Garbage"
+            
+        case "operations":
+            if workerId == 7 { return "DSNY Specialist" }
+            return nil
+            
+        case "repair":
+            return "Repairs"
+            
+        case "inspection":
+            return "Inspector"
+            
+        default:
+            return nil
+        }
     }
     
     // MARK: - Utility Functions
@@ -774,21 +644,5 @@ struct FrancoWorkerAssignment: Identifiable {
     }
 }
 
-// MARK: - Task Extension for Sync Result
-
-extension Task where Success: Sendable, Failure == Never {
-    /// WARNING: This blocks the thread - use only for legacy compatibility
-    var synchronousResult: Success? {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: Success?
-        
-        let task = Task<Void, Never> {
-            result = await self.value
-            semaphore.signal()
-        }
-        
-        semaphore.wait()
-        _ = task // Prevent compiler warning
-        return result
-    }
-}
+// MARK: - Date Extension
+// Removed: iso8601String is already defined in the project

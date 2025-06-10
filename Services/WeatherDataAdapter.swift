@@ -1,5 +1,5 @@
 // WeatherDataAdapter.swift
-// FrancoSphere v1.1 - Fixed type references and parameter issues
+// FrancoSphere v1.1 - Fixed version without SQLiteManager weather methods
 
 import Foundation
 import SwiftUI
@@ -64,15 +64,7 @@ class WeatherDataAdapter: ObservableObject {
             return
         }
         
-        // Check SQLite cache first
-        if let cached = await loadFromPersistentCache(buildingId: buildingId) {
-            self.forecast = cached.data
-            self.currentWeather = cached.data.first
-            self.lastUpdate = cached.timestamp
-            return
-        }
-        
-        // Check memory cache (faster than SQLite)
+        // Check memory cache first (faster than SQLite)
         if let cached = weatherCache[buildingId],
            Date().timeIntervalSince(cached.timestamp) < cacheExpirationTime {
             self.forecast = cached.data
@@ -104,9 +96,8 @@ class WeatherDataAdapter: ObservableObject {
             self.currentWeather = weatherData.first
             self.lastUpdate = Date()
             
-            // Cache in memory and SQLite
+            // Cache in memory
             weatherCache[buildingId] = (data: weatherData, timestamp: Date())
-            await saveToPersistentCache(buildingId: buildingId, data: weatherData)
             
             // Update API call tracking
             lastApiCallTime[buildingId] = Date()
@@ -260,62 +251,12 @@ class WeatherDataAdapter: ObservableObject {
         return weatherData
     }
     
-    // MARK: - SQLite Persistent Cache
-    
-    private func loadFromPersistentCache(buildingId: String) async -> (data: [FrancoSphere.WeatherData], timestamp: Date)? {
-        guard let sqliteManager = sqliteManager else { return nil }
-        
-        do {
-            guard let cached = try await sqliteManager.getCachedWeather(buildingId: buildingId) else {
-                return nil
-            }
-            
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            
-            if let weatherData = try? decoder.decode([FrancoSphere.WeatherData].self, from: cached.data) {
-                // Check if cache is still valid
-                let cacheAge = Date().timeIntervalSince1970 - cached.riskScore // Using riskScore as timestamp
-                if cacheAge < cacheExpirationTime {
-                    return (data: weatherData, timestamp: Date(timeIntervalSince1970: cached.riskScore))
-                }
-            }
-        } catch {
-            print("❌ Cache load error: \(error)")
-        }
-        return nil
-    }
-    
-    private func saveToPersistentCache(buildingId: String, data: [FrancoSphere.WeatherData]) async {
-        guard let sqliteManager = sqliteManager else { return }
-        
-        do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            let encoded = try encoder.encode(data)
-            
-            // Calculate risk score
-            let riskScore = calculateOverallRiskScore(for: data)
-            
-            try await sqliteManager.cacheWeatherData(
-                buildingId: buildingId,
-                forecastData: encoded,
-                riskScore: Date().timeIntervalSince1970, // Store timestamp as risk score
-                expiresIn: cacheExpirationTime
-            )
-        } catch {
-            print("❌ Cache save error: \(error)")
-        }
-    }
+    // MARK: - Cache Management (Memory Only for now)
     
     private func loadCachedData() async {
-        // Load all cached weather data on startup
-        let buildings = await BuildingRepository.shared.allBuildings
-        for building in buildings {
-            if let cached = await loadFromPersistentCache(buildingId: building.id) {
-                weatherCache[building.id] = cached
-            }
-        }
+        // Since SQLite weather cache methods aren't available,
+        // we'll just use memory cache for now
+        print("📦 Using memory-only cache for weather data")
     }
     
     // MARK: - Enhanced Risk Assessment

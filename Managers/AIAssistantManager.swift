@@ -1,5 +1,4 @@
-//
-// AIAssistantManager.swift
+/// AIAssistantManager.swift
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 // Manages helper AI "scenarios." No need to re‐declare AIScenario here.
 
@@ -8,8 +7,8 @@ import Foundation
 class AIAssistantManager: ObservableObject {
     static let shared = AIAssistantManager()
 
-    @Published var currentScenario: AIScenario?
-    @Published var scenarioQueue: [AIScenario] = []
+    @Published var currentScenario: FrancoSphere.AIScenario?
+    @Published var scenarioQueue: [FrancoSphere.AIScenario] = []
     @Published var hasActiveScenarios: Bool = false
 
     private init() {
@@ -22,13 +21,13 @@ class AIAssistantManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            if let scenario = notification.userInfo?["scenario"] as? AIScenario {
+            if let scenario = notification.userInfo?["scenario"] as? FrancoSphere.AIScenario {
                 self?.enqueue(scenario)
             }
         }
     }
 
-    private func enqueue(_ scenario: AIScenario) {
+    private func enqueue(_ scenario: FrancoSphere.AIScenario) {
         if !scenarioQueue.contains(where: { $0 == scenario }) {
             scenarioQueue.append(scenario)
             advanceIfNeeded()
@@ -52,9 +51,7 @@ class AIAssistantManager: ObservableObject {
         guard let scenario = currentScenario else { return }
 
         switch scenario {
-        case .routineIncomplete:
-            NotificationCenter.default.post(name: NSNotification.Name("NavigateToTasks"), object: nil)
-        case .pendingTasks:
+        case .routineIncomplete, .pendingTasks:
             NotificationCenter.default.post(name: NSNotification.Name("NavigateToTasks"), object: nil)
         case .missingPhoto:
             NotificationCenter.default.post(name: NSNotification.Name("OpenCamera"), object: nil)
@@ -62,16 +59,18 @@ class AIAssistantManager: ObservableObject {
             NotificationCenter.default.post(name: NSNotification.Name("TriggerClockOut"), object: nil)
         case .weatherAlert:
             NotificationCenter.default.post(name: NSNotification.Name("ShowWeatherDetails"), object: nil)
-        default:
-            // Handle any additional AIScenario cases
-            print("Unhandled AI scenario: \(scenario)")
-            NotificationCenter.default.post(name: NSNotification.Name("DefaultAIAction"), object: nil)
+        case .buildingArrival:
+            NotificationCenter.default.post(name: NSNotification.Name("ShowBuildingDetails"), object: nil)
+        case .taskCompletion:
+            NotificationCenter.default.post(name: NSNotification.Name("NavigateToTasks"), object: nil)
+        case .inventoryLow:
+            NotificationCenter.default.post(name: NSNotification.Name("ShowInventory"), object: nil)
         }
 
         dismissCurrentScenario()
     }
 
-    static func trigger(for scenario: AIScenario) {
+    static func trigger(for scenario: FrancoSphere.AIScenario) {
         NotificationCenter.default.post(
             name: NSNotification.Name("AIScenarioTriggered"),
             object: nil,

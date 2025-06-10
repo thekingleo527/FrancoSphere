@@ -21,7 +21,13 @@ class DatabaseSeeder {
             print("🌱 Starting database seed...")
             
             // Get database instance
-            let db = try await SQLiteManager.start(inMemory: false)
+            let db = SQLiteManager.shared
+            
+            // Ensure database is initialized
+            if !db.isDatabaseReady() {
+                db.quickInitialize()
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            }
             
             // Use RealWorldDataSeeder to populate data
             try await RealWorldDataSeeder.seedAllRealData(db)
@@ -50,7 +56,13 @@ class DatabaseSeeder {
     /// Alternative seeding without RealWorldDataSeeder (if file is missing)
     func seedBasicData() async -> (success: Bool, message: String) {
         do {
-            let db = try await SQLiteManager.start(inMemory: false)
+            let db = SQLiteManager.shared
+            
+            // Ensure database is initialized
+            if !db.isDatabaseReady() {
+                db.quickInitialize()
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            }
             
             // Basic worker data
             let workers = [
@@ -100,7 +112,13 @@ class DatabaseSeeder {
     /// Clears all data from the database
     func clearDatabase() async -> (success: Bool, message: String) {
         do {
-            let db = try await SQLiteManager.start()
+            let db = SQLiteManager.shared
+            
+            // Ensure database is initialized
+            if !db.isDatabaseReady() {
+                db.quickInitialize()
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            }
             
             // Clear tables in reverse dependency order
             try await db.execute("DELETE FROM routine_tasks")
@@ -144,4 +162,4 @@ extension DatabaseSeeder {
         }
     }
 }
-#endif  // <-- This was missing!
+#endif

@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  Shows a searchable list of all portfolio buildings.
-//  Requires: BuildingRepository.shared.allBuildings
+//  Fixed: Removed address references and corrected List syntax
 //
 
 import SwiftUI
@@ -16,12 +16,11 @@ struct BuildingsView: View {
     @State private var isLoading = true
     @State private var searchText = ""
     
-    // Filter helper
+    // Filter helper - removed address search
     private var filteredBuildings: [FrancoSphere.NamedCoordinate] {
         guard !searchText.isEmpty else { return buildings }
         return buildings.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            ($0.address ?? "").localizedCaseInsensitiveContains(searchText)
+            $0.name.localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -74,19 +73,13 @@ struct BuildingsView: View {
                     }
                     Spacer()
                 } else {
-                    List {
-                        ForEach(filteredBuildings, id: \.id) { building in
-                            NavigationLink {
-                                // Use TempBuildingDetailView if it exists, otherwise use placeholder
-                                if #available(iOS 15.0, *) {
-                                    TempBuildingDetailView(building: building)
-                                } else {
-                                    BuildingDetailPlaceholder(building: building)
-                                }
-                            } label: {
-                                // Building row view
-                                buildingRow(for: building)
-                            }
+                    List(filteredBuildings, id: \.id) { building in
+                        NavigationLink {
+                            // Use BuildingDetailPlaceholder for now
+                            BuildingDetailPlaceholder(building: building)
+                        } label: {
+                            // Building row view
+                            buildingRow(for: building)
                         }
                     }
                     .listStyle(.plain)
@@ -122,12 +115,11 @@ struct BuildingsView: View {
                     .font(.headline)
                     .lineLimit(1)
                 
-                if let addr = building.address {
-                    Text(addr)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
+                // Show coordinates instead of address
+                Text("Lat: \(building.latitude, specifier: "%.4f"), Lng: \(building.longitude, specifier: "%.4f")")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
                 
                 // Building ID badge
                 Text("ID: \(building.id)")
@@ -162,87 +154,11 @@ struct BuildingsView: View {
     }
 }
 
-// MARK: - Alternative Implementation with AsyncContent
-struct BuildingsViewAlternative: View {
-    @State private var searchText = ""
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    
-                    TextField("Search buildings", text: $searchText)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                }
-                .padding(10)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding([.horizontal, .top])
-                
-                // Buildings list with async loading
-                BuildingsList(searchText: searchText)
-            }
-            .navigationTitle("Buildings")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-}
-
-// Separate view for async loading
-struct BuildingsList: View {
-    let searchText: String
-    @State private var buildings: [FrancoSphere.NamedCoordinate] = []
-    
-    private var filteredBuildings: [FrancoSphere.NamedCoordinate] {
-        guard !searchText.isEmpty else { return buildings }
-        return buildings.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            ($0.address ?? "").localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
-    var body: some View {
-        List(filteredBuildings, id: \.id) { building in
-            NavigationLink(destination:
-                Group {
-                    if #available(iOS 15.0, *) {
-                        TempBuildingDetailView(building: building)
-                    } else {
-                        BuildingDetailPlaceholder(building: building)
-                    }
-                }
-            ) {
-                HStack {
-                    Image(systemName: "building.2.crop.circle")
-                        .resizable()
-                        .frame(width: 32, height: 32)
-                        .foregroundColor(.blue)
-                    VStack(alignment: .leading) {
-                        Text(building.name)
-                            .font(.headline)
-                        if let addr = building.address {
-                            Text(addr)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-        .listStyle(.plain)
-        .task {
-            buildings = await BuildingRepository.shared.allBuildings
-        }
-    }
-}
-
-// MARK: - Temporary Building Detail Placeholder
+// MARK: - Building Detail Placeholder
 struct BuildingDetailPlaceholder: View {
     let building: FrancoSphere.NamedCoordinate
+    @State private var assignedWorkers: String = "Loading..."
+    @State private var routineTasks: [String] = []
     
     var body: some View {
         ZStack {
@@ -284,55 +200,90 @@ struct BuildingDetailPlaceholder: View {
                             )
                     }
                     
-                    // Building info card
-                    GlassCard(intensity: .regular) {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text(building.name)
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            if let address = building.address {
-                                HStack {
-                                    Image(systemName: "location.fill")
-                                        .foregroundColor(.blue)
-                                    Text(address)
-                                        .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                            }
-                            
-                            HStack {
-                                Image(systemName: "number")
-                                    .foregroundColor(.blue)
-                                Text("Building ID: \(building.id)")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
+                    // Building info card - using manual glass effect
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(building.name)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        
+                        HStack {
+                            Image(systemName: "location.fill")
+                                .foregroundColor(.blue)
+                            Text("Lat: \(building.latitude, specifier: "%.4f"), Lng: \(building.longitude, specifier: "%.4f")")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.8))
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Placeholder message
-                    GlassCard(intensity: .thin) {
-                        VStack(spacing: 12) {
-                            Image(systemName: "hammer.fill")
-                                .font(.largeTitle)
-                                .foregroundColor(.orange)
-                            
-                            Text("Building Details Coming Soon")
+                        
+                        HStack {
+                            Image(systemName: "number")
+                                .foregroundColor(.blue)
+                            Text("Building ID: \(building.id)")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        
+                        Divider()
+                            .background(Color.white.opacity(0.3))
+                        
+                        // Assigned Workers
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Assigned Workers")
                                 .font(.headline)
                                 .foregroundColor(.white)
                             
-                            Text("The full building detail view with tasks, workers, and inventory is being prepared.")
+                            Text(assignedWorkers)
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.8))
-                                .multilineTextAlignment(.center)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        
+                        // Routine Tasks
+                        if !routineTasks.isEmpty {
+                            Divider()
+                                .background(Color.white.opacity(0.3))
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Routine Tasks")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                ForEach(routineTasks, id: \.self) { task in
+                                    HStack {
+                                        Image(systemName: "checkmark.circle")
+                                            .foregroundColor(.green.opacity(0.8))
+                                            .font(.caption)
+                                        Text(task)
+                                            .font(.subheadline)
+                                            .foregroundColor(.white.opacity(0.8))
+                                    }
+                                }
+                            }
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.regularMaterial)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.15),
+                                                Color.white.opacity(0.05),
+                                                Color.clear
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
                     .padding(.horizontal)
                     
                     Spacer(minLength: 100)
@@ -341,106 +292,22 @@ struct BuildingDetailPlaceholder: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .preferredColorScheme(.dark)
+        .task {
+            // Load assigned workers
+            assignedWorkers = await BuildingRepository.shared.getAssignedWorkersFormatted(for: building.id)
+            
+            // Load routine tasks
+            routineTasks = await BuildingRepository.shared.routineTasks(for: building.id)
+        }
     }
 }
 
+// MARK: - Preview
 #if DEBUG
 struct BuildingsView_Previews: PreviewProvider {
     static var previews: some View {
-        // Preview the main view
         BuildingsView()
-            .previewDisplayName("Buildings View")
-        
-        // Preview the alternative implementation
-        BuildingsViewAlternative()
-            .previewDisplayName("Alternative Implementation")
-        
-        // Preview with mock data for faster previews
-        MockBuildingsView()
-            .previewDisplayName("Mock Data")
-    }
-}
-
-// Mock view for previews with sample data
-struct MockBuildingsView: View {
-    @State private var searchText = ""
-    
-    // Sample buildings for preview
-    private let sampleBuildings = [
-        FrancoSphere.NamedCoordinate(
-            id: "1",
-            name: "12 West 18th Street",
-            latitude: 40.739750,
-            longitude: -73.994424,
-            address: "12 West 18th Street, New York, NY",
-            imageAssetName: "12_West_18th_Street"
-        ),
-        FrancoSphere.NamedCoordinate(
-            id: "2",
-            name: "29-31 East 20th Street",
-            latitude: 40.738957,
-            longitude: -73.986362,
-            address: "29-31 East 20th Street, New York, NY",
-            imageAssetName: "29_31_East_20th_Street"
-        ),
-        FrancoSphere.NamedCoordinate(
-            id: "3",
-            name: "36 Walker Street",
-            latitude: 40.718922,
-            longitude: -74.002657,
-            address: "36 Walker Street, New York, NY",
-            imageAssetName: "36_Walker_Street"
-        )
-    ]
-    
-    private var filteredBuildings: [FrancoSphere.NamedCoordinate] {
-        guard !searchText.isEmpty else { return sampleBuildings }
-        return sampleBuildings.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            ($0.address ?? "").localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    
-                    TextField("Search buildings", text: $searchText)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                }
-                .padding(10)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding([.horizontal, .top])
-                
-                // List
-                List(filteredBuildings, id: \.id) { building in
-                    HStack {
-                        Image(systemName: "building.2.crop.circle")
-                            .resizable()
-                            .frame(width: 32, height: 32)
-                            .foregroundColor(.blue)
-                        VStack(alignment: .leading) {
-                            Text(building.name)
-                                .font(.headline)
-                            if let addr = building.address {
-                                Text(addr)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                }
-                .listStyle(.plain)
-            }
-            .navigationTitle("Buildings (Preview)")
-            .navigationBarTitleDisplayMode(.inline)
-        }
+            .preferredColorScheme(.dark)
     }
 }
 #endif

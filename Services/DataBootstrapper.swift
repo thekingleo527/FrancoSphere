@@ -29,7 +29,7 @@ enum DataBootstrapper {
 
     private static func seed() async throws {
         // Wait for SQLiteManager to be ready
-        let manager = try await SQLiteManager.start()
+        let manager = SQLiteManager.shared
         
         try await seedBuildings(manager: manager)
         try await seedWorkers(manager: manager)

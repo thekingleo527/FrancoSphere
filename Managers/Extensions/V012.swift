@@ -8,10 +8,14 @@
 import Foundation
 import SQLite
 
-struct V012_RoutineTasks: DatabaseMigration {
-    let version = 12
-    let name = "Routine Tasks and Worker Assignments"
-    var checksum: String { "f2a3b4c5d6e7" }
+// Define the protocol locally if not accessible
+public protocol DatabaseMigration {
+    var version: Int { get }
+    var name: String { get }
+    var checksum: String { get }
+    func up(_ db: Connection) throws
+    func down(_ db: Connection) throws
+}
     
     func up(_ db: Connection) throws {
         // Check if worker_assignments table exists from V003
@@ -104,4 +108,4 @@ struct V012_RoutineTasks: DatabaseMigration {
         try db.run("DROP TABLE IF EXISTS routine_tasks;")
         // Don't drop worker_assignments as it might have been created by V003
     }
-}
+

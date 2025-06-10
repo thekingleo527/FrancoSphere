@@ -118,8 +118,11 @@ actor TaskManager {
     // MARK: - Database Setup
 
     private func setupDatabase() async {
+        // Change from:
+        // self.sqliteManager = try await SQLiteManager.start()
+        // To:
+        self.sqliteManager = SQLiteManager.shared
         do {
-            self.sqliteManager = try await SQLiteManager.start()
             try await createRequiredTables()
         } catch {
             print("❌ Error setting up database: \(error)")
@@ -321,16 +324,15 @@ actor TaskManager {
         let taskRecurrence = FrancoSphere.TaskRecurrence(rawValue: recurrence)
         let taskUrgency = FrancoSphere.TaskUrgency(rawValue: urgency)
 
-        // FIXED: Remove duplicate buildingID unwrapping
+        // To this corrected version:
         guard let workerID = workerID,
-              let taskCategory = taskCategory,
-              let taskRecurrence = taskRecurrence,
-              let taskUrgency = taskUrgency,
+              let _ = FrancoSphere.TaskCategory(rawValue: category),
+              let _ = FrancoSphere.TaskRecurrence(rawValue: recurrence),
+              let _ = FrancoSphere.TaskUrgency(rawValue: urgency),
               let sqliteManager = sqliteManager else {
             print("Error mapping CSV data for task: \(taskName)")
             return
         }
-
         // Calculate due date
         let dueDate = Calendar.current.date(byAdding: .day, value: dueOffset, to: Date()) ?? Date()
 

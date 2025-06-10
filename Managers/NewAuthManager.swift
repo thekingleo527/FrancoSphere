@@ -265,3 +265,20 @@ class NewAuthManager: ObservableObject {
         return schedules[workerId] ?? "No schedule"
     }
 }
+extension NewAuthManager {
+    /// Check authentication status (async version for ContentView)
+    func checkAuthenticationStatus() async {
+        // This method is mainly for compatibility with ContentView
+        // The actual check is done in init() via checkLoginStatus()
+        
+        // If needed, you can add additional async checks here
+        // For example, validating the stored token with a server
+        
+        // For now, just log the current state
+        print("✅ Authentication Status Check:")
+        print("   Authenticated: \(isAuthenticated)")
+        print("   User: \(currentWorkerName)")
+        print("   Role: \(userRole)")
+        print("   Worker ID: \(workerId)")
+    }
+}
