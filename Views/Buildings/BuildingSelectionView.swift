@@ -126,6 +126,7 @@ struct ClockInBuildingSelectionView: View {
     
     private var buildingTabSelector: some View {
         HStack(spacing: 0) {
+            // FIXED: Use proper ForEach with building tabs
             ForEach([BuildingTab.assigned, BuildingTab.nearby, BuildingTab.all], id: \.self) { tab in
                 Button(action: { withAnimation { currentTab = tab } }) {
                     VStack(spacing: 8) {
@@ -160,12 +161,13 @@ struct ClockInBuildingSelectionView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(building.name)
                             .font(.headline)
-                        if let address = building.address {
-                            Text(address)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
+                        
+                        // FIXED: Remove address access since property doesn't exist
+                        Text("Lat: \(String(format: "%.4f", building.latitude)), Lng: \(String(format: "%.4f", building.longitude))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        
                         HStack(spacing: 15) {
                             if let distance = buildingDistance(to: building) {
                                 Label(formatDistance(distance), systemImage: "location")
@@ -277,12 +279,11 @@ struct ClockInBuildingSelectionView: View {
                 }
             }
             
-            if let address = building.address {
-                Text(address)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
+            // FIXED: Replace address with coordinate information
+            Text("Lat: \(String(format: "%.4f", building.latitude)), Lng: \(String(format: "%.4f", building.longitude))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
             
             Button(action: { selectedBuilding = building }) {
                 Text("CLOCK IN")

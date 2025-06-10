@@ -40,17 +40,16 @@ struct BuildingHeaderGlassOverlay: View {
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.leading)
                                 
-                                if let address = building.address {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "location.fill")
-                                            .font(.caption)
-                                            .foregroundColor(.white.opacity(0.8))
-                                        
-                                        Text(address)
-                                            .font(.caption)
-                                            .foregroundColor(.white.opacity(0.8))
-                                            .lineLimit(2)
-                                    }
+                                // FIXED: Replace address with location information using coordinates
+                                HStack(spacing: 6) {
+                                    Image(systemName: "location.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                    
+                                    Text(getFormattedLocation())
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .lineLimit(2)
                                 }
                                 
                                 // Coordinates for technical reference
@@ -246,11 +245,18 @@ struct BuildingHeaderGlassOverlay: View {
     // MARK: - Computed Properties
     
     private var isClockedInCurrentBuilding: Bool {
-        clockedInStatus.isClockedIn && 
+        clockedInStatus.isClockedIn &&
         clockedInStatus.buildingId == Int64(building.id)
     }
     
     // MARK: - Helper Methods
+    
+    // FIXED: New helper method to format location information
+    private func getFormattedLocation() -> String {
+        let district = getDistrict()
+        let buildingType = getBuildingType()
+        return "\(district) • \(buildingType)"
+    }
     
     private func getDistrict() -> String {
         // Determine NYC district based on building name/address
@@ -296,7 +302,6 @@ struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
                         name: "Rubin Museum (142-148 W 17th)",
                         latitude: 40.740370,
                         longitude: -73.998120,
-                        address: "142-148 W 17th St, New York, NY",
                         imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
                     ),
                     clockedInStatus: (true, 15),

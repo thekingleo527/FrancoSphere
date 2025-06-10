@@ -20,43 +20,56 @@ struct FrancoSphereApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if authManager.isAuthenticated {
-                    // Show dashboard based on role
-                    switch authManager.userRole {
-                    case "admin":
-                        if doesViewExist("AdminDashboardView") {
-                            AdminDashboardView()
-                        } else {
-                            FallbackDashboard(role: "Admin")
-                        }
-                    case "client":
-                        FallbackDashboard(role: "Client")
-                    default:
-                        if doesViewExist("WorkerDashboardView") {
-                            WorkerDashboardView()
-                        } else {
-                            FallbackDashboard(role: "Worker")
-                        }
-                    }
-                } else {
-                    // Show login
-                    if doesViewExist("LoginView") {
-                        LoginView()
-                    } else {
-                        FallbackLoginView()
-                    }
-                }
-            }
-            .environmentObject(authManager)
+            AppContentRouter()
+                .environmentObject(authManager)
         }
     }
+}
+
+// MARK: - App Content Router (renamed from ContentView to avoid conflicts)
+struct AppContentRouter: View {
+    @EnvironmentObject var authManager: NewAuthManager
     
-    // Helper to check if view exists (prevents crashes)
-    private func doesViewExist(_ viewName: String) -> Bool {
-        // For now, return true and let it crash if view doesn't exist
-        // This helps identify missing views
-        return true
+    var body: some View {
+        if authManager.isAuthenticated {
+            // Show dashboard based on role
+            switch authManager.userRole {
+            case "admin":
+                AppAdminDashboard()
+            case "client":
+                FallbackDashboard(role: "Client")
+            default:
+                AppWorkerDashboard()
+            }
+        } else {
+            // Show login
+            AppLoginView()
+        }
+    }
+}
+
+// MARK: - App-specific Views (renamed to avoid conflicts)
+struct AppAdminDashboard: View {
+    var body: some View {
+        FallbackDashboard(role: "Admin")
+    }
+}
+
+struct AppWorkerDashboard: View {
+    var body: some View {
+        // Try to use the actual WorkerDashboardView_V2 if available, fallback otherwise
+        if let _ = NSClassFromString("WorkerDashboardView_V2") {
+            // Use the actual worker dashboard view
+            WorkerDashboardView_V2()
+        } else {
+            FallbackDashboard(role: "Worker")
+        }
+    }
+}
+
+struct AppLoginView: View {
+    var body: some View {
+        FallbackLoginView()
     }
 }
 
@@ -117,6 +130,18 @@ struct FallbackDashboard: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
+                
+                // Navigation to actual dashboard (if worker)
+                if role == "Worker" {
+                    NavigationLink(destination: WorkerDashboardView_V2()) {
+                        Label("Open Worker Dashboard", systemImage: "arrow.right.circle.fill")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(width: 250, height: 50)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                }
                 
                 // Logout button
                 Button(action: {

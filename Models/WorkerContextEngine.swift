@@ -10,27 +10,6 @@ import SwiftUI
 import CoreLocation
 import Combine
 
-// MARK: - Database Error (if not defined elsewhere)
-public enum DatabaseError: LocalizedError {
-    case notInitialized
-    case connectionFailed
-    case migrationFailed(String)
-    case invalidData(String)
-
-    public var errorDescription: String? {
-        switch self {
-        case .notInitialized:
-            return "Database not initialized. Call SQLiteManager.start() first."
-        case .connectionFailed:
-            return "Failed to connect to database."
-        case .migrationFailed(let reason):
-            return "Migration failed: \(reason)"
-        case .invalidData(let reason):
-            return "Invalid data: \(reason)"
-        }
-    }
-}
-
 // MARK: - Data Models
 
 struct WorkerContext {
@@ -97,32 +76,10 @@ class WorkerContextEngine: ObservableObject {
     @Published var upcomingTasks: [ContextualTask] = []
     @Published var isLoading = false
     @Published var lastError: Error?
-    @Published var lastRefreshTime: Date?
     
     private var sqliteManager: SQLiteManager?
     
-    // Auto-refresh properties
-    private var refreshTimer: Timer?
-    private static let refreshInterval: TimeInterval = 300 // 5 minutes
-    
     private init() {}
-    
-    // MARK: - Auto-Refresh Methods
-    
-    func startAutoRefresh() {
-        stopAutoRefresh()
-        
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: Self.refreshInterval, repeats: true) { _ in
-            Task { @MainActor in
-                await self.refreshContext()
-            }
-        }
-    }
-    
-    func stopAutoRefresh() {
-        refreshTimer?.invalidate()
-        refreshTimer = nil
-    }
     
     // MARK: - Public Methods
     
@@ -147,28 +104,23 @@ class WorkerContextEngine: ObservableObject {
             let upcoming = try await loadUpcomingTasks(workerId)
             
             // Update published properties
-            await MainActor.run {
-                self.currentWorker = worker
-                self.assignedBuildings = buildings
-                self.todaysTasks = tasks.sorted { task1, task2 in
-                    // Sort by start time, then by building
-                    if let time1 = task1.startTime, let time2 = task2.startTime {
-                        return time1 < time2
-                    }
-                    return task1.buildingName < task2.buildingName
+            self.currentWorker = worker
+            self.assignedBuildings = buildings
+            self.todaysTasks = tasks.sorted { task1, task2 in
+                // Sort by start time, then by building
+                if let time1 = task1.startTime, let time2 = task2.startTime {
+                    return time1 < time2
                 }
-                self.upcomingTasks = upcoming
-                self.lastRefreshTime = Date()
-                self.isLoading = false
+                return task1.buildingName < task2.buildingName
             }
+            self.upcomingTasks = upcoming
+            self.isLoading = false
             
             print("✅ Worker context loaded for: \(worker.workerName)")
             
         } catch {
-            await MainActor.run {
-                self.lastError = error
-                self.isLoading = false
-            }
+            self.lastError = error
+            self.isLoading = false
             print("❌ Failed to load worker context: \(error)")
         }
     }
@@ -216,7 +168,6 @@ class WorkerContextEngine: ObservableObject {
             ORDER BY wa.is_primary DESC, b.name ASC
         """, [workerId])
         
-        // FIXED: Corrected the parameter order to match Building struct
         let buildings = results.map { row -> Building? in
             guard let id = row["id"] as? Int64,
                   let name = row["name"] as? String else { return nil }
@@ -225,9 +176,9 @@ class WorkerContextEngine: ObservableObject {
             return Building(
                 id: String(id),
                 name: name,
-                latitude: row["latitude"] as? Double ?? 0.0,      // latitude is 3rd parameter
-                longitude: row["longitude"] as? Double ?? 0.0,    // longitude is 4th parameter
-                address: row["address"] as? String ?? "",        // address is 5th parameter
+                latitude: row["latitude"] as? Double ?? 0.0,
+                longitude: row["longitude"] as? Double ?? 0.0,
+                address: row["address"] as? String ?? "",
                 imageAssetName: row["imageAssetName"] as? String ?? name.replacingOccurrences(of: " ", with: "_")
             )
         }
@@ -339,9 +290,5 @@ class WorkerContextEngine: ObservableObject {
     func refreshContext() async {
         guard let workerId = currentWorker?.workerId else { return }
         await loadWorkerContext(workerId: workerId)
-    }
-    
-    deinit {
-        stopAutoRefresh()
     }
 }

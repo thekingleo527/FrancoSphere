@@ -5,10 +5,6 @@
 //  Created by Shawn Magloire on 6/7/25.
 //
 
-
-// AIAvatarOverlayView.swift
-// Glass-styled AI assistant overlay with improved speech bubbles
-
 import SwiftUI
 
 struct AIAvatarOverlayView: View {
@@ -42,7 +38,7 @@ struct AIAvatarOverlayView: View {
                                         dragOffset = value.translation
                                     }
                                     .onEnded { value in
-                                        if abs(value.translation.width) > 100 || 
+                                        if abs(value.translation.width) > 100 ||
                                            abs(value.translation.height) > 100 {
                                             withAnimation(.spring()) {
                                                 isExpanded = false
@@ -205,7 +201,7 @@ struct AIAvatarOverlayView: View {
                 
                 // Action button
                 GlassButton(
-                    scenario.actionText,
+                    actionText(for: scenario),
                     style: .primary,
                     size: .medium,
                     isFullWidth: true,
@@ -230,6 +226,7 @@ struct AIAvatarOverlayView: View {
         case .missingPhoto: return .purple
         case .clockOutReminder: return .red
         case .weatherAlert: return .yellow
+        default: return .blue // Handle any additional cases
         }
     }
     
@@ -240,6 +237,29 @@ struct AIAvatarOverlayView: View {
         case .missingPhoto: return "camera.fill"
         case .clockOutReminder: return "clock.badge.checkmark.fill"
         case .weatherAlert: return "cloud.sun.fill"
+        default: return "checkmark.circle.fill" // Handle any additional cases
         }
+    }
+    
+    private func actionText(for scenario: AIScenario) -> String {
+        switch scenario {
+        case .routineIncomplete: return "View Tasks"
+        case .pendingTasks: return "Check Tasks"
+        case .missingPhoto: return "Take Photo"
+        case .clockOutReminder: return "Clock Out"
+        case .weatherAlert: return "View Weather"
+        default: return "Continue" // Handle any additional cases
+        }
+    }
+}
+
+// MARK: - Preview Provider
+struct AIAvatarOverlayView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            AIAvatarOverlayView()
+        }
+        .preferredColorScheme(.dark)
     }
 }

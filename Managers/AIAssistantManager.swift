@@ -1,6 +1,7 @@
+//
 // AIAssistantManager.swift
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-// Manages helper AI “scenarios.” No need to re‐declare AIScenario here.
+// Manages helper AI "scenarios." No need to re‐declare AIScenario here.
 
 import Foundation
 
@@ -51,7 +52,9 @@ class AIAssistantManager: ObservableObject {
         guard let scenario = currentScenario else { return }
 
         switch scenario {
-        case .routineIncomplete, .pendingTasks:
+        case .routineIncomplete:
+            NotificationCenter.default.post(name: NSNotification.Name("NavigateToTasks"), object: nil)
+        case .pendingTasks:
             NotificationCenter.default.post(name: NSNotification.Name("NavigateToTasks"), object: nil)
         case .missingPhoto:
             NotificationCenter.default.post(name: NSNotification.Name("OpenCamera"), object: nil)
@@ -59,6 +62,10 @@ class AIAssistantManager: ObservableObject {
             NotificationCenter.default.post(name: NSNotification.Name("TriggerClockOut"), object: nil)
         case .weatherAlert:
             NotificationCenter.default.post(name: NSNotification.Name("ShowWeatherDetails"), object: nil)
+        default:
+            // Handle any additional AIScenario cases
+            print("Unhandled AI scenario: \(scenario)")
+            NotificationCenter.default.post(name: NSNotification.Name("DefaultAIAction"), object: nil)
         }
 
         dismissCurrentScenario()

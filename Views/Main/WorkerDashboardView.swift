@@ -13,49 +13,9 @@ import CoreLocation
 // MARK: - Fix ContextualTask Identifiable Conformance
 extension ContextualTask: Identifiable {}
 
-// MARK: - Missing WeatherCondition Extensions (Only if not defined elsewhere)
-extension WeatherCondition {
-    var temperatureString: String {
-        return "72°" // Placeholder - you'll need to store temperature in WeatherCondition
-    }
-    
-    var temperature: Int {
-        return 72 // Placeholder - you'll need to store temperature in WeatherCondition
-    }
-    
-    var apparentTemperature: Int {
-        return temperature + 2
-    }
-    
-    var humidity: Int {
-        return 65 // Placeholder
-    }
-    
-    var windSpeed: Int {
-        return 10 // Placeholder
-    }
-    
-    var precipitation: Double {
-        return 0.0 // Placeholder
-    }
-    
-    var taskWarnings: [String] {
-        switch self {
-        case .rain:
-            return ["Postpone outdoor cleaning tasks", "Check drainage systems"]
-        case .snow:
-            return ["Prepare snow removal equipment", "Check heating systems"]
-        case .thunderstorm:
-            return ["Cancel all outdoor work", "Secure loose equipment"]
-        default:
-            return []
-        }
-    }
-    
-    var condition: String {
-        return rawValue
-    }
-}
+// MARK: - Local Building Type Definition
+// Use explicit type to avoid confusion with global Building typealias
+typealias DashboardBuilding = FrancoSphere.NamedCoordinate
 
 struct WorkerDashboardView_V2: View {
     // MARK: - State Management
@@ -76,9 +36,9 @@ struct WorkerDashboardView_V2: View {
     @State private var clockedInStatus: (isClockedIn: Bool, buildingId: Int64?) = (false, nil)
     @State private var currentBuildingName: String = "None"
     
-    // Weather state
-    @State private var currentWeather: WeatherCondition?
-    @State private var buildingWeatherMap: [String: WeatherCondition] = [:]
+    // Weather state - FIXED: Changed from WeatherCondition to WeatherData
+    @State private var currentWeather: WeatherData?
+    @State private var buildingWeatherMap: [String: WeatherData] = [:]
     
     // MARK: - Computed Properties
     private var currentWorkerName: String {
@@ -149,9 +109,7 @@ struct WorkerDashboardView_V2: View {
                     center: CLLocationCoordinate2D(latitude: 40.7590, longitude: -73.9845),
                     span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
                 )
-            ),
-            annotationItems: contextEngine.assignedBuildings
-            ) { building in
+            ), annotationItems: contextEngine.assignedBuildings) { building in
                 MapAnnotation(
                     coordinate: CLLocationCoordinate2D(
                         latitude: building.latitude,
@@ -350,15 +308,15 @@ struct WorkerDashboardView_V2: View {
                     
                     Spacer()
                     
-                    if let startTime = getClockInTime() {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(startTime, style: .relative)
-                                .font(.caption.bold())
-                                .foregroundColor(.green)
-                            Text("elapsed")
-                                .font(.caption2)
-                                .foregroundColor(.white.opacity(0.6))
-                        }
+                    // Clock-in time display
+                    let startTime = getClockInTime()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(startTime, style: .relative)
+                            .font(.caption.bold())
+                            .foregroundColor(.green)
+                        Text("elapsed")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.6))
                     }
                 }
             }
@@ -373,15 +331,15 @@ struct WorkerDashboardView_V2: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Weather header
                         HStack {
-                            Image(systemName: weather.icon)
+                            Image(systemName: weather.condition.icon)
                                 .font(.title2)
-                                .foregroundColor(weather.color)
+                                .foregroundColor(weather.condition.conditionColor)
                             
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(weather.temperatureString)
+                                Text(weather.formattedTemperature)
                                     .font(.headline)
                                     .foregroundColor(.white)
-                                Text(weather.condition)
+                                Text(weather.condition.rawValue)
                                     .font(.caption)
                                     .foregroundColor(.white.opacity(0.7))
                             }
@@ -392,7 +350,7 @@ struct WorkerDashboardView_V2: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "thermometer")
                                         .font(.caption2)
-                                    Text("Feels \(weather.apparentTemperature)°")
+                                    Text("Feels \(Int(weather.feelsLike))°")
                                         .font(.caption)
                                 }
                                 HStack(spacing: 4) {
@@ -405,15 +363,19 @@ struct WorkerDashboardView_V2: View {
                             .foregroundColor(.white.opacity(0.7))
                         }
                         
-                        // Task warnings
-                        if !weather.taskWarnings.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                ForEach(weather.taskWarnings, id: \.self) { warning in
-                                    Text(warning)
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
+                        // Weather risk warning
+                        if weather.outdoorWorkRisk != .low {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(weather.outdoorWorkRisk.riskColor)
+                                Text("Outdoor work: \(weather.outdoorWorkRisk.rawValue)")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.8))
                             }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(weather.outdoorWorkRisk.riskColor.opacity(0.2))
+                            .cornerRadius(8)
                         }
                     }
                 }
@@ -443,7 +405,7 @@ struct WorkerDashboardView_V2: View {
     // MARK: - Today's Tasks Section
     private var todaysTasksSection: some View {
         VStack(spacing: 0) {
-            // Use the existing TodaysTasksGlassCard
+            // FIXED: Correct function call syntax based on actual signature
             TodaysTasksGlassCard(
                 tasks: mapContextualTasksToMaintenanceTasks(contextEngine.todaysTasks),
                 onTaskTap: { task in
@@ -519,12 +481,10 @@ struct WorkerDashboardView_V2: View {
                     
                     Spacer()
                     
-                    // Last refresh time
-                    if let refreshTime = contextEngine.lastRefreshTime {
-                        Text("Updated \(refreshTime, style: .relative)")
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.5))
-                    }
+                    // Last refresh time - FIXED: Access property directly
+                    Text("Updated \(contextEngine.lastRefreshTime, style: .relative)")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.5))
                 }
                 
                 HStack(spacing: 20) {
@@ -595,16 +555,13 @@ struct WorkerDashboardView_V2: View {
                 
                 NovaAvatar(
                     size: 60,
-                    showStatus: hasUrgentWork,
-                    hasUrgentInsight: categorizedTasks.overdue.count > 0,
-                    isBusy: contextEngine.isLoading,
-                    onTap: {
-                        handleNovaTap()
-                    },
-                    onLongPress: {
-                        showQuickActions = true
-                    }
-                )
+                    showStatus: hasUrgentWork
+                ) {
+                    handleNovaTap()
+                }
+                .onLongPressGesture {
+                    showQuickActions = true
+                }
                 .padding(.trailing, 20)
                 .padding(.top, 120)
             }
@@ -646,14 +603,32 @@ struct WorkerDashboardView_V2: View {
     private func loadWeatherData() async {
         // Get current location or first building
         if let firstBuilding = contextEngine.assignedBuildings.first {
-            // Create a mock WeatherCondition for now
-            currentWeather = WeatherCondition.clear
+            // Create a mock WeatherData for now - you'll want to replace this with real weather API
+            currentWeather = createMockWeatherData()
         }
         
         // Load weather for all buildings
         for building in contextEngine.assignedBuildings {
-            buildingWeatherMap[building.id] = WeatherCondition.clear
+            buildingWeatherMap[building.id] = createMockWeatherData()
         }
+    }
+    
+    // MARK: - Helper method to create mock weather data
+    private func createMockWeatherData() -> WeatherData {
+        return WeatherData(
+            date: Date(),
+            temperature: Double.random(in: 65...85),
+            feelsLike: Double.random(in: 65...85),
+            humidity: Int.random(in: 40...80),
+            windSpeed: Double.random(in: 5...15),
+            windDirection: Int.random(in: 0...360),
+            precipitation: Double.random(in: 0...0.5),
+            snow: 0,
+            visibility: 10,
+            pressure: 1013,
+            condition: [.clear, .cloudy, .rain].randomElement() ?? .clear,
+            icon: ""
+        )
     }
     
     // MARK: - Clock In/Out
@@ -706,7 +681,7 @@ struct WorkerDashboardView_V2: View {
         }
     }
     
-    private func handleClockIn(_ building: Building) {
+    private func handleClockIn(_ building: DashboardBuilding) {
         Task {
             do {
                 let sql = try await SQLiteManager.start()
@@ -778,14 +753,14 @@ struct WorkerDashboardView_V2: View {
         contextEngine.todaysTasks.first { $0.id == maintenanceTask.id }
     }
     
-    private func isClockedInBuilding(_ building: Building) -> Bool {
+    private func isClockedInBuilding(_ building: DashboardBuilding) -> Bool {
         if let clockedInId = clockedInStatus.buildingId {
             return String(clockedInId) == building.id
         }
         return false
     }
     
-    private func getClockInTime() -> Date? {
+    private func getClockInTime() -> Date {
         // Would need to query the actual clock-in time from database
         // For now, return a placeholder
         return Date().addingTimeInterval(-3600) // 1 hour ago
@@ -1001,15 +976,15 @@ struct WorkerDashboardView_V2: View {
                         VStack(spacing: 30) {
                             // Main weather display
                             VStack(spacing: 20) {
-                                Image(systemName: weather.icon)
+                                Image(systemName: weather.condition.icon)
                                     .font(.system(size: 80))
-                                    .foregroundColor(weather.color)
+                                    .foregroundColor(weather.condition.conditionColor)
                                 
-                                Text("\(weather.temperature)°")
+                                Text(weather.formattedTemperature)
                                     .font(.system(size: 72, weight: .thin))
                                     .foregroundColor(.white)
                                 
-                                Text(weather.condition)
+                                Text(weather.condition.rawValue)
                                     .font(.title2)
                                     .foregroundColor(.white.opacity(0.8))
                             }
@@ -1022,7 +997,7 @@ struct WorkerDashboardView_V2: View {
                                 WorkerDashboardWeatherDetailItem(
                                     icon: "thermometer",
                                     label: "Feels Like",
-                                    value: "\(weather.apparentTemperature)°"
+                                    value: "\(Int(weather.feelsLike))°"
                                 )
                                 
                                 WorkerDashboardWeatherDetailItem(
@@ -1034,7 +1009,7 @@ struct WorkerDashboardView_V2: View {
                                 WorkerDashboardWeatherDetailItem(
                                     icon: "wind",
                                     label: "Wind",
-                                    value: "\(weather.windSpeed) mph"
+                                    value: "\(Int(weather.windSpeed)) mph"
                                 )
                                 
                                 WorkerDashboardWeatherDetailItem(
@@ -1044,31 +1019,30 @@ struct WorkerDashboardView_V2: View {
                                 )
                             }
                             
-                            // Task recommendations
-                            if !weather.taskWarnings.isEmpty {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Task Recommendations")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
+                            // Work risk assessment
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Work Risk Assessment")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                HStack(spacing: 12) {
+                                    Circle()
+                                        .fill(weather.outdoorWorkRisk.riskColor)
+                                        .frame(width: 12, height: 12)
                                     
-                                    ForEach(weather.taskWarnings, id: \.self) { warning in
-                                        HStack(alignment: .top, spacing: 12) {
-                                            Text("•")
-                                                .foregroundColor(.white.opacity(0.6))
-                                            Text(warning)
-                                                .font(.subheadline)
-                                                .foregroundColor(.white.opacity(0.8))
-                                                .fixedSize(horizontal: false, vertical: true)
-                                        }
-                                    }
+                                    Text(weather.outdoorWorkRisk.rawValue)
+                                        .font(.subheadline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                    
+                                    Spacer()
                                 }
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(.ultraThinMaterial)
-                                        .opacity(0.15)
-                                )
                             }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(.ultraThinMaterial)
+                                    .opacity(0.15)
+                            )
                         }
                         .padding()
                     }
@@ -1184,9 +1158,9 @@ struct WorkerDashboardView_V2: View {
 // MARK: - Supporting Components (Renamed to avoid conflicts)
 
 struct WorkerDashboardBuildingMapMarker: View {
-    let building: Building
+    let building: DashboardBuilding
     let isClockedIn: Bool
-    let weather: WeatherCondition?
+    let weather: WeatherData?
     
     var body: some View {
         ZStack {
@@ -1212,9 +1186,9 @@ struct WorkerDashboardBuildingMapMarker: View {
                             .fill(Color.black.opacity(0.5))
                             .frame(width: 20, height: 20)
                         
-                        Image(systemName: weather.icon)
+                        Image(systemName: weather.condition.icon)
                             .font(.system(size: 10))
-                            .foregroundColor(weather.color)
+                            .foregroundColor(weather.condition.conditionColor)
                     }
                 }
                 .frame(width: 44, height: 44)
@@ -1226,10 +1200,10 @@ struct WorkerDashboardBuildingMapMarker: View {
 }
 
 struct WorkerDashboardBuildingRowEnhanced: View {
-    let building: Building
+    let building: DashboardBuilding
     let isClockedIn: Bool
     let taskCount: Int
-    let weather: WeatherCondition?
+    let weather: WeatherData?
     
     var body: some View {
         HStack(spacing: 16) {
@@ -1270,9 +1244,9 @@ struct WorkerDashboardBuildingRowEnhanced: View {
                     
                     // Weather
                     if let weather = weather {
-                        Label(weather.temperatureString, systemImage: weather.icon)
+                        Label(weather.formattedTemperature, systemImage: weather.condition.icon)
                             .font(.caption)
-                            .foregroundColor(weather.color.opacity(0.8))
+                            .foregroundColor(weather.condition.conditionColor.opacity(0.8))
                     }
                 }
             }
@@ -1291,8 +1265,8 @@ struct WorkerDashboardBuildingRowEnhanced: View {
 }
 
 struct WorkerDashboardBuildingSelectionRowV2: View {
-    let building: Building
-    let weather: WeatherCondition?
+    let building: DashboardBuilding
+    let weather: WeatherData?
     let onSelect: () -> Void
     
     var body: some View {
@@ -1319,7 +1293,7 @@ struct WorkerDashboardBuildingSelectionRowV2: View {
                         }
                     }
                     
-                    // Building details
+                    // Building details - FIXED: Remove address since type doesn't have it
                     VStack(alignment: .leading, spacing: 6) {
                         Text(building.name)
                             .font(.headline)
@@ -1327,20 +1301,19 @@ struct WorkerDashboardBuildingSelectionRowV2: View {
                             .foregroundColor(.white)
                             .lineLimit(2)
                         
-                        if let address = building.address {
-                            Text(address)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.7))
-                                .lineLimit(1)
-                        }
+                        // Show coordinates as location info instead of address
+                        Text("Lat: \(String(format: "%.4f", building.latitude)), Lng: \(String(format: "%.4f", building.longitude))")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(1)
                         
                         // Weather info
                         if let weather = weather {
                             HStack(spacing: 8) {
-                                Image(systemName: weather.icon)
+                                Image(systemName: weather.condition.icon)
                                     .font(.caption)
-                                    .foregroundColor(weather.color)
-                                Text("\(weather.temperatureString) • \(weather.condition)")
+                                    .foregroundColor(weather.condition.conditionColor)
+                                Text("\(weather.formattedTemperature) • \(weather.condition.rawValue)")
                                     .font(.caption2)
                                     .foregroundColor(.white.opacity(0.6))
                             }
@@ -1408,13 +1381,6 @@ struct WorkerDashboardTaskSummaryItem: View {
                 .foregroundColor(.white.opacity(0.7))
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Compatibility Extensions
-extension Building {
-    var address: String? {
-        return nil // Will use the existing address property if available
     }
 }
 

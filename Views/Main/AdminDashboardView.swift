@@ -769,12 +769,23 @@ private struct AdminBuildingDetailView: View {
                 .font(.title2)
                 .fontWeight(.bold)
             
-            if let address = building.address {
-                Text(address)
+            // FIXED: Replace address with coordinate information since address property doesn't exist
+            VStack(spacing: 4) {
+                Text("Location")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                Text("Lat: \(String(format: "%.4f", building.latitude))")
                     .font(.body)
                     .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                
+                Text("Lng: \(String(format: "%.4f", building.longitude))")
+                    .font(.body)
+                    .foregroundColor(.secondary)
             }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(8)
             
             Text("Admin Building Detail View")
                 .font(.title3)

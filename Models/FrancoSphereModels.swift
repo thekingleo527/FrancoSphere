@@ -11,69 +11,20 @@ import Foundation
 import SwiftUI
 import CoreLocation
 
-    /// Human-readable title in the bubble header
-    public var title: String {
-        switch self {
-        case .routineIncomplete: return "Incomplete Routine"
-        case .pendingTasks:      return "Tasks Pending"
-        case .missingPhoto:      return "Photo Required"
-        case .clockOutReminder:  return "Clock Out Reminder"
-        case .weatherAlert:      return "Weather Alert"
-        }
-    }
-
-    /// Icon name shown next to the title
-    public var icon: String {
-        switch self {
-        case .routineIncomplete: return "exclamationmark.circle"
-        case .pendingTasks:      return "list.bullet.clipboard"
-        case .missingPhoto:      return "camera.badge.ellipsis"
-        case .clockOutReminder:  return "clock.arrow.circlepath"
-        case .weatherAlert:      return "cloud.bolt"
-        }
-    }
-
-    /// Longer message text that the assistant will show
-    public var message: String {
-        switch self {
-        case .routineIncomplete:
-            return "Some of today's routine tasks remain incomplete. Let me help you see what's pending."
-        case .pendingTasks:
-            return "You have tasks waiting—shall we review them now?"
-        case .missingPhoto:
-            return "One or more tasks require a before/after photo. Please attach an image to proceed."
-        case .clockOutReminder:
-            return "Don't forget to clock out before you leave. Tap here to do so now."
-        case .weatherAlert:
-            return "There's a weather event affecting this building. Review related maintenance tasks?"
-        }
-    }
-
-    /// Button label shown at the bottom of the bubble
-    public var actionText: String {
-        switch self {
-        case .routineIncomplete: return "Show Me Tasks"
-        case .pendingTasks:      return "View Pending"
-        case .missingPhoto:      return "Take Photo"
-        case .clockOutReminder:  return "Clock Out Now"
-        case .weatherAlert:      return "See Weather Tasks"
-        }
-    }
-
-
 // MARK: — FrancoSphere Namespace
 public enum FrancoSphere {
 
     // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
     // MARK: — 1) Core Models
-
+    enum CodingKeys: String, CodingKey {
+        case id, name, latitude, longitude, address, imageAssetName
+    }
     /// Represents a geographic coordinate with a name (legacy building).
     public struct NamedCoordinate: Identifiable, Codable, Hashable {
         public let id: String
         public let name: String
         public let latitude: Double
         public let longitude: Double
-        public let address: String?
         public let imageAssetName: String
 
         public init(
@@ -88,7 +39,6 @@ public enum FrancoSphere {
             self.name = name
             self.latitude = latitude
             self.longitude = longitude
-            self.address = address
             self.imageAssetName = imageAssetName
         }
 
@@ -245,7 +195,17 @@ public enum FrancoSphere {
                 )
             ]
         }
-
+        
+        // Explicit Hashable conformance
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+        
+        // Explicit Equatable conformance
+        public static func == (lhs: NamedCoordinate, rhs: NamedCoordinate) -> Bool {
+            lhs.id == rhs.id
+        }
+        
         public static func getBuilding(byId id: String) -> NamedCoordinate? {
             return allBuildings.first { $0.id == id }
         }
@@ -306,6 +266,7 @@ public enum FrancoSphere {
             }
         }
     }
+    
     // MARK: — 2) Weather Models
 
     public enum WeatherCondition: String, Codable, CaseIterable, Hashable {
@@ -1712,6 +1673,113 @@ public enum FrancoSphere {
             self.scheduledDate = scheduledDate
         }
     }
+    
+    // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    // MARK: — 12) AI Assistant Models
+    
+    /// Scenarios that trigger AI assistant interactions
+    public enum AIScenario: String, Codable, CaseIterable, Hashable {
+        case routineIncomplete = "routineIncomplete"
+        case pendingTasks = "pendingTasks"
+        case missingPhoto = "missingPhoto"
+        case clockOutReminder = "clockOutReminder"
+        case weatherAlert = "weatherAlert"
+        case buildingArrival = "buildingArrival"
+        case taskCompletion = "taskCompletion"
+        case inventoryLow = "inventoryLow"
+        
+        public var title: String {
+            switch self {
+            case .routineIncomplete: return "Incomplete Routine"
+            case .pendingTasks: return "Tasks Pending"
+            case .missingPhoto: return "Photo Required"
+            case .clockOutReminder: return "Clock Out Reminder"
+            case .weatherAlert: return "Weather Alert"
+            case .buildingArrival: return "Welcome!"
+            case .taskCompletion: return "Great Job!"
+            case .inventoryLow: return "Low Inventory"
+            }
+        }
+        
+        public var message: String {
+            switch self {
+            case .routineIncomplete:
+                return "Some of today's routine tasks remain incomplete. Let me help you see what's pending."
+            case .pendingTasks:
+                return "You have tasks waiting—shall we review them now?"
+            case .missingPhoto:
+                return "One or more tasks require a before/after photo. Please attach an image to proceed."
+            case .clockOutReminder:
+                return "Don't forget to clock out before you leave. Tap here to do so now."
+            case .weatherAlert:
+                return "There's a weather event affecting this building. Review related maintenance tasks?"
+            case .buildingArrival:
+                return "You've arrived at the building. Ready to check in and see today's tasks?"
+            case .taskCompletion:
+                return "Excellent work completing that task! Here's what's next on your list."
+            case .inventoryLow:
+                return "Some inventory items are running low. Would you like to submit a restock request?"
+            }
+        }
+        
+        public var icon: String {
+            switch self {
+            case .routineIncomplete: return "exclamationmark.circle"
+            case .pendingTasks: return "list.bullet.clipboard"
+            case .missingPhoto: return "camera.badge.ellipsis"
+            case .clockOutReminder: return "clock.arrow.circlepath"
+            case .weatherAlert: return "cloud.bolt"
+            case .buildingArrival: return "building.2"
+            case .taskCompletion: return "checkmark.circle"
+            case .inventoryLow: return "cube.box"
+            }
+        }
+        
+        public var actionText: String {
+            switch self {
+            case .routineIncomplete: return "Show Me Tasks"
+            case .pendingTasks: return "View Pending"
+            case .missingPhoto: return "Take Photo"
+            case .clockOutReminder: return "Clock Out Now"
+            case .weatherAlert: return "See Weather Tasks"
+            case .buildingArrival: return "Check In"
+            case .taskCompletion: return "Next Task"
+            case .inventoryLow: return "Request Restock"
+            }
+        }
+    }
+    
+    // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    // MARK: — 13) Task Time Status
+    
+    /// Status of a task based on its timing
+    public enum TaskTimeStatus: String, Codable, CaseIterable, Hashable {
+        case onTime = "On Time"
+        case upcoming = "Upcoming"
+        case dueSoon = "Due Soon"
+        case overdue = "Overdue"
+        case completed = "Completed"
+        
+        public var color: Color {
+            switch self {
+            case .onTime: return .green
+            case .upcoming: return .blue
+            case .dueSoon: return .orange
+            case .overdue: return .red
+            case .completed: return .gray
+            }
+        }
+        
+        public var icon: String {
+            switch self {
+            case .onTime: return "clock"
+            case .upcoming: return "clock.badge"
+            case .dueSoon: return "clock.badge.exclamationmark"
+            case .overdue: return "clock.badge.xmark"
+            case .completed: return "checkmark.circle"
+            }
+        }
+    }
 
 } // — end namespace FrancoSphere
 
@@ -1722,10 +1790,16 @@ public enum FrancoSphere {
 // that all other files can refer to "MaintenanceTask"
 // instead of "FrancoSphere.MaintenanceTask."
 
-public typealias Building             = FrancoSphere.Building
+// Core Models
+public typealias NamedCoordinate      = FrancoSphere.NamedCoordinate
+public typealias Building             = NamedCoordinate  // Backwards compatibility
+
+// Weather Models
 public typealias WeatherCondition     = FrancoSphere.WeatherCondition
 public typealias WeatherData          = FrancoSphere.WeatherData
-public typealias WeatherAlert         = FrancoSphere.WeatherAlertModel  // Updated to use the renamed model
+public typealias WeatherAlert         = FrancoSphere.WeatherAlertModel
+
+// Task Models
 public typealias TaskUrgency          = FrancoSphere.TaskUrgency
 public typealias TaskCategory         = FrancoSphere.TaskCategory
 public typealias MaintenanceTask      = FrancoSphere.MaintenanceTask
@@ -1735,28 +1809,35 @@ public typealias TaskCompletionInfo   = FrancoSphere.TaskCompletionInfo
 public typealias TaskCompletionRecord = FrancoSphere.TaskCompletionRecord
 public typealias MaintenanceRecord    = FrancoSphere.MaintenanceRecord
 
+// Worker Models
 public typealias WorkerSkill          = FrancoSphere.WorkerSkill
 public typealias SkillLevel           = FrancoSphere.SkillLevel
 public typealias UserRole             = FrancoSphere.UserRole
 public typealias WorkerProfile        = FrancoSphere.WorkerProfile
 public typealias WorkerAssignment     = FrancoSphere.WorkerAssignment
-
-public typealias TaskTemplate         = FrancoSphere.TaskTemplate
-public typealias CSVDataMapper        = FrancoSphere.CSVDataMapper
-public typealias BuildingStatus       = FrancoSphere.BuildingStatus
-
-public typealias InventoryCategory    = FrancoSphere.InventoryCategory
-public typealias InventoryItem        = FrancoSphere.InventoryItem
-public typealias InventoryUsageRecord = FrancoSphere.InventoryUsageRecord
-
-public typealias RestockStatus        = FrancoSphere.RestockStatus
-public typealias InventoryRestockRequest = FrancoSphere.InventoryRestockRequest
-
-public typealias StatusChipView       = FrancoSphere.StatusChipView
-public typealias FSTaskItem           = FrancoSphere.FSTaskItem
 public typealias WorkerRoutineSummary = FrancoSphere.WorkerRoutineSummary
 public typealias WorkerDailyRoute     = FrancoSphere.WorkerDailyRoute
 public typealias RouteStop            = FrancoSphere.RouteStop
 public typealias RouteOptimization    = FrancoSphere.RouteOptimization
 public typealias ScheduleConflict     = FrancoSphere.ScheduleConflict
-public typealias NamedCoordinate      = FrancoSphere.NamedCoordinate
+
+// Other Models
+public typealias TaskTemplate         = FrancoSphere.TaskTemplate
+public typealias CSVDataMapper        = FrancoSphere.CSVDataMapper
+public typealias BuildingStatus       = FrancoSphere.BuildingStatus
+
+// Inventory Models
+public typealias InventoryCategory    = FrancoSphere.InventoryCategory
+public typealias InventoryItem        = FrancoSphere.InventoryItem
+public typealias InventoryUsageRecord = FrancoSphere.InventoryUsageRecord
+public typealias RestockStatus        = FrancoSphere.RestockStatus
+public typealias InventoryRestockRequest = FrancoSphere.InventoryRestockRequest
+
+// View Components
+public typealias StatusChipView       = FrancoSphere.StatusChipView
+
+// Legacy Models
+public typealias FSTaskItem           = FrancoSphere.FSTaskItem
+
+// AI Models
+public typealias AIScenario           = FrancoSphere.AIScenario

@@ -193,7 +193,7 @@ actor TaskManager {
     }
 
     // Load real task data from mapped CSV data
-    private func loadTasksFromCSVData() async {
+    private func loadTasksFromCSVDataImporter() async {
         // This method uses the mapping document to load real tasks into the database
 
         // Create tasks based on the "Updated_Task_Matrix.csv" data
