@@ -2,30 +2,19 @@
 set -euo pipefail
 
 # ───────────────────────────────────────────────────────────
-# 1️⃣  Locate the Data/ and Resources/ directories
+# 1️⃣  Locate Data/ and Resources/ relative to $SRCROOT
+#     ($SRCROOT == $(PROJECT_DIR) when the Run-Script phase runs)
 # ───────────────────────────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DIR="$SCRIPT_DIR"
-while [ "$DIR" != "/" ]; do
-  if [ -d "$DIR/Data" ] && [ -d "$DIR/Resources" ]; then
-    break
-  fi
-  # Handle nested FrancoSphere/FrancoSphere/Data
-  if [ -d "$DIR/FrancoSphere/Data" ] && [ -d "$DIR/FrancoSphere/Resources" ]; then
-    DIR="$DIR/FrancoSphere"
-    break
-  fi
-  DIR="$(dirname "$DIR")"
-done
+ROOT="$SRCROOT"                 # Xcode always sets this
+DATA_DIR="$ROOT/Data"
+RESOURCES_DIR="$ROOT/Resources"
+OUTPUT_SQL="$RESOURCES_DIR/FrancoSphereSeed.sql"
 
-if [ "$DIR" = "/" ]; then
-  echo "❌ ERROR: Couldn't find Data/ and Resources/ folders." >&2
+if [[ ! -d "$DATA_DIR" || ! -d "$RESOURCES_DIR" ]]; then
+  echo "❌ ERROR: Expected \$SRCROOT/Data and \$SRCROOT/Resources but one or both are missing." >&2
+  echo "   SRCROOT=$SRCROOT" >&2
   exit 1
 fi
-
-DATA_DIR="$DIR/Data"
-RESOURCES_DIR="$DIR/Resources"
-OUTPUT_SQL="$RESOURCES_DIR/FrancoSphereSeed.sql"
 
 echo "🔍 Data dir      : $DATA_DIR"
 echo "🔍 Resources dir : $RESOURCES_DIR"

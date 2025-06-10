@@ -1,5 +1,5 @@
--- CHECKSUM:84c394cdd7343406822647231843acf1d05d12986bd699dac02a032370b9e2ec
--- Auto-generated – DO NOT EDIT.
+-- CHECKSUM:ac7126b98eca70b88bf4e748627dc46826ba4e234ac9aaa243b705ae066ac314
+-- Auto-generated — DO NOT EDIT.
 BEGIN IMMEDIATE;
 
 INSERT INTO routine_tasks ("building","taskName","startHour","endHour","daysOfWeek","recurrence") VALUES
@@ -67,17 +67,6 @@ INSERT INTO routine_tasks ("building","taskName","startHour","endHour","daysOfWe
 
 -- End of routine_tasks
 
-INSERT INTO workers ("id","name","email","role","passwordHash","skillLevels","assignedBuildings","timezonePreference") VALUES
-('1','Greg Hutson','g.hutson1989@gmail.com','worker','','["plumbing"','electrical','hvac]'),
-('2','Edwin Lema','edwinlema911@gmail.com','worker','','["cleaning"','sanitation','inspection]'),
-('4','Kevin Dutan','dutankevin1@gmail.com','worker','','["hvac"','electrical','technical]'),
-('5','Mercedes Inamagua','Jneola@gmail.com','worker','','["cleaning"','sanitation]','["1"'),
-('6','Luis Lopez','luislopez030@yahoo.com','worker','','["maintenance"','manual','inspection]'),
-('7','Angel Guirachocha','lio.angel71@gmail.com','worker','','["cleaning"','sanitation','manual]'),
-('8','Shawn Magloire','shawn@francomanagementgroup.com','worker','','["management"','inspection','maintenance');
-
--- End of workers
-
 INSERT INTO buildings ("id","name","address","imageAssetName","latitude","longitude") VALUES
 ('1','12 West 18th Street','12 W 18th St, New York, NY','12_West_18th_Street','',''),
 ('2','29-31 East 20th Street','29-31 E 20th St, New York, NY','29_31_East_20th_Street','',''),
@@ -98,5 +87,16 @@ INSERT INTO buildings ("id","name","address","imageAssetName","latitude","longit
 
 -- End of buildings
 
-INSERT OR REPLACE INTO app_settings (key,value) VALUES ('csv_checksum','84c394cdd7343406822647231843acf1d05d12986bd699dac02a032370b9e2ec');
+INSERT INTO workers ("id","name","email","role","passwordHash","skillLevels","assignedBuildings","timezonePreference") VALUES
+('1','Greg Hutson','g.hutson1989@gmail.com','worker','','["plumbing"','electrical','hvac]'),
+('2','Edwin Lema','edwinlema911@gmail.com','worker','','["cleaning"','sanitation','inspection]'),
+('4','Kevin Dutan','dutankevin1@gmail.com','worker','','["hvac"','electrical','technical]'),
+('5','Mercedes Inamagua','Jneola@gmail.com','worker','','["cleaning"','sanitation]','["1"'),
+('6','Luis Lopez','luislopez030@yahoo.com','worker','','["maintenance"','manual','inspection]'),
+('7','Angel Guirachocha','lio.angel71@gmail.com','worker','','["cleaning"','sanitation','manual]'),
+('8','Shawn Magloire','shawn@francomanagementgroup.com','worker','','["management"','inspection','maintenance');
+
+-- End of workers
+
+INSERT OR REPLACE INTO app_settings (key,value) VALUES ('csv_checksum','ac7126b98eca70b88bf4e748627dc46826ba4e234ac9aaa243b705ae066ac314');
 COMMIT;
