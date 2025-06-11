@@ -155,6 +155,7 @@
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
 		2354B9E12D7425EE0050C53D /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 2354B9E02D7425EE0050C53D /* OpenMeteoSdk */; };
+		23DCD05C2DF91680007C6A7B /* QuickActionType 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DCD05B2DF91680007C6A7B /* QuickActionType 2.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -338,6 +339,7 @@
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
 		23AD7FB12DF5A95D00BDF90A /* SeedDatabase */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SeedDatabase; sourceTree = BUILT_PRODUCTS_DIR; };
+		23DCD05B2DF91680007C6A7B /* QuickActionType 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QuickActionType 2.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -488,6 +490,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23DCD05B2DF91680007C6A7B /* QuickActionType 2.swift */,
 				233F94E92DF7E69B00901707 /* TaskTimelineRow.swift */,
 				233F94E72DF7E55000901707 /* AdaptiveGlassModifier.swift */,
 				233F94D92DF7B0AD00901707 /* QuickActionType.swift */,
@@ -1065,6 +1068,7 @@
 				233F94E82DF7E55000901707 /* AdaptiveGlassModifier.swift in Sources */,
 				2345819B2DF78E3D00355F0A /* DashboardView.swift in Sources */,
 				2345819C2DF78E3D00355F0A /* GlassButton.swift in Sources */,
+				23DCD05C2DF91680007C6A7B /* QuickActionType 2.swift in Sources */,
 				2345819D2DF78E3D00355F0A /* DataInitializationView.swift in Sources */,
 				2345819E2DF78E3D00355F0A /* GlassNavigationBar.swift in Sources */,
 				2345819F2DF78E3D00355F0A /* AssetImageDebugger.swift in Sources */,

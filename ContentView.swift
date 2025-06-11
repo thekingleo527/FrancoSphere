@@ -30,8 +30,10 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // Check authentication status synchronously (already handled in init)
+            // Check authentication status
             print("ContentView appeared - Auth status: \(authManager.isAuthenticated)")
+            print("User role: \(authManager.userRole)")
+            print("Worker name: \(authManager.currentWorkerName)")
         }
     }
 }

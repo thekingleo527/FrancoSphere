@@ -2,7 +2,7 @@
 //  AIAvatarOverlayView.swift
 //  FrancoSphere
 //
-//  Fixed version - removed duplicate AIScenario and GlassButton references
+//  Fixed version - uses AIScenario from FrancoSphereModels
 //
 
 import SwiftUI
@@ -20,8 +20,8 @@ struct AIAvatarOverlayView: View {
                 
                 VStack(spacing: 12) {
                     // Speech bubble (if scenario exists)
-                    if let scenario = aiManager.currentScenario, isExpanded {
-                        speechBubble(for: scenario)
+                    if let scenarioData = aiManager.currentScenarioData, isExpanded {
+                        speechBubble(for: scenarioData)
                             .transition(.asymmetric(
                                 insertion: .scale.combined(with: .opacity),
                                 removal: .scale.combined(with: .opacity)
@@ -35,8 +35,8 @@ struct AIAvatarOverlayView: View {
             }
             Spacer()
         }
-        .onReceive(aiManager.$currentScenario) { scenario in
-            if scenario != nil {
+        .onReceive(aiManager.$currentScenarioData) { scenarioData in
+            if scenarioData != nil {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                     isExpanded = true
                     avatarScale = 1.1
@@ -55,7 +55,7 @@ struct AIAvatarOverlayView: View {
     
     private var novaAvatar: some View {
         Button(action: {
-            if aiManager.currentScenario != nil {
+            if aiManager.currentScenarioData != nil {
                 withAnimation(.spring()) {
                     isExpanded.toggle()
                 }
@@ -108,7 +108,7 @@ struct AIAvatarOverlayView: View {
                                 .fill(Color.red)
                                 .frame(width: 16, height: 16)
                                 .overlay(
-                                    Text("\(aiManager.scenarioQueue.count + (aiManager.currentScenario != nil ? 1 : 0))")
+                                    Text("\(aiManager.scenarioQueue.count + (aiManager.currentScenarioData != nil ? 1 : 0))")
                                         .font(.caption2)
                                         .foregroundColor(.white)
                                 )
@@ -125,16 +125,16 @@ struct AIAvatarOverlayView: View {
         }
     }
     
-    private func speechBubble(for scenario: FrancoSphere.AIScenario) -> some View {
+    private func speechBubble(for scenarioData: AIScenarioData) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
             HStack(spacing: 12) {
-                Image(systemName: scenario.icon)
+                Image(systemName: scenarioData.icon)
                     .font(.title2)
-                    .foregroundColor(iconColor(for: scenario))
+                    .foregroundColor(iconColor(for: scenarioData.scenario))
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(scenario.title)
+                    Text(scenarioData.title)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
@@ -162,7 +162,7 @@ struct AIAvatarOverlayView: View {
             }
             
             // Message
-            Text(scenario.message)
+            Text(scenarioData.message)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.9))
                 .lineLimit(nil)
@@ -176,9 +176,9 @@ struct AIAvatarOverlayView: View {
                 }
             }) {
                 HStack(spacing: 8) {
-                    Image(systemName: actionIcon(for: scenario))
+                    Image(systemName: actionIcon(for: scenarioData.scenario))
                         .font(.subheadline)
-                    Text(scenario.actionText)
+                    Text(scenarioData.actionText)
                         .font(.subheadline)
                         .fontWeight(.medium)
                 }
@@ -211,7 +211,7 @@ struct AIAvatarOverlayView: View {
     }
     
     // Helper functions
-    private func iconColor(for scenario: FrancoSphere.AIScenario) -> Color {
+    private func iconColor(for scenario: AIScenario) -> Color {
         switch scenario {
         case .routineIncomplete: return .orange
         case .pendingTasks: return .blue
@@ -224,7 +224,7 @@ struct AIAvatarOverlayView: View {
         }
     }
     
-    private func actionIcon(for scenario: FrancoSphere.AIScenario) -> String {
+    private func actionIcon(for scenario: AIScenario) -> String {
         switch scenario {
         case .routineIncomplete: return "checklist"
         case .pendingTasks: return "list.bullet.rectangle"
@@ -236,14 +236,14 @@ struct AIAvatarOverlayView: View {
         case .inventoryLow: return "shippingbox.circle.fill"
         }
     }
-}
-
-// MARK: - Preview
-struct AIAvatarOverlayView_Previews: PreviewProvider {
-    static var previews: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            AIAvatarOverlayView()
+    
+    // MARK: - Preview
+    struct AIAvatarOverlayView_Previews: PreviewProvider {
+        static var previews: some View {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                AIAvatarOverlayView()
+            }
         }
     }
 }

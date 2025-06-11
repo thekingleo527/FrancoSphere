@@ -639,34 +639,19 @@ struct WorkerDashboardView_V2: View {
     }
     
     private func loadWeatherData() async {
-        // Get current location or first building
-        if !contextEngine.assignedBuildings.isEmpty {
-            // Create a mock WeatherData for now
-            currentWeather = createMockWeatherData()
+        if let firstBuilding = contextEngine.assignedBuildings.first {
+            await weatherAdapter.fetchWeatherForBuildingAsync(firstBuilding)
         }
         
         // Load weather for all buildings
         for building in contextEngine.assignedBuildings {
-            buildingWeatherMap[building.id] = createMockWeatherData()
+            await weatherAdapter.fetchWeatherForBuildingAsync(building)
+            
+            // Subscribe to weather updates
+            if let weather = weatherAdapter.currentWeather {
+                buildingWeatherMap[building.id] = weather
+            }
         }
-    }
-    
-    // MARK: - Helper method to create mock weather data
-    private func createMockWeatherData() -> WeatherData {
-        return WeatherData(
-            date: Date(),
-            temperature: Double.random(in: 65...85),
-            feelsLike: Double.random(in: 65...85),
-            humidity: Int.random(in: 40...80),
-            windSpeed: Double.random(in: 5...15),
-            windDirection: Int.random(in: 0...360),
-            precipitation: Double.random(in: 0...0.5),
-            snow: 0,
-            visibility: 10,
-            pressure: 1013,
-            condition: [.clear, .cloudy, .rain].randomElement() ?? .clear,
-            icon: ""
-        )
     }
     
     // MARK: - Clock In/Out

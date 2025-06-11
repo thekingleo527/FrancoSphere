@@ -2,15 +2,8 @@
 //  NovaAvatar.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/9/25.
-//
-
-
-//
-//  NovaAvatar.swift
-//  FrancoSphere
-//
 //  Animated AI Assistant Avatar Component
+//  Created by Shawn Magloire on 6/9/25.
 //
 
 import SwiftUI
@@ -240,30 +233,6 @@ struct PulseRing: View {
                     isAnimating = true
                 }
             }
-    }
-}
-
-// MARK: - AI Assistant Manager Extension
-extension AIAssistantManager {
-    // Mock properties for preview/testing
-    var hasUrgentInsight: Bool {
-        // This would check actual urgent insights
-        return false
-    }
-    
-    var isProcessing: Bool {
-        // This would check if AI is currently processing
-        return false
-    }
-    
-    var isOffline: Bool {
-        // This would check connectivity status
-        return false
-    }
-    
-    var unreadNotifications: Int {
-        // This would return actual unread count
-        return 0
     }
 }
 

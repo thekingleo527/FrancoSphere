@@ -1,50 +1,12 @@
-///
-//  GlassModalSize.swift
+//
+//  GlassModal.swift
 //  FrancoSphere
 //
+//  Glassmorphism modal and sheet components for FrancoSphere
 //  Created by Shawn Magloire on 6/6/25.
 //
 
-
-// GlassModal.swift
-// Glassmorphism modal and sheet components for FrancoSphere
-// Supports various presentation styles and animations
-
 import SwiftUI
-
-// MARK: - Modal Size
-enum GlassModalSize {
-    case small
-    case medium
-    case large
-    case fullScreen
-    
-    var width: CGFloat? {
-        switch self {
-        case .small:
-            return 300
-        case .medium:
-            return 400
-        case .large:
-            return 600
-        case .fullScreen:
-            return nil
-        }
-    }
-    
-    var height: CGFloat? {
-        switch self {
-        case .small:
-            return 200
-        case .medium:
-            return 400
-        case .large:
-            return 600
-        case .fullScreen:
-            return nil
-        }
-    }
-}
 
 // MARK: - Modal Style
 enum GlassModalStyle {
@@ -114,7 +76,7 @@ struct GlassModal<Content: View>: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: isPresented)
-        .onChange(of: isPresented) { newValue in
+        .onChange(of: isPresented) { oldValue, newValue in
             if newValue {
                 withAnimation {
                     showContent = true
@@ -244,9 +206,9 @@ struct GlassModal<Content: View>: View {
     private var modalShape: some Shape {
         switch style {
         case .centered, .fullScreen:
-            return RoundedRectangle(cornerRadius: 24)
+            return AnyShape(RoundedRectangle(cornerRadius: 24))
         case .bottom:
-            return RoundedRectangle(cornerRadius: 24, style: .continuous)
+            return AnyShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
     
@@ -289,6 +251,19 @@ struct GlassModal<Content: View>: View {
             isPresented = false
             dragOffset = .zero
         }
+    }
+}
+
+// MARK: - AnyShape Helper
+private struct AnyShape: Shape, @unchecked Sendable {
+    private let _path: @Sendable (CGRect) -> Path
+    
+    init<S: Shape>(_ wrapped: S) {
+        _path = { rect in wrapped.path(in: rect) }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        _path(rect)
     }
 }
 
@@ -435,139 +410,145 @@ extension View {
 
 // MARK: - Preview Provider
 struct GlassModal_Previews: PreviewProvider {
-    @State static var showCenteredModal = false
-    @State static var showBottomModal = false
-    @State static var showActionSheet = false
-    @State static var showFullScreenModal = false
-    
-    static var previews: some View {
-        ZStack {
-            // Background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.3),
-                    Color(red: 0.2, green: 0.1, blue: 0.4)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            VStack(spacing: 24) {
-                Text("Glass Modal Examples")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+    struct PreviewContainer: View {
+        @State var showCenteredModal = false
+        @State var showBottomModal = false
+        @State var showActionSheet = false
+        @State var showFullScreenModal = false
+        
+        var body: some View {
+            ZStack {
+                // Background
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.1, green: 0.1, blue: 0.3),
+                        Color(red: 0.2, green: 0.1, blue: 0.4)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                VStack(spacing: 16) {
-                    GlassButton("Show Centered Modal", icon: "square.stack") {
-                        showCenteredModal = true
-                    }
+                VStack(spacing: 24) {
+                    Text("Glass Modal Examples")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
                     
-                    GlassButton("Show Bottom Sheet", icon: "rectangle.bottomthird.inset.filled") {
-                        showBottomModal = true
-                    }
-                    
-                    GlassButton("Show Action Sheet", icon: "ellipsis.circle") {
-                        showActionSheet = true
-                    }
-                    
-                    GlassButton("Show Full Screen", icon: "arrow.up.left.and.arrow.down.right") {
-                        showFullScreenModal = true
-                    }
-                }
-            }
-            .padding()
-        }
-        .glassModal(
-            isPresented: $showCenteredModal,
-            title: "Clock In",
-            size: .small,
-            style: .centered
-        ) {
-            VStack(spacing: 20) {
-                Text("Select your building to clock in")
-                    .font(.body)
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.top)
-                
-                GlassButton("12 West 18th Street", style: .primary, isFullWidth: true) {
-                    showCenteredModal = false
-                }
-                
-                GlassButton("Cancel", style: .secondary, isFullWidth: true) {
-                    showCenteredModal = false
-                }
-            }
-            .padding()
-        }
-        .overlay(
-            GlassModal(
-                isPresented: $showBottomModal,
-                title: "Task Details",
-                subtitle: "HVAC Filter Replacement",
-                size: .medium,
-                style: .bottom
-            ) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Label("Due in 2 hours", systemImage: "clock")
-                        .foregroundColor(.orange)
-                    
-                    Label("Building 12", systemImage: "building.2")
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    Text("Replace all air filters in the HVAC system on floors 3-5.")
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    GlassButton("Mark Complete", style: .primary, isFullWidth: true) {
-                        showBottomModal = false
+                    VStack(spacing: 16) {
+                        GlassButton("Show Centered Modal", icon: "square.stack") {
+                            showCenteredModal = true
+                        }
+                        
+                        GlassButton("Show Bottom Sheet", icon: "rectangle.bottomthird.inset.filled") {
+                            showBottomModal = true
+                        }
+                        
+                        GlassButton("Show Action Sheet", icon: "ellipsis.circle") {
+                            showActionSheet = true
+                        }
+                        
+                        GlassButton("Show Full Screen", icon: "arrow.up.left.and.arrow.down.right") {
+                            showFullScreenModal = true
+                        }
                     }
                 }
                 .padding()
             }
-        )
-        .overlay(
-            GlassActionSheet(
-                isPresented: $showActionSheet,
-                title: "Task Actions",
-                message: "What would you like to do?",
-                actions: [
-                    GlassActionSheetButton(title: "Edit Task", icon: "pencil") {
-                        print("Edit")
-                    },
-                    GlassActionSheetButton(title: "Assign Worker", icon: "person.badge.plus") {
-                        print("Assign")
-                    },
-                    GlassActionSheetButton(title: "Delete", style: .destructive, icon: "trash") {
-                        print("Delete")
-                    }
-                ]
-            )
-        )
-        .overlay(
-            GlassModal(
-                isPresented: $showFullScreenModal,
-                title: "Building Overview",
-                size: .fullScreen,
-                style: .fullScreen
+            .glassModal(
+                isPresented: $showCenteredModal,
+                title: "Clock In",
+                size: .small,
+                style: .centered
             ) {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.blue)
+                VStack(spacing: 20) {
+                    Text("Select your building to clock in")
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.top)
+                    
+                    GlassButton("12 West 18th Street", style: .primary, isFullWidth: true) {
+                        showCenteredModal = false
+                    }
+                    
+                    GlassButton("Cancel", style: .secondary, isFullWidth: true) {
+                        showCenteredModal = false
+                    }
+                }
+                .padding()
+            }
+            .overlay(
+                GlassModal(
+                    isPresented: $showBottomModal,
+                    title: "Task Details",
+                    subtitle: "HVAC Filter Replacement",
+                    size: .medium,
+                    style: .bottom
+                ) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Label("Due in 2 hours", systemImage: "clock")
+                            .foregroundColor(.orange)
                         
-                        Text("Full screen modal content")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                        
-                        Text("This modal takes up the entire screen")
+                        Label("Building 12", systemImage: "building.2")
                             .foregroundColor(.white.opacity(0.8))
+                        
+                        Text("Replace all air filters in the HVAC system on floors 3-5.")
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        GlassButton("Mark Complete", style: .primary, isFullWidth: true) {
+                            showBottomModal = false
+                        }
                     }
                     .padding()
                 }
-            }
-        )
-        .preferredColorScheme(.dark)
+            )
+            .overlay(
+                GlassActionSheet(
+                    isPresented: $showActionSheet,
+                    title: "Task Actions",
+                    message: "What would you like to do?",
+                    actions: [
+                        GlassActionSheetButton(title: "Edit Task", icon: "pencil") {
+                            print("Edit")
+                        },
+                        GlassActionSheetButton(title: "Assign Worker", icon: "person.badge.plus") {
+                            print("Assign")
+                        },
+                        GlassActionSheetButton(title: "Delete", style: .destructive, icon: "trash") {
+                            print("Delete")
+                        }
+                    ]
+                )
+            )
+            .overlay(
+                GlassModal(
+                    isPresented: $showFullScreenModal,
+                    title: "Building Overview",
+                    size: .fullScreen,
+                    style: .fullScreen
+                ) {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            Image(systemName: "building.2.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.blue)
+                            
+                            Text("Full screen modal content")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                            
+                            Text("This modal takes up the entire screen")
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                        .padding()
+                    }
+                }
+            )
+            .preferredColorScheme(.dark)
+        }
+    }
+    
+    static var previews: some View {
+        PreviewContainer()
     }
 }

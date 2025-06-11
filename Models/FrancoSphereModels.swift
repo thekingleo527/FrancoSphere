@@ -1675,32 +1675,48 @@ public enum FrancoSphere {
     }
     
     // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    // MARK: — 12) AI Assistant Models
-    
-    /// Scenarios that trigger AI assistant interactions
-    public enum AIScenario: String, Codable, CaseIterable, Hashable {
-        case routineIncomplete = "routineIncomplete"
-        case pendingTasks = "pendingTasks"
-        case missingPhoto = "missingPhoto"
-        case clockOutReminder = "clockOutReminder"
-        case weatherAlert = "weatherAlert"
-        case buildingArrival = "buildingArrival"
-        case taskCompletion = "taskCompletion"
-        case inventoryLow = "inventoryLow"
-        
+    // MARK: — AI Scenario (for use by AIAvatarOverlayView, AIAssistantManager, etc.)
+    // This should replace the existing AIScenario enum in FrancoSphereModels.swift
+
+    public enum AIScenario: String, CaseIterable {
+        case routineIncomplete = "Routine Incomplete"
+        case pendingTasks     = "Pending Tasks"
+        case missingPhoto     = "Missing Photo"
+        case clockOutReminder = "Clock Out Reminder"
+        case weatherAlert     = "Weather Alert"
+        case buildingArrival  = "Building Arrival"
+        case taskCompletion   = "Task Completion"
+        case inventoryLow     = "Inventory Low"
+
+        /// Human-readable title in the bubble header
         public var title: String {
             switch self {
             case .routineIncomplete: return "Incomplete Routine"
-            case .pendingTasks: return "Tasks Pending"
-            case .missingPhoto: return "Photo Required"
-            case .clockOutReminder: return "Clock Out Reminder"
-            case .weatherAlert: return "Weather Alert"
-            case .buildingArrival: return "Welcome!"
-            case .taskCompletion: return "Great Job!"
-            case .inventoryLow: return "Low Inventory"
+            case .pendingTasks:      return "Tasks Pending"
+            case .missingPhoto:      return "Photo Required"
+            case .clockOutReminder:  return "Clock Out Reminder"
+            case .weatherAlert:      return "Weather Alert"
+            case .buildingArrival:   return "Building Check-In"
+            case .taskCompletion:    return "Task Complete"
+            case .inventoryLow:      return "Low Inventory"
             }
         }
-        
+
+        /// Icon name shown next to the title
+        public var icon: String {
+            switch self {
+            case .routineIncomplete: return "exclamationmark.circle"
+            case .pendingTasks:      return "list.bullet.clipboard"
+            case .missingPhoto:      return "camera.badge.ellipsis"
+            case .clockOutReminder:  return "clock.arrow.circlepath"
+            case .weatherAlert:      return "cloud.bolt"
+            case .buildingArrival:   return "building.2"
+            case .taskCompletion:    return "checkmark.circle"
+            case .inventoryLow:      return "shippingbox"
+            }
+        }
+
+        /// Longer message text that the assistant will show
         public var message: String {
             switch self {
             case .routineIncomplete:
@@ -1714,37 +1730,11 @@ public enum FrancoSphere {
             case .weatherAlert:
                 return "There's a weather event affecting this building. Review related maintenance tasks?"
             case .buildingArrival:
-                return "You've arrived at the building. Ready to check in and see today's tasks?"
+                return "Welcome to this building! Would you like to clock in and see your tasks?"
             case .taskCompletion:
-                return "Excellent work completing that task! Here's what's next on your list."
+                return "Great job completing that task! Keep up the excellent work."
             case .inventoryLow:
-                return "Some inventory items are running low. Would you like to submit a restock request?"
-            }
-        }
-        
-        public var icon: String {
-            switch self {
-            case .routineIncomplete: return "exclamationmark.circle"
-            case .pendingTasks: return "list.bullet.clipboard"
-            case .missingPhoto: return "camera.badge.ellipsis"
-            case .clockOutReminder: return "clock.arrow.circlepath"
-            case .weatherAlert: return "cloud.bolt"
-            case .buildingArrival: return "building.2"
-            case .taskCompletion: return "checkmark.circle"
-            case .inventoryLow: return "cube.box"
-            }
-        }
-        
-        public var actionText: String {
-            switch self {
-            case .routineIncomplete: return "Show Me Tasks"
-            case .pendingTasks: return "View Pending"
-            case .missingPhoto: return "Take Photo"
-            case .clockOutReminder: return "Clock Out Now"
-            case .weatherAlert: return "See Weather Tasks"
-            case .buildingArrival: return "Check In"
-            case .taskCompletion: return "Next Task"
-            case .inventoryLow: return "Request Restock"
+                return "Some inventory items are running low and need restocking."
             }
         }
     }

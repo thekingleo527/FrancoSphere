@@ -188,7 +188,7 @@ actor TaskManager {
             if let firstRow = rows.first,
                let count = firstRow["count"] as? Int64,
                count == 0 {
-                await loadTasksFromCSVData()
+                await loadTasksFromCSVDataImporter()
             }
         } catch {
             print("Error checking task count: \(error)")
