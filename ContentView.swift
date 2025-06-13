@@ -18,11 +18,11 @@ struct ContentView: View {
                 case "admin", "client":
                     AdminDashboardPlaceholder()
                 case "worker":
-                    // Use the actual WorkerDashboardView_V2 from your project
-                    WorkerDashboardView_V2()
+                    // Use the actual WorkerDashboardView from your project
+                    WorkerDashboardView()
                 default:
                     // Fallback to worker dashboard
-                    WorkerDashboardView_V2()
+                    WorkerDashboardView()
                 }
             } else {
                 // Not authenticated, show login

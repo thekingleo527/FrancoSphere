@@ -374,13 +374,19 @@ struct MaintenanceHistoryView: View {
     private func loadData() {
         isLoading = true
         
-        // In a real app, use selectedDate to filter
-        maintRecords = TaskManager.shared.fetchMaintenanceHistory(forBuilding: buildingID, limit: 100)
-        
-        // Filter by date based on selectedDate
-        maintRecords = maintRecords.filter { $0.completionDate >= selectedDate }
-        
-        isLoading = false
+        Task {
+            // Make it async
+            let records = await TaskManager.shared.fetchMaintenanceHistory(
+                forBuilding: buildingID,
+                limit: 100
+            )
+            
+            await MainActor.run {
+                // Filter by date based on selectedDate
+                maintRecords = records.filter { $0.completionDate >= selectedDate }
+                isLoading = false
+            }
+        }
     }
     
     private func refreshData() {

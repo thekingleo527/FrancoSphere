@@ -12,14 +12,13 @@
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
-		233F94DA2DF7B0AD00901707 /* QuickActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionType.swift */; };
+		233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */; };
 		233F94DC2DF7B0EC00901707 /* TrackableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */; };
 		233F94E02DF7B67100901707 /* WorkerDashboardIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */; };
 		233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */; };
 		233F94E42DF7B96D00901707 /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */; };
 		233F94E82DF7E55000901707 /* AdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E72DF7E55000901707 /* AdaptiveGlassModifier.swift */; };
 		233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94E92DF7E69B00901707 /* TaskTimelineRow.swift */; };
-		23423DE62D73B4D400AACE3E /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23423DE52D73B4D400AACE3E /* SQLite */; };
 		2345812C2DF78E3D00355F0A /* 136_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F72DF78E3D00355F0A /* 136_West_17th_Street.jpg */; };
 		2345812D2DF78E3D00355F0A /* 29_31_East_20th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580EC2DF78E3D00355F0A /* 29_31_East_20th_Street.jpg */; };
 		2345812E2DF78E3D00355F0A /* 112_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F12DF78E3D00355F0A /* 112_West_18th_Street.jpg */; };
@@ -154,8 +153,8 @@
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
-		2354B9E12D7425EE0050C53D /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 2354B9E02D7425EE0050C53D /* OpenMeteoSdk */; };
-		23DCD05C2DF91680007C6A7B /* QuickActionType 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DCD05B2DF91680007C6A7B /* QuickActionType 2.swift */; };
+		23B117822DFBCBDC0065F39E /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117812DFBCBDC0065F39E /* SQLite */; };
+		23B117852DFBCC240065F39E /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117842DFBCC240065F39E /* OpenMeteoSdk */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -190,7 +189,7 @@
 /* Begin PBXFileReference section */
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
-		233F94D92DF7B0AD00901707 /* QuickActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionType.swift; sourceTree = "<group>"; };
+		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
 		233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
 		233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardIntegration.swift; sourceTree = "<group>"; };
 		233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatedDataLoading.swift; sourceTree = "<group>"; };
@@ -339,7 +338,6 @@
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
 		23AD7FB12DF5A95D00BDF90A /* SeedDatabase */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SeedDatabase; sourceTree = BUILT_PRODUCTS_DIR; };
-		23DCD05B2DF91680007C6A7B /* QuickActionType 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QuickActionType 2.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -365,8 +363,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2354B9E12D7425EE0050C53D /* OpenMeteoSdk in Frameworks */,
-				23423DE62D73B4D400AACE3E /* SQLite in Frameworks */,
+				23B117852DFBCC240065F39E /* OpenMeteoSdk in Frameworks */,
+				23B117822DFBCBDC0065F39E /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,10 +488,9 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
-				23DCD05B2DF91680007C6A7B /* QuickActionType 2.swift */,
 				233F94E92DF7E69B00901707 /* TaskTimelineRow.swift */,
 				233F94E72DF7E55000901707 /* AdaptiveGlassModifier.swift */,
-				233F94D92DF7B0AD00901707 /* QuickActionType.swift */,
+				233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */,
 				233F94D52DF7AFEE00901707 /* NovaAvatar.swift */,
 				234580AB2DF78E3D00355F0A /* AIAvatarOverlayView.swift */,
 				234580AC2DF78E3D00355F0A /* FrancoSphereColors.swift */,
@@ -762,8 +759,8 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				23423DE52D73B4D400AACE3E /* SQLite */,
-				2354B9E02D7425EE0050C53D /* OpenMeteoSdk */,
+				23B117812DFBCBDC0065F39E /* SQLite */,
+				23B117842DFBCC240065F39E /* OpenMeteoSdk */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -873,8 +870,8 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				23423DE42D73B4D400AACE3E /* XCRemoteSwiftPackageReference "SQLite.swift" */,
-				2354B9DF2D7425EE0050C53D /* XCRemoteSwiftPackageReference "sdk" */,
+				23B117802DFBCBDC0065F39E /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				23B117832DFBCC240065F39E /* XCRemoteSwiftPackageReference "sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1034,7 +1031,7 @@
 				2345817B2DF78E3D00355F0A /* AdminDashboardView.swift in Sources */,
 				2345817C2DF78E3D00355F0A /* TimelineProgressBar.swift in Sources */,
 				2345817D2DF78E3D00355F0A /* TimeBasedTaskFilter.swift in Sources */,
-				233F94DA2DF7B0AD00901707 /* QuickActionType.swift in Sources */,
+				233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */,
 				2345817F2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift in Sources */,
 				234581802DF78E3D00355F0A /* InventoryView.swift in Sources */,
 				234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */,
@@ -1068,7 +1065,6 @@
 				233F94E82DF7E55000901707 /* AdaptiveGlassModifier.swift in Sources */,
 				2345819B2DF78E3D00355F0A /* DashboardView.swift in Sources */,
 				2345819C2DF78E3D00355F0A /* GlassButton.swift in Sources */,
-				23DCD05C2DF91680007C6A7B /* QuickActionType 2.swift in Sources */,
 				2345819D2DF78E3D00355F0A /* DataInitializationView.swift in Sources */,
 				2345819E2DF78E3D00355F0A /* GlassNavigationBar.swift in Sources */,
 				2345819F2DF78E3D00355F0A /* AssetImageDebugger.swift in Sources */,
@@ -1461,7 +1457,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		23423DE42D73B4D400AACE3E /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
+		23B117802DFBCBDC0065F39E /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
 			requirement = {
@@ -1469,7 +1465,7 @@
 				minimumVersion = 0.15.3;
 			};
 		};
-		2354B9DF2D7425EE0050C53D /* XCRemoteSwiftPackageReference "sdk" */ = {
+		23B117832DFBCC240065F39E /* XCRemoteSwiftPackageReference "sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/open-meteo/sdk.git";
 			requirement = {
@@ -1480,14 +1476,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		23423DE52D73B4D400AACE3E /* SQLite */ = {
+		23B117812DFBCBDC0065F39E /* SQLite */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 23423DE42D73B4D400AACE3E /* XCRemoteSwiftPackageReference "SQLite.swift" */;
+			package = 23B117802DFBCBDC0065F39E /* XCRemoteSwiftPackageReference "SQLite.swift" */;
 			productName = SQLite;
 		};
-		2354B9E02D7425EE0050C53D /* OpenMeteoSdk */ = {
+		23B117842DFBCC240065F39E /* OpenMeteoSdk */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2354B9DF2D7425EE0050C53D /* XCRemoteSwiftPackageReference "sdk" */;
+			package = 23B117832DFBCC240065F39E /* XCRemoteSwiftPackageReference "sdk" */;
 			productName = OpenMeteoSdk;
 		};
 /* End XCSwiftPackageProductDependency section */

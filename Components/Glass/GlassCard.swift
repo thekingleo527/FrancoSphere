@@ -5,17 +5,9 @@
 //  Created by Shawn Magloire on 6/8/25.
 //
 
-
-//
-//  GlassCard.swift
-//  FrancoSphere
-//
-//  MINIMAL CLEAN VERSION - ONLY GlassCard, nothing else
-//  Created by Shawn Magloire on 6/6/25.
-
 import SwiftUI
 
-// MARK: - Glass Card View ONLY
+// MARK: - Glass Card View
 struct GlassCard<Content: View>: View {
     // Content
     let content: Content
@@ -126,5 +118,46 @@ struct GlassCard<Content: View>: View {
                 ),
                 lineWidth: borderWidth
             )
+    }
+}
+
+// MARK: - Convenience Initializers for WorkerDashboardView
+extension GlassCard {
+    // Convenience initializer matching the usage in WorkerDashboardView
+    init(
+        intensity: GlassIntensity = .regular,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.init(
+            intensity: intensity,
+            cornerRadius: 20,
+            padding: 20,
+            shadowRadius: 10,
+            borderWidth: 1,
+            isHovering: false,
+            hasGlow: false,
+            glowColor: .blue,
+            content: content
+        )
+    }
+    
+    // Additional convenience init with just corner radius
+    init(
+        intensity: GlassIntensity = .regular,
+        cornerRadius: CGFloat,
+        padding: CGFloat = 20,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.init(
+            intensity: intensity,
+            cornerRadius: cornerRadius,
+            padding: padding,
+            shadowRadius: 10,
+            borderWidth: 1,
+            isHovering: false,
+            hasGlow: false,
+            glowColor: .blue,
+            content: content
+        )
     }
 }

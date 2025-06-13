@@ -1,10 +1,3 @@
-//
-//  QuickActionType.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 6/9/25.
-//
-
 
 //
 //  QuickActionMenu.swift

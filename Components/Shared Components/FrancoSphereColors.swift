@@ -5,8 +5,6 @@
 //  Created by Shawn Magloire on 6/5/25.
 //
 
-
-// New file: FrancoSphere/Components/FrancoSphereColors.swift
 import SwiftUI
 
 public enum FrancoSphereColors {
@@ -17,5 +15,12 @@ public enum FrancoSphereColors {
     static let deepNavy = Color(red: 0.11, green: 0.18, blue: 0.31)          // #1B2D4F
     static let textPrimary = Color.white
     static let textSecondary = Color(white: 0.73)                             // #BBBBBB
+    
+    // Additional colors for dashboard
+    static let glassWhite = Color.white.opacity(0.1)
+    static let glassBorder = Color.white.opacity(0.2)
+    static let success = Color.green
+    static let warning = Color.orange
+    static let error = Color.red
+    static let info = Color.blue
 }
-

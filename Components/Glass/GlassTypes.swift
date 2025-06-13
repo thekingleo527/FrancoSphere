@@ -192,6 +192,13 @@ public enum GlassModalSize {
     }
 }
 
+// MARK: - Glass Modal Style
+public enum GlassModalStyle {
+    case centered
+    case bottom
+    case fullScreen
+}
+
 // MARK: - Glass Navigation Style
 public enum GlassNavigationStyle {
     case inline
@@ -301,44 +308,3 @@ public enum GlassStatus {
 // These ensure compatibility with existing code
 public typealias GlassCardStyle = GlassIntensity
 public typealias GlassEffectStyle = GlassIntensity
-
-// MARK: - Additional Extensions needed by WorkerDashboardView_V2
-extension GlassCard {
-    // Convenience initializer matching the usage in WorkerDashboardView_V2
-    public init(
-        intensity: GlassIntensity = .regular,
-        @ViewBuilder content: @escaping () -> Content
-    ) where Content: View {
-        self.init(
-            intensity: intensity,
-            cornerRadius: 20,
-            padding: 20,
-            shadowRadius: 10,
-            borderWidth: 1,
-            isHovering: false,
-            hasGlow: false,
-            glowColor: .blue,
-            content: content
-        )
-    }
-    
-    // Additional convenience init with just corner radius
-    public init(
-        intensity: GlassIntensity = .regular,
-        cornerRadius: CGFloat,
-        padding: CGFloat = 20,
-        @ViewBuilder content: @escaping () -> Content
-    ) where Content: View {
-        self.init(
-            intensity: intensity,
-            cornerRadius: cornerRadius,
-            padding: padding,
-            shadowRadius: 10,
-            borderWidth: 1,
-            isHovering: false,
-            hasGlow: false,
-            glowColor: .blue,
-            content: content
-        )
-    }
-}

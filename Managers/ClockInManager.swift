@@ -115,15 +115,15 @@ class ClockInManager: ObservableObject {
 // Extension to add currentWorkerId if it doesn't exist
 extension NewAuthManager {
     var currentWorkerId: String? {
-        // Map from worker name to ID
+        // FIXED: All IDs now match the database seeding
         switch currentWorkerName {
-        case "Edwin Lema": return "3"
+        case "Edwin Lema": return "2"     // FIXED: Was "3", now "2"
         case "Greg Hutson": return "1"
-        case "Kevin Dutan": return "2"
-        case "Angel Guirachocha": return "4"
+        case "Kevin Dutan": return "4"    // FIXED: Was "2", now "4"
         case "Mercedes Inamagua": return "5"
         case "Luis Lopez": return "6"
-        case "Shawn Magloire": return "7"
+        case "Angel Guirachocha": return "7"
+        case "Shawn Magloire": return "8" // FIXED: Was "7", now "8"
         default: return nil
         }
     }

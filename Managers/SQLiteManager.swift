@@ -470,22 +470,6 @@ public class SQLiteManager {
     
     // MARK: - Building Methods
 
-    // Method for your NamedCoordinate type
-    public func insertBuilding(_ building: Building) throws -> Int64 {
-        guard let db = db else { throw NSError(domain: "SQLiteManager", code: 0) }
-        
-        let insert = buildings.insert(
-            buildingName <- building.name,
-            buildingAddress <- building.name, // Use name as fallback
-            latitude <- building.latitude,
-            longitude <- building.longitude,
-            imageAssetName <- building.imageAssetName
-            // All other fields will use their default values (nil or 0)
-        )
-        
-        return try db.run(insert)
-    }
-
     // Method for manual insertion with all parameters
     public func insertBuildingDetailed(
         name: String,

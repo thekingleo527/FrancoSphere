@@ -2,18 +2,11 @@
 //  GlassModal.swift
 //  FrancoSphere
 //
-//  Glassmorphism modal and sheet components for FrancoSphere
+//  FIXED: Resolved AnyShape Sendable conformance error
 //  Created by Shawn Magloire on 6/6/25.
 //
 
 import SwiftUI
-
-// MARK: - Modal Style
-enum GlassModalStyle {
-    case centered
-    case bottom
-    case fullScreen
-}
 
 // MARK: - Glass Modal
 struct GlassModal<Content: View>: View {
@@ -76,7 +69,7 @@ struct GlassModal<Content: View>: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: isPresented)
-        .onChange(of: isPresented) { oldValue, newValue in
+        .onChange(of: isPresented) { newValue in
             if newValue {
                 withAnimation {
                     showContent = true
@@ -103,7 +96,7 @@ struct GlassModal<Content: View>: View {
         .frame(maxWidth: style == .fullScreen ? .infinity : size.width)
         .frame(maxHeight: style == .fullScreen ? .infinity : size.height)
         .background(modalBackground)
-        .clipShape(modalShape)
+        .clipShape(RoundedRectangle(cornerRadius: modalCornerRadius)) // FIX: Use single shape type
         .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
         .scaleEffect(showContent ? 1 : 0.9)
         .opacity(showContent ? 1 : 0)
@@ -115,8 +108,7 @@ struct GlassModal<Content: View>: View {
             VStack(alignment: .leading, spacing: 4) {
                 if let title = title {
                     Text(title)
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.headline)
                         .foregroundColor(.white)
                 }
                 
@@ -132,23 +124,16 @@ struct GlassModal<Content: View>: View {
             if showCloseButton {
                 Button(action: dismiss) {
                     Image(systemName: "xmark")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(width: 32, height: 32)
-                        .background(
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 20)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
         .background(
             LinearGradient(
                 colors: [
@@ -187,7 +172,7 @@ struct GlassModal<Content: View>: View {
             )
             
             // Border
-            modalShape
+            RoundedRectangle(cornerRadius: modalCornerRadius)
                 .stroke(
                     LinearGradient(
                         colors: [
@@ -202,14 +187,9 @@ struct GlassModal<Content: View>: View {
         }
     }
     
-    // MARK: - Modal Shape
-    private var modalShape: some Shape {
-        switch style {
-        case .centered, .fullScreen:
-            return AnyShape(RoundedRectangle(cornerRadius: 24))
-        case .bottom:
-            return AnyShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        }
+    // MARK: - Modal Corner Radius (FIX: Single computed property)
+    private var modalCornerRadius: CGFloat {
+        style == .bottom ? 24 : 24
     }
     
     // MARK: - Modal Transition
@@ -254,124 +234,128 @@ struct GlassModal<Content: View>: View {
     }
 }
 
-// MARK: - AnyShape Helper
-private struct AnyShape: Shape, @unchecked Sendable {
-    private let _path: @Sendable (CGRect) -> Path
-    
-    init<S: Shape>(_ wrapped: S) {
-        _path = { rect in wrapped.path(in: rect) }
-    }
-    
-    func path(in rect: CGRect) -> Path {
-        _path(rect)
-    }
-}
-
 // MARK: - Glass Action Sheet
 struct GlassActionSheet: View {
     @Binding var isPresented: Bool
     let title: String
     let message: String?
-    let actions: [GlassActionSheetButton]
+    let actions: [GlassActionButton]
+    
+    @State private var showContent = false
+    @Environment(\.actionSheetDismiss) var dismiss
     
     var body: some View {
-        GlassModal(
-            isPresented: $isPresented,
-            title: title,
-            subtitle: message,
-            size: .medium,
-            style: .bottom,
-            showCloseButton: false
-        ) {
-            VStack(spacing: 8) {
-                ForEach(actions) { action in
-                    action
-                        .environment(\.actionSheetDismiss, {
-                            isPresented = false
-                        })
-                }
+        ZStack {
+            if isPresented {
+                // Background
+                Color.black
+                    .opacity(showContent ? 0.5 : 0)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        dismissSheet()
+                    }
                 
-                GlassActionSheetButton(
-                    title: "Cancel",
-                    style: .cancel
-                ) {
-                    isPresented = false
+                // Sheet content
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(spacing: 8) {
+                        Text(title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        if let message = message {
+                            Text(message)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .padding()
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.2))
+                    
+                    // Actions
+                    VStack(spacing: 0) {
+                        ForEach(actions) { action in
+                            action
+                                .environment(\.actionSheetDismiss, dismissSheet)
+                            
+                            if action.id != actions.last?.id {
+                                Divider()
+                                    .background(Color.white.opacity(0.1))
+                            }
+                        }
+                    }
                 }
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+                .padding()
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .offset(y: showContent ? 0 : 300)
             }
-            .padding(20)
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented)
+        .onChange(of: isPresented) { newValue in
+            withAnimation {
+                showContent = newValue
+            }
+        }
+    }
+    
+    private func dismissSheet() {
+        withAnimation {
+            showContent = false
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            isPresented = false
         }
     }
 }
 
-// MARK: - Glass Action Sheet Button
-struct GlassActionSheetButton: View, Identifiable {
+// MARK: - Glass Action Button
+struct GlassActionButton: View, Identifiable {
     let id = UUID()
     let title: String
-    let style: ButtonStyle
-    let icon: String?
+    let role: ButtonRole?
     let action: () -> Void
     
     @Environment(\.actionSheetDismiss) var dismiss
     
-    enum ButtonStyle {
-        case `default`
-        case destructive
-        case cancel
-        
-        var textColor: Color {
-            switch self {
-            case .default:
-                return .white
-            case .destructive:
-                return .red
-            case .cancel:
-                return .white.opacity(0.8)
-            }
-        }
-    }
-    
-    init(
-        title: String,
-        style: ButtonStyle = .default,
-        icon: String? = nil,
-        action: @escaping () -> Void
-    ) {
+    init(_ title: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
         self.title = title
-        self.style = style
-        self.icon = icon
+        self.role = role
         self.action = action
     }
     
     var body: some View {
-        Button(action: {
-            action()
+        Button {
             dismiss?()
-        }) {
-            HStack {
-                if let icon = icon {
-                    Image(systemName: icon)
-                        .font(.body)
-                }
-                
-                Text(title)
-                    .font(style == .cancel ? .body : .body.weight(.medium))
-                
-                Spacer()
-            }
-            .foregroundColor(style.textColor)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .opacity(style == .cancel ? 0.5 : 0.8)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            action()
+        } label: {
+            Text(title)
+                .font(.body)
+                .foregroundColor(role == .destructive ? .red : .white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.white.opacity(0.001))
         }
+        .buttonStyle(PlainButtonStyle())
+        .background(
+            Rectangle()
+                .fill(Color.white.opacity(0.05))
+                .opacity(0.5)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 
@@ -405,150 +389,5 @@ extension View {
                 content: content
             )
         )
-    }
-}
-
-// MARK: - Preview Provider
-struct GlassModal_Previews: PreviewProvider {
-    struct PreviewContainer: View {
-        @State var showCenteredModal = false
-        @State var showBottomModal = false
-        @State var showActionSheet = false
-        @State var showFullScreenModal = false
-        
-        var body: some View {
-            ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.1, green: 0.1, blue: 0.3),
-                        Color(red: 0.2, green: 0.1, blue: 0.4)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                VStack(spacing: 24) {
-                    Text("Glass Modal Examples")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    VStack(spacing: 16) {
-                        GlassButton("Show Centered Modal", icon: "square.stack") {
-                            showCenteredModal = true
-                        }
-                        
-                        GlassButton("Show Bottom Sheet", icon: "rectangle.bottomthird.inset.filled") {
-                            showBottomModal = true
-                        }
-                        
-                        GlassButton("Show Action Sheet", icon: "ellipsis.circle") {
-                            showActionSheet = true
-                        }
-                        
-                        GlassButton("Show Full Screen", icon: "arrow.up.left.and.arrow.down.right") {
-                            showFullScreenModal = true
-                        }
-                    }
-                }
-                .padding()
-            }
-            .glassModal(
-                isPresented: $showCenteredModal,
-                title: "Clock In",
-                size: .small,
-                style: .centered
-            ) {
-                VStack(spacing: 20) {
-                    Text("Select your building to clock in")
-                        .font(.body)
-                        .foregroundColor(.white.opacity(0.8))
-                        .padding(.top)
-                    
-                    GlassButton("12 West 18th Street", style: .primary, isFullWidth: true) {
-                        showCenteredModal = false
-                    }
-                    
-                    GlassButton("Cancel", style: .secondary, isFullWidth: true) {
-                        showCenteredModal = false
-                    }
-                }
-                .padding()
-            }
-            .overlay(
-                GlassModal(
-                    isPresented: $showBottomModal,
-                    title: "Task Details",
-                    subtitle: "HVAC Filter Replacement",
-                    size: .medium,
-                    style: .bottom
-                ) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Label("Due in 2 hours", systemImage: "clock")
-                            .foregroundColor(.orange)
-                        
-                        Label("Building 12", systemImage: "building.2")
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        Text("Replace all air filters in the HVAC system on floors 3-5.")
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        GlassButton("Mark Complete", style: .primary, isFullWidth: true) {
-                            showBottomModal = false
-                        }
-                    }
-                    .padding()
-                }
-            )
-            .overlay(
-                GlassActionSheet(
-                    isPresented: $showActionSheet,
-                    title: "Task Actions",
-                    message: "What would you like to do?",
-                    actions: [
-                        GlassActionSheetButton(title: "Edit Task", icon: "pencil") {
-                            print("Edit")
-                        },
-                        GlassActionSheetButton(title: "Assign Worker", icon: "person.badge.plus") {
-                            print("Assign")
-                        },
-                        GlassActionSheetButton(title: "Delete", style: .destructive, icon: "trash") {
-                            print("Delete")
-                        }
-                    ]
-                )
-            )
-            .overlay(
-                GlassModal(
-                    isPresented: $showFullScreenModal,
-                    title: "Building Overview",
-                    size: .fullScreen,
-                    style: .fullScreen
-                ) {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            Image(systemName: "building.2.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(.blue)
-                            
-                            Text("Full screen modal content")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                            
-                            Text("This modal takes up the entire screen")
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        .padding()
-                    }
-                }
-            )
-            .preferredColorScheme(.dark)
-        }
-    }
-    
-    static var previews: some View {
-        PreviewContainer()
     }
 }

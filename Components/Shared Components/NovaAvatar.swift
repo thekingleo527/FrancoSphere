@@ -1,8 +1,8 @@
-//
+////
 //  NovaAvatar.swift
 //  FrancoSphere
 //
-//  Animated AI Assistant Avatar Component
+//  Standalone Nova AI Assistant Avatar Component
 //  Created by Shawn Magloire on 6/9/25.
 //
 
@@ -10,9 +10,13 @@ import SwiftUI
 
 // MARK: - Nova Avatar Component
 struct NovaAvatar: View {
-    @EnvironmentObject var ai: AIAssistantManager
-    @Environment(\.sizeCategory) var sizeCategory
-    @AppStorage("aiAvatarURL") private var avatarURL = ""
+    // Configuration
+    let size: CGFloat
+    let showStatus: Bool
+    let hasUrgentInsight: Bool
+    let isBusy: Bool
+    let onTap: () -> Void
+    let onLongPress: () -> Void
     
     // Animation states
     @State private var breathe = false
@@ -20,62 +24,48 @@ struct NovaAvatar: View {
     @State private var glowOpacity: Double = 0.3
     @State private var rotationAngle: Double = 0
     
-    // Configuration
-    var size: CGFloat = 60
-    var showStatus: Bool = true
-    var onTap: (() -> Void)?
-    var onLongPress: (() -> Void)?
-    
-    // Accessibility adjustments
-    private var adjustedSize: CGFloat {
-        sizeCategory >= .accessibilityMedium ? 48 : size
-    }
-    
-    private var adjustedGlowOpacity: Double {
-        sizeCategory >= .accessibilityMedium ? 0.2 : glowOpacity
+    init(
+        size: CGFloat = 60,
+        showStatus: Bool = true,
+        hasUrgentInsight: Bool = false,
+        isBusy: Bool = false,
+        onTap: @escaping () -> Void = {},
+        onLongPress: @escaping () -> Void = {}
+    ) {
+        self.size = size
+        self.showStatus = showStatus
+        self.hasUrgentInsight = hasUrgentInsight
+        self.isBusy = isBusy
+        self.onTap = onTap
+        self.onLongPress = onLongPress
     }
     
     var body: some View {
         ZStack {
             // Main avatar
             avatarView
-                .frame(width: adjustedSize, height: adjustedSize)
+                .frame(width: size, height: size)
                 .clipShape(Circle())
                 .overlay(glowEffect)
                 .overlay(urgentPulseRing)
                 .overlay(busyIndicator)
                 .scaleEffect(breathe ? 1.03 : 0.97)
-                .shadow(color: glowColor.opacity(adjustedGlowOpacity), radius: 12, x: 0, y: 4)
+                .shadow(color: glowColor.opacity(glowOpacity), radius: 12, x: 0, y: 4)
                 .onAppear { startBreathingAnimation() }
-                .onTapGesture { onTap?() }
-                .onLongPressGesture { onLongPress?() }
+                .onTapGesture { onTap() }
+                .onLongPressGesture { onLongPress() }
             
             // Status badge
             if showStatus {
                 statusBadge
-                    .offset(x: adjustedSize * 0.35, y: -adjustedSize * 0.35)
+                    .offset(x: size * 0.35, y: -size * 0.35)
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: breathe)
     }
     
     // MARK: - Avatar Image
-    @ViewBuilder
     private var avatarView: some View {
-        if !avatarURL.isEmpty, let url = URL(string: avatarURL) {
-            AsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                defaultAvatar
-            }
-        } else {
-            defaultAvatar
-        }
-    }
-    
-    private var defaultAvatar: some View {
         ZStack {
             // Background gradient
             Circle()
@@ -92,7 +82,7 @@ struct NovaAvatar: View {
             
             // AI Icon
             Image(systemName: "brain.head.profile")
-                .font(.system(size: adjustedSize * 0.5, weight: .medium))
+                .font(.system(size: size * 0.5, weight: .medium))
                 .foregroundColor(.white)
                 .rotationEffect(.degrees(rotationAngle))
         }
@@ -120,7 +110,7 @@ struct NovaAvatar: View {
     // MARK: - Urgent Pulse Ring
     @ViewBuilder
     private var urgentPulseRing: some View {
-        if ai.hasUrgentInsight {
+        if hasUrgentInsight {
             PulseRing(
                 color: .red,
                 animationDuration: 1.0,
@@ -132,7 +122,7 @@ struct NovaAvatar: View {
     // MARK: - Busy/Offline Indicator
     @ViewBuilder
     private var busyIndicator: some View {
-        if ai.isProcessing {
+        if isBusy {
             ZStack {
                 // Dark overlay
                 Circle()
@@ -143,24 +133,13 @@ struct NovaAvatar: View {
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     .scaleEffect(0.8)
             }
-        } else if ai.isOffline {
-            ZStack {
-                // Dark overlay
-                Circle()
-                    .fill(Color.black.opacity(0.4))
-                
-                // Offline icon
-                Image(systemName: "wifi.slash")
-                    .font(.system(size: adjustedSize * 0.3))
-                    .foregroundColor(.white.opacity(0.8))
-            }
         }
     }
     
     // MARK: - Status Badge
     @ViewBuilder
     private var statusBadge: some View {
-        if ai.hasUrgentInsight {
+        if hasUrgentInsight {
             Circle()
                 .fill(Color.red)
                 .frame(width: 12, height: 12)
@@ -168,24 +147,14 @@ struct NovaAvatar: View {
                     Circle()
                         .stroke(Color.white, lineWidth: 2)
                 )
-        } else if ai.unreadNotifications > 0 {
-            ZStack {
-                Circle()
-                    .fill(Color.blue)
-                    .frame(width: 20, height: 20)
-                
-                Text("\(min(ai.unreadNotifications, 9))")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
-            }
         }
     }
     
     // MARK: - Computed Properties
     private var glowColor: Color {
-        if ai.hasUrgentInsight {
+        if hasUrgentInsight {
             return .red
-        } else if ai.isProcessing {
+        } else if isBusy {
             return .orange
         } else {
             return .blue
@@ -240,30 +209,25 @@ struct PulseRing: View {
 struct NovaAvatar_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            FrancoSphereColors.primaryBackground.ignoresSafeArea()
             
             VStack(spacing: 40) {
                 // Regular state
                 NovaAvatar()
-                    .environmentObject(AIAssistantManager.shared)
                 
                 // With urgent insight
-                NovaAvatar()
-                    .environmentObject({
-                        let ai = AIAssistantManager.shared
-                        // Set mock urgent state for preview
-                        return ai
-                    }())
+                NovaAvatar(hasUrgentInsight: true)
+                
+                // Busy state
+                NovaAvatar(isBusy: true)
                 
                 // Different sizes
                 HStack(spacing: 30) {
                     NovaAvatar(size: 44)
-                        .environmentObject(AIAssistantManager.shared)
-                    
                     NovaAvatar(size: 80)
-                        .environmentObject(AIAssistantManager.shared)
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }

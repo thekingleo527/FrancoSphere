@@ -912,12 +912,19 @@ struct TaskScheduleView: View {
     private func loadTasks() {
         isLoading = true
         
-        // In a real app, fetch tasks for the building
-        tasks = TaskManager.shared.fetchTasks(forBuilding: buildingID, includePastTasks: true)
-        
-        isLoading = false
-        
-        loadTasksForSelectedDate()
+        Task {
+            // Make it async
+            let fetchedTasks = await TaskManager.shared.fetchTasks(
+                forBuilding: buildingID,
+                includePastTasks: true
+            )
+            
+            await MainActor.run {
+                tasks = fetchedTasks
+                isLoading = false
+                loadTasksForSelectedDate()
+            }
+        }
     }
     
     private func loadTasksForSelectedDate() {
