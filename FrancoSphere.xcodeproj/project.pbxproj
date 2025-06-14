@@ -155,6 +155,11 @@
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
 		23B117822DFBCBDC0065F39E /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117812DFBCBDC0065F39E /* SQLite */; };
 		23B117852DFBCC240065F39E /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117842DFBCC240065F39E /* OpenMeteoSdk */; };
+		23B117872DFDAF890065F39E /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117862DFDAF890065F39E /* WeatherManager.swift */; };
+		23B117892DFDAFC10065F39E /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117882DFDAFC10065F39E /* WorkerManager.swift */; };
+		23B1178B2DFDAFE60065F39E /* MapOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */; };
+		23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178C2DFDB0310065F39E /* MySitesCard.swift */; };
+		23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178E2DFDB0570065F39E /* HeaderV3B.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -338,6 +343,11 @@
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
 		23AD7FB12DF5A95D00BDF90A /* SeedDatabase */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SeedDatabase; sourceTree = BUILT_PRODUCTS_DIR; };
+		23B117862DFDAF890065F39E /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
+		23B117882DFDAFC10065F39E /* WorkerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerManager.swift; sourceTree = "<group>"; };
+		23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOverlayView.swift; sourceTree = "<group>"; };
+		23B1178C2DFDB0310065F39E /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
+		23B1178E2DFDB0570065F39E /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -439,6 +449,7 @@
 		234580962DF78E3D00355F0A /* Design */ = {
 			isa = PBXGroup;
 			children = (
+				23B1178E2DFDB0570065F39E /* HeaderV3B.swift */,
 				2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */,
 				2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */,
 				2345808E2DF78E3D00355F0A /* BuildingMapMarker.swift */,
@@ -488,6 +499,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23B1178C2DFDB0310065F39E /* MySitesCard.swift */,
 				233F94E92DF7E69B00901707 /* TaskTimelineRow.swift */,
 				233F94E72DF7E55000901707 /* AdaptiveGlassModifier.swift */,
 				233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */,
@@ -565,6 +577,8 @@
 		234580DD2DF78E3D00355F0A /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				23B117882DFDAFC10065F39E /* WorkerManager.swift */,
+				23B117862DFDAF890065F39E /* WeatherManager.swift */,
 				234580C52DF78E3D00355F0A /* Extensions */,
 				234580C72DF78E3D00355F0A /* Migrations */,
 				234580C82DF78E3D00355F0A /* AIAssistantManager.swift */,
@@ -710,6 +724,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */,
 				233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */,
 				233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */,
 				2345811D2DF78E3D00355F0A /* AdminDashboardView.swift */,
@@ -1006,6 +1021,7 @@
 				234581642DF78E3D00355F0A /* GlassDeckContainer.swift in Sources */,
 				234581652DF78E3D00355F0A /* GlassLoadingView.swift in Sources */,
 				234581662DF78E3D00355F0A /* TaskFormView.swift in Sources */,
+				23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */,
 				234581672DF78E3D00355F0A /* WeatherTaskTimelineCard.swift in Sources */,
 				234581692DF78E3D00355F0A /* TodaysTasksGlassCard.swift in Sources */,
 				2345816A2DF78E3D00355F0A /* InventoryManager.swift in Sources */,
@@ -1031,6 +1047,7 @@
 				2345817B2DF78E3D00355F0A /* AdminDashboardView.swift in Sources */,
 				2345817C2DF78E3D00355F0A /* TimelineProgressBar.swift in Sources */,
 				2345817D2DF78E3D00355F0A /* TimeBasedTaskFilter.swift in Sources */,
+				23B117892DFDAFC10065F39E /* WorkerManager.swift in Sources */,
 				233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */,
 				2345817F2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift in Sources */,
 				234581802DF78E3D00355F0A /* InventoryView.swift in Sources */,
@@ -1053,12 +1070,14 @@
 				2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
 				234581912DF78E3D00355F0A /* TaskCompletionManager.swift in Sources */,
+				23B1178B2DFDAFE60065F39E /* MapOverlayView.swift in Sources */,
 				234581922DF78E3D00355F0A /* BuildingStatusManager.swift in Sources */,
 				234581932DF78E3D00355F0A /* GlassTabBar.swift in Sources */,
 				234581942DF78E3D00355F0A /* WorkerSkill.swift in Sources */,
 				234581952DF78E3D00355F0A /* WeatherViewModifier.swift in Sources */,
 				234581962DF78E3D00355F0A /* NotificationManager.swift in Sources */,
 				234581972DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift in Sources */,
+				23B117872DFDAF890065F39E /* WeatherManager.swift in Sources */,
 				234581982DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift in Sources */,
 				234581992DF78E3D00355F0A /* WorkerRoutineManager.swift in Sources */,
 				2345819A2DF78E3D00355F0A /* VerificationRecord.swift in Sources */,
@@ -1076,6 +1095,7 @@
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
 				234581A72DF78E3D00355F0A /* CSVLoader.swift in Sources */,
 				234581A82DF78E3D00355F0A /* WeatherService.swift in Sources */,
+				23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */,
 				234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,
 				234581AB2DF78E3D00355F0A /* BuildingImageDiagnostic.swift in Sources */,

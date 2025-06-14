@@ -2,15 +2,7 @@
 //  HapticManager.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/8/25.
-//
-
-
-//
-//  HapticManager.swift
-//  FrancoSphere
-//
-//  Manages haptic feedback throughout the app
+//  Created by Shawn Magloire
 //
 
 import UIKit

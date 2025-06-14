@@ -32,16 +32,16 @@ class BuildingCollectionScheduleHelper {
 
 // MARK: - Task Recurrence Helper
 class TaskRecurrenceHelper {
-    static func garbageCollectionRecurrence() -> TaskRecurrence {
+    static func garbageCollectionRecurrence() -> FrancoSphere.TaskRecurrence {
         return .weekly // Map garbageCollection to weekly for now
     }
 }
 
 // MARK: - Extension to MaintenanceTask for immutable property handling
-extension MaintenanceTask {
+extension FrancoSphere.MaintenanceTask {
     // Create a new task with an updated due date
-    func withUpdatedDueDate(_ newDate: Date) -> MaintenanceTask {
-        return MaintenanceTask(
+    func withUpdatedDueDate(_ newDate: Date) -> FrancoSphere.MaintenanceTask {
+        return FrancoSphere.MaintenanceTask(
             id: self.id,
             name: self.name,
             buildingID: self.buildingID,
@@ -64,9 +64,9 @@ extension MaintenanceTask {
 @MainActor
 class TaskSchedulerHelper {
     
-    static func scheduleRecurringTasks(for buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) async -> [MaintenanceTask] {
+    static func scheduleRecurringTasks(for buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) async -> [FrancoSphere.MaintenanceTask] {
         // Use async version of fetchTasks
-        let existingTasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+        let existingTasks: [FrancoSphere.MaintenanceTask] = await withCheckedContinuation { continuation in
             Task {
                 let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
                 continuation.resume(returning: tasks)
@@ -75,15 +75,15 @@ class TaskSchedulerHelper {
         
         // Check if we already have garbage collection and monthly inspection tasks
         let hasGarbageCollection = existingTasks.contains { task in
-            return task.recurrence == TaskRecurrence.weekly && task.name.contains("Collection")
+            return task.recurrence == FrancoSphere.TaskRecurrence.weekly && task.name.contains("Collection")
         }
         
         let monthlyInspectionTasks = existingTasks.filter { task in
-            return task.recurrence == TaskRecurrence.monthly && task.category == TaskCategory.inspection
+            return task.recurrence == FrancoSphere.TaskRecurrence.monthly && task.category == FrancoSphere.TaskCategory.inspection
         }
         let hasMonthlyInspection = !monthlyInspectionTasks.isEmpty
         
-        var newTasks: [MaintenanceTask] = []
+        var newTasks: [FrancoSphere.MaintenanceTask] = []
         
         if !hasGarbageCollection {
             // Get all buildings from BuildingRepository
@@ -93,7 +93,7 @@ class TaskSchedulerHelper {
                 let garbageDays = BuildingCollectionScheduleHelper.garbageCollectionDays(for: building)
                 for day in garbageDays {
                     let nextDate = nextDateForWeekday(day)
-                    let task = MaintenanceTask(
+                    let task = FrancoSphere.MaintenanceTask(
                         name: "Garbage Collection",
                         buildingID: buildingID,
                         description: "Take out trash bins for collection",
@@ -109,7 +109,7 @@ class TaskSchedulerHelper {
                 let recyclingDays = BuildingCollectionScheduleHelper.recyclingCollectionDays(for: building)
                 for day in recyclingDays {
                     let nextDate = nextDateForWeekday(day)
-                    let task = MaintenanceTask(
+                    let task = FrancoSphere.MaintenanceTask(
                         name: "Recycling Collection",
                         buildingID: buildingID,
                         description: "Take out recycling bins for collection",
@@ -129,7 +129,7 @@ class TaskSchedulerHelper {
             let nextMonth = calendar.date(byAdding: .month, value: 1, to: today)!
             let components = calendar.dateComponents([.year, .month], from: nextMonth)
             let firstDayOfNextMonth = calendar.date(from: components)!
-            let task = MaintenanceTask(
+            let task = FrancoSphere.MaintenanceTask(
                 name: "Monthly Building Inspection",
                 buildingID: buildingID,
                 description: "Comprehensive inspection of building systems and common areas",
@@ -166,8 +166,8 @@ class TaskSchedulerHelper {
         return calendar.date(byAdding: .day, value: daysToAdd, to: today)!
     }
     
-    static func adjustTaskSchedulesForWeather(buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) async -> [MaintenanceTask] {
-        let tasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+    static func adjustTaskSchedulesForWeather(buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) async -> [FrancoSphere.MaintenanceTask] {
+        let tasks: [FrancoSphere.MaintenanceTask] = await withCheckedContinuation { continuation in
             Task {
                 let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
                 continuation.resume(returning: tasks)
@@ -176,7 +176,7 @@ class TaskSchedulerHelper {
         return await adjustForWeather(tasks: tasks, buildingID: buildingID, weatherAdapter: weatherAdapter)
     }
     
-    static func adjustForWeather(tasks: [MaintenanceTask], buildingID: String, weatherAdapter: WeatherDataAdapter) async -> [MaintenanceTask] {
+    static func adjustForWeather(tasks: [FrancoSphere.MaintenanceTask], buildingID: String, weatherAdapter: WeatherDataAdapter) async -> [FrancoSphere.MaintenanceTask] {
         // Get building from repository
         let allBuildings = await BuildingRepository.shared.allBuildings
         guard let building = allBuildings.first(where: { $0.id == buildingID }) else {
@@ -186,7 +186,7 @@ class TaskSchedulerHelper {
         // Fetch weather for the building
         await weatherAdapter.fetchWeatherForBuildingAsync(building)
         
-        var adjustedTasks: [MaintenanceTask] = []
+        var adjustedTasks: [FrancoSphere.MaintenanceTask] = []
         
         for task in tasks {
             if weatherAdapter.shouldRescheduleTask(task) {
@@ -206,8 +206,8 @@ class TaskSchedulerHelper {
         return adjustedTasks
     }
     
-    static func suggestOptimalSchedule(for buildingID: String, category: TaskCategory, urgency: TaskUrgency, taskManager: TaskManager) async -> Date {
-        let existingTasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+    static func suggestOptimalSchedule(for buildingID: String, category: FrancoSphere.TaskCategory, urgency: FrancoSphere.TaskUrgency, taskManager: TaskManager) async -> Date {
+        let existingTasks: [FrancoSphere.MaintenanceTask] = await withCheckedContinuation { continuation in
             Task {
                 let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
                 continuation.resume(returning: tasks)
@@ -238,14 +238,14 @@ class TaskSchedulerHelper {
         }
     }
     
-    static func optimizeWorkerAssignments(for buildingID: String, taskManager: TaskManager) async -> [String: [MaintenanceTask]] {
-        let tasks: [MaintenanceTask] = await withCheckedContinuation { continuation in
+    static func optimizeWorkerAssignments(for buildingID: String, taskManager: TaskManager) async -> [String: [FrancoSphere.MaintenanceTask]] {
+        let tasks: [FrancoSphere.MaintenanceTask] = await withCheckedContinuation { continuation in
             Task {
                 let tasks = await taskManager.fetchTasksAsync(forBuilding: buildingID, includePastTasks: false)
                 continuation.resume(returning: tasks)
             }
         }
-        var workerAssignments: [String: [MaintenanceTask]] = [:]
+        var workerAssignments: [String: [FrancoSphere.MaintenanceTask]] = [:]
         let workerIDs = ["1", "2", "3"]
         
         for (index, task) in tasks.enumerated() {
@@ -260,7 +260,7 @@ class TaskSchedulerHelper {
 
 extension TaskSchedulerHelper {
     // Wrapper methods for use in synchronous contexts
-    static func scheduleRecurringTasksSync(for buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) -> [MaintenanceTask] {
+    static func scheduleRecurringTasksSync(for buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) -> [FrancoSphere.MaintenanceTask] {
         let task = Task { @MainActor in
             await scheduleRecurringTasks(for: buildingID, taskManager: taskManager, weatherAdapter: weatherAdapter)
         }
@@ -270,7 +270,7 @@ extension TaskSchedulerHelper {
         return []  // Return empty array for now, as we can't easily block
     }
     
-    static func adjustTaskSchedulesForWeatherSync(buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) -> [MaintenanceTask] {
+    static func adjustTaskSchedulesForWeatherSync(buildingID: String, taskManager: TaskManager, weatherAdapter: WeatherDataAdapter) -> [FrancoSphere.MaintenanceTask] {
         let task = Task { @MainActor in
             await adjustTaskSchedulesForWeather(buildingID: buildingID, taskManager: taskManager, weatherAdapter: weatherAdapter)
         }
@@ -278,13 +278,13 @@ extension TaskSchedulerHelper {
         return []  // Return empty array for now
     }
     
-    static func suggestOptimalScheduleSync(for buildingID: String, category: TaskCategory, urgency: TaskUrgency, taskManager: TaskManager) -> Date {
+    static func suggestOptimalScheduleSync(for buildingID: String, category: FrancoSphere.TaskCategory, urgency: FrancoSphere.TaskUrgency, taskManager: TaskManager) -> Date {
         // For synchronous context, return a default date
         let calendar = Calendar.current
         return calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
     }
     
-    static func optimizeWorkerAssignmentsSync(for buildingID: String, taskManager: TaskManager) -> [String: [MaintenanceTask]] {
+    static func optimizeWorkerAssignmentsSync(for buildingID: String, taskManager: TaskManager) -> [String: [FrancoSphere.MaintenanceTask]] {
         let task = Task { @MainActor in
             await optimizeWorkerAssignments(for: buildingID, taskManager: taskManager)
         }

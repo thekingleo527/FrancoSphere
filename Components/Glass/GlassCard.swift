@@ -34,7 +34,7 @@ struct GlassCard<Content: View>: View {
         borderWidth: CGFloat = 1,
         isHovering: Bool = false,
         hasGlow: Bool = false,
-        glowColor: Color = .blue,
+        glowColor: Color = Color.blue,
         @ViewBuilder content: () -> Content
     ) {
         self.content = content()
@@ -76,7 +76,7 @@ struct GlassCard<Content: View>: View {
     // MARK: - Glass Background
     private var glassBackground: some View {
         ZStack {
-            // Base material blur
+            // Base material blur using existing GlassIntensity.material
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(intensity.material)
             
@@ -121,9 +121,9 @@ struct GlassCard<Content: View>: View {
     }
 }
 
-// MARK: - Convenience Initializers for WorkerDashboardView
+// MARK: - Convenience Initializers
 extension GlassCard {
-    // Convenience initializer matching the usage in WorkerDashboardView
+    // Convenience initializer with just intensity
     init(
         intensity: GlassIntensity = .regular,
         @ViewBuilder content: @escaping () -> Content
@@ -136,12 +136,12 @@ extension GlassCard {
             borderWidth: 1,
             isHovering: false,
             hasGlow: false,
-            glowColor: .blue,
+            glowColor: Color.blue,
             content: content
         )
     }
     
-    // Additional convenience init with just corner radius
+    // Convenience initializer with corner radius and padding
     init(
         intensity: GlassIntensity = .regular,
         cornerRadius: CGFloat,
@@ -156,7 +156,7 @@ extension GlassCard {
             borderWidth: 1,
             isHovering: false,
             hasGlow: false,
-            glowColor: .blue,
+            glowColor: Color.blue,
             content: content
         )
     }
