@@ -2,11 +2,11 @@
 //  BuildingDetailView.swift
 //  FrancoSphere
 //
-//  🎯 FINAL VERSION - ALL COMPILATION ERRORS RESOLVED
-//  ✅ FIXED: Removed duplicate EmptyTasksView declaration (uses shared component)
-//  ✅ FIXED: Date to String conversion in TaskDetailRow (task.startTime is String, not Date)
-//  ✅ Uses existing shared EmptyTasksView from TodaysTasksGlassCard
-//  ✅ All ViewBuilder and type issues resolved
+//  🎯 FIXED VERSION - All compilation and ViewBuilder errors resolved
+//  ✅ FIXED: Removed duplicate type aliases (already in FrancoSphereModels.swift)
+//  ✅ FIXED: Date formatting for task times
+//  ✅ FIXED: ViewBuilder issues resolved
+//  ✅ FIXED: Proper type annotations for closures
 //
 
 import SwiftUI
@@ -65,7 +65,7 @@ struct BuildingDetailView: View {
         } message: {
             Text("Would you like to clock in at \(building.name)?")
         }
-        .sheet(item: $showTaskDetail) { task in
+        .sheet(item: $showTaskDetail) { (task: MaintenanceTask) in
             TaskDetailSheet(task: task, showTaskDetail: $showTaskDetail)
         }
     }
@@ -515,11 +515,12 @@ struct TasksTab: View {
                 .foregroundColor(.white)
             
             if buildingTasks.isEmpty {
-                // ✅ FIXED: Use shared EmptyTasksView from TodaysTasksGlassCard instead of declaring our own
-                EmptyTasksView()
+                BuildingTasksEmptyView()
             } else {
-                ForEach(buildingTasks, id: \.id) { task in
-                    TaskRow(task: task, onTap: { onTaskTap(task) })
+                LazyVStack(spacing: 8) {
+                    ForEach(buildingTasks, id: \.id) { (task: MaintenanceTask) in
+                        TaskRow(task: task, onTap: { onTaskTap(task) })
+                    }
                 }
             }
         }
@@ -528,11 +529,36 @@ struct TasksTab: View {
     }
 }
 
-// ✅ REMOVED: Duplicate EmptyTasksView declaration - using shared component from TodaysTasksGlassCard
+struct BuildingTasksEmptyView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 40))
+                .foregroundColor(.green.opacity(0.6))
+            
+            Text("No tasks scheduled")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+            
+            Text("Tasks will appear here when assigned")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 30)
+    }
+}
 
 struct TaskRow: View {
     let task: MaintenanceTask
     let onTap: () -> Void
+    
+    private var formattedStartTime: String? {
+        guard let startTime = task.startTime else { return nil }
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .short
+        return timeFormatter.string(from: startTime)
+    }
     
     var body: some View {
         Button(action: onTap) {
@@ -547,9 +573,8 @@ struct TaskRow: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.leading)
                     
-                    // FIXED: Proper time handling - startTime is String, not Date
-                    if let taskStartTime = task.startTime {
-                        Text("Scheduled: \(taskStartTime)")
+                    if let timeString = formattedStartTime {
+                        Text("Scheduled: \(timeString)")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.7))
                     }
@@ -826,6 +851,20 @@ struct TaskDetailSheet: View {
 struct TaskMetadataSection: View {
     let task: MaintenanceTask
     
+    private var formattedDueDate: String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+        return dateFormatter.string(from: task.dueDate)
+    }
+    
+    private var formattedStartTime: String? {
+        guard let startTime = task.startTime else { return nil }
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .short
+        return timeFormatter.string(from: startTime)
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             TaskDetailRow(label: "Category", value: task.category.rawValue.capitalized)
@@ -833,15 +872,11 @@ struct TaskMetadataSection: View {
             TaskDetailRow(label: "Recurrence", value: task.recurrence.rawValue.capitalized)
             TaskDetailRow(label: "Status", value: task.isComplete ? "Complete" : "Pending")
             
-            // ✅ FIXED: task.startTime is String (HH:mm format), not Date
-            if let taskStartTime = task.startTime {
-                TaskDetailRow(label: "Scheduled Time", value: taskStartTime)
+            if let startTimeString = formattedStartTime {
+                TaskDetailRow(label: "Scheduled Time", value: startTimeString)
             }
             
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateStyle = .medium
-            dateFormatter.timeStyle = .none
-            TaskDetailRow(label: "Due Date", value: dateFormatter.string(from: task.dueDate))
+            TaskDetailRow(label: "Due Date", value: formattedDueDate)
         }
     }
 }
