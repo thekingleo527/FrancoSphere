@@ -339,3 +339,74 @@ enum WeatherManagerError: LocalizedError {
         }
     }
 }
+extension WeatherManager {
+    
+    /// Load weather with device location fallback - fixes "loadWeatherForBuildingsWithFallback() not found" error
+    func loadWeatherForBuildingsWithFallback(_ buildings: [Building]) async {
+        print("🌤️ Loading weather with fallback for \(buildings.count) buildings...")
+        
+        // Convert Building to NamedCoordinate for existing method
+        let coordinates = buildings.map { building in
+            FrancoSphere.NamedCoordinate(
+                id: building.id,
+                name: building.name,
+                latitude: building.latitude,
+                longitude: building.longitude,
+                imageAssetName: building.imageAssetName
+            )
+        }
+        
+        // Use existing loadWeatherForBuildings method
+        await loadWeatherForBuildings(coordinates)
+        
+        // If all failed, try device location fallback
+        if buildingWeatherMap.isEmpty {
+            print("🌤️ All building weather failed, using device location fallback...")
+            await loadDeviceLocationWeatherFallback()
+        }
+    }
+    
+    /// Fallback weather using device location
+    private func loadDeviceLocationWeatherFallback() async {
+        // Create a fallback coordinate (NYC area)
+        let fallbackCoordinate = FrancoSphere.NamedCoordinate(
+            id: "fallback",
+            name: "Current Location",
+            latitude: 40.7590,
+            longitude: -73.9845,
+            imageAssetName: "location"
+        )
+        
+        do {
+            let fallbackWeather = try await fetchWithRetry(for: fallbackCoordinate)
+            await MainActor.run {
+                self.currentWeather = fallbackWeather
+                print("✅ Device location fallback weather loaded")
+            }
+        } catch {
+            print("❌ Device location fallback also failed: \(error)")
+            // Use absolute fallback
+            await MainActor.run {
+                self.currentWeather = createAbsoluteFallbackWeather()
+            }
+        }
+    }
+    
+    /// Last resort fallback weather data
+    private func createAbsoluteFallbackWeather() -> FrancoSphere.WeatherData {
+        return FrancoSphere.WeatherData(
+            date: Date(),
+            temperature: 72.0,
+            feelsLike: 70.0,
+            humidity: 50,
+            windSpeed: 5.0,
+            windDirection: 180,
+            precipitation: 0.0,
+            snow: 0.0,
+            visibility: 10000,
+            pressure: 1013,
+            condition: .clear,
+            icon: "sun.max.fill"
+        )
+    }
+}

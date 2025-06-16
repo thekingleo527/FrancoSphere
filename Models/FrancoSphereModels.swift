@@ -42,10 +42,6 @@ public enum FrancoSphere {
             self.imageAssetName = imageAssetName
         }
 
-        public var coordinate: CLLocationCoordinate2D {
-            .init(latitude: latitude, longitude: longitude)
-        }
-
         /// Full list of buildings (18 entries including missing ones)
         public static var allBuildings: [NamedCoordinate] {
             return [
@@ -988,7 +984,32 @@ public enum FrancoSphere {
             self.specialRole = specialRole
         }
     }
-    
+    // MARK: - Worker Assignment for Building Detail Views
+        
+        public struct FrancoWorkerAssignment: Identifiable, Codable, Hashable {
+            public let id: String
+            public let workerId: String
+            public let workerName: String
+            public let buildingId: String
+            public let shift: String?
+            public let specialRole: String?
+            
+            public init(
+                id: String = UUID().uuidString,
+                workerId: String,
+                workerName: String,
+                buildingId: String,
+                shift: String? = nil,
+                specialRole: String? = nil
+            ) {
+                self.id = id
+                self.workerId = workerId
+                self.workerName = workerName
+                self.buildingId = buildingId
+                self.shift = shift
+                self.specialRole = specialRole
+            }
+        }
     // MARK: — 4b) Worker-Routine Models
 
     public struct WorkerRoutineSummary: Identifiable, Codable, Hashable {
@@ -1782,7 +1803,6 @@ public enum FrancoSphere {
 
 // Core Models
 public typealias NamedCoordinate      = FrancoSphere.NamedCoordinate
-public typealias Building             = NamedCoordinate  // Backwards compatibility
 
 // Weather Models
 public typealias WeatherCondition     = FrancoSphere.WeatherCondition
@@ -1831,3 +1851,32 @@ public typealias FSTaskItem           = FrancoSphere.FSTaskItem
 
 // AI Models
 public typealias AIScenario           = FrancoSphere.AIScenario
+
+// MARK: - Phase 2 Extensions for Missing Properties
+extension FrancoSphere.NamedCoordinate {
+    // Add missing address property
+    public var address: String? {
+        // Use real addresses from production
+        switch id {
+        case "1": return "12 West 18th Street, New York, NY"
+        case "2": return "29-31 East 20th Street, New York, NY"
+        case "3": return "36 Walker Street, New York, NY"
+        case "4": return "41 Elizabeth Street, New York, NY"
+        case "5": return "68 Perry Street, New York, NY"
+        case "6": return "104 Franklin Street, New York, NY"
+        case "7": return "112 West 18th Street, New York, NY"
+        case "8": return "117 West 17th Street, New York, NY"
+        case "9": return "123 1st Avenue, New York, NY"
+        case "10": return "131 Perry Street, New York, NY"
+        case "11": return "133 East 15th Street, New York, NY"
+        case "12": return "135-139 West 17th Street, New York, NY"
+        case "13": return "136 West 17th Street, New York, NY"
+        case "14": return "138 West 17th Street, New York, NY"
+        case "15": return "142-148 West 17th Street, New York, NY"
+        case "16": return "20 Waterside Plaza, New York, NY 10010"
+        case "17": return "178 Spring Street, New York, NY"
+        case "18": return "115 7th Avenue, New York, NY"
+        default: return nil
+        }
+    }
+}

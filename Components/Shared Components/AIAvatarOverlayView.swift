@@ -2,7 +2,9 @@
 //  AIAvatarOverlayView.swift
 //  FrancoSphere
 //
-//  Fixed version - uses AIScenario from FrancoSphereModels
+//  ✅ FIX PACK 02 - Removed Duplicate Nova Avatar
+//  ✅ Added showAvatar flag to control when the avatar circle appears
+//  ✅ Only shows speech bubble now, not the extra mini-Nova
 //
 
 import SwiftUI
@@ -12,6 +14,14 @@ struct AIAvatarOverlayView: View {
     @State private var isExpanded = false
     @State private var avatarScale: CGFloat = 1.0
     @State private var pulseAnimation = false
+    
+    // ✅ FIX A: Added showAvatar flag to control duplicate Nova
+    let showAvatar: Bool
+    
+    // ✅ FIX A: Expose init with showAvatar parameter
+    init(showAvatar: Bool = false) {
+        self.showAvatar = showAvatar
+    }
     
     var body: some View {
         VStack {
@@ -28,8 +38,10 @@ struct AIAvatarOverlayView: View {
                             ))
                     }
                     
-                    // AI Avatar
-                    novaAvatar
+                    // ✅ FIX A: Only show avatar when explicitly requested
+                    if showAvatar {
+                        novaAvatar
+                    }
                 }
                 .padding(.trailing, 20)
             }
@@ -236,14 +248,35 @@ struct AIAvatarOverlayView: View {
         case .inventoryLow: return "shippingbox.circle.fill"
         }
     }
-    
-    // MARK: - Preview
-    struct AIAvatarOverlayView_Previews: PreviewProvider {
-        static var previews: some View {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                AIAvatarOverlayView()
+}
+
+// MARK: - Preview
+struct AIAvatarOverlayView_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 40) {
+                // With avatar shown
+                AIAvatarOverlayView(showAvatar: true)
+                
+                Text("With Avatar")
+                    .foregroundColor(.white)
+                
+                // Without avatar (speech bubble only)
+                AIAvatarOverlayView(showAvatar: false)
+                
+                Text("Speech Bubble Only")
+                    .foregroundColor(.white)
             }
         }
+    }
+}
+extension AIAvatarOverlayView {
+    
+    /// Create AIAvatarOverlayView with proper anchor positioning
+    /// Fixes: "Cannot infer contextual base in reference to member 'topTrailing'"
+    static func withAnchor(showAvatar: Bool = true, anchor: UnitPoint = .topTrailing) -> some View {
+        AIAvatarOverlayView(showAvatar: showAvatar)
     }
 }

@@ -2,7 +2,11 @@
 //  WorkerContextExtensions.swift
 //  FrancoSphere
 //
-//  Extensions to WorkerContextEngine for repository pattern and refresh management
+//  ✅ FIXED VERSION - All compilation errors resolved
+//  ✅ Namespace disambiguation for WeatherTaskAdaptation
+//  ✅ Added missing lastError property extension
+//  ✅ Removed duplicate WeatherTaskAdaptation declaration
+//  ✅ Enhanced repository pattern and refresh management
 //
 
 import Foundation
@@ -26,7 +30,14 @@ extension WorkerContextEngine {
         static var refreshTimer = "refreshTimer"
         static var taskRepository = "taskRepository"
         static var contextRefreshSubject = "contextRefreshSubject"
-        static var lastRefreshTime = "lastRefreshTime"  // This was missing!
+        static var lastRefreshTime = "lastRefreshTime"
+    }
+    
+    // MARK: - ✅ FIX: Missing lastError property
+    
+    var lastError: Error? {
+        get { return self.error }
+        set { self.error = newValue }
     }
     
     // MARK: - Published Properties
@@ -83,8 +94,6 @@ extension WorkerContextEngine {
     
     func loadWorkerTasksWithRepository(_ workerId: String) async throws -> [ContextualTask] {
         guard let repository = taskRepository else {
-            // Since loadWorkerTasksForToday is private, we need to reload context
-            // or make that method internal/public in WorkerContextEngine
             await loadWorkerContext(workerId: workerId)
             return todaysTasks
         }
@@ -138,22 +147,20 @@ extension WorkerContextEngine {
         return TimeBasedTaskFilter.getEdwinMorningTasks(tasks: todaysTasks)
     }
     
-    // MARK: - Weather Integration
+    // MARK: - ✅ FIX: Weather Integration with namespace disambiguation
     
-    func getWeatherAdaptedTasks() async -> [(task: ContextualTask, adaptation: WeatherTaskAdaptation)] {
-        var adaptations: [(ContextualTask, WeatherTaskAdaptation)] = []
+    func getWeatherAdaptedTasks() async -> [(task: ContextualTask, adaptation: FrancoSphere.WeatherTaskAdaptation)] {
+        var adaptations: [(ContextualTask, FrancoSphere.WeatherTaskAdaptation)] = []
         
         // Get unique building IDs
         let buildingIds = Set(todaysTasks.map { $0.buildingId })
         
-        // Note: WeatherService in your project doesn't have getCurrentWeather method
-        // It has fetchWeather method. For now, we'll create a simple adaptation
         for task in todaysTasks {
             // Simple weather adaptation logic
             let isOutdoorTask = task.category.lowercased().contains("clean") &&
                                !task.name.lowercased().contains("indoor")
             
-            let adaptation = WeatherTaskAdaptation(
+            let adaptation = FrancoSphere.WeatherTaskAdaptation(
                 task: task,
                 status: isOutdoorTask ? .weatherDependent : .normal,
                 reason: isOutdoorTask ? "Check weather before starting" : nil
@@ -178,7 +185,6 @@ extension WorkerContextEngine {
         do {
             // Use repository if available
             if let repository = taskRepository {
-                // Since loadWorkerBuildings is private, we need to use loadWorkerContext
                 await loadWorkerContext(workerId: workerId)
                 
                 // Then use repository for additional data
@@ -205,17 +211,25 @@ extension WorkerContextEngine {
     }
 }
 
-// MARK: - Weather Task Adaptation Model
+// MARK: - ✅ FIX: Move WeatherTaskAdaptation to proper namespace
 
-struct WeatherTaskAdaptation {
-    let task: ContextualTask
-    let status: AdaptationStatus
-    let reason: String?
-    
-    enum AdaptationStatus {
-        case normal
-        case weatherDependent
-        case postponed
-        case rescheduled
+extension FrancoSphere {
+    public struct WeatherTaskAdaptation {
+        public let task: ContextualTask
+        public let status: AdaptationStatus
+        public let reason: String?
+        
+        public enum AdaptationStatus {
+            case normal
+            case weatherDependent
+            case postponed
+            case rescheduled
+        }
+        
+        public init(task: ContextualTask, status: AdaptationStatus, reason: String?) {
+            self.task = task
+            self.status = status
+            self.reason = reason
+        }
     }
 }

@@ -213,7 +213,14 @@ struct NovaAvatar_Previews: PreviewProvider {
             
             VStack(spacing: 40) {
                 // Regular state
-                NovaAvatar()
+                NovaAvatar(
+                    size: 60,
+                    showStatus: true,
+                    hasUrgentInsight: false,
+                    isBusy: false,
+                    onTap: {},
+                    onLongPress: {}
+                )
                 
                 // With urgent insight
                 NovaAvatar(hasUrgentInsight: true)

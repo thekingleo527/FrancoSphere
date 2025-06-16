@@ -188,22 +188,16 @@ struct DashboardTaskDetailView: View {
         isUpdatingStatus = true
         
         Task {
-            do {
-                // Update the completion state
-                await TaskManager.shared.toggleTaskCompletionAsync(taskID: task.id, completedBy: "Current User")
-                
-                await MainActor.run {
-                    isComplete.toggle()
-                    isUpdatingStatus = false
-                }
-            } catch {
-                await MainActor.run {
-                    isUpdatingStatus = false
-                    print("Error updating task completion: \(error)")
+                    // Update the completion state
+                    await TaskManager.shared.toggleTaskCompletionAsync(taskID: task.id, completedBy: "Current User")
+                    
+                    await MainActor.run {
+                        isComplete.toggle()
+                        isUpdatingStatus = false
+                    }
                 }
             }
         }
-    }
     
     private func loadBuildingInfo() async {
         do {
@@ -215,7 +209,6 @@ struct DashboardTaskDetailView: View {
             }
         }
     }
-}
 
 // MARK: - Preview
 

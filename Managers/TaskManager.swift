@@ -1104,3 +1104,76 @@ actor TaskManager {
         return (completed, pending, overdue)
     }
 }
+// MARK: - TaskManagerViewModel Wrapper for ObservableObject Compliance
+@MainActor
+public class TaskManagerViewModel: ObservableObject {
+    public static let shared = TaskManagerViewModel()
+    private let taskManager = TaskManager.shared
+    
+    @Published public var tasks: [FrancoSphere.MaintenanceTask] = []
+    @Published public var isLoading = false
+    @Published public var error: Error?
+    
+    private init() {}
+    
+    // Wrapper for fetchTasks(forWorker:date:)
+    public func fetchTasks(forWorker workerId: String, date: Date) async {
+        isLoading = true
+        error = nil
+        do {
+            tasks = await taskManager.fetchTasksAsync(forWorker: workerId, date: date)
+        } catch {
+            self.error = error
+            tasks = []
+        }
+        isLoading = false
+    }
+    
+    // Wrapper for toggleTaskCompletion
+    public func toggleTaskCompletion(taskID: String, completedBy: String = "System") async {
+        await taskManager.toggleTaskCompletionAsync(taskID: taskID, completedBy: completedBy)
+    }
+    
+    // Wrapper for createTask
+    public func createTask(_ task: FrancoSphere.MaintenanceTask) async -> Bool {
+        return await taskManager.createTaskAsync(task)
+    }
+    
+    // Wrapper for fetchTasks(forBuilding:includePastTasks:)
+    public func fetchTasks(forBuilding buildingId: String, includePastTasks: Bool = false) async {
+        isLoading = true
+        error = nil
+        tasks = await taskManager.fetchTasksAsync(forBuilding: buildingId, includePastTasks: includePastTasks)
+        isLoading = false
+    }
+    
+    // Wrapper for getUpcomingTasks
+    public func getUpcomingTasks(forWorker workerId: String, days: Int = 7) -> [FrancoSphere.MaintenanceTask] {
+        return taskManager.getUpcomingTasks(forWorker: workerId, days: days)
+    }
+    
+    // Wrapper for getTasksByCategory
+    public func getTasksByCategory(forWorker workerId: String) -> [FrancoSphere.TaskCategory: [FrancoSphere.MaintenanceTask]] {
+        return taskManager.getTasksByCategory(forWorker: workerId)
+    }
+    
+    // Wrapper for getPastDueTasks
+    public func getPastDueTasks(forWorker workerId: String) -> [FrancoSphere.MaintenanceTask] {
+        return taskManager.getPastDueTasks(forWorker: workerId)
+    }
+    
+    // Wrapper for fetchMaintenanceHistory
+    public func fetchMaintenanceHistory(forBuilding buildingId: String, limit: Int = 20) async -> [FrancoSphere.MaintenanceRecord] {
+        return await taskManager.fetchMaintenanceHistoryAsync(forBuilding: buildingId, limit: limit)
+    }
+    
+    // Wrapper for createTaskFromTemplate
+    public func createTaskFromTemplate(template: FrancoTaskTemplate, buildingId: String, dueDate: Date, workerIds: [String]) -> Bool {
+        return taskManager.createTaskFromTemplate(template: template, buildingId: buildingId, dueDate: dueDate, workerIds: workerIds)
+    }
+    
+    // Wrapper for getAllTaskTemplates
+    public func getAllTaskTemplates() -> [FrancoTaskTemplate] {
+        return taskManager.getAllTaskTemplates()
+    }
+}

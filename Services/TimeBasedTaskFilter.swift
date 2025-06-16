@@ -2,21 +2,39 @@
 //  TimeBasedTaskFilter.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/8/25.
-//
-
-
-//
-//  TimeBasedTaskFilter.swift
-//  FrancoSphere
-//
-//  In-memory task filtering by time - no database access
-//  LOCATION: Place this file in /Services/ folder
+//  ✅ SINGLE SOURCE OF TRUTH for TaskProgress struct
+//  ✅ Added CoreLocation import
+//  ✅ Fixed all parameter order issues
 //
 
 import Foundation
+import CoreLocation  // ✅ FIXED: Added missing import
 
 struct TimeBasedTaskFilter {
+    
+    // ✅ MASTER TaskProgress Definition - DO NOT DUPLICATE ELSEWHERE
+    struct TaskProgress {
+        let hourlyDistribution: [Int: Int]
+        let completedHours: Set<Int>
+        let currentHour: Int
+        let totalTasks: Int
+        let completedTasks: Int
+        
+        // ✅ FIXED: Proper parameter order
+        init(
+            hourlyDistribution: [Int: Int],
+            completedHours: Set<Int>,
+            currentHour: Int,
+            totalTasks: Int,
+            completedTasks: Int
+        ) {
+            self.hourlyDistribution = hourlyDistribution
+            self.completedHours = completedHours
+            self.currentHour = currentHour
+            self.totalTasks = totalTasks
+            self.completedTasks = completedTasks
+        }
+    }
     
     // MARK: - Time Window Filtering
     
@@ -32,7 +50,7 @@ struct TimeBasedTaskFilter {
         let windowEndMinutes = currentTotalMinutes + (windowHours * 60)
         
         return tasks.filter { task in
-            guard let startTime = task.startTime else { return true } // No time = always visible
+            guard let startTime = task.startTime else { return true }
             
             let components = startTime.split(separator: ":")
             guard components.count == 2,
@@ -41,8 +59,7 @@ struct TimeBasedTaskFilter {
             
             let taskTotalMinutes = hour * 60 + minute
             
-            // Show tasks within the time window
-            return taskTotalMinutes >= currentTotalMinutes && 
+            return taskTotalMinutes >= currentTotalMinutes &&
                    taskTotalMinutes <= windowEndMinutes
         }
     }
@@ -64,7 +81,7 @@ struct TimeBasedTaskFilter {
         
         for task in tasks {
             guard let startTime = task.startTime else {
-                current.append(task) // No time = current
+                current.append(task)
                 continue
             }
             
@@ -79,39 +96,17 @@ struct TimeBasedTaskFilter {
             let taskTotalMinutes = hour * 60 + minute
             
             if task.status == "completed" {
-                // Completed tasks don't go in any active category
                 continue
             } else if taskTotalMinutes < currentTotalMinutes - 30 {
-                // More than 30 minutes past start time
                 overdue.append(task)
             } else if taskTotalMinutes <= currentTotalMinutes + 30 {
-                // Within 30 minutes of now
                 current.append(task)
             } else {
-                // Future tasks
                 upcoming.append(task)
             }
         }
         
         return (upcoming, current, overdue)
-    }
-    
-    // MARK: - Worker Schedule Filtering
-    
-    static func filterByWorkerSchedule(
-        tasks: [ContextualTask],
-        workerStartHour: Int = 6,
-        workerEndHour: Int = 15
-    ) -> [ContextualTask] {
-        tasks.filter { task in
-            guard let startTime = task.startTime else { return true }
-            
-            let components = startTime.split(separator: ":")
-            guard components.count >= 1,
-                  let hour = Int(components[0]) else { return true }
-            
-            return hour >= workerStartHour && hour < workerEndHour
-        }
     }
     
     // MARK: - Smart Suggestions
@@ -122,21 +117,14 @@ struct TimeBasedTaskFilter {
     ) -> ContextualTask? {
         let categorized = categorizeByTimeStatus(tasks: tasks, currentTime: currentTime)
         
-        // Priority order:
-        // 1. Overdue urgent tasks
-        // 2. Current urgent tasks
-        // 3. Any overdue task
-        // 4. Any current task
-        // 5. Next upcoming task
-        
-        if let urgentOverdue = categorized.overdue.first(where: { 
-            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high" 
+        if let urgentOverdue = categorized.overdue.first(where: {
+            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high"
         }) {
             return urgentOverdue
         }
         
-        if let urgentCurrent = categorized.current.first(where: { 
-            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high" 
+        if let urgentCurrent = categorized.current.first(where: {
+            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high"
         }) {
             return urgentCurrent
         }
@@ -152,30 +140,107 @@ struct TimeBasedTaskFilter {
         return categorized.upcoming.first
     }
     
-    // MARK: - Time-Based Task Scheduler Integration
+    // MARK: - Context-based Filtering
     
-    static func getTasksForTimeSlot(
-        tasks: [ContextualTask],
-        hour: Int,
-        minute: Int = 0,
-        windowMinutes: Int = 60
-    ) -> [ContextualTask] {
-        let targetTotalMinutes = hour * 60 + minute
-        let windowStart = targetTotalMinutes
-        let windowEnd = targetTotalMinutes + windowMinutes
+    static func tasksForContext(
+        all tasks: [ContextualTask],
+        clockedInBuildingId: String? = nil,
+        userLocation: CLLocation? = nil,  // ✅ FIXED: CLLocation now available
+        now: Date = Date()
+    ) -> FilteredTaskResult {
         
-        return tasks.filter { task in
-            guard let startTime = task.startTime else { return false }
+        let contextBuildingId: String?
+        let contextBuildingName: String?
+        let isFilteredByBuilding: Bool
+        
+        if let clockedId = clockedInBuildingId {
+            contextBuildingId = clockedId
+            contextBuildingName = tasks.first { $0.buildingId == clockedId }?.buildingName
+            isFilteredByBuilding = true
+        } else {
+            contextBuildingId = nil
+            contextBuildingName = nil
+            isFilteredByBuilding = false
+        }
+        
+        var filteredTasks: [ContextualTask] = []
+        
+        if isFilteredByBuilding, let buildingId = contextBuildingId {
+            filteredTasks = tasks.filter { $0.buildingId == buildingId }
+            
+            let urgentFromOthers = tasks.filter { task in
+                task.buildingId != buildingId &&
+                task.status != "completed" &&
+                (isTaskOverdue(task, now: now) ||
+                 task.urgencyLevel.lowercased() == "urgent" ||
+                 task.urgencyLevel.lowercased() == "high")
+            }
+            
+            filteredTasks.append(contentsOf: urgentFromOthers)
+        } else {
+            filteredTasks = tasks
+        }
+        
+        let categorized = categorizeByTimeStatus(tasks: filteredTasks, currentTime: now)
+        let allTasksCategorized = categorizeByTimeStatus(tasks: tasks, currentTime: now)
+        
+        let sortedTasks = sortFilteredTasks(
+            overdue: categorized.overdue,
+            current: categorized.current,
+            upcoming: categorized.upcoming
+        )
+        
+        let completedCount = tasks.filter { $0.status == "completed" }.count
+        
+        return FilteredTaskResult(
+            tasks: sortedTasks,
+            totalCount: tasks.count,
+            overdueCount: allTasksCategorized.overdue.count,
+            completedCount: completedCount,
+            currentCount: categorized.current.count,
+            upcomingCount: categorized.upcoming.count,
+            contextBuildingName: contextBuildingName,
+            contextBuildingId: contextBuildingId,
+            isFilteredByBuilding: isFilteredByBuilding
+        )
+    }
+    
+    // ✅ FIXED: TaskProgress return type now unambiguous
+    static func calculateTaskProgress(
+        tasks: [ContextualTask],
+        now: Date = Date()
+    ) -> TaskProgress {
+        let calendar = Calendar.current
+        let currentHour = calendar.component(.hour, from: now)
+        
+        var hourlyDistribution: [Int: Int] = [:]
+        var completedHours: Set<Int> = []
+        
+        for task in tasks {
+            guard let startTime = task.startTime else { continue }
             
             let components = startTime.split(separator: ":")
-            guard components.count == 2,
-                  let taskHour = Int(components[0]),
-                  let taskMinute = Int(components[1]) else { return false }
+            guard components.count >= 2,
+                  let hour = Int(components[0]) else { continue }
             
-            let taskTotalMinutes = taskHour * 60 + taskMinute
+            hourlyDistribution[hour, default: 0] += 1
             
-            return taskTotalMinutes >= windowStart && taskTotalMinutes < windowEnd
+            if task.status == "completed" {
+                completedHours.insert(hour)
+            }
         }
+        
+        let totalTasks = tasks.count
+        let completedTasks = tasks.filter { $0.status == "completed" }.count
+        
+        // ✅ FIXED: Correct parameter order
+        return TaskProgress(
+            hourlyDistribution: hourlyDistribution,
+            completedHours: completedHours,
+            currentHour: currentHour,
+            totalTasks: totalTasks,
+            completedTasks: completedTasks
+        )
     }
     
     // MARK: - Edwin-Specific Schedule
@@ -203,6 +268,24 @@ struct TimeBasedTaskFilter {
             }
             
             return task1.buildingName < task2.buildingName
+        }
+    }
+    
+    // MARK: - Worker Schedule Filtering
+    
+    static func filterByWorkerSchedule(
+        tasks: [ContextualTask],
+        workerStartHour: Int = 6,
+        workerEndHour: Int = 15
+    ) -> [ContextualTask] {
+        tasks.filter { task in
+            guard let startTime = task.startTime else { return true }
+            
+            let components = startTime.split(separator: ":")
+            guard components.count >= 1,
+                  let hour = Int(components[0]) else { return true }
+            
+            return hour >= workerStartHour && hour < workerEndHour
         }
     }
     
@@ -252,6 +335,68 @@ struct TimeBasedTaskFilter {
             return "In \(difference) min"
         } else {
             return "In \(difference / 60) hr \(difference % 60) min"
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private static func isTaskOverdue(_ task: ContextualTask, now: Date) -> Bool {
+        guard task.status != "completed",
+              let startTime = task.startTime else { return false }
+        
+        let components = startTime.split(separator: ":")
+        guard components.count >= 2,
+              let hour = Int(components[0]),
+              let minute = Int(components[1]) else { return false }
+        
+        let calendar = Calendar.current
+        let currentHour = calendar.component(.hour, from: now)
+        let currentMinute = calendar.component(.minute, from: now)
+        
+        let taskMinutes = hour * 60 + minute
+        let currentMinutes = currentHour * 60 + currentMinute
+        
+        return taskMinutes < currentMinutes - 30
+    }
+    
+    private static func sortFilteredTasks(
+        overdue: [ContextualTask],
+        current: [ContextualTask],
+        upcoming: [ContextualTask]
+    ) -> [ContextualTask] {
+        var result: [ContextualTask] = []
+        
+        let sortedOverdue = overdue.sorted { task1, task2 in
+            if task1.urgencyLevel != task2.urgencyLevel {
+                return urgencyPriority(task1.urgencyLevel) > urgencyPriority(task2.urgencyLevel)
+            }
+            return (task1.startTime ?? "") < (task2.startTime ?? "")
+        }
+        
+        let sortedCurrent = current.sorted { task1, task2 in
+            if task1.urgencyLevel != task2.urgencyLevel {
+                return urgencyPriority(task1.urgencyLevel) > urgencyPriority(task2.urgencyLevel)
+            }
+            return (task1.startTime ?? "") < (task2.startTime ?? "")
+        }
+        
+        let sortedUpcoming = upcoming.sorted { task1, task2 in
+            return (task1.startTime ?? "") < (task2.startTime ?? "")
+        }
+        
+        result.append(contentsOf: sortedOverdue)
+        result.append(contentsOf: sortedCurrent)
+        result.append(contentsOf: sortedUpcoming)
+        
+        return result
+    }
+    
+    private static func urgencyPriority(_ urgency: String) -> Int {
+        switch urgency.lowercased() {
+        case "urgent", "high": return 3
+        case "medium": return 2
+        case "low": return 1
+        default: return 0
         }
     }
 }

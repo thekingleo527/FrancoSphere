@@ -316,3 +316,41 @@ enum InitializationError: LocalizedError {
 }
 
 // REMOVED: DataInitializationView struct (it's in DataInitializationView.swift)
+extension DataInitializationManager {
+    
+    /// Run schema migration as part of app initialization
+    func runSchemaMigration() async throws {
+        log("🔧 Running schema migration patch...")
+        currentStatus = "Applying database fixes..."
+        initializationProgress = 0.05
+        
+        do {
+            // Apply the patch
+            try await SchemaMigrationPatch.applyPatch()
+            log("✅ Schema migration completed")
+            
+            // Verify Edwin now has buildings
+            let hasBuildings = await SchemaMigrationPatch.edwinHasBuildings()
+            if hasBuildings {
+                log("🎉 Edwin now has building assignments!")
+            } else {
+                log("⚠️ Edwin still has no buildings - may need manual fix")
+            }
+            
+        } catch {
+            log("❌ Schema migration failed: \(error)")
+            throw error
+        }
+    }
+    
+    /// Enhanced initialization that includes schema fix
+    func initializeWithSchemaPatch() async throws -> InitializationStatus {
+        log("🚀 Starting enhanced initialization with schema patch...")
+        
+        // Step 1: Run schema migration first
+        try await runSchemaMigration()
+        
+        // Step 2: Run normal initialization
+        return try await initializeAllData()
+    }
+}

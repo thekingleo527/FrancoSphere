@@ -2,19 +2,16 @@
 //  HeaderV3B.swift
 //  FrancoSphere
 //
-//  🚀 HEADER V3-B: COMPACT DESIGN ≤80PT (PHASE-2)
-//  ✅ Row-1: Brand + Worker + Profile (18pt)
-//  ✅ Row-2: NovaAvatar centered + Clock button (28pt)
-//  ✅ Row-3: Next-Task banner (16pt)
-//  ✅ 6pt gaps → Total ≈78pt including padding
-//  ✅ Removed "Inactive/On-site" pill - state shown by green clock button + map markers
+//  🎯 PHASE-2 HEADER IMPLEMENTATION
+//  ✅ ≤80pt total height with Nova avatar centered
+//  ✅ Brand text auto-shrinks, never truncates
+//  ✅ Equal-width layout groups for perfect centering
+//  ✅ Next task banner and clock button integration
 //
 
 import SwiftUI
 
 struct HeaderV3B: View {
-    
-    // MARK: - Properties
     let workerName: String
     let clockedInStatus: Bool
     let onClockToggle: () -> Void
@@ -28,190 +25,148 @@ struct HeaderV3B: View {
     var body: some View {
         VStack(spacing: 6) {
             // Row 1: Brand + Worker + Profile (18pt)
-            row1BrandAndWorker
+            GeometryReader { geometry in
+                let sideWidth = geometry.size.width * 0.35 // 35% each side
+                let centerWidth = geometry.size.width * 0.3 // 30% center
+                
+                HStack(spacing: 0) {
+                    // Left: Brand (35%)
+                    HStack {
+                        Text("FrancoSphere")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(minWidth: 80, alignment: .leading)
+                        Spacer()
+                    }
+                    .frame(width: sideWidth)
+                    
+                    // Center: Spacer (30%)
+                    Spacer()
+                        .frame(width: centerWidth)
+                    
+                    // Right: Worker + Profile (35%)
+                    HStack {
+                        Spacer()
+                        HStack(spacing: 8) {
+                            Text(workerName)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                            
+                            ProfileBadge(
+                                workerName: workerName,
+                                imageUrl: "",
+                                isCompact: true,
+                                onTap: onProfilePress
+                            )
+                        }
+                    }
+                    .frame(width: sideWidth)
+                }
+            }
+            .frame(height: 18)
             
-            // Row 2: Nova Avatar (centered) + Clock Button (28pt)
-            row2NovaAndClock
+            // Row 2: Nova Avatar + Clock Button (28pt)
+            GeometryReader { geometry in
+                let sideWidth = geometry.size.width * 0.35
+                let centerWidth = geometry.size.width * 0.3
+                
+                HStack(spacing: 0) {
+                    // Left: Spacer
+                    Spacer()
+                        .frame(width: sideWidth)
+                    
+                    // Center: Nova Avatar (perfectly centered)
+                    HStack {
+                        Spacer()
+                        NovaAvatar(
+                            size: 44,
+                            showStatus: true,
+                            hasUrgentInsight: hasUrgentWork,
+                            isBusy: isNovaProcessing,
+                            onTap: onNovaPress,
+                            onLongPress: onNovaLongPress
+                        )
+                        Spacer()
+                    }
+                    .frame(width: centerWidth)
+                    
+                    // Right: Clock Button
+                    HStack {
+                        Spacer()
+                        ClockButton(
+                            isClockedIn: clockedInStatus,
+                            onToggle: onClockToggle
+                        )
+                    }
+                    .frame(width: sideWidth)
+                }
+            }
+            .frame(height: 28)
             
             // Row 3: Next Task Banner (16pt)
-            if let nextTaskName = nextTaskName {
-                row3NextTaskBanner(nextTaskName)
+            if let taskName = nextTaskName {
+                HStack {
+                    Image(systemName: hasUrgentWork ? "exclamationmark.triangle.fill" : "clock")
+                        .font(.system(size: 12))
+                        .foregroundColor(hasUrgentWork ? .orange : .blue)
+                    
+                    Text("Next: \(taskName)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    
+                    Spacer()
+                }
+                .frame(height: 16)
+            } else {
+                // Empty row to maintain consistent height
+                Spacer()
+                    .frame(height: 16)
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 6)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.3),
-                    Color.clear
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 0))
+        .frame(maxHeight: 80) // Ensure total height ≤ 80pt
     }
+}
+// Uses shared ProfileBadge component
+// MARK: - Supporting Components
+
+struct ClockButton: View {
+    let isClockedIn: Bool
+    let onToggle: () -> Void
     
-    // MARK: - Row 1: Brand + Worker + Profile (18pt)
-    
-    private var row1BrandAndWorker: some View {
-        HStack(spacing: 12) {
-            // Brand text with auto-shrinking (never truncate)
-            Text("FrancoSphere")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .minimumScaleFactor(0.8)
-                .lineLimit(1)
-            
-            Spacer()
-            
-            // Worker name
-            Text(workerName)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-                .lineLimit(1)
-            
-            // Profile button
-            Button(action: onProfilePress) {
-                Image(systemName: "person.circle")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.8))
-            }
-        }
-        .frame(height: 18)
-    }
-    
-    // MARK: - Row 2: Nova Avatar + Clock Button (28pt)
-    
-    private var row2NovaAndClock: some View {
-        HStack {
-            // Left spacer for centering
-            Spacer()
-            
-            // Nova Avatar (centered, 44pt)
-            Button(action: onNovaPress) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.blue.opacity(0.3),
-                                    Color.purple.opacity(0.2)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.4), lineWidth: 1)
-                        )
-                    
-                    // Nova AI icon
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white)
-                    
-                    // Processing indicator
-                    if isNovaProcessing {
-                        Circle()
-                            .stroke(Color.blue, lineWidth: 2)
-                            .frame(width: 48, height: 48)
-                            .opacity(0.6)
-                            .scaleEffect(1.1)
-                        
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .tint(.white.opacity(0.8))
-                    }
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 4) {
+                Image(systemName: isClockedIn ? "clock.fill" : "clock")
+                    .font(.system(size: 12, weight: .medium))
+                
+                if isClockedIn {
+                    Text("Out")
+                        .font(.system(size: 10, weight: .medium))
+                } else {
+                    Text("In")
+                        .font(.system(size: 10, weight: .medium))
                 }
             }
-            .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.5)
-                    .onEnded { _ in
-                        onNovaLongPress()
-                    }
-            )
-            
-            // Right spacer for centering
-            Spacer()
-            
-            // Clock button (positioned right)
-            clockButton
-        }
-        .frame(height: 28)
-    }
-    
-    // MARK: - Clock Button
-    
-    private var clockButton: some View {
-        Button(action: onClockToggle) {
-            HStack(spacing: 6) {
-                Image(systemName: clockedInStatus ? "checkmark.circle.fill" : "clock")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(clockedInStatus ? .green : .white.opacity(0.8))
-                
-                Text(clockedInStatus ? "Clocked In" : "Clock In")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(clockedInStatus ? .green : .white.opacity(0.8))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(clockedInStatus ? Color.green.opacity(0.2) : Color.white.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(clockedInStatus ? Color.green.opacity(0.4) : Color.white.opacity(0.2), lineWidth: 1)
-                    )
+                    .fill(isClockedIn ? Color.green : Color.blue)
+                    .shadow(radius: 2)
             )
         }
-    }
-    
-    // MARK: - Row 3: Next Task Banner (16pt)
-    
-    private func row3NextTaskBanner(_ taskName: String) -> some View {
-        HStack(spacing: 8) {
-            // Urgency indicator
-            Circle()
-                .fill(hasUrgentWork ? Color.red : Color.blue)
-                .frame(width: 6, height: 6)
-            
-            // Task text
-            Text("Next: \(taskName)")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.8))
-                .lineLimit(1)
-                .truncationMode(.tail)
-            
-            Spacer()
-            
-            // Task count or urgency indicator
-            if hasUrgentWork {
-                Text("URGENT")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.red)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.red.opacity(0.2))
-                    )
-            }
-        }
-        .frame(height: 16)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                )
-        )
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(0.9)
     }
 }
 
@@ -219,30 +174,41 @@ struct HeaderV3B: View {
 
 struct HeaderV3B_Previews: PreviewProvider {
     static var previews: some View {
-        VStack {
-            // Clocked out state
+        VStack(spacing: 20) {
+            // Normal state
             HeaderV3B(
-                workerName: "Edwin Martinez",
+                workerName: "Edwin Lema",
                 clockedInStatus: false,
                 onClockToggle: {},
                 onProfilePress: {},
-                nextTaskName: "Lobby Cleaning",
+                nextTaskName: "HVAC Filter Replacement",
                 hasUrgentWork: false,
                 onNovaPress: {},
                 onNovaLongPress: {},
                 isNovaProcessing: false
             )
             
-            Spacer()
-            
-            // Clocked in state with urgent work
+            // Clocked in with urgent work
             HeaderV3B(
-                workerName: "Edwin Martinez",
+                workerName: "Edwin Lema",
                 clockedInStatus: true,
                 onClockToggle: {},
                 onProfilePress: {},
-                nextTaskName: "Emergency Repair - Water Leak",
+                nextTaskName: "Emergency Repair",
                 hasUrgentWork: true,
+                onNovaPress: {},
+                onNovaLongPress: {},
+                isNovaProcessing: false
+            )
+            
+            // Processing state
+            HeaderV3B(
+                workerName: "Edwin Lema",
+                clockedInStatus: true,
+                onClockToggle: {},
+                onProfilePress: {},
+                nextTaskName: nil,
+                hasUrgentWork: false,
                 onNovaPress: {},
                 onNovaLongPress: {},
                 isNovaProcessing: true

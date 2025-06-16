@@ -338,3 +338,133 @@ extension WorkerContextEngine {
         )
     }
 }
+// MARK: - WorkerDashboardView Integration
+
+extension AIAssistantManager {
+    
+    /// Generate contextual scenario based on worker context - called by WorkerDashboardView
+    func generateContextualScenario(
+        workerId: String,
+        workerName: String,
+        todaysTasks: [ContextualTask],
+        assignedBuildings: [Building],
+        clockedIn: Bool,
+        overdueCount: Int
+    ) {
+        // Determine the most relevant scenario based on context
+        if let scenario = determineContextualScenario(
+            workerId: workerId,
+            workerName: workerName,
+            todaysTasks: todaysTasks,
+            assignedBuildings: assignedBuildings,
+            clockedIn: clockedIn,
+            overdueCount: overdueCount
+        ) {
+            // Add the scenario with relevant context data
+            addScenarioFromBuildings(scenario,
+                                   workerId: workerId,
+                                   todaysTasks: todaysTasks,
+                                   assignedBuildings: assignedBuildings,
+                                   clockedIn: clockedIn,
+                                   overdueCount: overdueCount)
+        }
+    }
+    
+    private func determineContextualScenario(
+        workerId: String,
+        workerName: String,
+        todaysTasks: [ContextualTask],
+        assignedBuildings: [Building],
+        clockedIn: Bool,
+        overdueCount: Int
+    ) -> AIScenario? {
+        
+        // Priority 1: Overdue tasks
+        if overdueCount > 0 {
+            return .pendingTasks
+        }
+        
+        // Priority 2: Incomplete routines
+        let incompleteTasks = todaysTasks.filter { $0.status != "completed" }
+        if incompleteTasks.count > 0 && clockedIn {
+            return .routineIncomplete
+        }
+        
+        // Priority 3: Clock out reminder (if clocked in and near end of day)
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: Date())
+        if clockedIn && hour >= 17 { // After 5 PM
+            return .clockOutReminder
+        }
+        
+        // Priority 4: Weather alerts for outdoor tasks
+        let weatherDependentTasks = todaysTasks.filter { $0.weatherDependent }
+        if !weatherDependentTasks.isEmpty {
+            return .weatherAlert
+        }
+        
+        // Priority 5: Building arrival (if not clocked in and has tasks)
+        if !clockedIn && !todaysTasks.isEmpty {
+            return .buildingArrival
+        }
+        
+        // No immediate scenario needed
+        return nil
+    }
+    
+    private func addScenarioFromBuildings(_ scenario: AIScenario,
+                                        workerId: String,
+                                        todaysTasks: [ContextualTask],
+                                        assignedBuildings: [Building],
+                                        clockedIn: Bool,
+                                        overdueCount: Int) {
+        let buildingName = assignedBuildings.first?.name
+        let taskCount = todaysTasks.count
+        let incompleteTasks = todaysTasks.filter { $0.status != "completed" }
+        let weatherTasks = todaysTasks.filter { $0.weatherDependent }
+        
+        switch scenario {
+        case .pendingTasks:
+            addScenario(.pendingTasks,
+                       buildingName: buildingName,
+                       taskCount: overdueCount)
+            
+        case .routineIncomplete:
+            addScenario(.routineIncomplete,
+                       buildingName: buildingName,
+                       taskCount: incompleteTasks.count)
+            
+        case .clockOutReminder:
+            // Calculate hours worked (simplified)
+            let hoursWorked = 8.0 // Would calculate from actual clock-in time
+            addScenario(.clockOutReminder,
+                       buildingName: buildingName,
+                       hoursWorked: hoursWorked)
+            
+        case .weatherAlert:
+            addScenario(.weatherAlert,
+                       buildingName: buildingName,
+                       taskCount: weatherTasks.count,
+                       condition: "Weather conditions may affect outdoor tasks")
+            
+        case .buildingArrival:
+            addScenario(.buildingArrival,
+                       buildingName: buildingName,
+                       taskCount: taskCount)
+            
+        default:
+            break
+        }
+    }
+}
+extension AIAssistantManager {
+    
+    /// Reset Nova's glow state - fixes "resetGlow() not found" error
+    func resetGlow() {
+        DispatchQueue.main.async {
+            self.isProcessing = false
+            // Reset to default purple glow state
+            print("🟣 Nova glow reset to default state")
+        }
+    }
+}
