@@ -3,7 +3,8 @@
 //  SeedDatabase.swift
 //  FrancoSphere
 //
-//  🔧 PHASE-2 FINAL - Database Schema Migration
+//  🔧 FIXED VERSION - Database Schema Migration with Type Annotations
+//  ✅ FIXED: Type ambiguity issues with explicit annotations
 //  ✅ Idempotent column renames to fix "no such column" errors
 //  ✅ Seeds Edwin's 8 building assignments
 //  ✅ Run once before any database queries
@@ -115,7 +116,7 @@ public class SeedDatabase {
             }
         }
         
-        // Update foreign key references
+        // Update foreign key references with explicit type casting
         try await manager.execute("""
             UPDATE tasks SET building_id = CAST(buildingId AS TEXT) 
             WHERE building_id IS NULL AND buildingId IS NOT NULL
@@ -145,14 +146,15 @@ public class SeedDatabase {
             try await manager.execute("DROP TABLE routine_tasks")
             try await createMissingTables(manager)
             
-            // Restore data with correct column mapping
+            // Restore data with correct column mapping and explicit type handling
             for row in existingData {
-                let workerId = row["worker_id"] ?? row["workerId"] ?? "2"
-                let buildingId = row["building_id"] ?? row["buildingId"] ?? "1"
-                let name = row["name"] ?? row["task_name"] ?? "Maintenance Task"
-                let category = row["category"] ?? "maintenance"
-                let startTime = row["startTime"] ?? row["start_time"] ?? "09:00"
-                let endTime = row["endTime"] ?? row["end_time"] ?? "10:00"
+                // FIXED: Explicit type annotations to resolve ambiguity
+                let workerId: String = (row["worker_id"] as? String) ?? (row["workerId"] as? String) ?? "2"
+                let buildingId: String = (row["building_id"] as? String) ?? (row["buildingId"] as? String) ?? "1"
+                let name: String = (row["name"] as? String) ?? (row["task_name"] as? String) ?? "Maintenance Task"
+                let category: String = (row["category"] as? String) ?? "maintenance"
+                let startTime: String = (row["startTime"] as? String) ?? (row["start_time"] as? String) ?? "09:00"
+                let endTime: String = (row["endTime"] as? String) ?? (row["end_time"] as? String) ?? "10:00"
                 
                 try await manager.execute("""
                     INSERT OR IGNORE INTO routine_tasks 
@@ -197,7 +199,8 @@ public class SeedDatabase {
     private static func seedEdwinAssignments(_ manager: SQLiteManager) async throws {
         print("🏢 Seeding Edwin's 8 building assignments...")
         
-        let assignments = [
+        // FIXED: Explicit tuple type annotations to resolve ambiguity
+        let assignments: [(String, String, String)] = [
             ("2", "Edwin Lema", "8"),   // 131 Perry Street
             ("2", "Edwin Lema", "10"),  // 133 Perry Street
             ("2", "Edwin Lema", "12"),  // 135-139 West 17th
@@ -222,7 +225,8 @@ public class SeedDatabase {
     private static func seedEdwinTasks(_ manager: SQLiteManager) async throws {
         print("📝 Seeding Edwin's routine tasks...")
         
-        let tasks = [
+        // FIXED: Explicit tuple type annotation to resolve ambiguity
+        let tasks: [(String, String, String, String, String, String, String)] = [
             // Morning routine - Stuyvesant Park (Building 17)
             ("2", "17", "Put Mats Out", "06:00", "06:15", "Cleaning", "Basic"),
             ("2", "17", "Park Area Check", "06:15", "06:45", "Inspection", "Basic"),
@@ -243,11 +247,14 @@ public class SeedDatabase {
         ]
         
         for (index, task) in tasks.enumerated() {
+            // FIXED: Explicit type conversion to resolve ambiguity
+            let externalId = "edwin_task_\(index + 1)"
+            
             try await manager.execute("""
                 INSERT OR REPLACE INTO routine_tasks 
                 (worker_id, building_id, name, category, recurrence, startTime, endTime, skill_level, external_id, created_at) 
                 VALUES (?, ?, ?, ?, 'daily', ?, ?, ?, ?, datetime('now'))
-            """, [task.0, task.1, task.2, task.5, task.3, task.4, task.6, "edwin_task_\(index + 1)"])
+            """, [task.0, task.1, task.2, task.5, task.3, task.4, task.6, externalId])
         }
         
         print("✅ Seeded \(tasks.count) routine tasks for Edwin")
@@ -256,7 +263,8 @@ public class SeedDatabase {
     private static func seedEdwinSkills(_ manager: SQLiteManager) async throws {
         print("🔧 Seeding Edwin's skills...")
         
-        let skills = [
+        // FIXED: Explicit tuple type annotation to resolve ambiguity
+        let skills: [(String, String, String, Int)] = [
             ("2", "Boiler Operation", "Advanced", 5),
             ("2", "General Maintenance", "Advanced", 8),
             ("2", "Plumbing", "Intermediate", 3),
@@ -282,13 +290,14 @@ public class SeedDatabase {
     public static func verifyMigration() async throws {
         let manager = SQLiteManager.shared
         
-        // Test Edwin's building assignments
+        // Test Edwin's building assignments with explicit type handling
         let buildings = try await manager.query("""
             SELECT COUNT(*) as count FROM worker_assignments 
             WHERE worker_id = '2'
         """)
         
-        let buildingCount = buildings.first?["count"] as? Int64 ?? 0
+        // FIXED: Explicit type annotation to resolve ambiguity
+        let buildingCount: Int64 = (buildings.first?["count"] as? Int64) ?? 0
         print("📊 Edwin has \(buildingCount) building assignments")
         
         // Test routine tasks query
@@ -312,13 +321,14 @@ public class SeedDatabase {
         do {
             let manager = SQLiteManager.shared
             
-            // Check if Edwin has buildings
+            // Check if Edwin has buildings with explicit type handling
             let buildings = try await manager.query("""
                 SELECT COUNT(*) as count FROM worker_assignments 
                 WHERE worker_id = '2'
             """)
             
-            let count = buildings.first?["count"] as? Int64 ?? 0
+            // FIXED: Explicit type annotation to resolve ambiguity
+            let count: Int64 = (buildings.first?["count"] as? Int64) ?? 0
             return count == 0
             
         } catch {
@@ -327,3 +337,24 @@ public class SeedDatabase {
         }
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES APPLIED
+/*
+ ✅ FIXED TYPE AMBIGUITY ISSUES:
+ 
+ 🔧 LINE 157 & Similar - Type ambiguity in variable assignments:
+ - ❌ BEFORE: let buildingCount = buildings.first?["count"] as? Int64 ?? 0
+ - ✅ AFTER: let buildingCount: Int64 = (buildings.first?["count"] as? Int64) ?? 0
+ 
+ 🔧 TUPLE TYPE ANNOTATIONS:
+ - ✅ Added explicit tuple types for assignments: [(String, String, String)]
+ - ✅ Added explicit tuple types for tasks: [(String, String, String, String, String, String, String)]
+ - ✅ Added explicit tuple types for skills: [(String, String, String, Int)]
+ 
+ 🔧 DICTIONARY ACCESS FIXES:
+ - ✅ Explicit type casting for all database row access
+ - ✅ Proper nil coalescing with type annotations
+ - ✅ Clear type conversion for SQL parameter binding
+ 
+ 🎯 STATUS: SeedDatabase.swift type ambiguity errors RESOLVED
+ */

@@ -5,6 +5,7 @@
 //  🌦️ PRODUCTION WEATHER MANAGER WITH EXPONENTIAL BACKOFF (PHASE-2)
 //  ✅ Implements fetchWithRetry() with 2→4→8s delays
 //  ✅ Enhanced error handling and surface loading states
+//  ✅ FIXED: Added missing getWeatherForBuilding() method for MySitesCard compatibility
 //  ✅ Integrates with existing FrancoSphereModels
 //
 
@@ -31,6 +32,15 @@ class WeatherManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     private init() {}
+    
+    // MARK: - 🚀 MISSING METHOD FIX: getWeatherForBuilding() for MySitesCard
+    
+    /// Gets weather data for a specific building by ID
+    /// - Parameter buildingId: The building ID to look up
+    /// - Returns: WeatherData if found, nil otherwise
+    func getWeatherForBuilding(_ buildingId: String) -> FrancoSphere.WeatherData? {
+        return buildingWeatherMap[buildingId]
+    }
     
     // MARK: - 🚀 PRODUCTION METHOD: fetchWithRetry() with Exponential Backoff
     
@@ -339,6 +349,9 @@ enum WeatherManagerError: LocalizedError {
         }
     }
 }
+
+// MARK: - Additional Extension Methods for Compatibility
+
 extension WeatherManager {
     
     /// Load weather with device location fallback - fixes "loadWeatherForBuildingsWithFallback() not found" error

@@ -2,10 +2,11 @@
 //  BuildingDetailView.swift
 //  FrancoSphere
 //
-//  🎯 CLEAN COMPILATION VERSION - ALL VIEWBUILDER ISSUES FIXED
-//  ✅ Simplified structure to avoid buildExpression errors
-//  ✅ No complex conditional expressions
-//  ✅ Uses real data only
+//  🎯 FINAL VERSION - ALL COMPILATION ERRORS RESOLVED
+//  ✅ FIXED: Removed duplicate EmptyTasksView declaration (uses shared component)
+//  ✅ FIXED: Date to String conversion in TaskDetailRow (task.startTime is String, not Date)
+//  ✅ Uses existing shared EmptyTasksView from TodaysTasksGlassCard
+//  ✅ All ViewBuilder and type issues resolved
 //
 
 import SwiftUI
@@ -13,7 +14,8 @@ import MapKit
 import CoreLocation
 
 struct BuildingDetailView: View {
-    let building: Building
+    // FIXED: Accept NamedCoordinate directly to match the rest of the codebase
+    let building: FrancoSphere.NamedCoordinate
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - State Management
@@ -42,9 +44,14 @@ struct BuildingDetailView: View {
             }
             .navigationTitle("Building Details")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
-                dismiss()
-            }.foregroundColor(.white))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+            }
         }
         .preferredColorScheme(.dark)
         .task {
@@ -98,6 +105,7 @@ struct BuildingDetailView: View {
             )
             .ignoresSafeArea()
             
+            // FIXED: Proper imageAssetName handling
             if !building.imageAssetName.isEmpty,
                let uiImage = UIImage(named: building.imageAssetName) {
                 Image(uiImage: uiImage)
@@ -135,15 +143,7 @@ struct BuildingDetailView: View {
     
     private func loadWeatherData() async {
         do {
-            let coordinate = FrancoSphere.NamedCoordinate(
-                id: building.id,
-                name: building.name,
-                latitude: building.latitude,
-                longitude: building.longitude,
-                imageAssetName: building.imageAssetName
-            )
-            
-            let weather = try await weatherManager.fetchWithRetry(for: coordinate)
+            let weather = try await weatherManager.fetchWithRetry(for: building)
             await MainActor.run {
                 self.buildingWeather = weather
             }
@@ -230,7 +230,8 @@ struct ErrorView: View {
 }
 
 struct MainContentView: View {
-    let building: Building
+    // FIXED: Use NamedCoordinate type
+    let building: FrancoSphere.NamedCoordinate
     let buildingWeather: FrancoSphere.WeatherData?
     @Binding var selectedTab: Int
     let buildingTasks: [MaintenanceTask]
@@ -270,7 +271,8 @@ struct MainContentView: View {
 }
 
 struct BuildingHeaderSection: View {
-    let building: Building
+    // FIXED: Use NamedCoordinate type
+    let building: FrancoSphere.NamedCoordinate
     let clockedInStatus: (isClockedIn: Bool, buildingId: Int64?)
     let onClockInTap: () -> Void
     
@@ -310,7 +312,8 @@ struct BuildingHeaderSection: View {
 }
 
 struct BuildingImageView: View {
-    let building: Building
+    // FIXED: Use NamedCoordinate type
+    let building: FrancoSphere.NamedCoordinate
     
     var body: some View {
         Group {
@@ -477,7 +480,8 @@ struct TabButton: View {
 
 struct TabContent: View {
     let selectedTab: Int
-    let building: Building
+    // FIXED: Use NamedCoordinate type
+    let building: FrancoSphere.NamedCoordinate
     let buildingTasks: [MaintenanceTask]
     let assignedWorkers: [FrancoWorkerAssignment]
     let onTaskTap: (MaintenanceTask) -> Void
@@ -511,6 +515,7 @@ struct TasksTab: View {
                 .foregroundColor(.white)
             
             if buildingTasks.isEmpty {
+                // ✅ FIXED: Use shared EmptyTasksView from TodaysTasksGlassCard instead of declaring our own
                 EmptyTasksView()
             } else {
                 ForEach(buildingTasks, id: \.id) { task in
@@ -523,7 +528,7 @@ struct TasksTab: View {
     }
 }
 
-// Uses shared EmptyTasksView component from TodaysTasksGlassCard
+// ✅ REMOVED: Duplicate EmptyTasksView declaration - using shared component from TodaysTasksGlassCard
 
 struct TaskRow: View {
     let task: MaintenanceTask
@@ -542,10 +547,9 @@ struct TaskRow: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.leading)
                     
+                    // FIXED: Proper time handling - startTime is String, not Date
                     if let taskStartTime = task.startTime {
-                        let timeFormatter = DateFormatter()
-                        timeFormatter.timeStyle = .short
-                        Text("Scheduled: \(timeFormatter.string(from: taskStartTime))")
+                        Text("Scheduled: \(taskStartTime)")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.7))
                     }
@@ -584,7 +588,8 @@ struct TaskRow: View {
 }
 
 struct InfoTab: View {
-    let building: Building
+    // FIXED: Use NamedCoordinate type
+    let building: FrancoSphere.NamedCoordinate
     let buildingTasks: [MaintenanceTask]
     let assignedWorkers: [FrancoWorkerAssignment]
     
@@ -710,7 +715,8 @@ struct WorkerRow: View {
 }
 
 struct MapTab: View {
-    let building: Building
+    // FIXED: Use NamedCoordinate type
+    let building: FrancoSphere.NamedCoordinate
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -718,16 +724,34 @@ struct MapTab: View {
                 .font(.headline)
                 .foregroundColor(.white)
             
-            Map {
-                Marker(building.name, coordinate: CLLocationCoordinate2D(
-                    latitude: building.latitude,
-                    longitude: building.longitude
-                ))
-                .tint(.blue)
+            // FIXED: Simplified Map usage to avoid buildExpression issues
+            if #available(iOS 17.0, *) {
+                Map {
+                    Marker(building.name, coordinate: CLLocationCoordinate2D(
+                        latitude: building.latitude,
+                        longitude: building.longitude
+                    ))
+                    .tint(.blue)
+                }
+                .mapStyle(.standard)
+                .frame(height: 300)
+                .cornerRadius(12)
+            } else {
+                // Fallback for iOS 16
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(height: 300)
+                    .cornerRadius(12)
+                    .overlay(
+                        VStack {
+                            Image(systemName: "map")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray)
+                            Text("Map not available")
+                                .foregroundColor(.gray)
+                        }
+                    )
             }
-            .mapStyle(.standard)
-            .frame(height: 300)
-            .cornerRadius(12)
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Location Details")
@@ -786,9 +810,14 @@ struct TaskDetailSheet: View {
             }
             .navigationTitle("Task Details")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
-                showTaskDetail = nil
-            }.foregroundColor(.white))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showTaskDetail = nil
+                    }
+                    .foregroundColor(.white)
+                }
+            }
         }
         .preferredColorScheme(.dark)
     }
@@ -804,11 +833,9 @@ struct TaskMetadataSection: View {
             TaskDetailRow(label: "Recurrence", value: task.recurrence.rawValue.capitalized)
             TaskDetailRow(label: "Status", value: task.isComplete ? "Complete" : "Pending")
             
+            // ✅ FIXED: task.startTime is String (HH:mm format), not Date
             if let taskStartTime = task.startTime {
-                let timeFormatter = DateFormatter()
-                timeFormatter.dateStyle = .none
-                timeFormatter.timeStyle = .short
-                TaskDetailRow(label: "Scheduled Time", value: timeFormatter.string(from: taskStartTime))
+                TaskDetailRow(label: "Scheduled Time", value: taskStartTime)
             }
             
             let dateFormatter = DateFormatter()
@@ -855,6 +882,7 @@ struct TaskCompletionButton: View {
 
 struct BuildingDetailView_Previews: PreviewProvider {
     static var previews: some View {
+        // FIXED: Use NamedCoordinate directly instead of conversion
         let realBuilding = FrancoSphere.NamedCoordinate(
             id: "1",
             name: "12 West 18th Street",

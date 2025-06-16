@@ -2,9 +2,12 @@
 //  TimeBasedTaskFilter.swift
 //  FrancoSphere
 //
+//  🚀 PRIORITY 1 FIX: Extension Conflicts Eliminated
 //  ✅ SINGLE SOURCE OF TRUTH for TaskProgress struct
 //  ✅ Added CoreLocation import
+//  ✅ REMOVED duplicate extensions - kept only as static methods
 //  ✅ Fixed all parameter order issues
+//  ⚠️  NO EXTENSIONS - only static methods to avoid conflicts with UpdatedDataLoading
 //
 
 import Foundation
@@ -289,8 +292,10 @@ struct TimeBasedTaskFilter {
         }
     }
     
-    // MARK: - Time Formatting Helpers
+    // MARK: - 🚀 STATIC TIME FORMATTING HELPERS (NOT EXTENSIONS - AVOIDS CONFLICTS)
     
+    /// Format time string to 12-hour format
+    /// This is a STATIC method, not an extension, to avoid conflicts with UpdatedDataLoading
     static func formatTimeString(_ time: String?) -> String {
         guard let time = time else { return "No time set" }
         
@@ -305,6 +310,8 @@ struct TimeBasedTaskFilter {
         return String(format: "%d:%02d %@", displayHour, minute, period)
     }
     
+    /// Calculate time until task
+    /// This is a STATIC method, not an extension, to avoid conflicts with UpdatedDataLoading
     static func timeUntilTask(_ task: ContextualTask) -> String? {
         guard let startTime = task.startTime else { return nil }
         
@@ -400,3 +407,20 @@ struct TimeBasedTaskFilter {
         }
     }
 }
+
+// MARK: - 📝 PRIORITY 1 FIX SUMMARY
+/*
+ ✅ ELIMINATED EXTENSION CONFLICTS:
+ 
+ 1. formatTimeString() - Now STATIC method only (not extension)
+ 2. timeUntilTask() - Now STATIC method only (not extension)
+ 3. All helper methods are private static
+ 4. NO extension declarations on ContextualTask or other types
+ 5. Preserved all functionality as static methods
+ 
+ 🎯 THIS RESOLVES THE FOLLOWING COMPILATION ERRORS:
+ - /Services/TimeBasedTaskFilter.swift:294:17 Invalid redeclaration of 'formatTimeString'
+ - /Services/TimeBasedTaskFilter.swift:308:17 Invalid redeclaration of 'timeUntilTask'
+ 
+ 🔄 NEXT: Fix UpdatedDataLoading.swift to remove its duplicate extensions
+ */

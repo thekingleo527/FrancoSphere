@@ -1139,27 +1139,34 @@ public class TaskManagerViewModel: ObservableObject {
         return await taskManager.createTaskAsync(task)
     }
     
-    // Wrapper for fetchTasks(forBuilding:includePastTasks:)
-    public func fetchTasks(forBuilding buildingId: String, includePastTasks: Bool = false) async {
-        isLoading = true
-        error = nil
-        tasks = await taskManager.fetchTasksAsync(forBuilding: buildingId, includePastTasks: includePastTasks)
-        isLoading = false
-    }
-    
     // Wrapper for getUpcomingTasks
-    public func getUpcomingTasks(forWorker workerId: String, days: Int = 7) -> [FrancoSphere.MaintenanceTask] {
-        return taskManager.getUpcomingTasks(forWorker: workerId, days: days)
+    public func getUpcomingTasks(forWorker workerId: String, days: Int = 7) async -> [FrancoSphere.MaintenanceTask] {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let result = await taskManager.getUpcomingTasks(forWorker: workerId, days: days)
+                continuation.resume(returning: result)
+            }
+        }
     }
+
     
-    // Wrapper for getTasksByCategory
-    public func getTasksByCategory(forWorker workerId: String) -> [FrancoSphere.TaskCategory: [FrancoSphere.MaintenanceTask]] {
-        return taskManager.getTasksByCategory(forWorker: workerId)
+    public func getTasksByCategory(forWorker workerId: String) async -> [FrancoSphere.TaskCategory: [FrancoSphere.MaintenanceTask]] {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let result = await taskManager.getTasksByCategory(forWorker: workerId)
+                continuation.resume(returning: result)
+            }
+        }
     }
     
     // Wrapper for getPastDueTasks
-    public func getPastDueTasks(forWorker workerId: String) -> [FrancoSphere.MaintenanceTask] {
-        return taskManager.getPastDueTasks(forWorker: workerId)
+    public func getPastDueTasks(forWorker workerId: String) async -> [FrancoSphere.MaintenanceTask] {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let result = await taskManager.getPastDueTasks(forWorker: workerId)
+                continuation.resume(returning: result)
+            }
+        }
     }
     
     // Wrapper for fetchMaintenanceHistory
@@ -1168,12 +1175,42 @@ public class TaskManagerViewModel: ObservableObject {
     }
     
     // Wrapper for createTaskFromTemplate
-    public func createTaskFromTemplate(template: FrancoTaskTemplate, buildingId: String, dueDate: Date, workerIds: [String]) -> Bool {
-        return taskManager.createTaskFromTemplate(template: template, buildingId: buildingId, dueDate: dueDate, workerIds: workerIds)
+    public func createTaskFromTemplateAsync(_ templateId: String, buildingId: String, dueDate: Date, workerIds: [String]) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let templates = await taskManager.getAllTaskTemplates()
+                guard let template = templates.first(where: { $0.id == templateId }) else {
+                    continuation.resume(returning: false)
+                    return
+                }
+                let result = await taskManager.createTaskFromTemplate(
+                    template: template,
+                    buildingId: buildingId,
+                    dueDate: dueDate,
+                    workerIds: workerIds
+                )
+                continuation.resume(returning: result)
+            }
+        }
     }
     
     // Wrapper for getAllTaskTemplates
-    public func getAllTaskTemplates() -> [FrancoTaskTemplate] {
-        return taskManager.getAllTaskTemplates()
+    public func getTaskTemplatesInfoAsync() async -> [[String: Any]] {
+        return await withCheckedContinuation { continuation in
+            Task {
+                let templates = await taskManager.getAllTaskTemplates()
+                let info = templates.map { template in
+                    [
+                        "id": template.id,
+                        "name": template.name,
+                        "category": template.category.rawValue,
+                        "urgency": template.urgency.rawValue,
+                        "recurrence": template.recurrence.rawValue,
+                        "skillLevel": template.skillLevel
+                    ] as [String: Any]
+                }
+                continuation.resume(returning: info)
+            }
+        }
     }
 }

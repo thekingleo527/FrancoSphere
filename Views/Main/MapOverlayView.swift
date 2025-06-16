@@ -2,8 +2,10 @@
 //  MapOverlayView.swift
 //  FrancoSphere
 //
-//  🗺️ FULL-SCREEN MAP OVERLAY (PHASE-2)
-//  ✅ Swipe-up gesture activation from dashboard
+//  🗺️ FIXED VERSION: Gesture Syntax and CGSize Issues Resolved
+//  ✅ FIXED: CGSize.y -> CGSize.height (lines 55, 63)
+//  ✅ FIXED: Malformed gesture syntax with semicolons
+//  ✅ Full-screen map overlay with swipe-up gesture activation
 //  ✅ All buildings with pulsing marker for focused building
 //  ✅ Green halo for current clocked-in building
 //  ✅ Drag-down to dismiss with 100pt threshold
@@ -51,16 +53,22 @@ struct MapOverlayView: View {
         .gesture(
             DragGesture()
                 .onChanged { value in
-                    value.translation.height > 0; {
-                        dragOffset = value.translation.y
+                    // FIXED: Simplified gesture handling to avoid complex expression issues
+                    let translation = value.translation.height
+                    if translation > 0 {
+                        dragOffset = translation
                     }
                 }
                 .onEnded { value in
-                    if value.translation.height > dismissThreshold {
+                    // FIXED: Break down complex conditional into simpler parts
+                    let translation = value.translation.height
+                    let shouldDismiss = translation > dismissThreshold
+                    
+                    if shouldDismiss {
                         withAnimation(.easeOut(duration: 0.3)) {
                             isPresented = false
                         }
-                    }; else {
+                    } else {
                         withAnimation(.spring()) {
                             dragOffset = 0
                         }
@@ -493,14 +501,6 @@ struct BuildingMapDetailView: View {
         let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
         mapItem.name = building.name
         mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
-    }
-}
-
-// MARK: - Extensions
-
-extension FrancoSphere.NamedCoordinate {
-    var coordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 }
 

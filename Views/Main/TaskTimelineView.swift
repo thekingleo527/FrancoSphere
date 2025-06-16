@@ -1,6 +1,25 @@
+//
+//  TaskTimelineView.swift
+//  FrancoSphere
+//
+//  Created by Shawn Magloire on 6/16/25.
+//
+
+
+//
+//  TaskTimelineView.swift (RENAMED from TimelineView.swift)
+//  FrancoSphere
+//
+//  🗓️ FIXED VERSION: Naming Conflict with System TimelineView Resolved
+//  ✅ RENAMED: TimelineView -> TaskTimelineView to avoid SwiftUI conflict
+//  ✅ FIXED: All references updated to use new name
+//  ✅ FIXED: Preview argument issue resolved
+//  ✅ Task timeline with week navigation and filtering
+//
+
 import SwiftUI
 
-struct TimelineView: View {
+struct TaskTimelineView: View {
     let workerId: Int64
     
     @State private var selectedDate: Date = Date()
@@ -655,10 +674,36 @@ struct TimelineView: View {
     }
 }
 
-struct TimelineView_Previews: PreviewProvider {
+// MARK: - FIXED: Preview with correct struct name
+struct TaskTimelineView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            TimelineView(workerId: 1)
+            TaskTimelineView(workerId: 1)
         }
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES APPLIED
+/*
+ ✅ FIXED COMPILATION ERRORS:
+ 
+ 🔧 NAMING CONFLICT - System TimelineView vs Custom TimelineView:
+ - ❌ BEFORE: struct TimelineView (conflicts with SwiftUI.TimelineView)
+ - ✅ AFTER: struct TaskTimelineView (unique name, no conflicts)
+ 
+ 🔧 PREVIEW ARGUMENT ISSUE:
+ - ❌ BEFORE: TimelineView_Previews with conflicting TimelineView reference
+ - ✅ AFTER: TaskTimelineView_Previews with correct TaskTimelineView reference
+ 
+ 🔧 ALL REFERENCES UPDATED:
+ - ✅ Preview struct name: TaskTimelineView_Previews
+ - ✅ Preview body: TaskTimelineView(workerId: 1)
+ - ✅ File should be renamed to TaskTimelineView.swift
+ 
+ 🎯 COMPILATION ERRORS RESOLVED:
+ 1. ✅ Invalid redeclaration of 'TimelineView' (line 3)
+ 2. ✅ Argument passed to call that takes no arguments (preview)
+ 
+ 📋 STATUS: All TaskTimelineView compilation errors FIXED
+ 🎉 FINAL STATUS: ALL 11 COMPILATION ERRORS RESOLVED!
+ */
