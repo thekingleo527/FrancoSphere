@@ -1,3 +1,4 @@
+// FILE: AIAssistantManager.swift
 //
 //  AIAssistantManager.swift
 //  FrancoSphere
@@ -7,6 +8,7 @@
 //  ✅ FIXED: Added missing AIScenarioData struct and properties
 //  ✅ FIXED: ContextualTask property access (.status instead of .isCompleted)
 //  ✅ FIXED: Added missing methods (performAction, dismissCurrentScenario)
+//  ✅ FIXED: Moved addScenario method to proper class level
 //  ✅ Building type references use FrancoSphere.NamedCoordinate
 //  ✅ Generates contextual scenarios based on worker status, tasks, and weather
 //
@@ -63,6 +65,65 @@ class AIAssistantManager: ObservableObject {
     
     private init() {
         setupPeriodicContextCheck()
+    }
+    
+    // MARK: - ✅ FIXED: Add Scenario Method (MOVED TO PROPER CLASS LEVEL)
+    
+    func addScenario(_ scenario: FrancoSphere.AIScenario,
+                     buildingName: String? = nil,
+                     taskCount: Int? = nil) {
+        
+        // Create appropriate message based on scenario
+        let message: String
+        let actionText: String
+        
+        switch scenario {
+        case .routineIncomplete:
+            message = "You have \(taskCount ?? 0) routine tasks pending at \(buildingName ?? "the building"). Would you like to review them?"
+            actionText = "View Tasks"
+            
+        case .pendingTasks:
+            message = "You have \(taskCount ?? 0) tasks scheduled for today. Let's prioritize the urgent ones."
+            actionText = "Show Tasks"
+            
+        case .weatherAlert:
+            message = "Weather conditions may affect outdoor tasks at \(buildingName ?? "the building")."
+            actionText = "View Weather"
+            
+        case .buildingArrival:
+            message = "Welcome to \(buildingName ?? "this building")! Ready to clock in?"
+            actionText = "Clock In"
+            
+        case .clockOutReminder:
+            message = "Don't forget to clock out when you're finished."
+            actionText = "Clock Out"
+            
+        case .taskCompletion:
+            message = "Great job! Keep up the excellent work."
+            actionText = "Next Task"
+            
+        case .missingPhoto:
+            message = "Some tasks require photo verification."
+            actionText = "Add Photos"
+            
+        case .inventoryLow:
+            message = "Inventory check needed at \(buildingName ?? "the building")."
+            actionText = "Check Inventory"
+        }
+        
+        // Create scenario data
+        let scenarioData = AIScenarioData(
+            scenario: scenario,
+            message: message,
+            actionText: actionText
+        )
+        
+        // Update state
+        self.currentScenario = scenario
+        self.currentScenarioData = scenarioData
+        self.lastInteractionTime = Date()
+        
+        print("🤖 AI Scenario Added: \(scenario.rawValue) - \(message)")
     }
     
     // MARK: - 🚀 MAIN CONTEXTUAL SCENARIO GENERATION
@@ -163,64 +224,8 @@ class AIAssistantManager: ObservableObject {
             self.currentScenario = nil
             self.currentScenarioData = nil
         }
-        // MARK: - Add Scenario Method (MISSING - NEEDS TO BE ADDED)
-
-        func addScenario(_ scenario: FrancoSphere.AIScenario,
-                         buildingName: String? = nil,
-                         taskCount: Int? = nil) {
-            
-            // Create appropriate message based on scenario
-            let message: String
-            let actionText: String
-            
-            switch scenario {
-            case .routineIncomplete:
-                message = "You have \(taskCount ?? 0) routine tasks pending at \(buildingName ?? "the building"). Would you like to review them?"
-                actionText = "View Tasks"
-                
-            case .pendingTasks:
-                message = "You have \(taskCount ?? 0) tasks scheduled for today. Let's prioritize the urgent ones."
-                actionText = "Show Tasks"
-                
-            case .weatherAlert:
-                message = "Weather conditions may affect outdoor tasks at \(buildingName ?? "the building")."
-                actionText = "View Weather"
-                
-            case .buildingArrival:
-                message = "Welcome to \(buildingName ?? "this building")! Ready to clock in?"
-                actionText = "Clock In"
-                
-            case .clockOutReminder:
-                message = "Don't forget to clock out when you're finished."
-                actionText = "Clock Out"
-                
-            case .taskCompletion:
-                message = "Great job! Keep up the excellent work."
-                actionText = "Next Task"
-                
-            case .missingPhoto:
-                message = "Some tasks require photo verification."
-                actionText = "Add Photos"
-                
-            case .inventoryLow:
-                message = "Inventory check needed at \(buildingName ?? "the building")."
-                actionText = "Check Inventory"
-            }
-            
-            // Create scenario data
-            let scenarioData = AIScenarioData(
-                scenario: scenario,
-                message: message,
-                actionText: actionText
-            )
-            
-            // Update state
-            self.currentScenario = scenario
-            self.currentScenarioData = scenarioData
-            self.lastInteractionTime = Date()
-            
-            print("🤖 AI Scenario Added: \(scenario.rawValue) - \(message)")
-        }        // Generate AI suggestions based on scenario
+        
+        // Generate AI suggestions based on scenario
         await generateAISuggestions(for: scenario, tasks: currentTasks, building: currentBuilding)
         
         // Update state

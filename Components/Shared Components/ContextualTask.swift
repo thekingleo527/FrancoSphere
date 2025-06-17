@@ -1,18 +1,11 @@
+// FILE: Components/Shared Components/ContextualTask.swift
 //
 //  ContextualTask.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/14/25.
-//
-
-
-//
-//  ContextualTask.swift
-//  FrancoSphere
-//
-//  🚨 STANDALONE CONTEXTUAL TASK TYPE
-//  ✅ Fixes "Cannot find type 'ContextualTask'" compilation errors
-//  ✅ Extracted from WorkerContextEngine.swift for better accessibility
+//  ✅ ENHANCED CONTEXTUAL TASK with computed properties
+//  ✅ Added compatibility properties for existing code
+//  ✅ Real data integration ready
 //
 
 import Foundation
@@ -33,8 +26,23 @@ struct ContextualTask: Identifiable, Hashable, Codable {
     let skillLevel: String
     let status: String
     let urgencyLevel: String
+    let assignedWorkerName: String?
+    let scheduledDate: Date?
     
     // MARK: - Computed Properties
+    
+    /// Compatibility property for existing code
+    var isCompleted: Bool {
+        return status == "completed"
+    }
+    
+    /// Check if task is weather-dependent
+    var isWeatherDependent: Bool {
+        let weatherKeywords = ["outdoor", "exterior", "roof", "gutter", "window", "clean", "sweep", "park", "sidewalk", "hose"]
+        return weatherKeywords.contains { keyword in
+            name.lowercased().contains(keyword) || category.lowercased().contains(keyword)
+        }
+    }
     
     /// Check if task is overdue based on current time
     var isOverdue: Bool {
@@ -84,12 +92,22 @@ struct ContextualTask: Identifiable, Hashable, Codable {
         return buildingName.isEmpty ? "Building \(buildingId)" : buildingName
     }
     
-    /// Determines if task is weather-dependent
-    var weatherDependent: Bool {
-        let weatherKeywords = ["outdoor", "exterior", "roof", "gutter", "window", "clean", "sweep", "park"]
-        return weatherKeywords.contains { keyword in
-            name.lowercased().contains(keyword) || category.lowercased().contains(keyword)
-        }
+    // MARK: - Initializers
+    
+    init(id: String, name: String, buildingId: String, buildingName: String, category: String, startTime: String?, endTime: String?, recurrence: String, skillLevel: String, status: String, urgencyLevel: String, assignedWorkerName: String? = nil, scheduledDate: Date? = nil) {
+        self.id = id
+        self.name = name
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.category = category
+        self.startTime = startTime
+        self.endTime = endTime
+        self.recurrence = recurrence
+        self.skillLevel = skillLevel
+        self.status = status
+        self.urgencyLevel = urgencyLevel
+        self.assignedWorkerName = assignedWorkerName
+        self.scheduledDate = scheduledDate
     }
     
     // MARK: - Hashable & Identifiable
@@ -120,7 +138,9 @@ extension ContextualTask {
             recurrence: row["recurrence"] as? String ?? "oneTime",
             skillLevel: row["skillLevel"] as? String ?? "Basic",
             status: row["status"] as? String ?? "pending",
-            urgencyLevel: row["urgencyLevel"] as? String ?? "medium"
+            urgencyLevel: row["urgencyLevel"] as? String ?? "medium",
+            assignedWorkerName: row["assignedWorkerName"] as? String,
+            scheduledDate: row["scheduledDate"] as? Date
         )
     }
     
@@ -143,23 +163,6 @@ extension ContextualTask {
             skillLevel: "Basic",
             status: "pending",
             urgencyLevel: "medium"
-        )
-    }
-    
-    /// Create empty/placeholder task
-    static var empty: ContextualTask {
-        return ContextualTask(
-            id: "",
-            name: "",
-            buildingId: "",
-            buildingName: "",
-            category: "",
-            startTime: nil,
-            endTime: nil,
-            recurrence: "",
-            skillLevel: "",
-            status: "",
-            urgencyLevel: ""
         )
     }
 }
@@ -205,149 +208,6 @@ extension Array where Element == ContextualTask {
     
     /// Count of weather-dependent tasks
     var weatherDependentCount: Int {
-        return self.filter { $0.weatherDependent }.count
+        return self.filter { $0.isWeatherDependent }.count
     }
 }
-
-// MARK: - Supporting Types
-
-/// Task progress calculation result
-struct TaskProgress {
-    let totalTasks: Int
-    let completedTasks: Int
-    let overdueTasks: Int
-    let urgentTasks: Int
-    
-    var completionPercentage: Double {
-        guard totalTasks > 0 else { return 0.0 }
-        return Double(completedTasks) / Double(totalTasks)
-    }
-    
-    var isOnTrack: Bool {
-        return overdueTasks == 0
-    }
-    
-    var hasUrgentWork: Bool {
-        return urgentTasks > 0 || overdueTasks > 0
-    }
-}
-
-/// Weather adaptation for tasks
-struct WeatherTaskAdaptation {
-    let task: ContextualTask
-    let status: AdaptationStatus
-    let reason: String?
-    
-    enum AdaptationStatus {
-        case normal
-        case weatherDependent
-        case postponed
-        case rescheduled
-    }
-    
-    var shouldDelay: Bool {
-        return status == .postponed || status == .rescheduled
-    }
-    
-    var warningMessage: String? {
-        guard status != .normal else { return nil }
-        return reason ?? "Weather conditions may affect this task"
-    }
-}
-
-// MARK: - Task Time Utilities
-
-extension ContextualTask {
-    
-    /// Get task start time as Date (today)
-    var startTimeAsDate: Date? {
-        guard let startTime = startTime else { return nil }
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        guard let time = formatter.date(from: startTime) else { return nil }
-        
-        let calendar = Calendar.current
-        let now = Date()
-        let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
-        
-        return calendar.date(bySettingHour: timeComponents.hour ?? 0,
-                            minute: timeComponents.minute ?? 0,
-                            second: 0,
-                            of: now)
-    }
-    
-    /// Check if task is scheduled for current hour
-    var isCurrentHour: Bool {
-        guard let taskDate = startTimeAsDate else { return false }
-        
-        let calendar = Calendar.current
-        let now = Date()
-        
-        return calendar.component(.hour, from: taskDate) == calendar.component(.hour, from: now)
-    }
-    
-    /// Check if task is upcoming (within next 2 hours)
-    var isUpcoming: Bool {
-        guard let taskDate = startTimeAsDate else { return false }
-        
-        let now = Date()
-        let twoHoursFromNow = now.addingTimeInterval(2 * 60 * 60)
-        
-        return taskDate > now && taskDate <= twoHoursFromNow
-    }
-}
-
-// MARK: - Preview Helpers
-
-#if DEBUG
-extension ContextualTask {
-    
-    /// Sample tasks for previews and testing
-    static var previewTasks: [ContextualTask] {
-        return [
-            ContextualTask(
-                id: "1",
-                name: "Boiler Check",
-                buildingId: "17",
-                buildingName: "Stuyvesant Cove Park",
-                category: "maintenance",
-                startTime: "07:30",
-                endTime: "08:00",
-                recurrence: "daily",
-                skillLevel: "Advanced",
-                status: "pending",
-                urgencyLevel: "high"
-            ),
-            ContextualTask(
-                id: "2",
-                name: "Clean Common Areas",
-                buildingId: "16",
-                buildingName: "133 East 15th Street",
-                category: "cleaning",
-                startTime: "08:00",
-                endTime: "09:00",
-                recurrence: "daily",
-                skillLevel: "Basic",
-                status: "pending",
-                urgencyLevel: "medium"
-            ),
-            ContextualTask(
-                id: "3",
-                name: "Sweep Front of Building",
-                buildingId: "4",
-                buildingName: "131 Perry Street",
-                category: "cleaning",
-                startTime: "10:00",
-                endTime: "10:30",
-                recurrence: "daily",
-                skillLevel: "Basic",
-                status: "completed",
-                urgencyLevel: "low"
-            )
-        ]
-    }
-}
-#endif
-

@@ -1,10 +1,12 @@
+// FILE: Components/Shared Components/ProfileBadge.swift
 //
 //  ProfileBadge.swift
 //  FrancoSphere
 //
+//  ✅ PHASE-2 UPDATE: Added accentColor parameter
+//  ✅ Keep circle shape but allow color customization
 //  ✅ Fixed Character/String type mismatches
 //  ✅ Fixed closure parameter issues
-//  ✅ Enhanced Phase-2 ProfileBadge implementation
 //
 
 import SwiftUI
@@ -14,6 +16,24 @@ struct ProfileBadge: View {
     let imageUrl: String?
     let isCompact: Bool
     let onTap: () -> Void
+    
+    // ✅ NEW: Optional accent color parameter
+    let accentColor: Color?
+    
+    // Default initializer maintains backward compatibility
+    init(
+        workerName: String,
+        imageUrl: String? = nil,
+        isCompact: Bool = false,
+        onTap: @escaping () -> Void = {},
+        accentColor: Color? = nil
+    ) {
+        self.workerName = workerName
+        self.imageUrl = imageUrl
+        self.isCompact = isCompact
+        self.onTap = onTap
+        self.accentColor = accentColor
+    }
     
     // MARK: - Private Properties
     
@@ -34,7 +54,12 @@ struct ProfileBadge: View {
     }
     
     private var gradientColors: [Color] {
-        // Generate gradient based on worker name hash for consistent colors
+        // ✅ PHASE-2: Use accent color if provided
+        if let accent = accentColor {
+            return [accent, accent.opacity(0.7)]
+        }
+        
+        // Otherwise use generated gradient based on worker name hash
         let hash = workerName.hashValue
         let colorIndex = abs(hash) % gradientOptions.count
         return gradientOptions[colorIndex]
@@ -155,14 +180,16 @@ struct ProfileBadge_Previews: PreviewProvider {
                     workerName: "Greg Hutson",
                     imageUrl: nil,
                     isCompact: false,
-                    onTap: { print("Greg tapped") }
+                    onTap: { print("Greg tapped") },
+                    accentColor: .teal
                 )
                 
                 ProfileBadge(
                     workerName: "Kevin Dutan",
                     imageUrl: nil,
                     isCompact: false,
-                    onTap: { print("Kevin tapped") }
+                    onTap: { print("Kevin tapped") },
+                    accentColor: .cyan
                 )
             }
             
@@ -183,7 +210,8 @@ struct ProfileBadge_Previews: PreviewProvider {
                     workerName: "Luis Lopez",
                     imageUrl: nil,
                     isCompact: true,
-                    onTap: { print("Luis compact tapped") }
+                    onTap: { print("Luis compact tapped") },
+                    accentColor: .mint
                 )
                 
                 ProfileBadge(

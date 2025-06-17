@@ -1,12 +1,12 @@
+// FILE: Managers/WeatherManager.swift
 //
 //  WeatherManager.swift
 //  FrancoSphere
 //
-//  🌦️ PRODUCTION WEATHER MANAGER WITH EXPONENTIAL BACKOFF (PHASE-2)
-//  ✅ Implements fetchWithRetry() with 2→4→8s delays
+//  🌦️ FIXED VERSION - Building type reference removed
+//  ✅ Uses only FrancoSphere.NamedCoordinate (no Building type)
+//  ✅ Implements fetchWithRetry() with exponential backoff
 //  ✅ Enhanced error handling and surface loading states
-//  ✅ FIXED: Added missing getWeatherForBuilding() method for MySitesCard compatibility
-//  ✅ Integrates with existing FrancoSphereModels
 //
 
 import Foundation
@@ -137,10 +137,8 @@ class WeatherManager: ObservableObject {
         var errorCount = 0
         
         for building in buildings {
-            let coordinate = building // buildings are already NamedCoordinate type
-            
             do {
-                let _ = try await fetchWithRetry(for: coordinate, buildingId: building.id)
+                let _ = try await fetchWithRetry(for: building, buildingId: building.id)
                 successCount += 1
             } catch {
                 errorCount += 1
@@ -314,68 +312,40 @@ class WeatherManager: ObservableObject {
         lastUpdateTime = nil
         error = nil
     }
-}
-
-// MARK: - Weather Manager Error Types
-
-enum WeatherManagerError: LocalizedError {
-    case invalidCoordinates(String)
-    case invalidURL
-    case invalidResponse
-    case httpError(Int)
-    case jsonParsingFailed
-    case parsingFailed(String)
-    case allRetriesFailed(String)
-    case allBuildingsFailed
     
-    var errorDescription: String? {
-        switch self {
-        case .invalidCoordinates(let message):
-            return "Invalid coordinates: \(message)"
-        case .invalidURL:
-            return "Invalid API URL"
-        case .invalidResponse:
-            return "Invalid server response"
-        case .httpError(let code):
-            return "HTTP error \(code)"
-        case .jsonParsingFailed:
-            return "Failed to parse JSON response"
-        case .parsingFailed(let message):
-            return "Parsing failed: \(message)"
-        case .allRetriesFailed(let message):
-            return "All retries failed: \(message)"
-        case .allBuildingsFailed:
-            return "Failed to load weather for all buildings"
-        }
-    }
-}
-
-// MARK: - Additional Extension Methods for Compatibility
-
-extension WeatherManager {
+    // MARK: - ✅ FIXED: Removed Building type references
     
-    /// Load weather with device location fallback - fixes "loadWeatherForBuildingsWithFallback() not found" error
-    func loadWeatherForBuildingsWithFallback(_ buildings: [Building]) async {
+    /// Load weather with fallback - now uses FrancoSphere.NamedCoordinate only
+    func loadWeatherForBuildingsWithFallback(_ buildings: [FrancoSphere.NamedCoordinate]) async {
         print("🌤️ Loading weather with fallback for \(buildings.count) buildings...")
         
-        // Convert Building to NamedCoordinate for existing method
-        let coordinates = buildings.map { building in
-            FrancoSphere.NamedCoordinate(
-                id: building.id,
-                name: building.name,
-                latitude: building.latitude,
-                longitude: building.longitude,
-                imageAssetName: building.imageAssetName
-            )
-        }
-        
         // Use existing loadWeatherForBuildings method
-        await loadWeatherForBuildings(coordinates)
+        await loadWeatherForBuildings(buildings)
         
         // If all failed, try device location fallback
         if buildingWeatherMap.isEmpty {
             print("🌤️ All building weather failed, using device location fallback...")
             await loadDeviceLocationWeatherFallback()
+        }
+    }
+    
+    /// Convenience method for single building weather fetch
+    func fetchWeather(latitude: Double, longitude: Double) async {
+        let coordinate = FrancoSphere.NamedCoordinate(
+            id: "temp",
+            name: "Location",
+            latitude: latitude,
+            longitude: longitude,
+            imageAssetName: "location"
+        )
+        
+        do {
+            let weather = try await fetchWithRetry(for: coordinate)
+            await MainActor.run {
+                self.currentWeather = weather
+            }
+        } catch {
+            print("❌ Single location weather fetch failed: \(error)")
         }
     }
     
@@ -421,5 +391,39 @@ extension WeatherManager {
             condition: .clear,
             icon: "sun.max.fill"
         )
+    }
+}
+
+// MARK: - Weather Manager Error Types
+
+enum WeatherManagerError: LocalizedError {
+    case invalidCoordinates(String)
+    case invalidURL
+    case invalidResponse
+    case httpError(Int)
+    case jsonParsingFailed
+    case parsingFailed(String)
+    case allRetriesFailed(String)
+    case allBuildingsFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidCoordinates(let message):
+            return "Invalid coordinates: \(message)"
+        case .invalidURL:
+            return "Invalid API URL"
+        case .invalidResponse:
+            return "Invalid server response"
+        case .httpError(let code):
+            return "HTTP error \(code)"
+        case .jsonParsingFailed:
+            return "Failed to parse JSON response"
+        case .parsingFailed(let message):
+            return "Parsing failed: \(message)"
+        case .allRetriesFailed(let message):
+            return "All retries failed: \(message)"
+        case .allBuildingsFailed:
+            return "Failed to load weather for all buildings"
+        }
     }
 }

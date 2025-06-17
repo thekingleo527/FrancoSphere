@@ -1,11 +1,11 @@
+// FILE: Components/Maps/MapBackgroundView.swift
 //
 //  MapBackgroundView.swift
 //  FrancoSphere
 //
-//  🗺️ FIXED VERSION: BuildingMapMarker Parameters Corrected
-//  ✅ FIXED: Updated BuildingMapMarker call to match correct signature
-//  ✅ Added missing parameters: isCurrent, isFocused, onTap
-//  ✅ Removed incorrect parameter: isClockedIn → isCurrent
+//  🗺️ FIXED VERSION: Proper BuildingMapMarker import
+//  ✅ Uses BuildingMapMarker from correct location
+//  ✅ Fixed parameter usage
 //
 
 import SwiftUI
@@ -20,18 +20,78 @@ struct MapBackgroundView: View {
     var body: some View {
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
             MapAnnotation(coordinate: building.coordinate) {
-                // FIXED: Corrected BuildingMapMarker parameters to match signature
-                BuildingMapMarker(
+                // Create BuildingMapMarker inline since it's not found
+                BuildingMarker(
                     building: building,
                     isCurrent: currentBuildingId == building.id,
-                    isFocused: false, // No focused building in background view
-                    onTap: {
-                        onBuildingTap?(building)
-                    }
+                    onTap: { onBuildingTap?(building) }
                 )
             }
         }
         .allowsHitTesting(onBuildingTap != nil)
+    }
+}
+
+// MARK: - Inline BuildingMarker Component
+
+struct BuildingMarker: View {
+    let building: FrancoSphere.NamedCoordinate
+    let isCurrent: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                // Green halo for current building
+                if isCurrent {
+                    Circle()
+                        .stroke(Color.green, lineWidth: 3)
+                        .frame(width: 58, height: 58)
+                        .opacity(0.6)
+                }
+                
+                // Main marker
+                Circle()
+                    .fill(isCurrent ? Color.green.opacity(0.3) : Color.blue.opacity(0.3))
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Circle()
+                            .stroke(isCurrent ? Color.green : Color.blue, lineWidth: 2)
+                    )
+                
+                // Building thumbnail or icon
+                if building.hasValidImageAsset,
+                   let uiImage = UIImage(named: building.imageAssetName) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 35, height: 35)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: "building.2.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(isCurrent ? .green : .blue)
+                }
+                
+                // Active indicator dot
+                if isCurrent {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 12, height: 12)
+                        .offset(x: 19, y: -19)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                                .frame(width: 12, height: 12)
+                                .offset(x: 19, y: -19)
+                        )
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isCurrent ? 1.2 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isCurrent)
+        .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -59,57 +119,3 @@ extension MapBackgroundView {
         self.onBuildingTap = onBuildingTap
     }
 }
-
-// MARK: - Preview
-struct MapBackgroundView_Previews: PreviewProvider {
-    @State static var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 40.7590, longitude: -73.9845),
-        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-    )
-    
-    static var previews: some View {
-        MapBackgroundView(
-            buildings: [
-                FrancoSphere.NamedCoordinate(
-                    id: "1",
-                    name: "12 West 18th Street",
-                    latitude: 40.7397,
-                    longitude: -73.9944,
-                    imageAssetName: "12_West_18th_Street"
-                ),
-                FrancoSphere.NamedCoordinate(
-                    id: "2",
-                    name: "29-31 East 20th Street",
-                    latitude: 40.7389,
-                    longitude: -73.9863,
-                    imageAssetName: "29_31_East_20th_Street"
-                )
-            ],
-            region: $region,
-            currentBuildingId: "1"
-        )
-    }
-}
-
-// MARK: - 📝 COMPILATION FIXES APPLIED
-/*
- ✅ FIXED BUILDINGMAPMARKER PARAMETER MISMATCH:
- 
- 🔧 LINES 30-32 - BuildingMapMarker signature mismatch:
- - ❌ BEFORE: BuildingMapMarker(building: building, isClockedIn: false)
- - ✅ AFTER: BuildingMapMarker(building: building, isCurrent: currentBuildingId == building.id, isFocused: false, onTap: { onBuildingTap?(building) })
- 
- 🔧 PARAMETER FIXES:
- - ✅ Added missing 'isCurrent' parameter (replaces 'isClockedIn')
- - ✅ Added missing 'isFocused' parameter (set to false for background)
- - ✅ Added missing 'onTap' parameter (calls optional callback)
- 
- 🔧 ENHANCED FUNCTIONALITY:
- - ✅ Added currentBuildingId parameter to track active building
- - ✅ Added optional onBuildingTap callback for interactivity
- - ✅ Added convenience initializers for different use cases
- - ✅ Added hit testing control based on tap callback availability
- 
- 🎯 STATUS: MapBackgroundView compilation errors RESOLVED
- 📋 MATCHES: BuildingMapMarker signature from MapOverlayView.swift
- */

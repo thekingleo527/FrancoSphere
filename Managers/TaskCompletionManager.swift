@@ -1,6 +1,40 @@
+// FILE: Managers/TaskCompletionManager.swift
+//
+//  TaskCompletionManager.swift - TYPE CONFLICTS RESOLVED
+//  FrancoSphere
+//
+//  ✅ FIXED: Renamed types to avoid conflicts with existing FrancoSphere types
+//  ✅ FIXED: Uses existing ImagePicker component
+//  ✅ FIXED: Removed duplicate BuildingStatusManager (uses existing one)
+//  ✅ FIXED: Updated to use correct method signatures
+//  ✅ FIXED: Cleaned up file structure and removed corrupted code
+//
+
 import Foundation
 import UIKit
 import SwiftUI
+
+// MARK: - ✅ FIXED: Renamed Types to Avoid Conflicts
+
+/// Status of a task verification (renamed to avoid conflict)
+enum TaskVerificationStatus {
+    case pending
+    case verified
+    case rejected
+}
+
+/// Record of a completed task with verification data (renamed to avoid conflict)
+struct TaskVerificationRecord {
+    let id: String
+    let taskId: String
+    let buildingID: String
+    let workerId: String
+    let completionDate: Date
+    let photoPath: String
+    var status: TaskVerificationStatus
+    var verifierID: String?
+    var verificationDate: Date?
+}
 
 /// Manages the task completion process, verification, and logging
 class TaskCompletionManager {
@@ -8,7 +42,7 @@ class TaskCompletionManager {
     
     // In-memory storage for task completion records
     // In a real app, this would be stored in a database
-    private var taskCompletions: [String: VerificationRecord] = [:]
+    private var taskCompletions: [String: TaskVerificationRecord] = [:]
     
     private init() {
         // Setup work if needed
@@ -17,12 +51,12 @@ class TaskCompletionManager {
     // MARK: - Task Completion Logging
     
     /// Logs a completed task with photo evidence
-    func logTaskCompletion(taskID: String, workerID: String, buildingID: String, photoPath: String) -> VerificationRecord {
+    func logTaskCompletion(taskID: String, workerID: String, buildingID: String, photoPath: String) -> TaskVerificationRecord {
         let id = UUID().uuidString
         let timestamp = Date()
         
         // Create a completion record
-        let record = VerificationRecord(
+        let record = TaskVerificationRecord(
             id: id,
             taskId: taskID,
             buildingID: buildingID,
@@ -42,7 +76,7 @@ class TaskCompletionManager {
             userInfo: ["taskID": taskID]
         )
         
-        // Update building status
+        // ✅ FIXED: Use existing BuildingStatusManager
         BuildingStatusManager.shared.recalculateStatus(for: buildingID)
         
         // Schedule auto-verification after 24 hours
@@ -71,7 +105,7 @@ class TaskCompletionManager {
             userInfo: ["taskID": taskID]
         )
         
-        // Update building status
+        // ✅ FIXED: Use existing BuildingStatusManager
         BuildingStatusManager.shared.recalculateStatus(for: record.buildingID)
     }
     
@@ -101,14 +135,14 @@ class TaskCompletionManager {
             userInfo: ["taskID": taskID]
         )
         
-        // Update building status
+        // ✅ FIXED: Use existing BuildingStatusManager
         BuildingStatusManager.shared.recalculateStatus(for: record.buildingID)
     }
     
     // MARK: - Query Methods
     
     /// Gets verification status for a task
-    func getVerificationStatus(for taskID: String) -> VerificationStatus {
+    func getVerificationStatus(for taskID: String) -> TaskVerificationStatus {
         return taskCompletions[taskID]?.status ?? .pending
     }
     
@@ -123,7 +157,7 @@ class TaskCompletionManager {
     }
     
     /// Gets all pending verifications
-    func getPendingVerifications() -> [VerificationRecord] {
+    func getPendingVerifications() -> [TaskVerificationRecord] {
         return taskCompletions.values.filter { $0.status == .pending }
     }
     
@@ -153,7 +187,8 @@ class TaskCompletionManager {
     }
 }
 
-// MARK: - Photo Uploader View
+// MARK: - ✅ FIXED: Photo Uploader View (Clean Implementation)
+
 struct PhotoUploaderView: View {
     @Binding var image: UIImage?
     var onPhotoSelected: (UIImage) -> Void
@@ -171,6 +206,7 @@ struct PhotoUploaderView: View {
             buttonRow
         }
         .sheet(isPresented: $showImagePicker) {
+            // ✅ FIXED: Use existing ImagePicker with correct parameters
             ImagePicker(sourceType: imageSource, selectedImage: $image)
                 .onDisappear {
                     if let selectedImage = image {
@@ -207,25 +243,25 @@ struct PhotoUploaderView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(FrancoSphereColors.accentBlue, lineWidth: 1)
+                            .stroke(Color.blue, lineWidth: 1)
                     )
             } else {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(FrancoSphereColors.cardBackground)
+                    .fill(Color.gray.opacity(0.2))
                     .frame(height: 200)
                     .overlay(
                         VStack(spacing: 12) {
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 40))
-                                .foregroundColor(FrancoSphereColors.accentBlue)
+                                .foregroundColor(.blue)
                             
                             Text("Verification photo required")
                                 .font(.headline)
-                                .foregroundColor(FrancoSphereColors.textSecondary)
+                                .foregroundColor(.white)
                                 
                             Text("Take a photo of the completed task")
                                 .font(.caption)
-                                .foregroundColor(FrancoSphereColors.textSecondary)
+                                .foregroundColor(.white.opacity(0.7))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
@@ -245,7 +281,7 @@ struct PhotoUploaderView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(FrancoSphereColors.accentBlue)
+                .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(10)
                 .contentShape(Rectangle())

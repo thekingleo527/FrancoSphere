@@ -165,6 +165,10 @@
 		23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581232DF78E3D00355F0A /* TaskRequestView.swift */; };
 		23B117A62DFE3A490065F39E /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811E2DF78E3D00355F0A /* DashboardTaskDetailView.swift */; };
 		23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */; };
+		23BBD75E2E0016E400013D90 /* BuildingPreviewPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */; };
+		23BBD7602E0018DD00013D90 /* Building.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD75F2E0018DD00013D90 /* Building.swift */; };
+		23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */; };
+		23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -358,6 +362,10 @@
 		23B1179E2DFE23B00065F39E /* SchemaMigrationPatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaMigrationPatch.swift; sourceTree = "<group>"; };
 		23B117A02DFE2BC40065F39E /* ContextualTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTask.swift; sourceTree = "<group>"; };
 		23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineView.swift; sourceTree = "<group>"; };
+		23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingPreviewPopover.swift; sourceTree = "<group>"; };
+		23BBD75F2E0018DD00013D90 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
+		23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantImageLoader.swift; sourceTree = "<group>"; };
+		23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -472,6 +480,7 @@
 		234580962DF78E3D00355F0A /* Design */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */,
 				23B1178E2DFDB0570065F39E /* HeaderV3B.swift */,
 				2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */,
 				2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */,
@@ -521,6 +530,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD75F2E0018DD00013D90 /* Building.swift */,
 				23B117A02DFE2BC40065F39E /* ContextualTask.swift */,
 				23B117962DFE01B50065F39E /* ProfileBadge.swift */,
 				23B117942DFE00A40065F39E /* MapInteractionHint.swift */,
@@ -735,6 +745,7 @@
 		2345811C2DF78E3D00355F0A /* Buildings */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */,
 				234581122DF78E3D00355F0A /* AssignedBuildingsView.swift */,
 				234581132DF78E3D00355F0A /* BuildingDetailView.swift */,
 				234581142DF78E3D00355F0A /* BuildingSelectionView.swift */,
@@ -752,6 +763,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */,
 				23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */,
 				23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */,
 				233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */,
@@ -1042,6 +1054,7 @@
 				23B1179D2DFE22A80065F39E /* DatabaseSchemaVerifier.swift in Sources */,
 				2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */,
 				2345815F2DF78E3D00355F0A /* TaskItem.swift in Sources */,
+				23BBD75E2E0016E400013D90 /* BuildingPreviewPopover.swift in Sources */,
 				234581602DF78E3D00355F0A /* TaskPhotoUploader.swift in Sources */,
 				234581612DF78E3D00355F0A /* WorkerRoutineViewModel.swift in Sources */,
 				234581622DF78E3D00355F0A /* DataBootstrapper.swift in Sources */,
@@ -1089,6 +1102,7 @@
 				234581892DF78E3D00355F0A /* CSVDataImporter.swift in Sources */,
 				233F94E02DF7B67100901707 /* WorkerDashboardIntegration.swift in Sources */,
 				2345818A2DF78E3D00355F0A /* GlassStatusBadge.swift in Sources */,
+				23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */,
 				2345818B2DF78E3D00355F0A /* ProfileView.swift in Sources */,
 				233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */,
 				23B1179F2DFE23B00065F39E /* SchemaMigrationPatch.swift in Sources */,
@@ -1112,6 +1126,7 @@
 				2345819A2DF78E3D00355F0A /* VerificationRecord.swift in Sources */,
 				233F94E82DF7E55000901707 /* AdaptiveGlassModifier.swift in Sources */,
 				2345819B2DF78E3D00355F0A /* DashboardView.swift in Sources */,
+				23BBD7602E0018DD00013D90 /* Building.swift in Sources */,
 				2345819C2DF78E3D00355F0A /* GlassButton.swift in Sources */,
 				2345819D2DF78E3D00355F0A /* DataInitializationView.swift in Sources */,
 				2345819E2DF78E3D00355F0A /* GlassNavigationBar.swift in Sources */,
@@ -1125,6 +1140,7 @@
 				234581A52DF78E3D00355F0A /* ContentView.swift in Sources */,
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
 				234581A72DF78E3D00355F0A /* CSVLoader.swift in Sources */,
+				23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */,
 				23B117972DFE01B50065F39E /* ProfileBadge.swift in Sources */,
 				234581A82DF78E3D00355F0A /* WeatherService.swift in Sources */,
 				23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */,

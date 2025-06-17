@@ -2,9 +2,10 @@
 //  AIAvatarOverlayView.swift
 //  FrancoSphere
 //
-//  ✅ FIX PACK 02 - Removed Duplicate Nova Avatar
-//  ✅ Added showAvatar flag to control when the avatar circle appears
-//  ✅ Only shows speech bubble now, not the extra mini-Nova
+//  ✅ FIXED: AIAssistant image integration
+//  ✅ FIXED: Duplicate Nova avatar removal
+//  ✅ FIXED: Proper image loading with fallback
+//  ✅ Enhanced with processing animations
 //
 
 import SwiftUI
@@ -15,10 +16,9 @@ struct AIAvatarOverlayView: View {
     @State private var avatarScale: CGFloat = 1.0
     @State private var pulseAnimation = false
     
-    // ✅ FIX A: Added showAvatar flag to control duplicate Nova
+    // Control when to show avatar vs just speech bubble
     let showAvatar: Bool
     
-    // ✅ FIX A: Expose init with showAvatar parameter
     init(showAvatar: Bool = false) {
         self.showAvatar = showAvatar
     }
@@ -38,7 +38,7 @@ struct AIAvatarOverlayView: View {
                             ))
                     }
                     
-                    // ✅ FIX A: Only show avatar when explicitly requested
+                    // Only show avatar when explicitly requested
                     if showAvatar {
                         novaAvatar
                     }
@@ -106,10 +106,27 @@ struct AIAvatarOverlayView: View {
                     )
                     .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
                 
-                // Nova icon
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
+                // ✅ FIXED: AIAssistant image with fallback
+                Group {
+                    if let aiImage = UIImage(named: "AIAssistant") {
+                        Image(uiImage: aiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 42, height: 42)
+                            .clipShape(Circle())
+                    } else if let aiAssistantImage = UIImage(named: "AIAssistant.png") {
+                        Image(uiImage: aiAssistantImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 42, height: 42)
+                            .clipShape(Circle())
+                    } else {
+                        // Fallback to brain icon
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
                 
                 // Notification badge
                 if aiManager.hasActiveScenarios {
@@ -180,7 +197,7 @@ struct AIAvatarOverlayView: View {
                 .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true)
             
-            // Action button - Using standard Button instead of GlassButton
+            // Action button
             Button(action: {
                 aiManager.performAction()
                 withAnimation(.spring()) {
@@ -223,7 +240,7 @@ struct AIAvatarOverlayView: View {
     }
     
     // Helper functions
-    private func iconColor(for scenario: AIScenario) -> Color {
+    private func iconColor(for scenario: FrancoSphere.AIScenario) -> Color {
         switch scenario {
         case .routineIncomplete: return .orange
         case .pendingTasks: return .blue
@@ -236,7 +253,7 @@ struct AIAvatarOverlayView: View {
         }
     }
     
-    private func actionIcon(for scenario: AIScenario) -> String {
+    private func actionIcon(for scenario: FrancoSphere.AIScenario) -> String {
         switch scenario {
         case .routineIncomplete: return "checklist"
         case .pendingTasks: return "list.bullet.rectangle"
@@ -250,7 +267,17 @@ struct AIAvatarOverlayView: View {
     }
 }
 
+// MARK: - Convenience Extensions
+
+extension AIAvatarOverlayView {
+    /// Create overlay with proper positioning
+    static func withAnchor(showAvatar: Bool = true, anchor: UnitPoint = .topTrailing) -> some View {
+        AIAvatarOverlayView(showAvatar: showAvatar)
+    }
+}
+
 // MARK: - Preview
+
 struct AIAvatarOverlayView_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
@@ -270,13 +297,6 @@ struct AIAvatarOverlayView_Previews: PreviewProvider {
                     .foregroundColor(.white)
             }
         }
-    }
-}
-extension AIAvatarOverlayView {
-    
-    /// Create AIAvatarOverlayView with proper anchor positioning
-    /// Fixes: "Cannot infer contextual base in reference to member 'topTrailing'"
-    static func withAnchor(showAvatar: Bool = true, anchor: UnitPoint = .topTrailing) -> some View {
-        AIAvatarOverlayView(showAvatar: showAvatar)
+        .preferredColorScheme(.dark)
     }
 }
