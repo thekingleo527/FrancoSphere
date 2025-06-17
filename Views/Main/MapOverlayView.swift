@@ -7,17 +7,29 @@
 //  ✅ Added proper back navigation to WorkerDashboard
 //  ✅ Chelsea/SoHo default region with all building markers
 //  ✅ Tap → hover card, double-tap → BuildingDetailView
+//  🆕 PHASE-2: Added "My Sites" ↔ "All Sites" toggle functionality
 //
 
 import SwiftUI
 import MapKit
 
 struct MapOverlayView: View {
-    let buildings: [FrancoSphere.NamedCoordinate]
+    // BEGIN PATCH - Updated signature with allBuildings parameter
+    let buildings: [FrancoSphere.NamedCoordinate]           // Assigned buildings ("My Sites")
+    let allBuildings: [FrancoSphere.NamedCoordinate]        // All buildings in portfolio ("All Sites")
     let currentBuildingId: String?
     let focusBuilding: FrancoSphere.NamedCoordinate?
     @Binding var isPresented: Bool
     let onBuildingDetail: ((FrancoSphere.NamedCoordinate) -> Void)?
+    
+    // NEW: Toggle state for site scope
+    @State private var showAll: Bool = false
+    
+    // NEW: Computed datasource property
+    private var datasource: [FrancoSphere.NamedCoordinate] {
+        showAll ? allBuildings : buildings
+    }
+    // END PATCH
     
     // ✅ DEFAULT REGION: Chelsea/SoHo area as specified
     @State private var region = MKCoordinateRegion(
@@ -37,18 +49,21 @@ struct MapOverlayView: View {
     
     private let dismissThreshold: CGFloat = 100
     
-    // Initialization with proper default region
+    // BEGIN PATCH - Updated initialization with allBuildings parameter
     init(buildings: [FrancoSphere.NamedCoordinate],
+         allBuildings: [FrancoSphere.NamedCoordinate],
          currentBuildingId: String?,
          focusBuilding: FrancoSphere.NamedCoordinate?,
          isPresented: Binding<Bool>,
          onBuildingDetail: ((FrancoSphere.NamedCoordinate) -> Void)? = nil) {
         self.buildings = buildings
+        self.allBuildings = allBuildings
         self.currentBuildingId = currentBuildingId
         self.focusBuilding = focusBuilding
         self._isPresented = isPresented
         self.onBuildingDetail = onBuildingDetail
     }
+    // END PATCH
     
     var body: some View {
         NavigationStack {
@@ -114,25 +129,27 @@ struct MapOverlayView: View {
     @ViewBuilder
     private var mapView: some View {
         if #available(iOS 17.0, *) {
-            // Modern Map API
+            // BEGIN PATCH - Modern Map API with datasource
             Map(position: $mapPosition) {
-                ForEach(buildings, id: \.id) { building in
+                ForEach(datasource, id: \.id) { building in
                     Annotation(building.name, coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)) {
                         buildingMapMarker(for: building)
                     }
                 }
             }
             .mapStyle(.standard)
+            // END PATCH
         } else {
-            // Legacy Map API
+            // BEGIN PATCH - Legacy Map API with datasource
             Map(
                 coordinateRegion: $region,
-                annotationItems: buildings
+                annotationItems: datasource
             ) { building in
                 MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)) {
                     buildingMapMarker(for: building)
                 }
             }
+            // END PATCH
         }
     }
     
@@ -248,40 +265,56 @@ struct MapOverlayView: View {
     
     // MARK: - Bottom Controls
     
+    // BEGIN PATCH - Updated bottom controls with segmented picker
     private var bottomControls: some View {
         VStack(spacing: 12) {
             // Building stats
             buildingStatsCard
             
-            // Quick actions
-            HStack(spacing: 16) {
-                Button("Fit All Buildings") {
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
-                    fitAllBuildings()
+            // Site scope toggle + Quick actions
+            HStack {
+                // NEW: Segmented picker for site scope
+                Picker("", selection: $showAll) {
+                    Text("My").tag(false)
+                    Text("All").tag(true)
                 }
-                .buttonStyle(MapOverlayActionButtonStyle())
+                .pickerStyle(.segmented)
+                .frame(width: 140)
                 
-                if let current = buildings.first(where: { $0.id == currentBuildingId }) {
-                    Button("Go to Current") {
+                Spacer()
+                
+                // Quick actions
+                HStack(spacing: 16) {
+                    Button("Fit All Buildings") {
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
-                        focusOnBuilding(current)
+                        fitAllBuildings(datasource) // UPDATED: use datasource
                     }
-                    .buttonStyle(MapOverlayActionButtonStyle(isPrimary: true))
+                    .buttonStyle(MapOverlayActionButtonStyle())
+                    
+                    if let current = buildings.first(where: { $0.id == currentBuildingId }) {
+                        Button("Go to Current") {
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                            impactFeedback.impactOccurred()
+                            focusOnBuilding(current)
+                        }
+                        .buttonStyle(MapOverlayActionButtonStyle(isPrimary: true))
+                    }
                 }
             }
         }
         .padding()
         .padding(.bottom, 10)
     }
+    // END PATCH
     
+    // BEGIN PATCH - Updated building stats card with dynamic labels
     private var buildingStatsCard: some View {
         HStack {
             mapStatItem(
                 icon: "building.2.fill",
-                label: "Total Sites",
-                value: "\(buildings.count)",
+                label: showAll ? "All Sites" : "My Sites",
+                value: "\(datasource.count)",
                 color: .blue
             )
             
@@ -310,6 +343,7 @@ struct MapOverlayView: View {
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
+    // END PATCH
     
     private func mapStatItem(icon: String, label: String, value: String, color: Color) -> some View {
         VStack(spacing: 4) {
@@ -397,18 +431,20 @@ struct MapOverlayView: View {
         onBuildingDetail?(building)
     }
     
+    // BEGIN PATCH - Updated map position methods with datasource
     private func setupMapPosition() {
-        if !buildings.isEmpty && focusBuilding == nil {
+        if !datasource.isEmpty && focusBuilding == nil {
             // Keep default Chelsea/SoHo region if no specific focus
             return
         }
         
         if let focus = focusBuilding {
             focusOnBuilding(focus)
-        } else if !buildings.isEmpty {
-            fitAllBuildings()
+        } else if !datasource.isEmpty {
+            fitAllBuildings(datasource)
         }
     }
+    // END PATCH
     
     private func focusOnBuilding(_ building: FrancoSphere.NamedCoordinate) {
         let focusRegion = MKCoordinateRegion(
@@ -424,10 +460,11 @@ struct MapOverlayView: View {
         }
     }
     
-    private func fitAllBuildings() {
-        guard !buildings.isEmpty else { return }
+    // BEGIN PATCH - Updated fitAllBuildings with parameter and zero-span guards
+    private func fitAllBuildings(_ buildingsToFit: [FrancoSphere.NamedCoordinate]) {
+        guard !buildingsToFit.isEmpty else { return }
         
-        let coordinates = buildings.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+        let coordinates = buildingsToFit.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
         let latitudes = coordinates.map { $0.latitude }
         let longitudes = coordinates.map { $0.longitude }
         
@@ -439,8 +476,8 @@ struct MapOverlayView: View {
         let centerLat = (minLat + maxLat) / 2
         let centerLng = (minLng + maxLng) / 2
         
-        let latDelta = max(0.01, (maxLat - minLat) * 1.2)
-        let lngDelta = max(0.01, (maxLng - minLng) * 1.2)
+        let latDelta = max(0.01, (maxLat - minLat) * 1.2) // Zero-span guard maintained
+        let lngDelta = max(0.01, (maxLng - minLng) * 1.2) // Zero-span guard maintained
         
         let newRegion = MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLng),
@@ -454,6 +491,7 @@ struct MapOverlayView: View {
             }
         }
     }
+    // END PATCH
 }
 
 // MARK: - Supporting Types (Local to avoid conflicts)
@@ -511,6 +549,7 @@ struct MapOverlayView_Previews: PreviewProvider {
                     imageAssetName: "29_31_East_20th_Street"
                 )
             ],
+            allBuildings: FrancoSphere.NamedCoordinate.allBuildings,
             currentBuildingId: "1",
             focusBuilding: nil,
             isPresented: .constant(true)

@@ -2,7 +2,8 @@
 // Managers/CSVDataImporter.swift
 // FIXED VERSION - Type ambiguity errors resolved
 // Purpose: Import ALL worker task assignments with complete, real-world routines (un-abbreviated)
-// Updated: 2025-06-08 with ops-reviewed task matrix (~120 tasks)
+// Updated: 2025-06-08 with ops-reviewed task matrix (~126 tasks total)
+// 🆕 PHASE-2: Added 6 new Kevin tasks for 131 Perry (Monday/Wednesday/Friday)
 
 import Foundation
 import SQLite
@@ -35,16 +36,18 @@ class CSVDataImporter: ObservableObject {
     private var importErrors: [String] = []
 
     // ──────────────────────────────────────────────────────────────────────────────
-    //  REAL-WORLD TASK MATRIX  (≈ 120 tasks after latest reconciliation)
+    //  REAL-WORLD TASK MATRIX  (≈ 126 tasks after Phase-2 Kevin expansion)
     //  – every entry reviewed with ops on 2025-06-08
     //  – DSNY put-out blocks included (prep + actual curb placement)
     //  – lunch breaks implicit; no tasks scheduled 12-13 for any worker
+    //  🆕 PHASE-2: Kevin Dutan expanded from ~28 to ~34 tasks
     // -----------------------------------------------------------------------------
     private let realWorldTasks: [CSVTaskAssignment] = [
 
         // ───────────────────────────────
         //  KEVIN DUTAN
         //  Mon-Fri 06:00-17:00  (lunch 12-13)
+        //  🆕 PHASE-2: Now includes 6 additional Mon/Wed/Fri tasks at 131 Perry
         // ───────────────────────────────
 
         // Perry cluster (finish by 09:30)
@@ -52,6 +55,15 @@ class CSVDataImporter: ObservableObject {
         CSVTaskAssignment(building: "131 Perry Street", taskName: "Hallway & Stairwell Clean / Vacuum", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 8, daysOfWeek: "Mon,Wed"),
         CSVTaskAssignment(building: "131 Perry Street", taskName: "Hallway & Stairwell Vacuum (light)", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 7, daysOfWeek: "Fri"),
 
+        // ✅ NEW: 6 additional Kevin tasks for 131 Perry (Monday/Wednesday/Friday) - PHASE-2
+        CSVTaskAssignment(building: "131 Perry Street", taskName: "Lobby + Packages Check", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 8, daysOfWeek: "Mon,Wed,Fri"),
+        CSVTaskAssignment(building: "131 Perry Street", taskName: "Vacuum Hallways Floor 2-6", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
+        CSVTaskAssignment(building: "131 Perry Street", taskName: "Hose Down Sidewalks", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
+        CSVTaskAssignment(building: "131 Perry Street", taskName: "Clear Walls & Surfaces", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
+        CSVTaskAssignment(building: "131 Perry Street", taskName: "Check Bathroom + Trash Room", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
+        CSVTaskAssignment(building: "131 Perry Street", taskName: "Mop Stairs A & B", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 11, daysOfWeek: "Mon,Wed,Fri"),
+
+        // 68 Perry Street tasks
         CSVTaskAssignment(building: "68 Perry Street", taskName: "Sidewalk / Curb Sweep & Trash Return", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
         CSVTaskAssignment(building: "68 Perry Street", taskName: "Full Building Clean & Vacuum", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 9, daysOfWeek: "Tue,Thu"),
         CSVTaskAssignment(building: "68 Perry Street", taskName: "Stairwell Hose-Down + Trash Area Hose", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
@@ -514,7 +526,7 @@ class CSVDataImporter: ObservableObject {
         Errors: \(errors.count)
         
         Worker Task Summary:
-        - Kevin Dutan: \(realWorldTasks.filter { $0.assignedWorker == "Kevin Dutan" }.count) tasks (Mon-Fri 06:00-17:00)
+        - Kevin Dutan: \(realWorldTasks.filter { $0.assignedWorker == "Kevin Dutan" }.count) tasks (Mon-Fri 06:00-17:00) 🆕 +6 tasks
         - Mercedes Inamagua: \(realWorldTasks.filter { $0.assignedWorker == "Mercedes Inamagua" }.count) tasks (06:30-11:00)
         - Edwin Lema: \(realWorldTasks.filter { $0.assignedWorker == "Edwin Lema" }.count) tasks (06:00-15:00)
         - Luis Lopez: \(realWorldTasks.filter { $0.assignedWorker == "Luis Lopez" }.count) tasks (07:00-16:00)

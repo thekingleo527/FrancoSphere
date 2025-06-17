@@ -236,6 +236,7 @@ struct WorkerDashboardView: View {
         .fullScreenCover(isPresented: $showMapOverlay) {
             MapOverlayView(
                 buildings: assignedBuildings,
+                allBuildings: FrancoSphere.NamedCoordinate.allBuildings,    // USE STATIC METHOD INSTEAD
                 currentBuildingId: clockedInStatus.buildingId,
                 focusBuilding: nil,
                 isPresented: $showMapOverlay
