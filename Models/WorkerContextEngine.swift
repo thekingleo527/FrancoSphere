@@ -1,13 +1,12 @@
-// FILE: Models/WorkerContextEngine.swift
 //
 //  WorkerContextEngine.swift
 //  FrancoSphere
 //
-//  ✅ CRITICAL FIX - Fixed access level conflicts
-//  ✅ Removed DateFormatter.iso8601 redeclaration
-//  ✅ Made access levels consistent
-//  ✅ Integrated with real CSVDataImporter buildings
-//  🆕 PHASE-2: Added getAllBuildings() method and Kevin task expansion (34 tasks)
+//  🔧 PHASE-2 ENHANCED - Dynamic Worker-Specific Data Loading
+//  ✅ PATCH P2-04-V2: Real CSV task assignments integration
+//  ✅ Enhanced worker validation with real-world data
+//  ✅ Jose Santos removal support, Kevin expansion tracking
+//  ✅ Dynamic worker-specific context loading with auth integration
 //
 
 import Foundation
@@ -53,6 +52,7 @@ public class WorkerContextEngine: ObservableObject {
     
     // MARK: - Internal Properties (accessed via public methods)
     @Published internal var currentWorker: InternalWorkerContext?
+    @Published internal var assignedBuildings: [FrancoSphere.NamedCoordinate] = []
     @Published internal var todaysTasks: [ContextualTask] = []
     @Published internal var upcomingTasks: [ContextualTask] = []
     
@@ -60,6 +60,11 @@ public class WorkerContextEngine: ObservableObject {
     private var sqliteManager: SQLiteManager?
     private var cancellables = Set<AnyCancellable>()
     private var migrationRun = false
+    
+    // MARK: - ⭐ PHASE-2: Auth manager reference
+    private var authManager: NewAuthManager {
+        return NewAuthManager.shared
+    }
     
     private init() {
         setupSQLiteManager()
@@ -71,48 +76,182 @@ public class WorkerContextEngine: ObservableObject {
         sqliteManager = SQLiteManager.shared
     }
     
-    // MARK: - ✅ FIX: Public accessor methods with proper access levels
+    // MARK: - ⭐ PHASE-2: Enhanced Load Worker Context with Real-World Data Validation
     
-    public func getAssignedBuildings() -> [FrancoSphere.NamedCoordinate] {
-        guard let workerId = currentWorker?.workerId else {
-            return []
+    /// Load complete worker context with real-world data validation
+    public func loadWorkerContext(workerId: String? = nil) async {
+        let actualWorkerId = workerId ?? authManager.workerId
+        
+        guard !actualWorkerId.isEmpty else {
+            print("❌ No worker ID provided and no authenticated user")
+            await MainActor.run {
+                self.error = WorkerContextError.noWorkerID
+                self.isLoading = false
+            }
+            return
         }
         
-        // Real worker-building assignments based on CSVDataImporter data
-        let workerBuildingMap: [String: [String]] = [
-            "1": ["9", "10", "12", "13", "14", "8"], // Kevin Dutan: Perry cluster + 17th Street buildings
-            "2": ["16", "11", "8", "7"],             // Edwin Lema: Park + maintenance buildings
-            "3": ["7", "8", "12"],                   // Mercedes Inamagua: 17th Street cluster
-            "4": ["6", "3", "4"],                    // Luis Lopez: Franklin + Walker + Elizabeth
-            "5": ["1", "17", "18"],                  // Angel Guirachocha: Evening buildings
-            "6": ["1"],                              // Greg Hutson: 18th Street
-            "7": ["8", "11", "13", "14", "18"]       // Shawn Magloire: Specialist buildings
-        ]
+        // Validate worker exists in real data
+        guard await validateWorkerExists(actualWorkerId) else {
+            print("❌ Worker ID \(actualWorkerId) not found in real-world data")
+            await MainActor.run {
+                self.error = WorkerContextError.workerNotFound(actualWorkerId)
+                self.isLoading = false
+            }
+            return
+        }
         
-        let assignedBuildingIds = workerBuildingMap[workerId] ?? []
-        let allBuildings = FrancoSphere.NamedCoordinate.allBuildings
+        print("🔄 Loading REAL worker context for ID: \(actualWorkerId)")
         
-        return allBuildings.filter { building in
-            assignedBuildingIds.contains(building.id)
+        await MainActor.run {
+            self.isLoading = true
+            self.error = nil
+        }
+        
+        do {
+            try await ensureMigrationRun()
+            
+            let worker = try await loadWorkerContext_Fixed(actualWorkerId)
+            let buildings = try await loadWorkerBuildings_Fixed(actualWorkerId)
+            let todayTasks = try await loadWorkerTasksForToday_Fixed(actualWorkerId)
+            let upcomingTasks = try await loadUpcomingTasks_Fixed(actualWorkerId)
+            
+            await MainActor.run {
+                self.currentWorker = worker
+                self.assignedBuildings = buildings
+                self.todaysTasks = todayTasks
+                self.upcomingTasks = upcomingTasks
+                self.isLoading = false
+            }
+            
+            print("✅ REAL worker context loaded for: \(worker.workerName)")
+            print("📋 Buildings: \(buildings.count), Today's tasks: \(todayTasks.count), Upcoming: \(upcomingTasks.count)")
+            
+            // Log worker-specific metrics for validation
+            await logWorkerMetrics(worker, buildings.count, todayTasks.count)
+            
+        } catch {
+            await MainActor.run {
+                self.error = error
+                self.isLoading = false
+            }
+            
+            print("❌ Failed to load worker context: \(error)")
         }
     }
     
-    // ✅ PHASE-2: Add getAllBuildings method for Track A
+    /// Validate worker exists in real-world data
+    private func validateWorkerExists(_ workerId: String) async -> Bool {
+        guard let manager = sqliteManager else { return false }
+        
+        do {
+            let results = try await manager.query("SELECT id FROM workers WHERE id = ? LIMIT 1", [workerId])
+            let exists = !results.isEmpty
+            
+            // Additional check: ensure worker is not Jose Santos (ID 3)
+            if workerId == "3" {
+                print("🚫 Worker ID 3 (Jose Santos) is no longer active")
+                return false
+            }
+            
+            // Verify worker is in current active roster
+            let activeWorkerIds = ["1", "2", "4", "5", "6", "7", "8"] // Current roster without Jose
+            if !activeWorkerIds.contains(workerId) {
+                print("🚫 Worker ID \(workerId) not in current active roster")
+                return false
+            }
+            
+            return exists
+        } catch {
+            print("⚠️ Worker validation error: \(error)")
+            return false
+        }
+    }
+    
+    /// Log worker-specific metrics for real-world validation
+    private func logWorkerMetrics(_ worker: InternalWorkerContext, _ buildingCount: Int, _ taskCount: Int) async {
+        print("📊 Worker Metrics - \(worker.workerName):")
+        print("   • Buildings assigned: \(buildingCount)")
+        print("   • Tasks today: \(taskCount)")
+        print("   • Worker role: \(worker.role)")
+        
+        // Validate against expected ranges for real workers
+        if buildingCount == 0 {
+            print("⚠️ WARNING: Worker \(worker.workerName) has no building assignments")
+        }
+        if taskCount == 0 {
+            print("⚠️ WARNING: Worker \(worker.workerName) has no tasks for today")
+        }
+        
+        // Special validation for Kevin's expanded duties
+        if worker.workerId == "4" && buildingCount < 6 {
+            print("⚠️ WARNING: Kevin Dutan should have 6+ buildings (expanded duties), found \(buildingCount)")
+        }
+        
+        // Special validation for Mercedes' split shift
+        if worker.workerId == "5" {
+            print("⏰ Mercedes Inamagua: Split shift 6:30-10:30 AM")
+        }
+        
+        // Log Phase-2 specific validations
+        await validatePhase2WorkerRequirements(worker, buildingCount, taskCount)
+    }
+    
+    /// Phase-2 specific worker validation
+    private func validatePhase2WorkerRequirements(_ worker: InternalWorkerContext, _ buildingCount: Int, _ taskCount: Int) async {
+        switch worker.workerId {
+        case "1": // Greg Hutson - reduced hours
+            print("🔧 Greg Hutson: Reduced hours 9:00-15:00")
+            
+        case "2": // Edwin Lema - early shift
+            print("🧹 Edwin Lema: Early morning shift 6:00-15:00")
+            
+        case "4": // Kevin Dutan - expanded duties
+            print("⚡ Kevin Dutan: EXPANDED DUTIES (took Jose's responsibilities)")
+            if buildingCount >= 6 {
+                print("✅ Kevin's building expansion verified: \(buildingCount) buildings")
+            }
+            
+        case "5": // Mercedes Inamagua - split shift
+            print("✨ Mercedes Inamagua: Split shift specialist 6:30-10:30 AM")
+            
+        case "6": // Luis Lopez - standard
+            print("🔨 Luis Lopez: Standard day shift 7:00-16:00")
+            
+        case "7": // Angel Guirachocha - evening
+            print("🗑️ Angel Guirachocha: Day + evening garbage duties")
+            
+        case "8": // Shawn Magloire - specialist
+            print("🎨 Shawn Magloire: Rubin Museum specialist, flexible schedule")
+            
+        default:
+            print("⚠️ Unknown worker ID: \(worker.workerId)")
+        }
+    }
+    
+    public func refreshContext() async {
+        guard let workerId = currentWorker?.workerId else { return }
+        await loadWorkerContext(workerId: workerId)
+    }
+    
+    // MARK: - ⭐ PHASE-2: Enhanced Public Accessor Methods
+    
+    public func getAssignedBuildings() -> [FrancoSphere.NamedCoordinate] {
+        return assignedBuildings
+    }
+    
     public func getAllBuildings() -> [FrancoSphere.NamedCoordinate] {
         return FrancoSphere.NamedCoordinate.allBuildings
     }
     
-    // ✅ FIX: Made internal to match ContextualTask access level
     internal func getTodaysTasks() -> [ContextualTask] {
         return todaysTasks
     }
     
-    // ✅ FIX: Made internal to match ContextualTask access level
     internal func getUpcomingTasks() -> [ContextualTask] {
         return upcomingTasks
     }
     
-    // Public methods that return basic types (no access level conflicts)
     public func getTasksCount() -> Int {
         return todaysTasks.count
     }
@@ -130,999 +269,8 @@ public class WorkerContextEngine: ObservableObject {
     }
     
     public func getBuildingsCount() -> Int {
-        return getAssignedBuildings().count
+        return assignedBuildings.count
     }
-    
-    // MARK: - ✅ FIX: Worker Context Management
-    
-    public var currentWorkerName: String {
-        return currentWorker?.workerName ?? "Unknown Worker"
-    }
-    
-    public var currentWorkerId: String {
-        return currentWorker?.workerId ?? ""
-    }
-    
-    public var currentWorkerRole: String {
-        return currentWorker?.role ?? "worker"
-    }
-    
-    // MARK: - ✅ MAIN FIX: Load Worker Context with Real CSVDataImporter Integration
-    
-    public func loadWorkerContext(workerId: String) async {
-        print("🔄 Loading worker context for ID: \(workerId)")
-        
-        await MainActor.run {
-            self.isLoading = true
-            self.error = nil
-        }
-        
-        do {
-            // Load worker from real CSVDataImporter data
-            let worker = try loadWorkerFromCSVData(workerId)
-            let tasks = try loadTasksFromCSVData(workerId)
-            
-            await MainActor.run {
-                self.currentWorker = worker
-                self.todaysTasks = tasks
-                self.upcomingTasks = []
-                self.isLoading = false
-            }
-            
-            let buildingsCount = getAssignedBuildings().count
-            print("✅ Worker context loaded for: \(worker.workerName)")
-            print("📋 Loaded \(buildingsCount) buildings and \(tasks.count) tasks")
-            
-        } catch {
-            await MainActor.run {
-                self.error = error
-                self.isLoading = false
-            }
-            
-            print("❌ Failed to load worker context: \(error)")
-        }
-    }
-    
-    public func refreshContext() async {
-        guard let workerId = currentWorker?.workerId else { return }
-        await loadWorkerContext(workerId: workerId)
-    }
-    
-    // MARK: - ✅ Real CSVDataImporter Integration
-    
-    private func loadWorkerFromCSVData(_ workerId: String) throws -> InternalWorkerContext {
-        // Real worker data from CSVDataImporter
-        let workerData: [String: (name: String, email: String, role: String)] = [
-            "1": ("Kevin Dutan", "kevin@francosphere.com", "worker"),
-            "2": ("Edwin Lema", "edwin@francosphere.com", "maintenance"),
-            "3": ("Mercedes Inamagua", "mercedes@francosphere.com", "worker"),
-            "4": ("Luis Lopez", "luis@francosphere.com", "worker"),
-            "5": ("Angel Guirachocha", "angel@francosphere.com", "worker"),
-            "6": ("Greg Hutson", "greg@francosphere.com", "worker"),
-            "7": ("Shawn Magloire", "shawn@francosphere.com", "specialist")
-        ]
-        
-        guard let worker = workerData[workerId] else {
-            throw DatabaseError.invalidData("Worker not found: \(workerId)")
-        }
-        
-        return InternalWorkerContext(
-            workerId: workerId,
-            workerName: worker.name,
-            email: worker.email,
-            role: worker.role,
-            primaryBuildingId: nil
-        )
-    }
-    
-    // ✅ PHASE-2: Updated Kevin tasks (Track B: Kevin Routine Expansion)
-    private func loadTasksFromCSVData(_ workerId: String) throws -> [ContextualTask] {
-        // Sample tasks based on real CSVDataImporter assignments
-        let workerTasks: [String: [ContextualTask]] = [
-            "1": [ // Kevin Dutan - NOW 34 tasks (was 28) - PHASE-2 EXPANSION
-                // Original core tasks
-                ContextualTask(
-                    id: "kevin_1",
-                    name: "Sidewalk + Curb Sweep / Trash Return",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "06:00",
-                    endTime: "07:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_2",
-                    name: "Hallway & Stairwell Clean / Vacuum",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "07:00",
-                    endTime: "08:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                
-                // ✅ NEW: 6 additional Kevin tasks for 131 Perry (Monday/Wednesday/Friday)
-                ContextualTask(
-                    id: "kevin_3",
-                    name: "Lobby + Packages Check",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "08:00",
-                    endTime: "08:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_4",
-                    name: "Vacuum Hallways Floor 2-6",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "08:30",
-                    endTime: "09:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_5",
-                    name: "Hose Down Sidewalks",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "09:00",
-                    endTime: "09:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_6",
-                    name: "Clear Walls & Surfaces",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "09:30",
-                    endTime: "10:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_7",
-                    name: "Check Bathroom + Trash Room",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Sanitation",
-                    startTime: "10:00",
-                    endTime: "10:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_8",
-                    name: "Mop Stairs A & B",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "10:30",
-                    endTime: "11:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                
-                // Additional Kevin tasks (68 Perry Street)
-                ContextualTask(
-                    id: "kevin_9",
-                    name: "Sidewalk / Curb Sweep & Trash Return",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Cleaning",
-                    startTime: "11:00",
-                    endTime: "12:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_10",
-                    name: "Full Building Clean & Vacuum",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Cleaning",
-                    startTime: "13:00",
-                    endTime: "14:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                
-                // 17th Street cluster tasks
-                ContextualTask(
-                    id: "kevin_11",
-                    name: "Trash Area + Sidewalk & Curb Clean",
-                    buildingId: "12",
-                    buildingName: "135-139 West 17th Street",
-                    category: "Sanitation",
-                    startTime: "14:00",
-                    endTime: "15:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_12",
-                    name: "Trash Area + Sidewalk & Curb Clean",
-                    buildingId: "13",
-                    buildingName: "136 West 17th Street",
-                    category: "Sanitation",
-                    startTime: "15:00",
-                    endTime: "16:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                
-                // After-lunch satellite cleans
-                ContextualTask(
-                    id: "kevin_13",
-                    name: "Hallway / Glass / Sidewalk Sweep & Mop",
-                    buildingId: "2",
-                    buildingName: "29-31 East 20th Street",
-                    category: "Cleaning",
-                    startTime: "13:00",
-                    endTime: "14:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_14",
-                    name: "Hallway & Curb Clean",
-                    buildingId: "9",
-                    buildingName: "123 1st Avenue",
-                    category: "Cleaning",
-                    startTime: "13:00",
-                    endTime: "14:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_15",
-                    name: "Stair Hose & Garbage Return",
-                    buildingId: "17",
-                    buildingName: "178 Spring Street",
-                    category: "Sanitation",
-                    startTime: "14:00",
-                    endTime: "15:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                
-                // DSNY put-out tasks (evening)
-                ContextualTask(
-                    id: "kevin_16",
-                    name: "DSNY Put-Out (after 20:00)",
-                    buildingId: "12",
-                    buildingName: "135-139 West 17th Street",
-                    category: "Operations",
-                    startTime: "20:00",
-                    endTime: "21:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_17",
-                    name: "DSNY Put-Out (after 20:00)",
-                    buildingId: "13",
-                    buildingName: "136 West 17th Street",
-                    category: "Operations",
-                    startTime: "20:00",
-                    endTime: "21:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_18",
-                    name: "DSNY Put-Out (after 20:00)",
-                    buildingId: "14",
-                    buildingName: "138 West 17th Street",
-                    category: "Operations",
-                    startTime: "20:00",
-                    endTime: "21:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_19",
-                    name: "DSNY Put-Out (after 20:00)",
-                    buildingId: "17",
-                    buildingName: "178 Spring Street",
-                    category: "Operations",
-                    startTime: "20:00",
-                    endTime: "21:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                
-                // Additional routine tasks to reach 34 total
-                ContextualTask(
-                    id: "kevin_20",
-                    name: "Trash Area Clean",
-                    buildingId: "8",
-                    buildingName: "117 West 17th Street",
-                    category: "Sanitation",
-                    startTime: "11:00",
-                    endTime: "12:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_21",
-                    name: "Trash Area Clean",
-                    buildingId: "7",
-                    buildingName: "112 West 18th Street",
-                    category: "Sanitation",
-                    startTime: "11:00",
-                    endTime: "12:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_22",
-                    name: "Stairwell Hose-Down + Trash Area Hose",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Sanitation",
-                    startTime: "09:00",
-                    endTime: "09:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_23",
-                    name: "Trash Area + Sidewalk & Curb Clean",
-                    buildingId: "14",
-                    buildingName: "138 West 17th Street",
-                    category: "Sanitation",
-                    startTime: "11:00",
-                    endTime: "12:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_24",
-                    name: "Hallway & Stairwell Vacuum (light)",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "07:00",
-                    endTime: "07:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_25",
-                    name: "Weekend Security Check",
-                    buildingId: "12",
-                    buildingName: "135-139 West 17th Street",
-                    category: "Inspection",
-                    startTime: "18:00",
-                    endTime: "19:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "low",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_26",
-                    name: "Weekend Security Check",
-                    buildingId: "13",
-                    buildingName: "136 West 17th Street",
-                    category: "Inspection",
-                    startTime: "18:30",
-                    endTime: "19:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "low",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_27",
-                    name: "Emergency Supply Check",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Inspection",
-                    startTime: "16:00",
-                    endTime: "17:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "low",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_28",
-                    name: "Emergency Supply Check",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Inspection",
-                    startTime: "16:30",
-                    endTime: "17:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "low",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_29",
-                    name: "Mail & Package Distribution",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Operations",
-                    startTime: "12:00",
-                    endTime: "13:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_30",
-                    name: "Mail & Package Distribution",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Operations",
-                    startTime: "12:30",
-                    endTime: "13:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_31",
-                    name: "Building Systems Check",
-                    buildingId: "12",
-                    buildingName: "135-139 West 17th Street",
-                    category: "Maintenance",
-                    startTime: "15:00",
-                    endTime: "16:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_32",
-                    name: "Building Systems Check",
-                    buildingId: "13",
-                    buildingName: "136 West 17th Street",
-                    category: "Maintenance",
-                    startTime: "15:30",
-                    endTime: "16:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_33",
-                    name: "Floor Deep Clean",
-                    buildingId: "10",
-                    buildingName: "131 Perry Street",
-                    category: "Cleaning",
-                    startTime: "07:00",
-                    endTime: "09:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "low",
-                    assignedWorkerName: "Kevin Dutan"
-                ),
-                ContextualTask(
-                    id: "kevin_34",
-                    name: "Floor Deep Clean",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Cleaning",
-                    startTime: "08:00",
-                    endTime: "10:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "low",
-                    assignedWorkerName: "Kevin Dutan"
-                )
-            ],
-            "2": [ // Edwin Lema
-                ContextualTask(
-                    id: "edwin_1",
-                    name: "Morning Park Check",
-                    buildingId: "16",
-                    buildingName: "Stuyvesant Cove Park",
-                    category: "Maintenance",
-                    startTime: "06:00",
-                    endTime: "07:00",
-                    recurrence: "Daily",
-                    skillLevel: "Intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Edwin Lema"
-                ),
-                ContextualTask(
-                    id: "edwin_2",
-                    name: "Boiler Blow-Down",
-                    buildingId: "11",
-                    buildingName: "133 East 15th Street",
-                    category: "Maintenance",
-                    startTime: "09:00",
-                    endTime: "09:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Advanced",
-                    status: "pending",
-                    urgencyLevel: "high",
-                    assignedWorkerName: "Edwin Lema"
-                ),
-                ContextualTask(
-                    id: "edwin_3",
-                    name: "Building Walk-Through",
-                    buildingId: "11",
-                    buildingName: "133 East 15th Street",
-                    category: "Maintenance",
-                    startTime: "09:00",
-                    endTime: "10:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Edwin Lema"
-                ),
-                ContextualTask(
-                    id: "edwin_4",
-                    name: "Water Filter Change & Roof Drain Check",
-                    buildingId: "8",
-                    buildingName: "117 West 17th Street",
-                    category: "Maintenance",
-                    startTime: "10:00",
-                    endTime: "11:00",
-                    recurrence: "Monthly",
-                    skillLevel: "Intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Edwin Lema"
-                ),
-                ContextualTask(
-                    id: "edwin_5",
-                    name: "Water Filter Change & Roof Drain Check",
-                    buildingId: "7",
-                    buildingName: "112 West 18th Street",
-                    category: "Maintenance",
-                    startTime: "11:00",
-                    endTime: "12:00",
-                    recurrence: "Monthly",
-                    skillLevel: "Intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Edwin Lema"
-                )
-            ],
-            "3": [ // Mercedes Inamagua
-                ContextualTask(
-                    id: "mercedes_1",
-                    name: "Glass & Lobby Clean",
-                    buildingId: "7",
-                    buildingName: "112 West 18th Street",
-                    category: "Cleaning",
-                    startTime: "06:30",
-                    endTime: "07:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Mercedes Inamagua"
-                ),
-                ContextualTask(
-                    id: "mercedes_2",
-                    name: "Glass & Lobby Clean",
-                    buildingId: "8",
-                    buildingName: "117 West 17th Street",
-                    category: "Cleaning",
-                    startTime: "07:00",
-                    endTime: "08:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Mercedes Inamagua"
-                ),
-                ContextualTask(
-                    id: "mercedes_3",
-                    name: "Glass & Lobby Clean",
-                    buildingId: "12",
-                    buildingName: "135-139 West 17th Street",
-                    category: "Cleaning",
-                    startTime: "08:00",
-                    endTime: "09:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Mercedes Inamagua"
-                ),
-                ContextualTask(
-                    id: "mercedes_4",
-                    name: "Roof Drain – 2F Terrace",
-                    buildingId: "15",
-                    buildingName: "Rubin Museum (142-148 W 17th)",
-                    category: "Maintenance",
-                    startTime: "10:00",
-                    endTime: "10:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Mercedes Inamagua"
-                ),
-                ContextualTask(
-                    id: "mercedes_5",
-                    name: "Office Deep Clean",
-                    buildingId: "6",
-                    buildingName: "104 Franklin Street",
-                    category: "Cleaning",
-                    startTime: "14:00",
-                    endTime: "16:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Mercedes Inamagua"
-                )
-            ],
-            "4": [ // Luis Lopez
-                ContextualTask(
-                    id: "luis_1",
-                    name: "Bathrooms Clean",
-                    buildingId: "4",
-                    buildingName: "41 Elizabeth Street",
-                    category: "Cleaning",
-                    startTime: "08:00",
-                    endTime: "09:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Luis Lopez"
-                ),
-                ContextualTask(
-                    id: "luis_2",
-                    name: "Lobby & Sidewalk Clean",
-                    buildingId: "4",
-                    buildingName: "41 Elizabeth Street",
-                    category: "Cleaning",
-                    startTime: "09:00",
-                    endTime: "10:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Luis Lopez"
-                ),
-                ContextualTask(
-                    id: "luis_3",
-                    name: "Elevator Clean",
-                    buildingId: "4",
-                    buildingName: "41 Elizabeth Street",
-                    category: "Cleaning",
-                    startTime: "10:00",
-                    endTime: "11:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Luis Lopez"
-                ),
-                ContextualTask(
-                    id: "luis_4",
-                    name: "Sidewalk Hose",
-                    buildingId: "6",
-                    buildingName: "104 Franklin Street",
-                    category: "Cleaning",
-                    startTime: "07:00",
-                    endTime: "07:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Luis Lopez"
-                ),
-                ContextualTask(
-                    id: "luis_5",
-                    name: "Sidewalk Sweep",
-                    buildingId: "3",
-                    buildingName: "36 Walker Street",
-                    category: "Cleaning",
-                    startTime: "07:00",
-                    endTime: "08:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Luis Lopez"
-                )
-            ],
-            "5": [ // Angel Guirachocha
-                ContextualTask(
-                    id: "angel_1",
-                    name: "Evening Garbage Collection",
-                    buildingId: "1",
-                    buildingName: "12 West 18th Street",
-                    category: "Sanitation",
-                    startTime: "18:00",
-                    endTime: "19:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Angel Guirachocha"
-                ),
-                ContextualTask(
-                    id: "angel_2",
-                    name: "DSNY Prep / Move Bins",
-                    buildingId: "5",
-                    buildingName: "68 Perry Street",
-                    category: "Operations",
-                    startTime: "19:00",
-                    endTime: "20:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Angel Guirachocha"
-                ),
-                ContextualTask(
-                    id: "angel_3",
-                    name: "DSNY Prep / Move Bins",
-                    buildingId: "9",
-                    buildingName: "123 1st Avenue",
-                    category: "Operations",
-                    startTime: "19:00",
-                    endTime: "20:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Angel Guirachocha"
-                ),
-                ContextualTask(
-                    id: "angel_4",
-                    name: "Evening Building Security Check",
-                    buildingId: "12",
-                    buildingName: "135-139 West 17th Street",
-                    category: "Inspection",
-                    startTime: "21:00",
-                    endTime: "22:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Angel Guirachocha"
-                )
-            ],
-            "6": [ // Greg Hutson
-                ContextualTask(
-                    id: "greg_1",
-                    name: "Sidewalk & Curb Clean",
-                    buildingId: "1",
-                    buildingName: "12 West 18th Street",
-                    category: "Cleaning",
-                    startTime: "09:00",
-                    endTime: "10:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Greg Hutson"
-                ),
-                ContextualTask(
-                    id: "greg_2",
-                    name: "Lobby & Vestibule Clean",
-                    buildingId: "1",
-                    buildingName: "12 West 18th Street",
-                    category: "Cleaning",
-                    startTime: "10:00",
-                    endTime: "11:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Greg Hutson"
-                ),
-                ContextualTask(
-                    id: "greg_3",
-                    name: "Glass & Elevator Clean",
-                    buildingId: "1",
-                    buildingName: "12 West 18th Street",
-                    category: "Cleaning",
-                    startTime: "11:00",
-                    endTime: "12:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Greg Hutson"
-                ),
-                ContextualTask(
-                    id: "greg_4",
-                    name: "Trash Area Clean",
-                    buildingId: "1",
-                    buildingName: "12 West 18th Street",
-                    category: "Sanitation",
-                    startTime: "13:00",
-                    endTime: "14:00",
-                    recurrence: "Daily",
-                    skillLevel: "Basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Greg Hutson"
-                ),
-                ContextualTask(
-                    id: "greg_5",
-                    name: "Boiler Blow-Down",
-                    buildingId: "1",
-                    buildingName: "12 West 18th Street",
-                    category: "Maintenance",
-                    startTime: "14:00",
-                    endTime: "14:30",
-                    recurrence: "Weekly",
-                    skillLevel: "Advanced",
-                    status: "pending",
-                    urgencyLevel: "high",
-                    assignedWorkerName: "Greg Hutson"
-                )
-            ],
-            "7": [ // Shawn Magloire
-                ContextualTask(
-                    id: "shawn_1",
-                    name: "Boiler Blow-Down",
-                    buildingId: "8",
-                    buildingName: "117 West 17th Street",
-                    category: "Maintenance",
-                    startTime: "09:00",
-                    endTime: "11:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Advanced",
-                    status: "pending",
-                    urgencyLevel: "high",
-                    assignedWorkerName: "Shawn Magloire"
-                ),
-                ContextualTask(
-                    id: "shawn_2",
-                    name: "Boiler Blow-Down",
-                    buildingId: "11",
-                    buildingName: "133 East 15th Street",
-                    category: "Maintenance",
-                    startTime: "11:00",
-                    endTime: "13:00",
-                    recurrence: "Weekly",
-                    skillLevel: "Advanced",
-                    status: "pending",
-                    urgencyLevel: "high",
-                    assignedWorkerName: "Shawn Magloire"
-                ),
-                ContextualTask(
-                    id: "shawn_3",
-                    name: "HVAC System Check",
-                    buildingId: "7",
-                    buildingName: "112 West 18th Street",
-                    category: "Maintenance",
-                    startTime: "09:00",
-                    endTime: "12:00",
-                    recurrence: "Monthly",
-                    skillLevel: "Advanced",
-                    status: "pending",
-                    urgencyLevel: "high",
-                    assignedWorkerName: "Shawn Magloire"
-                ),
-                ContextualTask(
-                    id: "shawn_4",
-                    name: "HVAC System Check",
-                    buildingId: "8",
-                    buildingName: "117 West 17th Street",
-                    category: "Maintenance",
-                    startTime: "13:00",
-                    endTime: "16:00",
-                    recurrence: "Monthly",
-                    skillLevel: "Advanced",
-                    status: "pending",
-                    urgencyLevel: "high",
-                    assignedWorkerName: "Shawn Magloire"
-                )
-            ]
-        ]
-        
-        return workerTasks[workerId] ?? []
-    }
-}
-
-// MARK: - ✅ FIX: Public interface for external access (no internal type exposure)
-
-extension WorkerContextEngine {
     
     public func getWorkerName() -> String {
         return currentWorker?.workerName ?? ""
@@ -1137,6 +285,471 @@ extension WorkerContextEngine {
     }
     
     public func getAssignedBuildingCount() -> Int {
-        return getAssignedBuildings().count
+        return assignedBuildings.count
+    }
+    
+    // MARK: - ⭐ PHASE-2: Enhanced Database Query Methods
+    
+    private func loadWorkerContext_Fixed(_ workerId: String) async throws -> InternalWorkerContext {
+        guard let manager = sqliteManager else {
+            throw DatabaseError.notInitialized
+        }
+        
+        let results = try await manager.query("""
+            SELECT w.id, w.name, w.email, w.role
+            FROM workers w
+            WHERE w.id = ?
+            LIMIT 1
+        """, [workerId])
+        
+        guard let row = results.first else {
+            throw DatabaseError.invalidData("Worker not found")
+        }
+        
+        let workerIdString: String
+        if let idInt = row["id"] as? Int64 {
+            workerIdString = String(idInt)
+        } else if let idString = row["id"] as? String {
+            workerIdString = idString
+        } else {
+            workerIdString = workerId
+        }
+        
+        return InternalWorkerContext(
+            workerId: workerIdString,
+            workerName: row["name"] as? String ?? "",
+            email: row["email"] as? String ?? "",
+            role: row["role"] as? String ?? "worker",
+            primaryBuildingId: nil
+        )
+    }
+    
+    private func loadWorkerBuildings_Fixed(_ workerId: String) async throws -> [FrancoSphere.NamedCoordinate] {
+        guard let manager = sqliteManager else {
+            throw DatabaseError.notInitialized
+        }
+        
+        // Load buildings from worker_building_assignments table (real CSV data)
+        let results = try await manager.query("""
+            SELECT DISTINCT b.id, b.name, b.latitude, b.longitude, b.imageAssetName
+            FROM buildings b
+            INNER JOIN worker_building_assignments wa ON CAST(b.id AS TEXT) = wa.building_id
+            WHERE wa.worker_id = ? AND wa.is_active = 1
+            ORDER BY b.name
+        """, [workerId])
+        
+        var buildings: [FrancoSphere.NamedCoordinate] = []
+        
+        for row in results {
+            guard let idValue = row["id"],
+                  let name = row["name"] as? String,
+                  let lat = row["latitude"] as? Double,
+                  let lng = row["longitude"] as? Double else {
+                continue
+            }
+            
+            let buildingId: String
+            if let idInt = idValue as? Int64 {
+                buildingId = String(idInt)
+            } else if let idString = idValue as? String {
+                buildingId = idString
+            } else {
+                continue
+            }
+            
+            let imageAssetName = row["imageAssetName"] as? String ?? "building_default"
+            
+            let building = FrancoSphere.NamedCoordinate(
+                id: buildingId,
+                name: name,
+                latitude: lat,
+                longitude: lng,
+                imageAssetName: imageAssetName
+            )
+            
+            buildings.append(building)
+        }
+        
+        print("📋 Loaded \(buildings.count) buildings for worker \(workerId) from database")
+        
+        // If no buildings found in database, try to get from CSV or trigger import
+        if buildings.isEmpty {
+            print("⚠️ No buildings found in database for worker \(workerId) - checking CSV assignments")
+            buildings = await loadBuildingsFromCSVFallback(workerId)
+        }
+        
+        return buildings
+    }
+    
+    /// Fallback to load buildings based on CSV assignments if database is empty
+    private func loadBuildingsFromCSVFallback(_ workerId: String) async -> [FrancoSphere.NamedCoordinate] {
+        print("🔄 Loading buildings from CSV fallback for worker \(workerId)")
+        
+        // Real worker-building assignments based on current roster
+        let workerBuildingMap: [String: [String]] = [
+            "1": ["1", "4", "7", "10", "12"],           // Greg Hutson
+            "2": ["2", "5", "8", "11"],                 // Edwin Lema
+            "4": ["3", "6", "7", "9", "11", "16"],      // Kevin Dutan (expanded - took Jose's duties)
+            "5": ["2", "6", "10", "13"],                // Mercedes Inamagua
+            "6": ["4", "8", "13"],                      // Luis Lopez
+            "7": ["9", "13", "15", "18"],               // Angel Guirachocha
+            "8": ["14"]                                 // Shawn Magloire (Rubin Museum)
+        ]
+        
+        let assignedBuildingIds = workerBuildingMap[workerId] ?? []
+        let allBuildings = FrancoSphere.NamedCoordinate.allBuildings
+        
+        let buildings = allBuildings.filter { building in
+            assignedBuildingIds.contains(building.id)
+        }
+        
+        print("📋 CSV fallback loaded \(buildings.count) buildings for worker \(workerId)")
+        return buildings
+    }
+    
+    private func loadWorkerTasksForToday_Fixed(_ workerId: String) async throws -> [ContextualTask] {
+        guard let manager = sqliteManager else {
+            throw DatabaseError.notInitialized
+        }
+        
+        let today = Date()
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: today)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? today
+        
+        // Load tasks from database with real worker assignments
+        let results = try await manager.query("""
+            SELECT t.id, t.name, t.buildingId, t.category, t.urgencyLevel, 
+                   t.status, t.startTime, t.endTime, t.description, 
+                   b.name as buildingName
+            FROM tasks t
+            LEFT JOIN buildings b ON CAST(t.buildingId AS TEXT) = CAST(b.id AS TEXT)
+            WHERE t.workerId = ? 
+            AND t.scheduledDate >= ? 
+            AND t.scheduledDate < ?
+            ORDER BY t.startTime
+        """, [workerId, startOfDay.iso8601String, endOfDay.iso8601String])
+        
+        var tasks: [ContextualTask] = []
+        
+        for row in results {
+            guard let id = row["id"] as? String,
+                  let name = row["name"] as? String else {
+                continue
+            }
+            
+            let buildingId = String(row["buildingId"] as? Int64 ?? 0)
+            let buildingName = row["buildingName"] as? String ?? "Unknown Building"
+            
+            let task = ContextualTask(
+                id: id,
+                name: name,
+                buildingId: buildingId,
+                buildingName: buildingName,
+                category: row["category"] as? String ?? "Maintenance",
+                startTime: row["startTime"] as? String,
+                endTime: row["endTime"] as? String,
+                recurrence: "Daily", // Default
+                skillLevel: "Basic", // Default
+                status: row["status"] as? String ?? "pending",
+                urgencyLevel: row["urgencyLevel"] as? String ?? "medium",
+                assignedWorkerName: getWorkerName()
+            )
+            
+            tasks.append(task)
+        }
+        
+        print("📋 Loaded \(tasks.count) tasks for worker \(workerId) today")
+        
+        // If no tasks found, generate sample tasks based on worker role
+        if tasks.isEmpty {
+            tasks = await generateSampleTasksForWorker(workerId)
+        }
+        
+        return tasks
+    }
+    
+    /// Generate sample tasks if database is empty (for development/testing)
+    private func generateSampleTasksForWorker(_ workerId: String) async -> [ContextualTask] {
+        let workerName = getWorkerName()
+        print("🔄 Generating sample tasks for \(workerName) (ID: \(workerId))")
+        
+        let sampleTasks: [String: [ContextualTask]] = [
+            "1": [ // Greg Hutson
+                ContextualTask(
+                    id: "greg_sample_1",
+                    name: "Sidewalk & Curb Clean",
+                    buildingId: "1",
+                    buildingName: "12 West 18th Street",
+                    category: "Cleaning",
+                    startTime: "09:00",
+                    endTime: "10:00",
+                    recurrence: "Daily",
+                    skillLevel: "Basic",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: workerName
+                )
+            ],
+            "2": [ // Edwin Lema
+                ContextualTask(
+                    id: "edwin_sample_1",
+                    name: "Morning Park Check",
+                    buildingId: "16",
+                    buildingName: "Stuyvesant Cove Park",
+                    category: "Maintenance",
+                    startTime: "06:00",
+                    endTime: "07:00",
+                    recurrence: "Daily",
+                    skillLevel: "Intermediate",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: workerName
+                )
+            ],
+            "4": [ // Kevin Dutan (expanded)
+                ContextualTask(
+                    id: "kevin_sample_1",
+                    name: "Sidewalk + Curb Sweep / Trash Return",
+                    buildingId: "10",
+                    buildingName: "131 Perry Street",
+                    category: "Cleaning",
+                    startTime: "06:00",
+                    endTime: "07:00",
+                    recurrence: "Daily",
+                    skillLevel: "Basic",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: workerName
+                ),
+                ContextualTask(
+                    id: "kevin_sample_2",
+                    name: "Lobby + Packages Check",
+                    buildingId: "10",
+                    buildingName: "131 Perry Street",
+                    category: "Cleaning",
+                    startTime: "08:00",
+                    endTime: "08:30",
+                    recurrence: "Weekly",
+                    skillLevel: "Basic",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: workerName
+                )
+            ],
+            "5": [ // Mercedes Inamagua
+                ContextualTask(
+                    id: "mercedes_sample_1",
+                    name: "Glass & Lobby Clean",
+                    buildingId: "7",
+                    buildingName: "112 West 18th Street",
+                    category: "Cleaning",
+                    startTime: "06:30",
+                    endTime: "07:00",
+                    recurrence: "Daily",
+                    skillLevel: "Basic",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: workerName
+                )
+            ]
+        ]
+        
+        return sampleTasks[workerId] ?? []
+    }
+    
+    private func loadUpcomingTasks_Fixed(_ workerId: String) async throws -> [ContextualTask] {
+        guard let manager = sqliteManager else {
+            throw DatabaseError.notInitialized
+        }
+        
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        let weekFromNow = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+        
+        let results = try await manager.query("""
+            SELECT t.id, t.name, t.buildingId, t.category, t.urgencyLevel, 
+                   t.status, t.startTime, t.endTime, t.description, 
+                   b.name as buildingName
+            FROM tasks t
+            LEFT JOIN buildings b ON CAST(t.buildingId AS TEXT) = CAST(b.id AS TEXT)
+            WHERE t.workerId = ? 
+            AND t.scheduledDate >= ? 
+            AND t.scheduledDate <= ?
+            ORDER BY t.scheduledDate, t.startTime
+        """, [workerId, tomorrow.iso8601String, weekFromNow.iso8601String])
+        
+        var tasks: [ContextualTask] = []
+        
+        for row in results {
+            guard let id = row["id"] as? String,
+                  let name = row["name"] as? String else {
+                continue
+            }
+            
+            let buildingId = String(row["buildingId"] as? Int64 ?? 0)
+            let buildingName = row["buildingName"] as? String ?? "Unknown Building"
+            
+            let task = ContextualTask(
+                id: id,
+                name: name,
+                buildingId: buildingId,
+                buildingName: buildingName,
+                category: row["category"] as? String ?? "Maintenance",
+                startTime: row["startTime"] as? String,
+                endTime: row["endTime"] as? String,
+                recurrence: "Daily", // Default
+                skillLevel: "Basic", // Default
+                status: row["status"] as? String ?? "pending",
+                urgencyLevel: row["urgencyLevel"] as? String ?? "medium",
+                assignedWorkerName: getWorkerName()
+            )
+            
+            tasks.append(task)
+        }
+        
+        print("📋 Loaded \(tasks.count) upcoming tasks for worker \(workerId)")
+        return tasks
+    }
+    
+    // MARK: - Migration Management
+    
+    private func ensureMigrationRun() async throws {
+        guard !migrationRun else { return }
+        
+        // Use the enhanced Phase-2 schema migration
+        do {
+            try await SchemaMigrationPatch.applyPatch()
+            print("✅ Phase-2 database migration completed")
+        } catch {
+            print("❌ Phase-2 database migration failed: \(error)")
+            throw error
+        }
+        
+        migrationRun = true
+    }
+}
+
+// MARK: - ⭐ PHASE-2: Enhanced Error Types for Real-World Validation
+
+enum WorkerContextError: LocalizedError {
+    case noWorkerID
+    case workerNotFound(String)
+    case noRealWorldData
+    case joseNotAllowed
+    case invalidWorkerRoster
+    
+    var errorDescription: String? {
+        switch self {
+        case .noWorkerID:
+            return "No worker ID available. Please log in."
+        case .workerNotFound(let id):
+            return "Worker ID \(id) not found in system. Contact administrator."
+        case .noRealWorldData:
+            return "Real-world data not loaded. Please refresh."
+        case .joseNotAllowed:
+            return "Jose Santos is no longer with the company."
+        case .invalidWorkerRoster:
+            return "Invalid worker roster. Expected 7 active workers."
+        }
+    }
+}
+
+// MARK: - ⭐ PHASE-2: Enhanced Worker Context Public Interface
+
+extension WorkerContextEngine {
+    
+    /// Get current worker context summary for debugging
+    public func getWorkerContextSummary() -> [String: Any] {
+        var summary: [String: Any] = [:]
+        
+        if let worker = currentWorker {
+            summary["workerId"] = worker.workerId
+            summary["workerName"] = worker.workerName
+            summary["role"] = worker.role
+            summary["email"] = worker.email
+        }
+        
+        summary["buildingCount"] = assignedBuildings.count
+        summary["todayTaskCount"] = todaysTasks.count
+        summary["upcomingTaskCount"] = upcomingTasks.count
+        summary["completedTaskCount"] = getCompletedTasksCount()
+        summary["urgentTaskCount"] = getUrgentTaskCount()
+        summary["isLoading"] = isLoading
+        summary["hasError"] = error != nil
+        
+        if let error = error {
+            summary["errorDescription"] = error.localizedDescription
+        }
+        
+        return summary
+    }
+    
+    /// Validate current worker against Phase-2 requirements
+    public func validateCurrentWorker() -> (isValid: Bool, issues: [String]) {
+        var issues: [String] = []
+        
+        guard let worker = currentWorker else {
+            issues.append("No worker loaded")
+            return (false, issues)
+        }
+        
+        // Check if worker is Jose Santos (should not be allowed)
+        if worker.workerId == "3" || worker.workerName.contains("Jose") {
+            issues.append("Jose Santos is no longer active")
+        }
+        
+        // Check if worker is in current active roster
+        let activeWorkerIds = ["1", "2", "4", "5", "6", "7", "8"]
+        if !activeWorkerIds.contains(worker.workerId) {
+            issues.append("Worker not in current active roster")
+        }
+        
+        // Check Kevin's expanded assignments
+        if worker.workerId == "4" && assignedBuildings.count < 6 {
+            issues.append("Kevin should have 6+ buildings (expanded duties)")
+        }
+        
+        // Check Mercedes' schedule constraints
+        if worker.workerId == "5" && !todaysTasks.isEmpty {
+            // Should only have morning tasks (6:30-10:30 AM)
+            let morningTasks = todaysTasks.filter { task in
+                guard let startTime = task.startTime,
+                      let hour = Int(startTime.split(separator: ":").first ?? "") else {
+                    return true
+                }
+                return hour >= 6 && hour <= 10
+            }
+            
+            if morningTasks.count != todaysTasks.count {
+                issues.append("Mercedes should only have morning tasks (6:30-10:30 AM)")
+            }
+        }
+        
+        return (issues.isEmpty, issues)
+    }
+    
+    /// Force refresh worker context with CSV import if needed
+    public func forceRefreshWithCSVImport() async {
+        print("🔄 Force refreshing worker context with CSV import if needed...")
+        
+        // Clear current data
+        await MainActor.run {
+            self.assignedBuildings = []
+            self.todaysTasks = []
+            self.upcomingTasks = []
+        }
+        
+        // Trigger CSV import if needed
+        do {
+            let importer = CSVDataImporter.shared
+            importer.sqliteManager = sqliteManager
+            let (imported, errors) = try await importer.importRealWorldTasks()
+            print("🔄 CSV import: \(imported) tasks, \(errors.count) errors")
+        } catch {
+            print("❌ CSV import failed: \(error)")
+        }
+        
+        // Reload context
+        await refreshContext()
     }
 }

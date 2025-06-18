@@ -169,6 +169,7 @@
 		23BBD7602E0018DD00013D90 /* Building.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD75F2E0018DD00013D90 /* Building.swift */; };
 		23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */; };
 		23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */; };
+		23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -366,6 +367,7 @@
 		23BBD75F2E0018DD00013D90 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantImageLoader.swift; sourceTree = "<group>"; };
 		23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
+		23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -530,6 +532,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */,
 				23BBD75F2E0018DD00013D90 /* Building.swift */,
 				23B117A02DFE2BC40065F39E /* ContextualTask.swift */,
 				23B117962DFE01B50065F39E /* ProfileBadge.swift */,
@@ -1043,6 +1046,7 @@
 				233F94E42DF7B96D00901707 /* WorkerDashboardView.swift in Sources */,
 				234581532DF78E3D00355F0A /* TaskVerification.swift in Sources */,
 				234581542DF78E3D00355F0A /* BuildingsView.swift in Sources */,
+				23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */,
 				234581552DF78E3D00355F0A /* MapRevealContainer.swift in Sources */,
 				234581562DF78E3D00355F0A /* TaskManagementService.swift in Sources */,
 				234581572DF78E3D00355F0A /* BuildingRepository.swift in Sources */,

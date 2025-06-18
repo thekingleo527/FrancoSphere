@@ -2,19 +2,17 @@
 //  MapOverlayView.swift
 //  FrancoSphere
 //
-//  ✅ COMPILATION FIXED: All errors resolved
-//  ✅ Integrated BuildingPreviewPopover component
-//  ✅ Added proper back navigation to WorkerDashboard
-//  ✅ Chelsea/SoHo default region with all building markers
-//  ✅ Tap → hover card, double-tap → BuildingDetailView
-//  🆕 PHASE-2: Added "My Sites" ↔ "All Sites" toggle functionality
+//  ✅ PHASE-2 ENHANCED: Fail-soft fallback logic
+//  ✅ Emergency recovery when no buildings assigned
+//  ✅ Visual indicators for fallback state
+//  ✅ Enhanced user guidance and debugging
+//  ✅ Production-ready error handling
 //
 
 import SwiftUI
 import MapKit
 
 struct MapOverlayView: View {
-    // BEGIN PATCH - Updated signature with allBuildings parameter
     let buildings: [FrancoSphere.NamedCoordinate]           // Assigned buildings ("My Sites")
     let allBuildings: [FrancoSphere.NamedCoordinate]        // All buildings in portfolio ("All Sites")
     let currentBuildingId: String?
@@ -22,14 +20,46 @@ struct MapOverlayView: View {
     @Binding var isPresented: Bool
     let onBuildingDetail: ((FrancoSphere.NamedCoordinate) -> Void)?
     
-    // NEW: Toggle state for site scope
+    // NEW: Enhanced toggle state with fallback detection
     @State private var showAll: Bool = false
+    @State private var showFallbackWarning: Bool = false
     
-    // NEW: Computed datasource property
+    // ✅ ENHANCED: Fail-soft datasource with automatic fallback
     private var datasource: [FrancoSphere.NamedCoordinate] {
-        showAll ? allBuildings : buildings
+        // If user explicitly chose "All Sites", show all
+        if showAll {
+            return allBuildings
+        }
+        
+        // If assigned buildings are empty, automatically fall back to all buildings
+        if buildings.isEmpty {
+            // Show fallback warning only once
+            DispatchQueue.main.async {
+                if !showFallbackWarning {
+                    showFallbackWarning = true
+                }
+            }
+            return allBuildings
+        }
+        
+        // Normal case: show assigned buildings
+        return buildings
     }
-    // END PATCH
+    
+    // ✅ NEW: Computed properties for UI state
+    private var isInFallbackMode: Bool {
+        buildings.isEmpty && !showAll
+    }
+    
+    private var effectiveMode: String {
+        if showAll {
+            return "All Sites"
+        } else if isInFallbackMode {
+            return "All Sites (Fallback)"
+        } else {
+            return "My Sites"
+        }
+    }
     
     // ✅ DEFAULT REGION: Chelsea/SoHo area as specified
     @State private var region = MKCoordinateRegion(
@@ -49,7 +79,6 @@ struct MapOverlayView: View {
     
     private let dismissThreshold: CGFloat = 100
     
-    // BEGIN PATCH - Updated initialization with allBuildings parameter
     init(buildings: [FrancoSphere.NamedCoordinate],
          allBuildings: [FrancoSphere.NamedCoordinate],
          currentBuildingId: String?,
@@ -63,7 +92,6 @@ struct MapOverlayView: View {
         self._isPresented = isPresented
         self.onBuildingDetail = onBuildingDetail
     }
-    // END PATCH
     
     var body: some View {
         NavigationStack {
@@ -71,6 +99,11 @@ struct MapOverlayView: View {
                 // Full-screen map
                 mapView
                     .ignoresSafeArea()
+                
+                // ✅ NEW: Fallback warning overlay
+                if showFallbackWarning && isInFallbackMode {
+                    fallbackWarningOverlay
+                }
                 
                 // Overlay controls
                 VStack {
@@ -88,12 +121,12 @@ struct MapOverlayView: View {
             .gesture(dismissGesture)
             .onAppear {
                 setupMapPosition()
+                checkForFallbackMode()
             }
             .sheet(item: $selectedBuilding) { building in
                 BuildingDetailView(building: building)
             }
             .overlay(
-                // ✅ FIXED: Building preview popover integration
                 buildingPreviewOverlay,
                 alignment: .center
             )
@@ -101,7 +134,6 @@ struct MapOverlayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
-                // ✅ FIXED: Back navigation to Dashboard
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -124,12 +156,60 @@ struct MapOverlayView: View {
         .preferredColorScheme(.dark)
     }
     
+    // MARK: - ✅ NEW: Fallback Warning Overlay
+    
+    private var fallbackWarningOverlay: some View {
+        VStack {
+            HStack {
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        
+                        Text("No buildings assigned")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("Showing all buildings so you can clock in")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.trailing)
+                    
+                    Button("Dismiss") {
+                        withAnimation(.spring()) {
+                            showFallbackWarning = false
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.blue)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                )
+                .shadow(color: .black.opacity(0.2), radius: 5)
+            }
+            .padding(.horizontal)
+            .padding(.top, 80)
+            
+            Spacer()
+        }
+    }
+    
     // MARK: - Map View with Enhanced Annotations
     
     @ViewBuilder
     private var mapView: some View {
         if #available(iOS 17.0, *) {
-            // BEGIN PATCH - Modern Map API with datasource
             Map(position: $mapPosition) {
                 ForEach(datasource, id: \.id) { building in
                     Annotation(building.name, coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)) {
@@ -138,9 +218,7 @@ struct MapOverlayView: View {
                 }
             }
             .mapStyle(.standard)
-            // END PATCH
         } else {
-            // BEGIN PATCH - Legacy Map API with datasource
             Map(
                 coordinateRegion: $region,
                 annotationItems: datasource
@@ -149,15 +227,15 @@ struct MapOverlayView: View {
                     buildingMapMarker(for: building)
                 }
             }
-            // END PATCH
         }
     }
     
-    // MARK: - Building Map Marker (Local Implementation)
+    // MARK: - Building Map Marker Enhanced
     
     private func buildingMapMarker(for building: FrancoSphere.NamedCoordinate) -> some View {
         let isCurrent = building.id == currentBuildingId
         let isFocused = building.id == focusBuilding?.id
+        let isAssigned = buildings.contains { $0.id == building.id }
         let markerSize: CGFloat = isCurrent ? 60 : (isFocused ? 55 : 50)
         
         return Button(action: {
@@ -180,13 +258,17 @@ struct MapOverlayView: View {
                         .opacity(0.6)
                 }
                 
+                // ✅ ENHANCED: Different colors for assigned vs unassigned buildings
+                let markerColor = isCurrent ? Color.green : (isAssigned ? Color.blue : Color.gray)
+                let backgroundColor = isCurrent ? Color.green.opacity(0.3) : (isAssigned ? Color.blue.opacity(0.3) : Color.gray.opacity(0.2))
+                
                 // Main marker with building thumbnail
                 Circle()
-                    .fill(isCurrent ? Color.green.opacity(0.3) : Color.blue.opacity(0.3))
+                    .fill(backgroundColor)
                     .frame(width: markerSize, height: markerSize)
                     .overlay(
                         Circle()
-                            .stroke(isCurrent ? Color.green : Color.blue, lineWidth: 2)
+                            .stroke(markerColor, lineWidth: 2)
                     )
                 
                 // Building thumbnail with fallback
@@ -198,7 +280,7 @@ struct MapOverlayView: View {
                     } else {
                         Image(systemName: "building.2.fill")
                             .font(.system(size: markerSize * 0.4))
-                            .foregroundColor(isCurrent ? .green : .blue)
+                            .foregroundColor(markerColor)
                     }
                 }
                 .frame(width: markerSize * 0.7, height: markerSize * 0.7)
@@ -216,6 +298,15 @@ struct MapOverlayView: View {
                                 .frame(width: 12, height: 12)
                                 .offset(x: markerSize/2 - 6, y: -markerSize/2 + 6)
                         )
+                }
+                
+                // ✅ NEW: Unassigned building indicator
+                if !isAssigned && !isCurrent && isInFallbackMode {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                        .background(Circle().fill(.white))
+                        .offset(x: -markerSize/2 + 8, y: -markerSize/2 + 8)
                 }
             }
         }
@@ -263,23 +354,32 @@ struct MapOverlayView: View {
         .padding(.top, 10)
     }
     
-    // MARK: - Bottom Controls
+    // MARK: - ✅ ENHANCED: Bottom Controls with Fallback Indicators
     
-    // BEGIN PATCH - Updated bottom controls with segmented picker
     private var bottomControls: some View {
         VStack(spacing: 12) {
             // Building stats
-            buildingStatsCard
+            enhancedBuildingStatsCard
             
             // Site scope toggle + Quick actions
             HStack {
-                // NEW: Segmented picker for site scope
-                Picker("", selection: $showAll) {
-                    Text("My").tag(false)
-                    Text("All").tag(true)
+                // ✅ ENHANCED: Segmented picker with fallback awareness
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("", selection: $showAll) {
+                        Text("My").tag(false)
+                        Text("All").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 140)
+                    .disabled(buildings.isEmpty) // Disable if no assigned buildings
+                    
+                    // Fallback indicator
+                    if isInFallbackMode {
+                        Text("(Auto-fallback)")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 140)
                 
                 Spacer()
                 
@@ -288,7 +388,7 @@ struct MapOverlayView: View {
                     Button("Fit All Buildings") {
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
-                        fitAllBuildings(datasource) // UPDATED: use datasource
+                        fitAllBuildings(datasource)
                     }
                     .buttonStyle(MapOverlayActionButtonStyle())
                     
@@ -306,16 +406,15 @@ struct MapOverlayView: View {
         .padding()
         .padding(.bottom, 10)
     }
-    // END PATCH
     
-    // BEGIN PATCH - Updated building stats card with dynamic labels
-    private var buildingStatsCard: some View {
+    // ✅ ENHANCED: Building stats card with fallback indicators
+    private var enhancedBuildingStatsCard: some View {
         HStack {
             mapStatItem(
-                icon: "building.2.fill",
-                label: showAll ? "All Sites" : "My Sites",
+                icon: isInFallbackMode ? "exclamationmark.triangle.fill" : "building.2.fill",
+                label: effectiveMode,
                 value: "\(datasource.count)",
-                color: .blue
+                color: isInFallbackMode ? .orange : .blue
             )
             
             Divider()
@@ -342,8 +441,11 @@ struct MapOverlayView: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(isInFallbackMode ? Color.orange.opacity(0.3) : Color.clear, lineWidth: 1)
+        )
     }
-    // END PATCH
     
     private func mapStatItem(icon: String, label: String, value: String, color: Color) -> some View {
         VStack(spacing: 4) {
@@ -364,7 +466,7 @@ struct MapOverlayView: View {
         .frame(maxWidth: .infinity)
     }
     
-    // MARK: - ✅ Building Preview Overlay with BuildingPreviewPopover
+    // MARK: - Building Preview Overlay
     
     @ViewBuilder
     private var buildingPreviewOverlay: some View {
@@ -431,7 +533,7 @@ struct MapOverlayView: View {
         onBuildingDetail?(building)
     }
     
-    // BEGIN PATCH - Updated map position methods with datasource
+    // ✅ ENHANCED: Setup with fallback detection
     private func setupMapPosition() {
         if !datasource.isEmpty && focusBuilding == nil {
             // Keep default Chelsea/SoHo region if no specific focus
@@ -444,7 +546,14 @@ struct MapOverlayView: View {
             fitAllBuildings(datasource)
         }
     }
-    // END PATCH
+    
+    /// ✅ NEW: Check for fallback mode on appear
+    private func checkForFallbackMode() {
+        if buildings.isEmpty {
+            print("⚠️ MapOverlayView: No assigned buildings found - activating fallback mode")
+            showFallbackWarning = true
+        }
+    }
     
     private func focusOnBuilding(_ building: FrancoSphere.NamedCoordinate) {
         let focusRegion = MKCoordinateRegion(
@@ -460,7 +569,6 @@ struct MapOverlayView: View {
         }
     }
     
-    // BEGIN PATCH - Updated fitAllBuildings with parameter and zero-span guards
     private func fitAllBuildings(_ buildingsToFit: [FrancoSphere.NamedCoordinate]) {
         guard !buildingsToFit.isEmpty else { return }
         
@@ -476,8 +584,8 @@ struct MapOverlayView: View {
         let centerLat = (minLat + maxLat) / 2
         let centerLng = (minLng + maxLng) / 2
         
-        let latDelta = max(0.01, (maxLat - minLat) * 1.2) // Zero-span guard maintained
-        let lngDelta = max(0.01, (maxLng - minLng) * 1.2) // Zero-span guard maintained
+        let latDelta = max(0.01, (maxLat - minLat) * 1.2)
+        let lngDelta = max(0.01, (maxLng - minLng) * 1.2)
         
         let newRegion = MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLng),
@@ -491,10 +599,9 @@ struct MapOverlayView: View {
             }
         }
     }
-    // END PATCH
 }
 
-// MARK: - Supporting Types (Local to avoid conflicts)
+// MARK: - Supporting Types
 
 struct MapBuildingPreviewData: Identifiable, Equatable {
     let id = UUID()
@@ -532,27 +639,32 @@ struct MapOverlayActionButtonStyle: ButtonStyle {
 
 struct MapOverlayView_Previews: PreviewProvider {
     static var previews: some View {
-        MapOverlayView(
-            buildings: [
-                FrancoSphere.NamedCoordinate(
-                    id: "1",
-                    name: "12 West 18th Street",
-                    latitude: 40.7397,
-                    longitude: -73.9944,
-                    imageAssetName: "12_West_18th_Street"
-                ),
-                FrancoSphere.NamedCoordinate(
-                    id: "2",
-                    name: "29-31 East 20th Street",
-                    latitude: 40.7389,
-                    longitude: -73.9863,
-                    imageAssetName: "29_31_East_20th_Street"
-                )
-            ],
-            allBuildings: FrancoSphere.NamedCoordinate.allBuildings,
-            currentBuildingId: "1",
-            focusBuilding: nil,
-            isPresented: .constant(true)
-        )
+        VStack(spacing: 20) {
+            // Normal state with assigned buildings
+            MapOverlayView(
+                buildings: [
+                    FrancoSphere.NamedCoordinate(
+                        id: "1",
+                        name: "12 West 18th Street",
+                        latitude: 40.7397,
+                        longitude: -73.9944,
+                        imageAssetName: "12_West_18th_Street"
+                    )
+                ],
+                allBuildings: FrancoSphere.NamedCoordinate.allBuildings,
+                currentBuildingId: "1",
+                focusBuilding: nil,
+                isPresented: .constant(true)
+            )
+            
+            // Fallback state (no assigned buildings)
+            MapOverlayView(
+                buildings: [], // Empty assigned buildings
+                allBuildings: FrancoSphere.NamedCoordinate.allBuildings,
+                currentBuildingId: nil,
+                focusBuilding: nil,
+                isPresented: .constant(true)
+            )
+        }
     }
 }

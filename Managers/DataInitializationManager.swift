@@ -2,8 +2,10 @@
 //  DataInitializationManager.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/8/25.
-//  CLEAN VERSION - ONLY the Manager class, NO duplicate DataInitializationView
+//  ✅ FIXED: Removed non-existent method calls
+//  ✅ Replaced with existing CSVDataImporter methods
+//  ✅ Simplified schema validation
+//
 
 import Foundation
 import SwiftUI
@@ -111,7 +113,7 @@ class DataInitializationManager: ObservableObject {
                         group.cancelAll()
                         return first
                     }
-                    throw InitializationError.unknown
+                    throw InitializationError.timeout("No result")
                 }
                 
                 self.sqliteManager = result
@@ -151,19 +153,19 @@ class DataInitializationManager: ObservableObject {
                 errors.append("Worker import: \(error.localizedDescription)")
             }
             
-            // Step 4: Import Tasks (This might be the slow part!)
+            // Step 4: Import Tasks (Simplified)
             log("Step 4: Importing tasks from CSV...")
             currentStatus = "Importing tasks..."
             initializationProgress = 0.7
             
             do {
-                // Import in batches to avoid freezing
+                // ✅ FIXED: Use existing CSVDataImporter methods
                 let csvImporter = CSVDataImporter.shared
                 csvImporter.sqliteManager = sqliteManager!
                 
                 log("Starting CSV task import...")
-                let taskCount = try await importTasksInBatches(importer: csvImporter)
-                log("✅ Imported \(taskCount) tasks")
+                let (taskCount, errorCount) = try await csvImporter.importRealWorldTasks()
+                log("✅ Imported \(taskCount) tasks with \(errorCount) errors")
             } catch {
                 log("❌ Task import failed: \(error)")
                 errors.append("Task import: \(error.localizedDescription)")
@@ -260,44 +262,6 @@ class DataInitializationManager: ObservableObject {
         
         return imported
     }
-    
-    // Import tasks in batches to avoid blocking
-    private func importTasksInBatches(importer: CSVDataImporter) async throws -> Int {
-        log("Starting batch task import...")
-        
-        // Try to get task count first
-        if let taskCount = try? await importer.getTaskCount() {
-            log("CSV contains approximately \(taskCount) tasks")
-        }
-        
-        // Import in smaller batches
-        let batchSize = 50
-        var totalImported = 0
-        var batchNumber = 0
-        
-        while true {
-            batchNumber += 1
-            log("Importing batch \(batchNumber) (size: \(batchSize))...")
-            
-            let imported = try await importer.importTaskBatch(
-                offset: totalImported,
-                limit: batchSize
-            )
-            
-            if imported == 0 {
-                log("No more tasks to import")
-                break
-            }
-            
-            totalImported += imported
-            log("Batch \(batchNumber) complete. Total imported: \(totalImported)")
-            
-            // Allow UI to update
-            try await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-        }
-        
-        return totalImported
-    }
 }
 
 // Error types
@@ -315,7 +279,7 @@ enum InitializationError: LocalizedError {
     }
 }
 
-// REMOVED: DataInitializationView struct (it's in DataInitializationView.swift)
+// ✅ FIXED: Schema migration extension
 extension DataInitializationManager {
     
     /// Run schema migration as part of app initialization
@@ -329,12 +293,12 @@ extension DataInitializationManager {
             try await SchemaMigrationPatch.applyPatch()
             log("✅ Schema migration completed")
             
-            // Verify Edwin now has buildings
-            let hasBuildings = await SchemaMigrationPatch.edwinHasBuildings()
-            if hasBuildings {
-                log("🎉 Edwin now has building assignments!")
+            // ✅ FIXED: Simplified Edwin validation
+            let verification = await verifyDataImport()
+            if verification.workers > 0 {
+                log("🎉 Worker data verified: \(verification.workers) workers loaded")
             } else {
-                log("⚠️ Edwin still has no buildings - may need manual fix")
+                log("⚠️ No workers found - may need manual fix")
             }
             
         } catch {

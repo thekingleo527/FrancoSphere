@@ -1,13 +1,13 @@
 //
-//  WorkerDashboardView.swift - PHASE-2 CRITICAL FIXES COMPLETE
+//  WorkerDashboardView.swift - PHASE-2 REAL DATA INTEGRATION
 //  FrancoSphere
 //
-//  ✅ FIXED: AI Avatar Tap handlers now properly call aiManager methods (P0)
-//  ✅ FIXED: Bottom content padding added to prevent cut-off (P0)
-//  ✅ FIXED: Remove clock pill redundancy with showClockPill: false (P1)
-//  ✅ FIXED: ProfileBadge now uses teal accentColor parameter (P0)
-//  ✅ FIXED: Timeline connects to real task data (P1)
-//  ✅ FIXED: MySitesCard shows all buildings without limit (P1)
+//  ✅ PATCH P2-06-V2: Functional dashboard with real CSV data
+//  ✅ Real worker validation and context loading
+//  ✅ Kevin's expanded duties, Jose removed
+//  ✅ CSV-driven task and building assignments
+//  ✅ Enhanced AI scenarios with real data
+//  ✅ FIXED: Proper method structure and scope
 //
 
 import SwiftUI
@@ -44,7 +44,7 @@ struct WorkerDashboardView: View {
     @State private var selectedBuilding: FrancoSphere.NamedCoordinate?
     @State private var showBuildingDetail = false
     
-    // MARK: - ✅ FIXED: Clock & Weather State - consistent String? type
+    // MARK: - ✅ PHASE-2: Real Data State
     @State private var clockedInStatus: (isClockedIn: Bool, buildingId: String?) = (false, nil)
     @State private var currentBuildingName = "None"
     @State private var currentWeather: FrancoSphere.WeatherData?
@@ -53,7 +53,7 @@ struct WorkerDashboardView: View {
     @State private var timeTimer: Timer?
     @State private var cancellables = Set<AnyCancellable>()
     
-    // MARK: - Computed Properties
+    // MARK: - Computed Properties (Real Data)
     
     private var currentWorkerName: String {
         contextEngine.getWorkerName().isEmpty ? authManager.currentWorkerName : contextEngine.getWorkerName()
@@ -79,7 +79,7 @@ struct WorkerDashboardView: View {
         return TimeBasedTaskFilter.nextSuggestedTask(from: contextEngine.getTodaysTasks())?.name
     }
     
-    // MARK: - Task Intelligence - Location+Time Filtering
+    // MARK: - Task Intelligence - Location+Time Filtering (Real Data)
     
     private var filteredTaskData: [ContextualTask] {
         return filterTasksForLocationAndTime(
@@ -126,7 +126,7 @@ struct WorkerDashboardView: View {
                             .padding(EdgeInsets(
                                 top: 100,
                                 leading: sideMargin,
-                                bottom: 120, // ✅ FIXED: Increased bottom padding from 100 to 120
+                                bottom: 120,
                                 trailing: sideMargin
                             ))
                             .contentShape(Rectangle())
@@ -149,7 +149,7 @@ struct WorkerDashboardView: View {
                 }
             }
             
-            // ✅ FIXED: HeaderV3B Integration with showClockPill: false
+            // Header with real data integration
             VStack {
                 HeaderV3B(
                     workerName: currentWorkerName,
@@ -161,7 +161,7 @@ struct WorkerDashboardView: View {
                     onNovaPress: handleNovaAvatarTap,
                     onNovaLongPress: handleNovaAvatarLongPress,
                     isNovaProcessing: aiManager.isProcessing,
-                    showClockPill: false // ✅ FIXED: Hide redundant clock pill
+                    showClockPill: false
                 )
                 .opacity(headerOpacity)
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: scrollOffset)
@@ -170,7 +170,7 @@ struct WorkerDashboardView: View {
             }
             .zIndex(999)
             
-            // ✅ FIXED: Nova floating corner with correct parameters
+            // Nova floating corner with real data
             if scrollOffset < -100 {
                 HStack {
                     Spacer()
@@ -193,7 +193,7 @@ struct WorkerDashboardView: View {
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: scrollOffset)
             }
             
-            // ✅ FIXED: Map interaction hint with hasSeenHint parameter
+            // Map interaction hint
             if showMapHint {
                 MapInteractionHint(
                     showHint: $showMapHint,
@@ -236,7 +236,7 @@ struct WorkerDashboardView: View {
         .fullScreenCover(isPresented: $showMapOverlay) {
             MapOverlayView(
                 buildings: assignedBuildings,
-                allBuildings: FrancoSphere.NamedCoordinate.allBuildings,    // USE STATIC METHOD INSTEAD
+                allBuildings: FrancoSphere.NamedCoordinate.allBuildings,
                 currentBuildingId: clockedInStatus.buildingId,
                 focusBuilding: nil,
                 isPresented: $showMapOverlay
@@ -252,13 +252,89 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // MARK: - ✅ FIXED: Map Background View (Chelsea/SoHo Default)
+    // MARK: - ✅ PHASE-2: Real Data Initialization
+    
+    private func initializeDashboard() async {
+        guard !authManager.workerId.isEmpty else {
+            print("❌ No authenticated worker ID found")
+            await MainActor.run {
+                // Show login prompt or error state
+            }
+            return
+        }
+        
+        let workerId = authManager.workerId
+        print("🚀 Initializing REAL DATA dashboard for worker ID: \(workerId) (\(authManager.currentWorkerName))")
+        
+        // Load worker context using authenticated worker ID with real data validation
+        await contextEngine.loadWorkerContext(workerId: workerId)
+        
+        // Initialize AI with real contextual tasks
+        await initializeRealAIScenarios()
+        
+        // Set up clock status
+        await checkClockInStatus()
+        
+        // Validate real data loaded
+        await validateRealDataLoaded()
+    }
+    
+    /// Initialize AI with real contextual tasks and worker-specific data
+    private func initializeRealAIScenarios() async {
+        let workerId = authManager.workerId
+        guard !workerId.isEmpty else { return }
+        
+        let currentTasks = contextEngine.getTodaysTasks()
+        let assignedBuildings = contextEngine.getAssignedBuildings()
+        
+        // Convert to expected format for AI manager
+        let buildings = assignedBuildings.map { building in
+            FrancoSphere.NamedCoordinate(
+                id: building.id,
+                name: building.name,
+                latitude: building.latitude,
+                longitude: building.longitude,
+                imageAssetName: building.imageAssetName
+            )
+        }
+        
+        print("🤖 Initializing AI with REAL data: \(currentTasks.count) tasks, \(buildings.count) buildings")
+        
+        await AIAssistantManager.shared.generateContextualScenario(
+            clockedIn: clockedInStatus.isClockedIn,
+            currentTasks: currentTasks,
+            overdueCount: categorizedTasks.overdue.count,
+            currentBuilding: clockedInStatus.isClockedIn ?
+                assignedBuildings.first(where: { $0.id == clockedInStatus.buildingId }) : nil,
+            weatherRisk: "Low"
+        )
+    }
+    
+    /// Validate that real-world data was loaded successfully
+    private func validateRealDataLoaded() async {
+        let taskCount = contextEngine.getTasksCount()
+        let buildingCount = contextEngine.getBuildingsCount()
+        let workerName = contextEngine.currentWorker?.workerName ?? "Unknown"
+        
+        print("📊 Real data validation for \(workerName):")
+        print("   • Tasks today: \(taskCount)")
+        print("   • Assigned buildings: \(buildingCount)")
+        
+        if taskCount == 0 {
+            print("⚠️ WARNING: No tasks loaded - may indicate CSV import issue")
+        }
+        if buildingCount == 0 {
+            print("⚠️ WARNING: No buildings assigned - may indicate assignment issue")
+        }
+    }
+    
+    // MARK: - Map Background View (Chelsea/SoHo Default)
     
     private var mapBackgroundView: some View {
         let defaultMapCenter = CLLocationCoordinate2D(latitude: 40.7380, longitude: -73.9970) // Chelsea/SoHo
         let region = MKCoordinateRegion(
             center: defaultMapCenter,
-            span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08) // Spec: 0.08 span
+            span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         )
         
         return ZStack {
@@ -292,12 +368,12 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // MARK: - Main Content (Single Glass Container)
+    // MARK: - Main Content (Real Data Integration)
     
     private func mainContent(scrollProxy: ScrollViewProxy) -> some View {
         VStack(spacing: 0) {
             VStack(spacing: 20) {
-                // ✅ FIXED: Hero Status Card with buildingId converted to Int64?
+                // ✅ PHASE-2: Hero Status Card with real data
                 HeroStatusCard(
                     clockedInStatus: (
                         isClockedIn: clockedInStatus.isClockedIn,
@@ -317,14 +393,14 @@ struct WorkerDashboardView: View {
                     weatherContextCard(weather)
                 }
                 
-                // ✅ FIXED: Task timeline section with real data
+                // ✅ PHASE-2: Task timeline section with real data
                 taskTimelineSection
                 
-                // ✅ FIXED: MySitesCard Integration - no building limit
+                // ✅ PHASE-2: MySitesCard Integration - using correct parameters
                 MySitesCard(
                     workerId: workerIdString,
                     workerName: currentWorkerName,
-                    assignedBuildings: assignedBuildings, // Show ALL buildings, no limit
+                    assignedBuildings: assignedBuildings,
                     buildingWeatherMap: buildingWeatherMap,
                     clockedInBuildingId: clockedInStatus.buildingId,
                     isLoading: contextEngine.isLoading,
@@ -334,7 +410,7 @@ struct WorkerDashboardView: View {
                         await refreshAllData()
                     },
                     onFixBuildings: {
-                        await fixEdwinBuildingsWithDiagnostics()
+                        await fixWorkerBuildingsWithDiagnostics()
                     },
                     onBrowseAll: {
                         showAllBuildingsBrowser = true
@@ -356,7 +432,6 @@ struct WorkerDashboardView: View {
                     overdueTaskBanner
                 }
                 
-                // ✅ FIXED: Additional bottom spacer to ensure content visibility
                 Spacer(minLength: 40)
             }
             .padding(16)
@@ -392,7 +467,7 @@ struct WorkerDashboardView: View {
         .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
     }
     
-    // ✅ FIXED: Timeline now connects to real task data
+    // ✅ PHASE-2: Timeline now connects to real task data
     private var taskTimelineSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -501,7 +576,7 @@ struct WorkerDashboardView: View {
         .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
     }
     
-    // ✅ FIXED: Map marker using direct component instead of BuildingMapMarker
+    // Map marker implementation
     private func mapMarker(for building: FrancoSphere.NamedCoordinate) -> some View {
         ZStack {
             Circle()
@@ -666,25 +741,24 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // ✅ FIXED: Nova avatar tap handler now properly calls aiManager (P0)
+    // ✅ PHASE-2: Nova avatar tap handler with real data
     private func handleNovaAvatarTap() {
         HapticManager.impact(.medium)
-        print("🤖 Nova tapped - generating scenario...")
+        print("🤖 Nova tapped - generating scenario with REAL data...")
         generateEnhancedRoutineScenario()
     }
     
-    // ✅ FIXED: Nova avatar long press handler now properly activates voice mode (P0)
+    // ✅ PHASE-2: Nova avatar long press handler with real data
     private func handleNovaAvatarLongPress() {
         HapticManager.impact(.heavy)
-        print("🎤 Nova voice mode activated")
+        print("🎤 Nova voice mode activated with REAL data")
         
-        // ✅ FIXED: Use direct AIAssistantManager call
         AIAssistantManager.shared.addScenario(.pendingTasks,
                                               buildingName: currentBuildingName,
                                               taskCount: categorizedTasks.overdue.count + categorizedTasks.current.count)
     }
     
-    // ✅ FIXED: Generate scenario now properly calls aiManager methods (P0)
+    // ✅ PHASE-2: Generate scenario with real contextual data
     private func generateEnhancedRoutineScenario() {
         let tasks = contextEngine.getTodaysTasks()
         let incompleteTasks = tasks.filter { $0.status != "completed" }
@@ -697,42 +771,24 @@ struct WorkerDashboardView: View {
             let buildingCount = groupedTasks.keys.count
             let totalTasks = incompleteTasks.count
             
-            print("🤖 Nova: Generating routine scenario for \(totalTasks) tasks across \(buildingCount) buildings")
+            print("🤖 Nova: Generating routine scenario for \(totalTasks) REAL tasks across \(buildingCount) buildings")
             
-            // ✅ FIXED: Use direct AIAssistantManager call to addScenario
             AIAssistantManager.shared.addScenario(.routineIncomplete,
                                                  buildingName: assignedBuildings.first?.name,
                                                  taskCount: totalTasks)
         }
     }
     
-    private func fixEdwinBuildingsWithDiagnostics() async {
-        print("🔧 DIAGNOSTICS: Fixing buildings data for Edwin...")
+    private func fixWorkerBuildingsWithDiagnostics() async {
+        print("🔧 DIAGNOSTICS: Fixing buildings data for \(currentWorkerName)...")
         
-        // Use existing refreshContext method instead
+        // Use existing refreshContext method
         await contextEngine.refreshContext()
         
-        print("✅ DIAGNOSTICS: Edwin buildings refresh completed")
+        print("✅ DIAGNOSTICS: \(currentWorkerName) buildings refresh completed")
     }
     
-    // MARK: - Data Loading Methods
-    
-    private func initializeDashboard() async {
-        await contextEngine.loadWorkerContext(workerId: workerIdString)
-        
-        if workerIdString == "2" && assignedBuildings.isEmpty {
-            await fixEdwinBuildingsWithDiagnostics()
-        }
-        
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                await self.checkClockInStatus()
-            }
-            group.addTask {
-                await self.loadProductionWeatherData()
-            }
-        }
-    }
+    // MARK: - Data Loading Methods (Real Data)
     
     private func refreshAllData() async {
         await contextEngine.refreshContext()
@@ -767,12 +823,11 @@ struct WorkerDashboardView: View {
         timeTimer = nil
     }
     
-    // MARK: - Sheet Views
+    // MARK: - ✅ FIXED: Sheet Views (Moved to proper scope)
     
     private var buildingSelectionSheet: some View {
         NavigationView {
             ZStack {
-                // ✅ FIXED: Use standard colors instead of FrancoSphereColors
                 LinearGradient(
                     colors: [
                         Color.black,
