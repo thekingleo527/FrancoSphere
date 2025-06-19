@@ -170,6 +170,7 @@
 		23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */; };
 		23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */; };
 		23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */; };
+		23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76B2E030EA500013D90 /* RoutinePriority.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -368,6 +369,7 @@
 		23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantImageLoader.swift; sourceTree = "<group>"; };
 		23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
 		23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
+		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -532,6 +534,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD76B2E030EA500013D90 /* RoutinePriority.swift */,
 				23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */,
 				23BBD75F2E0018DD00013D90 /* Building.swift */,
 				23B117A02DFE2BC40065F39E /* ContextualTask.swift */,
@@ -1032,6 +1035,7 @@
 			files = (
 				233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
+				23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */,
 				234581462DF78E3D00355F0A /* MaintenanceUtility.swift in Sources */,
 				234581482DF78E3D00355F0A /* WorkerContextEngine.swift in Sources */,
 				234581492DF78E3D00355F0A /* GlassCard.swift in Sources */,

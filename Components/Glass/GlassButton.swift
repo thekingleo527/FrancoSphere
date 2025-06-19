@@ -3,19 +3,12 @@
 //  FrancoSphere
 //
 //  Created by Shawn Magloire on 6/8/25.
+//  ✅ FIXED: Removed duplicate type definitions (using existing GlassTypes.swift)
 //
-
-
-//
-//  GlassButton.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 6/7/25.
-//  CLEAN VERSION - No duplicate enums, uses GlassTypes.swift
 
 import SwiftUI
 
-// MARK: - Glass Button (ONLY the View implementations, no enums)
+// MARK: - Glass Button (using existing types from GlassTypes.swift)
 struct GlassButton: View {
     // Content
     let text: String
@@ -301,7 +294,7 @@ struct GlassToggleButton: View {
     }
 }
 
-// MARK: - Preview (FIXED - All buttons now have action closures)
+// MARK: - Preview
 struct GlassButton_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
@@ -386,7 +379,7 @@ struct GlassButton_Previews: PreviewProvider {
                         }
                     }
                     
-                    // Toggle buttons  
+                    // Toggle buttons
                     VStack(spacing: 16) {
                         Text("Toggle Buttons")
                             .font(.headline)

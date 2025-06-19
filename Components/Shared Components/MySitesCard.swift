@@ -7,6 +7,9 @@
 //  ✅ Real-world data integration
 //  ✅ Enhanced debugging and recovery
 //  ✅ Production-ready error handling
+//  ✅ HF-06 HOTFIX: Auto-fallback and graceful recovery
+//  ✅ FIXED: Removed all shimmerGradient references
+//  ✅ HF-06B: Enhanced coordination with WorkerAssignmentManager
 //
 
 import SwiftUI
@@ -30,6 +33,19 @@ struct MySitesCard: View {
     @State private var shimmerOffset: CGFloat = -1.0
     @State private var showDebugInfo = false
     
+    // BEGIN PATCH(HF-06): Auto-recovery state
+    @State private var hasTriedAutoRecovery = false
+    @State private var autoRecoveryInProgress = false
+    @State private var showRecoverySuccess = false
+    // END PATCH(HF-06)
+    
+    // BEGIN PATCH(HF-06B): Enhanced recovery coordination
+    @State private var recoveryAttempts = 0
+    @State private var lastRecoveryTime: Date = Date.distantPast
+    private let maxRecoveryAttempts = 3
+    private let recoveryInterval: TimeInterval = 30 // 30 seconds between attempts
+    // END PATCH(HF-06B)
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
@@ -39,13 +55,19 @@ struct MySitesCard: View {
                 .background(Color.white.opacity(0.2))
             
             // Content
-            if isLoading {
+            if isLoading || autoRecoveryInProgress {
                 loadingShimmerView
             } else if assignedBuildings.isEmpty {
                 enhancedEmptyStateView
             } else {
                 buildingsGridView
             }
+            
+            // BEGIN PATCH(HF-06): Recovery success banner
+            if showRecoverySuccess {
+                recoverySuccessBanner
+            }
+            // END PATCH(HF-06)
             
             // ✅ NEW: Debug info for troubleshooting
             if showDebugInfo {
@@ -64,8 +86,157 @@ struct MySitesCard: View {
         .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
         .onAppear {
             startShimmerAnimation()
+            // BEGIN PATCH(HF-06B): Enhanced auto-recovery trigger
+            if shouldTriggerAutoRecovery() {
+                triggerEnhancedAutoRecovery()
+            }
+            // END PATCH(HF-06B)
+        }
+        .onChange(of: assignedBuildings) { newBuildings in
+            // BEGIN PATCH(HF-06B): Monitor building changes for recovery validation
+            if !newBuildings.isEmpty && autoRecoveryInProgress {
+                print("✅ HF-06B: Buildings recovered during auto-recovery - success!")
+                autoRecoveryInProgress = false
+                showRecoverySuccess = true
+                
+                // Auto-hide success banner
+                Task {
+                    try? await Task.sleep(nanoseconds: 4_000_000_000) // 4 seconds
+                    await MainActor.run {
+                        showRecoverySuccess = false
+                    }
+                }
+            }
+            // END PATCH(HF-06B)
         }
     }
+    
+    // BEGIN PATCH(HF-06B): Enhanced auto-recovery logic
+    private func shouldTriggerAutoRecovery() -> Bool {
+        guard workerId == "4" else { return false } // Only for Kevin
+        guard assignedBuildings.isEmpty else { return false } // Only if no buildings
+        guard !hasTriedAutoRecovery else { return false } // Only if not already tried
+        guard recoveryAttempts < maxRecoveryAttempts else { return false } // Max attempts limit
+        
+        let timeSinceLastRecovery = Date().timeIntervalSince(lastRecoveryTime)
+        guard timeSinceLastRecovery > recoveryInterval else { return false } // Respect interval
+        
+        return true
+    }
+    
+    private func triggerEnhancedAutoRecovery() {
+        guard !autoRecoveryInProgress else { return }
+        
+        print("🔄 HF-06B: Triggering enhanced auto-recovery for \(workerName) (attempt \(recoveryAttempts + 1))")
+        
+        Task {
+            await MainActor.run {
+                autoRecoveryInProgress = true
+                hasTriedAutoRecovery = true
+                recoveryAttempts += 1
+                lastRecoveryTime = Date()
+            }
+            
+            // Step 1: Try WorkerAssignmentManager emergency trigger first
+            await WorkerAssignmentManager.shared.triggerEmergencyResponse(for: workerId)
+            
+            // Step 2: Wait a moment for emergency response
+            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            
+            // Step 3: Trigger context refresh
+            await onRefresh()
+            
+            // Step 4: If still empty, try the fix buildings method
+            await MainActor.run {
+                if assignedBuildings.isEmpty {
+                    print("🆘 HF-06B: Still no buildings after emergency response, trying fix buildings")
+                }
+            }
+            
+            if assignedBuildings.isEmpty {
+                await onFixBuildings()
+            }
+            
+            // Step 5: Final validation
+            await MainActor.run {
+                if !assignedBuildings.isEmpty {
+                    print("✅ HF-06B: Enhanced auto-recovery successful - \(assignedBuildings.count) buildings recovered")
+                    showRecoverySuccess = true
+                } else {
+                    print("❌ HF-06B: Enhanced auto-recovery failed - escalating to manual intervention")
+                }
+                autoRecoveryInProgress = false
+            }
+        }
+    }
+    // END PATCH(HF-06B)
+    
+    // BEGIN PATCH(HF-06): Auto-recovery implementation (legacy - kept for compatibility)
+    private func triggerAutoRecovery() {
+        guard !autoRecoveryInProgress && !hasTriedAutoRecovery else { return }
+        
+        print("🔄 HF-06: Triggering auto-recovery for \(workerName)")
+        
+        Task {
+            await MainActor.run {
+                autoRecoveryInProgress = true
+                hasTriedAutoRecovery = true
+            }
+            
+            // Wait a brief moment to show loading state
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            
+            // Trigger the fix process
+            await onFixBuildings()
+            
+            await MainActor.run {
+                autoRecoveryInProgress = false
+                showRecoverySuccess = true
+            }
+            
+            // Auto-hide success banner after 3 seconds
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await MainActor.run {
+                showRecoverySuccess = false
+            }
+        }
+    }
+    
+    private var recoverySuccessBanner: some View {
+        HStack {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Buildings Recovered")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                
+                Text("Your assigned buildings have been restored")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            
+            Spacer()
+            
+            Button("Dismiss") {
+                showRecoverySuccess = false
+            }
+            .font(.caption2)
+            .foregroundColor(.blue)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.green.opacity(0.2))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+    // END PATCH(HF-06)
     
     // MARK: - Header Section Enhanced
     
@@ -88,29 +259,37 @@ struct MySitesCard: View {
                 }
             }
             
-            if assignedBuildings.count > 0 {
-                Text("(\(assignedBuildings.count))")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
-            }
-            
             Spacer()
             
-            // ✅ ENHANCED: Actions menu with worker-specific options
+            // Enhanced header controls with debug toggle
             Menu {
-                Button("Refresh Sites", action: { Task { await handleRefresh() } })
-                Button("Browse All Buildings", action: onBrowseAll)
+                Button("Refresh Data") {
+                    handleRefresh()
+                }
                 
-                // Worker-specific emergency fixes
+                Button("Browse All Buildings") {
+                    onBrowseAll()
+                }
+                
+                // BEGIN PATCH(HF-06B): Enhanced recovery menu options
                 if workerId == "4" && assignedBuildings.isEmpty {
-                    Button("🆘 Emergency Kevin Fix", action: { Task { await handleEmergencyKevinFix() } })
+                    Divider()
+                    
+                    Button("🆘 Force Emergency Recovery") {
+                        Task {
+                            await WorkerAssignmentManager.shared.triggerEmergencyResponse(for: workerId)
+                            await onRefresh()
+                        }
+                    }
+                    
+                    Button("🔧 Manual Fix Buildings") {
+                        handleFixBuildings()
+                    }
                 }
+                // END PATCH(HF-06B)
                 
-                if workerId == "2" || assignedBuildings.isEmpty {
-                    Button("Reseed Buildings", action: { Task { await handleFix() } })
-                }
+                Divider()
                 
-                // Debug toggle for developers
                 Button(showDebugInfo ? "Hide Debug" : "Show Debug") {
                     showDebugInfo.toggle()
                 }
@@ -124,7 +303,7 @@ struct MySitesCard: View {
         }
     }
     
-    // MARK: - Loading Shimmer View
+    // MARK: - Loading Shimmer View (FIXED: No shimmerGradient references)
     
     private var loadingShimmerView: some View {
         VStack(spacing: 12) {
@@ -132,18 +311,18 @@ struct MySitesCard: View {
                 HStack(spacing: 12) {
                     // Building image placeholder
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(shimmerGradient)
+                        .fill(Color.white.opacity(0.1))
                         .frame(width: 50, height: 50)
                     
                     VStack(alignment: .leading, spacing: 6) {
                         // Building name placeholder
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(shimmerGradient)
+                            .fill(Color.white.opacity(0.1))
                             .frame(height: 16)
                         
                         // Address placeholder
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(shimmerGradient)
+                            .fill(Color.white.opacity(0.1))
                             .frame(width: 120, height: 12)
                     }
                     
@@ -151,425 +330,304 @@ struct MySitesCard: View {
                     
                     // Status indicator placeholder
                     Circle()
-                        .fill(shimmerGradient)
+                        .fill(Color.white.opacity(0.1))
                         .frame(width: 12, height: 12)
                 }
                 .padding(.vertical, 8)
             }
         }
+        .opacity(0.7 + 0.3 * shimmerOffset)
     }
     
-    private var shimmerGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color.white.opacity(0.1),
-                Color.white.opacity(0.3),
-                Color.white.opacity(0.1)
-            ],
-            startPoint: UnitPoint(x: shimmerOffset, y: 0.5),
-            endPoint: UnitPoint(x: shimmerOffset + 0.3, y: 0.5)
-        )
-    }
-    
-    // MARK: - ✅ ENHANCED: Worker-Specific Empty State View
+    // MARK: - Enhanced Empty State View with Better Recovery
     
     private var enhancedEmptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "building.2")
-                .font(.system(size: 40))
-                .foregroundColor(.white.opacity(0.4))
+            // BEGIN PATCH(HF-06B): Enhanced icon based on recovery state
+            Image(systemName: autoRecoveryInProgress ? "arrow.triangle.2.circlepath" : "building.2.cropped.circle")
+                .font(.system(size: 48))
+                .foregroundColor(autoRecoveryInProgress ? .blue : .orange.opacity(0.8))
+                .symbolEffect(.pulse, isActive: autoRecoveryInProgress)
+            // END PATCH(HF-06B)
             
             VStack(spacing: 8) {
-                Text("No Buildings Assigned")
+                Text(autoRecoveryInProgress ? "Recovering Buildings..." : "No Buildings Assigned")
                     .font(.headline)
                     .foregroundColor(.white)
                 
-                Text(getWorkerSpecificEmptyMessage())
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
+                // BEGIN PATCH(HF-06B): Enhanced messaging for auto-recovery
+                Group {
+                    if autoRecoveryInProgress {
+                        Text("Running enhanced recovery process...")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                            .multilineTextAlignment(.center)
+                    } else if workerId == "4" && recoveryAttempts > 0 {
+                        Text("Auto-recovery attempted (\(recoveryAttempts)/\(maxRecoveryAttempts)). Use the manual options below if needed.")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                    } else if workerId == "4" {
+                        Text("Expected 6 buildings for Kevin Dutan. Enhanced recovery will start automatically.")
+                            .font(.subheadline)
+                            .foregroundColor(.orange)
+                            .multilineTextAlignment(.center)
+                    } else {
+                        Text("Your account doesn't have any assigned buildings yet.")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                // END PATCH(HF-06B)
             }
             
-            // ✅ ENHANCED: Worker-specific action buttons
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
-                    Button("Browse All") {
-                        onBrowseAll()
-                    }
-                    .buttonStyle(SecondaryButtonStyle())
-                    
-                    Button("Refresh") {
-                        Task { await handleRefresh() }
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(isRefreshing)
+            // Enhanced action buttons
+            HStack(spacing: 12) {
+                Button("Fix Buildings") {
+                    handleFixBuildings()
                 }
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(
+                    LinearGradient(
+                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(8)
+                .disabled(isFixing || autoRecoveryInProgress)
                 
-                // ✅ NEW: Kevin emergency fix button
-                if workerId == "4" {
-                    Button("🆘 Emergency Fix for Kevin") {
-                        Task { await handleEmergencyKevinFix() }
-                    }
-                    .buttonStyle(EmergencyButtonStyle())
-                    .disabled(isFixing)
+                Button("Browse All") {
+                    onBrowseAll()
                 }
-                
-                // General reseed option
-                if workerId == "2" || error != nil {
-                    Button("Load Default Buildings") {
-                        Task { await handleFix() }
-                    }
-                    .buttonStyle(TertiaryButtonStyle())
-                    .disabled(isFixing)
-                }
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.blue)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.blue.opacity(0.2))
+                .cornerRadius(8)
+            }
+            
+            // Worker-specific help text
+            if !workerId.isEmpty {
+                Text("Worker ID: \(workerId)")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.5))
             }
         }
-        .padding(.vertical, 20)
+        .padding(20)
     }
     
     // MARK: - Buildings Grid View
     
     private var buildingsGridView: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 12) {
+        VStack(spacing: 12) {
+            // Summary header
+            HStack {
+                Text("\(assignedBuildings.count) Assigned Buildings")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                if let clockedInId = clockedInBuildingId {
+                    Text("Clocked in: \(clockedInId)")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            }
+            
+            // Buildings list
             ForEach(assignedBuildings, id: \.id) { building in
-                buildingCard(for: building)
+                buildingRow(building)
             }
         }
     }
     
-    private func buildingCard(for building: FrancoSphere.NamedCoordinate) -> some View {
-        Button(action: { onBuildingTap(building) }) {
-            VStack(alignment: .leading, spacing: 8) {
-                // Building image with fallback
-                buildingImage(for: building)
-                    .frame(height: 80)
-                    .clipped()
+    private func buildingRow(_ building: FrancoSphere.NamedCoordinate) -> some View {
+        Button(action: {
+            onBuildingTap(building)
+        }) {
+            HStack(spacing: 12) {
+                // Building image or placeholder
+                if !building.imageAssetName.isEmpty {
+                    Image(building.imageAssetName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 50)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Image(systemName: "building.2.fill")
+                                .foregroundColor(.white.opacity(0.7))
+                        )
+                }
                 
+                // Building info
                 VStack(alignment: .leading, spacing: 4) {
                     Text(building.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.white)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.8)
                     
-                    Text(building.address ?? "Address not available")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
-                    
-                    HStack {
-                        // Weather indicator
+                    HStack(spacing: 8) {
+                        Text("ID: \(building.id)")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.6))
+                        
                         if let weather = buildingWeatherMap[building.id] {
-                            HStack(spacing: 4) {
-                                Image(systemName: weather.icon)
-                                    .font(.caption)
-                                    .foregroundColor(.blue)
-                                
-                                Text("\(Int(weather.temperature))°")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.8))
-                            }
+                            Text(weather.formattedTemperature)
+                                .font(.caption2)
+                                .foregroundColor(.blue)
                         }
-                        
-                        Spacer()
-                        
-                        // Status indicator
-                        Circle()
-                            .fill(isCurrentBuilding(building) ? .green : .blue)
-                            .frame(width: 8, height: 8)
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.bottom, 8)
+                
+                Spacer()
+                
+                // Status indicators
+                VStack(spacing: 4) {
+                    // Clock-in status
+                    Circle()
+                        .fill(building.id == clockedInBuildingId ? Color.green : Color.gray.opacity(0.3))
+                        .frame(width: 12, height: 12)
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.4))
+                }
             }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
+                    .fill(building.id == clockedInBuildingId ? Color.green.opacity(0.1) : Color.white.opacity(0.05))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isCurrentBuilding(building) ? .green : Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(building.id == clockedInBuildingId ? Color.green.opacity(0.3) : Color.clear, lineWidth: 1)
                     )
             )
         }
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func buildingImage(for building: FrancoSphere.NamedCoordinate) -> some View {
-        Group {
-            if let uiImage = UIImage(named: building.imageAssetName) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                // Fallback with building icon
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.blue.opacity(0.3))
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.title)
-                            .foregroundColor(.blue)
-                    )
-            }
-        }
-        .cornerRadius(8)
-    }
-    
-    // MARK: - ✅ NEW: Debug Info Section
+    // MARK: - Debug Info Section
     
     private var debugInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Debug Info")
+            Text("Debug Information")
                 .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.yellow)
+                .fontWeight(.bold)
+                .foregroundColor(.orange)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("Worker ID: \(workerId)")
-                Text("Worker Name: \(workerName)")
-                Text("Buildings Count: \(assignedBuildings.count)")
-                Text("Is Loading: \(isLoading)")
-                Text("Has Error: \(error != nil)")
-                if let clockedIn = clockedInBuildingId {
-                    Text("Clocked In: \(clockedIn)")
-                }
+                debugInfoRow("Worker ID", workerId)
+                debugInfoRow("Worker Name", workerName)
+                debugInfoRow("Buildings Count", "\(assignedBuildings.count)")
+                debugInfoRow("Is Loading", "\(isLoading)")
+                debugInfoRow("Has Error", error != nil ? "Yes" : "No")
+                debugInfoRow("Clocked In Building", clockedInBuildingId ?? "None")
+                // BEGIN PATCH(HF-06): Auto-recovery debug info
+                debugInfoRow("Auto Recovery Tried", "\(hasTriedAutoRecovery)")
+                debugInfoRow("Recovery In Progress", "\(autoRecoveryInProgress)")
+                // BEGIN PATCH(HF-06B): Enhanced recovery debug info
+                debugInfoRow("Recovery Attempts", "\(recoveryAttempts)/\(maxRecoveryAttempts)")
+                debugInfoRow("Last Recovery", formatDate(lastRecoveryTime))
+                
+                // WorkerAssignmentManager status
+                let emergencyStatus = WorkerAssignmentManager.shared.getEmergencyStatus()
+                debugInfoRow("Emergency Active", "\(emergencyStatus.isActive)")
+                debugInfoRow("Emergency Cache", "\(emergencyStatus.cacheCount) entries")
+                // END PATCH(HF-06B)
+                // END PATCH(HF-06)
             }
-            .font(.caption)
-            .foregroundColor(.white.opacity(0.6))
+            
+            if let error = error {
+                Text("Error: \(error.localizedDescription)")
+                    .font(.caption2)
+                    .foregroundColor(.red)
+                    .padding(.top, 4)
+            }
         }
-        .padding(.top, 8)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.orange.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
     
-    // MARK: - ✅ ENHANCED: Helper Methods
-    
-    private func isCurrentBuilding(_ building: FrancoSphere.NamedCoordinate) -> Bool {
-        return building.id == clockedInBuildingId
-    }
-    
-    private func handleRefresh() async {
-        print("🔄 MySitesCard: Refreshing for worker \(workerId)")
-        isRefreshing = true
-        await onRefresh()
-        isRefreshing = false
-    }
-    
-    private func handleFix() async {
-        print("🔧 MySitesCard: Running fix for worker \(workerId)")
-        isFixing = true
-        await onFixBuildings()
-        isFixing = false
-    }
-    
-    /// ✅ NEW: Emergency fix specifically for Kevin Dutan
-    private func handleEmergencyKevinFix() async {
-        guard workerId == "4" else { return }
-        
-        print("🆘 MySitesCard: Running emergency Kevin fix")
-        isFixing = true
-        
-        // Force refresh assignments first
-        await handleRefresh()
-        
-        // If still empty, trigger CSV import
-        if assignedBuildings.isEmpty {
-            await handleFix()
+    private func debugInfoRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text("\(label):")
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.7))
+            Text(value)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+            Spacer()
         }
-        
-        // Final fallback: create emergency assignments via database
-        if assignedBuildings.isEmpty {
-            await createEmergencyKevinAssignments()
+    }
+    
+    // BEGIN PATCH(HF-06B): Helper methods
+    private func formatDate(_ date: Date) -> String {
+        if date == Date.distantPast {
+            return "Never"
         }
-        
-        isFixing = false
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    // END PATCH(HF-06B)
+    
+    // MARK: - Action Methods
+    
+    private func handleRefresh() {
+        Task {
+            await MainActor.run {
+                isRefreshing = true
+            }
+            
+            await onRefresh()
+            
+            await MainActor.run {
+                isRefreshing = false
+            }
+        }
     }
     
-    /// ✅ NEW: Create emergency Kevin assignments
-    private func createEmergencyKevinAssignments() async {
-        print("🆘 Creating emergency assignments for Kevin...")
-        
-        // This would trigger the WorkerAssignmentManager emergency assignment creation
-        // The actual implementation would call the emergency method in WorkerAssignmentManager
-        await handleRefresh()
-    }
-    
-    /// ✅ NEW: Worker-specific empty state messages
-    private func getWorkerSpecificEmptyMessage() -> String {
-        switch workerId {
-        case "4":
-            return "Kevin should have 6 buildings assigned (including former Jose duties). Try the emergency fix if this persists."
-        case "2":
-            return "Edwin should have morning shift buildings assigned. Try refreshing or reseeding."
-        case "1":
-            return "Greg should have day shift buildings assigned."
-        case "5":
-            return "Mercedes should have split shift buildings assigned."
-        case "6":
-            return "Luis should have maintenance buildings assigned."
-        case "7":
-            return "Angel should have garbage collection buildings assigned."
-        case "8":
-            return "Shawn should have Rubin Museum and admin buildings assigned."
-        default:
-            if !workerName.isEmpty {
-                return "\(workerName) hasn't been assigned to any buildings yet. Contact your supervisor."
-            } else {
-                return "You haven't been assigned to any buildings yet."
+    private func handleFixBuildings() {
+        Task {
+            await MainActor.run {
+                isFixing = true
+            }
+            
+            await onFixBuildings()
+            
+            await MainActor.run {
+                isFixing = false
             }
         }
     }
     
     private func startShimmerAnimation() {
-        withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
             shimmerOffset = 1.0
         }
-    }
-}
-
-// MARK: - ✅ ENHANCED: Custom Button Styles
-
-struct PrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline)
-            .fontWeight(.medium)
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.blue)
-            .cornerRadius(8)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-struct SecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline)
-            .fontWeight(.medium)
-            .foregroundColor(.blue)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.blue.opacity(0.2))
-            .cornerRadius(8)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-struct TertiaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.caption)
-            .fontWeight(.medium)
-            .foregroundColor(.white.opacity(0.7))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(6)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-/// ✅ NEW: Emergency button style for critical fixes
-struct EmergencyButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline)
-            .fontWeight(.bold)
-            .foregroundColor(.white)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
-            .background(
-                LinearGradient(
-                    colors: [Color.red, Color.red.opacity(0.8)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.red.opacity(0.5), lineWidth: 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Preview
-
-struct MySitesCard_Previews: PreviewProvider {
-    static var previews: some View {
-        VStack(spacing: 20) {
-            // Kevin's empty state (should show emergency fix)
-            MySitesCard(
-                workerId: "4",
-                workerName: "Kevin Dutan",
-                assignedBuildings: [],
-                buildingWeatherMap: [:],
-                clockedInBuildingId: nil,
-                isLoading: false,
-                error: nil,
-                forceShow: true,
-                onRefresh: {},
-                onFixBuildings: {},
-                onBrowseAll: {},
-                onBuildingTap: { _ in }
-            )
-            
-            // Edwin's loaded state
-            MySitesCard(
-                workerId: "2",
-                workerName: "Edwin Lema",
-                assignedBuildings: [
-                    FrancoSphere.NamedCoordinate(
-                        id: "1",
-                        name: "12 West 18th Street",
-                        latitude: 40.7397,
-                        longitude: -73.9944,
-                        imageAssetName: "12_West_18th_Street"
-                    ),
-                    FrancoSphere.NamedCoordinate(
-                        id: "2",
-                        name: "29-31 East 20th Street",
-                        latitude: 40.7389,
-                        longitude: -73.9863,
-                        imageAssetName: "29_31_East_20th_Street"
-                    )
-                ],
-                buildingWeatherMap: [
-                    "1": FrancoSphere.WeatherData(
-                        date: Date(),
-                        temperature: 72,
-                        feelsLike: 70,
-                        humidity: 65,
-                        windSpeed: 12,
-                        windDirection: 180,
-                        precipitation: 0,
-                        snow: 0,
-                        visibility: 10000,
-                        pressure: 1013,
-                        condition: .clear,
-                        icon: "sun.max.fill"
-                    )
-                ],
-                clockedInBuildingId: "1",
-                isLoading: false,
-                error: nil,
-                forceShow: true,
-                onRefresh: {},
-                onFixBuildings: {},
-                onBrowseAll: {},
-                onBuildingTap: { _ in }
-            )
-        }
-        .padding()
-        .background(Color.black)
-        .preferredColorScheme(.dark)
     }
 }

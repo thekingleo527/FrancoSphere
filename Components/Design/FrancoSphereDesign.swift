@@ -275,9 +275,24 @@ struct FrancoEmptyState: View {
             }
             
             if let action = action, let actionTitle = actionTitle {
-                // Use the existing GlassButton from your project
-                GlassButton(actionTitle, style: .primary, action: action)
-                    .padding(.top, FrancoSphereDesign.Spacing.sm)
+                // Simple button without GlassButton dependency
+                Button(actionTitle) {
+                    action()
+                }
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(8)
+                .padding(.top, FrancoSphereDesign.Spacing.sm)
             }
         }
         .francoCardPadding()

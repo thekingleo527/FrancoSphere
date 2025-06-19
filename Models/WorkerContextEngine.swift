@@ -7,6 +7,7 @@
 //  ✅ Enhanced worker validation with real-world data
 //  ✅ Jose Santos removal support, Kevin expansion tracking
 //  ✅ Dynamic worker-specific context loading with auth integration
+//  ✅ HF-07: Enhanced coordination with WorkerAssignmentManager
 //
 
 import Foundation
@@ -61,6 +62,12 @@ public class WorkerContextEngine: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var migrationRun = false
     
+    // BEGIN PATCH(HF-07): Enhanced WorkerAssignmentManager integration
+    private var assignmentManager: WorkerAssignmentManager {
+        return WorkerAssignmentManager.shared
+    }
+    // END PATCH(HF-07)
+    
     // MARK: - ⭐ PHASE-2: Auth manager reference
     private var authManager: NewAuthManager {
         return NewAuthManager.shared
@@ -112,7 +119,11 @@ public class WorkerContextEngine: ObservableObject {
             try await ensureMigrationRun()
             
             let worker = try await loadWorkerContext_Fixed(actualWorkerId)
-            let buildings = try await loadWorkerBuildings_Fixed(actualWorkerId)
+            
+            // BEGIN PATCH(HF-07): Enhanced building loading with AssignmentManager coordination
+            let buildings = try await loadWorkerBuildings_Enhanced(actualWorkerId)
+            // END PATCH(HF-07)
+            
             let todayTasks = try await loadWorkerTasksForToday_Fixed(actualWorkerId)
             let upcomingTasks = try await loadUpcomingTasks_Fixed(actualWorkerId)
             
@@ -324,6 +335,56 @@ public class WorkerContextEngine: ObservableObject {
         )
     }
     
+    // BEGIN PATCH(HF-07): Enhanced building loading with WorkerAssignmentManager coordination
+    private func loadWorkerBuildings_Enhanced(_ workerId: String) async throws -> [FrancoSphere.NamedCoordinate] {
+        print("🔄 HF-07: Enhanced building loading for worker \(workerId)")
+        
+        // Method 1: Try WorkerAssignmentManager first (immediate response)
+        let assignmentManagerBuildings = assignmentManager.getAssignedBuildingIds(for: workerId)
+        
+        if !assignmentManagerBuildings.isEmpty {
+            print("✅ HF-07: Got \(assignmentManagerBuildings.count) buildings from WorkerAssignmentManager")
+            return convertBuildingIdsToCoordinates(assignmentManagerBuildings)
+        }
+        
+        // Method 2: Try database query (fallback)
+        print("🔄 HF-07: WorkerAssignmentManager empty, trying database...")
+        let databaseBuildings = try await loadWorkerBuildings_Fixed(workerId)
+        
+        if !databaseBuildings.isEmpty {
+            print("✅ HF-07: Got \(databaseBuildings.count) buildings from database")
+            return databaseBuildings
+        }
+        
+        // Method 3: Try CSV fallback (last resort)
+        print("🔄 HF-07: Database empty, using CSV fallback...")
+        let csvBuildings = await loadBuildingsFromCSVFallback(workerId)
+        
+        if !csvBuildings.isEmpty {
+            print("✅ HF-07: Got \(csvBuildings.count) buildings from CSV fallback")
+            
+            // For Kevin, trigger emergency assignment creation to populate database
+            if workerId == "4" && csvBuildings.count >= 6 {
+                print("🔧 HF-07: Triggering emergency assignment creation for Kevin")
+                let success = await assignmentManager.createEmergencyAssignments(for: workerId)
+                if success {
+                    print("✅ HF-07: Emergency assignments created successfully")
+                }
+            }
+        }
+        
+        return csvBuildings
+    }
+    
+    /// Convert building IDs to NamedCoordinate objects
+    private func convertBuildingIdsToCoordinates(_ buildingIds: [String]) -> [FrancoSphere.NamedCoordinate] {
+        let allBuildings = FrancoSphere.NamedCoordinate.allBuildings
+        return allBuildings.filter { building in
+            buildingIds.contains(building.id)
+        }.sorted { $0.name < $1.name }
+    }
+    // END PATCH(HF-07)
+    
     private func loadWorkerBuildings_Fixed(_ workerId: String) async throws -> [FrancoSphere.NamedCoordinate] {
         guard let manager = sqliteManager else {
             throw DatabaseError.notInitialized
@@ -371,18 +432,11 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         print("📋 Loaded \(buildings.count) buildings for worker \(workerId) from database")
-        
-        // If no buildings found in database, try to get from CSV or trigger import
-        if buildings.isEmpty {
-            print("⚠️ No buildings found in database for worker \(workerId) - checking CSV assignments")
-            buildings = await loadBuildingsFromCSVFallback(workerId)
-        }
-        
         return buildings
     }
     
     /// Fallback to load buildings based on CSV assignments if database is empty
-    private func loadBuildingsFromCSVFallback(_ workerId: String) async -> [FrancoSphere.NamedCoordinate] {
+    internal func loadBuildingsFromCSVFallback(_ workerId: String) async -> [FrancoSphere.NamedCoordinate] {
         print("🔄 Loading buildings from CSV fallback for worker \(workerId)")
         
         // Real worker-building assignments based on current roster

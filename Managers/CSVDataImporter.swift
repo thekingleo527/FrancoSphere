@@ -7,6 +7,7 @@
 //  ✅ Enhanced worker validation and assignment tracking
 //  ✅ Kevin's expanded duties integration
 //  ✅ Real-world data validation and logging
+//  ✅ HF-09: Enhanced diagnostic logging and Kevin validation
 //
 
 import Foundation
@@ -196,6 +197,20 @@ class CSVDataImporter: ObservableObject {
         print("🔧 Current active workers only (Jose Santos removed)")
         currentStatus = "Importing \(realWorldTasks.count) tasks for current active workers..."
         
+        // BEGIN PATCH(HF-09): Pre-import Kevin diagnostic
+        print("🔍 HF-09: Pre-import Kevin diagnostic")
+        do {
+            let existingKevin = try await sqliteManager.query("""
+                SELECT COUNT(*) as count FROM worker_building_assignments 
+                WHERE worker_id = '4' AND is_active = 1
+            """)
+            let currentCount = existingKevin.first?["count"] as? Int64 ?? 0
+            print("   Kevin's current building assignments: \(currentCount)")
+        } catch {
+            print("   Could not check Kevin's existing assignments: \(error)")
+        }
+        // END PATCH(HF-09)
+        
         // First populate worker building assignments
         try await populateWorkerBuildingAssignments(realWorldTasks)
         
@@ -315,22 +330,40 @@ class CSVDataImporter: ObservableObject {
                          userInfo: [NSLocalizedDescriptionKey: "SQLiteManager not available"])
         }
         
-        // CURRENT ACTIVE WORKER ROSTER (Jose Santos removed, Kevin expanded)
-        let activeWorkers = [
+        // BEGIN PATCH(HF-09): Enhanced activeWorkers with exact name matching and diagnostic logging
+        let activeWorkers: [String: String] = [
             "Greg Hutson": "1",
             "Edwin Lema": "2",
-            "Kevin Dutan": "4",      // Assumed Jose's duties + original assignments
+            "Kevin Dutan": "4",        // ✅ CRITICAL: Exact CSV name match
             "Mercedes Inamagua": "5",
             "Luis Lopez": "6",
             "Angel Guirachocha": "7",
             "Shawn Magloire": "8"
         ]
         
+        // EMERGENCY DIAGNOSTIC: Log all worker names in CSV vs activeWorkers
+        print("🔍 HF-09: CSV Import Diagnostic")
+        print("📋 Active Workers Dictionary:")
+        for (name, id) in activeWorkers.sorted(by: { $0.key < $1.key }) {
+            print("   '\(name)' → ID '\(id)'")
+        }
+        
+        // Count assignments per worker in CSV data
+        let csvWorkerCounts = Dictionary(grouping: assignments) { $0.assignedWorker }
+        print("📋 CSV Task Assignments:")
+        for (workerName, tasks) in csvWorkerCounts.sorted(by: { $0.key < $1.key }) {
+            let isActive = activeWorkers[workerName] != nil
+            let status = isActive ? "✅ ACTIVE" : "❌ INACTIVE/UNKNOWN"
+            print("   '\(workerName)': \(tasks.count) tasks (\(status))")
+        }
+        // END PATCH(HF-09)
+        
         print("🔗 Extracting assignments from \(assignments.count) CSV tasks for ACTIVE WORKERS ONLY")
         
         // Extract unique worker-building pairs - ACTIVE WORKERS ONLY
         var workerBuildingPairs: Set<String> = []
         var skippedAssignments = 0
+        var kevinAssignmentCount = 0  // Track Kevin specifically
         
         for assignment in assignments {
             guard !assignment.assignedWorker.isEmpty,
@@ -338,16 +371,28 @@ class CSVDataImporter: ObservableObject {
                 continue
             }
             
-            // CRITICAL: Only process assignments for current active workers
+            // BEGIN PATCH(HF-09): Enhanced worker validation with Kevin tracking
             guard let workerId = activeWorkers[assignment.assignedWorker] else {
-                if assignment.assignedWorker == "Jose Santos" {
+                if assignment.assignedWorker.contains("Jose") || assignment.assignedWorker.contains("Santos") {
                     print("📝 Skipping Jose Santos assignment (no longer with company)")
                 } else {
-                    print("⚠️ Skipping unknown worker: \(assignment.assignedWorker)")
+                    print("⚠️ HF-09: Skipping unknown worker: '\(assignment.assignedWorker)'")
+                    // List all unique unknown workers for debugging
+                    let allUnknownWorkers = Set(assignments.map { $0.assignedWorker })
+                        .subtracting(activeWorkers.keys)
+                    if allUnknownWorkers.count < 10 { // Avoid spam
+                        print("   Known workers: \(activeWorkers.keys.joined(separator: ", "))")
+                    }
                 }
                 skippedAssignments += 1
                 continue
             }
+            
+            // Track Kevin's assignments specifically
+            if workerId == "4" {
+                kevinAssignmentCount += 1
+            }
+            // END PATCH(HF-09)
             
             do {
                 let buildingId = try await mapBuildingNameToId(assignment.building)
@@ -355,13 +400,38 @@ class CSVDataImporter: ObservableObject {
                 workerBuildingPairs.insert(pairKey)
                 
             } catch {
-                print("⚠️ Skipping assignment - unknown building: \(assignment.building)")
+                print("⚠️ Skipping assignment - unknown building: '\(assignment.building)' for \(assignment.assignedWorker)")
                 skippedAssignments += 1
                 continue
             }
         }
         
-        print("🔗 Active worker assignments: \(workerBuildingPairs.count) pairs, \(skippedAssignments) skipped")
+        // BEGIN PATCH(HF-09): Critical Kevin validation
+        print("🔗 HF-09: Assignment Extraction Results:")
+        print("   Total pairs extracted: \(workerBuildingPairs.count)")
+        print("   Assignments skipped: \(skippedAssignments)")
+        print("   Kevin task assignments found: \(kevinAssignmentCount)")
+        
+        // Count Kevin's building assignments specifically
+        let kevinBuildingPairs = workerBuildingPairs.filter { $0.hasPrefix("4-") }
+        print("   Kevin building assignments: \(kevinBuildingPairs.count)")
+        
+        if kevinBuildingPairs.isEmpty {
+            print("🚨 CRITICAL: Kevin has NO building assignments!")
+            print("🔍 Debugging Kevin assignments...")
+            
+            // Emergency diagnostic for Kevin
+            let kevinTasks = assignments.filter { $0.assignedWorker == "Kevin Dutan" }
+            print("   Kevin tasks in CSV: \(kevinTasks.count)")
+            if kevinTasks.count > 0 {
+                print("   Sample Kevin task: '\(kevinTasks.first?.taskName ?? "N/A")' at '\(kevinTasks.first?.building ?? "N/A")'")
+            }
+            
+            // Check if Kevin's name appears with different spelling
+            let kevinVariants = assignments.filter { $0.assignedWorker.lowercased().contains("kevin") }
+            print("   Kevin name variants found: \(Set(kevinVariants.map { $0.assignedWorker }))")
+        }
+        // END PATCH(HF-09)
         
         // Insert assignments into database
         var insertedCount = 0
@@ -387,11 +457,61 @@ class CSVDataImporter: ObservableObject {
             }
         }
         
-        print("✅ Real-world assignments populated: \(insertedCount) active assignments")
+        // BEGIN PATCH(HF-09): Enhanced results logging with Kevin focus
+        print("✅ HF-09: Real-world assignments populated: \(insertedCount) active assignments")
+        
+        // Immediate Kevin verification
+        do {
+            let kevinVerification = try await sqliteManager.query("""
+                SELECT building_id FROM worker_building_assignments 
+                WHERE worker_id = '4' AND is_active = 1
+            """)
+            print("🎯 Kevin verification: \(kevinVerification.count) buildings in database")
+            
+            if kevinVerification.count == 0 {
+                print("🚨 EMERGENCY: Kevin still has 0 buildings after import!")
+                await createEmergencyKevinAssignments(sqliteManager)
+            }
+        } catch {
+            print("❌ Could not verify Kevin assignments: \(error)")
+        }
+        // END PATCH(HF-09)
         
         // Log final worker assignment summary
         await logWorkerAssignmentSummary(activeWorkers)
     }
+    
+    // BEGIN PATCH(HF-09): Emergency Kevin fallback method
+    /// Emergency fallback: Create Kevin's assignments manually if import fails
+    private func createEmergencyKevinAssignments(_ manager: SQLiteManager) async {
+        print("🆘 HF-09: Creating emergency Kevin assignments...")
+        
+        // Kevin's known buildings based on real-world assignments
+        let kevinBuildings = ["3", "6", "7", "9", "11", "16"]
+        
+        do {
+            for buildingId in kevinBuildings {
+                try await manager.execute("""
+                    INSERT OR REPLACE INTO worker_building_assignments 
+                    (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
+                    VALUES ('4', ?, 'Kevin Dutan', 'emergency_fallback', datetime('now'), 1)
+                """, [buildingId])
+            }
+            
+            print("✅ HF-09: Emergency Kevin assignments created: \(kevinBuildings)")
+            
+            // Verify the emergency assignments
+            let verification = try await manager.query("""
+                SELECT building_id FROM worker_building_assignments 
+                WHERE worker_id = '4' AND is_active = 1
+            """)
+            print("🎯 Emergency verification: Kevin now has \(verification.count) buildings")
+            
+        } catch {
+            print("🚨 CRITICAL: Emergency assignment creation failed: \(error)")
+        }
+    }
+    // END PATCH(HF-09)
     
     /// Log summary of worker assignments for validation
     private func logWorkerAssignmentSummary(_ activeWorkers: [String: String]) async {
