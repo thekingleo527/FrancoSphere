@@ -199,21 +199,33 @@ struct MapOverlayView: View {
     
     private func buildingMarker(_ building: FrancoSphere.NamedCoordinate) -> some View {
         ZStack {
-            Circle()
-                .fill(markerBackgroundColor(for: building))
-                .frame(width: 32, height: 32)
-                .overlay(
-                    Circle()
-                        .stroke(markerBorderColor(for: building), lineWidth: 2)
-                )
+            // Background with building image
+            if !building.imageAssetName.isEmpty {
+                Image(building.imageAssetName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(markerBorderColor(for: building), lineWidth: 2)
+                    )
+            } else {
+                Circle()
+                    .fill(markerBackgroundColor(for: building))
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Circle()
+                            .stroke(markerBorderColor(for: building), lineWidth: 2)
+                    )
+            }
             
-            Image(systemName: markerIcon(for: building))
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
-            
-            // BEGIN PATCH(HF-03): Remove orange warning indicators
-            // No more orange exclamation overlays
-            // END PATCH(HF-03)
+            // Icon overlay for current building
+            if building.id == currentBuildingId {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+            }
         }
         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
     }

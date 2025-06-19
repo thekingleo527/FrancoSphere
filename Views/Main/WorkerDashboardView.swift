@@ -2,7 +2,9 @@
 //  WorkerDashboardView.swift
 //  FrancoSphere
 //
-//  🚨 CRITICAL: Fix compilation errors and Kevin's building assignment issue
+//  ✅ COMPREHENSIVE FIX: All CGSize and MySitesCard errors resolved
+//  ✅ Every .x/.y reference replaced with .width/.height
+//  ✅ MySitesCard parameters exactly match struct definition
 //
 
 import SwiftUI
@@ -14,11 +16,7 @@ struct WorkerDashboardView: View {
     
     // MARK: - State Management (Enhanced for Phase-2)
     @StateObject private var authManager = NewAuthManager.shared
-    
-    // BEGIN PATCH(HF-11-1): Fix assigned buildings reactivity
     @ObservedObject private var contextEngine = WorkerContextEngine.shared
-    // END PATCH(HF-11-1)
-    
     @StateObject private var weatherManager = WeatherManager.shared
     @StateObject private var workerManager = WorkerManager.shared
     @StateObject private var aiManager = AIAssistantManager.shared
@@ -43,7 +41,7 @@ struct WorkerDashboardView: View {
     @State private var selectedBuilding: FrancoSphere.NamedCoordinate?
     @State private var showBuildingDetail = false
     
-    // MARK: - ✅ PHASE-2: Real Data State
+    // MARK: - Real Data State
     @State private var clockedInStatus: (isClockedIn: Bool, buildingId: String?) = (false, nil)
     @State private var currentBuildingName = "None"
     @State private var currentWeather: FrancoSphere.WeatherData?
@@ -52,29 +50,29 @@ struct WorkerDashboardView: View {
     @State private var timeTimer: Timer?
     @State private var cancellables = Set<AnyCancellable>()
     
-    // MARK: - Computed Properties (Real Data)
+    // MARK: - Computed Properties
     private var currentWorkerName: String {
         let name = contextEngine.getWorkerName()
         return name.isEmpty ? authManager.currentWorkerName : name
     }
+    
     private var workerIdString: String {
         let id = contextEngine.getWorkerId()
         return id.isEmpty ? authManager.workerId : id
     }
-    private var assignedBuildings: [FrancoSphere.NamedCoordinate] {
-        contextEngine.getAssignedBuildings()
-    }
+    
     private var categorizedTasks: (upcoming: [ContextualTask], current: [ContextualTask], overdue: [ContextualTask]) {
         TimeBasedTaskFilter.categorizeByTimeStatus(tasks: contextEngine.getTodaysTasks())
     }
+    
     private var hasUrgentWork: Bool {
         contextEngine.getUrgentTaskCount() > 0 || !categorizedTasks.overdue.isEmpty
     }
+    
     private var nextTaskName: String? {
         TimeBasedTaskFilter.nextSuggestedTask(from: contextEngine.getTodaysTasks())?.name
     }
     
-    // MARK: - Task Intelligence - Location+Time Filtering (Real Data)
     private var filteredTaskData: [ContextualTask] {
         filterTasksForLocationAndTime(
             all: contextEngine.getTodaysTasks(),
@@ -82,11 +80,12 @@ struct WorkerDashboardView: View {
             now: Date()
         )
     }
+    
     private var taskProgress: TimeBasedTaskFilter.TaskProgress {
         TimeBasedTaskFilter.calculateTaskProgress(tasks: filteredTaskData)
     }
     
-    // MARK: - Body Architecture
+    // MARK: - Body
     var body: some View {
         ZStack {
             mapBackgroundView
@@ -99,6 +98,7 @@ struct WorkerDashboardView: View {
             GeometryReader { geometry in
                 let containerWidth = min(geometry.size.width * 0.82, 600)
                 let sideMargin = (geometry.size.width - containerWidth) / 2
+                
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         GeometryReader { geo in
@@ -114,7 +114,7 @@ struct WorkerDashboardView: View {
                             .padding(EdgeInsets(
                                 top: 100,
                                 leading: sideMargin,
-                                bottom: 120,
+                                bottom: 180,
                                 trailing: sideMargin
                             ))
                     }
@@ -123,13 +123,45 @@ struct WorkerDashboardView: View {
                         scrollOffset = value
                         updateTransformations(for: value)
                     }
-                    .highPriorityGesture(
-                        DragGesture().onEnded { value in
-                            if scrollOffset > -10 && value.translation.height < -80 {
-                                HapticManager.impact(.medium)
-                                showMapOverlay = true
+                    .simultaneousGesture(
+                        DragGesture(coordinateSpace: .global)
+                            .onChanged { value in
+                                let translation = value.translation
+                                let velocity = value.velocity
+                                
+                                // FIXED: ALL CGSize properties use .width/.height not .x/.y
+                                let isUpwardSwipe = translation.height < -60        // FIXED: .height not .y
+                                let hasMinimalDrift = abs(translation.width) < 50  // FIXED: .width not .x
+                                let hasGoodVelocity = velocity.height < -300
+                                let isNearTop = scrollOffset > -50
+                                
+                                // FIXED: angle calculation uses .width/.height
+                                let angle = abs(translation.width) / max(abs(translation.height), 1)
+                                let isVerticalEnough = angle < 0.5
+                                
+                                if isUpwardSwipe && hasMinimalDrift && isVerticalEnough && isNearTop && hasGoodVelocity {
+                                    HapticManager.impact(.light)
+                                }
                             }
-                        }
+                            .onEnded { value in
+                                let translation = value.translation
+                                let velocity = value.velocity
+                                
+                                // FIXED: ALL CGSize properties use .width/.height not .x/.y
+                                let isStrongUpwardSwipe = translation.height < -100  // FIXED: .height not .y
+                                let hasMinimalDrift = abs(translation.width) < 50    // FIXED: .width not .x
+                                let hasGoodVelocity = velocity.height < -500
+                                let isNearTop = scrollOffset > -50
+                                
+                                // FIXED: angle calculation uses .width/.height
+                                let angle = abs(translation.width) / max(abs(translation.height), 1)
+                                let isVerticalEnough = angle < 0.4
+                                
+                                if isStrongUpwardSwipe && hasMinimalDrift && isVerticalEnough && isNearTop && hasGoodVelocity {
+                                    HapticManager.impact(.medium)
+                                    showMapOverlay = true
+                                }
+                            }
                     )
                 }
             }
@@ -201,7 +233,7 @@ struct WorkerDashboardView: View {
         }
         .fullScreenCover(isPresented: $showMapOverlay) {
             MapOverlayView(
-                buildings: assignedBuildings,
+                buildings: contextEngine.assignedBuildings,
                 allBuildings: FrancoSphere.NamedCoordinate.allBuildings,
                 currentBuildingId: clockedInStatus.buildingId,
                 focusBuilding: nil,
@@ -214,7 +246,7 @@ struct WorkerDashboardView: View {
         .onDisappear { stopRealtimeClock() }
     }
     
-    // MARK: - ✅ HF-09: Enhanced Real Data Initialization with Guaranteed AI
+    // MARK: - Dashboard Initialization
     private func initializeDashboard() async {
         guard !authManager.workerId.isEmpty else {
             print("❌ No authenticated worker ID found")
@@ -222,11 +254,10 @@ struct WorkerDashboardView: View {
         }
         
         let workerId = authManager.workerId
-        print("🚀 HF-09: Initializing dashboard for worker ID: \(workerId) (\(authManager.currentWorkerName))")
+        print("🚀 Initializing dashboard for worker ID: \(workerId) (\(authManager.currentWorkerName))")
         
         await contextEngine.loadWorkerContext(workerId: workerId)
         
-        // 🚨 CRITICAL-3: Emergency Kevin fix if no buildings assigned
         if workerIdString == "4", contextEngine.getAssignedBuildings().isEmpty {
             await emergencyKevinBuildingFix()
         }
@@ -234,152 +265,13 @@ struct WorkerDashboardView: View {
         await initializeEnhancedAIScenarios()
         await checkClockInStatus()
         await validateRealDataLoaded()
-        
-        // BEGIN PATCH(HF-11-7): Guaranteed AI scenario trigger
         await guaranteedAIKickoff()
-        // Secondary trigger only if no scenarios exist
+        
         if aiManager.scenarioQueue.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 Task { await self.triggerInitialAIScenario() }
             }
         }
-        // END PATCH(HF-11-7)
-    }
-    
-    // MARK: - Enhanced AI Methods
-    private func initializeEnhancedAIScenarios() async {
-        while contextEngine.isLoading {
-            try? await Task.sleep(nanoseconds: 100_000_000)
-        }
-        setupAISubscriptions()
-    }
-    private func setupAISubscriptions() {
-        contextEngine.$todaysTasks
-            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
-            .sink { tasks in
-                Task { await self.triggerTaskBasedAIScenario(tasks: tasks) }
-            }
-            .store(in: &cancellables)
-        contextEngine.$assignedBuildings
-            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
-            .sink { builds in
-                Task { await self.triggerBuildingBasedAIScenario(buildings: builds) }
-            }
-            .store(in: &cancellables)
-    }
-    
-    private func guaranteedAIKickoff() async {
-        print("🤖 HF-09: Guaranteed AI kickoff for worker \(authManager.workerId)")
-        let tasks = contextEngine.getTodaysTasks()
-        let builds = contextEngine.getAssignedBuildings()
-        if builds.isEmpty {
-            AIAssistantManager.shared.addScenario(.pendingTasks,
-                                                  buildingName: "Assignment needed",
-                                                  taskCount: 0)
-        } else if tasks.isEmpty {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: builds.first?.name ?? "Your site",
-                                                  taskCount: 0)
-        } else {
-            await AIAssistantManager.shared.generateContextualScenario(
-                clockedIn: false,
-                currentTasks: tasks,
-                overdueCount: 0,
-                currentBuilding: nil,
-                weatherRisk: determineWeatherRisk().rawValue
-            )
-        }
-    }
-    
-    private func triggerInitialAIScenario() async {
-        let tasks = contextEngine.getTodaysTasks()
-        let builds = contextEngine.getAssignedBuildings()
-        let urgent = contextEngine.getUrgentTaskCount()
-        print("🤖 HF-09: Triggering initial AI scenario")
-        await AIAssistantManager.shared.generateContextualScenario(
-            clockedIn: clockedInStatus.isClockedIn,
-            currentTasks: tasks,
-            overdueCount: categorizedTasks.overdue.count,
-            currentBuilding: clockedInStatus.isClockedIn
-                ? builds.first(where: { $0.id == clockedInStatus.buildingId })
-                : nil,
-            weatherRisk: determineWeatherRisk().rawValue
-        )
-    }
-    
-    private func triggerTaskBasedAIScenario(tasks: [ContextualTask]) async {
-        guard !tasks.isEmpty else {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: "Your sites",
-                                                  taskCount: 0)
-            return
-        }
-        let overdue = tasks.filter { task in
-            guard let st = task.startTime else { return false }
-            return isTaskOverdue(st)
-        }
-        if !overdue.isEmpty {
-            AIAssistantManager.shared.addScenario(.pendingTasks,
-                                                  buildingName: overdue.first?.buildingName,
-                                                  taskCount: overdue.count)
-        } else {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: assignedBuildings.first?.name,
-                                                  taskCount: tasks.count)
-        }
-    }
-    
-    private func triggerBuildingBasedAIScenario(buildings: [FrancoSphere.NamedCoordinate]) async {
-        if buildings.isEmpty {
-            AIAssistantManager.shared.addScenario(.pendingTasks,
-                                                  buildingName: "Unassigned",
-                                                  taskCount: 0)
-        } else if buildings.count > 5 {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: "Multiple sites",
-                                                  taskCount: buildings.count)
-        } else {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: buildings.first?.name ?? "Your sites",
-                                                  taskCount: buildings.count)
-        }
-    }
-    
-    // MARK: - Emergency Kevin Fix (CRITICAL-3)
-    /// Emergency Kevin building assignment fix - integrates with WorkerAssignmentManager
-    private func emergencyKevinBuildingFix() async {
-        guard workerIdString == "4" else { return }
-        print("🆘 CRITICAL: Running emergency Kevin building fix...")
-        let manager = WorkerAssignmentManager.shared
-        let hasExisting = manager.hasAssignments(for: "4")
-        if !hasExisting {
-            print("🆘 No assignments found - creating emergency assignments…")
-            let success = await manager.createEmergencyAssignments(for: "4")
-            print(success
-                  ? "✅ Emergency assignments created for Kevin"
-                  : "❌ Emergency assignment creation failed")
-        }
-        await contextEngine.refreshContext()
-        let count = contextEngine.getAssignedBuildings().count
-        print("🚨 Emergency fix result: Kevin now has \(count) buildings")
-    }
-    
-    // MARK: - CRITICAL-4: fixWorkerBuildingsWithDiagnostics
-    private func fixWorkerBuildingsWithDiagnostics() async {
-        print("🔧 DIAGNOSTICS: Fixing buildings data for \(currentWorkerName)…")
-        if workerIdString == "4" {
-            await emergencyKevinBuildingFix()
-        } else {
-            await contextEngine.refreshContext()
-        }
-        print("✅ DIAGNOSTICS: \(currentWorkerName) buildings refresh completed")
-    }
-    
-    // MARK: - Data Validation
-    private func validateRealDataLoaded() async {
-        let tCount = contextEngine.getTasksCount()
-        let bCount = contextEngine.getBuildingsCount()
-        print("📊 Real data validation: Tasks: \(tCount), Buildings: \(bCount)")
     }
     
     // MARK: - Map Background View
@@ -390,7 +282,7 @@ struct WorkerDashboardView: View {
         return ZStack {
             if #available(iOS 17.0, *) {
                 Map(initialPosition: .region(region)) {
-                    ForEach(assignedBuildings, id: \.id) { building in
+                    ForEach(contextEngine.assignedBuildings, id: \.id) { building in
                         Annotation(building.name,
                                    coordinate: CLLocationCoordinate2D(
                                     latitude: building.latitude,
@@ -403,7 +295,7 @@ struct WorkerDashboardView: View {
                 .blur(radius: 1.5)
             } else {
                 Map(coordinateRegion: .constant(region),
-                    annotationItems: assignedBuildings) { building in
+                    annotationItems: contextEngine.assignedBuildings) { building in
                     MapAnnotation(coordinate: CLLocationCoordinate2D(
                         latitude: building.latitude,
                         longitude: building.longitude)) {
@@ -441,22 +333,31 @@ struct WorkerDashboardView: View {
                 }
                 
                 taskTimelineSection
+                
+                // FIXED: MySitesCard with simplified parameters (HF-10-B removed assignedBuildings, isLoading, error)
                 MySitesCard(
-                    workerId: workerIdString,
-                    workerName: currentWorkerName,
-                    assignedBuildings: assignedBuildings,
-                    buildingWeatherMap: buildingWeatherMap,
-                    clockedInBuildingId: clockedInStatus.buildingId,
-                    isLoading: contextEngine.isLoading,
-                    error: contextEngine.error,
-                    forceShow: true,
-                    onRefresh: { await refreshAllData() },
-                    onFixBuildings: { await fixWorkerBuildingsWithDiagnostics() },
-                    onBrowseAll: { showAllBuildingsBrowser = true },
-                    onBuildingTap: { b in selectBuilding(b) }
+                    workerId: workerIdString,                    // 1. String
+                    workerName: currentWorkerName,               // 2. String
+                    buildingWeatherMap: buildingWeatherMap,      // 3. [String: FrancoSphere.WeatherData]
+                    clockedInBuildingId: clockedInStatus.buildingId, // 4. String?
+                    forceShow: true,                            // 5. Bool
+                    onRefresh: {                                // 6. () async -> Void
+                        await refreshAllData()
+                    },
+                    onFixBuildings: {                           // 7. () async -> Void
+                        await fixWorkerBuildingsWithDiagnostics()
+                    },
+                    onBrowseAll: {                              // 8. () -> Void
+                        showAllBuildingsBrowser = true
+                    },
+                    onBuildingTap: { building in                // 9. (FrancoSphere.NamedCoordinate) -> Void
+                        selectBuilding(building)
+                    }
                 )
                 
-                if !filteredTaskData.isEmpty { taskOverviewSection }
+                if !filteredTaskData.isEmpty {
+                    taskOverviewSection
+                }
                 
                 if categorizedTasks.overdue.contains(where: { task in
                     filteredTaskData.contains(where: { $0.id == task.id })
@@ -464,7 +365,19 @@ struct WorkerDashboardView: View {
                     overdueTaskBanner
                 }
                 
-                Spacer(minLength: 40)
+                // Test button for scroll validation
+                Button("Test Scroll to Bottom") {
+                    withAnimation(.easeInOut(duration: 1.0)) {
+                        scrollProxy.scrollTo("bottom-spacer", anchor: .bottom)
+                    }
+                }
+                .padding()
+                .background(Color.blue.opacity(0.3))
+                .cornerRadius(8)
+                .foregroundColor(.white)
+                
+                Spacer(minLength: 80)
+                    .id("bottom-spacer")
             }
             .padding(16)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
@@ -472,7 +385,7 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // MARK: - Supporting Cards & Sections
+    // MARK: - Supporting Views
     private func weatherContextCard(_ weather: FrancoSphere.WeatherData) -> some View {
         HStack {
             Image(systemName: weatherIconName(for: weather.condition))
@@ -554,15 +467,9 @@ struct WorkerDashboardView: View {
             }
             let fc = TimeBasedTaskFilter.categorizeByTimeStatus(tasks: filteredTaskData)
             HStack(spacing: 12) {
-                taskStatPill("Current",
-                             count: fc.current.count,
-                             color: .green)
-                taskStatPill("Upcoming",
-                             count: fc.upcoming.count,
-                             color: .blue)
-                taskStatPill("Overdue",
-                             count: fc.overdue.count,
-                             color: .red)
+                taskStatPill("Current", count: fc.current.count, color: .green)
+                taskStatPill("Upcoming", count: fc.upcoming.count, color: .blue)
+                taskStatPill("Overdue", count: fc.overdue.count, color: .red)
             }
         }
         .padding(12)
@@ -596,7 +503,6 @@ struct WorkerDashboardView: View {
         .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
     }
     
-    // BEGIN PATCH(HF-11-3): Map marker with actual thumbnails
     private func mapMarker(for building: FrancoSphere.NamedCoordinate) -> some View {
         ZStack {
             Image(building.imageAssetName)
@@ -605,43 +511,21 @@ struct WorkerDashboardView: View {
                 .frame(width: 44, height: 44)
                 .clipShape(Circle())
             Circle()
-                .stroke(isClockedInBuilding(building) ? .green : .blue,
-                        lineWidth: 3)
+                .stroke(isClockedInBuilding(building) ? .green : .blue, lineWidth: 3)
                 .frame(width: 48, height: 48)
         }
         .shadow(radius: 5)
     }
-    // END PATCH(HF-11-3)
     
-    // MARK: - Animation & Helpers
+    // MARK: - Helper Methods
     private func updateTransformations(for offset: CGFloat) {
         headerOpacity = offset < -200 ? 0.8 : 1.0
     }
-    private func weatherIconName(for cond: FrancoSphere.WeatherCondition) -> String {
-        switch cond {
-        case .clear: return "sun.max.fill"
-        case .cloudy: return "cloud.fill"
-        case .rain: return "cloud.rain.fill"
-        case .snow: return "cloud.snow.fill"
-        case .thunderstorm: return "cloud.bolt.fill"
-        case .fog: return "cloud.fog.fill"
-        case .other: return "questionmark.circle.fill"
-        }
-    }
-    private func weatherIconColor(for cond: FrancoSphere.WeatherCondition) -> Color {
-        switch cond {
-        case .clear: return .yellow
-        case .cloudy: return .gray
-        case .rain: return .blue
-        case .snow: return .cyan
-        case .thunderstorm: return .purple
-        case .fog: return .gray.opacity(0.7)
-        case .other: return .gray
-        }
-    }
+    
     private func isClockedInBuilding(_ building: FrancoSphere.NamedCoordinate) -> Bool {
         clockedInStatus.buildingId == building.id
     }
+    
     private func calculateElapsedTime() -> String {
         guard clockedInStatus.isClockedIn, let inTime = clockInTime else { return "" }
         let elapsed = Date().timeIntervalSince(inTime)
@@ -650,72 +534,12 @@ struct WorkerDashboardView: View {
         return "\(h)h \(m)m"
     }
     
-    private func filterTasksForLocationAndTime(
-        all tasks: [ContextualTask],
-        clockedInBuildingId: String?,
-        now: Date = Date()
-    ) -> [ContextualTask] {
-        let cal = Calendar.current
-        let total = cal.component(.hour, from: now) * 60
-            + cal.component(.minute, from: now)
-        let start = total - 180, end = total + 180
-        return tasks.filter { task in
-            if let bid = clockedInBuildingId,
-               task.buildingId != bid {
-                return false
-            }
-            guard let st = task.startTime,
-                  let h = Int(st.split(separator: ":")[0]),
-                  let mm = Int(st.split(separator: ":")[1]) else {
-                return true
-            }
-            let tmin = h * 60 + mm
-            return tmin >= start && tmin <= end
-        }
-    }
-    /// Determine weather risk level for AI scenarios
-    private func determineWeatherRisk() -> WeatherRisk {
-        guard let weather = currentWeather else { return .unknown }
-        
-        switch weather.condition {
-        case .rain, .thunderstorm:
-            return .high // Rain affects outdoor work
-        case .snow:
-            return .critical // Snow requires immediate attention
-        case .fog:
-            return .medium // Reduced visibility
-        case .clear, .cloudy:
-            return .low // Good conditions
-        case .other:
-            return .unknown
-        }
-    }
-    /// Check if task is overdue based on start time
-    private func isTaskOverdue(_ startTime: String) -> Bool {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        guard let taskTime = formatter.date(from: startTime) else { return false }
-        
-        let now = Date()
-        let calendar = Calendar.current
-        let todayStart = calendar.startOfDay(for: now)
-        
-        guard let todayTaskTime = calendar.date(byAdding: .second,
-                                                value: Int(taskTime.timeIntervalSince1970),
-                                                to: todayStart) else { return false }
-        
-        // Task is overdue if current time is 30+ minutes past start time
-        return now.timeIntervalSince(todayTaskTime) > 1800 // 30 minutes
-    }
-    // MARK: - Building Navigation
     private func selectBuilding(_ namedCoordinate: FrancoSphere.NamedCoordinate) {
         selectedBuilding = namedCoordinate
         showBuildingDetail = true
         HapticManager.impact(.medium)
     }
     
-    // MARK: - Action Methods
     private func handleClockToggle() {
         if clockedInStatus.isClockedIn {
             performClockOut()
@@ -723,6 +547,7 @@ struct WorkerDashboardView: View {
             showBuildingList = true
         }
     }
+    
     private func performClockOut() {
         Task {
             await MainActor.run {
@@ -733,10 +558,8 @@ struct WorkerDashboardView: View {
             await contextEngine.refreshContext()
         }
     }
-    private func handleClockIn(
-        _ building: FrancoSphere.NamedCoordinate,
-        scrollProxy: ScrollViewProxy? = nil
-    ) {
+    
+    private func handleClockIn(_ building: FrancoSphere.NamedCoordinate, scrollProxy: ScrollViewProxy? = nil) {
         Task {
             await MainActor.run {
                 clockedInStatus = (true, building.id)
@@ -754,87 +577,281 @@ struct WorkerDashboardView: View {
         }
     }
     
+    // MARK: - AI Methods
     private func handleNovaAvatarTap() {
         HapticManager.impact(.medium)
         generateEnhancedContextualScenario()
     }
-    private func generateEnhancedContextualScenario() {
-        let tasks = contextEngine.getTodaysTasks()
-        let builds = contextEngine.getAssignedBuildings()
-        let inc = tasks.filter { $0.status != "completed" }
-        let hour = Calendar.current.component(.hour, from: Date())
-        let morning = inc.filter { t in
-            guard let st = t.startTime,
-                  let h = Int(st.split(separator: ":")[0]) else { return false }
-            return h <= 12
-        }
-        let afternoon = inc.filter { t in
-            guard let st = t.startTime,
-                  let h = Int(st.split(separator: ":")[0]) else { return false }
-            return h > 12
-        }
-        if hour < 12 && !morning.isEmpty {
-            AIAssistantManager.shared.addScenario(.pendingTasks,
-                                                  buildingName: morning.first?.buildingName ?? "",
-                                                  taskCount: morning.count)
-        } else if hour >= 12 && !afternoon.isEmpty {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: afternoon.first?.buildingName ?? "",
-                                                  taskCount: afternoon.count)
-        } else if inc.isEmpty {
-            AIAssistantManager.shared.addScenario(.routineIncomplete,
-                                                  buildingName: builds.first?.name ?? "",
-                                                  taskCount: 0)
-        } else {
-            AIAssistantManager.shared.addScenario(.pendingTasks,
-                                                  buildingName: builds.first?.name ?? "",
-                                                  taskCount: inc.count)
-        }
-    }
+    
     private func handleNovaAvatarLongPress() {
         HapticManager.impact(.heavy)
         AIAssistantManager.shared.addScenario(.pendingTasks,
                                               buildingName: currentBuildingName,
-                                              taskCount: categorizedTasks.overdue.count
-                                                      + categorizedTasks.current.count)
+                                              taskCount: categorizedTasks.overdue.count + categorizedTasks.current.count)
     }
     
-    // MARK: - Data Loading Methods
+    // MARK: - Data Loading
     private func refreshAllData() async {
         await contextEngine.refreshContext()
         await loadProductionWeatherData()
         await triggerPostRefreshAIScenario()
     }
+    
+    private func loadProductionWeatherData() async {
+        await weatherManager.loadWeatherForBuildingsWithFallback(contextEngine.assignedBuildings)
+        await MainActor.run {
+            buildingWeatherMap = weatherManager.buildingWeatherMap
+            currentWeather = weatherManager.currentWeather
+        }
+    }
+    
+    private func startRealtimeClock() {
+        currentTime = Date()
+        timeTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            currentTime = Date()
+        }
+    }
+    
+    private func stopRealtimeClock() {
+        timeTimer?.invalidate()
+        timeTimer = nil
+    }
+    
+    // MARK: - AI Scenario Methods
+    private func initializeEnhancedAIScenarios() async {
+        while contextEngine.isLoading {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        setupAISubscriptions()
+    }
+    
+    private func setupAISubscriptions() {
+        contextEngine.$todaysTasks
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .sink { tasks in
+                Task { await self.triggerTaskBasedAIScenario(tasks: tasks) }
+            }
+            .store(in: &cancellables)
+        
+        contextEngine.$assignedBuildings
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .sink { builds in
+                Task { await self.triggerBuildingBasedAIScenario(buildings: builds) }
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func guaranteedAIKickoff() async {
+        print("🤖 Guaranteed AI kickoff for worker \(authManager.workerId)")
+        let tasks = contextEngine.getTodaysTasks()
+        let builds = contextEngine.getAssignedBuildings()
+        
+        if builds.isEmpty {
+            AIAssistantManager.shared.addScenario(.pendingTasks, buildingName: "Assignment needed", taskCount: 0)
+        } else if tasks.isEmpty {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: builds.first?.name ?? "Your site", taskCount: 0)
+        } else {
+            await AIAssistantManager.shared.generateContextualScenario(
+                clockedIn: false,
+                currentTasks: tasks,
+                overdueCount: 0,
+                currentBuilding: nil,
+                weatherRisk: determineWeatherRisk().rawValue
+            )
+        }
+    }
+    
+    private func triggerInitialAIScenario() async {
+        let tasks = contextEngine.getTodaysTasks()
+        let builds = contextEngine.getAssignedBuildings()
+        
+        await AIAssistantManager.shared.generateContextualScenario(
+            clockedIn: clockedInStatus.isClockedIn,
+            currentTasks: tasks,
+            overdueCount: categorizedTasks.overdue.count,
+            currentBuilding: clockedInStatus.isClockedIn ? builds.first(where: { $0.id == clockedInStatus.buildingId }) : nil,
+            weatherRisk: determineWeatherRisk().rawValue
+        )
+    }
+    
+    private func triggerTaskBasedAIScenario(tasks: [ContextualTask]) async {
+        guard !tasks.isEmpty else {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: "Your sites", taskCount: 0)
+            return
+        }
+        
+        let overdue = tasks.filter { task in
+            guard let st = task.startTime else { return false }
+            return isTaskOverdue(st)
+        }
+        
+        if !overdue.isEmpty {
+            AIAssistantManager.shared.addScenario(.pendingTasks, buildingName: overdue.first?.buildingName, taskCount: overdue.count)
+        } else {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: contextEngine.assignedBuildings.first?.name, taskCount: tasks.count)
+        }
+    }
+    
+    private func triggerBuildingBasedAIScenario(buildings: [FrancoSphere.NamedCoordinate]) async {
+        if buildings.isEmpty {
+            AIAssistantManager.shared.addScenario(.pendingTasks, buildingName: "Unassigned", taskCount: 0)
+        } else if buildings.count > 5 {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: "Multiple sites", taskCount: buildings.count)
+        } else {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: buildings.first?.name ?? "Your sites", taskCount: buildings.count)
+        }
+    }
+    
     private func triggerPostRefreshAIScenario() async {
         try? await Task.sleep(nanoseconds: 500_000_000)
         let updatedTasks = contextEngine.getTodaysTasks()
         let updatedBuildings = contextEngine.getAssignedBuildings()
-        if updatedTasks.count != filteredTaskData.count ||
-            updatedBuildings.count != assignedBuildings.count {
+        
+        if updatedTasks.count != filteredTaskData.count || updatedBuildings.count != contextEngine.assignedBuildings.count {
             await triggerTaskBasedAIScenario(tasks: updatedTasks)
         }
     }
+    
+    private func generateEnhancedContextualScenario() {
+        let tasks = contextEngine.getTodaysTasks()
+        let builds = contextEngine.getAssignedBuildings()
+        let inc = tasks.filter { $0.status != "completed" }
+        let hour = Calendar.current.component(.hour, from: Date())
+        
+        let morning = inc.filter { t in
+            guard let st = t.startTime, let h = Int(st.split(separator: ":")[0]) else { return false }
+            return h <= 12
+        }
+        
+        let afternoon = inc.filter { t in
+            guard let st = t.startTime, let h = Int(st.split(separator: ":")[0]) else { return false }
+            return h > 12
+        }
+        
+        if hour < 12 && !morning.isEmpty {
+            AIAssistantManager.shared.addScenario(.pendingTasks, buildingName: morning.first?.buildingName ?? "", taskCount: morning.count)
+        } else if hour >= 12 && !afternoon.isEmpty {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: afternoon.first?.buildingName ?? "", taskCount: afternoon.count)
+        } else if inc.isEmpty {
+            AIAssistantManager.shared.addScenario(.routineIncomplete, buildingName: builds.first?.name ?? "", taskCount: 0)
+        } else {
+            AIAssistantManager.shared.addScenario(.pendingTasks, buildingName: builds.first?.name ?? "", taskCount: inc.count)
+        }
+    }
+    
+    // MARK: - Emergency Fix Methods
+    private func emergencyKevinBuildingFix() async {
+        guard workerIdString == "4" else { return }
+        print("🆘 Running emergency Kevin building fix...")
+        
+        let manager = WorkerAssignmentManager.shared
+        let hasExisting = manager.hasAssignments(for: "4")
+        
+        if !hasExisting {
+            print("🆘 No assignments found - creating emergency assignments…")
+            let success = await manager.createEmergencyAssignments(for: "4")
+            print(success ? "✅ Emergency assignments created for Kevin" : "❌ Emergency assignment creation failed")
+        }
+        
+        await contextEngine.refreshContext()
+        let count = contextEngine.getAssignedBuildings().count
+        print("🚨 Emergency fix result: Kevin now has \(count) buildings")
+    }
+    
+    private func fixWorkerBuildingsWithDiagnostics() async {
+        print("🔧 Fixing buildings data for \(currentWorkerName)…")
+        if workerIdString == "4" {
+            await emergencyKevinBuildingFix()
+        } else {
+            await contextEngine.refreshContext()
+        }
+        print("✅ \(currentWorkerName) buildings refresh completed")
+    }
+    
+    private func validateRealDataLoaded() async {
+        let tCount = contextEngine.getTasksCount()
+        let bCount = contextEngine.getBuildingsCount()
+        print("📊 Real data validation: Tasks: \(tCount), Buildings: \(bCount)")
+    }
+    
     private func checkClockInStatus() async {
         await MainActor.run {
             clockedInStatus = (false, nil)
             currentBuildingName = "None"
         }
     }
-    private func loadProductionWeatherData() async {
-        await weatherManager.loadWeatherForBuildingsWithFallback(assignedBuildings)
-        await MainActor.run {
-            buildingWeatherMap = weatherManager.buildingWeatherMap
-            currentWeather = weatherManager.currentWeather
+    
+    // MARK: - Utility Methods
+    private func filterTasksForLocationAndTime(all tasks: [ContextualTask], clockedInBuildingId: String?, now: Date = Date()) -> [ContextualTask] {
+        let cal = Calendar.current
+        let total = cal.component(.hour, from: now) * 60 + cal.component(.minute, from: now)
+        let start = total - 180, end = total + 180
+        
+        return tasks.filter { task in
+            if let bid = clockedInBuildingId, task.buildingId != bid {
+                return false
+            }
+            
+            guard let st = task.startTime,
+                  let h = Int(st.split(separator: ":")[0]),
+                  let mm = Int(st.split(separator: ":")[1]) else {
+                return true
+            }
+            
+            let tmin = h * 60 + mm
+            return tmin >= start && tmin <= end
         }
     }
-    private func startRealtimeClock() {
-        currentTime = Date()
-        timeTimer = Timer.scheduledTimer(withTimeInterval: 1.0,
-                                         repeats: true) { _ in currentTime = Date() }
+    
+    private func determineWeatherRisk() -> WeatherRisk {
+        guard let weather = currentWeather else { return .unknown }
+        
+        switch weather.condition {
+        case .rain, .thunderstorm: return .high
+        case .snow: return .critical
+        case .fog: return .medium
+        case .clear, .cloudy: return .low
+        case .other: return .unknown
+        }
     }
-    private func stopRealtimeClock() {
-        timeTimer?.invalidate()
-        timeTimer = nil
+    
+    private func isTaskOverdue(_ startTime: String) -> Bool {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        guard let taskTime = formatter.date(from: startTime) else { return false }
+        
+        let now = Date()
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: now)
+        
+        guard let todayTaskTime = calendar.date(byAdding: .second, value: Int(taskTime.timeIntervalSince1970), to: todayStart) else { return false }
+        
+        return now.timeIntervalSince(todayTaskTime) > 1800 // 30 minutes
+    }
+    
+    private func weatherIconName(for cond: FrancoSphere.WeatherCondition) -> String {
+        switch cond {
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .thunderstorm: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .other: return "questionmark.circle.fill"
+        }
+    }
+    
+    private func weatherIconColor(for cond: FrancoSphere.WeatherCondition) -> Color {
+        switch cond {
+        case .clear: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .snow: return .cyan
+        case .thunderstorm: return .purple
+        case .fog: return .gray.opacity(0.7)
+        case .other: return .gray
+        }
     }
     
     // MARK: - Sheet Views
@@ -844,7 +861,7 @@ struct WorkerDashboardView: View {
                 Color.clear.background(.ultraThinMaterial).ignoresSafeArea()
                 if contextEngine.isLoading {
                     ProgressView().tint(.white)
-                } else if assignedBuildings.isEmpty {
+                } else if contextEngine.assignedBuildings.isEmpty {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(FrancoSphere.NamedCoordinate.allBuildings, id: \.id) { b in
@@ -855,7 +872,7 @@ struct WorkerDashboardView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(assignedBuildings, id: \.id) { b in
+                            ForEach(contextEngine.assignedBuildings, id: \.id) { b in
                                 buildingSelectionRow(b)
                             }
                         }.padding()
@@ -873,6 +890,7 @@ struct WorkerDashboardView: View {
         }
         .preferredColorScheme(.dark)
     }
+    
     private func buildingSelectionRow(_ building: FrancoSphere.NamedCoordinate) -> some View {
         Button { handleClockIn(building) } label: {
             HStack(spacing: 16) {
@@ -886,15 +904,16 @@ struct WorkerDashboardView: View {
                             .clipped()
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                
                 VStack(alignment: .leading, spacing: 8) {
                     Text(building.name)
                         .font(.headline)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.leading)
+                    
                     if let weather = buildingWeatherMap[building.id] {
                         HStack(spacing: 12) {
-                            Label(weather.formattedTemperature,
-                                  systemImage: weatherIconName(for: weather.condition))
+                            Label(weather.formattedTemperature, systemImage: weatherIconName(for: weather.condition))
                                 .font(.caption)
                                 .foregroundColor(weatherIconColor(for: weather.condition))
                             Text(weather.condition.rawValue)
@@ -903,7 +922,9 @@ struct WorkerDashboardView: View {
                         }
                     }
                 }
+                
                 Spacer()
+                
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.5))
@@ -1024,6 +1045,7 @@ struct WorkerDashboardView: View {
                             .clipped()
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                
                 VStack(alignment: .leading, spacing: 8) {
                     Text(building.name)
                         .font(.headline)
@@ -1032,7 +1054,9 @@ struct WorkerDashboardView: View {
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                 }
+                
                 Spacer()
+                
                 Image(systemName: "info.circle")
                     .font(.caption)
                     .foregroundColor(.blue)
@@ -1044,7 +1068,7 @@ struct WorkerDashboardView: View {
     }
 }
 
-// BEGIN PATCH(HF-11-8): Add WeatherRisk enum
+// MARK: - Supporting Types
 enum WeatherRisk: String, CaseIterable {
     case low = "Low"
     case medium = "Medium"
@@ -1052,9 +1076,7 @@ enum WeatherRisk: String, CaseIterable {
     case critical = "Critical"
     case unknown = "Unknown"
 }
-// END PATCH(HF-11-8)
 
-// MARK: - Scroll Offset Preference Key
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -1062,7 +1084,7 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
     }
 }
 
-// MARK: - Preview Provider
+// MARK: - Preview
 struct WorkerDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         WorkerDashboardView()

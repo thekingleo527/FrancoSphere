@@ -277,3 +277,27 @@ struct AdaptiveGlassModifier_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
+// MARK: - FrancoSphere Convenience Methods
+extension View {
+    /// Standard FrancoSphere glass card style
+    func francoGlassCard() -> some View {
+        self.adaptiveGlass(
+            intensity: .regular,
+            cornerRadius: 16,
+            opacity: 0.1,
+            blur: 20
+        )
+        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+    }
+    
+    /// Compact FrancoSphere glass card style
+    func francoGlassCardCompact() -> some View {
+        self.adaptiveGlass(
+            intensity: .thin,
+            cornerRadius: 12,
+            opacity: 0.08,
+            blur: 15
+        )
+        .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
+    }
+}

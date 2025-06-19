@@ -7,7 +7,8 @@
 //  ✅ Enhanced worker validation with real-world data
 //  ✅ Jose Santos removal support, Kevin expansion tracking
 //  ✅ Dynamic worker-specific context loading with auth integration
-//  ✅ HF-07: Enhanced coordination with WorkerAssignmentManager
+//  ✅ HF-10-A: Made assignedBuildings PUBLIC @Published for reactive access
+//  ✅ HF-14-A: Added task count methods for MapOverlay
 //
 
 import Foundation
@@ -50,13 +51,15 @@ public class WorkerContextEngine: ObservableObject {
     // MARK: - Published Properties
     @Published public var isLoading = false
     @Published public var error: Error?
-    
+
+    // ✅ HF-10: Made assignedBuildings PUBLIC @Published for reactive access
+    @Published public var assignedBuildings: [FrancoSphere.NamedCoordinate] = []
+
     // MARK: - Internal Properties (accessed via public methods)
     @Published internal var currentWorker: InternalWorkerContext?
-    @Published internal var assignedBuildings: [FrancoSphere.NamedCoordinate] = []
     @Published internal var todaysTasks: [ContextualTask] = []
     @Published internal var upcomingTasks: [ContextualTask] = []
-    
+
     // MARK: - Private Properties
     private var sqliteManager: SQLiteManager?
     private var cancellables = Set<AnyCancellable>()
@@ -297,6 +300,34 @@ public class WorkerContextEngine: ObservableObject {
     
     public func getAssignedBuildingCount() -> Int {
         return assignedBuildings.count
+    }
+    
+    // MARK: - HF-14: Task Count Methods for MapOverlay
+
+    /// Get total task count for a specific building
+    public func getTaskCount(forBuilding buildingId: String) -> Int {
+        return todaysTasks.filter { $0.buildingId == buildingId }.count
+    }
+
+    /// Get open task count for a specific building
+    public func getOpenTaskCount(forBuilding buildingId: String) -> Int {
+        return todaysTasks.filter { task in
+            task.buildingId == buildingId && task.status != "completed"
+        }.count
+    }
+
+    /// Get completed task count for a specific building
+    public func getCompletedTaskCount(forBuilding buildingId: String) -> Int {
+        return todaysTasks.filter { task in
+            task.buildingId == buildingId && task.status == "completed"
+        }.count
+    }
+
+    /// Get overdue task count for a specific building
+    public func getOverdueTaskCount(forBuilding buildingId: String) -> Int {
+        return todaysTasks.filter { task in
+            task.buildingId == buildingId && task.isOverdue
+        }.count
     }
     
     // MARK: - ⭐ PHASE-2: Enhanced Database Query Methods

@@ -234,7 +234,6 @@ class AIAssistantManager: ObservableObject {
         
         print("🤖 AI Scenario Generated: \(scenario?.rawValue ?? "None") - \(message)")
     }
-    
     // MARK: - AI Suggestions Generation
     
     private func generateAISuggestions(

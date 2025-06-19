@@ -10,6 +10,7 @@
 //  ✅ HF-06 HOTFIX: Auto-fallback and graceful recovery
 //  ✅ FIXED: Removed all shimmerGradient references
 //  ✅ HF-06B: Enhanced coordination with WorkerAssignmentManager
+//  ✅ HF-10-B: Direct observation of WorkerContextEngine for reactive buildings
 //
 
 import SwiftUI
@@ -17,21 +18,37 @@ import SwiftUI
 struct MySitesCard: View {
     let workerId: String
     let workerName: String
-    let assignedBuildings: [FrancoSphere.NamedCoordinate]
+    // ✅ HF-10: REMOVED assignedBuildings parameter
     let buildingWeatherMap: [String: FrancoSphere.WeatherData]
     let clockedInBuildingId: String?
-    let isLoading: Bool
-    let error: Error?
     let forceShow: Bool
     let onRefresh: () async -> Void
     let onFixBuildings: () async -> Void
     let onBrowseAll: () -> Void
     let onBuildingTap: (FrancoSphere.NamedCoordinate) -> Void
     
+    // ✅ HF-10: Direct observation of WorkerContextEngine
+    @StateObject private var contextEngine = WorkerContextEngine.shared
+    
     @State private var isRefreshing = false
     @State private var isFixing = false
     @State private var shimmerOffset: CGFloat = -1.0
     @State private var showDebugInfo = false
+    
+    // ✅ HF-10: Use contextEngine.assignedBuildings directly
+    private var assignedBuildings: [FrancoSphere.NamedCoordinate] {
+        contextEngine.assignedBuildings
+    }
+    
+    // ✅ HF-10: Use contextEngine.isLoading directly
+    private var isLoading: Bool {
+        contextEngine.isLoading
+    }
+    
+    // ✅ HF-10: Use contextEngine.error directly
+    private var error: Error? {
+        contextEngine.error
+    }
     
     // BEGIN PATCH(HF-06): Auto-recovery state
     @State private var hasTriedAutoRecovery = false

@@ -8,6 +8,7 @@
 //  ✅ Enhanced worker assignment display
 //  ✅ Production-ready error handling
 //  ✅ HF-04 HOTFIX: Redesigned tabs with proper data presentation
+//  ✅ HF-13: Real-data integration with enhanced BuildingRepository methods
 //
 
 import SwiftUI
@@ -20,7 +21,9 @@ struct BuildingDetailView: View {
     @StateObject private var contextEngine = WorkerContextEngine.shared
     @StateObject private var weatherManager = WeatherManager.shared
     @StateObject private var workerManager = WorkerManager.shared
-    @StateObject private var routineRepository = RoutineRepository.shared
+    
+    // ✅ HF-13: Use existing repositories instead of creating new ones
+    private let buildingRepository = BuildingRepository.shared
     
     @State private var selectedTab: Int = 0
     @State private var buildingTasks: [MaintenanceTask] = []
@@ -30,14 +33,101 @@ struct BuildingDetailView: View {
     @State private var isLoading = false
     @State private var error: Error?
     
-    // BEGIN PATCH(HF-04): Enhanced tab structure
+    // MARK: - BuildingRoutine Model
+    struct BuildingRoutine: Identifiable {
+        let id: String
+        let routineName: String
+        let displaySchedule: String
+        let description: String
+        let estimatedDuration: Int
+        let priority: RoutinePriority
+        let isOverdue: Bool
+        let isDueToday: Bool
+        let nextDue: Date?
+        
+        enum RoutinePriority: String {
+            case low = "Low"
+            case medium = "Medium"
+            case high = "High"
+            
+            var displayName: String { rawValue }
+            
+            var color: Color {
+                switch self {
+                case .low: return .green
+                case .medium: return .orange
+                case .high: return .red
+                }
+            }
+        }
+    }
+    
+    // MARK: - Supporting Types
+    struct TabInfo {
+        let title: String
+        let icon: String
+        let id: Int
+    }
+    
+    // MARK: - Button Styles
+    
+    struct PrimaryActionButtonStyle: ButtonStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.label
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    LinearGradient(
+                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+        }
+    }
+    
+    struct SecondaryActionButtonStyle: ButtonStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.label
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.blue)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.blue.opacity(0.2))
+                .cornerRadius(8)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+        }
+    }
+    
+    struct TertiaryActionButtonStyle: ButtonStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.label
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(6)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+        }
+    }
+    
     private let tabs = [
         TabInfo(title: "Overview", icon: "house.fill", id: 0),
         TabInfo(title: "Routines", icon: "repeat.circle.fill", id: 1),
         TabInfo(title: "Workers", icon: "person.2.fill", id: 2),
         TabInfo(title: "Weather", icon: "cloud.sun.fill", id: 3)
     ]
-    // END PATCH(HF-04)
     
     var clockedInStatus: (isClockedIn: Bool, buildingId: Int64?) {
         // Mock for now - integrate with real clock-in system
@@ -51,9 +141,8 @@ struct BuildingDetailView: View {
                     // Building header
                     buildingHeaderSection
                     
-                    // BEGIN PATCH(HF-04): Redesigned tab selector
+                    // Enhanced tab selector
                     enhancedTabSelector
-                    // END PATCH(HF-04)
                     
                     // Tab content
                     tabContentSection
@@ -81,6 +170,137 @@ struct BuildingDetailView: View {
         }
     }
     
+    // MARK: - ✅ HF-13: Enhanced Data Loading with Existing Repositories
+
+    private func loadBuildingData() {
+        isLoading = true
+        error = nil
+        
+        Task {
+            do {
+                // ✅ HF-13: Load workers from existing BuildingRepository
+                let workers = await buildingRepository.getBuildingWorkerAssignments(for: building.id)
+                
+                // ✅ HF-13: Load routine task names from existing BuildingRepository
+                let routineTaskNames = await buildingRepository.getBuildingRoutineTaskNames(for: building.id)
+                
+                // Convert task names to BuildingRoutine objects with enhanced data
+                let buildingRoutines = routineTaskNames.map { taskName in
+                    createBuildingRoutine(from: taskName)
+                }
+                
+                // ✅ HF-13: Load weather data
+                await loadWeatherData()
+                
+                await MainActor.run {
+                    self.assignedWorkers = workers
+                    self.buildingRoutines = buildingRoutines
+                    self.isLoading = false
+                }
+                
+                print("✅ HF-13: Loaded \(workers.count) workers and \(buildingRoutines.count) routines for building \(building.id)")
+                
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    self.isLoading = false
+                }
+                print("❌ HF-13: Failed to load building data: \(error)")
+            }
+        }
+    }
+    
+    /// Create BuildingRoutine from task name with enhanced categorization
+    private func createBuildingRoutine(from taskName: String) -> BuildingRoutine {
+        let taskLower = taskName.lowercased()
+        
+        // Determine schedule based on task name patterns
+        let displaySchedule: String
+        if taskLower.contains("daily") {
+            displaySchedule = "Daily"
+        } else if taskLower.contains("weekly") || taskLower.contains("tue") || taskLower.contains("thu") {
+            displaySchedule = "Weekly"
+        } else if taskLower.contains("monthly") {
+            displaySchedule = "Monthly"
+        } else {
+            displaySchedule = "As Needed"
+        }
+        
+        // Determine priority based on task type
+        let priority: BuildingRoutine.RoutinePriority
+        if taskLower.contains("emergency") || taskLower.contains("urgent") || taskLower.contains("boiler") {
+            priority = .high
+        } else if taskLower.contains("maintenance") || taskLower.contains("repair") || taskLower.contains("dsny") {
+            priority = .medium
+        } else {
+            priority = .low
+        }
+        
+        // Estimate duration based on task type
+        let estimatedDuration: Int
+        if taskLower.contains("cleaning") || taskLower.contains("sweep") {
+            estimatedDuration = 30
+        } else if taskLower.contains("maintenance") || taskLower.contains("repair") {
+            estimatedDuration = 45
+        } else if taskLower.contains("inspection") {
+            estimatedDuration = 20
+        } else if taskLower.contains("trash") || taskLower.contains("dsny") {
+            estimatedDuration = 25
+        } else {
+            estimatedDuration = 30
+        }
+        
+        // Create description based on task category
+        let description = generateTaskDescription(for: taskName)
+        
+        return BuildingRoutine(
+            id: UUID().uuidString,
+            routineName: taskName,
+            displaySchedule: displaySchedule,
+            description: description,
+            estimatedDuration: estimatedDuration,
+            priority: priority,
+            isOverdue: false, // Could be enhanced with real scheduling data
+            isDueToday: displaySchedule == "Daily", // Simplified logic
+            nextDue: displaySchedule == "Daily" ? Date() : nil
+        )
+    }
+    
+    /// Generate appropriate description for task
+    private func generateTaskDescription(for taskName: String) -> String {
+        let taskLower = taskName.lowercased()
+        
+        if taskLower.contains("sweep") {
+            return "Sidewalk and curb cleaning maintenance"
+        } else if taskLower.contains("boiler") {
+            return "HVAC system maintenance and monitoring"
+        } else if taskLower.contains("dsny") || taskLower.contains("trash") {
+            return "Waste management and sanitation duties"
+        } else if taskLower.contains("glass") {
+            return "Window and glass surface cleaning"
+        } else if taskLower.contains("lobby") {
+            return "Building entrance and common area maintenance"
+        } else if taskLower.contains("inspection") {
+            return "Routine building safety and maintenance check"
+        } else {
+            return "Regular building maintenance task"
+        }
+    }
+    
+    private func loadWeatherData() async {
+        do {
+            let weather = try await weatherManager.fetchWithRetry(for: building)
+            await MainActor.run {
+                self.buildingWeather = weather
+            }
+        } catch {
+            print("Failed to load weather for building \(building.id): \(error)")
+            await MainActor.run {
+                self.error = error
+            }
+        }
+    }
+
     // MARK: - Building Header Section
     
     private var buildingHeaderSection: some View {
@@ -145,7 +365,7 @@ struct BuildingDetailView: View {
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
     }
     
-    // BEGIN PATCH(HF-04): Enhanced tab selector with better visual design
+    // Enhanced tab selector with better visual design
     private var enhancedTabSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 4) {
@@ -171,12 +391,12 @@ struct BuildingDetailView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(selectedTab == tab.id ?
                                       Color.blue.opacity(0.3) :
-                                      Color.white.opacity(0.05))
+                                        Color.white.opacity(0.05))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(selectedTab == tab.id ?
                                                 Color.blue.opacity(0.5) :
-                                                Color.clear, lineWidth: 1)
+                                                    Color.clear, lineWidth: 1)
                                 )
                         )
                     }
@@ -187,29 +407,46 @@ struct BuildingDetailView: View {
         }
         .padding(.bottom, 20)
     }
-    // END PATCH(HF-04)
     
     // MARK: - Tab Content Section
     
     private var tabContentSection: some View {
         Group {
-            switch selectedTab {
-            case 0:
-                overviewTab
-            case 1:
-                routinesTab
-            case 2:
-                workersTab
-            case 3:
-                weatherTab
-            default:
-                overviewTab
+            if isLoading {
+                loadingStateView
+            } else {
+                switch selectedTab {
+                case 0:
+                    overviewTab
+                case 1:
+                    routinesTab
+                case 2:
+                    workersTab
+                case 3:
+                    weatherTab
+                default:
+                    overviewTab
+                }
             }
         }
         .padding(.horizontal, 20)
     }
     
-    // BEGIN PATCH(HF-04): Redesigned tab content with proper data presentation
+    // ✅ HF-13: Show spinner on loading
+    private var loadingStateView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+            
+            Text("Loading building data...")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(40)
+        .francoGlassCardCompact()
+    }
     
     // MARK: - Overview Tab (Redesigned)
     
@@ -232,8 +469,7 @@ struct BuildingDetailView: View {
                 buildingInfoRow("Status", "Active")
                 buildingInfoRow("Type", "Residential")
             }
-            .padding(16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .francoGlassCardCompact()
             
             // Quick stats
             VStack(alignment: .leading, spacing: 12) {
@@ -283,13 +519,12 @@ struct BuildingDetailView: View {
                     .buttonStyle(SecondaryActionButtonStyle())
                     .frame(maxWidth: .infinity)
                 }
-                .padding(16)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .francoGlassCardCompact()
             }
         }
     }
     
-    // MARK: - Routines Tab (New Implementation)
+    // MARK: - Routines Tab (Enhanced with Real Data)
     
     private var routinesTab: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -299,27 +534,28 @@ struct BuildingDetailView: View {
                 Spacer()
                 
                 Button("Add Routine") {
-                    // Add routine action - non-async
                     print("Add routine to building \(building.id)")
                 }
                 .buttonStyle(TertiaryActionButtonStyle())
             }
             
             if buildingRoutines.isEmpty {
+                // ✅ HF-13: Empty-state if zero rows
                 emptyStateView(
                     icon: "repeat.circle",
                     title: "No Routines Scheduled",
                     subtitle: "This building doesn't have any scheduled maintenance routines yet.",
                     actionTitle: "Create Routine",
                     action: {
-                        // Add routine action - non-async
                         print("Create routine for building \(building.id)")
                     }
                 )
             } else {
                 VStack(spacing: 12) {
                     ForEach(buildingRoutines, id: \.id) { routine in
+                        // ✅ HF-13: Each tab uses francoGlassCardCompact() wrappers
                         routineTaskCard(routine)
+                            .francoGlassCardCompact()
                     }
                 }
             }
@@ -375,13 +611,11 @@ struct BuildingDetailView: View {
                 }
             }
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(routine.isOverdue ? Color.red.opacity(0.3) :
-                       routine.isDueToday ? Color.orange.opacity(0.3) : Color.clear,
-                       lineWidth: 1)
+                            routine.isDueToday ? Color.orange.opacity(0.3) : Color.clear,
+                        lineWidth: 1)
         )
     }
     
@@ -394,7 +628,7 @@ struct BuildingDetailView: View {
             .foregroundColor(.white)
     }
     
-    // MARK: - Workers Tab (Enhanced)
+    // MARK: - Workers Tab (Enhanced with Real Data)
     
     private var workersTab: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -404,39 +638,29 @@ struct BuildingDetailView: View {
                 Spacer()
                 
                 Button("Assign Workers") {
-                    // Assign workers action - non-async
                     print("Assign workers to building \(building.id)")
                 }
                 .buttonStyle(TertiaryActionButtonStyle())
             }
             
             if assignedWorkers.isEmpty {
+                // ✅ HF-13: Empty-state if zero rows
                 emptyStateView(
                     icon: "person.2",
                     title: "No Workers Assigned",
                     subtitle: "This building doesn't have any workers assigned yet.",
                     actionTitle: "Assign Workers",
                     action: {
-                        // Assign workers action - non-async
                         print("Assign workers to building \(building.id)")
                     }
                 )
             } else {
                 VStack(spacing: 12) {
                     ForEach(assignedWorkers, id: \.id) { worker in
+                        // ✅ HF-13: Each tab uses francoGlassCardCompact() wrappers
                         workerCard(worker)
+                            .francoGlassCardCompact()
                     }
-                }
-            }
-            
-            // Add Kevin as a placeholder worker if empty
-            if assignedWorkers.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Sample Worker (Demo)")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    sampleWorkerCard()
                 }
             }
         }
@@ -482,50 +706,6 @@ struct BuildingDetailView: View {
                 .fill(Color.green)
                 .frame(width: 12, height: 12)
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private func sampleWorkerCard() -> some View {
-        HStack(spacing: 16) {
-            // Worker avatar
-            Circle()
-                .fill(Color.blue.opacity(0.3))
-                .frame(width: 48, height: 48)
-                .overlay(
-                    Text("K")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                )
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Kevin Dutan")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                Text("Worker ID: 4")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
-                
-                Text("Day Shift")
-                    .font(.caption2)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Color.green.opacity(0.3), in: Capsule())
-                    .foregroundColor(.white)
-            }
-            
-            Spacer()
-            
-            // Status indicator
-            Circle()
-                .fill(Color.green)
-                .frame(width: 12, height: 12)
-        }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Weather Tab (Enhanced)
@@ -535,7 +715,9 @@ struct BuildingDetailView: View {
             sectionHeader("Weather & Environment", icon: "cloud.sun.fill")
             
             if let weather = buildingWeather {
+                // ✅ HF-13: Each tab uses francoGlassCardCompact() wrappers
                 weatherDetailCard(weather)
+                    .francoGlassCardCompact()
             } else {
                 emptyStateView(
                     icon: "cloud.fill",
@@ -591,8 +773,6 @@ struct BuildingDetailView: View {
                 weatherDetailRow("Updated", "Just now")
             }
         }
-        .padding(20)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
     
     private var weatherTaskRecommendations: some View {
@@ -611,6 +791,7 @@ struct BuildingDetailView: View {
                             subtitle: "Focus on interior maintenance due to rain",
                             color: .blue
                         )
+                        .francoGlassCardCompact()
                     case .clear:
                         recommendationCard(
                             icon: "sun.max.fill",
@@ -618,6 +799,7 @@ struct BuildingDetailView: View {
                             subtitle: "Great weather for exterior maintenance",
                             color: .yellow
                         )
+                        .francoGlassCardCompact()
                     case .snow:
                         recommendationCard(
                             icon: "snow",
@@ -625,6 +807,7 @@ struct BuildingDetailView: View {
                             subtitle: "Clear walkways and entrances",
                             color: .cyan
                         )
+                        .francoGlassCardCompact()
                     default:
                         recommendationCard(
                             icon: "checkmark.circle.fill",
@@ -632,6 +815,7 @@ struct BuildingDetailView: View {
                             subtitle: "Weather conditions are suitable for all tasks",
                             color: .green
                         )
+                        .francoGlassCardCompact()
                     }
                 } else {
                     recommendationCard(
@@ -640,12 +824,11 @@ struct BuildingDetailView: View {
                         subtitle: "Unable to provide weather-based recommendations",
                         color: .gray
                     )
+                    .francoGlassCardCompact()
                 }
             }
         }
     }
-    
-    // END PATCH(HF-04)
     
     // MARK: - Helper Views
     
@@ -691,7 +874,7 @@ struct BuildingDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .francoGlassCardCompact()
     }
     
     private func emptyStateView(icon: String, title: String, subtitle: String, actionTitle: String, action: @escaping () -> Void) -> some View {
@@ -718,7 +901,7 @@ struct BuildingDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(40)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .francoGlassCardCompact()
     }
     
     private func weatherDetailRow(_ label: String, _ value: String) -> some View {
@@ -755,8 +938,6 @@ struct BuildingDetailView: View {
             
             Spacer()
         }
-        .padding(12)
-        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(color.opacity(0.3), lineWidth: 1)
@@ -792,19 +973,11 @@ struct BuildingDetailView: View {
     // MARK: - Action Methods
     
     private func handleClockIn() {
-        // Implement clock-in logic - wrap in Task if needed
         print("Clock in at building \(building.id)")
-        // Task {
-        //     await clockInManager.clockIn(buildingId: building.id)
-        // }
     }
     
     private func handleClockOut() {
-        // Implement clock-out logic - wrap in Task if needed
         print("Clock out from building \(building.id)")
-        // Task {
-        //     await clockInManager.clockOut()
-        // }
     }
     
     private func openInMaps() {
@@ -813,101 +986,8 @@ struct BuildingDetailView: View {
         let mapItem = MKMapItem(placemark: placemark)
         mapItem.name = building.name
         
-        // This is safe to call from main thread
         mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
     }
-    
-    // MARK: - Data Loading
-    
-    private func loadBuildingData() {
-        isLoading = true
-        
-        Task {
-            // Load routines for this building
-            let routines = routineRepository.getRoutinesForBuilding(building.id)
-            
-            // Load weather data
-            await loadWeatherData()
-            
-            await MainActor.run {
-                self.buildingRoutines = routines
-                self.isLoading = false
-            }
-        }
-    }
-    
-    private func loadWeatherData() async {
-        do {
-            let weather = try await weatherManager.fetchWithRetry(for: building)
-            await MainActor.run {
-                self.buildingWeather = weather
-            }
-        } catch {
-            print("Failed to load weather for building \(building.id): \(error)")
-            await MainActor.run {
-                self.error = error
-            }
-        }
-    }
 }
 
-// MARK: - Supporting Types
-
-struct TabInfo {
-    let title: String
-    let icon: String
-    let id: Int
-}
-
-// MARK: - Button Styles
-
-struct PrimaryActionButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.headline)
-            .fontWeight(.semibold)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                LinearGradient(
-                    colors: [Color.blue, Color.blue.opacity(0.8)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .cornerRadius(12)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-struct SecondaryActionButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline)
-            .fontWeight(.medium)
-            .foregroundColor(.blue)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(Color.blue.opacity(0.2))
-            .cornerRadius(8)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-struct TertiaryActionButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.caption)
-            .fontWeight(.medium)
-            .foregroundColor(.white.opacity(0.7))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(6)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
+// NOTE: francoGlassCardCompact() extension removed - using existing Glass system
