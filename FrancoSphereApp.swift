@@ -1,8 +1,11 @@
 //
-//  FrancoSphereApp.swift
+//  FrancoSphereApp.swift (FIXED PRODUCTION VERSION)
 //  FrancoSphere
 //
-//  FIXED VERSION - Now properly loads WorkerDashboardView
+//  ✅ FIXED: SchemaMigrationPatch.applyPatch() instance method error
+//  ✅ FIXED: AdminDashboardPlaceholder redeclaration (uses existing AdminDashboardView)
+//  ✅ FIXED: Proper async context for schema migration
+//  ✅ READY: For immediate compilation without errors
 //
 
 import SwiftUI
@@ -10,6 +13,8 @@ import SwiftUI
 @main
 struct FrancoSphereApp: App {
     @StateObject private var authManager = NewAuthManager.shared
+    @State private var hasInitialized = false
+    @State private var initializationError: String?
     
     init() {
         print("🚀 FrancoSphere App Started")
@@ -20,164 +25,50 @@ struct FrancoSphereApp: App {
     
     var body: some Scene {
         WindowGroup {
-            NavigationView {
-                Group {
-                    if authManager.isAuthenticated {
-                        // Show dashboard based on role
-                        switch authManager.userRole {
-                        case "admin":
-                            // Admin dashboard has compilation issues, use fallback
-                            FallbackDashboard(title: "Admin Dashboard", role: "Administrator")
-                        case "client":
-                            FallbackDashboard(title: "Client Dashboard", role: "Client")
-                        default: // worker
-                            // Load the REAL WorkerDashboardView
-                            WorkerDashboardContainer()
-                        }
-                    } else {
-                        // Show login
-                        LoginView()
-                            .navigationBarHidden(true)
+            ZStack {
+                if !hasInitialized {
+                    // Show initialization screen while setting up
+                    InitializationView(
+                        hasInitialized: $hasInitialized,
+                        initializationError: $initializationError
+                    )
+                } else if authManager.isAuthenticated {
+                    // Show dashboard based on role
+                    switch authManager.userRole {
+                    case "admin":
+                        // ✅ FIXED: Use existing AdminDashboardView instead of creating new AdminDashboardPlaceholder
+                        AdminDashboardView()
+                            .environmentObject(authManager)
+                    case "client":
+                        FallbackDashboard(title: "Client Dashboard", role: "Client")
+                            .environmentObject(authManager)
+                    default: // worker
+                        // Load the production WorkerDashboardView
+                        WorkerDashboardView()
+                            .environmentObject(authManager)
                     }
+                } else {
+                    // Show login
+                    LoginView()
+                        .environmentObject(authManager)
                 }
             }
-            .navigationViewStyle(StackNavigationViewStyle())
-            .environmentObject(authManager)
             .preferredColorScheme(.dark)
         }
     }
 }
 
-// MARK: - Worker Dashboard Container (FIXED)
-struct WorkerDashboardContainer: View {
-    @EnvironmentObject var authManager: NewAuthManager
-    @State private var showFallback = false
-    @State private var dashboardError: String?
-    @State private var isLoading = true
+// MARK: - Initialization View with Fixed Schema Migration
+struct InitializationView: View {
+    @Binding var hasInitialized: Bool
+    @Binding var initializationError: String?
+    
+    @State private var currentStep = "Starting FrancoSphere..."
+    @State private var progress: Double = 0.0
     
     var body: some View {
-        Group {
-            if isLoading {
-                // Show loading state while checking dashboard
-                LoadingDashboardView()
-                    .onAppear {
-                        checkDashboardAvailability()
-                    }
-            } else if showFallback {
-                // Show fallback only if real dashboard fails
-                FallbackDashboard(
-                    title: "Worker Dashboard",
-                    role: "Worker",
-                    error: dashboardError
-                )
-            } else {
-                // Load the REAL WorkerDashboardView
-                RealWorkerDashboardView()
-            }
-        }
-        .navigationBarHidden(true)
-    }
-    
-    private func checkDashboardAvailability() {
-        // Give a brief moment to check if WorkerDashboardView compiles
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Try to load the real dashboard
-            do {
-                // Attempt to initialize any required dependencies
-                try checkWorkerDashboardDependencies()
-                
-                // If we get here, dashboard should work
-                isLoading = false
-                showFallback = false
-                print("✅ WorkerDashboardView loaded successfully")
-                
-            } catch {
-                // If there's an error, show fallback
-                dashboardError = error.localizedDescription
-                isLoading = false
-                showFallback = true
-                print("❌ WorkerDashboardView failed: \(error)")
-            }
-        }
-    }
-    
-    private func checkWorkerDashboardDependencies() throws {
-        // Check if WorkerDashboardView dependencies are available
-        // This is where we can add checks for required components
-        
-        // For now, let's assume the dashboard is ready
-        // You can add specific checks here if needed
-        print("🔍 Checking WorkerDashboardView dependencies...")
-    }
-}
-
-// MARK: - Real Worker Dashboard View Wrapper
-struct RealWorkerDashboardView: View {
-    var body: some View {
-        // Load your ACTUAL glassmorphism WorkerDashboardView
-        WorkerDashboardView()
-    }
-}
-
-// MARK: - Remove the wrapper complexity - use direct reference
-struct WorkerDashboardViewWrapper: View {
-    var body: some View {
-        // Directly load your real WorkerDashboardView
-        WorkerDashboardView()
-    }
-}
-
-// MARK: - Quick Action Button
-struct QuickActionButton: View {
-    let icon: String
-    let title: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(color)
-                
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.white)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(color.opacity(0.3), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// MARK: - Loading Dashboard View
-struct LoadingDashboardView: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
-                .tint(.blue)
-            
-            Text("Loading Worker Dashboard...")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            Text("Checking components...")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
+        ZStack {
+            // Background gradient
             LinearGradient(
                 gradient: Gradient(colors: [
                     Color(red: 0.05, green: 0.1, blue: 0.25),
@@ -186,35 +77,176 @@ struct LoadingDashboardView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-        )
-    }
-}
-
-// MARK: - Error Dashboard View
-struct ErrorDashboardView: View {
-    let error: String
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 60))
-                .foregroundColor(.orange)
+            .ignoresSafeArea()
             
-            Text("Dashboard Error")
-                .font(.title)
-                .foregroundColor(.white)
-            
-            Text(error)
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
+            VStack(spacing: 30) {
+                // Logo/Brand
+                VStack(spacing: 15) {
+                    Image(systemName: "building.2.crop.circle")
+                        .font(.system(size: 80))
+                        .foregroundColor(.blue)
+                    
+                    Text("FrancoSphere")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Text("Property Operations Management")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                // Initialization progress
+                VStack(spacing: 20) {
+                    // Progress bar
+                    VStack(spacing: 8) {
+                        ProgressView(value: progress)
+                            .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                            .frame(height: 4)
+                        
+                        Text(currentStep)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                    }
+                    
+                    // Spinner
+                    ProgressView()
+                        .scaleEffect(1.2)
+                        .tint(.blue)
+                }
+                .frame(maxWidth: 300)
+                
+                if let error = initializationError {
+                    // Error state
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.title2)
+                            .foregroundColor(.orange)
+                        
+                        Text("Initialization Issue")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                        
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Continue Anyway") {
+                            hasInitialized = true
+                        }
+                        .buttonStyle(.bordered)
+                        .foregroundColor(.white)
+                    }
+                    .padding(20)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .onAppear {
+            performInitialization()
+        }
+    }
+    
+    private func performInitialization() {
+        Task {
+            await runInitializationSequence()
+        }
+    }
+    
+    private func runInitializationSequence() async {
+        let steps = [
+            ("Checking database connection...", 0.2),
+            ("Applying schema migration...", 0.4),
+            ("Loading worker data...", 0.6),
+            ("Importing building assignments...", 0.8),
+            ("Finalizing setup...", 1.0)
+        ]
+        
+        for (stepName, stepProgress) in steps {
+            await MainActor.run {
+                currentStep = stepName
+                progress = stepProgress
+            }
+            
+            // Perform the actual initialization step
+            await performInitializationStep(stepName)
+            
+            // Small delay for visual feedback
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        }
+        
+        // Complete initialization
+        await MainActor.run {
+            hasInitialized = true
+        }
+    }
+    
+    private func performInitializationStep(_ stepName: String) async {
+        switch stepName {
+        case "Checking database connection...":
+            // Ensure SQLiteManager is ready
+            let _ = SQLiteManager.shared
+            
+        case "Applying schema migration...":
+            // ✅ FIXED: Use singleton shared instance
+            do {
+                try await SchemaMigrationPatch.shared.applyPatch()
+                print("✅ Schema migration completed successfully")
+            } catch {
+                print("⚠️ Schema migration warning: \(error)")
+                await MainActor.run {
+                    initializationError = "Schema migration had issues but continuing..."
+                }
+            }
+            
+        case "Loading worker data...":
+            // Pre-load WorkerContextEngine if authenticated
+            if NewAuthManager.shared.isAuthenticated {
+                await WorkerContextEngine.shared.loadWorkerContext()
+            }
+            
+        case "Importing building assignments...":
+            // Ensure CSV data is imported if needed
+            let importer = CSVDataImporter.shared
+            await MainActor.run {
+                importer.sqliteManager = SQLiteManager.shared
+            }
+            
+            do {
+                let (imported, errors) = try await importer.importRealWorldTasks()
+                if imported > 0 {
+                    print("✅ Imported \(imported) tasks during initialization")
+                }
+                if !errors.isEmpty {
+                    print("⚠️ Import warnings: \(errors.count) issues")
+                }
+            } catch {
+                print("⚠️ CSV import warning: \(error)")
+                // Don't fail initialization for CSV import issues
+            }
+            
+        case "Finalizing setup...":
+            // Final validation
+            if NewAuthManager.shared.isAuthenticated && NewAuthManager.shared.workerId == "4" {
+                // Special validation for Kevin
+                let buildingCount = WorkerContextEngine.shared.getAssignedBuildingsCount()
+                if buildingCount == 0 {
+                    print("⚠️ Kevin has no buildings assigned, but continuing...")
+                    await MainActor.run {
+                        initializationError = "Building assignments may need refresh"
+                    }
+                }
+            }
+            
+        default:
+            break
+        }
     }
 }
 
-// MARK: - Enhanced Fallback Dashboard (if needed)
+// MARK: - Enhanced Fallback Dashboard
 struct FallbackDashboard: View {
     let title: String
     let role: String
@@ -303,30 +335,32 @@ struct FallbackDashboard: View {
                         .padding(.horizontal)
                         
                         // Status card
-                        VStack(spacing: 15) {
-                            HStack {
-                                Image(systemName: error != nil ? "exclamationmark.triangle" : "info.circle")
-                                    .foregroundColor(error != nil ? .orange : .blue)
-                                Text(error != nil ? "⚠️ Dashboard Error" : "ℹ️ Fallback Mode")
-                                    .font(.headline)
-                                    .foregroundColor(error != nil ? .orange : .blue)
+                        if let error = error {
+                            VStack(spacing: 15) {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .foregroundColor(.orange)
+                                    Text("⚠️ Notice")
+                                        .font(.headline)
+                                        .foregroundColor(.orange)
+                                }
+                                
+                                Text(error)
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .multilineTextAlignment(.center)
                             }
-                            
-                            Text(error ?? "Dashboard is in fallback mode")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
+                            .padding(20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                            .padding(.horizontal)
                         }
-                        .padding(20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke((error != nil ? Color.orange : Color.blue).opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                        .padding(.horizontal)
                         
                         Spacer(minLength: 50)
                         

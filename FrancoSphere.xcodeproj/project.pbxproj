@@ -141,13 +141,11 @@
 		234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581162DF78E3D00355F0A /* BuildingTaskDetailView.swift */; };
 		234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */; };
 		234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AB2DF78E3D00355F0A /* AIAvatarOverlayView.swift */; };
-		234581B12DF78E3D00355F0A /* V012.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C32DF78E3D00355F0A /* V012.swift */; };
 		234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AC2DF78E3D00355F0A /* FrancoSphereColors.swift */; };
 		234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581102DF78E3D00355F0A /* SignUpView.swift */; };
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
-		23B117822DFBCBDC0065F39E /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117812DFBCBDC0065F39E /* SQLite */; };
 		23B117852DFBCC240065F39E /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117842DFBCC240065F39E /* OpenMeteoSdk */; };
 		23B117872DFDAF890065F39E /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117862DFDAF890065F39E /* WeatherManager.swift */; };
 		23B117892DFDAFC10065F39E /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117882DFDAFC10065F39E /* WorkerManager.swift */; };
@@ -171,6 +169,12 @@
 		23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */; };
 		23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */; };
 		23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76B2E030EA500013D90 /* RoutinePriority.swift */; };
+		23BBD76E2E05107400013D90 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76D2E05107400013D90 /* WorkersInlineList.swift */; };
+		23BBD7702E051C9700013D90 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76F2E051C9700013D90 /* DSNYTaskGenerator.swift */; };
+		23BBD7722E063D8300013D90 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7712E063D8300013D90 /* WorkerProfileView.swift */; };
+		23BBD7742E063DC900013D90 /* AIScenarioSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7732E063DC900013D90 /* AIScenarioSheet.swift */; };
+		23E1E5702E0F38030036127D /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23E1E56F2E0F38030036127D /* SQLite */; };
+		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -189,18 +193,6 @@
 			remoteInfo = FrancoSphere;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		23AD7FAF2DF5A95D00BDF90A /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
@@ -350,7 +342,6 @@
 		234581232DF78E3D00355F0A /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
-		23AD7FB12DF5A95D00BDF90A /* SeedDatabase */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SeedDatabase; sourceTree = BUILT_PRODUCTS_DIR; };
 		23B117862DFDAF890065F39E /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
 		23B117882DFDAFC10065F39E /* WorkerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerManager.swift; sourceTree = "<group>"; };
 		23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOverlayView.swift; sourceTree = "<group>"; };
@@ -370,6 +361,11 @@
 		23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
 		23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
 		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
+		23BBD76D2E05107400013D90 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
+		23BBD76F2E051C9700013D90 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
+		23BBD7712E063D8300013D90 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
+		23BBD7732E063DC900013D90 /* AIScenarioSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheet.swift; sourceTree = "<group>"; };
+		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -408,8 +404,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23E1E5702E0F38030036127D /* SQLite in Frameworks */,
 				23B117852DFBCC240065F39E /* OpenMeteoSdk in Frameworks */,
-				23B117822DFBCBDC0065F39E /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,13 +417,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		23423DCE2D739D6A00AACE3E /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		23AD7FAE2DF5A95D00BDF90A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -458,6 +447,7 @@
 				23423DCA2D739D6900AACE3E /* FrancoSphereTests */,
 				23423DD42D739D6A00AACE3E /* FrancoSphereUITests */,
 				23AD7FB22DF5A95D00BDF90A /* SeedDatabase */,
+				23E1E56D2E0F37CA0036127D /* Frameworks */,
 				23423DB82D739D6800AACE3E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -468,7 +458,6 @@
 				23423DB72D739D6800AACE3E /* FrancoSphere.app */,
 				23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */,
 				23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */,
-				23AD7FB12DF5A95D00BDF90A /* SeedDatabase */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -534,6 +523,8 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD7732E063DC900013D90 /* AIScenarioSheet.swift */,
+				23BBD76D2E05107400013D90 /* WorkersInlineList.swift */,
 				23BBD76B2E030EA500013D90 /* RoutinePriority.swift */,
 				23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */,
 				23BBD75F2E0018DD00013D90 /* Building.swift */,
@@ -612,6 +603,7 @@
 		234580C72DF78E3D00355F0A /* Migrations */ = {
 			isa = PBXGroup;
 			children = (
+				23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */,
 				234580C62DF78E3D00355F0A /* V003_WorkerAssignments.swift */,
 			);
 			path = Migrations;
@@ -721,6 +713,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD76F2E051C9700013D90 /* DSNYTaskGenerator.swift */,
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */,
 				234581022DF78E3D00355F0A /* CSVLoader.swift */,
@@ -769,6 +762,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD7712E063D8300013D90 /* WorkerProfileView.swift */,
 				23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */,
 				23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */,
 				23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */,
@@ -802,6 +796,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		23E1E56D2E0F37CA0036127D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -820,8 +821,8 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				23B117812DFBCBDC0065F39E /* SQLite */,
 				23B117842DFBCC240065F39E /* OpenMeteoSdk */,
+				23E1E56F2E0F38030036127D /* SQLite */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -873,28 +874,6 @@
 			productReference = 23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		23AD7FB02DF5A95D00BDF90A /* SeedDatabase */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 23AD7FB52DF5A95D00BDF90A /* Build configuration list for PBXNativeTarget "SeedDatabase" */;
-			buildPhases = (
-				23AD7FAD2DF5A95D00BDF90A /* Sources */,
-				23AD7FAE2DF5A95D00BDF90A /* Frameworks */,
-				23AD7FAF2DF5A95D00BDF90A /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				23AD7FB22DF5A95D00BDF90A /* SeedDatabase */,
-			);
-			name = SeedDatabase;
-			packageProductDependencies = (
-			);
-			productName = SeedDatabase;
-			productReference = 23AD7FB12DF5A95D00BDF90A /* SeedDatabase */;
-			productType = "com.apple.product-type.tool";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -916,9 +895,6 @@
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 23423DB62D739D6800AACE3E;
 					};
-					23AD7FB02DF5A95D00BDF90A = {
-						CreatedOnToolsVersion = 16.4;
-					};
 				};
 			};
 			buildConfigurationList = 23423DB22D739D6800AACE3E /* Build configuration list for PBXProject "FrancoSphere" */;
@@ -931,8 +907,8 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				23B117802DFBCBDC0065F39E /* XCRemoteSwiftPackageReference "SQLite.swift" */,
 				23B117832DFBCC240065F39E /* XCRemoteSwiftPackageReference "sdk" */,
+				23E1E56E2E0F38030036127D /* XCRemoteSwiftPackageReference "SQLite" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -948,7 +924,6 @@
 				23423DB62D739D6800AACE3E /* FrancoSphere */,
 				23423DC62D739D6900AACE3E /* FrancoSphereTests */,
 				23423DD02D739D6A00AACE3E /* FrancoSphereUITests */,
-				23AD7FB02DF5A95D00BDF90A /* SeedDatabase */,
 			);
 		};
 /* End PBXProject section */
@@ -1070,6 +1045,7 @@
 				234581642DF78E3D00355F0A /* GlassDeckContainer.swift in Sources */,
 				234581652DF78E3D00355F0A /* GlassLoadingView.swift in Sources */,
 				234581662DF78E3D00355F0A /* TaskFormView.swift in Sources */,
+				23BBD7742E063DC900013D90 /* AIScenarioSheet.swift in Sources */,
 				23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */,
 				234581672DF78E3D00355F0A /* WeatherTaskTimelineCard.swift in Sources */,
 				234581692DF78E3D00355F0A /* TodaysTasksGlassCard.swift in Sources */,
@@ -1086,6 +1062,8 @@
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
 				233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */,
 				234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */,
+				23BBD7722E063D8300013D90 /* WorkerProfileView.swift in Sources */,
+				23BBD7702E051C9700013D90 /* DSNYTaskGenerator.swift in Sources */,
 				234581762DF78E3D00355F0A /* AIAssistantManager.swift in Sources */,
 				234581772DF78E3D00355F0A /* TaskSchedulerService.swift in Sources */,
 				234581782DF78E3D00355F0A /* TaskDetailView.swift in Sources */,
@@ -1141,6 +1119,7 @@
 				2345819F2DF78E3D00355F0A /* AssetImageDebugger.swift in Sources */,
 				234581A02DF78E3D00355F0A /* TaskScheduleView.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
+				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
 				234581A32DF78E3D00355F0A /* WorkerConstants.swift in Sources */,
 				23B117A12DFE2BC40065F39E /* ContextualTask.swift in Sources */,
@@ -1154,6 +1133,7 @@
 				23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */,
 				234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,
+				23BBD76E2E05107400013D90 /* WorkersInlineList.swift in Sources */,
 				23B117932DFE008D0065F39E /* HeroStatusCard.swift in Sources */,
 				234581AB2DF78E3D00355F0A /* BuildingImageDiagnostic.swift in Sources */,
 				234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */,
@@ -1161,7 +1141,6 @@
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
-				234581B12DF78E3D00355F0A /* V012.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
@@ -1184,13 +1163,6 @@
 			files = (
 				233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */,
 				233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		23AD7FAD2DF5A95D00BDF90A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1457,32 +1429,6 @@
 			};
 			name = Release;
 		};
-		23AD7FB62DF5A95D00BDF90A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = X82DB5QT3S;
-				ENABLE_HARDENED_RUNTIME = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		23AD7FB72DF5A95D00BDF90A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = X82DB5QT3S;
-				ENABLE_HARDENED_RUNTIME = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1522,26 +1468,9 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		23AD7FB52DF5A95D00BDF90A /* Build configuration list for PBXNativeTarget "SeedDatabase" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				23AD7FB62DF5A95D00BDF90A /* Debug */,
-				23AD7FB72DF5A95D00BDF90A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		23B117802DFBCBDC0065F39E /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.15.3;
-			};
-		};
 		23B117832DFBCC240065F39E /* XCRemoteSwiftPackageReference "sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/open-meteo/sdk.git";
@@ -1550,18 +1479,26 @@
 				kind = branch;
 			};
 		};
+		23E1E56E2E0F38030036127D /* XCRemoteSwiftPackageReference "SQLite" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		23B117812DFBCBDC0065F39E /* SQLite */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 23B117802DFBCBDC0065F39E /* XCRemoteSwiftPackageReference "SQLite.swift" */;
-			productName = SQLite;
-		};
 		23B117842DFBCC240065F39E /* OpenMeteoSdk */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 23B117832DFBCC240065F39E /* XCRemoteSwiftPackageReference "sdk" */;
 			productName = OpenMeteoSdk;
+		};
+		23E1E56F2E0F38030036127D /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23E1E56E2E0F38030036127D /* XCRemoteSwiftPackageReference "SQLite" */;
+			productName = SQLite;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

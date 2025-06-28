@@ -38,7 +38,7 @@ public protocol DatabaseMigration {
             if !existingColumns.contains("start_date") {
                 try db.run("ALTER TABLE worker_assignments ADD COLUMN start_date TEXT")
                 // Update existing rows with current timestamp
-                let currentTimestamp = Date().iso8601String
+                let currentTimestamp = ISO8601DateFormatter().string(from: Date())
                 try db.run("UPDATE worker_assignments SET start_date = ? WHERE start_date IS NULL", [currentTimestamp])
             }
             

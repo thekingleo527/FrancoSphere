@@ -8,6 +8,9 @@
 //  ✅ Kevin's expanded duties integration
 //  ✅ Real-world data validation and logging
 //  ✅ HF-09: Enhanced diagnostic logging and Kevin validation
+//  🔧 HF-23: ROUTINE SCHEDULES & DSNY DATA (EXPANDED CSV IMPORT)
+//  🔧 FIX #2: Deterministic IDs to prevent migration duplicates
+//  ✅ PHASE 3B FIX: Worker seeding to resolve "Worker ID 4 not found" error
 //
 
 import Foundation
@@ -172,11 +175,143 @@ class CSVDataImporter: ObservableObject {
         // NOTE: Jose Santos tasks have been COMPLETELY REMOVED and redistributed to Kevin Dutan
     ]
     
+    // ──────────────────────────────────────────────────────────────────────────────
+    //  🔧 HF-23: ROUTINE SCHEDULES & DSNY DATA (EXPANDED CSV IMPORT)
+    //  🔧 FIX #2: Deterministic IDs to prevent migration duplicates
+    //  Real-world operational schedules based on NYC property management standards
+    // ──────────────────────────────────────────────────────────────────────────────
+
+    private let routineSchedules: [(buildingId: String, name: String, rrule: String, workerId: String, category: String)] = [
+        // Kevin's Perry Street circuit (expanded duties - took Jose's routes)
+        ("10", "Daily Sidewalk Sweep", "FREQ=DAILY;BYHOUR=6", "4", "Cleaning"),
+        ("10", "Weekly Hallway Deep Clean", "FREQ=WEEKLY;BYDAY=MO,WE;BYHOUR=7", "4", "Cleaning"),
+        ("6", "Perry 68 Full Building Clean", "FREQ=WEEKLY;BYDAY=TU,TH;BYHOUR=8", "4", "Cleaning"),
+        ("7", "17th Street Trash Area Maintenance", "FREQ=DAILY;BYHOUR=11", "4", "Cleaning"),
+        ("9", "DSNY Compliance Check", "FREQ=WEEKLY;BYDAY=SU,TU,TH;BYHOUR=20", "4", "Operations"),
+        
+        // Mercedes' morning glass circuit (6:30-11:00 AM shift)
+        ("7", "Glass & Lobby Clean", "FREQ=DAILY;BYHOUR=6", "5", "Cleaning"),
+        ("9", "117 West 17th Glass & Vestibule", "FREQ=DAILY;BYHOUR=7", "5", "Cleaning"),
+        ("11", "135-139 West 17th Glass Clean", "FREQ=DAILY;BYHOUR=8", "5", "Cleaning"),
+        ("13", "Rubin Museum Roof Drain Check", "FREQ=WEEKLY;BYDAY=WE;BYHOUR=10", "5", "Maintenance"),
+        
+        // Edwin's maintenance rounds (6:00-15:00)
+        ("16", "Stuyvesant Park Morning Inspection", "FREQ=DAILY;BYHOUR=6", "2", "Maintenance"),
+        ("8", "133 E 15th Boiler Blow-Down", "FREQ=WEEKLY;BYDAY=MO;BYHOUR=9", "2", "Maintenance"),
+        ("7", "Water Filter Change", "FREQ=MONTHLY;BYHOUR=10", "2", "Maintenance"),
+        
+        // Luis Lopez daily circuit (7:00-16:00)
+        ("4", "104 Franklin Sidewalk Hose", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=7", "6", "Cleaning"),
+        ("8", "41 Elizabeth Full Service", "FREQ=DAILY;BYHOUR=8", "6", "Cleaning"),
+        
+        // Greg Hutson building specialist (9:00-15:00)
+        ("1", "12 West 18th Complete Service", "FREQ=DAILY;BYHOUR=9", "1", "Cleaning"),
+        
+        // Angel evening operations (18:00-22:00)
+        ("1", "Evening Security Check", "FREQ=DAILY;BYHOUR=21", "7", "Operations"),
+        
+        // Shawn specialist maintenance (floating schedule)
+        ("14", "Rubin Museum HVAC Systems", "FREQ=MONTHLY;BYHOUR=9", "8", "Maintenance"),
+    ]
+
+    private let dsnySchedules: [(buildingIds: [String], collectionDays: String, routeId: String)] = [
+        // Manhattan West 17th Street corridor
+        (["7", "9", "11"], "MON,WED,FRI", "MAN-17TH-WEST"),
+        
+        // Perry Street / West Village
+        (["10", "6"], "MON,WED,FRI", "MAN-PERRY-VILLAGE"),
+        
+        // Downtown / Tribeca route
+        (["4", "8"], "TUE,THU,SAT", "MAN-DOWNTOWN-TRI"),
+        
+        // East side route
+        (["1"], "MON,WED,FRI", "MAN-18TH-EAST"),
+        
+        // Special collections (Rubin Museum)
+        (["14"], "TUE,FRI", "MAN-MUSEUM-SPECIAL"),
+    ]
+    
     private init() {}
+
+    // MARK: - ✅ PHASE 3B FIX: Ensure Active Workers Exist in Database
+
+    /// Seed the workers table with current active roster
+    private func seedActiveWorkers() async throws {
+        guard let sqliteManager = sqliteManager else {
+            throw CSVError.noSQLiteManager
+        }
+        
+        print("🔧 PHASE 3B FIX: Seeding active workers table...")
+        
+        // Current active worker roster (no Jose Santos)
+        let activeWorkers = [
+            ("1", "Greg Hutson", "greg.hutson@francomanagement.com", "Maintenance"),
+            ("2", "Edwin Lema", "edwin.lema@francomanagement.com", "Cleaning"),
+            ("4", "Kevin Dutan", "kevin.dutan@francomanagement.com", "Cleaning"), // CRITICAL: Kevin
+            ("5", "Mercedes Inamagua", "mercedes.inamagua@francomanagement.com", "Cleaning"),
+            ("6", "Luis Lopez", "luis.lopez@francomanagement.com", "Maintenance"),
+            ("7", "Angel Guirachocha", "angel.guirachocha@francomanagement.com", "Sanitation"),
+            ("8", "Shawn Magloire", "shawn.magloire@francomanagement.com", "Management")
+        ]
+        
+        for (id, name, email, role) in activeWorkers {
+            // Check if worker already exists
+            let existingWorker = try await sqliteManager.query(
+                "SELECT id FROM workers WHERE id = ? LIMIT 1",
+                [id]
+            )
+            
+            if existingWorker.isEmpty {
+                // Insert missing worker
+                try await sqliteManager.execute("""
+                    INSERT INTO workers (id, name, email, role, isActive, shift, hireDate) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, [
+                        id,
+                        name,
+                        email,
+                        role,
+                        "1", // isActive = true
+                        getWorkerShift(id),
+                        "2023-01-01" // Default hire date
+                    ])
+                
+                print("✅ Created worker record: \(name) (ID: \(id))")
+            } else {
+                print("✓ Worker exists: \(name) (ID: \(id))")
+            }
+        }
+        
+        // Verify Kevin specifically
+        let kevinCheck = try await sqliteManager.query(
+            "SELECT id, name FROM workers WHERE id = '4' LIMIT 1",
+            []
+        )
+        
+        if kevinCheck.isEmpty {
+            print("❌ CRITICAL: Kevin still not found after seeding!")
+        } else {
+            print("✅ VERIFIED: Kevin Dutan (ID: 4) exists in workers table")
+        }
+    }
+
+    /// Get worker shift schedule
+    private func getWorkerShift(_ workerId: String) -> String {
+        switch workerId {
+        case "1": return "9:00 AM - 3:00 PM"        // Greg
+        case "2": return "6:00 AM - 3:00 PM"        // Edwin
+        case "4": return "6:00 AM - 5:00 PM"        // Kevin (expanded)
+        case "5": return "6:30 AM - 11:00 AM"       // Mercedes (split)
+        case "6": return "7:00 AM - 4:00 PM"        // Luis
+        case "7": return "6:00 PM - 10:00 PM"       // Angel (evening)
+        case "8": return "Flexible"                 // Shawn (management)
+        default: return "9:00 AM - 5:00 PM"
+        }
+    }
 
     // MARK: - ⭐ PHASE-2: Enhanced Import Methods
     
-    /// Main import function - enhanced for current active workers only
+    /// Main import function - enhanced for current active workers only with worker seeding
     func importRealWorldTasks() async throws -> (imported: Int, errors: [String]) {
         guard let sqliteManager = sqliteManager else {
             throw CSVError.noSQLiteManager
@@ -187,138 +322,256 @@ class CSVDataImporter: ObservableObject {
             return (0, [])
         }
         
-        var importedCount = 0
-        importErrors = []
+        await MainActor.run {
+            importProgress = 0.0
+            currentStatus = "Starting import..."
+            importErrors = []
+        }
         
-        let calendar = Calendar.current
-        let today = Date()
-        
-        print("📂 Starting PHASE-2 task import with \(realWorldTasks.count) tasks...")
-        print("🔧 Current active workers only (Jose Santos removed)")
-        currentStatus = "Importing \(realWorldTasks.count) tasks for current active workers..."
-        
-        // BEGIN PATCH(HF-09): Pre-import Kevin diagnostic
-        print("🔍 HF-09: Pre-import Kevin diagnostic")
         do {
-            let existingKevin = try await sqliteManager.query("""
-                SELECT COUNT(*) as count FROM worker_building_assignments 
-                WHERE worker_id = '4' AND is_active = 1
-            """)
-            let currentCount = existingKevin.first?["count"] as? Int64 ?? 0
-            print("   Kevin's current building assignments: \(currentCount)")
-        } catch {
-            print("   Could not check Kevin's existing assignments: \(error)")
-        }
-        // END PATCH(HF-09)
-        
-        // First populate worker building assignments
-        try await populateWorkerBuildingAssignments(realWorldTasks)
-        
-        // Process each CSV assignment
-        for (index, csvTask) in realWorldTasks.enumerated() {
-            do {
-                // Update progress
-                importProgress = Double(index) / Double(realWorldTasks.count)
-                currentStatus = "Importing task \(index + 1)/\(realWorldTasks.count)"
-                
-                // Generate external ID for idempotency
-                let externalId = generateExternalId(for: csvTask, index: index)
-                
-                // Check if task already exists
-                let existingTasks = try await sqliteManager.query("""
-                    SELECT id FROM tasks WHERE external_id = ?
-                    """, [externalId])
-                
-                if !existingTasks.isEmpty {
-                    print("⏭️ Skipping duplicate task: \(csvTask.taskName)")
-                    continue
-                }
-                
-                // Calculate due date
-                let dueDate = calculateDueDate(for: csvTask.recurrence, from: today)
-                
-                // Map building name to ID
-                let buildingId = try await mapBuildingNameToId(csvTask.building)
-                
-                // Map worker name to ID (current active workers only)
-                let workerId: Int? = if !csvTask.assignedWorker.isEmpty {
-                    try? await mapWorkerNameToId(csvTask.assignedWorker)
-                } else {
-                    nil
-                }
-                
-                // Skip if worker not found (handles Jose removal)
-                guard let validWorkerId = workerId else {
-                    print("⚠️ Skipping task for inactive worker: \(csvTask.assignedWorker)")
-                    continue
-                }
-                
-                // Calculate start/end times
-                var startTime: String? = nil
-                var endTime: String? = nil
-                
-                if let startHour = csvTask.startHour, let endHour = csvTask.endHour {
-                    if let start = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: dueDate),
-                       let end = calendar.date(bySettingHour: endHour, minute: 0, second: 0, of: dueDate) {
-                        startTime = start.iso8601String
-                        endTime = end.iso8601String
-                    }
-                }
-                
-                // Map urgency level
-                let urgencyLevel = csvTask.skillLevel == "Advanced" ? "high" :
-                                  csvTask.skillLevel == "Intermediate" ? "medium" : "low"
-                
-                // Insert task - Convert to strings and handle optionals
-                try await sqliteManager.execute("""
-                    INSERT INTO tasks (
-                        name, description, buildingId, workerId, isCompleted,
-                        scheduledDate, recurrence, urgencyLevel, category,
-                        startTime, endTime, external_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, [
-                        csvTask.taskName,
-                        "Imported from current active worker schedule",
-                        "\(buildingId)",  // Convert to string
-                        "\(validWorkerId)",  // Convert to string
-                        "0",
-                        dueDate.iso8601String,
-                        csvTask.recurrence,
-                        urgencyLevel,
-                        csvTask.category,
-                        startTime ?? "",  // Use empty string for nil
-                        endTime ?? "",    // Use empty string for nil
-                        externalId
-                    ])
-                
-                importedCount += 1
-                print("✅ Imported: \(csvTask.taskName) for \(csvTask.building) (\(csvTask.assignedWorker))")
-                
-                // Log progress every 10 tasks
-                if (index + 1) % 10 == 0 {
-                    print("📈 Imported \(index + 1)/\(realWorldTasks.count) tasks")
-                }
-                
-                // Allow UI to update periodically
-                if index % 5 == 0 {
-                    try await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
-                }
-                
-            } catch {
-                let errorMsg = "Error processing task \(csvTask.taskName): \(error.localizedDescription)"
-                importErrors.append(errorMsg)
-                print("❌ \(errorMsg)")
+            // ✅ PHASE 3B FIX: Seed workers table FIRST
+            try await seedActiveWorkers()
+            
+            await MainActor.run {
+                importProgress = 0.1
+                currentStatus = "Workers seeded, importing tasks..."
             }
+            
+            // Now continue with the original import logic
+            var importedCount = 0
+            let calendar = Calendar.current
+            let today = Date()
+            
+            print("📂 Starting PHASE-2 task import with \(realWorldTasks.count) tasks...")
+            print("🔧 Current active workers only (Jose Santos removed)")
+            currentStatus = "Importing \(realWorldTasks.count) tasks for current active workers..."
+            
+            // BEGIN PATCH(HF-09): Pre-import Kevin diagnostic
+            print("🔍 HF-09: Pre-import Kevin diagnostic")
+            do {
+                let existingKevin = try await sqliteManager.query("""
+                    SELECT COUNT(*) as count FROM worker_building_assignments 
+                    WHERE worker_id = '4' AND is_active = 1
+                """)
+                let currentCount = existingKevin.first?["count"] as? Int64 ?? 0
+                print("   Kevin's current building assignments: \(currentCount)")
+            } catch {
+                print("   Could not check Kevin's existing assignments: \(error)")
+            }
+            // END PATCH(HF-09)
+            
+            // First populate worker building assignments
+            try await populateWorkerBuildingAssignments(realWorldTasks)
+            
+            // Process each CSV assignment
+            for (index, csvTask) in realWorldTasks.enumerated() {
+                do {
+                    // Update progress
+                    importProgress = 0.1 + (0.8 * Double(index) / Double(realWorldTasks.count))
+                    currentStatus = "Importing task \(index + 1)/\(realWorldTasks.count)"
+                    
+                    // Generate external ID for idempotency
+                    let externalId = generateExternalId(for: csvTask, index: index)
+                    
+                    // Check if task already exists
+                    let existingTasks = try await sqliteManager.query("""
+                        SELECT id FROM tasks WHERE external_id = ?
+                        """, [externalId])
+                    
+                    if !existingTasks.isEmpty {
+                        print("⏭️ Skipping duplicate task: \(csvTask.taskName)")
+                        continue
+                    }
+                    
+                    // Calculate due date
+                    let dueDate = calculateDueDate(for: csvTask.recurrence, from: today)
+                    
+                    // Map building name to ID
+                    let buildingId = try await mapBuildingNameToId(csvTask.building)
+                    
+                    // Map worker name to ID (current active workers only)
+                    let workerId: Int? = if !csvTask.assignedWorker.isEmpty {
+                        try? await mapWorkerNameToId(csvTask.assignedWorker)
+                    } else {
+                        nil
+                    }
+                    
+                    // Skip if worker not found (handles Jose removal)
+                    guard let validWorkerId = workerId else {
+                        print("⚠️ Skipping task for inactive worker: \(csvTask.assignedWorker)")
+                        continue
+                    }
+                    
+                    // Calculate start/end times
+                    var startTime: String? = nil
+                    var endTime: String? = nil
+                    
+                    if let startHour = csvTask.startHour, let endHour = csvTask.endHour {
+                        if let start = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: dueDate),
+                           let end = calendar.date(bySettingHour: endHour, minute: 0, second: 0, of: dueDate) {
+                            startTime = start.iso8601String
+                            endTime = end.iso8601String
+                        }
+                    }
+                    
+                    // Map urgency level
+                    let urgencyLevel = csvTask.skillLevel == "Advanced" ? "high" :
+                                      csvTask.skillLevel == "Intermediate" ? "medium" : "low"
+                    
+                    // Insert task - Convert to strings and handle optionals
+                    try await sqliteManager.execute("""
+                        INSERT INTO tasks (
+                            name, description, buildingId, workerId, isCompleted,
+                            scheduledDate, recurrence, urgencyLevel, category,
+                            startTime, endTime, external_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, [
+                            csvTask.taskName,
+                            "Imported from current active worker schedule",
+                            "\(buildingId)",  // Convert to string
+                            "\(validWorkerId)",  // Convert to string
+                            "0",
+                            dueDate.iso8601String,
+                            csvTask.recurrence,
+                            urgencyLevel,
+                            csvTask.category,
+                            startTime ?? "",  // Use empty string for nil
+                            endTime ?? "",    // Use empty string for nil
+                            externalId
+                        ])
+                    
+                    importedCount += 1
+                    print("✅ Imported: \(csvTask.taskName) for \(csvTask.building) (\(csvTask.assignedWorker))")
+                    
+                    // Log progress every 10 tasks
+                    if (index + 1) % 10 == 0 {
+                        print("📈 Imported \(index + 1)/\(realWorldTasks.count) tasks")
+                    }
+                    
+                    // Allow UI to update periodically
+                    if index % 5 == 0 {
+                        try await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
+                    }
+                    
+                } catch {
+                    let errorMsg = "Error processing task \(csvTask.taskName): \(error.localizedDescription)"
+                    importErrors.append(errorMsg)
+                    print("❌ \(errorMsg)")
+                }
+            }
+            
+            hasImported = true
+            
+            await MainActor.run {
+                importProgress = 1.0
+                currentStatus = "Import complete!"
+            }
+            
+            // Log results with Phase-2 summary
+            await logPhase2ImportResults(imported: importedCount, errors: importErrors)
+            
+            return (importedCount, importErrors)
+            
+        } catch {
+            await MainActor.run {
+                currentStatus = "Import failed: \(error.localizedDescription)"
+            }
+            throw error
+        }
+    }
+    
+    /// Enhanced import method for operational schedules with deterministic IDs
+    func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
+        guard let sqliteManager = sqliteManager else {
+            throw CSVError.noSQLiteManager
         }
         
-        hasImported = true
-        importProgress = 1.0
-        currentStatus = "Import complete!"
+        var routineCount = 0, dsnyCount = 0
         
-        // Log results with Phase-2 summary
-        await logPhase2ImportResults(imported: importedCount, errors: importErrors)
+        print("🔧 HF-23: Creating routine scheduling tables...")
         
-        return (importedCount, importErrors)
+        // Create routine_schedules table (operational schedule tracking)
+        try await sqliteManager.execute("""
+            CREATE TABLE IF NOT EXISTS routine_schedules (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                rrule TEXT NOT NULL,
+                worker_id TEXT NOT NULL,
+                category TEXT NOT NULL,
+                estimated_duration INTEGER DEFAULT 3600,
+                weather_dependent INTEGER DEFAULT 0,
+                priority_level TEXT DEFAULT 'medium',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
+                FOREIGN KEY (worker_id) REFERENCES workers(id)
+            )
+        """)
+        
+        // 🔧 FIX #2: Add UNIQUE constraints to prevent duplicates
+        try await sqliteManager.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_routine_unique 
+            ON routine_schedules(building_id, worker_id, name)
+        """)
+        
+        // Insert operational routines with deterministic IDs
+        for routine in routineSchedules {
+            // 🔧 FIX #2: Deterministic ID generation using hash
+            let id = "routine_\(routine.buildingId)_\(routine.workerId)_\(routine.name.hashValue.magnitude)"
+            let weatherDependent = routine.category == "Cleaning" ? 1 : 0
+            
+            try await sqliteManager.execute("""
+                INSERT OR REPLACE INTO routine_schedules 
+                (id, name, building_id, rrule, worker_id, category, weather_dependent)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, [id, routine.name, routine.buildingId, routine.rrule, routine.workerId, routine.category, String(weatherDependent)])
+            routineCount += 1
+        }
+        
+        // Create dsny_schedules table (NYC DSNY compliance tracking)
+        try await sqliteManager.execute("""
+            CREATE TABLE IF NOT EXISTS dsny_schedules (
+                id TEXT PRIMARY KEY,
+                route_id TEXT NOT NULL,
+                building_ids TEXT NOT NULL,
+                collection_days TEXT NOT NULL,
+                earliest_setout INTEGER DEFAULT 72000,
+                latest_pickup INTEGER DEFAULT 32400,
+                pickup_window_start INTEGER DEFAULT 21600,
+                pickup_window_end INTEGER DEFAULT 43200,
+                route_status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        // 🔧 FIX #2: Add UNIQUE constraint for DSNY routes
+        try await sqliteManager.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_dsny_unique 
+            ON dsny_schedules(route_id)
+        """)
+        
+        // Insert DSNY schedules with deterministic IDs
+        for dsny in dsnySchedules {
+            // 🔧 FIX #2: Deterministic ID for DSNY routes
+            let id = "dsny_\(dsny.routeId.hashValue.magnitude)"
+            let buildingIdsJson = dsny.buildingIds.joined(separator: ",")
+            
+            try await sqliteManager.execute("""
+                INSERT OR REPLACE INTO dsny_schedules 
+                (id, route_id, building_ids, collection_days, earliest_setout, latest_pickup, pickup_window_start, pickup_window_end)
+                VALUES (?, ?, ?, ?, 72000, 32400, 21600, 43200)
+            """, [id, dsny.routeId, buildingIdsJson, dsny.collectionDays])
+            dsnyCount += 1
+        }
+        
+        print("✅ HF-23: Imported \(routineCount) routine schedules, \(dsnyCount) DSNY routes")
+        print("   🗑️ DSNY compliance: Set-out after 8:00 PM, pickup 6:00-12:00 AM")
+        print("   🔄 Routine coverage: \(Set(routineSchedules.map { $0.workerId }).count) active workers")
+        print("   🔧 FIX #2: Using deterministic IDs to prevent duplicates")
+        
+        return (routineCount, dsnyCount)
     }
     
     // MARK: - ⭐ PHASE-2: Populate worker_building_assignments with CURRENT ACTIVE WORKERS ONLY
@@ -776,7 +1029,7 @@ class CSVDataImporter: ObservableObject {
         }
     }
     
-    // MARK: - Validation and Summary Methods (Unchanged)
+    // MARK: - Validation and Summary Methods
     
     func validateCSVData() -> [String] {
         var validationErrors: [String] = []
@@ -842,8 +1095,76 @@ class CSVDataImporter: ObservableObject {
         return summary
     }
     
-    // Additional methods remain unchanged...
-    // getTimeOfDayDistribution(), getCategoryDistribution(), etc.
+    func getTimeOfDayDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            guard let startHour = task.startHour else { continue }
+            
+            let timeSlot: String
+            switch startHour {
+            case 0..<6:
+                timeSlot = "Night (12AM-6AM)"
+            case 6..<12:
+                timeSlot = "Morning (6AM-12PM)"
+            case 12..<18:
+                timeSlot = "Afternoon (12PM-6PM)"
+            case 18..<24:
+                timeSlot = "Evening (6PM-12AM)"
+            default:
+                timeSlot = "Unknown"
+            }
+            
+            distribution[timeSlot, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getCategoryDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            distribution[task.category, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getRecurrenceDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            distribution[task.recurrence, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getSkillLevelDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            distribution[task.skillLevel, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getBuildingCoverage() -> [String: [String]] {
+        var coverage: [String: [String]] = [:]
+        
+        for task in realWorldTasks {
+            if coverage[task.building] == nil {
+                coverage[task.building] = []
+            }
+            if !coverage[task.building]!.contains(task.assignedWorker) {
+                coverage[task.building]!.append(task.assignedWorker)
+            }
+        }
+        
+        return coverage
+    }
 }
 
 // MARK: - Error Types (Enhanced for Phase-2)

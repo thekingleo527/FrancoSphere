@@ -2,56 +2,153 @@
 //  SchemaMigrationPatch.swift
 //  FrancoSphere
 //
-//  🔧 PHASE-2 ENHANCED - Real-World Data Migration
-//  ✅ Added worker_building_assignments table for CSV data
-//  ✅ Jose Santos removal and Kevin expansion support
-//  ✅ CSV-only data source (no hardcoded fallbacks)
-//  ✅ Enhanced validation and error handling
+//  🔧 PHASE-3B COMPLETE: Enhanced Schema Migration with Kevin Fix
+//  ✅ HF-29: ROUTINE SCHEDULING & DSNY COMPLIANCE TABLES (COMPLETE)
+//  ✅ Fixed missing isActive column in workers table
+//  ✅ Enhanced Kevin Dutan building assignments
+//  ✅ Complete emergency data recovery integration
+//  ✅ Enhanced error handling and validation
+//  ✅ Compatible with Phase-2 implementation
 //
 
 import Foundation
 import SQLite
 
-// MARK: - PATCH P2-05-V2: Enhanced Schema Migration
-
-public class SchemaMigrationPatch {
+class SchemaMigrationPatch {
+    static let shared = SchemaMigrationPatch()
     
-    /// Apply the enhanced schema migration patch for Phase-2 real-world data
-    public static func applyPatch() async throws {
-        print("🚀 Applying PHASE-2 Schema Migration Patch...")
+    private init() {}
+    
+    /// Apply all pending schema patches including emergency fixes
+    func applyPatch() async throws {
+        let manager = SQLiteManager.shared
         
-        let sqliteManager = SQLiteManager.shared
+        print("🔧 Starting PHASE-3B comprehensive schema migration...")
         
         do {
-            // Step 1: Create worker_building_assignments table (Priority 1)
-            try await createWorkerBuildingAssignmentsTable(sqliteManager)
+            // Patch 0: Emergency fix for missing columns (PRIORITY 1)
+            try await fixMissingWorkerColumns(manager)
             
-            // Step 2: Ensure all required tables exist
-            try await createMissingTables(sqliteManager)
+            // Patch 1: Fix worker_building_assignments table
+            try await fixWorkerBuildingAssignments(manager)
             
-            // Step 3: Add missing columns to existing tables
-            try await addMissingColumns(sqliteManager)
+            // Patch 2: Seed active workers (including Kevin)
+            try await seedActiveWorkers(manager)
             
-            // Step 4: Seed current active workers data (Jose removed, Kevin expanded)
-            try await seedCurrentActiveWorkers(sqliteManager)
+            // Patch 3: Create Kevin's building assignments
+            try await createKevinBuildingAssignments(manager)
             
-            // Step 5: Verify the migration worked
-            try await verifyPhase2Migration(sqliteManager)
+            // Patch 4: Add missing constraints
+            try await addMissingConstraints(manager)
             
-            print("✅ PHASE-2 Schema Migration Patch completed successfully!")
+            // Patch 5: Update column types
+            try await updateColumnTypes(manager)
+            
+            // Patch 6: Add building name mappings table
+            try await createBuildingNameMappings(manager)
+            
+            // Patch 7: Add worker shift assignments
+            try await createWorkerShiftAssignments(manager)
+            
+            // 🔧 HF-29: ROUTINE SCHEDULING & DSNY COMPLIANCE TABLES
+            try await createRoutineSchedulingTables(manager)
+            
+            // 🔧 HF-29: Import operational schedule data
+            try await importOperationalSchedules(manager)
+            
+            print("✅ PHASE-3B comprehensive schema migration completed successfully!")
             
         } catch {
-            print("❌ PHASE-2 Schema Migration Patch failed: \(error)")
+            print("❌ Schema migration failed: \(error)")
             throw error
         }
     }
     
-    // MARK: - ⭐ PRIORITY 1: Worker Building Assignments Table
+    // MARK: - 🚨 EMERGENCY FIX: Missing Worker Columns
     
-    private static func createWorkerBuildingAssignmentsTable(_ manager: SQLiteManager) async throws {
-        print("📝 Creating worker_building_assignments table for real CSV data...")
+    /// Fix missing columns in workers table (PRIORITY 1)
+    private func fixMissingWorkerColumns(_ manager: SQLiteManager) async throws {
+        print("🚨 EMERGENCY FIX: Adding missing columns to workers table...")
         
-        // Create the main assignments table for CSV import
+        // Check current table structure
+        let tableInfo = try await manager.query("PRAGMA table_info(workers)")
+        let columnNames = Set(tableInfo.compactMap { $0["name"] as? String })
+        
+        print("📋 Current workers table columns: \(columnNames.sorted())")
+        
+        // Add missing isActive column (this was causing the error)
+        if !columnNames.contains("isActive") {
+            try await manager.execute("ALTER TABLE workers ADD COLUMN isActive INTEGER DEFAULT 1")
+            print("✅ Added isActive column to workers table")
+        }
+        
+        // Add missing shift column
+        if !columnNames.contains("shift") {
+            try await manager.execute("ALTER TABLE workers ADD COLUMN shift TEXT DEFAULT 'day'")
+            print("✅ Added shift column to workers table")
+        }
+        
+        // Add missing hireDate column
+        if !columnNames.contains("hireDate") {
+            try await manager.execute("ALTER TABLE workers ADD COLUMN hireDate TEXT DEFAULT (date('now'))")
+            print("✅ Added hireDate column to workers table")
+        }
+        
+        // Add missing email column if not exists
+        if !columnNames.contains("email") {
+            try await manager.execute("ALTER TABLE workers ADD COLUMN email TEXT")
+            print("✅ Added email column to workers table")
+        }
+        
+        print("✅ Emergency column fixes completed")
+    }
+    
+    // MARK: - 👷 ACTIVE WORKERS SEEDING
+    
+    /// Seed active workers with correct schema (including Kevin)
+    private func seedActiveWorkers(_ manager: SQLiteManager) async throws {
+        print("👷 Seeding active workers with enhanced schema...")
+        
+        // Seed active workers with correct schema (including Kevin)
+        let activeWorkers: [(String, String, String, String, Int, String, String)] = [
+            ("1", "Greg Hutson", "greg.hutson@francosphere.com", "worker", 1, "day", "2022-03-15"),
+            ("2", "Edwin Lema", "edwin.lema@francosphere.com", "worker", 1, "morning", "2023-01-10"),
+            ("4", "Kevin Dutan", "kevin.dutan@francosphere.com", "worker", 1, "day", "2021-08-20"),
+            ("5", "Mercedes Inamagua", "mercedes.inamagua@francosphere.com", "worker", 1, "split", "2022-11-05"),
+            ("6", "Luis Lopez", "luis.lopez@francosphere.com", "worker", 1, "day", "2023-02-18"),
+            ("7", "Angel Guirachocha", "angel.guirachocha@francosphere.com", "worker", 1, "evening", "2022-07-12"),
+            ("8", "Shawn Magloire", "shawn.magloire@francosphere.com", "admin", 1, "day", "2020-01-15")
+        ]
+        
+        for (id, name, email, role, isActive, shift, hireDate) in activeWorkers {
+            try await manager.execute("""
+                INSERT OR REPLACE INTO workers (id, name, email, role, isActive, shift, hireDate) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, [id, name, email, role, isActive, shift, hireDate])
+        }
+        
+        print("✅ Seeded \(activeWorkers.count) active workers (including Kevin)")
+        
+        // Verify Kevin was created
+        let kevinCheck = try await manager.query(
+            "SELECT id, name, isActive FROM workers WHERE id = '4' LIMIT 1",
+            []
+        )
+        
+        if let kevin = kevinCheck.first {
+            print("✅ Kevin verification: ID=\(kevin["id"] ?? "nil"), Name=\(kevin["name"] ?? "nil"), Active=\(kevin["isActive"] ?? "nil")")
+        } else {
+            print("🚨 WARNING: Kevin not found after seeding!")
+        }
+    }
+    
+    // MARK: - 🏢 KEVIN'S BUILDING ASSIGNMENTS
+    
+    /// Create Kevin's building assignments (expanded duties after Jose's departure)
+    private func createKevinBuildingAssignments(_ manager: SQLiteManager) async throws {
+        print("🏢 Creating Kevin's expanded building assignments...")
+        
+        // Ensure worker_building_assignments table exists with correct structure
         try await manager.execute("""
             CREATE TABLE IF NOT EXISTS worker_building_assignments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,455 +167,621 @@ public class SchemaMigrationPatch {
             );
         """)
         
-        // Create index for fast lookups
-        try await manager.execute("""
-            CREATE INDEX IF NOT EXISTS idx_worker_building_assignments_worker 
-            ON worker_building_assignments(worker_id, is_active);
-        """)
+        // Kevin's building assignments (expanded duties - formerly Jose's responsibilities)
+        let kevinBuildings: [(String, String, String)] = [
+            ("3", "131 Perry Street", "Former Jose Santos building - high priority"),
+            ("6", "68 Perry Street", "Perry Street corridor - daily maintenance"),
+            ("7", "135-139 West 17th Street", "Main maintenance building"),
+            ("9", "117 West 17th Street", "West 17th Street corridor"),
+            ("11", "136 West 17th Street", "Extended coverage area"),
+            ("16", "Stuyvesant Cove Park", "Special assignment - outdoor maintenance")
+        ]
         
-        try await manager.execute("""
-            CREATE INDEX IF NOT EXISTS idx_worker_building_assignments_building 
-            ON worker_building_assignments(building_id, is_active);
-        """)
+        for (buildingId, buildingName, notes) in kevinBuildings {
+            try await manager.execute("""
+                INSERT OR REPLACE INTO worker_building_assignments 
+                (worker_id, worker_name, building_id, assignment_type, start_date, is_active, notes) 
+                VALUES ('4', 'Kevin Dutan', ?, 'expanded_duties', datetime('now'), 1, ?)
+            """, [buildingId, notes])
+        }
         
-        print("✅ worker_building_assignments table created with indexes")
+        print("✅ Created \(kevinBuildings.count) building assignments for Kevin (expanded duties)")
+        
+        // Verify Kevin's assignments were created
+        let kevinAssignments = try await manager.query("""
+            SELECT building_id, notes FROM worker_building_assignments 
+            WHERE worker_id = '4' AND is_active = 1
+        """, [])
+        
+        print("📊 Kevin's verified assignments: \(kevinAssignments.count) buildings")
+        for assignment in kevinAssignments {
+            print("   🏢 Building ID: \(assignment["building_id"] ?? "nil")")
+        }
     }
     
-    // MARK: - Enhanced Table Creation
+    // MARK: - 🔧 HF-29: ROUTINE SCHEDULING INFRASTRUCTURE
     
-    private static func createMissingTables(_ manager: SQLiteManager) async throws {
-        print("📝 Creating additional required tables...")
-        
-        // Create routine_tasks table if it doesn't exist (enhanced for CSV)
+    /// Create all routine scheduling and DSNY compliance tables
+    private func createRoutineSchedulingTables(_ manager: SQLiteManager) async throws {
+        print("🔧 HF-29: Adding routine scheduling tables...")
+
+        // Create routine_schedules table for operational workflow tracking
         try await manager.execute("""
-            CREATE TABLE IF NOT EXISTS routine_tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                worker_id TEXT NOT NULL,
-                building_id TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS routine_schedules (
+                id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                category TEXT NOT NULL DEFAULT 'maintenance',
-                recurrence TEXT NOT NULL DEFAULT 'daily',
-                startTime TEXT,
-                endTime TEXT,
-                skill_level TEXT DEFAULT 'Basic',
-                external_id TEXT UNIQUE,
-                is_active INTEGER DEFAULT 1,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                CHECK(is_active IN (0, 1))
-            );
-        """)
-        
-        // Create worker_skills table if it doesn't exist
-        try await manager.execute("""
-            CREATE TABLE IF NOT EXISTS worker_skills (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                building_id TEXT NOT NULL,
+                rrule TEXT NOT NULL,
                 worker_id TEXT NOT NULL,
-                skill_name TEXT NOT NULL,
-                skill_level TEXT NOT NULL DEFAULT 'Basic',
-                years_experience INTEGER DEFAULT 0,
-                is_active INTEGER DEFAULT 1,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                UNIQUE(worker_id, skill_name),
-                CHECK(is_active IN (0, 1))
-            );
+                category TEXT NOT NULL,
+                estimated_duration INTEGER DEFAULT 3600,
+                weather_dependent INTEGER DEFAULT 0,
+                priority_level TEXT DEFAULT 'medium',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
+                FOREIGN KEY (worker_id) REFERENCES workers(id)
+            )
         """)
-        
-        print("✅ Additional tables created")
-    }
-    
-    // MARK: - Enhanced Column Migration
-    
-    private static func addMissingColumns(_ manager: SQLiteManager) async throws {
-        print("📝 Adding missing columns for Phase-2...")
-        
-        // Add columns to tasks table for better CSV compatibility
-        let taskColumns = [
-            "ALTER TABLE tasks ADD COLUMN building_id TEXT",
-            "ALTER TABLE tasks ADD COLUMN worker_id TEXT",
-            "ALTER TABLE tasks ADD COLUMN urgencyLevel TEXT DEFAULT 'medium'",
-            "ALTER TABLE tasks ADD COLUMN external_id TEXT",
-            "ALTER TABLE tasks ADD COLUMN is_active INTEGER DEFAULT 1"
-        ]
-        
-        for sql in taskColumns {
-            do {
-                try await manager.execute(sql)
-            } catch {
-                // Ignore errors if column already exists
-                print("⚠️ Column may already exist: \(error)")
-            }
-        }
-        
-        // Update foreign key references if needed (enhanced)
+
+        // Create DSNY schedules table for NYC compliance tracking
         try await manager.execute("""
-            UPDATE tasks SET building_id = CAST(buildingId AS TEXT) 
-            WHERE building_id IS NULL AND buildingId IS NOT NULL
+            CREATE TABLE IF NOT EXISTS dsny_schedules (
+                id TEXT PRIMARY KEY,
+                route_id TEXT NOT NULL,
+                building_ids TEXT NOT NULL,
+                collection_days TEXT NOT NULL,
+                earliest_setout INTEGER DEFAULT 72000,
+                latest_pickup INTEGER DEFAULT 32400,
+                pickup_window_start INTEGER DEFAULT 21600,
+                pickup_window_end INTEGER DEFAULT 43200,
+                route_status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        // Create routine_overrides table for weather/emergency postponements
+        try await manager.execute("""
+            CREATE TABLE IF NOT EXISTS routine_overrides (
+                id TEXT PRIMARY KEY,
+                routine_id TEXT NOT NULL,
+                override_type TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                original_status TEXT NOT NULL,
+                new_status TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expires_at DATETIME,
+                FOREIGN KEY (routine_id) REFERENCES routine_schedules(id)
+            )
+        """)
+
+        // Add indexes for performance
+        try await manager.execute("""
+            CREATE INDEX IF NOT EXISTS idx_routine_worker_building 
+            ON routine_schedules(worker_id, building_id)
         """)
         
         try await manager.execute("""
-            UPDATE tasks SET worker_id = CAST(workerId AS TEXT)
-            WHERE worker_id IS NULL AND workerId IS NOT NULL  
+            CREATE INDEX IF NOT EXISTS idx_dsny_routes 
+            ON dsny_schedules(route_id, route_status)
         """)
         
-        print("✅ Missing columns added and updated")
+        try await manager.execute("""
+            CREATE INDEX IF NOT EXISTS idx_routine_overrides 
+            ON routine_overrides(routine_id, override_type)
+        """)
+
+        print("✅ HF-29: Routine scheduling infrastructure created")
     }
     
-    // MARK: - ⭐ PHASE-2: Current Active Workers Data (Jose Removed, Kevin Expanded)
-    
-    private static func seedCurrentActiveWorkers(_ manager: SQLiteManager) async throws {
-        print("👷 Seeding CURRENT ACTIVE WORKERS data (Phase-2)...")
+    /// Import operational schedule data directly (fallback implementation)
+    private func importOperationalSchedules(_ manager: SQLiteManager) async throws {
+        print("🔧 HF-29: Importing operational schedule data...")
+
+        // Always use fallback implementation for reliability
+        try await importRoutineSchedulesFallback(manager)
+        try await importDSNYSchedulesFallback(manager)
         
-        // CURRENT ACTIVE WORKER ROSTER (Jose Santos removed, Kevin expanded)
-        let activeWorkers = [
-            ("1", "Greg Hutson", "greg@francosphere.com", "worker"),
-            ("2", "Edwin Lema", "edwin@francosphere.com", "maintenance"),
-            ("4", "Kevin Dutan", "kevin@francosphere.com", "worker"),      // Expanded duties
-            ("5", "Mercedes Inamagua", "mercedes@francosphere.com", "worker"),
-            ("6", "Luis Lopez", "luis@francosphere.com", "worker"),
-            ("7", "Angel Guirachocha", "angel@francosphere.com", "worker"),
-            ("8", "Shawn Magloire", "shawn@francosphere.com", "specialist")
+        print("✅ HF-29: Operational schedule data imported")
+    }
+    
+    /// Fallback method to import routine schedules directly
+    private func importRoutineSchedulesFallback(_ manager: SQLiteManager) async throws {
+        let routineSchedules: [(String, String, String, String, String, String)] = [
+            // Kevin's Perry Street circuit (expanded duties)
+            ("routine_10_4_daily_sweep", "Daily Sidewalk Sweep", "10", "FREQ=DAILY;BYHOUR=6", "4", "Cleaning"),
+            ("routine_10_4_weekly_clean", "Weekly Hallway Deep Clean", "10", "FREQ=WEEKLY;BYDAY=MO,WE;BYHOUR=7", "4", "Cleaning"),
+            ("routine_6_4_building_clean", "Perry 68 Full Building Clean", "6", "FREQ=WEEKLY;BYDAY=TU,TH;BYHOUR=8", "4", "Cleaning"),
+            ("routine_7_4_trash_maint", "17th Street Trash Area Maintenance", "7", "FREQ=DAILY;BYHOUR=11", "4", "Cleaning"),
+            ("routine_9_4_dsny_check", "DSNY Compliance Check", "9", "FREQ=WEEKLY;BYDAY=SU,TU,TH;BYHOUR=20", "4", "Operations"),
+            ("routine_3_4_jose_duties", "Former Jose Santos Building Duties", "3", "FREQ=DAILY;BYHOUR=9", "4", "Maintenance"),
+            ("routine_11_4_coverage", "Extended Coverage Maintenance", "11", "FREQ=WEEKLY;BYDAY=FR;BYHOUR=10", "4", "Maintenance"),
+            ("routine_16_4_park_maint", "Stuyvesant Park Maintenance", "16", "FREQ=WEEKLY;BYDAY=SA;BYHOUR=8", "4", "Outdoor"),
+            
+            // Mercedes' morning glass circuit (6:30-11:00 AM shift)
+            ("routine_7_5_glass_lobby", "Glass & Lobby Clean", "7", "FREQ=DAILY;BYHOUR=6", "5", "Cleaning"),
+            ("routine_9_5_glass_vestibule", "117 West 17th Glass & Vestibule", "9", "FREQ=DAILY;BYHOUR=7", "5", "Cleaning"),
+            ("routine_11_5_glass_clean", "135-139 West 17th Glass Clean", "11", "FREQ=DAILY;BYHOUR=8", "5", "Cleaning"),
+            ("routine_13_5_roof_check", "Rubin Museum Roof Drain Check", "13", "FREQ=WEEKLY;BYDAY=WE;BYHOUR=10", "5", "Maintenance"),
+            
+            // Edwin's maintenance rounds (6:00-15:00)
+            ("routine_16_2_park_inspect", "Stuyvesant Park Morning Inspection", "16", "FREQ=DAILY;BYHOUR=6", "2", "Maintenance"),
+            ("routine_8_2_boiler_check", "133 E 15th Boiler Blow-Down", "8", "FREQ=WEEKLY;BYDAY=MO;BYHOUR=9", "2", "Maintenance"),
+            ("routine_7_2_filter_change", "Water Filter Change", "7", "FREQ=MONTHLY;BYHOUR=10", "2", "Maintenance"),
+            
+            // Luis Lopez daily circuit (7:00-16:00)
+            ("routine_4_6_sidewalk_hose", "104 Franklin Sidewalk Hose", "4", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=7", "6", "Cleaning"),
+            ("routine_8_6_full_service", "41 Elizabeth Full Service", "8", "FREQ=DAILY;BYHOUR=8", "6", "Cleaning"),
+            
+            // Greg Hutson building specialist (9:00-15:00)
+            ("routine_1_1_complete_service", "12 West 18th Complete Service", "1", "FREQ=DAILY;BYHOUR=9", "1", "Cleaning"),
+            
+            // Angel evening operations (18:00-22:00)
+            ("routine_1_7_security_check", "Evening Security Check", "1", "FREQ=DAILY;BYHOUR=21", "7", "Operations"),
+            
+            // Shawn specialist maintenance (floating schedule)
+            ("routine_14_8_hvac_systems", "Rubin Museum HVAC Systems", "14", "FREQ=MONTHLY;BYHOUR=9", "8", "Maintenance")
         ]
         
-        // Ensure workers exist in workers table
-        for (workerId, workerName, email, role) in activeWorkers {
-            let existingWorker = try await manager.query("""
-                SELECT id FROM workers WHERE id = ? OR email = ?
-            """, [workerId, email])
+        var routineCount = 0
+        for routine in routineSchedules {
+            let weatherDependent = routine.5 == "Cleaning" ? 1 : 0
             
-            if existingWorker.isEmpty {
-                print("📝 Creating worker: \(workerName)")
-                try await manager.execute("""
-                    INSERT OR REPLACE INTO workers (
-                        id, name, email, role, passwordHash, isActive
-                    ) VALUES (?, ?, ?, ?, ?, 1)
-                """, [workerId, workerName, email, role, "hashed_\(workerName.lowercased().replacingOccurrences(of: " ", with: "_"))"])
-            }
+            try await manager.execute("""
+                INSERT OR REPLACE INTO routine_schedules 
+                (id, name, building_id, rrule, worker_id, category, weather_dependent)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, [routine.0, routine.1, routine.2, routine.3, routine.4, routine.5, weatherDependent])
+            routineCount += 1
         }
         
-        // REAL-WORLD BUILDING ASSIGNMENTS (Updated June 2025)
-        let buildingAssignments = [
-            // Greg Hutson (reduced hours, focused assignments)
-            ("1", "Greg Hutson", "1"),
-            ("1", "Greg Hutson", "4"),
-            ("1", "Greg Hutson", "7"),
-            ("1", "Greg Hutson", "10"),
-            ("1", "Greg Hutson", "12"),
+        print("✅ HF-29: Imported \(routineCount) routine schedules (including Kevin's expanded duties)")
+    }
+    
+    /// Fallback method to import DSNY schedules directly
+    private func importDSNYSchedulesFallback(_ manager: SQLiteManager) async throws {
+        let dsnySchedules: [(String, String, String, String)] = [
+            // Manhattan West 17th Street corridor (includes Kevin's buildings)
+            ("dsny_man_17th_west", "MAN-17TH-WEST", "7,9,11", "MON,WED,FRI"),
             
-            // Edwin Lema (early morning shift, maintenance focus)
-            ("2", "Edwin Lema", "2"),
-            ("2", "Edwin Lema", "5"),
-            ("2", "Edwin Lema", "8"),
-            ("2", "Edwin Lema", "11"),
+            // Perry Street / West Village (Kevin's primary route)
+            ("dsny_man_perry_village", "MAN-PERRY-VILLAGE", "3,6,10", "MON,WED,FRI"),
             
-            // Kevin Dutan (EXPANDED - took Jose's duties + original assignments)
-            ("4", "Kevin Dutan", "3"),
-            ("4", "Kevin Dutan", "6"),
-            ("4", "Kevin Dutan", "7"),
-            ("4", "Kevin Dutan", "9"),
-            ("4", "Kevin Dutan", "11"),
-            ("4", "Kevin Dutan", "16"),
+            // Downtown / Tribeca route
+            ("dsny_man_downtown_tri", "MAN-DOWNTOWN-TRI", "4,8", "TUE,THU,SAT"),
             
-            // Mercedes Inamagua (split shift 6:30-10:30 AM)
-            ("5", "Mercedes Inamagua", "2"),
-            ("5", "Mercedes Inamagua", "6"),
-            ("5", "Mercedes Inamagua", "10"),
-            ("5", "Mercedes Inamagua", "13"),
+            // East side route
+            ("dsny_man_18th_east", "MAN-18TH-EAST", "1", "MON,WED,FRI"),
             
-            // Luis Lopez (standard day shift)
-            ("6", "Luis Lopez", "4"),
-            ("6", "Luis Lopez", "8"),
-            ("6", "Luis Lopez", "13"),
-            
-            // Angel Guirachocha (day + evening garbage)
-            ("7", "Angel Guirachocha", "9"),
-            ("7", "Angel Guirachocha", "13"),
-            ("7", "Angel Guirachocha", "15"),
-            ("7", "Angel Guirachocha", "18"),
-            
-            // Shawn Magloire (Rubin Museum specialist)
-            ("8", "Shawn Magloire", "14")
+            // Special collections (Rubin Museum and parks)
+            ("dsny_man_museum_special", "MAN-MUSEUM-SPECIAL", "13,14,16", "TUE,FRI")
         ]
         
-        // Clear existing assignments for clean state
-        try await manager.execute("DELETE FROM worker_building_assignments WHERE 1=1")
+        var dsnyCount = 0
+        for dsny in dsnySchedules {
+            try await manager.execute("""
+                INSERT OR REPLACE INTO dsny_schedules 
+                (id, route_id, building_ids, collection_days, earliest_setout, latest_pickup, pickup_window_start, pickup_window_end)
+                VALUES (?, ?, ?, ?, 72000, 32400, 21600, 43200)
+            """, [dsny.0, dsny.1, dsny.2, dsny.3])
+            dsnyCount += 1
+        }
         
-        // Insert current active assignments
-        var insertedCount = 0
-        for (workerId, workerName, buildingId) in buildingAssignments {
+        print("✅ HF-29: Imported \(dsnyCount) DSNY route schedules (covering Kevin's expanded coverage)")
+    }
+    
+    // MARK: - Individual Migration Steps (existing methods enhanced)
+    
+    /// Fix worker_building_assignments table structure
+    private func fixWorkerBuildingAssignments(_ manager: SQLiteManager) async throws {
+        print("🔧 Fixing worker_building_assignments table...")
+        
+        // Check if table exists with correct structure
+        let tableInfo = try await manager.query("PRAGMA table_info(worker_building_assignments)")
+        let columns = tableInfo.compactMap { $0["name"] as? String }
+        
+        if !columns.contains("worker_name") {
+            // Add missing worker_name column
+            try await manager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN worker_name TEXT DEFAULT ''
+            """)
+            
+            // Populate worker_name from workers table
+            try await manager.execute("""
+                UPDATE worker_building_assignments 
+                SET worker_name = (
+                    SELECT name FROM workers 
+                    WHERE workers.id = worker_building_assignments.worker_id
+                )
+                WHERE worker_name = ''
+            """)
+        }
+        
+        if !columns.contains("assignment_type") {
+            try await manager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN assignment_type TEXT DEFAULT 'regular'
+            """)
+        }
+        
+        if !columns.contains("start_date") {
+            try await manager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN start_date DATETIME DEFAULT CURRENT_TIMESTAMP
+            """)
+        }
+        
+        if !columns.contains("is_active") {
+            try await manager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN is_active INTEGER DEFAULT 1
+            """)
+        }
+        
+        if !columns.contains("notes") {
+            try await manager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN notes TEXT
+            """)
+        }
+        
+        print("✅ worker_building_assignments table updated with enhanced structure")
+    }
+    
+    /// Add missing database constraints
+    private func addMissingConstraints(_ manager: SQLiteManager) async throws {
+        print("🔧 Adding missing constraints...")
+        
+        // Create unique indexes to prevent duplicates
+        let indexes: [(String, String, String)] = [
+            ("idx_worker_building_unique", "worker_building_assignments", "worker_id, building_id"),
+            ("idx_task_external_id", "tasks", "external_id"),
+            ("idx_building_name", "buildings", "name"),
+            ("idx_worker_email", "workers", "email")
+        ]
+        
+        for (indexName, tableName, columns) in indexes {
             do {
                 try await manager.execute("""
-                    INSERT INTO worker_building_assignments 
-                    (worker_id, worker_name, building_id, assignment_type, start_date, is_active) 
-                    VALUES (?, ?, ?, 'regular', datetime('now'), 1)
-                """, [workerId, workerName, buildingId])
-                insertedCount += 1
+                    CREATE UNIQUE INDEX IF NOT EXISTS \(indexName) 
+                    ON \(tableName)(\(columns))
+                """)
             } catch {
-                print("⚠️ Failed to insert assignment \(workerId)->\(buildingId): \(error)")
+                print("⚠️ Could not create index \(indexName): \(error)")
+                // Continue with other indexes
             }
         }
         
-        print("✅ Seeded \(insertedCount) active worker building assignments")
-        
-        // Seed worker skills for current roster
-        await seedCurrentWorkerSkills(manager, activeWorkers: activeWorkers.map { ($0.0, $0.1) })
-        
-        print("✅ Current active workers data seeded successfully")
+        print("✅ Database constraints added")
     }
     
-    // MARK: - Current Worker Skills
-    
-    private static func seedCurrentWorkerSkills(_ manager: SQLiteManager, activeWorkers: [(String, String)]) async {
-        print("🔧 Seeding skills for current active workers...")
+    /// Update column types for consistency
+    private func updateColumnTypes(_ manager: SQLiteManager) async throws {
+        print("🔧 Updating column types...")
         
-        let workerSkills: [String: [(skill: String, level: String, years: Int)]] = [
-            "1": [  // Greg Hutson
-                ("General Maintenance", "Advanced", 8),
-                ("Cleaning", "Advanced", 10),
-                ("Plumbing", "Intermediate", 5),
-                ("Electrical", "Basic", 3)
-            ],
-            "2": [  // Edwin Lema
-                ("Boiler Operation", "Advanced", 6),
-                ("General Maintenance", "Advanced", 8),
-                ("Plumbing", "Advanced", 5),
-                ("HVAC", "Intermediate", 4),
-                ("Cleaning", "Advanced", 8)
-            ],
-            "4": [  // Kevin Dutan (expanded skills)
-                ("General Maintenance", "Intermediate", 4),
-                ("Cleaning", "Advanced", 6),
-                ("Electrical", "Intermediate", 3),
-                ("Sanitation", "Advanced", 5),
-                ("HVAC", "Basic", 2)
-            ],
-            "5": [  // Mercedes Inamagua
-                ("Cleaning", "Advanced", 7),
-                ("Glass Cleaning", "Expert", 8),
-                ("General Maintenance", "Basic", 2)
-            ],
-            "6": [  // Luis Lopez
-                ("General Maintenance", "Intermediate", 5),
-                ("Cleaning", "Advanced", 6),
-                ("Plumbing", "Basic", 2)
-            ],
-            "7": [  // Angel Guirachocha
-                ("Sanitation", "Advanced", 6),
-                ("Waste Management", "Expert", 7),
-                ("Security", "Intermediate", 3),
-                ("General Maintenance", "Basic", 2)
-            ],
-            "8": [  // Shawn Magloire
-                ("HVAC", "Expert", 12),
-                ("Boiler Operation", "Expert", 15),
-                ("Electrical", "Advanced", 10),
-                ("Plumbing", "Advanced", 8),
-                ("General Maintenance", "Expert", 15)
-            ]
-        ]
+        // SQLite doesn't support ALTER COLUMN, so we'll handle type issues in queries
+        // For now, just ensure all ID columns are consistent
         
-        // Clear existing skills for clean state
-        try? await manager.execute("DELETE FROM worker_skills WHERE 1=1")
+        let tables = try await manager.query("""
+            SELECT name FROM sqlite_master WHERE type='table'
+        """)
         
-        var skillsInserted = 0
-        for (workerId, workerName) in activeWorkers {
-            guard let skills = workerSkills[workerId] else { continue }
+        for table in tables {
+            guard let tableName = table["name"] as? String else { continue }
             
-            for skill in skills {
-                do {
-                    try await manager.execute("""
-                        INSERT INTO worker_skills 
-                        (worker_id, skill_name, skill_level, years_experience, is_active) 
-                        VALUES (?, ?, ?, ?, 1)
-                    """, [workerId, skill.skill, skill.level, skill.years])
-                    skillsInserted += 1
-                } catch {
-                    print("⚠️ Failed to insert skill for \(workerName): \(error)")
+            // Skip system tables
+            if tableName.hasPrefix("sqlite_") { continue }
+            
+            let tableInfo = try await manager.query("PRAGMA table_info(\(tableName))")
+            
+            for column in tableInfo {
+                guard let columnName = column["name"] as? String,
+                      let dataType = column["type"] as? String else { continue }
+                
+                // Log any potential type issues for future fixing
+                if columnName.hasSuffix("_id") && !dataType.uppercased().contains("TEXT") && !dataType.uppercased().contains("INTEGER") {
+                    print("⚠️ Potential type issue: \(tableName).\(columnName) has type \(dataType)")
                 }
             }
         }
         
-        print("✅ Seeded \(skillsInserted) worker skills for current roster")
+        print("✅ Column types checked")
     }
     
-    // MARK: - ⭐ PHASE-2: Enhanced Verification
-    
-    private static func verifyPhase2Migration(_ manager: SQLiteManager) async throws {
-        print("🔍 Verifying PHASE-2 migration...")
+    /// Create building name mappings for CSV import
+    private func createBuildingNameMappings(_ manager: SQLiteManager) async throws {
+        print("🔧 Creating building name mappings...")
         
-        // Test 1: Verify worker_building_assignments table exists
-        let tableCheck = try await manager.query("""
-            SELECT name FROM sqlite_master 
-            WHERE type='table' AND name='worker_building_assignments'
+        try await manager.execute("""
+            CREATE TABLE IF NOT EXISTS building_name_mappings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                csv_name TEXT NOT NULL,
+                canonical_name TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(csv_name, building_id)
+            )
         """)
         
-        guard !tableCheck.isEmpty else {
-            throw NSError(domain: "VerificationError", code: 1,
-                         userInfo: [NSLocalizedDescriptionKey: "worker_building_assignments table not created"])
+        // Insert common mappings for CSV import (including Kevin's buildings)
+        let mappings: [(String, String, String)] = [
+            // Kevin's Perry Street buildings
+            ("131 Perry Street", "131 Perry Street", "3"),
+            ("68 Perry Street", "68 Perry Street", "6"),
+            
+            // Kevin's 17th Street corridor buildings
+            ("135–139 West 17th", "135-139 West 17th Street", "7"),
+            ("135-139 West 17th", "135-139 West 17th Street", "7"),
+            ("117 West 17th Street", "117 West 17th Street", "9"),
+            ("136 West 17th", "136 West 17th Street", "11"),
+            ("138 West 17th Street", "138 West 17th Street", "12"),
+            
+            // 18th Street variants
+            ("12 West 18th Street", "12 West 18th Street", "1"),
+            ("112 West 18th Street", "112 West 18th Street", "14"),
+            
+            // Downtown variants
+            ("104 Franklin", "104 Franklin Street", "4"),
+            ("41 Elizabeth Street", "41 Elizabeth Street", "8"),
+            ("133 East 15th Street", "133 East 15th Street", "15"),
+            
+            // Special buildings (Kevin's park assignment)
+            ("Rubin Museum (142–148 W 17th)", "Rubin Museum", "13"),
+            ("Stuyvesant Cove Park", "Stuyvesant Cove Park", "16"),
+            ("FrancoSphere HQ", "12 West 18th Street", "1"), // HQ maps to main building
+            
+            // Additional variants
+            ("29–31 East 20th", "29-31 East 20th Street", "2"),
+            ("123 1st Ave", "123 1st Avenue", "3"),
+            ("178 Spring", "178 Spring Street", "5"),
+            ("36 Walker", "36 Walker Street", "17"),
+            ("115 7th Ave", "115 7th Avenue", "18")
+        ]
+        
+        for (csvName, canonicalName, buildingId) in mappings {
+            try await manager.execute("""
+                INSERT OR IGNORE INTO building_name_mappings 
+                (csv_name, canonical_name, building_id) 
+                VALUES (?, ?, ?)
+            """, [csvName, canonicalName, buildingId])
         }
         
-        // Test 2: Check that Jose Santos is NOT in the system
-        let joseCheck = try await manager.query("""
-            SELECT * FROM worker_building_assignments 
-            WHERE worker_name LIKE '%Jose%' OR worker_name LIKE '%Santos%'
+        print("✅ Building name mappings created (\(mappings.count) entries - Kevin's buildings prioritized)")
+    }
+    
+    /// Create worker shift assignments table
+    private func createWorkerShiftAssignments(_ manager: SQLiteManager) async throws {
+        print("🔧 Creating worker shift assignments...")
+        
+        try await manager.execute("""
+            CREATE TABLE IF NOT EXISTS worker_shift_assignments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                worker_id TEXT NOT NULL,
+                shift_type TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT NOT NULL,
+                days_of_week TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (worker_id) REFERENCES workers(id),
+                UNIQUE(worker_id, shift_type)
+            )
         """)
         
-        if !joseCheck.isEmpty {
-            print("⚠️ WARNING: Jose Santos still found in assignments")
-        } else {
-            print("✅ Confirmed: Jose Santos removed from system")
+        // Insert current worker shift data (Kevin gets expanded hours)
+        let shifts: [(String, String, String, String, String)] = [
+            ("1", "regular", "09:00", "15:00", "Mon,Tue,Wed,Thu,Fri"), // Greg Hutson
+            ("2", "regular", "06:00", "15:00", "Mon,Tue,Wed,Thu,Fri,Sat,Sun"), // Edwin Lema
+            ("4", "expanded", "06:00", "18:00", "Mon,Tue,Wed,Thu,Fri,Sat"), // Kevin Dutan (expanded)
+            ("5", "morning", "06:30", "11:00", "Mon,Tue,Wed,Thu,Fri,Sat"), // Mercedes Inamagua
+            ("6", "regular", "07:00", "16:00", "Mon,Tue,Wed,Thu,Fri,Sat"), // Luis Lopez
+            ("7", "evening", "18:00", "22:00", "Mon,Tue,Wed,Thu,Fri"), // Angel Guirachocha
+            ("8", "flexible", "09:00", "17:00", "Mon,Tue,Wed,Thu,Fri") // Shawn Magloire
+        ]
+        
+        for (workerId, shiftType, startTime, endTime, daysOfWeek) in shifts {
+            try await manager.execute("""
+                INSERT OR IGNORE INTO worker_shift_assignments 
+                (worker_id, shift_type, start_time, end_time, days_of_week) 
+                VALUES (?, ?, ?, ?, ?)
+            """, [workerId, shiftType, startTime, endTime, daysOfWeek])
         }
         
-        // Test 3: Verify Kevin's expanded assignments (should have 6+ buildings)
-        let kevinAssignments = try await manager.query("""
-            SELECT building_id FROM worker_building_assignments 
-            WHERE worker_name = 'Kevin Dutan' AND is_active = 1
-        """)
-        
-        let kevinBuildingCount = kevinAssignments.count
-        print("📊 Kevin Dutan has \(kevinBuildingCount) building assignments")
-        
-        if kevinBuildingCount >= 6 {
-            print("✅ Kevin's expanded assignments verified")
-        } else {
-            print("⚠️ WARNING: Kevin should have 6+ buildings, found \(kevinBuildingCount)")
-        }
-        
-        // Test 4: Check total active workers (should be 7)
-        let activeWorkerCount = try await manager.query("""
-            SELECT DISTINCT worker_id FROM worker_building_assignments WHERE is_active = 1
-        """)
-        
-        print("📊 Total active workers: \(activeWorkerCount.count)")
-        
-        if activeWorkerCount.count == 7 {
-            print("✅ Correct number of active workers")
-        } else {
-            print("⚠️ Expected 7 active workers, found \(activeWorkerCount.count)")
-        }
-        
-        // Test 5: Log assignment summary
-        await logPhase2AssignmentSummary(manager)
-        
-        print("🎉 PHASE-2 migration verification completed!")
+        print("✅ Worker shift assignments created (\(shifts.count) entries - Kevin expanded schedule)")
     }
     
-    // MARK: - Phase-2 Assignment Summary
+    // MARK: - Validation and Cleanup
     
-    private static func logPhase2AssignmentSummary(_ manager: SQLiteManager) async {
-        do {
-            let results = try await manager.query("""
-                SELECT wa.worker_name, COUNT(wa.building_id) as building_count 
-                FROM worker_building_assignments wa 
-                WHERE wa.is_active = 1 
-                GROUP BY wa.worker_id 
-                ORDER BY building_count DESC
-            """)
-            
-            print("📊 PHASE-2 WORKER ASSIGNMENT SUMMARY:")
-            for row in results {
-                let name = row["worker_name"] as? String ?? "Unknown"
-                let count = row["building_count"] as? Int64 ?? 0
-                let emoji = getWorkerEmoji(name)
-                print("   \(emoji) \(name): \(count) buildings")
-            }
-            
-        } catch {
-            print("⚠️ Could not generate Phase-2 assignment summary: \(error)")
-        }
-    }
-    
-    private static func getWorkerEmoji(_ workerName: String) -> String {
-        switch workerName {
-        case "Greg Hutson": return "🔧"
-        case "Edwin Lema": return "🧹"
-        case "Kevin Dutan": return "⚡"  // Expanded duties
-        case "Mercedes Inamagua": return "✨"
-        case "Luis Lopez": return "🔨"
-        case "Angel Guirachocha": return "🗑️"
-        case "Shawn Magloire": return "🎨"
-        default: return "👷"
-        }
-    }
-}
-
-// MARK: - ⭐ PHASE-2: Enhanced Convenience Methods
-
-extension SchemaMigrationPatch {
-    
-    /// Check if current active workers are properly assigned
-    public static func validateCurrentWorkerRoster() async -> Bool {
-        do {
-            let manager = SQLiteManager.shared
-            
-            // Check that we have exactly 7 active workers
-            let activeWorkers = try await manager.query("""
-                SELECT DISTINCT worker_id FROM worker_building_assignments WHERE is_active = 1
-            """)
-            
-            // Check that Jose is not in the system
-            let joseCheck = try await manager.query("""
-                SELECT COUNT(*) as count FROM worker_building_assignments 
-                WHERE worker_name LIKE '%Jose%' AND is_active = 1
-            """)
-            
-            let hasJose = (joseCheck.first?["count"] as? Int64 ?? 0) > 0
-            
-            // Check Kevin's expanded assignments
-            let kevinBuildings = try await manager.query("""
-                SELECT COUNT(*) as count FROM worker_building_assignments 
-                WHERE worker_name = 'Kevin Dutan' AND is_active = 1
-            """)
-            
-            let kevinCount = kevinBuildings.first?["count"] as? Int64 ?? 0
-            
-            return activeWorkers.count == 7 && !hasJose && kevinCount >= 6
-            
-        } catch {
-            print("❌ Error validating worker roster: \(error)")
-            return false
-        }
-    }
-    
-    /// Force reseed with current active workers (Phase-2)
-    public static func forceReseedCurrentWorkers() async throws {
-        print("🔄 Force reseeding current active workers (Phase-2)...")
-        
+    /// Validate the migration completed successfully
+    func validateMigration() async throws {
         let manager = SQLiteManager.shared
         
-        // Clear existing data
-        try await manager.execute("DELETE FROM worker_building_assignments WHERE 1=1")
-        try await manager.execute("DELETE FROM worker_skills WHERE 1=1")
+        print("🔍 Validating comprehensive migration...")
         
-        // Reseed with current active workers
-        try await seedCurrentActiveWorkers(manager)
+        // Check required tables
+        let requiredTables: [String] = [
+            "workers",
+            "buildings",
+            "worker_building_assignments",
+            "building_name_mappings",
+            "worker_shift_assignments",
+            "routine_schedules",
+            "dsny_schedules",
+            "routine_overrides"
+        ]
         
-        print("✅ Current active workers force reseeded")
+        for tableName in requiredTables {
+            let tables = try await manager.query("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name=?
+            """, [tableName])
+            
+            guard !tables.isEmpty else {
+                throw MigrationError.missingTable(tableName)
+            }
+        }
+        
+        // Validate Kevin specifically
+        let kevinCheck = try await manager.query("""
+            SELECT w.id, w.name, w.isActive, COUNT(wba.building_id) as building_count
+            FROM workers w 
+            LEFT JOIN worker_building_assignments wba ON w.id = wba.worker_id AND wba.is_active = 1
+            WHERE w.id = '4'
+            GROUP BY w.id, w.name, w.isActive
+        """, [])
+        
+        guard let kevin = kevinCheck.first else {
+            throw MigrationError.noData("Kevin Dutan not found")
+        }
+        
+        let buildingCount = kevin["building_count"] as? Int64 ?? 0
+        print("✅ Kevin validation: Found with \(buildingCount) building assignments")
+        
+        if buildingCount < 6 {
+            print("⚠️ WARNING: Kevin has only \(buildingCount) buildings (expected 6+)")
+        }
+        
+        // Validate data integrity
+        let workerBuildingCount = try await manager.query("SELECT COUNT(*) as count FROM worker_building_assignments")
+        let buildingMappingCount = try await manager.query("SELECT COUNT(*) as count FROM building_name_mappings")
+        let routineCount = try await manager.query("SELECT COUNT(*) as count FROM routine_schedules")
+        let dsnyCount = try await manager.query("SELECT COUNT(*) as count FROM dsny_schedules")
+        
+        guard let wbCount = workerBuildingCount.first?["count"] as? Int64, wbCount > 0 else {
+            throw MigrationError.noData("worker_building_assignments")
+        }
+        
+        guard let bmCount = buildingMappingCount.first?["count"] as? Int64, bmCount > 0 else {
+            throw MigrationError.noData("building_name_mappings")
+        }
+        
+        print("✅ Comprehensive migration validation passed")
+        print("   📊 Worker-building assignments: \(wbCount)")
+        print("   📊 Building name mappings: \(bmCount)")
+        
+        if let rCount = routineCount.first?["count"] as? Int64 {
+            print("   📊 Routine schedules: \(rCount)")
+        }
+        
+        if let dCount = dsnyCount.first?["count"] as? Int64 {
+            print("   📊 DSNY schedules: \(dCount)")
+        }
     }
     
-    /// Get current worker roster summary
-    public static func getCurrentWorkerRoster() async -> [String: Int] {
-        do {
-            let manager = SQLiteManager.shared
-            let results = try await manager.query("""
-                SELECT wa.worker_name, COUNT(wa.building_id) as building_count 
-                FROM worker_building_assignments wa 
-                WHERE wa.is_active = 1 
-                GROUP BY wa.worker_id 
-                ORDER BY wa.worker_name
-            """)
+    /// Clean up any orphaned data
+    func cleanupOrphanedData() async throws {
+        let manager = SQLiteManager.shared
+        
+        print("🧹 Cleaning up orphaned data...")
+        
+        // Remove worker assignments for non-existent workers
+        try await manager.execute("""
+            DELETE FROM worker_building_assignments 
+            WHERE worker_id NOT IN (SELECT id FROM workers)
+        """)
+        
+        // Remove worker assignments for non-existent buildings
+        try await manager.execute("""
+            DELETE FROM worker_building_assignments 
+            WHERE building_id NOT IN (SELECT id FROM buildings)
+        """)
+        
+        // Remove inactive assignments older than 30 days (except Kevin's)
+        try await manager.execute("""
+            DELETE FROM worker_building_assignments 
+            WHERE is_active = 0 
+            AND worker_id != '4'
+            AND datetime(start_date, '+30 days') < datetime('now')
+        """)
+        
+        print("✅ Orphaned data cleanup completed (Kevin's assignments protected)")
+    }
+    
+    // MARK: - Emergency Recovery Methods
+    
+    /// Apply emergency schema fix for specific worker issues
+    func applyEmergencyWorkerFix(workerId: String) async throws {
+        let manager = SQLiteManager.shared
+        
+        print("🚨 Applying emergency fix for worker \(workerId)...")
+        
+        // Ensure all required columns exist
+        try await fixMissingWorkerColumns(manager)
+        
+        // Ensure worker exists using CSVDataImporter (the real data source)
+        let workerCheck = try await manager.query(
+            "SELECT id, name FROM workers WHERE id = ? LIMIT 1",
+            [workerId]
+        )
+        
+        if workerCheck.isEmpty {
+            print("🚨 Worker \(workerId) not found - using CSVDataImporter to seed workers...")
             
-            var roster: [String: Int] = [:]
-            for row in results {
-                let name = row["worker_name"] as? String ?? "Unknown"
-                let count = Int(row["building_count"] as? Int64 ?? 0)
-                roster[name] = count
+            // Use CSVDataImporter to seed workers properly
+            let csvImporter = CSVDataImporter.shared
+            
+            // Set sqliteManager on main actor since CSVDataImporter is @MainActor
+            await MainActor.run {
+                csvImporter.sqliteManager = manager
             }
             
-            return roster
+            // Import real world tasks (which includes worker seeding)
+            let (imported, errors) = try await csvImporter.importRealWorldTasks()
+            print("📥 Emergency CSV import: \(imported) tasks imported, \(errors.count) errors")
             
-        } catch {
-            print("❌ Error getting worker roster: \(error)")
-            return [:]
+            if !errors.isEmpty {
+                print("⚠️ Import warnings: \(errors.prefix(3).joined(separator: ", "))")
+            }
+            
+            // Verify worker was created
+            let workerRecheck = try await manager.query(
+                "SELECT id, name FROM workers WHERE id = ? LIMIT 1",
+                [workerId]
+            )
+            
+            if workerRecheck.isEmpty {
+                throw MigrationError.noData("Worker \(workerId) could not be created via CSVDataImporter")
+            }
+        }
+        
+        // Specific fixes for Kevin using real data
+        if workerId == "4" {
+            try await createKevinBuildingAssignments(manager)
+        }
+        
+        print("✅ Emergency fix completed for worker \(workerId)")
+    }
+    
+    /// Get worker data for emergency creation (DEPRECATED - use CSVDataImporter instead)
+    private func getWorkerData(for workerId: String) -> [Any] {
+        // This method is deprecated - CSVDataImporter should be used instead
+        // Keeping for legacy compatibility only
+        switch workerId {
+        case "4":
+            return ["4" as Any, "Kevin Dutan" as Any, "kevin.dutan@francosphere.com" as Any, "worker" as Any, 1 as Any, "day" as Any, "2021-08-20" as Any]
+        default:
+            return [workerId as Any, "Unknown Worker" as Any, "unknown@francosphere.com" as Any, "worker" as Any, 1 as Any, "day" as Any, "2023-01-01" as Any]
+        }
+    }
+    }
+
+// MARK: - Migration Error Types
+
+enum MigrationError: LocalizedError {
+    case missingTable(String)
+    case noData(String)
+    case constraintViolation(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .missingTable(let table):
+            return "Required table missing: \(table)"
+        case .noData(let table):
+            return "No data found in table: \(table)"
+        case .constraintViolation(let message):
+            return "Constraint violation: \(message)"
         }
     }
 }

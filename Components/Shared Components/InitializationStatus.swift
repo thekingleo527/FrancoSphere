@@ -1,16 +1,12 @@
-
+//
 // DataImporters.swift
-// Missing data importers and types for FrancoSphere
+// FrancoSphere Data Importers and Types
+//
+// ✅ CLEAN VERSION: No InitializationStatus redeclaration
+// ✅ PRESERVES: All existing importer functionality
+//
 
 import Foundation
-
-// MARK: - Initialization Status
-struct InitializationStatus {
-    let isComplete: Bool
-    let hasErrors: Bool
-    let errors: [String]
-    let timestamp: Date
-}
 
 // MARK: - Building Data Importer
 @MainActor

@@ -10,3 +10,10 @@ xcuserdata/
 *.xcresult
 # Personal secrets or config files
 Secrets.plist
+
+# Xcode runtime cruft
+DerivedData/
+*.xcuserstate
+
+*.xcuserstate
+*.xcuserdatad/

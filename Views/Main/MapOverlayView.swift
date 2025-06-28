@@ -2,12 +2,11 @@
 //  MapOverlayView.swift
 //  FrancoSphere
 //
-//  ✅ PHASE-2 ENHANCED: Fail-soft fallback logic
-//  ✅ Emergency recovery when no buildings assigned
-//  ✅ Visual indicators for fallback state
-//  ✅ Enhanced user guidance and debugging
-//  ✅ Production-ready error handling
-//  ✅ HF-03 HOTFIX: Orange warning overlays removed
+//  ✅ HF-36: FIXED GESTURE CONFLICTS
+//  ✅ Vertical drag vs map pin tap resolution
+//  ✅ High priority gesture handling for scroll interactions
+//  ✅ Simultaneous gesture support for map interactions
+//  ✅ Enhanced tap detection with minimum distance
 //
 
 import SwiftUI
@@ -21,28 +20,24 @@ struct MapOverlayView: View {
     @Binding var isPresented: Bool
     let onBuildingDetail: ((FrancoSphere.NamedCoordinate) -> Void)?
     
-    // NEW: Enhanced toggle state with fallback detection
+    // Enhanced toggle state with fallback detection
     @State private var showAll: Bool = false
-    // BEGIN PATCH(HF-03): Remove warning state - no longer needed
-    // @State private var showFallbackWarning: Bool = false
-    // END PATCH(HF-03)
+    
+    // ✅ HF-36: Enhanced gesture state management
+    @State private var isPanningMap: Bool = false
+    @State private var lastTapLocation: CGPoint = .zero
+    @State private var dragStartTime: Date = Date()
     
     // ✅ ENHANCED: Fail-soft datasource with automatic fallback
     private var datasource: [FrancoSphere.NamedCoordinate] {
-        // If user explicitly chose "All Sites", show all
         if showAll {
             return allBuildings
         }
         
-        // If assigned buildings are empty, automatically fall back to all buildings
         if buildings.isEmpty {
-            // BEGIN PATCH(HF-03): Remove warning trigger - silent fallback now
-            // No warning needed - graceful fallback is expected behavior
-            // END PATCH(HF-03)
             return allBuildings
         }
         
-        // Normal case: show assigned buildings
         return buildings
     }
     
@@ -55,7 +50,7 @@ struct MapOverlayView: View {
         if showAll {
             return "All Sites"
         } else if isInFallbackMode {
-            return "All Sites (Auto)"  // Changed from "Fallback" to more user-friendly text
+            return "All Sites (Auto)"
         } else {
             return "My Sites"
         }
@@ -78,6 +73,9 @@ struct MapOverlayView: View {
     @State private var showBuildingPreview: MapBuildingPreviewData?
     
     private let dismissThreshold: CGFloat = 100
+    // ✅ HF-36: Gesture conflict resolution constants
+    private let minTapDistance: CGFloat = 5.0
+    private let maxTapDuration: TimeInterval = 0.5
     
     init(buildings: [FrancoSphere.NamedCoordinate],
          allBuildings: [FrancoSphere.NamedCoordinate],
@@ -96,33 +94,51 @@ struct MapOverlayView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Full-screen map
+                // Full-screen map with enhanced gesture handling
                 mapView
                     .ignoresSafeArea()
+                    // ✅ HF-36: Enhanced gesture system
+                    .highPriorityGesture(
+                        DragGesture(minimumDistance: minTapDistance)
+                            .onChanged { value in
+                                isPanningMap = true
+                            }
+                            .onEnded { _ in
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    isPanningMap = false
+                                }
+                            }
+                    )
+                    .simultaneousGesture(
+                        TapGesture()
+                            .onEnded { _ in
+                                // Allow map interactions to continue
+                                // Building taps are handled separately in annotations
+                            }
+                    )
                 
-                // BEGIN PATCH(HF-03): Remove fallback warning overlay
-                // Removed - no longer showing orange warning overlays
-                // END PATCH(HF-03)
-                
-                // Overlay controls
+                // Overlay controls with gesture-safe interactions
                 VStack {
                     // Top controls
                     topControls
+                        // ✅ HF-36: Prevent gesture conflicts with map
+                        .allowsHitTesting(true)
+                        .zIndex(10)
                     
                     Spacer()
                     
                     // Bottom stats and controls
                     bottomControls
+                        // ✅ HF-36: Prevent gesture conflicts with map
+                        .allowsHitTesting(true)
+                        .zIndex(10)
                 }
                 .background(.clear)
             }
             .offset(y: dragOffset)
-            .gesture(dismissGesture)
+            .gesture(enhancedDismissGesture) // ✅ HF-36: Enhanced dismiss gesture
             .onAppear {
                 setupMapPosition()
-                // BEGIN PATCH(HF-03): Remove fallback mode check
-                // checkForFallbackMode() - no longer needed
-                // END PATCH(HF-03)
             }
             .sheet(item: $selectedBuilding) { building in
                 BuildingDetailView(building: building)
@@ -157,7 +173,7 @@ struct MapOverlayView: View {
         .preferredColorScheme(.dark)
     }
     
-    // MARK: - Map View
+    // MARK: - Map View with Enhanced Gesture Handling
     
     @ViewBuilder
     private var mapView: some View {
@@ -169,12 +185,15 @@ struct MapOverlayView: View {
                         longitude: building.longitude
                     )) {
                         buildingMarker(building)
+                            // ✅ HF-36: Enhanced tap handling with gesture conflict resolution
                             .onTapGesture {
-                                handleSingleTap(building)
+                                handleBuildingTap(building)
                             }
-                            .onLongPressGesture {
-                                handleDoubleTap(building)
+                            .onLongPressGesture(minimumDuration: 0.5) {
+                                handleBuildingLongPress(building)
                             }
+                            // Ensure building markers stay above map gestures
+                            .zIndex(5)
                     }
                 }
             }
@@ -186,12 +205,15 @@ struct MapOverlayView: View {
                     longitude: building.longitude
                 )) {
                     buildingMarker(building)
+                        // ✅ HF-36: Enhanced tap handling with gesture conflict resolution
                         .onTapGesture {
-                            handleSingleTap(building)
+                            handleBuildingTap(building)
                         }
-                        .onLongPressGesture {
-                            handleDoubleTap(building)
+                        .onLongPressGesture(minimumDuration: 0.5) {
+                            handleBuildingLongPress(building)
                         }
+                        // Ensure building markers stay above map gestures
+                        .zIndex(5)
                 }
             }
         }
@@ -228,6 +250,8 @@ struct MapOverlayView: View {
             }
         }
         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+        // ✅ HF-36: Enhanced interactive area for better tap detection
+        .contentShape(Circle().inset(by: -8)) // Expand tap area slightly
     }
     
     private func markerBackgroundColor(for building: FrancoSphere.NamedCoordinate) -> Color {
@@ -244,14 +268,7 @@ struct MapOverlayView: View {
         return .blue
     }
     
-    private func markerIcon(for building: FrancoSphere.NamedCoordinate) -> String {
-        if building.id == currentBuildingId {
-            return "person.fill"
-        }
-        return "building.2.fill"
-    }
-    
-    // MARK: - Top Controls
+    // MARK: - Top Controls with Gesture Safety
     
     private var topControls: some View {
         HStack {
@@ -304,7 +321,7 @@ struct MapOverlayView: View {
         .padding(.top, 10)
     }
     
-    // MARK: - Bottom Controls (Simplified - No Orange Warnings)
+    // MARK: - Bottom Controls
     
     private var bottomControls: some View {
         HStack(spacing: 16) {
@@ -339,9 +356,6 @@ struct MapOverlayView: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        // BEGIN PATCH(HF-03): Remove orange fallback border indicator
-        // No more orange borders showing fallback state
-        // END PATCH(HF-03)
     }
     
     private func mapStatItem(icon: String, label: String, value: String, color: Color) -> some View {
@@ -363,10 +377,6 @@ struct MapOverlayView: View {
         .frame(maxWidth: .infinity)
     }
     
-    // BEGIN PATCH(HF-03): Remove fallback warning overlay entirely
-    // This entire section has been removed
-    // END PATCH(HF-03)
-    
     // MARK: - Building Preview Overlay
     
     @ViewBuilder
@@ -376,7 +386,7 @@ struct MapOverlayView: View {
                 building: previewData.building,
                 onDetails: {
                     showBuildingPreview = nil
-                    handleDoubleTap(previewData.building)
+                    handleBuildingLongPress(previewData.building)
                 },
                 onDismiss: {
                     withAnimation(.spring()) {
@@ -385,20 +395,25 @@ struct MapOverlayView: View {
                 }
             )
             .transition(.scale.combined(with: .opacity))
+            .zIndex(20) // ✅ HF-36: Ensure preview stays above all interactions
         }
     }
     
-    // MARK: - Gesture Handling
+    // MARK: - ✅ HF-36: Enhanced Gesture Handling
     
-    private var dismissGesture: some Gesture {
-        DragGesture()
+    private var enhancedDismissGesture: some Gesture {
+        DragGesture(minimumDistance: 10) // ✅ Increased minimum distance to avoid conflicts
             .onChanged { value in
-                if value.translation.height > 0 {
+                // Only respond to vertical drags that aren't map panning
+                if !isPanningMap && value.translation.height > 0 && abs(value.translation.width) < abs(value.translation.height) {
                     dragOffset = value.translation.height
                 }
             }
             .onEnded { value in
-                if value.translation.height > dismissThreshold {
+                // Only dismiss on significant vertical movement
+                if !isPanningMap &&
+                   value.translation.height > dismissThreshold &&
+                   abs(value.translation.width) < abs(value.translation.height) {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                     impactFeedback.impactOccurred()
                     withAnimation(.easeOut(duration: 0.3)) {
@@ -412,17 +427,21 @@ struct MapOverlayView: View {
             }
     }
     
-    // MARK: - Map Actions
+    // ✅ HF-36: Enhanced building interaction handlers
     
-    private func handleSingleTap(_ building: FrancoSphere.NamedCoordinate) {
+    private func handleBuildingTap(_ building: FrancoSphere.NamedCoordinate) {
+        // Ignore taps during map panning
+        guard !isPanningMap else { return }
+        
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
+        
         withAnimation(.spring()) {
             showBuildingPreview = MapBuildingPreviewData(building: building)
         }
     }
     
-    private func handleDoubleTap(_ building: FrancoSphere.NamedCoordinate) {
+    private func handleBuildingLongPress(_ building: FrancoSphere.NamedCoordinate) {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         showBuildingPreview = nil
@@ -433,6 +452,8 @@ struct MapOverlayView: View {
         // Also call the optional callback
         onBuildingDetail?(building)
     }
+    
+    // MARK: - Map Setup and Actions
     
     private func setupMapPosition() {
         if let focusBuilding = focusBuilding {
@@ -453,10 +474,6 @@ struct MapOverlayView: View {
             fitMapToBuildings()
         }
     }
-    
-    // BEGIN PATCH(HF-03): Remove fallback mode check method
-    // This method has been removed as warning overlay is no longer needed
-    // END PATCH(HF-03)
     
     private func fitMapToBuildings() {
         guard !datasource.isEmpty else { return }
@@ -489,7 +506,7 @@ struct MapOverlayView: View {
     }
 }
 
-// MARK: - Supporting Types
+// MARK: - Supporting Types (Unchanged)
 
 struct MapBuildingPreviewData: Identifiable, Equatable {
     let id = UUID()
@@ -523,4 +540,5 @@ struct MapOverlayActionButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Building Preview Popover removed - using existing implementation
+// MARK: - Building Preview Popover
+// 🔧 FIXED: Using existing BuildingPreviewPopover from project - removed duplicate
