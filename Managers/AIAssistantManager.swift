@@ -10,6 +10,7 @@
 //  ✅ Worker-specific scenario generation based on actual assignments
 //  ✅ Dynamic message generation with live context
 //  🔧 CRITICAL FIX: Eliminated empty building names and "0 task" issues
+//  ✅ F3: AI Assistant Avatar Image Property
 //
 
 import Foundation
@@ -64,6 +65,25 @@ class AIAssistantManager: ObservableObject {
     // ✅ CRITICAL FIX: Added missing hasPendingScenario property (PRESERVED)
     var hasPendingScenario: Bool {
         hasActiveScenarios
+    }
+    
+    // MARK: - ✅ F3: AI Assistant Avatar Image Property
+    
+    /// ✅ F3: Consistent AI assistant avatar image across the app
+    var avatarImage: UIImage? {
+        // Try multiple asset names for the AI assistant image
+        if let image = UIImage(named: "AIAssistant") {
+            return image
+        } else if let image = UIImage(named: "AIAssistant.png") {
+            return image
+        } else if let image = UIImage(named: "Nova") {
+            return image
+        } else if let image = UIImage(named: "AI_Assistant") {
+            return image
+        } else {
+            // Return nil to use fallback SF Symbol
+            return nil
+        }
     }
     
     // MARK: - Private Properties (PRESERVED)

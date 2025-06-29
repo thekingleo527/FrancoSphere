@@ -146,6 +146,10 @@
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
+		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
+		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
+		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
+		2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560D2E11086300B3F105 /* WorkersInlineList.swift */; };
 		23B117852DFBCC240065F39E /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23B117842DFBCC240065F39E /* OpenMeteoSdk */; };
 		23B117872DFDAF890065F39E /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117862DFDAF890065F39E /* WeatherManager.swift */; };
 		23B117892DFDAFC10065F39E /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117882DFDAFC10065F39E /* WorkerManager.swift */; };
@@ -169,10 +173,6 @@
 		23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */; };
 		23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */; };
 		23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76B2E030EA500013D90 /* RoutinePriority.swift */; };
-		23BBD76E2E05107400013D90 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76D2E05107400013D90 /* WorkersInlineList.swift */; };
-		23BBD7702E051C9700013D90 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76F2E051C9700013D90 /* DSNYTaskGenerator.swift */; };
-		23BBD7722E063D8300013D90 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7712E063D8300013D90 /* WorkerProfileView.swift */; };
-		23BBD7742E063DC900013D90 /* AIScenarioSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7732E063DC900013D90 /* AIScenarioSheet.swift */; };
 		23E1E5702E0F38030036127D /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23E1E56F2E0F38030036127D /* SQLite */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 /* End PBXBuildFile section */
@@ -342,6 +342,10 @@
 		234581232DF78E3D00355F0A /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
+		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
+		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
+		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
+		2399560D2E11086300B3F105 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
 		23B117862DFDAF890065F39E /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
 		23B117882DFDAFC10065F39E /* WorkerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerManager.swift; sourceTree = "<group>"; };
 		23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOverlayView.swift; sourceTree = "<group>"; };
@@ -361,10 +365,6 @@
 		23BBD7652E00A12800013D90 /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
 		23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
 		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
-		23BBD76D2E05107400013D90 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
-		23BBD76F2E051C9700013D90 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
-		23BBD7712E063D8300013D90 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
-		23BBD7732E063DC900013D90 /* AIScenarioSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheet.swift; sourceTree = "<group>"; };
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -440,7 +440,6 @@
 				234580C22DF78E3D00355F0A /* FrancoSphereUITests */,
 				234580DD2DF78E3D00355F0A /* Managers */,
 				234580E92DF78E3D00355F0A /* Models */,
-				234580EA2DF78E3D00355F0A /* Preview Content */,
 				234581012DF78E3D00355F0A /* Resources */,
 				2345810D2DF78E3D00355F0A /* Services */,
 				234581292DF78E3D00355F0A /* Views */,
@@ -523,8 +522,8 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
-				23BBD7732E063DC900013D90 /* AIScenarioSheet.swift */,
-				23BBD76D2E05107400013D90 /* WorkersInlineList.swift */,
+				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
+				239956072E11079F00B3F105 /* AIScenarioSheetView.swift */,
 				23BBD76B2E030EA500013D90 /* RoutinePriority.swift */,
 				23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */,
 				23BBD75F2E0018DD00013D90 /* Building.swift */,
@@ -660,13 +659,6 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		234580EA2DF78E3D00355F0A /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
 		234580FD2DF78E3D00355F0A /* Assets.xassets */ = {
 			isa = PBXGroup;
 			children = (
@@ -713,7 +705,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				23BBD76F2E051C9700013D90 /* DSNYTaskGenerator.swift */,
+				2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */,
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */,
 				234581022DF78E3D00355F0A /* CSVLoader.swift */,
@@ -762,7 +754,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
-				23BBD7712E063D8300013D90 /* WorkerProfileView.swift */,
+				239956092E1107E800B3F105 /* WorkerProfileView.swift */,
 				23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */,
 				23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */,
 				23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */,
@@ -1045,10 +1037,10 @@
 				234581642DF78E3D00355F0A /* GlassDeckContainer.swift in Sources */,
 				234581652DF78E3D00355F0A /* GlassLoadingView.swift in Sources */,
 				234581662DF78E3D00355F0A /* TaskFormView.swift in Sources */,
-				23BBD7742E063DC900013D90 /* AIScenarioSheet.swift in Sources */,
 				23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */,
 				234581672DF78E3D00355F0A /* WeatherTaskTimelineCard.swift in Sources */,
 				234581692DF78E3D00355F0A /* TodaysTasksGlassCard.swift in Sources */,
+				2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */,
 				2345816A2DF78E3D00355F0A /* InventoryManager.swift in Sources */,
 				2345816B2DF78E3D00355F0A /* FrancoSphereModels.swift in Sources */,
 				2345816C2DF78E3D00355F0A /* TodayTasksViewModel.swift in Sources */,
@@ -1062,8 +1054,6 @@
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
 				233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */,
 				234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */,
-				23BBD7722E063D8300013D90 /* WorkerProfileView.swift in Sources */,
-				23BBD7702E051C9700013D90 /* DSNYTaskGenerator.swift in Sources */,
 				234581762DF78E3D00355F0A /* AIAssistantManager.swift in Sources */,
 				234581772DF78E3D00355F0A /* TaskSchedulerService.swift in Sources */,
 				234581782DF78E3D00355F0A /* TaskDetailView.swift in Sources */,
@@ -1079,6 +1069,7 @@
 				23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */,
 				234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */,
 				234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */,
+				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
@@ -1088,6 +1079,7 @@
 				234581892DF78E3D00355F0A /* CSVDataImporter.swift in Sources */,
 				233F94E02DF7B67100901707 /* WorkerDashboardIntegration.swift in Sources */,
 				2345818A2DF78E3D00355F0A /* GlassStatusBadge.swift in Sources */,
+				2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */,
 				23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */,
 				2345818B2DF78E3D00355F0A /* ProfileView.swift in Sources */,
 				233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */,
@@ -1133,12 +1125,12 @@
 				23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */,
 				234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,
-				23BBD76E2E05107400013D90 /* WorkersInlineList.swift in Sources */,
 				23B117932DFE008D0065F39E /* HeroStatusCard.swift in Sources */,
 				234581AB2DF78E3D00355F0A /* BuildingImageDiagnostic.swift in Sources */,
 				234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */,
 				234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */,
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,
+				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
