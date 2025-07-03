@@ -1,18 +1,3 @@
-//
-//  CSVDataImporter.swift
-//  FrancoSphere
-//
-//  🔧 PHASE-2 ENHANCED - Current Worker Roster CSV Import
-//  ✅ PATCH P2-02-V2: Only import assignments for current active workers (no Jose Santos)
-//  ✅ Enhanced worker validation and assignment tracking
-//  ✅ Kevin's expanded duties integration
-//  ✅ Real-world data validation and logging
-//  ✅ HF-09: Enhanced diagnostic logging and Kevin validation
-//  🔧 HF-23: ROUTINE SCHEDULES & DSNY DATA (EXPANDED CSV IMPORT)
-//  🔧 FIX #2: Deterministic IDs to prevent migration duplicates
-//  ✅ PHASE 3B FIX: Worker seeding to resolve "Worker ID 4 not found" error
-//
-
 import Foundation
 import SQLite
 
@@ -48,7 +33,7 @@ class CSVDataImporter: ObservableObject {
     //  🔧 PHASE-2: CURRENT ACTIVE WORKER TASK MATRIX  (José removed, Kevin expanded)
     //  – every entry reviewed with ops on 2025-06-17
     //  – Jose Santos completely removed from all assignments
-    //  – Kevin Dutan expanded from ~28 to ~34 tasks (6+ buildings)
+    //  – Kevin Dutan expanded from ~28 to ~38 tasks (8+ buildings including Rubin Museum)
     //  – Only includes CURRENT ACTIVE WORKERS
     // -----------------------------------------------------------------------------
     private let realWorldTasks: [CSVTaskAssignment] = [
@@ -56,7 +41,7 @@ class CSVDataImporter: ObservableObject {
         // ───────────────────────────────
         //  KEVIN DUTAN (EXPANDED DUTIES)
         //  Mon-Fri 06:00-17:00  (lunch 12-13)
-        //  🔧 PHASE-2: Took Jose's duties + original assignments = 6+ buildings
+        //  🔧 PHASE-2: Took Jose's duties + original assignments = 8+ buildings
         // ───────────────────────────────
 
         // Perry cluster (finish by 09:30)
@@ -83,6 +68,12 @@ class CSVDataImporter: ObservableObject {
         CSVTaskAssignment(building: "138 West 17th Street", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
         CSVTaskAssignment(building: "117 West 17th Street", taskName: "Trash Area Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
         CSVTaskAssignment(building: "112 West 18th Street", taskName: "Trash Area Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+
+        // ✅ CRITICAL: Kevin's Rubin Museum tasks (PHASE 1C COMPLETION)
+        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Museum Entrance Sweep", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Weekly Deep Clean - Trash Area", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 12, daysOfWeek: "Mon,Wed,Fri"),
+        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
 
         // After-lunch satellite cleans (former Jose territories now Kevin's)
         CSVTaskAssignment(building: "29–31 East 20th", taskName: "Hallway / Glass / Sidewalk Sweep & Mop", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 13, endHour: 14, daysOfWeek: "Tue"),
@@ -179,6 +170,7 @@ class CSVDataImporter: ObservableObject {
     //  🔧 HF-23: ROUTINE SCHEDULES & DSNY DATA (EXPANDED CSV IMPORT)
     //  🔧 FIX #2: Deterministic IDs to prevent migration duplicates
     //  Real-world operational schedules based on NYC property management standards
+    //  ✅ UPDATED: Includes Kevin's Rubin Museum routing
     // ──────────────────────────────────────────────────────────────────────────────
 
     private let routineSchedules: [(buildingId: String, name: String, rrule: String, workerId: String, category: String)] = [
@@ -188,6 +180,11 @@ class CSVDataImporter: ObservableObject {
         ("6", "Perry 68 Full Building Clean", "FREQ=WEEKLY;BYDAY=TU,TH;BYHOUR=8", "4", "Cleaning"),
         ("7", "17th Street Trash Area Maintenance", "FREQ=DAILY;BYHOUR=11", "4", "Cleaning"),
         ("9", "DSNY Compliance Check", "FREQ=WEEKLY;BYDAY=SU,TU,TH;BYHOUR=20", "4", "Operations"),
+        
+        // ✅ ADDED: Kevin's Rubin Museum routing (PHASE 1C COMPLETION)
+        ("14", "Rubin Morning Trash Circuit", "FREQ=DAILY;BYHOUR=10", "4", "Sanitation"),
+        ("14", "Rubin Museum Deep Clean", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=10", "4", "Sanitation"),
+        ("14", "Rubin DSNY Operations", "FREQ=WEEKLY;BYDAY=SU,TU,TH;BYHOUR=20", "4", "Operations"),
         
         // Mercedes' morning glass circuit (6:30-11:00 AM shift)
         ("7", "Glass & Lobby Clean", "FREQ=DAILY;BYHOUR=6", "5", "Cleaning"),
@@ -215,8 +212,8 @@ class CSVDataImporter: ObservableObject {
     ]
 
     private let dsnySchedules: [(buildingIds: [String], collectionDays: String, routeId: String)] = [
-        // Manhattan West 17th Street corridor
-        (["7", "9", "11"], "MON,WED,FRI", "MAN-17TH-WEST"),
+        // Manhattan West 17th Street corridor (including Rubin Museum)
+        (["7", "9", "11", "14"], "MON,WED,FRI", "MAN-17TH-WEST"),
         
         // Perry Street / West Village
         (["10", "6"], "MON,WED,FRI", "MAN-PERRY-VILLAGE"),
@@ -227,7 +224,7 @@ class CSVDataImporter: ObservableObject {
         // East side route
         (["1"], "MON,WED,FRI", "MAN-18TH-EAST"),
         
-        // Special collections (Rubin Museum)
+        // Special collections (Rubin Museum enhanced)
         (["14"], "TUE,FRI", "MAN-MUSEUM-SPECIAL"),
     ]
     
@@ -344,6 +341,7 @@ class CSVDataImporter: ObservableObject {
             
             print("📂 Starting PHASE-2 task import with \(realWorldTasks.count) tasks...")
             print("🔧 Current active workers only (Jose Santos removed)")
+            print("✅ PHASE 1C: Kevin's Rubin Museum tasks included")
             currentStatus = "Importing \(realWorldTasks.count) tasks for current active workers..."
             
             // BEGIN PATCH(HF-09): Pre-import Kevin diagnostic
@@ -441,7 +439,13 @@ class CSVDataImporter: ObservableObject {
                         ])
                     
                     importedCount += 1
-                    print("✅ Imported: \(csvTask.taskName) for \(csvTask.building) (\(csvTask.assignedWorker))")
+                    
+                    // Special logging for Kevin's Rubin Museum tasks
+                    if csvTask.assignedWorker == "Kevin Dutan" && csvTask.building.contains("Rubin") {
+                        print("✅ PHASE 1C: Imported Kevin's Rubin Museum task: \(csvTask.taskName)")
+                    } else {
+                        print("✅ Imported: \(csvTask.taskName) for \(csvTask.building) (\(csvTask.assignedWorker))")
+                    }
                     
                     // Log progress every 10 tasks
                     if (index + 1) % 10 == 0 {
@@ -479,6 +483,80 @@ class CSVDataImporter: ObservableObject {
             throw error
         }
     }
+
+    /// PHASE 1C: Enhanced method to get Kevin's tasks including Rubin Museum
+    func getTasksForWorker(_ workerId: String, date: Date) async -> [ContextualTask] {
+        let workerTasks = realWorldTasks.filter { task in
+            // Map worker names to IDs for filtering
+            let workerNameToId = [
+                "Greg Hutson": "1",
+                "Edwin Lema": "2",
+                "Kevin Dutan": "4",
+                "Mercedes Inamagua": "5",
+                "Luis Lopez": "6",
+                "Angel Guirachocha": "7",
+                "Shawn Magloire": "8"
+            ]
+            
+            return workerNameToId[task.assignedWorker] == workerId
+        }
+        
+        // Convert to ContextualTask objects
+        var contextualTasks: [ContextualTask] = []
+        
+        for csvTask in workerTasks {
+            let task = ContextualTask(
+                id: generateExternalId(for: csvTask, index: 0),
+                name: csvTask.taskName,
+                buildingId: getBuildingIdFromName(csvTask.building),
+                buildingName: csvTask.building,
+                category: csvTask.category,
+                startTime: csvTask.startHour != nil ? String(format: "%02d:00", csvTask.startHour!) : nil,
+                endTime: csvTask.endHour != nil ? String(format: "%02d:00", csvTask.endHour!) : nil,
+                recurrence: csvTask.recurrence,
+                skillLevel: csvTask.skillLevel,
+                status: "pending",
+                urgencyLevel: csvTask.skillLevel == "Advanced" ? "high" : "medium",
+                assignedWorkerName: csvTask.assignedWorker
+            )
+            contextualTasks.append(task)
+        }
+        
+        // Special logging for Kevin's Rubin Museum tasks
+        if workerId == "4" {
+            let rubinTasks = contextualTasks.filter { $0.buildingName.contains("Rubin") }
+            print("✅ PHASE 1C: Kevin has \(rubinTasks.count) Rubin Museum tasks")
+        }
+        
+        return contextualTasks
+    }
+    
+    /// Helper method to map building names to IDs
+    private func getBuildingIdFromName(_ buildingName: String) -> String {
+        let buildingMap = [
+            "131 Perry Street": "10",
+            "68 Perry Street": "6",
+            "135–139 West 17th": "12",
+            "136 West 17th": "13",
+            "138 West 17th Street": "16",
+            "117 West 17th Street": "9",
+            "112 West 18th Street": "7",
+            "Rubin Museum (142–148 W 17th)": "14",
+            "29–31 East 20th": "2",
+            "178 Spring": "17",
+            "12 West 18th Street": "1",
+            "104 Franklin": "4",
+            "41 Elizabeth Street": "8",
+            "133 East 15th Street": "15",
+            "Stuyvesant Cove Park": "16",
+            "123 1st Ave": "11",
+            "36 Walker": "18",
+            "115 7th Ave": "19",
+            "FrancoSphere HQ": "20"
+        ]
+        
+        return buildingMap[buildingName] ?? "1"
+    }
     
     /// Enhanced import method for operational schedules with deterministic IDs
     func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
@@ -489,6 +567,7 @@ class CSVDataImporter: ObservableObject {
         var routineCount = 0, dsnyCount = 0
         
         print("🔧 HF-23: Creating routine scheduling tables...")
+        print("✅ PHASE 1C: Including Kevin's Rubin Museum routing")
         
         // Create routine_schedules table (operational schedule tracking)
         try await sqliteManager.execute("""
@@ -527,6 +606,11 @@ class CSVDataImporter: ObservableObject {
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, [id, routine.name, routine.buildingId, routine.rrule, routine.workerId, routine.category, String(weatherDependent)])
             routineCount += 1
+            
+            // Special logging for Kevin's Rubin Museum routing
+            if routine.workerId == "4" && routine.buildingId == "14" {
+                print("✅ PHASE 1C: Added Kevin's Rubin Museum routine: \(routine.name)")
+            }
         }
         
         // Create dsny_schedules table (NYC DSNY compliance tracking)
@@ -564,12 +648,18 @@ class CSVDataImporter: ObservableObject {
                 VALUES (?, ?, ?, ?, 72000, 32400, 21600, 43200)
             """, [id, dsny.routeId, buildingIdsJson, dsny.collectionDays])
             dsnyCount += 1
+            
+            // Special logging for Rubin Museum DSNY routing
+            if dsny.buildingIds.contains("14") {
+                print("✅ PHASE 1C: Rubin Museum included in DSNY route: \(dsny.routeId)")
+            }
         }
         
         print("✅ HF-23: Imported \(routineCount) routine schedules, \(dsnyCount) DSNY routes")
         print("   🗑️ DSNY compliance: Set-out after 8:00 PM, pickup 6:00-12:00 AM")
         print("   🔄 Routine coverage: \(Set(routineSchedules.map { $0.workerId }).count) active workers")
         print("   🔧 FIX #2: Using deterministic IDs to prevent duplicates")
+        print("   ✅ PHASE 1C: Kevin's Rubin Museum fully integrated")
         
         return (routineCount, dsnyCount)
     }
@@ -607,16 +697,20 @@ class CSVDataImporter: ObservableObject {
         for (workerName, tasks) in csvWorkerCounts.sorted(by: { $0.key < $1.key }) {
             let isActive = activeWorkers[workerName] != nil
             let status = isActive ? "✅ ACTIVE" : "❌ INACTIVE/UNKNOWN"
-            print("   '\(workerName)': \(tasks.count) tasks (\(status))")
+            let rubinCount = tasks.filter { $0.building.contains("Rubin") }.count
+            let rubinStatus = rubinCount > 0 ? " (including \(rubinCount) Rubin Museum tasks)" : ""
+            print("   '\(workerName)': \(tasks.count) tasks (\(status))\(rubinStatus)")
         }
         // END PATCH(HF-09)
         
         print("🔗 Extracting assignments from \(assignments.count) CSV tasks for ACTIVE WORKERS ONLY")
+        print("✅ PHASE 1C: Including Kevin's Rubin Museum assignments")
         
         // Extract unique worker-building pairs - ACTIVE WORKERS ONLY
         var workerBuildingPairs: Set<String> = []
         var skippedAssignments = 0
         var kevinAssignmentCount = 0  // Track Kevin specifically
+        var kevinRubinAssignments = 0 // Track Kevin's Rubin Museum specifically
         
         for assignment in assignments {
             guard !assignment.assignedWorker.isEmpty,
@@ -644,6 +738,9 @@ class CSVDataImporter: ObservableObject {
             // Track Kevin's assignments specifically
             if workerId == "4" {
                 kevinAssignmentCount += 1
+                if assignment.building.contains("Rubin") {
+                    kevinRubinAssignments += 1
+                }
             }
             // END PATCH(HF-09)
             
@@ -659,11 +756,12 @@ class CSVDataImporter: ObservableObject {
             }
         }
         
-        // BEGIN PATCH(HF-09): Critical Kevin validation
+        // BEGIN PATCH(HF-09): Critical Kevin validation with Rubin Museum tracking
         print("🔗 HF-09: Assignment Extraction Results:")
         print("   Total pairs extracted: \(workerBuildingPairs.count)")
         print("   Assignments skipped: \(skippedAssignments)")
         print("   Kevin task assignments found: \(kevinAssignmentCount)")
+        print("   ✅ PHASE 1C: Kevin Rubin Museum assignments: \(kevinRubinAssignments)")
         
         // Count Kevin's building assignments specifically
         let kevinBuildingPairs = workerBuildingPairs.filter { $0.hasPrefix("4-") }
@@ -683,6 +781,10 @@ class CSVDataImporter: ObservableObject {
             // Check if Kevin's name appears with different spelling
             let kevinVariants = assignments.filter { $0.assignedWorker.lowercased().contains("kevin") }
             print("   Kevin name variants found: \(Set(kevinVariants.map { $0.assignedWorker }))")
+        } else if kevinRubinAssignments == 0 {
+            print("⚠️ WARNING: Kevin has building assignments but NO Rubin Museum tasks!")
+        } else {
+            print("✅ PHASE 1C: Kevin's Rubin Museum assignments confirmed")
         }
         // END PATCH(HF-09)
         
@@ -705,6 +807,11 @@ class CSVDataImporter: ObservableObject {
                     VALUES (?, ?, ?, 'regular', datetime('now'), 1)
                 """, [workerId, buildingId, workerName])
                 insertedCount += 1
+                
+                // Special logging for Kevin's Rubin Museum assignment
+                if workerId == "4" && buildingId == "14" {
+                    print("✅ PHASE 1C: Kevin assigned to Rubin Museum (ID: 14)")
+                }
             } catch {
                 print("⚠️ Failed to insert assignment \(workerId)->\(buildingId): \(error)")
             }
@@ -721,6 +828,18 @@ class CSVDataImporter: ObservableObject {
             """)
             print("🎯 Kevin verification: \(kevinVerification.count) buildings in database")
             
+            // Check specifically for Rubin Museum assignment
+            let kevinRubinVerification = try await sqliteManager.query("""
+                SELECT building_id FROM worker_building_assignments 
+                WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
+            """)
+            
+            if kevinRubinVerification.count > 0 {
+                print("✅ PHASE 1C: Kevin's Rubin Museum assignment verified in database")
+            } else {
+                print("⚠️ PHASE 1C: Kevin's Rubin Museum assignment NOT found in database")
+            }
+            
             if kevinVerification.count == 0 {
                 print("🚨 EMERGENCY: Kevin still has 0 buildings after import!")
                 await createEmergencyKevinAssignments(sqliteManager)
@@ -734,21 +853,27 @@ class CSVDataImporter: ObservableObject {
         await logWorkerAssignmentSummary(activeWorkers)
     }
     
-    // BEGIN PATCH(HF-09): Emergency Kevin fallback method
+    // BEGIN PATCH(HF-09): Emergency Kevin fallback method (Enhanced for Rubin Museum)
     /// Emergency fallback: Create Kevin's assignments manually if import fails
     private func createEmergencyKevinAssignments(_ manager: SQLiteManager) async {
         print("🆘 HF-09: Creating emergency Kevin assignments...")
+        print("✅ PHASE 1C: Including Rubin Museum in emergency assignments")
         
-        // Kevin's known buildings based on real-world assignments
-        let kevinBuildings = ["3", "6", "7", "9", "11", "16"]
+        // Kevin's known buildings based on real-world assignments (including Rubin Museum)
+        let kevinBuildings = ["10", "6", "12", "13", "16", "2", "17", "14"] // 14 = Rubin Museum
         
         do {
             for buildingId in kevinBuildings {
+                let assignmentType = buildingId == "14" ? "emergency_rubin_museum" : "emergency_fallback"
                 try await manager.execute("""
                     INSERT OR REPLACE INTO worker_building_assignments 
                     (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
-                    VALUES ('4', ?, 'Kevin Dutan', 'emergency_fallback', datetime('now'), 1)
-                """, [buildingId])
+                    VALUES ('4', ?, 'Kevin Dutan', ?, datetime('now'), 1)
+                """, [buildingId, assignmentType])
+                
+                if buildingId == "14" {
+                    print("✅ PHASE 1C: Emergency Rubin Museum assignment created for Kevin")
+                }
             }
             
             print("✅ HF-09: Emergency Kevin assignments created: \(kevinBuildings)")
@@ -779,23 +904,36 @@ class CSVDataImporter: ObservableObject {
                 ORDER BY building_count DESC
             """)
             
-            print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PHASE-2):")
+            print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PHASE-2 + PHASE 1C):")
             for row in results {
                 let name = row["worker_name"] as? String ?? "Unknown"
                 let count = row["building_count"] as? Int64 ?? 0
                 let emoji = getWorkerEmoji(name)
-                print("   \(emoji) \(name): \(count) buildings")
+                let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum" : ""
+                print("   \(emoji) \(name): \(count) buildings \(status)")
             }
             
-            // Verify Kevin's expansion
+            // Verify Kevin's expansion with Rubin Museum
             let kevinCount = results.first(where: {
                 ($0["worker_name"] as? String)?.contains("Kevin") == true
             })?["building_count"] as? Int64 ?? 0
             
-            if kevinCount >= 6 {
-                print("✅ Kevin's expanded duties verified: \(kevinCount) buildings")
+            if kevinCount >= 8 {
+                print("✅ Kevin's expanded duties verified: \(kevinCount) buildings (including Rubin Museum)")
             } else {
-                print("⚠️ WARNING: Kevin should have 6+ buildings, found \(kevinCount)")
+                print("⚠️ WARNING: Kevin should have 8+ buildings, found \(kevinCount)")
+            }
+            
+            // Specific Rubin Museum verification
+            let rubinCheck = try await sqliteManager.query("""
+                SELECT COUNT(*) as count FROM worker_building_assignments 
+                WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
+            """)
+            let rubinCount = rubinCheck.first?["count"] as? Int64 ?? 0
+            if rubinCount > 0 {
+                print("✅ PHASE 1C: Kevin's Rubin Museum assignment verified")
+            } else {
+                print("❌ PHASE 1C: Kevin's Rubin Museum assignment MISSING")
             }
             
         } catch {
@@ -807,7 +945,7 @@ class CSVDataImporter: ObservableObject {
         switch workerName {
         case "Greg Hutson": return "🔧"
         case "Edwin Lema": return "🧹"
-        case "Kevin Dutan": return "⚡"  // Expanded duties
+        case "Kevin Dutan": return "⚡"  // Expanded duties + Rubin Museum
         case "Mercedes Inamagua": return "✨"
         case "Luis Lopez": return "🔨"
         case "Angel Guirachocha": return "🗑️"
@@ -903,13 +1041,17 @@ class CSVDataImporter: ObservableObject {
     
     // MARK: - ⭐ PHASE-2: Enhanced Logging
     
-    /// Log Phase-2 import results with worker roster changes
+    /// Log Phase-2 import results with worker roster changes and Rubin Museum integration
     private func logPhase2ImportResults(imported: Int, errors: [String]) async {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
+        // Count Kevin's tasks specifically
+        let kevinTasks = realWorldTasks.filter { $0.assignedWorker == "Kevin Dutan" }
+        let kevinRubinTasks = kevinTasks.filter { $0.building.contains("Rubin") }
+        
         var logContent = """
-        PHASE-2 CSV Import Log - \(dateFormatter.string(from: Date()))
+        PHASE-2 + PHASE 1C CSV Import Log - \(dateFormatter.string(from: Date()))
         ================================================================
         Total Records: \(realWorldTasks.count)
         Successfully Imported: \(imported)
@@ -917,11 +1059,16 @@ class CSVDataImporter: ObservableObject {
         
         🔧 PHASE-2 CHANGES:
         • Jose Santos: REMOVED from all assignments
-        • Kevin Dutan: EXPANDED to 6+ buildings (took Jose's duties)
+        • Kevin Dutan: EXPANDED to 8+ buildings (took Jose's duties)
         • Current Active Workers: 7 total (Greg, Edwin, Kevin, Mercedes, Luis, Angel, Shawn)
         
+        ✅ PHASE 1C COMPLETION:
+        • Kevin Rubin Museum tasks: \(kevinRubinTasks.count) tasks
+        • Rubin Museum building ID: 14
+        • Kevin's corrected reality: Works at Rubin Museum (NOT 104 Franklin)
+        
         CURRENT ACTIVE WORKER TASK SUMMARY:
-        - Kevin Dutan: \(realWorldTasks.filter { $0.assignedWorker == "Kevin Dutan" }.count) tasks 🔧 EXPANDED
+        - Kevin Dutan: \(kevinTasks.count) tasks 🔧 EXPANDED + Rubin Museum (\(kevinRubinTasks.count) Rubin tasks)
         - Mercedes Inamagua: \(realWorldTasks.filter { $0.assignedWorker == "Mercedes Inamagua" }.count) tasks (06:30-11:00)
         - Edwin Lema: \(realWorldTasks.filter { $0.assignedWorker == "Edwin Lema" }.count) tasks (06:00-15:00)
         - Luis Lopez: \(realWorldTasks.filter { $0.assignedWorker == "Luis Lopez" }.count) tasks (07:00-16:00)
@@ -937,10 +1084,18 @@ class CSVDataImporter: ObservableObject {
         - Inspection: \(realWorldTasks.filter { $0.category == "Inspection" }.count) tasks
         - Repair: \(realWorldTasks.filter { $0.category == "Repair" }.count) tasks
         
+        Kevin's Building Coverage (PHASE 1C):
         """
         
+        let kevinBuildings = Set(kevinTasks.map { $0.building })
+        for building in kevinBuildings.sorted() {
+            let buildingTasks = kevinTasks.filter { $0.building == building }
+            let rubinIndicator = building.contains("Rubin") ? " ✅ RUBIN MUSEUM" : ""
+            logContent += "- \(building): \(buildingTasks.count) tasks\(rubinIndicator)\n"
+        }
+        
         if !errors.isEmpty {
-            logContent += "Errors:\n"
+            logContent += "\nErrors:\n"
             for error in errors {
                 logContent += "- \(error)\n"
             }
@@ -948,11 +1103,11 @@ class CSVDataImporter: ObservableObject {
         
         // Save to documents directory
         if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let logPath = documentsPath.appendingPathComponent("phase2_csv_import_log.txt")
+            let logPath = documentsPath.appendingPathComponent("phase2_phase1c_csv_import_log.txt")
             
             do {
                 try logContent.write(to: logPath, atomically: true, encoding: .utf8)
-                print("📝 Phase-2 import log saved to: \(logPath)")
+                print("📝 Phase-2 + Phase 1C import log saved to: \(logPath)")
             } catch {
                 print("❌ Failed to save import log: \(error)")
             }

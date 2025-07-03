@@ -2,13 +2,14 @@
 //  AIAssistantManager.swift
 //  FrancoSphere
 //
-//  🔧 COMPLETE SYSTEMATIC FIXES per Engineering Brief
-//  ✅ FIX 3.1: Scenario deduplication with deterministic scenarioId
-//  ✅ FIX 3.2: DSNY day reminder system at 19:30 local time
-//  ✅ FIX 3.3: Enhanced modal presentation with detents
-//  ✅ Emergency data pipeline integration with Kevin building fixes
-//  ✅ Intelligent health monitoring and auto-repair capabilities
-//  ✅ All compilation issues resolved
+//  🔧 COMPILATION ERRORS FIXED
+//  ✅ Fixed method name references to match WorkerContextEngine
+//  ✅ Fixed @ObservedObject property wrapper issues
+//  ✅ Corrected method calls to use proper signatures
+//  ✅ All dynamic member access issues resolved
+//  ✅ Scenario deduplication with deterministic scenarioId
+//  ✅ DSNY day reminder system at 19:30 local time
+//  ✅ Enhanced modal presentation with detents
 //
 
 import Foundation
@@ -66,8 +67,8 @@ class AIAssistantManager: ObservableObject {
     // Scenario deduplication tracking
     @Published private var activeScenarioIds: Set<String> = []
     
-    // Real Data Integration
-    @ObservedObject private var contextEngine = WorkerContextEngine.shared
+    // FIXED: Changed from @ObservedObject to direct property
+    private let contextEngine = WorkerContextEngine.shared
     
     // Enhanced monitoring properties
     @Published var isMonitoringActive = false
@@ -408,11 +409,11 @@ class AIAssistantManager: ObservableObject {
         lastHealthCheckTime = Date()
         
         let healthReport = contextEngine.getDataHealthReport()
-        let workerId = healthReport["worker_id"] as? String ?? ""
-        let workerName = healthReport["worker_name"] as? String ?? ""
-        let buildingsAssigned = healthReport["buildings_assigned"] as? Int ?? 0
-        let tasksLoaded = healthReport["tasks_loaded"] as? Int ?? 0
-        let hasError = healthReport["has_error"] as? Bool ?? false
+        let workerId = healthReport["workerId"] as? String ?? ""
+        let workerName = healthReport["workerName"] as? String ?? ""
+        let buildingsAssigned = healthReport["buildingCount"] as? Int ?? 0
+        let tasksLoaded = healthReport["taskCount"] as? Int ?? 0
+        let hasError = healthReport["hasError"] as? Bool ?? false
         
         print("🔍 Intelligent health check: \(workerName) - Buildings: \(buildingsAssigned), Tasks: \(tasksLoaded)")
         
@@ -423,9 +424,7 @@ class AIAssistantManager: ObservableObject {
             hasError: hasError
         )
         
-        await MainActor.run {
-            self.dataHealthStatus = newHealthStatus
-        }
+        self.dataHealthStatus = newHealthStatus
         
         if newHealthStatus == .critical {
             await generateIntelligentDataScenario(
@@ -512,40 +511,38 @@ class AIAssistantManager: ObservableObject {
             buildingId: "4"
         )
         
-        await MainActor.run {
-            self.currentScenario = .buildingArrival
-            self.currentScenarioData = scenarioData
-            self.lastInteractionTime = Date()
-            
-            // Track the scenario
-            let scenarioId = "kevin-critical-\(Date().formatted(.dateTime.year().month().day()))"
-            self.activeScenarioIds.insert(scenarioId)
-            
-            // Add emergency repair suggestions
-            self.aiSuggestions = [
-                AISuggestion(
-                    id: "emergency_kevin_repair",
-                    title: "🔧 Emergency Building Repair",
-                    description: "Restore Kevin's 6+ building assignments",
-                    icon: "building.2.crop.circle.badge.plus",
-                    priority: .high
-                ),
-                AISuggestion(
-                    id: "force_data_refresh",
-                    title: "🔄 Force Data Refresh",
-                    description: "Reload all assignments from CSV source",
-                    icon: "arrow.clockwise.circle.fill",
-                    priority: .high
-                ),
-                AISuggestion(
-                    id: "contact_support",
-                    title: "📞 Contact Support",
-                    description: "Report critical system issue",
-                    icon: "exclamationmark.triangle.fill",
-                    priority: .medium
-                )
-            ]
-        }
+        self.currentScenario = .buildingArrival
+        self.currentScenarioData = scenarioData
+        self.lastInteractionTime = Date()
+        
+        // Track the scenario
+        let scenarioId = "kevin-critical-\(Date().formatted(.dateTime.year().month().day()))"
+        self.activeScenarioIds.insert(scenarioId)
+        
+        // Add emergency repair suggestions
+        self.aiSuggestions = [
+            AISuggestion(
+                id: "emergency_kevin_repair",
+                title: "🔧 Emergency Building Repair",
+                description: "Restore Kevin's 6+ building assignments",
+                icon: "building.2.crop.circle.badge.plus",
+                priority: .high
+            ),
+            AISuggestion(
+                id: "force_data_refresh",
+                title: "🔄 Force Data Refresh",
+                description: "Reload all assignments from CSV source",
+                icon: "arrow.clockwise.circle.fill",
+                priority: .high
+            ),
+            AISuggestion(
+                id: "contact_support",
+                title: "📞 Contact Support",
+                description: "Report critical system issue",
+                icon: "exclamationmark.triangle.fill",
+                priority: .medium
+            )
+        ]
     }
     
     private func generateTaskPipelineFailureScenario(workerName: String, buildingCount: Int) async {
@@ -570,35 +567,33 @@ class AIAssistantManager: ObservableObject {
             actionText: "Auto-Diagnose"
         )
         
-        await MainActor.run {
-            self.currentScenario = .pendingTasks
-            self.currentScenarioData = scenarioData
-            self.lastInteractionTime = Date()
-            
-            self.aiSuggestions = [
-                AISuggestion(
-                    id: "auto_repair_pipeline",
-                    title: "🛠️ Auto-Repair Pipeline",
-                    description: "Automatically diagnose and fix task loading",
-                    icon: "gear.badge.checkmark",
-                    priority: .high
-                ),
-                AISuggestion(
-                    id: "manual_task_creation",
-                    title: "➕ Create Essential Tasks",
-                    description: "Manually add critical daily tasks",
-                    icon: "plus.circle.fill",
-                    priority: .medium
-                ),
-                AISuggestion(
-                    id: "refresh_worker_context",
-                    title: "🔄 Refresh Worker Context",
-                    description: "Reload worker assignments and tasks",
-                    icon: "arrow.clockwise",
-                    priority: .medium
-                )
-            ]
-        }
+        self.currentScenario = .pendingTasks
+        self.currentScenarioData = scenarioData
+        self.lastInteractionTime = Date()
+        
+        self.aiSuggestions = [
+            AISuggestion(
+                id: "auto_repair_pipeline",
+                title: "🛠️ Auto-Repair Pipeline",
+                description: "Automatically diagnose and fix task loading",
+                icon: "gear.badge.checkmark",
+                priority: .high
+            ),
+            AISuggestion(
+                id: "manual_task_creation",
+                title: "➕ Create Essential Tasks",
+                description: "Manually add critical daily tasks",
+                icon: "plus.circle.fill",
+                priority: .medium
+            ),
+            AISuggestion(
+                id: "refresh_worker_context",
+                title: "🔄 Refresh Worker Context",
+                description: "Reload worker assignments and tasks",
+                icon: "arrow.clockwise",
+                priority: .medium
+            )
+        ]
     }
     
     private func generateSystemErrorScenario(workerName: String) async {
@@ -620,13 +615,12 @@ class AIAssistantManager: ObservableObject {
             actionText: "Run Diagnostic"
         )
         
-        await MainActor.run {
-            self.currentScenario = .weatherAlert
-            self.currentScenarioData = scenarioData
-            self.lastInteractionTime = Date()
-        }
+        self.currentScenario = .weatherAlert
+        self.currentScenarioData = scenarioData
+        self.lastInteractionTime = Date()
     }
     
+    // FIXED: Updated to use correct method names from WorkerContextEngine
     func performIntelligentRepair() async -> (success: Bool, message: String) {
         await setProcessingState(true)
         
@@ -636,13 +630,12 @@ class AIAssistantManager: ObservableObject {
             }
         }
         
-        await MainActor.run {
-            self.contextualMessage = "Running intelligent diagnostics..."
-        }
+        self.contextualMessage = "Running intelligent diagnostics..."
         
         print("🔧 AI: Starting intelligent repair system")
         
-        let pipelineRepaired = await contextEngine.validateAndRepairDataPipeline()
+        // FIXED: Use correct method name
+        let pipelineRepaired = await contextEngine.validateAndRepairDataPipelineFixed()
         
         let workerId = contextEngine.getWorkerId()
         if workerId == "4" && contextEngine.getAssignedBuildings().isEmpty {
@@ -650,9 +643,11 @@ class AIAssistantManager: ObservableObject {
             await contextEngine.applyEmergencyBuildingFix()
         }
         
+        // FIXED: Use available methods instead of non-existent forceEmergencyRepair
         if contextEngine.getTodaysTasks().isEmpty || contextEngine.getAssignedBuildings().isEmpty {
             print("🔧 AI: Performing comprehensive data refresh")
-            await contextEngine.forceEmergencyRepair()
+            await contextEngine.forceReloadBuildingTasksFixed()
+            await contextEngine.refreshContext()
         }
         
         let finalBuildingCount = contextEngine.getAssignedBuildings().count
@@ -663,10 +658,8 @@ class AIAssistantManager: ObservableObject {
             ? "✅ Repair successful: \(finalBuildingCount) buildings, \(finalTaskCount) tasks restored"
             : "⚠️ Some issues remain - manual intervention may be required"
         
-        await MainActor.run {
-            self.contextualMessage = message
-            self.dataHealthStatus = success ? .healthy : .warning
-        }
+        self.contextualMessage = message
+        self.dataHealthStatus = success ? .healthy : .warning
         
         return (success, message)
     }
@@ -743,9 +736,7 @@ class AIAssistantManager: ObservableObject {
     }
     
     func setProcessingState(_ processing: Bool) async {
-        await MainActor.run {
-            self.isProcessing = processing
-        }
+        self.isProcessing = processing
         
         if processing {
             processingFailsafeTimer?.invalidate()
@@ -810,11 +801,9 @@ class AIAssistantManager: ObservableObject {
             buildingId: "4"
         )
         
-        await MainActor.run {
-            self.currentScenario = .routineIncomplete
-            self.currentScenarioData = scenarioData
-            self.lastInteractionTime = Date()
-        }
+        self.currentScenario = .routineIncomplete
+        self.currentScenarioData = scenarioData
+        self.lastInteractionTime = Date()
     }
     
     private func generateContextualScenario() async {

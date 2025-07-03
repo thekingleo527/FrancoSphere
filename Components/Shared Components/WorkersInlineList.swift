@@ -3,8 +3,10 @@
 //  WorkersInlineList.swift
 //  FrancoSphere
 //
-//  ✅ Inline list component for displaying workers assigned to buildings
-//  ✅ Compatible with existing WorkerContextEngine and ProfileBadge components
+//  🔧 COMPILATION ERRORS FIXED
+//  ✅ Fixed @StateObject property wrapper issues
+//  ✅ Corrected method name from todayWorkersV2 to todayWorkers
+//  ✅ Compatible with corrected WorkerContextEngine
 //  ✅ Supports interactive worker profiles and status indicators
 //
 
@@ -16,14 +18,15 @@ struct WorkersInlineList: View {
     let showDSNYWorkers: Bool
     let onWorkerTap: ((String) -> Void)?
     
-    @StateObject private var contextEngine = WorkerContextEngine.shared
+    // FIXED: Changed from @StateObject to direct reference to avoid wrapper issues
+    private let contextEngine = WorkerContextEngine.shared
     @State private var workers: [WorkerInfo] = []
     @State private var isLoading = true
     @State private var showAllWorkers = false
     
     // Convenience initializers
-    init(buildingId: String, 
-         maxDisplayCount: Int = 3, 
+    init(buildingId: String,
+         maxDisplayCount: Int = 3,
          showDSNYWorkers: Bool = false,
          onWorkerTap: ((String) -> Void)? = nil) {
         self.buildingId = buildingId
@@ -248,25 +251,45 @@ struct WorkersInlineList: View {
             isLoading = true
         }
         
-        // Get workers assigned to this building
-        let workerNames = contextEngine.todayWorkersV2(for: buildingId, includeDSNY: showDSNYWorkers)
+        // FIXED: Use correct method name and get DetailedWorker objects directly
+        let detailedWorkers = contextEngine.getDetailedWorkers(for: buildingId, includeDSNY: showDSNYWorkers)
         
         var loadedWorkers: [WorkerInfo] = []
         
-        for workerName in workerNames {
-            let workerId = getWorkerIdFromName(workerName)
+        for detailedWorker in detailedWorkers {
             let worker = WorkerInfo(
-                id: workerId,
-                name: workerName,
-                displayName: formatWorkerDisplayName(workerName),
-                role: getWorkerRole(workerId),
-                shift: getWorkerShift(workerId),
-                isActive: isWorkerActive(workerId),
-                isClockedIn: isWorkerClockedIn(workerId),
-                taskCount: getWorkerTaskCount(workerId),
-                isDSNYWorker: isDSNYWorker(workerName)
+                id: detailedWorker.id,
+                name: detailedWorker.name,
+                displayName: formatWorkerDisplayName(detailedWorker.name),
+                role: detailedWorker.role,
+                shift: detailedWorker.shift,
+                isActive: isWorkerActive(detailedWorker.id),
+                isClockedIn: detailedWorker.isOnSite,
+                taskCount: getWorkerTaskCount(detailedWorker.id),
+                isDSNYWorker: isDSNYWorker(detailedWorker.name)
             )
             loadedWorkers.append(worker)
+        }
+        
+        // If no detailed workers found, try the simpler method as fallback
+        if loadedWorkers.isEmpty {
+            let workerNames = contextEngine.todayWorkers(for: buildingId, includeDSNY: showDSNYWorkers)
+            
+            for workerName in workerNames {
+                let workerId = getWorkerIdFromName(workerName)
+                let worker = WorkerInfo(
+                    id: workerId,
+                    name: workerName,
+                    displayName: formatWorkerDisplayName(workerName),
+                    role: getWorkerRole(workerId),
+                    shift: getWorkerShift(workerId),
+                    isActive: isWorkerActive(workerId),
+                    isClockedIn: isWorkerClockedIn(workerId),
+                    taskCount: getWorkerTaskCount(workerId),
+                    isDSNYWorker: isDSNYWorker(workerName)
+                )
+                loadedWorkers.append(worker)
+            }
         }
         
         // Sort workers by priority (clocked in first, then by task count)
@@ -288,14 +311,23 @@ struct WorkersInlineList: View {
     private func getWorkerIdFromName(_ name: String) -> String {
         let workerMap: [String: String] = [
             "Greg Hutson": "1",
-            "Edwin Lema": "2", 
+            "Edwin Lema": "2",
             "Kevin Dutan": "4",
             "Mercedes Inamagua": "5",
             "Luis Lopez": "6",
             "Angel Guirachocha": "7",
             "Shawn Magloire": "8"
         ]
-        return workerMap[name] ?? "unknown"
+        
+        // Handle partial matches for names like "Greg" or "Kevin"
+        for (fullName, id) in workerMap {
+            if fullName.lowercased().contains(name.lowercased()) ||
+               name.lowercased().contains(fullName.components(separatedBy: " ").first?.lowercased() ?? "") {
+                return id
+            }
+        }
+        
+        return "unknown"
     }
     
     private func formatWorkerDisplayName(_ name: String) -> String {
@@ -336,7 +368,7 @@ struct WorkersInlineList: View {
     private func isWorkerClockedIn(_ workerId: String) -> Bool {
         // Check if worker is currently clocked in
         // This would integrate with actual clock-in system
-        return false // Placeholder - would check actual status
+        return contextEngine.isWorkerClockedIn() && contextEngine.getWorkerId() == workerId
     }
     
     private func getWorkerTaskCount(_ workerId: String) -> Int {
@@ -348,7 +380,9 @@ struct WorkersInlineList: View {
     
     private func isDSNYWorker(_ workerName: String) -> Bool {
         let dsnyTasks = contextEngine.getTodaysTasks().filter { task in
-            task.category.lowercased().contains("dsny") &&
+            (task.category.lowercased().contains("dsny") ||
+             task.name.lowercased().contains("trash") ||
+             task.name.lowercased().contains("recycling")) &&
             task.assignedWorkerName?.lowercased().contains(workerName.lowercased()) == true
         }
         return !dsnyTasks.isEmpty
@@ -392,8 +426,8 @@ struct WorkersInlineList_Previews: PreviewProvider {
                 .padding()
             
             WorkersInlineList(
-                buildingId: "5", 
-                maxDisplayCount: 2, 
+                buildingId: "5",
+                maxDisplayCount: 2,
                 showDSNYWorkers: true
             )
             .padding()

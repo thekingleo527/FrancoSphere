@@ -1,4 +1,4 @@
--- CHECKSUM:ac7126b98eca70b88bf4e748627dc46826ba4e234ac9aaa243b705ae066ac314
+-- CHECKSUM:836aed1f0118906844a3fb31f8e4b0b8551ea0b34f3bcde77a160485b760bebd
 -- Auto-generated — DO NOT EDIT.
 BEGIN IMMEDIATE;
 
@@ -83,7 +83,8 @@ INSERT INTO buildings ("id","name","address","imageAssetName","latitude","longit
 ('13','136 West 17th Street','136 W 17th St, New York, NY','136_West_17th_Street','',''),
 ('14','Rubin Museum (142-148 W 17th)','142-148 W 17th St, New York, NY','Rubin_Museum_142_148_West_17th_Street','',''),
 ('15','Stuyvesant Cove Park','20 Waterside Plaza, New York, NY 10010','Stuyvesant_Cove_Park','',''),
-('16','138 West 17th Street','138 W 17th St, New York, NY','138West17thStreet','','');
+('16','138 West 17th Street','138 W 17th St, New York, NY','138West17thStreet','',''),
+('17','178 Spring Street','\"178 Spring St',' New York',' NY\"','178_Spring_Street','[''40.7245'', ''-73.9968'']');
 
 -- End of buildings
 
@@ -98,5 +99,5 @@ INSERT INTO workers ("id","name","email","role","passwordHash","skillLevels","as
 
 -- End of workers
 
-INSERT OR REPLACE INTO app_settings (key,value) VALUES ('csv_checksum','ac7126b98eca70b88bf4e748627dc46826ba4e234ac9aaa243b705ae066ac314');
+INSERT OR REPLACE INTO app_settings (key,value) VALUES ('csv_checksum','836aed1f0118906844a3fb31f8e4b0b8551ea0b34f3bcde77a160485b760bebd');
 COMMIT;
