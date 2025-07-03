@@ -45,15 +45,12 @@
 		234581432DF78E3D00355F0A /* 138West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F82DF78E3D00355F0A /* 138West17thStreet.jpg */; };
 		234581442DF78E3D00355F0A /* 104_Franklin_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F02DF78E3D00355F0A /* 104_Franklin_Street.jpg */; };
 		234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580982DF78E3D00355F0A /* ClockInGlassModal.swift */; };
-		234581462DF78E3D00355F0A /* MaintenanceUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D32DF78E3D00355F0A /* MaintenanceUtility.swift */; };
 		234581482DF78E3D00355F0A /* WorkerContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E62DF78E3D00355F0A /* WorkerContextEngine.swift */; };
 		234581492DF78E3D00355F0A /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809B2DF78E3D00355F0A /* GlassCard.swift */; };
-		2345814A2DF78E3D00355F0A /* SimpleTaskCompletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D62DF78E3D00355F0A /* SimpleTaskCompletionManager.swift */; };
 		2345814C2DF78E3D00355F0A /* PhotoUploaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AF2DF78E3D00355F0A /* PhotoUploaderView.swift */; };
 		2345814D2DF78E3D00355F0A /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A32DF78E3D00355F0A /* GlassTypes.swift */; };
 		2345814F2DF78E3D00355F0A /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D02DF78E3D00355F0A /* HapticManager.swift */; };
 		234581502DF78E3D00355F0A /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581072DF78E3D00355F0A /* RealWorldDataSeeder.swift */; };
-		234581512DF78E3D00355F0A /* WorkerAssignmentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580DB2DF78E3D00355F0A /* WorkerAssignmentManager.swift */; };
 		234581522DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A62DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift */; };
 		234581532DF78E3D00355F0A /* TaskVerification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E22DF78E3D00355F0A /* TaskVerification.swift */; };
 		234581542DF78E3D00355F0A /* BuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581152DF78E3D00355F0A /* BuildingsView.swift */; };
@@ -76,13 +73,11 @@
 		234581662DF78E3D00355F0A /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811A2DF78E3D00355F0A /* TaskFormView.swift */; };
 		234581672DF78E3D00355F0A /* WeatherTaskTimelineCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580952DF78E3D00355F0A /* WeatherTaskTimelineCard.swift */; };
 		234581692DF78E3D00355F0A /* TodaysTasksGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580942DF78E3D00355F0A /* TodaysTasksGlassCard.swift */; };
-		2345816A2DF78E3D00355F0A /* InventoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D12DF78E3D00355F0A /* InventoryManager.swift */; };
 		2345816B2DF78E3D00355F0A /* FrancoSphereModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */; };
 		2345816C2DF78E3D00355F0A /* TodayTasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */; };
 		2345816D2DF78E3D00355F0A /* InitializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AE2DF78E3D00355F0A /* InitializationStatus.swift */; };
 		2345816E2DF78E3D00355F0A /* ClockInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CC2DF78E3D00355F0A /* ClockInManager.swift */; };
 		234581712DF78E3D00355F0A /* BuildingStatsGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580972DF78E3D00355F0A /* BuildingStatsGlassCard.swift */; };
-		234581722DF78E3D00355F0A /* TaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D92DF78E3D00355F0A /* TaskManager.swift */; };
 		234581732DF78E3D00355F0A /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810E2DF78E3D00355F0A /* ForgotPasswordView.swift */; };
 		234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A22DF78E3D00355F0A /* GlassTransitions.swift */; };
 		234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580922DF78E3D00355F0A /* ModelColorsExtensions.swift */; };
@@ -110,7 +105,6 @@
 		2345818E2DF78E3D00355F0A /* WeatherTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B42DF78E3D00355F0A /* WeatherTasksSection.swift */; };
 		2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D22DF78E3D00355F0A /* LocationManager.swift */; };
 		234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift */; };
-		234581912DF78E3D00355F0A /* TaskCompletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D82DF78E3D00355F0A /* TaskCompletionManager.swift */; };
 		234581922DF78E3D00355F0A /* BuildingStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CB2DF78E3D00355F0A /* BuildingStatusManager.swift */; };
 		234581932DF78E3D00355F0A /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A12DF78E3D00355F0A /* GlassTabBar.swift */; };
 		234581942DF78E3D00355F0A /* WorkerSkill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E82DF78E3D00355F0A /* WorkerSkill.swift */; };
@@ -118,7 +112,6 @@
 		234581962DF78E3D00355F0A /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D52DF78E3D00355F0A /* NotificationManager.swift */; };
 		234581972DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */; };
 		234581982DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */; };
-		234581992DF78E3D00355F0A /* WorkerRoutineManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580DC2DF78E3D00355F0A /* WorkerRoutineManager.swift */; };
 		2345819A2DF78E3D00355F0A /* VerificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E32DF78E3D00355F0A /* VerificationRecord.swift */; };
 		2345819B2DF78E3D00355F0A /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811F2DF78E3D00355F0A /* DashboardView.swift */; };
 		2345819C2DF78E3D00355F0A /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580992DF78E3D00355F0A /* GlassButton.swift */; };
@@ -146,6 +139,7 @@
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
+		236106D92E16F2F100463A59 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106D82E16F2F100463A59 /* TaskService.swift */; };
 		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
@@ -163,7 +157,6 @@
 		23B1179D2DFE22A80065F39E /* DatabaseSchemaVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1179C2DFE22A80065F39E /* DatabaseSchemaVerifier.swift */; };
 		23B1179F2DFE23B00065F39E /* SchemaMigrationPatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1179E2DFE23B00065F39E /* SchemaMigrationPatch.swift */; };
 		23B117A12DFE2BC40065F39E /* ContextualTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117A02DFE2BC40065F39E /* ContextualTask.swift */; };
-		23B117A42DFE39E90065F39E /* TaskRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580DA2DF78E3D00355F0A /* TaskRepository.swift */; };
 		23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581232DF78E3D00355F0A /* TaskRequestView.swift */; };
 		23B117A62DFE3A490065F39E /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811E2DF78E3D00355F0A /* DashboardTaskDetailView.swift */; };
 		23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */; };
@@ -266,18 +259,10 @@
 		234580CE2DF78E3D00355F0A /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataInitializationManager.swift; sourceTree = "<group>"; };
 		234580D02DF78E3D00355F0A /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
-		234580D12DF78E3D00355F0A /* InventoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryManager.swift; sourceTree = "<group>"; };
 		234580D22DF78E3D00355F0A /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		234580D32DF78E3D00355F0A /* MaintenanceUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceUtility.swift; sourceTree = "<group>"; };
 		234580D42DF78E3D00355F0A /* NewAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewAuthManager.swift; sourceTree = "<group>"; };
 		234580D52DF78E3D00355F0A /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		234580D62DF78E3D00355F0A /* SimpleTaskCompletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleTaskCompletionManager.swift; sourceTree = "<group>"; };
 		234580D72DF78E3D00355F0A /* SQLiteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteManager.swift; sourceTree = "<group>"; };
-		234580D82DF78E3D00355F0A /* TaskCompletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskCompletionManager.swift; sourceTree = "<group>"; };
-		234580D92DF78E3D00355F0A /* TaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskManager.swift; sourceTree = "<group>"; };
-		234580DA2DF78E3D00355F0A /* TaskRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRepository.swift; sourceTree = "<group>"; };
-		234580DB2DF78E3D00355F0A /* WorkerAssignmentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentManager.swift; sourceTree = "<group>"; };
-		234580DC2DF78E3D00355F0A /* WorkerRoutineManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineManager.swift; sourceTree = "<group>"; };
 		234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
 		234580DF2DF78E3D00355F0A /* InventoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryItem.swift; sourceTree = "<group>"; };
 		234580E02DF78E3D00355F0A /* MaintenanceTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceTask.swift; sourceTree = "<group>"; };
@@ -342,6 +327,7 @@
 		234581232DF78E3D00355F0A /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
+		236106D82E16F2F100463A59 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
 		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
@@ -624,18 +610,10 @@
 				234580CE2DF78E3D00355F0A /* DatabaseManager.swift */,
 				234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */,
 				234580D02DF78E3D00355F0A /* HapticManager.swift */,
-				234580D12DF78E3D00355F0A /* InventoryManager.swift */,
 				234580D22DF78E3D00355F0A /* LocationManager.swift */,
-				234580D32DF78E3D00355F0A /* MaintenanceUtility.swift */,
 				234580D42DF78E3D00355F0A /* NewAuthManager.swift */,
 				234580D52DF78E3D00355F0A /* NotificationManager.swift */,
-				234580D62DF78E3D00355F0A /* SimpleTaskCompletionManager.swift */,
 				234580D72DF78E3D00355F0A /* SQLiteManager.swift */,
-				234580D82DF78E3D00355F0A /* TaskCompletionManager.swift */,
-				234580D92DF78E3D00355F0A /* TaskManager.swift */,
-				234580DA2DF78E3D00355F0A /* TaskRepository.swift */,
-				234580DB2DF78E3D00355F0A /* WorkerAssignmentManager.swift */,
-				234580DC2DF78E3D00355F0A /* WorkerRoutineManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -705,6 +683,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				236106D82E16F2F100463A59 /* TaskService.swift */,
 				2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */,
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */,
@@ -1003,16 +982,13 @@
 				233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
 				23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */,
-				234581462DF78E3D00355F0A /* MaintenanceUtility.swift in Sources */,
 				234581482DF78E3D00355F0A /* WorkerContextEngine.swift in Sources */,
 				234581492DF78E3D00355F0A /* GlassCard.swift in Sources */,
 				23B117A62DFE3A490065F39E /* DashboardTaskDetailView.swift in Sources */,
-				2345814A2DF78E3D00355F0A /* SimpleTaskCompletionManager.swift in Sources */,
 				2345814C2DF78E3D00355F0A /* PhotoUploaderView.swift in Sources */,
 				2345814D2DF78E3D00355F0A /* GlassTypes.swift in Sources */,
 				2345814F2DF78E3D00355F0A /* HapticManager.swift in Sources */,
 				234581502DF78E3D00355F0A /* RealWorldDataSeeder.swift in Sources */,
-				234581512DF78E3D00355F0A /* WorkerAssignmentManager.swift in Sources */,
 				234581522DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift in Sources */,
 				233F94E42DF7B96D00901707 /* WorkerDashboardView.swift in Sources */,
 				234581532DF78E3D00355F0A /* TaskVerification.swift in Sources */,
@@ -1041,14 +1017,13 @@
 				234581672DF78E3D00355F0A /* WeatherTaskTimelineCard.swift in Sources */,
 				234581692DF78E3D00355F0A /* TodaysTasksGlassCard.swift in Sources */,
 				2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */,
-				2345816A2DF78E3D00355F0A /* InventoryManager.swift in Sources */,
 				2345816B2DF78E3D00355F0A /* FrancoSphereModels.swift in Sources */,
 				2345816C2DF78E3D00355F0A /* TodayTasksViewModel.swift in Sources */,
 				2345816D2DF78E3D00355F0A /* InitializationStatus.swift in Sources */,
 				2345816E2DF78E3D00355F0A /* ClockInManager.swift in Sources */,
 				233F94DC2DF7B0EC00901707 /* TrackableScrollView.swift in Sources */,
+				236106D92E16F2F100463A59 /* TaskService.swift in Sources */,
 				234581712DF78E3D00355F0A /* BuildingStatsGlassCard.swift in Sources */,
-				234581722DF78E3D00355F0A /* TaskManager.swift in Sources */,
 				233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */,
 				234581732DF78E3D00355F0A /* ForgotPasswordView.swift in Sources */,
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
@@ -1085,11 +1060,9 @@
 				233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */,
 				23B1179F2DFE23B00065F39E /* SchemaMigrationPatch.swift in Sources */,
 				2345818D2DF78E3D00355F0A /* ImagePicker.swift in Sources */,
-				23B117A42DFE39E90065F39E /* TaskRepository.swift in Sources */,
 				2345818E2DF78E3D00355F0A /* WeatherTasksSection.swift in Sources */,
 				2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
-				234581912DF78E3D00355F0A /* TaskCompletionManager.swift in Sources */,
 				23B1178B2DFDAFE60065F39E /* MapOverlayView.swift in Sources */,
 				234581922DF78E3D00355F0A /* BuildingStatusManager.swift in Sources */,
 				234581932DF78E3D00355F0A /* GlassTabBar.swift in Sources */,
@@ -1100,7 +1073,6 @@
 				234581972DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift in Sources */,
 				23B117872DFDAF890065F39E /* WeatherManager.swift in Sources */,
 				234581982DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift in Sources */,
-				234581992DF78E3D00355F0A /* WorkerRoutineManager.swift in Sources */,
 				2345819A2DF78E3D00355F0A /* VerificationRecord.swift in Sources */,
 				233F94E82DF7E55000901707 /* AdaptiveGlassModifier.swift in Sources */,
 				2345819B2DF78E3D00355F0A /* DashboardView.swift in Sources */,

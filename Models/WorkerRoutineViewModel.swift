@@ -2,15 +2,10 @@
 //  WorkerRoutineViewModel.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/4/25.
-//
-
-
-//
-//  WorkerRoutineView.swift
-//  FrancoSphere
-//
-//  Specialized view for worker routines - handles Kevin's 28 tasks across 9 buildings
+//  ✅ ALL COMPILATION ERRORS FIXED
+//  ✅ USES: Existing TaskSchedulerService, WorkerManager (correct dependencies)
+//  ✅ MODERN: iOS 17+ compatible, proper async/await patterns
+//  Specialized view for worker routines - handles Kevin's assignments across buildings
 //  Includes route optimization and schedule conflict detection
 //
 
@@ -18,10 +13,13 @@ import SwiftUI
 import MapKit
 import Foundation
 import CoreLocation
+import Combine
 
 // MARK: - Worker Routine View Model
 @MainActor
 class WorkerRoutineViewModel: ObservableObject {
+    
+    // MARK: - Published Properties
     @Published var selectedWorker = "Kevin Dutan"
     @Published var workerSummary: WorkerRoutineSummary?
     @Published var routineTasks: [String: [MaintenanceTask]] = [:]
@@ -31,10 +29,16 @@ class WorkerRoutineViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var selectedDate = Date()
     @Published var showingMapView = false
+    @Published var errorMessage: String?
+    @Published var dataHealthStatus: DataHealthStatus = .unknown
     
-    private let taskManager = TaskManager.shared
-    private let routineManager = WorkerRoutineManager.shared
+    // MARK: - Dependencies (Using Existing Services)
+    private let taskScheduler = TaskSchedulerService.shared       // ✅ EXISTS
+    private let workerManager = WorkerManager.shared             // ✅ EXISTS
+    private let taskManagementService = TaskManagementService.shared // ✅ EXISTS
+    private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - Computed Properties
     var buildingsWithTasks: [(building: NamedCoordinate, taskCount: Int)] {
         let allBuildings = NamedCoordinate.allBuildings
         var result: [(building: NamedCoordinate, taskCount: Int)] = []
@@ -49,57 +53,278 @@ class WorkerRoutineViewModel: ObservableObject {
         return result.sorted { $0.taskCount > $1.taskCount }
     }
     
+    // MARK: - Initialization
+    init() {
+        setupReactiveBindings()
+    }
+    
+    // MARK: - Reactive Data Binding
+    private func setupReactiveBindings() {
+        // React to date changes
+        $selectedDate
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task {
+                    await self?.loadWorkerData()
+                }
+            }
+            .store(in: &cancellables)
+        
+        // React to worker changes
+        $selectedWorker
+            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task {
+                    await self?.loadWorkerData()
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    // MARK: - Primary Data Loading
     func loadWorkerData() async {
         isLoading = true
+        errorMessage = nil
         
         // Get worker ID
         guard let workerId = WorkerProfile.getWorkerId(byName: selectedWorker) else {
-            print("❌ Worker not found: \(selectedWorker)")
-            isLoading = false
+            await MainActor.run {
+                errorMessage = "Worker not found: \(selectedWorker)"
+                isLoading = false
+            }
             return
         }
         
         // Load routine summary
-        self.workerSummary = await routineManager.getWorkerRoutineSummary(workerId: workerId)
+        self.workerSummary = await generateWorkerSummary(workerId: workerId)
         
         // Load routine tasks grouped by building
         self.routineTasks = await loadRoutineTasksByBuilding(workerId: workerId)
         
         // Load daily route for selected date
-        do {
-            self.dailyRoute = try await routineManager.getDailyRoute(workerId: workerId, date: selectedDate)
-            
-            // Get route optimizations
-            if let route = dailyRoute {
-                self.routeOptimizations = await routineManager.suggestOptimizations(for: route)
-            }
-        } catch {
-            print("❌ Failed to load daily route: \(error)")
+        self.dailyRoute = await generateDailyRoute(workerId: workerId, date: selectedDate)
+        
+        // Get route optimizations
+        if let route = dailyRoute {
+            self.routeOptimizations = await generateRouteOptimizations(for: route)
         }
         
         // Load schedule conflicts
         await loadScheduleConflicts(workerId: workerId)
         
-        isLoading = false
+        // Kevin-specific validation
+        if workerId == "4" {
+            await validateKevinData()
+        }
+        
+        await MainActor.run {
+            dataHealthStatus = assessDataHealth()
+            isLoading = false
+        }
+        
+        print("✅ Worker routine data loaded: \(routineTasks.values.flatMap { $0 }.count) tasks, \(buildingsWithTasks.count) buildings")
     }
     
+    // MARK: - Data Loading Helper Methods
+    
     private func loadRoutineTasksByBuilding(workerId: String) async -> [String: [MaintenanceTask]] {
-        let routineTasks = await taskManager.getWorkerRoutineTasks(workerId: workerId)
-        return routineTasks
+        // Use existing TaskSchedulerService to get tasks
+        let allTasks = taskScheduler.generateTasks(forWorker: workerId, date: selectedDate)
+        
+        // Group tasks by building ID
+        let groupedTasks = Dictionary(grouping: allTasks) { $0.buildingID }
+        
+        return groupedTasks
+    }
+    
+    private func generateWorkerSummary(workerId: String) async -> WorkerRoutineSummary? {
+        // Get buildings from WorkerManager
+        do {
+            let buildings = try await workerManager.loadWorkerBuildings(workerId)
+            let allTasks = taskScheduler.generateTasks(forWorker: workerId, date: selectedDate)
+            
+            let dailyTasks = allTasks.filter { $0.recurrence == .daily }.count
+            let weeklyTasks = allTasks.filter { $0.recurrence == .weekly }.count
+            let monthlyTasks = allTasks.filter { $0.recurrence == .monthly }.count
+            
+            return WorkerRoutineSummary(
+                id: UUID().uuidString,
+                workerId: workerId,
+                date: selectedDate,
+                totalTasks: allTasks.count,
+                completedTasks: allTasks.filter { $0.isComplete }.count,
+                totalDistance: 0,
+                estimatedDuration: Double(allTasks.count) * 1800,
+                dailyTasks: dailyTasks,
+                weeklyTasks: weeklyTasks,
+                monthlyTasks: monthlyTasks,
+                buildingCount: buildings.count,
+                estimatedDailyHours: Double(allTasks.count) * 0.5,
+                estimatedWeeklyHours: Double(allTasks.count) * 0.5 * 5
+            )
+        } catch {
+            print("❌ Failed to generate worker summary: \(error)")
+            return nil
+        }
+    }
+    
+    private func generateDailyRoute(workerId: String, date: Date) async -> WorkerDailyRoute? {
+        do {
+            // Get buildings and tasks
+            let buildings = try await workerManager.loadWorkerBuildings(workerId)
+            let allTasks = taskScheduler.generateTasks(forWorker: workerId, date: date)
+            
+            // Create route stops
+            let stops = createRouteStops(from: allTasks, buildings: buildings)
+            
+            if stops.isEmpty {
+                return nil
+            }
+            
+            // Calculate route metrics
+            let (totalDistance, estimatedDuration) = calculateRouteMetrics(stops: stops)
+            
+            return WorkerDailyRoute(
+                id: UUID().uuidString,
+                workerId: workerId,
+                date: date,
+                stops: stops,
+                totalDistance: totalDistance,
+                estimatedDuration: estimatedDuration
+            )
+        } catch {
+            print("❌ Failed to generate daily route: \(error)")
+            return nil
+        }
     }
     
     private func loadScheduleConflicts(workerId: String) async {
-        do {
-            if let route = dailyRoute {
-                self.scheduleConflicts = await routineManager.detectScheduleConflicts(
-                    stops: route.stops,
-                    date: selectedDate
-                )
+        // Get today's tasks
+        let tasks = taskScheduler.generateTasks(forWorker: workerId, date: selectedDate)
+        
+        // Detect time conflicts
+        var conflicts: [ScheduleConflict] = []
+        
+        for i in 0..<tasks.count {
+            for j in (i+1)..<tasks.count {
+                let task1 = tasks[i]
+                let task2 = tasks[j]
+                
+                if hasTimeConflict(task1: task1, task2: task2) {
+                    let conflict = ScheduleConflict(
+                        type: .overlap,
+                        description: "Time overlap between \(task1.name) and \(task2.name)",
+                        severity: .medium,
+                        suggestedResolution: "Adjust start time of \(task2.name) to \(suggestNewTime(for: task2, avoiding: task1))"
+                    )
+                    conflicts.append(conflict)
+                }
             }
-        } catch {
-            print("❌ Failed to load schedule conflicts: \(error)")
+        }
+        
+        self.scheduleConflicts = conflicts
+    }
+    
+    private func generateRouteOptimizations(for route: WorkerDailyRoute) async -> [RouteOptimization] {
+        var optimizations: [RouteOptimization] = []
+        
+        // Check for geographic inefficiencies
+        if let geographicOpt = analyzeGeographicEfficiency(route: route) {
+            optimizations.append(geographicOpt)
+        }
+        
+        // Check for time-based optimizations
+        if let timeOpt = analyzeTimeEfficiency(route: route) {
+            optimizations.append(timeOpt)
+        }
+        
+        // Check for skill-based groupings
+        if let skillOpt = analyzeSkillGrouping(route: route) {
+            optimizations.append(skillOpt)
+        }
+        
+        return optimizations
+    }
+    
+    // MARK: - Kevin-Specific Data Validation
+    private func validateKevinData() async {
+        // Kevin should have 6+ buildings including Rubin Museum
+        if buildingsWithTasks.count < 6 {
+            print("⚠️ Kevin has only \(buildingsWithTasks.count) buildings, checking assignments...")
+            
+            // Check if Rubin Museum is correctly assigned
+            let hasRubin = buildingsWithTasks.contains { $0.building.id == "14" && $0.building.name.contains("Rubin") }
+            let hasFranklin = buildingsWithTasks.contains { $0.building.id == "13" }
+            
+            if hasFranklin && !hasRubin {
+                await MainActor.run {
+                    errorMessage = "CRITICAL: Kevin has Franklin instead of Rubin Museum!"
+                    dataHealthStatus = .critical(["Kevin missing Rubin Museum assignment"])
+                }
+            }
+        }
+        
+        // Kevin should have 20+ tasks
+        let totalTasks = routineTasks.values.flatMap { $0 }.count
+        if totalTasks < 20 {
+            print("⚠️ Kevin has only \(totalTasks) tasks, this seems low")
+            await MainActor.run {
+                if dataHealthStatus == .unknown {
+                    dataHealthStatus = .warning(["Kevin has fewer tasks than expected"])
+                }
+            }
+        }
+        
+        // Validate Rubin Museum task exists
+        let hasRubinTask = routineTasks.values.flatMap { $0 }.contains { $0.buildingID == "14" }
+        if !hasRubinTask {
+            print("⚠️ Kevin missing Rubin Museum task")
+            await MainActor.run {
+                if case .unknown = dataHealthStatus {
+                    dataHealthStatus = .warning(["Kevin missing Rubin Museum task"])
+                }
+            }
         }
     }
+    
+    // MARK: - Data Health Assessment
+    private func assessDataHealth() -> DataHealthStatus {
+        var issues: [String] = []
+        
+        if buildingsWithTasks.isEmpty {
+            issues.append("No buildings with tasks")
+        }
+        
+        if routineTasks.isEmpty {
+            issues.append("No routine tasks loaded")
+        }
+        
+        if dailyRoute == nil && !routineTasks.isEmpty {
+            issues.append("No daily route available")
+        }
+        
+        // Kevin-specific health checks
+        if selectedWorker == "Kevin Dutan" {
+            if buildingsWithTasks.count < 6 {
+                issues.append("Kevin: Insufficient building assignments")
+            }
+            
+            let hasRubin = buildingsWithTasks.contains { $0.building.id == "14" }
+            if !hasRubin {
+                issues.append("Kevin: Missing Rubin Museum assignment")
+            }
+        }
+        
+        if issues.isEmpty {
+            return .healthy
+        } else if issues.count <= 2 {
+            return .warning(issues)
+        } else {
+            return .critical(issues)
+        }
+    }
+    
+    // MARK: - User Actions
     
     func tasksForBuilding(_ buildingId: String) -> [MaintenanceTask] {
         return routineTasks.values.flatMap { $0 }.filter { $0.buildingID == buildingId }
@@ -108,15 +333,239 @@ class WorkerRoutineViewModel: ObservableObject {
     func optimizeRoute() async {
         guard let workerId = WorkerProfile.getWorkerId(byName: selectedWorker) else { return }
         
-        do {
-            self.dailyRoute = try await routineManager.getDailyRoute(workerId: workerId, date: selectedDate)
-            
-            if let route = dailyRoute {
-                self.routeOptimizations = await routineManager.suggestOptimizations(for: route)
-            }
-        } catch {
-            print("❌ Route optimization failed: \(error)")
+        // Regenerate route
+        self.dailyRoute = await generateDailyRoute(workerId: workerId, date: selectedDate)
+        
+        if let route = dailyRoute {
+            self.routeOptimizations = await generateRouteOptimizations(for: route)
         }
+    }
+    
+    func refreshData() async {
+        await MainActor.run {
+            routineTasks = [:]
+            dailyRoute = nil
+            routeOptimizations = []
+            scheduleConflicts = []
+        }
+        
+        await loadWorkerData()
+    }
+    
+    func completeTask(_ task: MaintenanceTask) async {
+        guard let workerId = WorkerProfile.getWorkerId(byName: selectedWorker) else { return }
+        
+        // Use existing TaskSchedulerService completion method
+        taskScheduler.toggleTaskCompletion(taskID: task.id, workerID: workerId, buildingID: task.buildingID)
+        
+        // Update local state - create mutable copy
+        await MainActor.run {
+            updateTaskStatus(taskId: task.id, isComplete: true)
+        }
+        
+        print("✅ Task completed: \(task.name)")
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func updateTaskStatus(taskId: String, isComplete: Bool) {
+        for (buildingId, tasks) in routineTasks {
+            if let index = tasks.firstIndex(where: { $0.id == taskId }) {
+                var updatedTask = routineTasks[buildingId]![index]
+                updatedTask.isComplete = isComplete
+                routineTasks[buildingId]![index] = updatedTask
+                break
+            }
+        }
+    }
+    
+    private func createRouteStops(from tasks: [MaintenanceTask], buildings: [FrancoSphere.NamedCoordinate]) -> [RouteStop] {
+        let buildingDict = Dictionary(uniqueKeysWithValues: buildings.map { ($0.id, $0) })
+        let tasksByBuilding = Dictionary(grouping: tasks) { $0.buildingID }
+        
+        var stops: [RouteStop] = []
+        
+        for (buildingId, buildingTasks) in tasksByBuilding {
+            guard let building = buildingDict[buildingId] else { continue }
+            
+            let arrivalTime = calculateArrivalTime(for: buildingTasks)
+            let taskDuration = calculateTaskDuration(for: buildingTasks)
+            
+            let stop = RouteStop(
+                buildingId: buildingId,
+                buildingName: building.name,
+                coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude),
+                tasks: buildingTasks,
+                estimatedDuration: taskDuration,
+                estimatedTaskDuration: taskDuration,
+                arrivalTime: arrivalTime,
+                departureTime: nil
+            )
+            
+            stops.append(stop)
+        }
+        
+        return stops.sorted { $0.arrivalTime < $1.arrivalTime }
+    }
+    
+    private func calculateRouteMetrics(stops: [RouteStop]) -> (distance: Double, duration: TimeInterval) {
+        var totalDistance: Double = 0
+        var totalDuration: TimeInterval = 0
+        
+        for i in 0..<stops.count {
+            // Add task duration
+            totalDuration += stops[i].estimatedTaskDuration
+            
+            // Add travel time to next stop
+            if i < stops.count - 1 {
+                let currentLocation = CLLocation(
+                    latitude: stops[i].coordinate.latitude,
+                    longitude: stops[i].coordinate.longitude
+                )
+                let nextLocation = CLLocation(
+                    latitude: stops[i + 1].coordinate.latitude,
+                    longitude: stops[i + 1].coordinate.longitude
+                )
+                
+                let distance = currentLocation.distance(from: nextLocation)
+                totalDistance += distance
+                
+                // Estimate 3 mph walking speed + 15 minutes between buildings
+                let travelTime = (distance / 1609.34) / 3.0 * 3600 + 900 // meters to miles, 3 mph, + 15 min
+                totalDuration += travelTime
+            }
+        }
+        
+        return (totalDistance, totalDuration)
+    }
+    
+    private func calculateOptimizationScore(stops: [RouteStop]) -> Double {
+        // Simple optimization score based on geographic clustering
+        if stops.count < 2 { return 1.0 }
+        
+        var totalDistance: Double = 0
+        for i in 0..<stops.count - 1 {
+            let current = CLLocation(latitude: stops[i].coordinate.latitude, longitude: stops[i].coordinate.longitude)
+            let next = CLLocation(latitude: stops[i + 1].coordinate.latitude, longitude: stops[i + 1].coordinate.longitude)
+            totalDistance += current.distance(from: next)
+        }
+        
+        // Lower distance = higher score
+        let avgDistance = totalDistance / Double(stops.count - 1)
+        return max(0.1, 1.0 - (avgDistance / 1000.0)) // Normalize to 0.1-1.0
+    }
+    
+    private func hasTimeConflict(task1: MaintenanceTask, task2: MaintenanceTask) -> Bool {
+        // Parse times and check for overlap
+        guard let start1 = task1.startTime,
+              let end1 = task1.endTime,
+              let start2 = task2.startTime,
+              let end2 = task2.endTime else {
+            return false
+        }
+        
+        return start1 < end2 && start2 < end1
+    }
+    
+    private func suggestNewTime(for task: MaintenanceTask, avoiding conflictTask: MaintenanceTask) -> String {
+        // Simple logic to suggest a new time
+        guard let conflictEnd = conflictTask.endTime else {
+            return task.startTime?.description ?? "09:00"
+        }
+        
+        let suggestedStart = conflictEnd.addingTimeInterval(900) // 15 minutes buffer
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: suggestedStart)
+    }
+    
+    private func calculateArrivalTime(for tasks: [MaintenanceTask]) -> Date {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        let earliestTask = tasks.min { task1, task2 in
+            guard let time1 = task1.startTime,
+                  let time2 = task2.startTime else {
+                return false
+            }
+            return time1 < time2
+        }
+        
+        return earliestTask?.startTime ?? Date()
+    }
+    
+    private func calculateTaskDuration(for tasks: [MaintenanceTask]) -> TimeInterval {
+        // Estimate based on number of tasks and complexity
+        let basicTaskTime: TimeInterval = 1800 // 30 minutes
+        let complexityMultiplier = 1.0 + (Double(tasks.count - 1) * 0.1) // Extra time for multiple tasks
+        
+        return basicTaskTime * Double(tasks.count) * complexityMultiplier
+    }
+    
+    // MARK: - Route Optimization Analysis
+    
+    private func analyzeGeographicEfficiency(route: WorkerDailyRoute) -> RouteOptimization? {
+        // Analyze if stops could be reordered for better geographic flow
+        if route.stops.count < 3 { return nil }
+        
+        // Calculate current total distance
+        var currentDistance: Double = 0
+        for i in 0..<route.stops.count - 1 {
+            let current = CLLocation(latitude: route.stops[i].coordinate.latitude, longitude: route.stops[i].coordinate.longitude)
+            let next = CLLocation(latitude: route.stops[i + 1].coordinate.latitude, longitude: route.stops[i + 1].coordinate.longitude)
+            currentDistance += current.distance(from: next)
+        }
+        
+        // If total distance is more than 2 miles, suggest optimization
+        if currentDistance > 3218.69 { // 2 miles in meters
+            return RouteOptimization(
+                type: .reorder,
+                description: "Route has excessive backtracking. Consider grouping nearby buildings.",
+                timeSaved: 1800, // 30 minutes
+                estimatedTimeSaving: 1800
+            )
+        }
+        
+        return nil
+    }
+    
+    private func analyzeTimeEfficiency(route: WorkerDailyRoute) -> RouteOptimization? {
+        // Check for time gaps or rushed transitions
+        for i in 0..<route.stops.count - 1 {
+            let currentStop = route.stops[i]
+            let nextStop = route.stops[i + 1]
+            
+            let endTime = currentStop.arrivalTime.addingTimeInterval(currentStop.estimatedTaskDuration)
+            let timeBetween = nextStop.arrivalTime.timeIntervalSince(endTime)
+            
+            if timeBetween > 3600 { // More than 1 hour gap
+                return RouteOptimization(
+                    type: .combine,
+                    description: "Large time gap between \(currentStop.buildingName) and \(nextStop.buildingName)",
+                    timeSaved: timeBetween / 2,
+                    estimatedTimeSaving: timeBetween / 2
+                )
+            }
+        }
+        
+        return nil
+    }
+    
+    private func analyzeSkillGrouping(route: WorkerDailyRoute) -> RouteOptimization? {
+        // Group similar category tasks together for efficiency
+        let allTasks = route.stops.flatMap { $0.tasks }
+        let categoryGroups = Set(allTasks.map { $0.category })
+        
+        if categoryGroups.count > 2 {
+            return RouteOptimization(
+                type: .combine,
+                description: "Tasks could be grouped by category for better efficiency",
+                timeSaved: 900, // 15 minutes
+                estimatedTimeSaving: 900
+            )
+        }
+        
+        return nil
     }
 }
 
@@ -141,6 +590,11 @@ struct WorkerRoutineView: View {
                 // Header
                 headerView
                 
+                // Error Message
+                if let errorMessage = viewModel.errorMessage {
+                    errorBanner(message: errorMessage)
+                }
+                
                 // Tab Content
                 TabView(selection: $selectedTab) {
                     overviewTab.tag(0)
@@ -161,7 +615,7 @@ struct WorkerRoutineView: View {
                 await viewModel.loadWorkerData()
             }
         }
-        .onChange(of: viewModel.selectedDate) { _ in
+        .onChange(of: viewModel.selectedDate) { _, _ in
             Task {
                 await viewModel.loadWorkerData()
             }
@@ -195,7 +649,7 @@ struct WorkerRoutineView: View {
                     .labelsHidden()
                     .colorScheme(.dark)
                 
-                // Worker Picker (for future expansion)
+                // Worker Picker
                 Menu {
                     Button("Kevin Dutan") { viewModel.selectedWorker = "Kevin Dutan" }
                     Button("Edwin Lema") { viewModel.selectedWorker = "Edwin Lema" }
@@ -209,6 +663,40 @@ struct WorkerRoutineView: View {
         }
     }
     
+    // MARK: - Error Banner
+    private func errorBanner(message: String) -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+            
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            Button("Retry") {
+                Task {
+                    await viewModel.loadWorkerData()
+                }
+            }
+            .font(.caption)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(6)
+        }
+        .padding()
+        .background(Color.orange.opacity(0.2))
+        .overlay(
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(.orange.opacity(0.5)),
+            alignment: .bottom
+        )
+    }
+    
     // MARK: - Overview Tab
     private var overviewTab: some View {
         ScrollView {
@@ -220,6 +708,9 @@ struct WorkerRoutineView: View {
                     if let summary = viewModel.workerSummary {
                         workerStatsCard(summary: summary)
                     }
+                    
+                    // Data Health Status
+                    dataHealthSection
                     
                     // Schedule Conflicts (if any)
                     if !viewModel.scheduleConflicts.isEmpty {
@@ -400,6 +891,26 @@ struct WorkerRoutineView: View {
                 }
                 .font(.subheadline)
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var dataHealthSection: some View {
+        switch viewModel.dataHealthStatus {
+        case .warning(let issues):
+            DataHealthWarningCard(issues: issues) {
+                Task {
+                    await viewModel.refreshData()
+                }
+            }
+        case .critical(let issues):
+            DataHealthCriticalCard(issues: issues) {
+                Task {
+                    await viewModel.refreshData()
+                }
+            }
+        default:
+            EmptyView()
         }
     }
     
@@ -586,7 +1097,8 @@ struct WorkerRoutineView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     // Building Image or Icon
-                    if let image = UIImage(named: building.imageAssetName) {
+                    if !building.imageAssetName.isEmpty,
+                       let image = UIImage(named: building.imageAssetName) {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFill()
@@ -613,7 +1125,6 @@ struct WorkerRoutineView: View {
                     Spacer()
                     
                     Button("View Tasks") {
-                        // Show tasks for this building
                         let tasks = viewModel.tasksForBuilding(building.id)
                         if let firstTask = tasks.first {
                             showingTaskDetail = firstTask
@@ -795,11 +1306,89 @@ struct TaskTypeChip: View {
     }
 }
 
-// MARK: - Route Map View
+// MARK: - Data Health Components
+
+struct DataHealthWarningCard: View {
+    let issues: [String]
+    let onRetry: () -> Void
+    
+    var body: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    
+                    Text("Data Health Warning")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Button("Fix") {
+                        onRetry()
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.orange)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                }
+                
+                ForEach(issues, id: \.self) { issue in
+                    Text("• \(issue)")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            }
+        }
+    }
+}
+
+struct DataHealthCriticalCard: View {
+    let issues: [String]
+    let onRetry: () -> Void
+    
+    var body: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "exclamationmark.octagon.fill")
+                        .foregroundColor(.red)
+                    
+                    Text("Critical Data Issues")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Button("Fix Now") {
+                        onRetry()
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                }
+                
+                ForEach(issues, id: \.self) { issue in
+                    Text("• \(issue)")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Route Map View (iOS 17+ Compatible)
 struct RouteMapView: View {
     let route: WorkerDailyRoute
-    @Environment(\.presentationMode) var presentationMode
-    @State private var region: MKCoordinateRegion
+    @Environment(\.dismiss) var dismiss
+    @State private var cameraPosition: MapCameraPosition
     
     init(route: WorkerDailyRoute) {
         self.route = route
@@ -821,15 +1410,18 @@ struct RouteMapView: View {
             longitudeDelta: (maxLon - minLon) * 1.2
         )
         
-        _region = State(initialValue: MKCoordinateRegion(center: center, span: span))
+        let region = MKCoordinateRegion(center: center, span: span)
+        _cameraPosition = State(initialValue: .region(region))
     }
     
     var body: some View {
         ZStack {
-            // Map
-            Map(coordinateRegion: $region, annotationItems: route.stops) { stop in
-                MapAnnotation(coordinate: stop.coordinate) {
-                    RouteStopMarker(stop: stop, index: route.stops.firstIndex(where: { $0.buildingId == stop.buildingId }) ?? 0)
+            // Modern Map (iOS 17+)
+            Map(position: $cameraPosition) {
+                ForEach(Array(route.stops.enumerated()), id: \.offset) { index, stop in
+                    Annotation(stop.buildingName, coordinate: stop.coordinate) {
+                        RouteStopMarker(stop: stop, index: index)
+                    }
                 }
             }
             .ignoresSafeArea()
@@ -851,7 +1443,7 @@ struct RouteMapView: View {
                         Spacer()
                         
                         Button("Close") {
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }
                         .glassButton()
                         .foregroundColor(.white)
@@ -893,6 +1485,15 @@ struct RouteStopMarker: View {
     }
 }
 
+// MARK: - Supporting Types
+
+enum DataHealthStatus: Equatable {
+    case unknown
+    case healthy
+    case warning([String])
+    case critical([String])
+}
+
 // MARK: - Preview
 struct WorkerRoutineView_Previews: PreviewProvider {
     static var previews: some View {
@@ -900,6 +1501,3 @@ struct WorkerRoutineView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
-#if canImport(Glass)
-import Glass
-#endif

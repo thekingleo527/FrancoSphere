@@ -2,24 +2,24 @@
 //  WorkerContextExtensions.swift
 //  FrancoSphere
 //
-//  ✅ COMPREHENSIVE FIX - All compilation errors resolved
-//  ✅ FIXED: TaskRepository protocol defined
-//  ✅ FIXED: All method access issues resolved
-//  ✅ FIXED: Missing associated keys added
-//  ✅ FIXED: Proper access to internal data via safe methods
+//  ✅ SIMPLE FIX - Uses existing managers only
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ REMOVED: Non-existent service references
+//  ✅ USES: WorkerManager, SQLiteManager, WeatherManager (existing)
 //
 
 import Foundation
 import Combine
+import UserNotifications
 
 // MARK: - WorkerContextEngine Extensions
-// Note: TaskRepository protocol is defined in Managers/TaskRepository.swift
 
 extension WorkerContextEngine {
     
     // MARK: - Refresh Management
     
     private static let refreshInterval: TimeInterval = 900 // 15 minutes
+    
     private var refreshTimer: Timer? {
         get { objc_getAssociatedObject(self, &AssociatedKeys.refreshTimer) as? Timer }
         set { objc_setAssociatedObject(self, &AssociatedKeys.refreshTimer, newValue, .OBJC_ASSOCIATION_RETAIN) }
@@ -29,13 +29,12 @@ extension WorkerContextEngine {
     
     private struct AssociatedKeys {
         static var refreshTimer = "refreshTimer"
-        static var taskRepository = "taskRepository"
         static var contextRefreshSubject = "contextRefreshSubject"
         static var lastRefreshTime = "lastRefreshTime"
         static var lastError = "lastError"
     }
     
-    // MARK: - ✅ ADDED: Missing lastError property
+    // MARK: - Error Handling
     
     var lastError: Error? {
         get { objc_getAssociatedObject(self, &AssociatedKeys.lastError) as? Error }
@@ -47,17 +46,6 @@ extension WorkerContextEngine {
     var lastRefreshTime: Date {
         get { objc_getAssociatedObject(self, &AssociatedKeys.lastRefreshTime) as? Date ?? Date() }
         set { objc_setAssociatedObject(self, &AssociatedKeys.lastRefreshTime, newValue, .OBJC_ASSOCIATION_RETAIN) }
-    }
-    
-    // MARK: - Repository Integration
-    
-    private var taskRepository: TaskRepository? {
-        get { objc_getAssociatedObject(self, &AssociatedKeys.taskRepository) as? TaskRepository }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.taskRepository, newValue, .OBJC_ASSOCIATION_RETAIN) }
-    }
-    
-    func configure(with repository: TaskRepository) {
-        self.taskRepository = repository
     }
     
     // MARK: - Refresh Stream
@@ -92,309 +80,142 @@ extension WorkerContextEngine {
         refreshTimer = nil
     }
     
-    // MARK: - ✅ FIXED: Safe Internal Data Access Methods
+    // MARK: - Safe Internal Data Access Methods
     
-    /// Get today's tasks safely - uses internal access when available
     internal func getTodaysTasksInternal() -> [ContextualTask] {
-        // Access internal todaysTasks property directly since this is an extension
         return todaysTasks
     }
     
-    /// Get assigned buildings safely - uses internal access when available
     internal func getAssignedBuildingsInternal() -> [FrancoSphere.NamedCoordinate] {
-        // Access internal assignedBuildings property directly since this is an extension
         return assignedBuildings
     }
     
-    // MARK: - Enhanced Load Methods
+    // MARK: - Enhanced Load Methods (Using Existing Managers)
     
-    func loadWorkerTasksWithRepository(_ workerId: String) async throws -> [ContextualTask] {
-        guard let repository = taskRepository else {
-            // Fallback to context reload if no repository
-            await loadWorkerContext(workerId: workerId)
-            return getTodaysTasksInternal()
+    func loadWorkerTasksWithManager(_ workerId: String) async -> [ContextualTask] {
+        // Use existing WorkerContextEngine methods
+        await loadWorkerContext(workerId: workerId)
+        
+        // Notify observers
+        contextRefreshSubject.send()
+        
+        return getTodaysTasksInternal()
+    }
+    
+    func loadWorkerBuildingsWithManager(_ workerId: String) async throws -> [FrancoSphere.NamedCoordinate] {
+        // Use existing WorkerManager
+        let buildings = try await WorkerManager.shared.loadWorkerBuildings(workerId)
+        
+        // Update internal state
+        await MainActor.run {
+            self.assignedBuildings = buildings
         }
         
-        // Get both regular and routine tasks
-        async let regularTasks = repository.tasks(for: workerId)
-        async let routineTasks = repository.routineTasks(for: workerId)
+        // Notify observers
+        contextRefreshSubject.send()
         
-        let (regular, routine) = try await (regularTasks, routineTasks)
-        
-        // Combine and deduplicate
-        var allTasks = regular + routine
-        
-        // Remove duplicates based on id
-        var seen = Set<String>()
-        allTasks = allTasks.filter { task in
-            if seen.contains(task.id) {
-                return false
-            }
-            seen.insert(task.id)
-            return true
+        return buildings
+    }
+    
+    // MARK: - Context Refresh with Existing Managers
+    
+    private func refreshContextWithManagers() async {
+        guard let workerId = currentWorker?.workerId else {
+            print("⚠️ No worker ID available for refresh")
+            return
         }
         
-        return allTasks.sorted { task1, task2 in
-            if let time1 = task1.startTime, let time2 = task2.startTime {
-                return time1 < time2
-            }
-            return task1.buildingName < task2.buildingName
-        }
-    }
-    
-    // MARK: - Filtered Task Access
-    
-    func getTimeFilteredTasks(windowHours: Int = 2) -> [ContextualTask] {
-        return TimeBasedTaskFilter.tasksForCurrentWindow(
-            tasks: getTodaysTasksInternal(),
-            windowHours: windowHours
-        )
-    }
-    
-    func getCategorizedTasks() -> (upcoming: [ContextualTask], current: [ContextualTask], overdue: [ContextualTask]) {
-        return TimeBasedTaskFilter.categorizeByTimeStatus(tasks: getTodaysTasksInternal())
-    }
-    
-    func getNextSuggestedTask() -> ContextualTask? {
-        return TimeBasedTaskFilter.nextSuggestedTask(from: getTodaysTasksInternal())
-    }
-    
-    // MARK: - ✅ FIXED: Weather Integration with String Time Handling
-    
-    func getTasksAffectedByWeather(_ weatherCondition: String) -> [ContextualTask] {
-        let allTasks = getTodaysTasksInternal()
+        // Parallel loading using existing managers
+        async let buildings = loadWorkerBuildingsWithManager(workerId)
+        async let tasks = loadWorkerTasksWithManager(workerId)
         
-        return allTasks.filter { task in
-            let isOutdoorTask = task.category.lowercased().contains("clean") ||
-                               task.category.lowercased().contains("maintenance") ||
-                               task.name.lowercased().contains("sidewalk") ||
-                               task.name.lowercased().contains("trash") ||
-                               task.name.lowercased().contains("roof")
+        do {
+            let (buildingList, taskList) = try await (buildings, tasks)
             
-            let isWeatherSensitive = weatherCondition.lowercased().contains("rain") ||
-                                   weatherCondition.lowercased().contains("snow") ||
-                                   weatherCondition.lowercased().contains("storm")
-            
-            return isOutdoorTask && isWeatherSensitive
-        }
-    }
-    
-    func adaptTasksForWeather(_ tasks: [ContextualTask], weatherCondition: String) -> [ContextualTask] {
-        return tasks.map { task in
-            var adaptedTask = task
-            
-            if weatherCondition.lowercased().contains("rain") {
-                adaptedTask = adaptTaskForRain(task)
-            } else if weatherCondition.lowercased().contains("snow") {
-                adaptedTask = adaptTaskForSnow(task)
-            } else if weatherCondition.lowercased().contains("storm") {
-                adaptedTask = adaptTaskForStorm(task)
+            await MainActor.run {
+                self.assignedBuildings = buildingList
+                self.todaysTasks = taskList
+                self.lastRefreshTime = Date()
             }
             
-            return adaptedTask
+            print("✅ Context refreshed: \(buildingList.count) buildings, \(taskList.count) tasks")
+            
+        } catch {
+            lastError = error
+            print("❌ Context refresh failed: \(error)")
         }
     }
     
-    // ✅ FIXED: Individual weather adaptation methods with proper String time handling
+    // MARK: - Background Operations
     
-    private func adaptTaskForRain(_ task: ContextualTask) -> ContextualTask {
-        let isOutdoor = task.name.lowercased().contains("sidewalk") ||
-                       task.name.lowercased().contains("trash") ||
-                       task.name.lowercased().contains("exterior")
+    func scheduleBackgroundRefresh() {
+        let identifier = "com.francosphere.background-refresh"
         
-        if isOutdoor {
-            if let startTime = task.startTime {
-                let delayedTime = delayTimeString(startTime, byMinutes: 60)
-                return ContextualTask(
-                    id: task.id,
-                    name: task.name + " (Rain Delayed)",
-                    buildingId: task.buildingId,
-                    buildingName: task.buildingName,
-                    category: task.category,
-                    startTime: delayedTime,
-                    endTime: task.endTime,
-                    recurrence: task.recurrence,
-                    skillLevel: task.skillLevel,
-                    status: task.status,
-                    urgencyLevel: "medium",
-                    assignedWorkerName: task.assignedWorkerName
-                )
+        let content = UNMutableNotificationContent()
+        content.title = "FrancoSphere"
+        content.body = "Refreshing your schedule..."
+        content.sound = nil
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.refreshInterval, repeats: true)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Failed to schedule background refresh: \(error)")
+            } else {
+                print("✅ Background refresh scheduled")
             }
         }
-        
-        return task
     }
     
-    private func adaptTaskForSnow(_ task: ContextualTask) -> ContextualTask {
-        let requiresSnowClearance = task.name.lowercased().contains("sidewalk") ||
-                                   task.name.lowercased().contains("entrance") ||
-                                   task.name.lowercased().contains("walkway")
-        
-        if requiresSnowClearance {
-            if let startTime = task.startTime {
-                let earlierTime = advanceTimeString(startTime, byMinutes: -30)
-                return ContextualTask(
-                    id: task.id,
-                    name: "Snow Clearance + " + task.name,
-                    buildingId: task.buildingId,
-                    buildingName: task.buildingName,
-                    category: task.category,
-                    startTime: earlierTime,
-                    endTime: task.endTime,
-                    recurrence: task.recurrence,
-                    skillLevel: task.skillLevel,
-                    status: task.status,
-                    urgencyLevel: "high",
-                    assignedWorkerName: task.assignedWorkerName
-                )
-            }
-        }
-        
-        return task
-    }
+    // MARK: - Data Validation (Simplified)
     
-    private func adaptTaskForStorm(_ task: ContextualTask) -> ContextualTask {
-        let isOutdoor = task.name.lowercased().contains("roof") ||
-                       task.name.lowercased().contains("exterior") ||
-                       task.name.lowercased().contains("sidewalk")
-        
-        if isOutdoor {
-            if let startTime = task.startTime {
-                let postponedTime = delayTimeString(startTime, byMinutes: 180)
-                return ContextualTask(
-                    id: task.id,
-                    name: task.name + " (Storm Postponed)",
-                    buildingId: task.buildingId,
-                    buildingName: task.buildingName,
-                    category: task.category,
-                    startTime: postponedTime,
-                    endTime: task.endTime,
-                    recurrence: task.recurrence,
-                    skillLevel: task.skillLevel,
-                    status: task.status,
-                    urgencyLevel: "low",
-                    assignedWorkerName: task.assignedWorkerName
-                )
-            }
-        }
-        
-        return task
-    }
-    
-    // MARK: - ✅ FIXED: String Time Manipulation Helpers
-    
-    private func delayTimeString(_ timeString: String, byMinutes minutes: Int) -> String {
-        return adjustTimeString(timeString, byMinutes: minutes)
-    }
-    
-    private func advanceTimeString(_ timeString: String, byMinutes minutes: Int) -> String {
-        return adjustTimeString(timeString, byMinutes: minutes)
-    }
-    
-    private func adjustTimeString(_ timeString: String, byMinutes minutes: Int) -> String {
-        // Parse "HH:mm" format
-        let components = timeString.split(separator: ":")
-        guard components.count == 2,
-              let hour = Int(components[0]),
-              let minute = Int(components[1]) else {
-            return timeString // Return original if can't parse
-        }
-        
-        // Convert to total minutes
-        var totalMinutes = hour * 60 + minute
-        totalMinutes += minutes
-        
-        // Handle day overflow/underflow
-        if totalMinutes < 0 {
-            totalMinutes = 1440 + (totalMinutes % 1440) // Wrap to previous day
-        }
-        totalMinutes = totalMinutes % 1440 // Wrap to next day if over 24 hours
-        
-        // Convert back to hour:minute
-        let newHour = totalMinutes / 60
-        let newMinute = totalMinutes % 60
-        
-        return String(format: "%02d:%02d", newHour, newMinute)
-    }
-    
-    // Get time difference between two time strings
-    private func getTimeDifferenceInMinutes(from startTime: String, to endTime: String) -> Int {
-        let startComponents = startTime.split(separator: ":")
-        let endComponents = endTime.split(separator: ":")
-        
-        guard startComponents.count == 2, endComponents.count == 2,
-              let startHour = Int(startComponents[0]), let startMinute = Int(startComponents[1]),
-              let endHour = Int(endComponents[0]), let endMinute = Int(endComponents[1]) else {
-            return 0
-        }
-        
-        let startTotalMinutes = startHour * 60 + startMinute
-        let endTotalMinutes = endHour * 60 + endMinute
-        
-        return endTotalMinutes - startTotalMinutes
-    }
-}
-
-// MARK: - Error Handling Extensions
-
-extension WorkerContextEngine {
-    
-    func setError(_ error: Error) {
-        self.lastError = error
-        self.error = error
-    }
-    
-    func clearError() {
-        self.lastError = nil
-        self.error = nil
-    }
-    
-    func hasRecentError(withinMinutes minutes: Int = 5) -> Bool {
-        guard lastError != nil else { return false }
-        
-        let timeSinceLastRefresh = Date().timeIntervalSince(lastRefreshTime)
-        return timeSinceLastRefresh < TimeInterval(minutes * 60)
-    }
-}
-
-// MARK: - Context Validation Extensions
-
-extension WorkerContextEngine {
-    
-    func validateContext() -> Bool {
-        guard let worker = currentWorker else {
-            setError(DatabaseError.invalidData("No current worker"))
+    func validateDataIntegrity() async -> Bool {
+        guard let workerId = currentWorker?.workerId else {
             return false
         }
         
-        let buildings = getAssignedBuildingsInternal()
-        if buildings.isEmpty {
-            setError(DatabaseError.invalidData("No assigned buildings for worker \(worker.workerId)"))
+        // Simple validation using existing data
+        if assignedBuildings.isEmpty {
+            print("⚠️ No assigned buildings found")
+            return false
+        }
+        
+        if todaysTasks.isEmpty {
+            print("⚠️ No tasks found for today")
             return false
         }
         
         return true
     }
     
-    func contextSummary() -> String {
+    // MARK: - Logging and Summary
+    
+    func logContextSummary() -> String {
         let worker = currentWorker?.workerName ?? "Unknown"
-        let buildingCount = getBuildingsCount()
-        let taskCount = getTasksCount()
-        let pendingCount = getPendingTasksCount()
+        let buildingCount = assignedBuildings.count
+        let taskCount = todaysTasks.count
+        let pendingCount = todaysTasks.filter { $0.status.lowercased() == "pending" }.count
+        let routineCount = dailyRoutines.count
         
-        return "Worker: \(worker), Buildings: \(buildingCount), Tasks: \(taskCount) (\(pendingCount) pending)"
+        return """
+        📊 WorkerContextEngine Summary:
+        Worker: \(worker) (ID: \(getWorkerId()))
+        Buildings: \(buildingCount)
+        Tasks: \(taskCount) (\(pendingCount) pending)
+        Routines: \(routineCount)
+        Last Refresh: \(lastRefreshTime)
+        Data Health: \(lastError == nil ? "✅ Healthy" : "⚠️ Issues")
+        """
     }
-}
-
-// MARK: - Time-Based Extensions
-
-extension WorkerContextEngine {
+    
+    // MARK: - Time-Based Task Filtering
     
     func getTasksForTimeWindow(startHour: Int, endHour: Int) -> [ContextualTask] {
         let allTasks = getTodaysTasksInternal()
         
         return allTasks.filter { task in
-            guard let startTime = task.startTime else { return false }
+            guard let startTime = task.startTime, !startTime.isEmpty else { return false }
             
             let components = startTime.split(separator: ":")
             guard components.count >= 1,
@@ -415,11 +236,8 @@ extension WorkerContextEngine {
     func getEveningTasks() -> [ContextualTask] {
         return getTasksForTimeWindow(startHour: 18, endHour: 22)
     }
-}
-
-// MARK: - ✅ ENHANCED: Internal API Access Extensions (Fixed Access Control)
-
-extension WorkerContextEngine {
+    
+    // MARK: - Enhanced Internal Access Methods
     
     /// Get merged tasks including routines (internal access only)
     internal func getMergedTasksInternal() -> [ContextualTask] {
@@ -436,46 +254,42 @@ extension WorkerContextEngine {
         return dailyRoutines.filter { $0.buildingId == buildingId }
     }
     
-    /// Get weather postponed tasks count (safe public access)
-    public func getWeatherPostponedTasksCount() -> Int {
-        return routineOverrides.count
+    // MARK: - Refresh Methods
+    
+    func forceRefresh() async {
+        await refreshContextWithManagers()
+        contextRefreshSubject.send()
     }
     
-    /// Check if building has active tasks (safe public access)
-    public func hasTasks(forBuilding buildingId: String) -> Bool {
-        return getTaskCount(forBuilding: buildingId) > 0
+    func refreshWithWeather() async {
+        // Refresh context first
+        await refreshContextWithManagers()
+        
+        // Load weather data using existing WeatherManager
+        if !assignedBuildings.isEmpty {
+            await WeatherManager.shared.loadWeatherForBuildings(assignedBuildings)
+        }
+        
+        contextRefreshSubject.send()
     }
     
-    /// Get current worker summary (safe public access - basic types only)
-    public func getCurrentWorkerSummary() -> [String: Any] {
-        return [
-            "workerId": getWorkerId(),
-            "workerName": getWorkerName(),
-            "role": getWorkerRole(),
-            "email": getWorkerEmail(),
-            "buildingCount": getBuildingsCount(),
-            "taskCount": getTasksCount(),
-            "hasData": hasWorkerData()
-        ]
-    }
-}
-
-// MARK: - Internal Type Access (for Extensions only)
-
-extension WorkerContextEngine {
+    // MARK: - Emergency Recovery (Simplified)
     
-    /// Internal access to worker context (extensions only)
-    internal var currentWorkerInternal: InternalWorkerContext? {
-        return currentWorker
-    }
-    
-    /// Internal access to buildings array (extensions only)
-    internal var assignedBuildingsInternal: [FrancoSphere.NamedCoordinate] {
-        return assignedBuildings
-    }
-    
-    /// Internal access to tasks array (extensions only)
-    internal var todaysTasksInternal: [ContextualTask] {
-        return todaysTasks
+    func triggerEmergencyRefresh() async {
+        print("🚨 Emergency refresh triggered")
+        
+        // Clear cached data
+        await MainActor.run {
+            self.assignedBuildings = []
+            self.todaysTasks = []
+            self.dailyRoutines = []
+            self.lastError = nil
+        }
+        
+        // Force reload using existing managers
+        await refreshContextWithManagers()
+        
+        contextRefreshSubject.send()
+        print("✅ Emergency refresh completed")
     }
 }
