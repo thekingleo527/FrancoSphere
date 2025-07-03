@@ -35,12 +35,14 @@ enum InitializationError: LocalizedError {
 @MainActor
 class DataInitializationManager: ObservableObject {
     static let shared = DataInitializationManager()
-    
+
     @Published var currentStatus: String = "Ready"
     @Published var initializationProgress: Double = 1.0
     @Published var hasError: Bool = false
     @Published var errorMessage: String = ""
     
+    private let migrationFlagKey = "MigrationsComplete"
+
     private init() {}
     
     // Full implementation that matches DataInitializationView expectations
@@ -48,11 +50,18 @@ class DataInitializationManager: ObservableObject {
         currentStatus = "Starting initialization..."
         initializationProgress = 0.1
         
-        // Simulate initialization steps
-        await simulateStep("Database setup...", progress: 0.2)
-        await simulateStep("Loading buildings...", progress: 0.4)
-        await simulateStep("Loading workers...", progress: 0.6)
-        await simulateStep("Loading tasks...", progress: 0.8)
+        if !UserDefaults.standard.bool(forKey: migrationFlagKey) {
+            currentStatus = "Running migrations..."
+            initializationProgress = 0.2
+            try await SeedDatabase.runMigrations()
+            UserDefaults.standard.set(true, forKey: migrationFlagKey)
+        }
+
+        currentStatus = "Bootstrapping data..."
+        initializationProgress = 0.6
+        DataBootstrapper.runIfNeeded()
+
+        await simulateStep("Finishing up...", progress: 0.9)
         
         currentStatus = "Initialization complete"
         initializationProgress = 1.0
@@ -68,7 +77,7 @@ class DataInitializationManager: ObservableObject {
     private func simulateStep(_ message: String, progress: Double) async {
         currentStatus = message
         initializationProgress = progress
-        try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
     
     // Other expected methods

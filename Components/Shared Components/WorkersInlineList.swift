@@ -1,10 +1,3 @@
-//
-//  WorkersInlineList.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 6/29/25.
-//
-
 
 //
 //  WorkersInlineList.swift

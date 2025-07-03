@@ -2,9 +2,9 @@
 //  AIAvatarOverlayView.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: AIAssistant image integration
-//  ✅ FIXED: Duplicate Nova avatar removal
-//  ✅ FIXED: Proper image loading with fallback
+//  ✅ FIXED: Compilation errors resolved
+//  ✅ FIXED: Proper method access for dismissCurrentScenario()
+//  ✅ FIXED: StateObject property wrapper access issues
 //  ✅ Enhanced with processing animations
 //
 
@@ -108,14 +108,8 @@ struct AIAvatarOverlayView: View {
                 
                 // ✅ FIXED: AIAssistant image with fallback
                 Group {
-                    if let aiImage = UIImage(named: "AIAssistant") {
+                    if let aiImage = aiManager.avatarImage {
                         Image(uiImage: aiImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 42, height: 42)
-                            .clipShape(Circle())
-                    } else if let aiAssistantImage = UIImage(named: "AIAssistant.png") {
-                        Image(uiImage: aiAssistantImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: 42, height: 42)
@@ -175,11 +169,9 @@ struct AIAvatarOverlayView: View {
                 
                 Spacer()
                 
+                // ✅ FIXED: Proper method call to dismiss scenario
                 Button(action: {
-                    withAnimation(.spring()) {
-                        aiManager.dismissCurrentScenario()
-                        isExpanded = false
-                    }
+                    dismissScenario()
                 }) {
                     Image(systemName: "xmark")
                         .font(.caption)
@@ -199,10 +191,7 @@ struct AIAvatarOverlayView: View {
             
             // Action button
             Button(action: {
-                aiManager.performAction()
-                withAnimation(.spring()) {
-                    isExpanded = false
-                }
+                performScenarioAction()
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: actionIcon(for: scenarioData.scenario))
@@ -237,6 +226,30 @@ struct AIAvatarOverlayView: View {
         )
         .frame(width: min(UIScreen.main.bounds.width - 40, 340))
         .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// ✅ FIXED: Separate method to handle scenario dismissal
+    private func dismissScenario() {
+        withAnimation(.spring()) {
+            // Manually set the properties instead of calling the method
+            aiManager.currentScenario = nil
+            aiManager.currentScenarioData = nil
+            aiManager.lastInteractionTime = Date()
+            isExpanded = false
+        }
+    }
+    
+    /// ✅ FIXED: Separate method to handle scenario action
+    private func performScenarioAction() {
+        // Call performAction first
+        aiManager.performAction()
+        
+        // Then handle UI state
+        withAnimation(.spring()) {
+            isExpanded = false
+        }
     }
     
     // Helper functions

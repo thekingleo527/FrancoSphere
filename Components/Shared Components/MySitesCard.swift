@@ -1,76 +1,36 @@
 //
-//  MySitesCard.swift - SIMPLIFIED DATA DISPLAYER
+//  MySitesCard.swift - REAL DATA INTEGRATION FIX
 //  FrancoSphere
 //
-//  🎯 PHASE-3 CRITICAL FIX: Pure data display component
-//  ✅ Uses WorkerContextEngine.shared as single source of truth
-//  ✅ No data loading, CSV imports, or retry logic
-//  ✅ Simple display of real Kevin assignments
-//  🚫 Removed all emergency fixes and complex state management
+//  ✅ 3. MY SITES CARD: Real data integration with WorkerContextEngine counts
+//  ✅ 3. Uses getTaskCount(forBuilding:) and getCompletedTaskCount for each cell
+//  ✅ 3. Removes emergency placeholders, relies on CSV fallback in WorkerDashboardView
+//  ✅ 6. GLASSMORPHISM: Consistent .ultraThinMaterial styling
 //
 
 import SwiftUI
 
 struct MySitesCard: View {
-    // MARK: - Simple Data Source
-    @ObservedObject private var contextEngine = WorkerContextEngine.shared
-    
-    // MARK: - Callback Props
     let onRefresh: () async -> Void
     let onBrowseAll: () -> Void
     let onBuildingTap: (FrancoSphere.NamedCoordinate) -> Void
     
-    // MARK: - Simple Computed Properties
+    // ✅ 3. REAL DATA: Integration with WorkerContextEngine
+    @ObservedObject private var contextEngine = WorkerContextEngine.shared
+    @State private var isLoading = false
     
+    // Get real assigned buildings from context engine
     private var buildings: [FrancoSphere.NamedCoordinate] {
         contextEngine.getAssignedBuildings()
     }
     
-    private var isLoading: Bool {
-        contextEngine.isLoading
-    }
-    
-    private var workerName: String {
-        contextEngine.getWorkerName()
-    }
-    
-    private var workerId: String {
-        contextEngine.getWorkerId()
-    }
-    
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                Image(systemName: "building.2.fill")
-                    .font(.title3)
-                    .foregroundColor(.white)
-                
-                Text("My Sites")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                
-                if buildings.count > 0 {
-                    Text("(\(buildings.count))")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                
-                Spacer()
-                
-                // Simple actions menu
-                Menu {
-                    Button("Refresh", action: { Task { await onRefresh() } })
-                    Button("Browse All", action: onBrowseAll)
-                } label: {
-                    Image(systemName: isLoading ? "arrow.circlepath" : "ellipsis.circle")
-                        .font(.title3)
-                        .foregroundColor(.white.opacity(0.7))
-                        .rotationEffect(.degrees(isLoading ? 360 : 0))
-                        .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isLoading)
-                }
-            }
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with refresh and browse actions
+            header
+            
+            Divider()
+                .background(Color.white.opacity(0.2))
             
             // Content
             if isLoading {
@@ -81,8 +41,52 @@ struct MySitesCard: View {
                 buildingsGridView
             }
         }
+        // ✅ 6. GLASSMORPHISM: Consistent .ultraThinMaterial styling
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+    
+    // MARK: - Header
+    
+    private var header: some View {
+        HStack {
+            Image(systemName: "building.2.fill")
+                .font(.title3)
+                .foregroundColor(.blue)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("My Sites")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                if !buildings.isEmpty {
+                    Text("\(buildings.count) assigned")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+            }
+            
+            Spacer()
+            
+            Menu {
+                Button("Refresh Sites") {
+                    Task {
+                        isLoading = true
+                        await onRefresh()
+                        isLoading = false
+                    }
+                }
+                Button("Browse All Buildings") {
+                    onBrowseAll()
+                }
+            } label: {
+                Image(systemName: isLoading ? "arrow.circlepath" : "ellipsis.circle")
+                    .font(.title3)
+                    .foregroundColor(.white.opacity(0.7))
+                    .rotationEffect(.degrees(isLoading ? 360 : 0))
+                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isLoading)
+            }
+        }
     }
     
     // MARK: - Loading View
@@ -99,8 +103,7 @@ struct MySitesCard: View {
         .frame(maxWidth: .infinity, minHeight: 80)
     }
     
-    // MARK: - Empty State View
-    
+    // ✅ 3. EMPTY STATE: Removed emergency placeholders, clean empty state
     private var emptyStateView: some View {
         VStack(spacing: 12) {
             Image(systemName: "building.2")
@@ -112,13 +115,13 @@ struct MySitesCard: View {
                     .font(.headline)
                     .foregroundColor(.white)
                 
-                Text(getEmptyStateMessage())
+                Text("Contact your supervisor to get building assignments")
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
             
-            // Simple action buttons
+            // Simple action buttons (no emergency fixes)
             HStack(spacing: 12) {
                 Button("Browse All") {
                     onBrowseAll()
@@ -126,7 +129,11 @@ struct MySitesCard: View {
                 .buttonStyle(SecondaryButtonStyle())
                 
                 Button("Refresh") {
-                    Task { await onRefresh() }
+                    Task {
+                        isLoading = true
+                        await onRefresh()
+                        isLoading = false
+                    }
                 }
                 .buttonStyle(PrimaryButtonStyle())
             }
@@ -134,8 +141,7 @@ struct MySitesCard: View {
         .frame(maxWidth: .infinity, minHeight: 120)
     }
     
-    // MARK: - Buildings Grid View
-    
+    // ✅ 3. BUILDINGS GRID: Real data with live task counts
     private var buildingsGridView: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
             ForEach(buildings.prefix(4), id: \.id) { building in
@@ -150,114 +156,118 @@ struct MySitesCard: View {
         }
     }
     
-    // MARK: - More Buildings Card
-    
     private var moreBuildings: some View {
-        Button(action: onBrowseAll) {
+        Button {
+            onBrowseAll()
+        } label: {
             VStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(.blue)
                 
                 Text("+\(buildings.count - 4) more")
                     .font(.caption)
-                    .fontWeight(.medium)
                     .foregroundColor(.white.opacity(0.8))
             }
-            .frame(maxWidth: .infinity, minHeight: 80)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 80)
+            .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
         }
-        .buttonStyle(.plain)
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func getEmptyStateMessage() -> String {
-        if workerId == "4" {
-            return "Kevin should have 6+ buildings assigned (expanded duties). Try refreshing."
-        } else if !workerName.isEmpty {
-            return "\(workerName) hasn't been assigned to any buildings yet."
-        } else {
-            return "You haven't been assigned to any buildings yet."
-        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - Building Site Card
-
+// ✅ 3. BUILDING SITE CARD: Real data integration with live task counts
 struct BuildingSiteCard: View {
     let building: FrancoSphere.NamedCoordinate
     let onTap: () -> Void
     
+    // ✅ 3. REAL DATA: Live task counts from WorkerContextEngine
     @ObservedObject private var contextEngine = WorkerContextEngine.shared
     
-    private var taskCount: Int {
+    private var totalTasks: Int {
         contextEngine.getTaskCount(forBuilding: building.id)
     }
     
-    private var completedCount: Int {
+    private var completedTasks: Int {
         contextEngine.getCompletedTaskCount(forBuilding: building.id)
+    }
+    
+    private var openTasks: Int {
+        totalTasks - completedTasks
     }
     
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 8) {
-                // Building image or icon
-                AsyncImage(url: URL(string: "building_\(building.imageAssetName)")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Image(systemName: "building.2.fill")
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                .frame(width: 40, height: 40)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                // Building image
+                buildingImage
                 
-                // Building name
-                Text(building.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                
-                // Task count
-                if taskCount > 0 {
-                    Text("\(completedCount)/\(taskCount)")
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.7))
+                // Building info
+                VStack(spacing: 4) {
+                    Text(building.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                    
+                    // ✅ 3. LIVE TASK COUNTS: Real data from WorkerContextEngine
+                    taskCountBadge
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 80)
+            .frame(maxWidth: .infinity)
             .padding(8)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var buildingImage: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.gray.opacity(0.3))
+            .frame(height: 50)
+            .overlay(
+                Image(building.imageAssetName)
+                    .resizable()
+                    .scaledToFill()
+                    .clipped()
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+    
+    // ✅ 3. TASK COUNT BADGE: Live counts from WorkerContextEngine
+    private var taskCountBadge: some View {
+        HStack(spacing: 4) {
+            if totalTasks > 0 {
+                // Show completion ratio
+                Text("\(completedTasks)/\(totalTasks)")
+                    .font(.caption2)
+                    .foregroundColor(completedTasks == totalTasks ? .green : .white.opacity(0.6))
+                
+                if openTasks > 0 {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 6, height: 6)
+                }
+            } else {
+                Text("No tasks")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+        }
     }
 }
 
-// MARK: - Button Styles
+// MARK: - Supporting Button Styles
 
 struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline)
-            .fontWeight(.medium)
+            .font(.caption)
             .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(Color.blue)
             .cornerRadius(8)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
@@ -267,12 +277,11 @@ struct PrimaryButtonStyle: ButtonStyle {
 struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline)
-            .fontWeight(.medium)
-            .foregroundColor(.white.opacity(0.8))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.white.opacity(0.1))
+            .font(.caption)
+            .foregroundColor(.blue)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.blue.opacity(0.1))
             .cornerRadius(8)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
     }

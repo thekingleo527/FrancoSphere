@@ -133,7 +133,7 @@ actor BuildingRepository {
             .replacingOccurrences(of: "–", with: "-")
             .replacingOccurrences(of: "—", with: "-")
             .trimmingCharacters(in: .whitespaces)
-        
+
         return buildings.first {
             $0.name.compare(cleanedName, options: .caseInsensitive) == .orderedSame ||
             $0.name.compare(name, options: .caseInsensitive) == .orderedSame

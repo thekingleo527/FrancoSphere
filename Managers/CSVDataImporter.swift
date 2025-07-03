@@ -844,62 +844,13 @@ class CSVDataImporter: ObservableObject {
         throw CSVError.workerNotFound(workerName)
     }
     
-    /// Enhanced building mapping
+
+    /// Enhanced building mapping using BuildingRepository
     private func mapBuildingNameToId(_ buildingName: String) async throws -> Int {
-        guard let sqliteManager = sqliteManager else {
-            throw CSVError.noSQLiteManager
+        if let idStr = await BuildingRepository.shared.id(forName: buildingName),
+           let id = Int(idStr) {
+            return id
         }
-        
-        // Clean the building name
-        let cleanedName = buildingName
-            .replacingOccurrences(of: "–", with: "-")
-            .replacingOccurrences(of: "—", with: "-")
-            .trimmingCharacters(in: .whitespaces)
-        
-        // First check name mappings table
-        let mappingResults = try await sqliteManager.query("""
-            SELECT building_id FROM building_name_mappings 
-            WHERE csv_name = ? OR csv_name = ? OR canonical_name = ?
-            """, [buildingName, cleanedName, cleanedName])
-        
-        if let mapping = mappingResults.first,
-           let buildingIdStr = mapping["building_id"] as? String,
-           let buildingId = Int(buildingIdStr) {
-            return buildingId
-        }
-        
-        // Fallback: direct building name match
-        let buildingResults = try await sqliteManager.query("""
-            SELECT id FROM buildings WHERE name = ? OR name = ?
-            """, [buildingName, cleanedName])
-        
-        if let building = buildingResults.first {
-            if let buildingId = building["id"] as? Int64 {
-                return Int(buildingId)
-            } else if let buildingId = building["id"] as? Int {
-                return buildingId
-            }
-        }
-        
-        // Special case for FrancoSphere HQ
-        if buildingName == "FrancoSphere HQ" {
-            return 1 // Default to first building
-        }
-        
-        // Last resort: partial match
-        let partialResults = try await sqliteManager.query("""
-            SELECT id, name FROM buildings WHERE name LIKE ?
-            """, ["%\(cleanedName.prefix(10))%"])
-        
-        if let building = partialResults.first {
-            if let buildingId = building["id"] as? Int64 {
-                print("⚠️ Partial match: '\(buildingName)' → '\(building["name"] ?? "")'")
-                return Int(buildingId)
-            } else if let buildingId = building["id"] as? Int {
-                return buildingId
-            }
-        }
-        
         throw CSVError.buildingNotFound(buildingName)
     }
     
