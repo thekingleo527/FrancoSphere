@@ -201,13 +201,13 @@ struct BuildingDetailView: View {
     }
     
     private func loadCSVRoutinesForBuilding() async {
-        // ✅ Get routines from CSV data using existing CSVDataImporter methods
+        // ✅ Get routines from CSV data using existing OperationalDataManager methods
         let buildingName = getBuildingNameForCSV(building.id)
         
         print("🏢 Loading CSV routines for building \(building.id) (\(buildingName))")
         
         // ✅ FIXED: Use public method instead of private property
-        let csvImporter = CSVDataImporter.shared
+        let csvImporter = OperationalDataManager.shared
         
         // Get tasks for all workers and filter for this building
         let allWorkerIds = ["1", "2", "3", "4", "5", "6", "7"] // Known worker IDs

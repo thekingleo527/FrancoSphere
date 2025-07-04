@@ -1303,8 +1303,8 @@ public class WorkerContextEngine: ObservableObject {
         self.todaysTasks = []
         self.dailyRoutines = []
         
-        // FIXED: Use existing CSVDataImporter method
-        let _ = try? await CSVDataImporter.shared.importRealWorldTasks()
+        // FIXED: Use existing OperationalDataManager method
+        let _ = try? await OperationalDataManager.shared.importRealWorldTasks()
         
         // Reload context
         await refreshContext()

@@ -21,7 +21,7 @@ class WorkerDashboardIntegration: ObservableObject {
     private let taskManagementService = TaskManagementService.shared  // FIXED: Use existing service
     private let workerManager = WorkerManager.shared                  // FIXED: Use existing manager
     private let contextEngine = WorkerContextEngine.shared
-    private let csvImporter = CSVDataImporter.shared
+    private let csvImporter = OperationalDataManager.shared
     
     // MARK: - Published Properties
     @Published var dashboardData: DashboardData?
@@ -113,7 +113,7 @@ class WorkerDashboardIntegration: ObservableObject {
             print("🔄 Importing CSV data...")
             csvImportProgress = 0.1
             
-            // Use CSVDataImporter to load real tasks
+            // Use OperationalDataManager to load real tasks
             let (imported, errors) = try await csvImporter.importRealWorldTasks()
             
             csvImportProgress = 1.0

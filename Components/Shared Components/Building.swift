@@ -4,7 +4,7 @@
 //  FrancoSphere
 //
 //  ✅ PHASE-2 COMPILATION FIX - Uses ONLY real-world building data
-//  ✅ No mock data - references actual buildings from CSVDataImporter
+//  ✅ No mock data - references actual buildings from OperationalDataManager
 //  ✅ Uses existing FrancoSphere.NamedCoordinate as canonical building model
 //
 
@@ -29,9 +29,9 @@ extension FrancoSphere.NamedCoordinate {
         return String(name.prefix(8))
     }
     
-    /// Building address from real CSVDataImporter dataset (no redeclaration)
+    /// Building address from real OperationalDataManager dataset (no redeclaration)
     var fullAddress: String {
-        // Extract address from actual building names in CSVDataImporter
+        // Extract address from actual building names in OperationalDataManager
         switch name {
         case "131 Perry Street": return "131 Perry Street, New York, NY"
         case "68 Perry Street": return "68 Perry Street, New York, NY"

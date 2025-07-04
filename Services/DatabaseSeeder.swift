@@ -92,7 +92,7 @@ class DatabaseSeeder {
     /// Imports tasks from CSV (if you still need this)
     func importCSVTasks() async -> (success: Bool, message: String) {
         do {
-            let (count, errors) = try await CSVDataImporter.shared.importRealWorldTasks()
+            let (count, errors) = try await OperationalDataManager.shared.importRealWorldTasks()
             
             let message = """
             ✅ Imported \(count) tasks

@@ -25,10 +25,8 @@
 		2345812F2DF78E3D00355F0A /* Rubin_Museum_142_148_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580FB2DF78E3D00355F0A /* Rubin_Museum_142_148_West_17th_Street.jpg */; };
 		234581302DF78E3D00355F0A /* Stuyvesant_Cove_Park.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580FC2DF78E3D00355F0A /* Stuyvesant_Cove_Park.jpg */; };
 		234581312DF78E3D00355F0A /* 117_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F22DF78E3D00355F0A /* 117_West_17th_Street.jpg */; };
-		234581322DF78E3D00355F0A /* workers.csv in Resources */ = {isa = PBXBuildFile; fileRef = 234580BB2DF78E3D00355F0A /* workers.csv */; };
 		234581332DF78E3D00355F0A /* 68_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580EF2DF78E3D00355F0A /* 68_Perry_Street.jpg */; };
 		234581342DF78E3D00355F0A /* 135West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F62DF78E3D00355F0A /* 135West17thStreet.jpg */; };
-		234581352DF78E3D00355F0A /* buildings.csv in Resources */ = {isa = PBXBuildFile; fileRef = 234580BA2DF78E3D00355F0A /* buildings.csv */; };
 		234581362DF78E3D00355F0A /* 12_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580EB2DF78E3D00355F0A /* 12_West_18th_Street.jpg */; };
 		234581372DF78E3D00355F0A /* 133_East_15th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F52DF78E3D00355F0A /* 133_East_15th_Street.jpg */; };
 		234581382DF78E3D00355F0A /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 234580FA2DF78E3D00355F0A /* AppIcon.png */; };
@@ -40,7 +38,6 @@
 		2345813E2DF78E3D00355F0A /* csv2sql.sh in Resources */ = {isa = PBXBuildFile; fileRef = 234580882DF78E3D00355F0A /* csv2sql.sh */; };
 		2345813F2DF78E3D00355F0A /* 131_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F42DF78E3D00355F0A /* 131_Perry_Street.jpg */; };
 		234581402DF78E3D00355F0A /* FrancoSphereSeed.sql in Resources */ = {isa = PBXBuildFile; fileRef = 234581002DF78E3D00355F0A /* FrancoSphereSeed.sql */; };
-		234581412DF78E3D00355F0A /* AllTasks.csv in Resources */ = {isa = PBXBuildFile; fileRef = 234580B92DF78E3D00355F0A /* AllTasks.csv */; };
 		234581422DF78E3D00355F0A /* 36_Walker_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580ED2DF78E3D00355F0A /* 36_Walker_Street.jpg */; };
 		234581432DF78E3D00355F0A /* 138West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F82DF78E3D00355F0A /* 138West17thStreet.jpg */; };
 		234581442DF78E3D00355F0A /* 104_Franklin_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F02DF78E3D00355F0A /* 104_Franklin_Street.jpg */; };
@@ -98,7 +95,7 @@
 		234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B02DF78E3D00355F0A /* RouteStatItem.swift */; };
 		234581872DF78E3D00355F0A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810F2DF78E3D00355F0A /* LoginView.swift */; };
 		234581882DF78E3D00355F0A /* WorkerContextExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C42DF78E3D00355F0A /* WorkerContextExtensions.swift */; };
-		234581892DF78E3D00355F0A /* CSVDataImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CD2DF78E3D00355F0A /* CSVDataImporter.swift */; };
+		234581892DF78E3D00355F0A /* OperationalDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CD2DF78E3D00355F0A /* OperationalDataManager.swift */; };
 		2345818A2DF78E3D00355F0A /* GlassStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A02DF78E3D00355F0A /* GlassStatusBadge.swift */; };
 		2345818B2DF78E3D00355F0A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581212DF78E3D00355F0A /* ProfileView.swift */; };
 		2345818D2DF78E3D00355F0A /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AD2DF78E3D00355F0A /* ImagePicker.swift */; };
@@ -140,6 +137,7 @@
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
 		236106D92E16F2F100463A59 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106D82E16F2F100463A59 /* TaskService.swift */; };
+		236106E42E176B5000463A59 /* ContextualTaskExtensions.swift in Resources */ = {isa = PBXBuildFile; fileRef = 236106E32E176B5000463A59 /* ContextualTaskExtensions.swift */; };
 		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
@@ -240,9 +238,6 @@
 		234580B42DF78E3D00355F0A /* WeatherTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTasksSection.swift; sourceTree = "<group>"; };
 		234580B52DF78E3D00355F0A /* WeatherViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewModifier.swift; sourceTree = "<group>"; };
 		234580B82DF78E3D00355F0A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		234580B92DF78E3D00355F0A /* AllTasks.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = AllTasks.csv; sourceTree = "<group>"; };
-		234580BA2DF78E3D00355F0A /* buildings.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = buildings.csv; sourceTree = "<group>"; };
-		234580BB2DF78E3D00355F0A /* workers.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = workers.csv; sourceTree = "<group>"; };
 		234580BD2DF78E3D00355F0A /* FrancoSphere.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FrancoSphere.xcodeproj; sourceTree = "<group>"; };
 		234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereTests.swift; sourceTree = "<group>"; };
 		234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereUITests.swift; sourceTree = "<group>"; };
@@ -255,7 +250,7 @@
 		234580CA2DF78E3D00355F0A /* BuildingRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingRepository.swift; sourceTree = "<group>"; };
 		234580CB2DF78E3D00355F0A /* BuildingStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingStatusManager.swift; sourceTree = "<group>"; };
 		234580CC2DF78E3D00355F0A /* ClockInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInManager.swift; sourceTree = "<group>"; };
-		234580CD2DF78E3D00355F0A /* CSVDataImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVDataImporter.swift; sourceTree = "<group>"; };
+		234580CD2DF78E3D00355F0A /* OperationalDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationalDataManager.swift; sourceTree = "<group>"; };
 		234580CE2DF78E3D00355F0A /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataInitializationManager.swift; sourceTree = "<group>"; };
 		234580D02DF78E3D00355F0A /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
@@ -328,6 +323,7 @@
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
 		236106D82E16F2F100463A59 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
+		236106E32E176B5000463A59 /* ContextualTaskExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskExtensions.swift; sourceTree = "<group>"; };
 		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
@@ -552,9 +548,6 @@
 			children = (
 				23B1179E2DFE23B00065F39E /* SchemaMigrationPatch.swift */,
 				23B1179C2DFE22A80065F39E /* DatabaseSchemaVerifier.swift */,
-				234580B92DF78E3D00355F0A /* AllTasks.csv */,
-				234580BA2DF78E3D00355F0A /* buildings.csv */,
-				234580BB2DF78E3D00355F0A /* workers.csv */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -579,6 +572,7 @@
 		234580C52DF78E3D00355F0A /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				236106E32E176B5000463A59 /* ContextualTaskExtensions.swift */,
 				234580C32DF78E3D00355F0A /* V012.swift */,
 				234580C42DF78E3D00355F0A /* WorkerContextExtensions.swift */,
 			);
@@ -606,7 +600,7 @@
 				234580CA2DF78E3D00355F0A /* BuildingRepository.swift */,
 				234580CB2DF78E3D00355F0A /* BuildingStatusManager.swift */,
 				234580CC2DF78E3D00355F0A /* ClockInManager.swift */,
-				234580CD2DF78E3D00355F0A /* CSVDataImporter.swift */,
+				234580CD2DF78E3D00355F0A /* OperationalDataManager.swift */,
 				234580CE2DF78E3D00355F0A /* DatabaseManager.swift */,
 				234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */,
 				234580D02DF78E3D00355F0A /* HapticManager.swift */,
@@ -910,22 +904,20 @@
 				2345812F2DF78E3D00355F0A /* Rubin_Museum_142_148_West_17th_Street.jpg in Resources */,
 				234581302DF78E3D00355F0A /* Stuyvesant_Cove_Park.jpg in Resources */,
 				234581312DF78E3D00355F0A /* 117_West_17th_Street.jpg in Resources */,
-				234581322DF78E3D00355F0A /* workers.csv in Resources */,
 				234581332DF78E3D00355F0A /* 68_Perry_Street.jpg in Resources */,
 				234581342DF78E3D00355F0A /* 135West17thStreet.jpg in Resources */,
-				234581352DF78E3D00355F0A /* buildings.csv in Resources */,
 				234581362DF78E3D00355F0A /* 12_West_18th_Street.jpg in Resources */,
 				234581372DF78E3D00355F0A /* 133_East_15th_Street.jpg in Resources */,
 				234581382DF78E3D00355F0A /* AppIcon.png in Resources */,
 				234581392DF78E3D00355F0A /* CLAUDE.md in Resources */,
 				2345813A2DF78E3D00355F0A /* 41_Elizabeth_Street.jpeg in Resources */,
+				236106E42E176B5000463A59 /* ContextualTaskExtensions.swift in Resources */,
 				2345813B2DF78E3D00355F0A /* Preview Assets.xcassets in Resources */,
 				2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */,
 				2345813D2DF78E3D00355F0A /* 123_1st_Avenue.jpg in Resources */,
 				2345813E2DF78E3D00355F0A /* csv2sql.sh in Resources */,
 				2345813F2DF78E3D00355F0A /* 131_Perry_Street.jpg in Resources */,
 				234581402DF78E3D00355F0A /* FrancoSphereSeed.sql in Resources */,
-				234581412DF78E3D00355F0A /* AllTasks.csv in Resources */,
 				234581422DF78E3D00355F0A /* 36_Walker_Street.jpg in Resources */,
 				234581432DF78E3D00355F0A /* 138West17thStreet.jpg in Resources */,
 				234581442DF78E3D00355F0A /* 104_Franklin_Street.jpg in Resources */,
@@ -1051,7 +1043,7 @@
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,
 				234581872DF78E3D00355F0A /* LoginView.swift in Sources */,
 				234581882DF78E3D00355F0A /* WorkerContextExtensions.swift in Sources */,
-				234581892DF78E3D00355F0A /* CSVDataImporter.swift in Sources */,
+				234581892DF78E3D00355F0A /* OperationalDataManager.swift in Sources */,
 				233F94E02DF7B67100901707 /* WorkerDashboardIntegration.swift in Sources */,
 				2345818A2DF78E3D00355F0A /* GlassStatusBadge.swift in Sources */,
 				2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */,

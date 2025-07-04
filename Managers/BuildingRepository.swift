@@ -1,5 +1,5 @@
 // BuildingRepository.swift
-// FrancoSphere v2.0 - Using real data from CSVDataImporter
+// FrancoSphere v2.0 - Using real data from OperationalDataManager
 // No more hardcoded assignments - queries SQLite for actual worker schedules
 // ✅ HF-12: Enhanced building routine details and worker assignments for BuildingDetailView
 // ✅ FIXED: Compilation errors resolved, duplicate types removed
@@ -613,7 +613,7 @@ actor BuildingRepository {
             throw BuildingRepositoryError.databaseNotInitialized
         }
         
-        // Tasks should be added through CSVDataImporter or task management
+        // Tasks should be added through OperationalDataManager or task management
         print("ℹ️ Tasks should be added through task management system")
     }
     

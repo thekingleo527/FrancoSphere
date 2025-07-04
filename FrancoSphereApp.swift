@@ -209,7 +209,7 @@ struct InitializationView: View {
             
         case "Importing building assignments...":
             // Ensure CSV data is imported if needed
-            let importer = CSVDataImporter.shared
+            let importer = OperationalDataManager.shared
             await MainActor.run {
                 importer.sqliteManager = SQLiteManager.shared
             }

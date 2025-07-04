@@ -42,7 +42,7 @@ enum DataBootstrapper {
         if let count = existingWorkers.first?["count"] as? Int64, count > 0 {
             print("✅ Data already exists, skipping seed")
             
-            // But make sure we import tasks from CSVDataImporter (on MainActor)
+            // But make sure we import tasks from OperationalDataManager (on MainActor)
             await MainActor.run {
                 Task {
                     await importRealWorldTasks(manager: manager)
@@ -56,7 +56,7 @@ enum DataBootstrapper {
         try await seedWorkers(manager: manager)
         try await seedSchedules(manager: manager)
         
-        // Import real-world tasks using CSVDataImporter (on MainActor)
+        // Import real-world tasks using OperationalDataManager (on MainActor)
         await MainActor.run {
             Task {
                 await importRealWorldTasks(manager: manager)
@@ -68,9 +68,9 @@ enum DataBootstrapper {
     
     @MainActor
     private static func importRealWorldTasks(manager: SQLiteManager) async {
-        print("📋 Importing real-world tasks using CSVDataImporter...")
+        print("📋 Importing real-world tasks using OperationalDataManager...")
         
-        let importer = CSVDataImporter.shared
+        let importer = OperationalDataManager.shared
         importer.sqliteManager = manager
         
         do {
@@ -294,7 +294,7 @@ enum DataBootstrapper {
     private static func seedSchedulesHardcoded(manager: SQLiteManager) async throws {
         print("📅 Seeding hardcoded schedules...")
         
-        // Based on the real-world task assignments from CSVDataImporter
+        // Based on the real-world task assignments from OperationalDataManager
         let hardcodedSchedules = [
             // Kevin Dutan - Mon-Fri 06:00-17:00
             (workerId: 1, buildingId: 7, weekdays: "Mon,Tue,Wed,Thu,Fri", startHour: 6, endHour: 17), // 131 Perry

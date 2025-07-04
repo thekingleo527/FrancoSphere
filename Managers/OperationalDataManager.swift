@@ -1,8 +1,8 @@
 import Foundation
 import SQLite
 
-// MARK: - CSV Task Assignment Structure (Enhanced)
-struct CSVTaskAssignment {
+// MARK: - Operational Task Assignment Structure (Enhanced)
+struct OperationalTaskAssignment {
     let building: String             // Plain-English building name as spoken internally
     let taskName: String             // Human friendly task title
     let assignedWorker: String       // Canonical full name, must exist in WorkerConstants
@@ -11,14 +11,14 @@ struct CSVTaskAssignment {
     let recurrence: String           // Daily | Weekly | Bi-Weekly | Monthly | Quarterly | Semiannual | Annual | On-Demand
     let startHour: Int?              // 0-23, local time
     let endHour: Int?                // 0-23, local time
-    let daysOfWeek: String?          // CSV list of day abbreviations (Mon,Tue …) or nil for "any"
+    let daysOfWeek: String?          // Comma list of day abbreviations (Mon,Tue …) or nil for "any"
 }
 
-// MARK: - PATCH P2-02-V2: Current Worker Roster CSV Data Importer
+// MARK: - OperationalDataManager (CSV-Free Implementation)
 
 @MainActor
-class CSVDataImporter: ObservableObject {
-    static let shared = CSVDataImporter()
+class OperationalDataManager: ObservableObject {
+    static let shared = OperationalDataManager()
     
     // MUST have sqliteManager property
     var sqliteManager: SQLiteManager?
@@ -30,147 +30,147 @@ class CSVDataImporter: ObservableObject {
     private var importErrors: [String] = []
 
     // ──────────────────────────────────────────────────────────────────────────────
-    //  🔧 PHASE-2: CURRENT ACTIVE WORKER TASK MATRIX  (José removed, Kevin expanded)
+    //  🔧 PRESERVED: CURRENT ACTIVE WORKER TASK MATRIX  (José removed, Kevin expanded)
     //  – every entry reviewed with ops on 2025-06-17
     //  – Jose Santos completely removed from all assignments
     //  – Kevin Dutan expanded from ~28 to ~38 tasks (8+ buildings including Rubin Museum)
     //  – Only includes CURRENT ACTIVE WORKERS
+    //  ✅ NO FILE PARSING - All data programmatic
     // -----------------------------------------------------------------------------
-    private let realWorldTasks: [CSVTaskAssignment] = [
+    private let realWorldTasks: [OperationalTaskAssignment] = [
 
         // ───────────────────────────────
         //  KEVIN DUTAN (EXPANDED DUTIES)
         //  Mon-Fri 06:00-17:00  (lunch 12-13)
-        //  🔧 PHASE-2: Took Jose's duties + original assignments = 8+ buildings
+        //  🔧 PRESERVED: Took Jose's duties + original assignments = 8+ buildings
         // ───────────────────────────────
 
         // Perry cluster (finish by 09:30)
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Sidewalk + Curb Sweep / Trash Return", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 6, endHour: 7, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Hallway & Stairwell Clean / Vacuum", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 8, daysOfWeek: "Mon,Wed"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Hallway & Stairwell Vacuum (light)", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 7, daysOfWeek: "Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Sidewalk + Curb Sweep / Trash Return", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 6, endHour: 7, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Hallway & Stairwell Clean / Vacuum", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 8, daysOfWeek: "Mon,Wed"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Hallway & Stairwell Vacuum (light)", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 7, daysOfWeek: "Fri"),
 
-        // ✅ NEW: 6 additional Kevin tasks for 131 Perry (Monday/Wednesday/Friday) - PHASE-2
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Lobby + Packages Check", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 8, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Vacuum Hallways Floor 2-6", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Hose Down Sidewalks", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Clear Walls & Surfaces", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Check Bathroom + Trash Room", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Mop Stairs A & B", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 11, daysOfWeek: "Mon,Wed,Fri"),
+        // ✅ PRESERVED: 6 additional Kevin tasks for 131 Perry (Monday/Wednesday/Friday)
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Lobby + Packages Check", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 8, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Vacuum Hallways Floor 2-6", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Hose Down Sidewalks", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Clear Walls & Surfaces", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Check Bathroom + Trash Room", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Mop Stairs A & B", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 11, daysOfWeek: "Mon,Wed,Fri"),
 
         // 68 Perry Street tasks (Jose's former duties now Kevin's)
-        CSVTaskAssignment(building: "68 Perry Street", taskName: "Sidewalk / Curb Sweep & Trash Return", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "68 Perry Street", taskName: "Full Building Clean & Vacuum", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 9, daysOfWeek: "Tue,Thu"),
-        CSVTaskAssignment(building: "68 Perry Street", taskName: "Stairwell Hose-Down + Trash Area Hose", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "68 Perry Street", taskName: "Sidewalk / Curb Sweep & Trash Return", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "68 Perry Street", taskName: "Full Building Clean & Vacuum", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 8, endHour: 9, daysOfWeek: "Tue,Thu"),
+        OperationalTaskAssignment(building: "68 Perry Street", taskName: "Stairwell Hose-Down + Trash Area Hose", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon,Wed,Fri"),
 
         // 17th / 18th cluster – Trash areas & common cleaning 10-12 (Kevin expanded coverage)
-        CSVTaskAssignment(building: "135–139 West 17th", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "136 West 17th", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "138 West 17th Street", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "117 West 17th Street", taskName: "Trash Area Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "112 West 18th Street", taskName: "Trash Area Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "135-139 West 17th Street", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "136 West 17th Street", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "138 West 17th Street", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "117 West 17th Street", taskName: "Trash Area Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "112 West 18th Street", taskName: "Trash Area Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
 
-        // ✅ CRITICAL: Kevin's Rubin Museum tasks (PHASE 1C COMPLETION)
-        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Museum Entrance Sweep", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Weekly Deep Clean - Trash Area", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 12, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
+        // ✅ CRITICAL: Kevin's Rubin Museum tasks (CORRECTED REALITY)
+        OperationalTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Trash Area + Sidewalk & Curb Clean", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Museum Entrance Sweep", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Weekly Deep Clean - Trash Area", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 12, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
 
         // After-lunch satellite cleans (former Jose territories now Kevin's)
-        CSVTaskAssignment(building: "29–31 East 20th", taskName: "Hallway / Glass / Sidewalk Sweep & Mop", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 13, endHour: 14, daysOfWeek: "Tue"),
-        CSVTaskAssignment(building: "123 1st Ave", taskName: "Hallway & Curb Clean", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 13, endHour: 14, daysOfWeek: "Tue,Thu"),
-        CSVTaskAssignment(building: "178 Spring", taskName: "Stair Hose & Garbage Return", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 14, endHour: 15, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "29-31 East 20th Street", taskName: "Hallway / Glass / Sidewalk Sweep & Mop", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 13, endHour: 14, daysOfWeek: "Tue"),
+        OperationalTaskAssignment(building: "123 1st Avenue", taskName: "Hallway & Curb Clean", assignedWorker: "Kevin Dutan", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 13, endHour: 14, daysOfWeek: "Tue,Thu"),
+        OperationalTaskAssignment(building: "178 Spring Street", taskName: "Stair Hose & Garbage Return", assignedWorker: "Kevin Dutan", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 14, endHour: 15, daysOfWeek: "Mon,Wed,Fri"),
 
         // DSNY put-out (curb placement) — Sun/Tue/Thu, cannot place before 20:00
-        CSVTaskAssignment(building: "135–139 West 17th", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
-        CSVTaskAssignment(building: "136 West 17th", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
-        CSVTaskAssignment(building: "138 West 17th Street", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
-        CSVTaskAssignment(building: "178 Spring", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
+        OperationalTaskAssignment(building: "135-139 West 17th Street", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
+        OperationalTaskAssignment(building: "136 West 17th Street", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
+        OperationalTaskAssignment(building: "138 West 17th Street", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
+        OperationalTaskAssignment(building: "178 Spring Street", taskName: "DSNY Put-Out (after 20:00)", assignedWorker: "Kevin Dutan", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Sun,Tue,Thu"),
 
         // ───────────────────────────────
         //  MERCEDES INAMAGUA  (06:30-11:00)
         // ───────────────────────────────
-        CSVTaskAssignment(building: "112 West 18th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 6, endHour: 7, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "117 West 17th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 7, endHour: 8, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "135–139 West 17th", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "136 West 17th", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 9, endHour: 10, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "138 West 17th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Roof Drain – 2F Terrace", assignedWorker: "Mercedes Inamagua", category: "Maintenance", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Wed"),
+        OperationalTaskAssignment(building: "112 West 18th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 6, endHour: 7, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "117 West 17th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 7, endHour: 8, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "135-139 West 17th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "136 West 17th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 9, endHour: 10, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "138 West 17th Street", taskName: "Glass & Lobby Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "Rubin Museum (142–148 W 17th)", taskName: "Roof Drain – 2F Terrace", assignedWorker: "Mercedes Inamagua", category: "Maintenance", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Wed"),
         // 104 Franklin deep clean twice a week
-        CSVTaskAssignment(building: "104 Franklin", taskName: "Office Deep Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 14, endHour: 16, daysOfWeek: "Mon,Thu"),
+        OperationalTaskAssignment(building: "104 Franklin Street", taskName: "Office Deep Clean", assignedWorker: "Mercedes Inamagua", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 14, endHour: 16, daysOfWeek: "Mon,Thu"),
 
         // ───────────────────────────────
         //  EDWIN LEMA  (06:00-15:00)
         // ───────────────────────────────
         // Park open
-        CSVTaskAssignment(building: "Stuyvesant Cove Park", taskName: "Morning Park Check", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Daily", startHour: 6, endHour: 7, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat,Sun"),
-        CSVTaskAssignment(building: "Stuyvesant Cove Park", taskName: "Power Wash Walkways", assignedWorker: "Edwin Lema", category: "Cleaning", skillLevel: "Intermediate", recurrence: "Monthly", startHour: 7, endHour: 9, daysOfWeek: nil),
+        OperationalTaskAssignment(building: "Stuyvesant Cove Park", taskName: "Morning Park Check", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Daily", startHour: 6, endHour: 7, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat,Sun"),
+        OperationalTaskAssignment(building: "Stuyvesant Cove Park", taskName: "Power Wash Walkways", assignedWorker: "Edwin Lema", category: "Cleaning", skillLevel: "Intermediate", recurrence: "Monthly", startHour: 7, endHour: 9, daysOfWeek: nil),
         // 133 E 15th walk-through + boiler
-        CSVTaskAssignment(building: "133 East 15th Street", taskName: "Building Walk-Through", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Weekly", startHour: 9, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "133 East 15th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon"),
+        OperationalTaskAssignment(building: "133 East 15th Street", taskName: "Building Walk-Through", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Weekly", startHour: 9, endHour: 10, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "133 East 15th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 9, endHour: 9, daysOfWeek: "Mon"),
         // Kevin coordination / repairs 13-15 (variable bldg)
-        CSVTaskAssignment(building: "FrancoSphere HQ", taskName: "Scheduled Repairs & Follow-ups", assignedWorker: "Edwin Lema", category: "Repair", skillLevel: "Intermediate", recurrence: "Daily", startHour: 13, endHour: 15, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "FrancoSphere HQ", taskName: "Scheduled Repairs & Follow-ups", assignedWorker: "Edwin Lema", category: "Repair", skillLevel: "Intermediate", recurrence: "Daily", startHour: 13, endHour: 15, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
         // Roof & filter rounds (embedded into walkthroughs, every other month)
-        CSVTaskAssignment(building: "117 West 17th Street", taskName: "Water Filter Change & Roof Drain Check", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Bi-Monthly", startHour: 10, endHour: 11, daysOfWeek: nil),
-        CSVTaskAssignment(building: "112 West 18th Street", taskName: "Water Filter Change & Roof Drain Check", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Bi-Monthly", startHour: 11, endHour: 12, daysOfWeek: nil),
-        CSVTaskAssignment(building: "135–139 West 17th", taskName: "Backyard Drain Check", assignedWorker: "Edwin Lema", category: "Inspection", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Fri"),
+        OperationalTaskAssignment(building: "117 West 17th Street", taskName: "Water Filter Change & Roof Drain Check", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Bi-Monthly", startHour: 10, endHour: 11, daysOfWeek: nil),
+        OperationalTaskAssignment(building: "112 West 18th Street", taskName: "Water Filter Change & Roof Drain Check", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Intermediate", recurrence: "Bi-Monthly", startHour: 11, endHour: 12, daysOfWeek: nil),
+        OperationalTaskAssignment(building: "135-139 West 17th Street", taskName: "Backyard Drain Check", assignedWorker: "Edwin Lema", category: "Inspection", skillLevel: "Basic", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Fri"),
         // Boiler blow-downs quick hits
-        CSVTaskAssignment(building: "131 Perry Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 8, endHour: 8, daysOfWeek: "Wed"),
-        CSVTaskAssignment(building: "138 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Thu"),
-        CSVTaskAssignment(building: "135–139 West 17th", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Tue"),
-        CSVTaskAssignment(building: "117 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 11, endHour: 11, daysOfWeek: "Tue"),
+        OperationalTaskAssignment(building: "131 Perry Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 8, endHour: 8, daysOfWeek: "Wed"),
+        OperationalTaskAssignment(building: "138 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Thu"),
+        OperationalTaskAssignment(building: "135-139 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 10, endHour: 10, daysOfWeek: "Tue"),
+        OperationalTaskAssignment(building: "117 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Edwin Lema", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 11, endHour: 11, daysOfWeek: "Tue"),
 
         // ───────────────────────────────
         //  LUIS LOPEZ  (07:00-16:00)
         // ───────────────────────────────
-        CSVTaskAssignment(building: "104 Franklin", taskName: "Sidewalk Hose", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 7, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "36 Walker", taskName: "Sidewalk Sweep", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 8, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "104 Franklin Street", taskName: "Sidewalk Hose", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 7, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "36 Walker Street", taskName: "Sidewalk Sweep", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Weekly", startHour: 7, endHour: 8, daysOfWeek: "Mon,Wed,Fri"),
         // 41 Elizabeth daily core
-        CSVTaskAssignment(building: "41 Elizabeth Street", taskName: "Bathrooms Clean", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "41 Elizabeth Street", taskName: "Lobby & Sidewalk Clean", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 9, endHour: 10, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "41 Elizabeth Street", taskName: "Elevator Clean", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
-        CSVTaskAssignment(building: "41 Elizabeth Street", taskName: "Afternoon Garbage Removal", assignedWorker: "Luis Lopez", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 13, endHour: 14, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "41 Elizabeth Street", taskName: "Bathrooms Clean", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 8, endHour: 9, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "41 Elizabeth Street", taskName: "Lobby & Sidewalk Clean", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 9, endHour: 10, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "41 Elizabeth Street", taskName: "Elevator Clean", assignedWorker: "Luis Lopez", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
+        OperationalTaskAssignment(building: "41 Elizabeth Street", taskName: "Afternoon Garbage Removal", assignedWorker: "Luis Lopez", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 13, endHour: 14, daysOfWeek: "Mon,Tue,Wed,Thu,Fri,Sat"),
         // Mail + bathroom re-check
-        CSVTaskAssignment(building: "41 Elizabeth Street", taskName: "Deliver Mail & Packages", assignedWorker: "Luis Lopez", category: "Operations", skillLevel: "Basic", recurrence: "Daily", startHour: 14, endHour: 14, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "41 Elizabeth Street", taskName: "Deliver Mail & Packages", assignedWorker: "Luis Lopez", category: "Operations", skillLevel: "Basic", recurrence: "Daily", startHour: 14, endHour: 14, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
 
         // ───────────────────────────────
         //  ANGEL GUIRACHOCHA  (18:00-22:00)
         // ───────────────────────────────
         // Evening garbage collection & DSNY prep
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Evening Garbage Collection", assignedWorker: "Angel Guirachocha", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 18, endHour: 19, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "68 Perry Street", taskName: "DSNY Prep / Move Bins", assignedWorker: "Angel Guirachocha", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 19, endHour: 20, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "123 1st Ave", taskName: "DSNY Prep / Move Bins", assignedWorker: "Angel Guirachocha", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 19, endHour: 20, daysOfWeek: "Tue,Thu"),
-        CSVTaskAssignment(building: "104 Franklin", taskName: "DSNY Prep / Move Bins", assignedWorker: "Angel Guirachocha", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Mon,Wed,Fri"),
-        CSVTaskAssignment(building: "135–139 West 17th", taskName: "Evening Building Security Check", assignedWorker: "Angel Guirachocha", category: "Inspection", skillLevel: "Basic", recurrence: "Daily", startHour: 21, endHour: 22, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Evening Garbage Collection", assignedWorker: "Angel Guirachocha", category: "Sanitation", skillLevel: "Basic", recurrence: "Weekly", startHour: 18, endHour: 19, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "68 Perry Street", taskName: "DSNY Prep / Move Bins", assignedWorker: "Angel Guirachocha", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 19, endHour: 20, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "123 1st Avenue", taskName: "DSNY Prep / Move Bins", assignedWorker: "Angel Guirachocha", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 19, endHour: 20, daysOfWeek: "Tue,Thu"),
+        OperationalTaskAssignment(building: "104 Franklin Street", taskName: "DSNY Prep / Move Bins", assignedWorker: "Angel Guirachocha", category: "Operations", skillLevel: "Basic", recurrence: "Weekly", startHour: 20, endHour: 21, daysOfWeek: "Mon,Wed,Fri"),
+        OperationalTaskAssignment(building: "135-139 West 17th Street", taskName: "Evening Building Security Check", assignedWorker: "Angel Guirachocha", category: "Inspection", skillLevel: "Basic", recurrence: "Daily", startHour: 21, endHour: 22, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
 
         // ───────────────────────────────
         //  GREG HUTSON  (09:00-15:00)
         // ───────────────────────────────
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Sidewalk & Curb Clean", assignedWorker: "Greg Hutson", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 9, endHour: 10, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Lobby & Vestibule Clean", assignedWorker: "Greg Hutson", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Glass & Elevator Clean", assignedWorker: "Greg Hutson", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Trash Area Clean", assignedWorker: "Greg Hutson", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 13, endHour: 14, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Boiler Blow-Down", assignedWorker: "Greg Hutson", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 14, endHour: 14, daysOfWeek: "Fri"),
-        CSVTaskAssignment(building: "12 West 18th Street", taskName: "Freight Elevator Operation (On-Demand)", assignedWorker: "Greg Hutson", category: "Operations", skillLevel: "Basic", recurrence: "On-Demand", startHour: nil, endHour: nil, daysOfWeek: nil),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Sidewalk & Curb Clean", assignedWorker: "Greg Hutson", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 9, endHour: 10, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Lobby & Vestibule Clean", assignedWorker: "Greg Hutson", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 10, endHour: 11, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Glass & Elevator Clean", assignedWorker: "Greg Hutson", category: "Cleaning", skillLevel: "Basic", recurrence: "Daily", startHour: 11, endHour: 12, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Trash Area Clean", assignedWorker: "Greg Hutson", category: "Sanitation", skillLevel: "Basic", recurrence: "Daily", startHour: 13, endHour: 14, daysOfWeek: "Mon,Tue,Wed,Thu,Fri"),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Boiler Blow-Down", assignedWorker: "Greg Hutson", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 14, endHour: 14, daysOfWeek: "Fri"),
+        OperationalTaskAssignment(building: "12 West 18th Street", taskName: "Freight Elevator Operation (On-Demand)", assignedWorker: "Greg Hutson", category: "Operations", skillLevel: "Basic", recurrence: "On-Demand", startHour: nil, endHour: nil, daysOfWeek: nil),
 
         // ───────────────────────────────
         //  SHAWN MAGLOIRE  (floating specialist)
         // ───────────────────────────────
-        CSVTaskAssignment(building: "117 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 9, endHour: 11, daysOfWeek: "Mon"),
-        CSVTaskAssignment(building: "133 East 15th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 11, endHour: 13, daysOfWeek: "Tue"),
-        CSVTaskAssignment(building: "136 West 17th", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 13, endHour: 15, daysOfWeek: "Wed"),
-        CSVTaskAssignment(building: "138 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 15, endHour: 17, daysOfWeek: "Thu"),
-        CSVTaskAssignment(building: "115 7th Ave", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 9, endHour: 11, daysOfWeek: "Fri"),
-        CSVTaskAssignment(building: "112 West 18th Street", taskName: "HVAC System Check", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Monthly", startHour: 9, endHour: 12, daysOfWeek: nil),
-        CSVTaskAssignment(building: "117 West 17th Street", taskName: "HVAC System Check", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Monthly", startHour: 13, endHour: 16, daysOfWeek: nil)
+        OperationalTaskAssignment(building: "117 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 9, endHour: 11, daysOfWeek: "Mon"),
+        OperationalTaskAssignment(building: "133 East 15th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 11, endHour: 13, daysOfWeek: "Tue"),
+        OperationalTaskAssignment(building: "136 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 13, endHour: 15, daysOfWeek: "Wed"),
+        OperationalTaskAssignment(building: "138 West 17th Street", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 15, endHour: 17, daysOfWeek: "Thu"),
+        OperationalTaskAssignment(building: "115 7th Avenue", taskName: "Boiler Blow-Down", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Weekly", startHour: 9, endHour: 11, daysOfWeek: "Fri"),
+        OperationalTaskAssignment(building: "112 West 18th Street", taskName: "HVAC System Check", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Monthly", startHour: 9, endHour: 12, daysOfWeek: nil),
+        OperationalTaskAssignment(building: "117 West 17th Street", taskName: "HVAC System Check", assignedWorker: "Shawn Magloire", category: "Maintenance", skillLevel: "Advanced", recurrence: "Monthly", startHour: 13, endHour: 16, daysOfWeek: nil)
 
         // NOTE: Jose Santos tasks have been COMPLETELY REMOVED and redistributed to Kevin Dutan
     ]
     
     // ──────────────────────────────────────────────────────────────────────────────
-    //  🔧 HF-23: ROUTINE SCHEDULES & DSNY DATA (EXPANDED CSV IMPORT)
-    //  🔧 FIX #2: Deterministic IDs to prevent migration duplicates
+    //  🔧 PRESERVED: ROUTINE SCHEDULES WITH CORRECTED BUILDING IDs
     //  Real-world operational schedules based on NYC property management standards
-    //  ✅ UPDATED: Includes Kevin's Rubin Museum routing
+    //  ✅ NO FILE PARSING - All data programmatic
     // ──────────────────────────────────────────────────────────────────────────────
 
     private let routineSchedules: [(buildingId: String, name: String, rrule: String, workerId: String, category: String)] = [
@@ -181,7 +181,7 @@ class CSVDataImporter: ObservableObject {
         ("7", "17th Street Trash Area Maintenance", "FREQ=DAILY;BYHOUR=11", "4", "Cleaning"),
         ("9", "DSNY Compliance Check", "FREQ=WEEKLY;BYDAY=SU,TU,TH;BYHOUR=20", "4", "Operations"),
         
-        // ✅ ADDED: Kevin's Rubin Museum routing (PHASE 1C COMPLETION)
+        // ✅ PRESERVED: Kevin's Rubin Museum routing (consistent ID "14")
         ("14", "Rubin Morning Trash Circuit", "FREQ=DAILY;BYHOUR=10", "4", "Sanitation"),
         ("14", "Rubin Museum Deep Clean", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=10", "4", "Sanitation"),
         ("14", "Rubin DSNY Operations", "FREQ=WEEKLY;BYDAY=SU,TU,TH;BYHOUR=20", "4", "Operations"),
@@ -189,13 +189,13 @@ class CSVDataImporter: ObservableObject {
         // Mercedes' morning glass circuit (6:30-11:00 AM shift)
         ("7", "Glass & Lobby Clean", "FREQ=DAILY;BYHOUR=6", "5", "Cleaning"),
         ("9", "117 West 17th Glass & Vestibule", "FREQ=DAILY;BYHOUR=7", "5", "Cleaning"),
-        ("11", "135-139 West 17th Glass Clean", "FREQ=DAILY;BYHOUR=8", "5", "Cleaning"),
-        ("13", "Rubin Museum Roof Drain Check", "FREQ=WEEKLY;BYDAY=WE;BYHOUR=10", "5", "Maintenance"),
+        ("3", "135-139 West 17th Glass Clean", "FREQ=DAILY;BYHOUR=8", "5", "Cleaning"),
+        ("14", "Rubin Museum Roof Drain Check", "FREQ=WEEKLY;BYDAY=WE;BYHOUR=10", "5", "Maintenance"),
         
         // Edwin's maintenance rounds (6:00-15:00)
         ("16", "Stuyvesant Park Morning Inspection", "FREQ=DAILY;BYHOUR=6", "2", "Maintenance"),
-        ("8", "133 E 15th Boiler Blow-Down", "FREQ=WEEKLY;BYDAY=MO;BYHOUR=9", "2", "Maintenance"),
-        ("7", "Water Filter Change", "FREQ=MONTHLY;BYHOUR=10", "2", "Maintenance"),
+        ("15", "133 E 15th Boiler Blow-Down", "FREQ=WEEKLY;BYDAY=MO;BYHOUR=9", "2", "Maintenance"),
+        ("9", "Water Filter Change", "FREQ=MONTHLY;BYHOUR=10", "2", "Maintenance"),
         
         // Luis Lopez daily circuit (7:00-16:00)
         ("4", "104 Franklin Sidewalk Hose", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=7", "6", "Cleaning"),
@@ -213,7 +213,7 @@ class CSVDataImporter: ObservableObject {
 
     private let dsnySchedules: [(buildingIds: [String], collectionDays: String, routeId: String)] = [
         // Manhattan West 17th Street corridor (including Rubin Museum)
-        (["7", "9", "11", "14"], "MON,WED,FRI", "MAN-17TH-WEST"),
+        (["7", "9", "3", "14"], "MON,WED,FRI", "MAN-17TH-WEST"),
         
         // Perry Street / West Village
         (["10", "6"], "MON,WED,FRI", "MAN-PERRY-VILLAGE"),
@@ -230,15 +230,15 @@ class CSVDataImporter: ObservableObject {
     
     private init() {}
 
-    // MARK: - ✅ PHASE 3B FIX: Ensure Active Workers Exist in Database
+    // MARK: - ✅ PRESERVED: Ensure Active Workers Exist in Database
 
     /// Seed the workers table with current active roster
     private func seedActiveWorkers() async throws {
         guard let sqliteManager = sqliteManager else {
-            throw CSVError.noSQLiteManager
+            throw OperationalError.noSQLiteManager
         }
         
-        print("🔧 PHASE 3B FIX: Seeding active workers table...")
+        print("🔧 Seeding active workers table...")
         
         // Current active worker roster (no Jose Santos)
         let activeWorkers = [
@@ -306,12 +306,12 @@ class CSVDataImporter: ObservableObject {
         }
     }
 
-    // MARK: - ⭐ PHASE-2: Enhanced Import Methods
+    // MARK: - ⭐ PRESERVED: Enhanced Import Methods (NO FILE PARSING)
     
-    /// Main import function - enhanced for current active workers only with worker seeding
+    /// Main import function - uses ONLY programmatic data (no file parsing)
     func importRealWorldTasks() async throws -> (imported: Int, errors: [String]) {
         guard let sqliteManager = sqliteManager else {
-            throw CSVError.noSQLiteManager
+            throw OperationalError.noSQLiteManager
         }
         
         guard !hasImported else {
@@ -326,7 +326,7 @@ class CSVDataImporter: ObservableObject {
         }
         
         do {
-            // ✅ PHASE 3B FIX: Seed workers table FIRST
+            // ✅ Seed workers table FIRST
             try await seedActiveWorkers()
             
             await MainActor.run {
@@ -334,18 +334,18 @@ class CSVDataImporter: ObservableObject {
                 currentStatus = "Workers seeded, importing tasks..."
             }
             
-            // Now continue with the original import logic
+            // Now continue with the original import logic using programmatic data
             var importedCount = 0
             let calendar = Calendar.current
             let today = Date()
             
-            print("📂 Starting PHASE-2 task import with \(realWorldTasks.count) tasks...")
+            print("📂 Starting task import with \(realWorldTasks.count) tasks...")
             print("🔧 Current active workers only (Jose Santos removed)")
-            print("✅ PHASE 1C: Kevin's Rubin Museum tasks included")
+            print("✅ PRESERVED: Kevin's Rubin Museum (building ID 14) tasks included")
             currentStatus = "Importing \(realWorldTasks.count) tasks for current active workers..."
             
-            // BEGIN PATCH(HF-09): Pre-import Kevin diagnostic
-            print("🔍 HF-09: Pre-import Kevin diagnostic")
+            // Pre-import Kevin diagnostic
+            print("🔍 Pre-import Kevin diagnostic")
             do {
                 let existingKevin = try await sqliteManager.query("""
                     SELECT COUNT(*) as count FROM worker_building_assignments 
@@ -356,20 +356,19 @@ class CSVDataImporter: ObservableObject {
             } catch {
                 print("   Could not check Kevin's existing assignments: \(error)")
             }
-            // END PATCH(HF-09)
             
             // First populate worker building assignments
             try await populateWorkerBuildingAssignments(realWorldTasks)
             
-            // Process each CSV assignment
-            for (index, csvTask) in realWorldTasks.enumerated() {
+            // Process each operational assignment (no file parsing)
+            for (index, operationalTask) in realWorldTasks.enumerated() {
                 do {
                     // Update progress
                     importProgress = 0.1 + (0.8 * Double(index) / Double(realWorldTasks.count))
                     currentStatus = "Importing task \(index + 1)/\(realWorldTasks.count)"
                     
                     // Generate external ID for idempotency
-                    let externalId = generateExternalId(for: csvTask, index: index)
+                    let externalId = generateExternalId(for: operationalTask, index: index)
                     
                     // Check if task already exists
                     let existingTasks = try await sqliteManager.query("""
@@ -377,26 +376,26 @@ class CSVDataImporter: ObservableObject {
                         """, [externalId])
                     
                     if !existingTasks.isEmpty {
-                        print("⏭️ Skipping duplicate task: \(csvTask.taskName)")
+                        print("⏭️ Skipping duplicate task: \(operationalTask.taskName)")
                         continue
                     }
                     
                     // Calculate due date
-                    let dueDate = calculateDueDate(for: csvTask.recurrence, from: today)
+                    let dueDate = calculateDueDate(for: operationalTask.recurrence, from: today)
                     
                     // Map building name to ID
-                    let buildingId = try await mapBuildingNameToId(csvTask.building)
+                    let buildingId = try await mapBuildingNameToId(operationalTask.building)
                     
                     // Map worker name to ID (current active workers only)
-                    let workerId: Int? = if !csvTask.assignedWorker.isEmpty {
-                        try? await mapWorkerNameToId(csvTask.assignedWorker)
+                    let workerId: Int? = if !operationalTask.assignedWorker.isEmpty {
+                        try? await mapWorkerNameToId(operationalTask.assignedWorker)
                     } else {
                         nil
                     }
                     
                     // Skip if worker not found (handles Jose removal)
                     guard let validWorkerId = workerId else {
-                        print("⚠️ Skipping task for inactive worker: \(csvTask.assignedWorker)")
+                        print("⚠️ Skipping task for inactive worker: \(operationalTask.assignedWorker)")
                         continue
                     }
                     
@@ -404,7 +403,7 @@ class CSVDataImporter: ObservableObject {
                     var startTime: String? = nil
                     var endTime: String? = nil
                     
-                    if let startHour = csvTask.startHour, let endHour = csvTask.endHour {
+                    if let startHour = operationalTask.startHour, let endHour = operationalTask.endHour {
                         if let start = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: dueDate),
                            let end = calendar.date(bySettingHour: endHour, minute: 0, second: 0, of: dueDate) {
                             startTime = start.iso8601String
@@ -413,8 +412,8 @@ class CSVDataImporter: ObservableObject {
                     }
                     
                     // Map urgency level
-                    let urgencyLevel = csvTask.skillLevel == "Advanced" ? "high" :
-                                      csvTask.skillLevel == "Intermediate" ? "medium" : "low"
+                    let urgencyLevel = operationalTask.skillLevel == "Advanced" ? "high" :
+                                      operationalTask.skillLevel == "Intermediate" ? "medium" : "low"
                     
                     // Insert task - Convert to strings and handle optionals
                     try await sqliteManager.execute("""
@@ -424,15 +423,15 @@ class CSVDataImporter: ObservableObject {
                             startTime, endTime, external_id
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, [
-                            csvTask.taskName,
+                            operationalTask.taskName,
                             "Imported from current active worker schedule",
                             "\(buildingId)",  // Convert to string
                             "\(validWorkerId)",  // Convert to string
                             "0",
                             dueDate.iso8601String,
-                            csvTask.recurrence,
+                            operationalTask.recurrence,
                             urgencyLevel,
-                            csvTask.category,
+                            operationalTask.category,
                             startTime ?? "",  // Use empty string for nil
                             endTime ?? "",    // Use empty string for nil
                             externalId
@@ -441,10 +440,10 @@ class CSVDataImporter: ObservableObject {
                     importedCount += 1
                     
                     // Special logging for Kevin's Rubin Museum tasks
-                    if csvTask.assignedWorker == "Kevin Dutan" && csvTask.building.contains("Rubin") {
-                        print("✅ PHASE 1C: Imported Kevin's Rubin Museum task: \(csvTask.taskName)")
+                    if operationalTask.assignedWorker == "Kevin Dutan" && operationalTask.building.contains("Rubin") {
+                        print("✅ PRESERVED: Imported Kevin's Rubin Museum task: \(operationalTask.taskName)")
                     } else {
-                        print("✅ Imported: \(csvTask.taskName) for \(csvTask.building) (\(csvTask.assignedWorker))")
+                        print("✅ Imported: \(operationalTask.taskName) for \(operationalTask.building) (\(operationalTask.assignedWorker))")
                     }
                     
                     // Log progress every 10 tasks
@@ -458,7 +457,7 @@ class CSVDataImporter: ObservableObject {
                     }
                     
                 } catch {
-                    let errorMsg = "Error processing task \(csvTask.taskName): \(error.localizedDescription)"
+                    let errorMsg = "Error processing task \(operationalTask.taskName): \(error.localizedDescription)"
                     importErrors.append(errorMsg)
                     print("❌ \(errorMsg)")
                 }
@@ -471,8 +470,8 @@ class CSVDataImporter: ObservableObject {
                 currentStatus = "Import complete!"
             }
             
-            // Log results with Phase-2 summary
-            await logPhase2ImportResults(imported: importedCount, errors: importErrors)
+            // Log results with corrected summary
+            await logImportResults(imported: importedCount, errors: importErrors)
             
             return (importedCount, importErrors)
             
@@ -484,7 +483,7 @@ class CSVDataImporter: ObservableObject {
         }
     }
 
-    /// PHASE 1C: Enhanced method to get Kevin's tasks including Rubin Museum
+    /// Enhanced method to get Kevin's tasks including Rubin Museum (programmatic data only)
     func getTasksForWorker(_ workerId: String, date: Date) async -> [ContextualTask] {
         let workerTasks = realWorldTasks.filter { task in
             // Map worker names to IDs for filtering
@@ -504,20 +503,20 @@ class CSVDataImporter: ObservableObject {
         // Convert to ContextualTask objects
         var contextualTasks: [ContextualTask] = []
         
-        for csvTask in workerTasks {
+        for operationalTask in workerTasks {
             let task = ContextualTask(
-                id: generateExternalId(for: csvTask, index: 0),
-                name: csvTask.taskName,
-                buildingId: getBuildingIdFromName(csvTask.building),
-                buildingName: csvTask.building,
-                category: csvTask.category,
-                startTime: csvTask.startHour != nil ? String(format: "%02d:00", csvTask.startHour!) : nil,
-                endTime: csvTask.endHour != nil ? String(format: "%02d:00", csvTask.endHour!) : nil,
-                recurrence: csvTask.recurrence,
-                skillLevel: csvTask.skillLevel,
+                id: generateExternalId(for: operationalTask, index: 0),
+                name: operationalTask.taskName,
+                buildingId: getBuildingIdFromName(operationalTask.building),
+                buildingName: operationalTask.building,
+                category: operationalTask.category,
+                startTime: operationalTask.startHour != nil ? String(format: "%02d:00", operationalTask.startHour!) : nil,
+                endTime: operationalTask.endHour != nil ? String(format: "%02d:00", operationalTask.endHour!) : nil,
+                recurrence: operationalTask.recurrence,
+                skillLevel: operationalTask.skillLevel,
                 status: "pending",
-                urgencyLevel: csvTask.skillLevel == "Advanced" ? "high" : "medium",
-                assignedWorkerName: csvTask.assignedWorker
+                urgencyLevel: operationalTask.skillLevel == "Advanced" ? "high" : "medium",
+                assignedWorkerName: operationalTask.assignedWorker
             )
             contextualTasks.append(task)
         }
@@ -525,49 +524,62 @@ class CSVDataImporter: ObservableObject {
         // Special logging for Kevin's Rubin Museum tasks
         if workerId == "4" {
             let rubinTasks = contextualTasks.filter { $0.buildingName.contains("Rubin") }
-            print("✅ PHASE 1C: Kevin has \(rubinTasks.count) Rubin Museum tasks")
+            print("✅ PRESERVED: Kevin has \(rubinTasks.count) Rubin Museum tasks with building ID 14")
         }
         
         return contextualTasks
     }
     
-    /// Helper method to map building names to IDs
+    /// ✅ PRESERVED: Helper method to map building names to IDs with corrected mapping
     private func getBuildingIdFromName(_ buildingName: String) -> String {
         let buildingMap = [
+            // Perry Street cluster
             "131 Perry Street": "10",
             "68 Perry Street": "6",
-            "135–139 West 17th": "12",
-            "136 West 17th": "13",
-            "138 West 17th Street": "16",
-            "117 West 17th Street": "9",
-            "112 West 18th Street": "7",
-            "Rubin Museum (142–148 W 17th)": "14",
-            "29–31 East 20th": "2",
-            "178 Spring": "17",
-            "12 West 18th Street": "1",
-            "104 Franklin": "4",
-            "41 Elizabeth Street": "8",
-            "133 East 15th Street": "15",
-            "Stuyvesant Cove Park": "16",
-            "123 1st Ave": "11",
-            "36 Walker": "18",
-            "115 7th Ave": "19",
-            "FrancoSphere HQ": "20"
+            
+            // West 17th Street corridor
+            "135-139 West 17th Street": "3",    // ✅ PRESERVED: corrected mapping
+            "136 West 17th Street": "13",       // ✅ CONSISTENT
+            "138 West 17th Street": "5",        // ✅ PRESERVED: corrected mapping
+            "117 West 17th Street": "9",        // ✅ CONSISTENT
+            
+            // West 18th Street
+            "112 West 18th Street": "7",        // ✅ CONSISTENT
+            "12 West 18th Street": "1",         // ✅ CONSISTENT
+            
+            // ✅ CRITICAL: Rubin Museum (Kevin's workplace)
+            "Rubin Museum (142–148 W 17th)": "14",  // ✅ PRESERVED REALITY
+            
+            // East side
+            "29-31 East 20th Street": "2",      // ✅ CONSISTENT
+            "133 East 15th Street": "15",       // ✅ CONSISTENT
+            
+            // Downtown
+            "178 Spring Street": "17",          // ✅ CONSISTENT
+            "104 Franklin Street": "4",         // ✅ CONSISTENT
+            "41 Elizabeth Street": "8",         // ✅ CONSISTENT
+            "36 Walker Street": "18",           // ✅ CONSISTENT
+            
+            // Special locations
+            "Stuyvesant Cove Park": "16",       // ✅ PRESERVED: unique ID
+            "123 1st Avenue": "11",             // ✅ CONSISTENT
+            "115 7th Avenue": "19",             // ✅ CONSISTENT
+            "FrancoSphere HQ": "20"             // ✅ CONSISTENT
         ]
         
         return buildingMap[buildingName] ?? "1"
     }
     
-    /// Enhanced import method for operational schedules with deterministic IDs
+    /// Enhanced import method for operational schedules with deterministic IDs (no file parsing)
     func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
         guard let sqliteManager = sqliteManager else {
-            throw CSVError.noSQLiteManager
+            throw OperationalError.noSQLiteManager
         }
         
         var routineCount = 0, dsnyCount = 0
         
-        print("🔧 HF-23: Creating routine scheduling tables...")
-        print("✅ PHASE 1C: Including Kevin's Rubin Museum routing")
+        print("🔧 Creating routine scheduling tables...")
+        print("✅ PRESERVED: Including Kevin's Rubin Museum routing with building ID 14")
         
         // Create routine_schedules table (operational schedule tracking)
         try await sqliteManager.execute("""
@@ -588,15 +600,15 @@ class CSVDataImporter: ObservableObject {
             )
         """)
         
-        // 🔧 FIX #2: Add UNIQUE constraints to prevent duplicates
+        // Add UNIQUE constraints to prevent duplicates
         try await sqliteManager.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_routine_unique 
             ON routine_schedules(building_id, worker_id, name)
         """)
         
-        // Insert operational routines with deterministic IDs
+        // Insert operational routines with deterministic IDs (no file parsing)
         for routine in routineSchedules {
-            // 🔧 FIX #2: Deterministic ID generation using hash
+            // Deterministic ID generation using hash
             let id = "routine_\(routine.buildingId)_\(routine.workerId)_\(routine.name.hashValue.magnitude)"
             let weatherDependent = routine.category == "Cleaning" ? 1 : 0
             
@@ -609,7 +621,7 @@ class CSVDataImporter: ObservableObject {
             
             // Special logging for Kevin's Rubin Museum routing
             if routine.workerId == "4" && routine.buildingId == "14" {
-                print("✅ PHASE 1C: Added Kevin's Rubin Museum routine: \(routine.name)")
+                print("✅ PRESERVED: Added Kevin's Rubin Museum routine: \(routine.name) (building ID 14)")
             }
         }
         
@@ -630,15 +642,15 @@ class CSVDataImporter: ObservableObject {
             )
         """)
         
-        // 🔧 FIX #2: Add UNIQUE constraint for DSNY routes
+        // Add UNIQUE constraint for DSNY routes
         try await sqliteManager.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_dsny_unique 
             ON dsny_schedules(route_id)
         """)
         
-        // Insert DSNY schedules with deterministic IDs
+        // Insert DSNY schedules with deterministic IDs (no file parsing)
         for dsny in dsnySchedules {
-            // 🔧 FIX #2: Deterministic ID for DSNY routes
+            // Deterministic ID for DSNY routes
             let id = "dsny_\(dsny.routeId.hashValue.magnitude)"
             let buildingIdsJson = dsny.buildingIds.joined(separator: ",")
             
@@ -651,62 +663,60 @@ class CSVDataImporter: ObservableObject {
             
             // Special logging for Rubin Museum DSNY routing
             if dsny.buildingIds.contains("14") {
-                print("✅ PHASE 1C: Rubin Museum included in DSNY route: \(dsny.routeId)")
+                print("✅ PRESERVED: Rubin Museum (building ID 14) included in DSNY route: \(dsny.routeId)")
             }
         }
         
-        print("✅ HF-23: Imported \(routineCount) routine schedules, \(dsnyCount) DSNY routes")
+        print("✅ Imported \(routineCount) routine schedules, \(dsnyCount) DSNY routes")
         print("   🗑️ DSNY compliance: Set-out after 8:00 PM, pickup 6:00-12:00 AM")
         print("   🔄 Routine coverage: \(Set(routineSchedules.map { $0.workerId }).count) active workers")
-        print("   🔧 FIX #2: Using deterministic IDs to prevent duplicates")
-        print("   ✅ PHASE 1C: Kevin's Rubin Museum fully integrated")
+        print("   ✅ PRESERVED: Kevin's Rubin Museum fully integrated with building ID 14")
         
         return (routineCount, dsnyCount)
     }
     
-    // MARK: - ⭐ PHASE-2: Populate worker_building_assignments with CURRENT ACTIVE WORKERS ONLY
+    // MARK: - ⭐ PRESERVED: Worker Building Assignments (NO FILE PARSING)
     
-    /// Populate worker_building_assignments with CURRENT ACTIVE WORKERS ONLY
-    private func populateWorkerBuildingAssignments(_ assignments: [CSVTaskAssignment]) async throws {
+    /// Populate worker_building_assignments with CURRENT ACTIVE WORKERS ONLY (no file parsing)
+    private func populateWorkerBuildingAssignments(_ assignments: [OperationalTaskAssignment]) async throws {
         guard let sqliteManager = sqliteManager else {
-            throw NSError(domain: "CSVImportError", code: 1,
+            throw NSError(domain: "OperationalImportError", code: 1,
                          userInfo: [NSLocalizedDescriptionKey: "SQLiteManager not available"])
         }
         
-        // BEGIN PATCH(HF-09): Enhanced activeWorkers with exact name matching and diagnostic logging
+        // Enhanced activeWorkers with exact name matching and diagnostic logging
         let activeWorkers: [String: String] = [
             "Greg Hutson": "1",
             "Edwin Lema": "2",
-            "Kevin Dutan": "4",        // ✅ CRITICAL: Exact CSV name match
+            "Kevin Dutan": "4",        // ✅ CRITICAL: Exact operational name match
             "Mercedes Inamagua": "5",
             "Luis Lopez": "6",
             "Angel Guirachocha": "7",
             "Shawn Magloire": "8"
         ]
         
-        // EMERGENCY DIAGNOSTIC: Log all worker names in CSV vs activeWorkers
-        print("🔍 HF-09: CSV Import Diagnostic")
+        // EMERGENCY DIAGNOSTIC: Log all worker names in operational data vs activeWorkers
+        print("🔍 Operational Data Import Diagnostic")
         print("📋 Active Workers Dictionary:")
         for (name, id) in activeWorkers.sorted(by: { $0.key < $1.key }) {
             print("   '\(name)' → ID '\(id)'")
         }
         
-        // Count assignments per worker in CSV data
-        let csvWorkerCounts = Dictionary(grouping: assignments) { $0.assignedWorker }
-        print("📋 CSV Task Assignments:")
-        for (workerName, tasks) in csvWorkerCounts.sorted(by: { $0.key < $1.key }) {
+        // Count assignments per worker in operational data
+        let operationalWorkerCounts = Dictionary(grouping: assignments) { $0.assignedWorker }
+        print("📋 Operational Task Assignments:")
+        for (workerName, tasks) in operationalWorkerCounts.sorted(by: { $0.key < $1.key }) {
             let isActive = activeWorkers[workerName] != nil
             let status = isActive ? "✅ ACTIVE" : "❌ INACTIVE/UNKNOWN"
             let rubinCount = tasks.filter { $0.building.contains("Rubin") }.count
             let rubinStatus = rubinCount > 0 ? " (including \(rubinCount) Rubin Museum tasks)" : ""
             print("   '\(workerName)': \(tasks.count) tasks (\(status))\(rubinStatus)")
         }
-        // END PATCH(HF-09)
         
-        print("🔗 Extracting assignments from \(assignments.count) CSV tasks for ACTIVE WORKERS ONLY")
-        print("✅ PHASE 1C: Including Kevin's Rubin Museum assignments")
+        print("🔗 Extracting assignments from \(assignments.count) operational tasks for ACTIVE WORKERS ONLY")
+        print("✅ PRESERVED: Including Kevin's Rubin Museum assignments with building ID 14")
         
-        // Extract unique worker-building pairs - ACTIVE WORKERS ONLY
+        // Extract unique worker-building pairs - ACTIVE WORKERS ONLY (no file parsing)
         var workerBuildingPairs: Set<String> = []
         var skippedAssignments = 0
         var kevinAssignmentCount = 0  // Track Kevin specifically
@@ -718,18 +728,12 @@ class CSVDataImporter: ObservableObject {
                 continue
             }
             
-            // BEGIN PATCH(HF-09): Enhanced worker validation with Kevin tracking
+            // Enhanced worker validation with Kevin tracking
             guard let workerId = activeWorkers[assignment.assignedWorker] else {
                 if assignment.assignedWorker.contains("Jose") || assignment.assignedWorker.contains("Santos") {
                     print("📝 Skipping Jose Santos assignment (no longer with company)")
                 } else {
-                    print("⚠️ HF-09: Skipping unknown worker: '\(assignment.assignedWorker)'")
-                    // List all unique unknown workers for debugging
-                    let allUnknownWorkers = Set(assignments.map { $0.assignedWorker })
-                        .subtracting(activeWorkers.keys)
-                    if allUnknownWorkers.count < 10 { // Avoid spam
-                        print("   Known workers: \(activeWorkers.keys.joined(separator: ", "))")
-                    }
+                    print("⚠️ Skipping unknown worker: '\(assignment.assignedWorker)'")
                 }
                 skippedAssignments += 1
                 continue
@@ -742,7 +746,6 @@ class CSVDataImporter: ObservableObject {
                     kevinRubinAssignments += 1
                 }
             }
-            // END PATCH(HF-09)
             
             do {
                 let buildingId = try await mapBuildingNameToId(assignment.building)
@@ -756,12 +759,12 @@ class CSVDataImporter: ObservableObject {
             }
         }
         
-        // BEGIN PATCH(HF-09): Critical Kevin validation with Rubin Museum tracking
-        print("🔗 HF-09: Assignment Extraction Results:")
+        // Critical Kevin validation with Rubin Museum tracking
+        print("🔗 Assignment Extraction Results:")
         print("   Total pairs extracted: \(workerBuildingPairs.count)")
         print("   Assignments skipped: \(skippedAssignments)")
         print("   Kevin task assignments found: \(kevinAssignmentCount)")
-        print("   ✅ PHASE 1C: Kevin Rubin Museum assignments: \(kevinRubinAssignments)")
+        print("   ✅ PRESERVED: Kevin Rubin Museum assignments: \(kevinRubinAssignments)")
         
         // Count Kevin's building assignments specifically
         let kevinBuildingPairs = workerBuildingPairs.filter { $0.hasPrefix("4-") }
@@ -773,7 +776,7 @@ class CSVDataImporter: ObservableObject {
             
             // Emergency diagnostic for Kevin
             let kevinTasks = assignments.filter { $0.assignedWorker == "Kevin Dutan" }
-            print("   Kevin tasks in CSV: \(kevinTasks.count)")
+            print("   Kevin tasks in operational data: \(kevinTasks.count)")
             if kevinTasks.count > 0 {
                 print("   Sample Kevin task: '\(kevinTasks.first?.taskName ?? "N/A")' at '\(kevinTasks.first?.building ?? "N/A")'")
             }
@@ -784,9 +787,8 @@ class CSVDataImporter: ObservableObject {
         } else if kevinRubinAssignments == 0 {
             print("⚠️ WARNING: Kevin has building assignments but NO Rubin Museum tasks!")
         } else {
-            print("✅ PHASE 1C: Kevin's Rubin Museum assignments confirmed")
+            print("✅ PRESERVED: Kevin's Rubin Museum assignments confirmed")
         }
-        // END PATCH(HF-09)
         
         // Insert assignments into database
         var insertedCount = 0
@@ -810,15 +812,15 @@ class CSVDataImporter: ObservableObject {
                 
                 // Special logging for Kevin's Rubin Museum assignment
                 if workerId == "4" && buildingId == "14" {
-                    print("✅ PHASE 1C: Kevin assigned to Rubin Museum (ID: 14)")
+                    print("✅ PRESERVED: Kevin assigned to Rubin Museum (building ID 14)")
                 }
             } catch {
                 print("⚠️ Failed to insert assignment \(workerId)->\(buildingId): \(error)")
             }
         }
         
-        // BEGIN PATCH(HF-09): Enhanced results logging with Kevin focus
-        print("✅ HF-09: Real-world assignments populated: \(insertedCount) active assignments")
+        // Enhanced results logging with Kevin focus
+        print("✅ Real-world assignments populated: \(insertedCount) active assignments")
         
         // Immediate Kevin verification
         do {
@@ -835,9 +837,9 @@ class CSVDataImporter: ObservableObject {
             """)
             
             if kevinRubinVerification.count > 0 {
-                print("✅ PHASE 1C: Kevin's Rubin Museum assignment verified in database")
+                print("✅ PRESERVED: Kevin's Rubin Museum assignment verified in database")
             } else {
-                print("⚠️ PHASE 1C: Kevin's Rubin Museum assignment NOT found in database")
+                print("⚠️ PRESERVED: Kevin's Rubin Museum assignment NOT found in database")
             }
             
             if kevinVerification.count == 0 {
@@ -847,20 +849,18 @@ class CSVDataImporter: ObservableObject {
         } catch {
             print("❌ Could not verify Kevin assignments: \(error)")
         }
-        // END PATCH(HF-09)
         
         // Log final worker assignment summary
         await logWorkerAssignmentSummary(activeWorkers)
     }
     
-    // BEGIN PATCH(HF-09): Emergency Kevin fallback method (Enhanced for Rubin Museum)
     /// Emergency fallback: Create Kevin's assignments manually if import fails
     private func createEmergencyKevinAssignments(_ manager: SQLiteManager) async {
-        print("🆘 HF-09: Creating emergency Kevin assignments...")
-        print("✅ PHASE 1C: Including Rubin Museum in emergency assignments")
+        print("🆘 Creating emergency Kevin assignments...")
+        print("✅ PRESERVED: Including Rubin Museum (building ID 14) in emergency assignments")
         
-        // Kevin's known buildings based on real-world assignments (including Rubin Museum)
-        let kevinBuildings = ["10", "6", "12", "13", "16", "2", "17", "14"] // 14 = Rubin Museum
+        // Kevin's known buildings based on real-world assignments (with corrected IDs)
+        let kevinBuildings = ["10", "6", "3", "13", "5", "2", "17", "14"] // 14 = Rubin Museum
         
         do {
             for buildingId in kevinBuildings {
@@ -872,11 +872,11 @@ class CSVDataImporter: ObservableObject {
                 """, [buildingId, assignmentType])
                 
                 if buildingId == "14" {
-                    print("✅ PHASE 1C: Emergency Rubin Museum assignment created for Kevin")
+                    print("✅ PRESERVED: Emergency Rubin Museum assignment created for Kevin (building ID 14)")
                 }
             }
             
-            print("✅ HF-09: Emergency Kevin assignments created: \(kevinBuildings)")
+            print("✅ Emergency Kevin assignments created: \(kevinBuildings)")
             
             // Verify the emergency assignments
             let verification = try await manager.query("""
@@ -889,7 +889,6 @@ class CSVDataImporter: ObservableObject {
             print("🚨 CRITICAL: Emergency assignment creation failed: \(error)")
         }
     }
-    // END PATCH(HF-09)
     
     /// Log summary of worker assignments for validation
     private func logWorkerAssignmentSummary(_ activeWorkers: [String: String]) async {
@@ -904,12 +903,12 @@ class CSVDataImporter: ObservableObject {
                 ORDER BY building_count DESC
             """)
             
-            print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PHASE-2 + PHASE 1C):")
+            print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PRESERVED):")
             for row in results {
                 let name = row["worker_name"] as? String ?? "Unknown"
                 let count = row["building_count"] as? Int64 ?? 0
                 let emoji = getWorkerEmoji(name)
-                let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum" : ""
+                let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum (building ID 14)" : ""
                 print("   \(emoji) \(name): \(count) buildings \(status)")
             }
             
@@ -931,9 +930,9 @@ class CSVDataImporter: ObservableObject {
             """)
             let rubinCount = rubinCheck.first?["count"] as? Int64 ?? 0
             if rubinCount > 0 {
-                print("✅ PHASE 1C: Kevin's Rubin Museum assignment verified")
+                print("✅ PRESERVED: Kevin's Rubin Museum assignment verified (building ID 14)")
             } else {
-                print("❌ PHASE 1C: Kevin's Rubin Museum assignment MISSING")
+                print("❌ PRESERVED: Kevin's Rubin Museum assignment MISSING")
             }
             
         } catch {
@@ -954,17 +953,17 @@ class CSVDataImporter: ObservableObject {
         }
     }
     
-    // MARK: - Helper Methods (Enhanced for Phase-2)
+    // MARK: - Helper Methods (Enhanced, NO FILE PARSING)
     
     /// Map worker names to IDs (current active workers only)
     private func mapWorkerNameToId(_ workerName: String) async throws -> Int {
         guard let sqliteManager = sqliteManager else {
-            throw CSVError.noSQLiteManager
+            throw OperationalError.noSQLiteManager
         }
         
         // Block Jose Santos explicitly
         if workerName.contains("Jose") || workerName.contains("Santos") {
-            throw CSVError.workerNotFound("Jose Santos is no longer with the company")
+            throw OperationalError.workerNotFound("Jose Santos is no longer with the company")
         }
         
         let workerResults = try await sqliteManager.query("""
@@ -979,7 +978,7 @@ class CSVDataImporter: ObservableObject {
             }
         }
         
-        throw CSVError.workerNotFound(workerName)
+        throw OperationalError.workerNotFound(workerName)
     }
     
 
@@ -989,11 +988,11 @@ class CSVDataImporter: ObservableObject {
            let id = Int(idStr) {
             return id
         }
-        throw CSVError.buildingNotFound(buildingName)
+        throw OperationalError.buildingNotFound(buildingName)
     }
     
     /// Generate unique external ID for idempotency
-    private func generateExternalId(for task: CSVTaskAssignment, index: Int) -> String {
+    private func generateExternalId(for task: OperationalTaskAssignment, index: Int) -> String {
         let components = [
             task.building,
             task.taskName,
@@ -1003,7 +1002,7 @@ class CSVDataImporter: ObservableObject {
             String(index)
         ]
         let combined = components.joined(separator: "|")
-        return "CSV-PHASE2-\(combined.hashValue)-\(index)"
+        return "OPERATIONAL-PRESERVED-\(combined.hashValue)-\(index)"
     }
     
     /// Calculate appropriate due date based on recurrence and day pattern
@@ -1039,10 +1038,10 @@ class CSVDataImporter: ObservableObject {
         }
     }
     
-    // MARK: - ⭐ PHASE-2: Enhanced Logging
+    // MARK: - ⭐ PRESERVED: Enhanced Logging (NO FILE PARSING)
     
-    /// Log Phase-2 import results with worker roster changes and Rubin Museum integration
-    private func logPhase2ImportResults(imported: Int, errors: [String]) async {
+    /// Log import results with corrected building IDs and Rubin Museum integration
+    private func logImportResults(imported: Int, errors: [String]) async {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
@@ -1051,21 +1050,23 @@ class CSVDataImporter: ObservableObject {
         let kevinRubinTasks = kevinTasks.filter { $0.building.contains("Rubin") }
         
         var logContent = """
-        PHASE-2 + PHASE 1C CSV Import Log - \(dateFormatter.string(from: Date()))
+        OPERATIONAL DATA MANAGER - NO FILE PARSING - \(dateFormatter.string(from: Date()))
         ================================================================
         Total Records: \(realWorldTasks.count)
         Successfully Imported: \(imported)
         Errors: \(errors.count)
         
-        🔧 PHASE-2 CHANGES:
+        🔧 PRESERVED CHANGES:
         • Jose Santos: REMOVED from all assignments
         • Kevin Dutan: EXPANDED to 8+ buildings (took Jose's duties)
         • Current Active Workers: 7 total (Greg, Edwin, Kevin, Mercedes, Luis, Angel, Shawn)
+        • NO FILE PARSING: All data programmatic
         
-        ✅ PHASE 1C COMPLETION:
-        • Kevin Rubin Museum tasks: \(kevinRubinTasks.count) tasks
-        • Rubin Museum building ID: 14
-        • Kevin's corrected reality: Works at Rubin Museum (NOT 104 Franklin)
+        ✅ PRESERVED BUILDING IDs:
+        • Kevin Rubin Museum tasks: \(kevinRubinTasks.count) tasks (building ID 14)
+        • Rubin Museum building ID: 14 (PRESERVED from correct mapping)
+        • Kevin's preserved reality: Works at Rubin Museum (NOT 104 Franklin)
+        • All building ID conflicts resolved
         
         CURRENT ACTIVE WORKER TASK SUMMARY:
         - Kevin Dutan: \(kevinTasks.count) tasks 🔧 EXPANDED + Rubin Museum (\(kevinRubinTasks.count) Rubin tasks)
@@ -1084,14 +1085,15 @@ class CSVDataImporter: ObservableObject {
         - Inspection: \(realWorldTasks.filter { $0.category == "Inspection" }.count) tasks
         - Repair: \(realWorldTasks.filter { $0.category == "Repair" }.count) tasks
         
-        Kevin's Building Coverage (PHASE 1C):
+        Kevin's Building Coverage (PRESERVED):
         """
         
         let kevinBuildings = Set(kevinTasks.map { $0.building })
         for building in kevinBuildings.sorted() {
             let buildingTasks = kevinTasks.filter { $0.building == building }
-            let rubinIndicator = building.contains("Rubin") ? " ✅ RUBIN MUSEUM" : ""
-            logContent += "- \(building): \(buildingTasks.count) tasks\(rubinIndicator)\n"
+            let rubinIndicator = building.contains("Rubin") ? " ✅ RUBIN MUSEUM (ID: 14)" : ""
+            let buildingId = getBuildingIdFromName(building)
+            logContent += "- \(building): \(buildingTasks.count) tasks (ID: \(buildingId))\(rubinIndicator)\n"
         }
         
         if !errors.isEmpty {
@@ -1101,43 +1103,43 @@ class CSVDataImporter: ObservableObject {
             }
         }
         
-        // Save to documents directory
+        // Save to documents directory (no file parsing, but can still write logs)
         if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let logPath = documentsPath.appendingPathComponent("phase2_phase1c_csv_import_log.txt")
+            let logPath = documentsPath.appendingPathComponent("operational_data_manager_no_csv_log.txt")
             
             do {
                 try logContent.write(to: logPath, atomically: true, encoding: .utf8)
-                print("📝 Phase-2 + Phase 1C import log saved to: \(logPath)")
+                print("📝 Operational DataManager (no CSV parsing) import log saved to: \(logPath)")
             } catch {
                 print("❌ Failed to save import log: \(error)")
             }
         }
         
-        // Also save errors to CSV for easier review
+        // Also save errors for review if any
         if !errors.isEmpty {
-            await saveErrorsToCSV(errors)
+            await saveErrorsForReview(errors)
         }
     }
     
-    /// Save errors to CSV file
-    private func saveErrorsToCSV(_ errors: [String]) async {
-        let csvContent = "Timestamp,Error\n" + errors.map { "\"\(Date())\",\"\($0)\"" }.joined(separator: "\n")
+    /// Save errors for review
+    private func saveErrorsForReview(_ errors: [String]) async {
+        let errorContent = "Timestamp,Error\n" + errors.map { "\"\(Date())\",\"\($0)\"" }.joined(separator: "\n")
         
         if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let errorPath = documentsPath.appendingPathComponent("phase2_import_errors.csv")
+            let errorPath = documentsPath.appendingPathComponent("operational_data_manager_errors.txt")
             
             do {
-                try csvContent.write(to: errorPath, atomically: true, encoding: .utf8)
-                print("📊 Phase-2 error CSV saved to: \(errorPath)")
+                try errorContent.write(to: errorPath, atomically: true, encoding: .utf8)
+                print("📊 OperationalDataManager error file saved to: \(errorPath)")
             } catch {
-                print("❌ Failed to save error CSV: \(error)")
+                print("❌ Failed to save error file: \(error)")
             }
         }
     }
     
-    // MARK: - Validation and Summary Methods
+    // MARK: - Validation and Summary Methods (NO FILE PARSING)
     
-    func validateCSVData() -> [String] {
+    func validateOperationalData() -> [String] {
         var validationErrors: [String] = []
         
         for (index, task) in realWorldTasks.enumerated() {
@@ -1172,7 +1174,7 @@ class CSVDataImporter: ObservableObject {
                 }
             }
             
-            // PHASE-2: Validate no Jose Santos
+            // Validate no Jose Santos
             if task.assignedWorker.contains("Jose") || task.assignedWorker.contains("Santos") {
                 validationErrors.append("Row \(index + 1): Jose Santos is no longer active")
             }
@@ -1273,9 +1275,9 @@ class CSVDataImporter: ObservableObject {
     }
 }
 
-// MARK: - Error Types (Enhanced for Phase-2)
+// MARK: - Error Types (Enhanced for OperationalDataManager)
 
-enum CSVError: LocalizedError {
+enum OperationalError: LocalizedError {
     case noSQLiteManager
     case buildingNotFound(String)
     case workerNotFound(String)
@@ -1284,7 +1286,7 @@ enum CSVError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noSQLiteManager:
-            return "SQLiteManager not set on CSVDataImporter"
+            return "SQLiteManager not set on OperationalDataManager"
         case .buildingNotFound(let name):
             return "Building not found: '\(name)'"
         case .workerNotFound(let name):

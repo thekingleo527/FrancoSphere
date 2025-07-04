@@ -6,6 +6,7 @@
 // top-level typealiases at the bottom.
 //
 // Fixed compilation errors: duplicate color properties and WeatherAlert redeclaration
+// ✅ UPDATED: References to OperationalDataManager (renamed from CSVDataImporter)
 
 import Foundation
 import SwiftUI
@@ -207,7 +208,7 @@ public enum FrancoSphere {
         }
         
         public static func getBuildingId(byName name: String) -> String? {
-            // Handle various name formats from CSV
+            // Handle various name formats from operational data
             let normalizedName = name.lowercased()
                 .replacingOccurrences(of: "–", with: "-")
                 .replacingOccurrences(of: "_", with: "-")
@@ -847,7 +848,7 @@ public enum FrancoSphere {
             self.skillLevel = skillLevel
         }
 
-        /// Complete list of all workers from CSV data
+        /// Complete list of all workers from operational data (active workers only)
         public static var allWorkers: [WorkerProfile] {
             return [
                 WorkerProfile(
@@ -869,21 +870,12 @@ public enum FrancoSphere {
                     skillLevel: .intermediate
                 ),
                 WorkerProfile(
-                    id: "3",
+                    id: "4",
                     name: "Kevin Dutan",
                     email: "dutankevin1@gmail.com",
                     role: .worker,
                     skills: [.maintenance, .cleaning, .sanitation],
                     assignedBuildings: ["2", "3", "4", "5", "6", "9", "10", "12", "15", "17"],
-                    skillLevel: .intermediate
-                ),
-                WorkerProfile(
-                    id: "4",
-                    name: "Angel Guirachocha",
-                    email: "lio.angel71@gmail.com",
-                    role: .worker,
-                    skills: [.maintenance, .cleaning, .sanitation],
-                    assignedBuildings: ["1", "7", "8", "12", "13", "16", "18"],
                     skillLevel: .intermediate
                 ),
                 WorkerProfile(
@@ -906,6 +898,15 @@ public enum FrancoSphere {
                 ),
                 WorkerProfile(
                     id: "7",
+                    name: "Angel Guirachocha",
+                    email: "lio.angel71@gmail.com",
+                    role: .worker,
+                    skills: [.maintenance, .cleaning, .sanitation],
+                    assignedBuildings: ["1", "7", "8", "12", "13", "16", "18"],
+                    skillLevel: .intermediate
+                ),
+                WorkerProfile(
+                    id: "8",
                     name: "Shawn Magloire",
                     email: "shawn@francomanagementgroup.com",
                     role: .worker,
@@ -915,7 +916,7 @@ public enum FrancoSphere {
                 ),
                 // Shawn's additional accounts for testing
                 WorkerProfile(
-                    id: "8",
+                    id: "9",
                     name: "Shawn Magloire",
                     email: "FrancoSphere@francomanagementgroup.com",
                     role: .client,
@@ -924,7 +925,7 @@ public enum FrancoSphere {
                     skillLevel: .basic
                 ),
                 WorkerProfile(
-                    id: "9",
+                    id: "10",
                     name: "Shawn Magloire",
                     email: "Shawn@fme-llc.com",
                     role: .admin,
@@ -950,7 +951,7 @@ public enum FrancoSphere {
             
             // Handle first name only cases
             if searchName == "angel" {
-                return "4"
+                return "7"
             }
             
             return nil
@@ -1293,9 +1294,9 @@ public enum FrancoSphere {
     }
 
     // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-    // MARK: — 6) CSV Data Mapping Helper
+    // MARK: — 6) Operational Data Mapping Helper (Updated from CSV)
 
-    public class CSVDataMapper {
+    public class OperationalDataMapper {
         public static func getBuildingID(fromName name: String) -> String? {
             return NamedCoordinate.getBuildingId(byName: name)
         }
@@ -1303,7 +1304,7 @@ public enum FrancoSphere {
             return WorkerProfile.getWorkerId(byName: name)
         }
 
-        public static func createTaskFromCSVData(
+        public static func createTaskFromOperationalData(
             taskName: String,
             buildingName: String,
             workerName: String,
@@ -1352,8 +1353,8 @@ public enum FrancoSphere {
             return tasks
         }
         
-        public static func mapRecurrenceType(_ csvRecurrence: String) -> TaskRecurrence? {
-            switch csvRecurrence {
+        public static func mapRecurrenceType(_ operationalRecurrence: String) -> TaskRecurrence? {
+            switch operationalRecurrence {
             case "Daily": return .daily
             case "Weekly": return .weekly
             case "Bi-Weekly": return .biweekly
@@ -1364,7 +1365,7 @@ public enum FrancoSphere {
             }
         }
 
-        public static func validateCSVData(
+        public static func validateOperationalData(
             category: String,
             urgency: String,
             recurrence: String,
@@ -1833,7 +1834,7 @@ public typealias ScheduleConflict     = FrancoSphere.ScheduleConflict
 
 // Other Models
 public typealias TaskTemplate         = FrancoSphere.TaskTemplate
-public typealias CSVDataMapper        = FrancoSphere.CSVDataMapper
+public typealias OperationalDataMapper = FrancoSphere.OperationalDataMapper  // ✅ UPDATED: Changed from CSVDataMapper
 public typealias BuildingStatus       = FrancoSphere.BuildingStatus
 
 // Inventory Models
