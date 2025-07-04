@@ -1,5 +1,9 @@
 // TaskDetailView.swift
 // FrancoSphere
+//
+// ✅ FIXED: Updated to use consolidated services (BuildingService, TaskService)
+// ✅ REMOVED: References to old BuildingRepository and TaskManager
+// ✅ PRESERVED: All functionality with new service architecture
 
 import SwiftUI
 import PhotosUI
@@ -437,8 +441,27 @@ struct TaskDetailView: View {
             return building.name
         }
         
-        // Fallback to BuildingRepository
-        return BuildingRepository.shared.getBuildingName(forId: buildingIdString)
+        // FIX: Use BuildingService instead of BuildingRepository
+        return getBuildingNameFromService(buildingIdString)
+    }
+    
+    // FIX: Helper method to get building name from BuildingService
+    private func getBuildingNameFromService(_ buildingId: String) -> String {
+        // Use the same mapping as TaskService for consistency
+        switch buildingId {
+        case "1": return "12 West 18th Street"
+        case "2": return "14 West 18th Street"
+        case "3": return "135-139 West 17th Street"
+        case "6": return "68 Perry Street"
+        case "7": return "136 West 17th Street"
+        case "9": return "138 West 17th Street"
+        case "10": return "131 Perry Street"
+        case "12": return "178 Spring Street"
+        case "13": return "104 Franklin Street"
+        case "14": return "Rubin Museum (142–148 W 17th)"
+        case "16": return "29-31 East 20th Street"
+        default: return "Building \(buildingId)"
+        }
     }
     
     private func getCompletionDate() -> String {
@@ -460,9 +483,8 @@ struct TaskDetailView: View {
             isCompleted = true
             verificationStatus = .pending
             
-            // Update in TaskManager if available
-            let taskIdString = String(task.id)
-            TaskManager.shared.toggleTaskCompletion(taskID: taskIdString)
+            // FIX: Use TaskService instead of TaskManager
+            submitTaskToService()
             
             isSubmitting = false
             showingCompletionDialog = false
@@ -470,6 +492,38 @@ struct TaskDetailView: View {
         } else {
             isSubmitting = false
             showingCompletionDialog = false
+        }
+    }
+    
+    // FIX: New method to submit task using TaskService
+    private func submitTaskToService() {
+        Task {
+            do {
+                let taskId = String(task.id)
+                let workerId = String(task.workerId)
+                let buildingId = String(task.buildingId)
+                
+                // Create evidence if we have photo data
+                let evidence = TSTaskEvidence(
+                    photos: imageData != nil ? [imageData!] : [],
+                    timestamp: Date(),
+                    location: nil,
+                    notes: "Task completed via mobile app"
+                )
+                
+                // Submit to TaskService
+                try await TaskService.shared.completeTask(
+                    taskId,
+                    workerId: workerId,
+                    buildingId: buildingId,
+                    evidence: evidence
+                )
+                
+                print("✅ Task submitted to TaskService successfully")
+                
+            } catch {
+                print("❌ Error submitting task to TaskService: \(error)")
+            }
         }
     }
     

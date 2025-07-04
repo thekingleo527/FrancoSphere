@@ -10,6 +10,7 @@
 //  ✅ Scenario deduplication with deterministic scenarioId
 //  ✅ DSNY day reminder system at 19:30 local time
 //  ✅ Enhanced modal presentation with detents
+//  ✅ FIXED: applyEmergencyBuildingFix → ensureKevinDataIntegrity
 //
 
 import Foundation
@@ -620,7 +621,7 @@ class AIAssistantManager: ObservableObject {
         self.lastInteractionTime = Date()
     }
     
-    // FIXED: Updated to use correct method names from WorkerContextEngine
+    // ✅ FIXED: Updated to use correct method names from WorkerContextEngine
     func performIntelligentRepair() async -> (success: Bool, message: String) {
         await setProcessingState(true)
         
@@ -640,7 +641,8 @@ class AIAssistantManager: ObservableObject {
         let workerId = contextEngine.getWorkerId()
         if workerId == "4" && contextEngine.getAssignedBuildings().isEmpty {
             print("🔧 AI: Applying Kevin-specific emergency fix")
-            await contextEngine.applyEmergencyBuildingFix()
+            // ✅ FIXED: Use ensureKevinDataIntegrity instead of applyEmergencyBuildingFix
+            await contextEngine.ensureKevinDataIntegrity()
         }
         
         // FIXED: Use available methods instead of non-existent forceEmergencyRepair

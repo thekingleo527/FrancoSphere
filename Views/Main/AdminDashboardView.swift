@@ -2,7 +2,9 @@
 //  AdminDashboardView.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 3/13/25.
+//  ✅ FIXED: Updated to use consolidated services (BuildingService, TaskService, WorkerService)
+//  ✅ REMOVED: References to old BuildingRepository and TaskManager
+//  ✅ PRESERVED: All functionality with new service architecture
 //
 
 import SwiftUI
@@ -17,12 +19,17 @@ struct AdminDashboardView: View {
     
     // State variables
     @State private var activeWorkers: [FrancoSphere.WorkerProfile] = []
-    @State private var ongoingTasks: [FrancoSphere.MaintenanceTask] = []
+    @State private var ongoingTasks: [ContextualTask] = []  // ✅ FIXED: Use ContextualTask from consolidated services
     @State private var inventoryAlerts: [FrancoSphere.InventoryItem] = []
     @State private var selectedTab = 0
     @State private var showNewTaskSheet = false
     @State private var isRefreshing = false
     @State private var selectedBuilding: FrancoSphere.NamedCoordinate? = nil
+    
+    // ✅ FIXED: Add consolidated services
+    private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
     
     // Map region
     @State private var region = MKCoordinateRegion(
@@ -71,7 +78,7 @@ struct AdminDashboardView: View {
             .navigationBarHidden(true)
             .task {
                 await loadBuildings()
-                loadDashboardData()
+                await loadDashboardData()
             }
             .sheet(isPresented: $showNewTaskSheet) {
                 TaskRequestView()
@@ -396,15 +403,16 @@ struct AdminDashboardView: View {
         }
     }
     
-    private func taskListItem(_ task: FrancoSphere.MaintenanceTask) -> some View {
+    // ✅ FIXED: Updated to use ContextualTask instead of MaintenanceTask
+    private func taskListItem(_ task: ContextualTask) -> some View {
         NavigationLink(destination: Text("Task Detail View")) {
             HStack(spacing: 12) {
                 // Task icon with status color
-                Image(systemName: task.category.icon)
+                Image(systemName: getCategoryIcon(task.category))
                     .font(.system(size: 18))
                     .foregroundColor(.white)
                     .frame(width: 36, height: 36)
-                    .background(task.statusColor)
+                    .background(getStatusColor(task.status))
                     .cornerRadius(8)
                 
                 // Task details
@@ -416,12 +424,12 @@ struct AdminDashboardView: View {
                     
                     // Location and time
                     HStack(spacing: 8) {
-                        Text(getBuildingName(for: task.buildingID))
+                        Text(task.buildingName ?? getBuildingName(for: task.buildingId))
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
                         if let startTime = task.startTime {
-                            Text(formatTime(startTime))
+                            Text(startTime)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -431,12 +439,12 @@ struct AdminDashboardView: View {
                 Spacer()
                 
                 // Status pill
-                Text(task.statusText)
+                Text(task.status.capitalized)
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(task.statusColor.opacity(0.1))
-                    .foregroundColor(task.statusColor)
+                    .background(getStatusColor(task.status).opacity(0.1))
+                    .foregroundColor(getStatusColor(task.status))
                     .cornerRadius(12)
             }
             .padding(12)
@@ -557,40 +565,67 @@ struct AdminDashboardView: View {
     private func refreshData() async {
         isRefreshing = true
         await loadBuildings()
-        loadDashboardData()
+        await loadDashboardData()
         isRefreshing = false
     }
     
+    // ✅ FIXED: Use BuildingService instead of BuildingRepository
     private func loadBuildings() async {
         isLoadingBuildings = true
         
-        // Load buildings from repository
-        Task { @MainActor in
-            buildings = await BuildingRepository.shared.allBuildings
-            isLoadingBuildings = false
+        do {
+            buildings = try await buildingService.getAllBuildings()
+            print("✅ Loaded \(buildings.count) buildings from BuildingService")
+        } catch {
+            print("❌ Error loading buildings: \(error)")
+            buildings = []
+        }
+        
+        isLoadingBuildings = false
+    }
+    
+    // ✅ FIXED: Use consolidated services instead of legacy managers
+    private func loadDashboardData() async {
+        // Load active workers (mock data for now)
+        activeWorkers = FrancoSphere.WorkerProfile.allWorkers
+        
+        // Load ongoing tasks from all buildings using TaskService
+        await loadOngoingTasks()
+        
+        // Load inventory alerts from all buildings
+        await loadInventoryAlerts()
+    }
+    
+    private func loadOngoingTasks() async {
+        var allTasks: [ContextualTask] = []
+        
+        do {
+            for building in buildings {
+                // Get tasks for each building
+                let buildingTasks = try await taskService.getTasks(for: building.id, date: Date())
+                allTasks.append(contentsOf: buildingTasks)
+            }
+            
+            // Filter to only ongoing (not completed) tasks
+            ongoingTasks = allTasks.filter { $0.status != "completed" }
+            print("✅ Loaded \(ongoingTasks.count) ongoing tasks from TaskService")
+            
+        } catch {
+            print("❌ Error loading ongoing tasks: \(error)")
+            ongoingTasks = []
         }
     }
     
-    private func loadDashboardData() {
-        // Load active workers
-        activeWorkers = FrancoSphere.WorkerProfile.allWorkers
-        
-        // Load ongoing tasks from all buildings
-        var allTasks: [FrancoSphere.MaintenanceTask] = []
-        for building in buildings {
-            let buildingTasks = TaskManager.shared.fetchTasks(forBuilding: building.id, includePastTasks: false)
-            allTasks.append(contentsOf: buildingTasks)
-        }
-        ongoingTasks = allTasks.filter { !$0.isComplete }
-        
-        // Load inventory alerts from all buildings
+    private func loadInventoryAlerts() async {
         var allInventoryAlerts: [FrancoSphere.InventoryItem] = []
+        
         for building in buildings {
             // Create mock inventory items since InventoryManager might not exist
             let mockItems = createMockInventoryItems(forBuilding: building.id)
             let alerts = mockItems.filter { $0.needsReorder }
             allInventoryAlerts.append(contentsOf: alerts)
         }
+        
         inventoryAlerts = allInventoryAlerts
     }
     
@@ -650,6 +685,39 @@ struct AdminDashboardView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
+    }
+    
+    // ✅ FIXED: Helper methods for ContextualTask
+    private func getCategoryIcon(_ category: String) -> String {
+        switch category.lowercased() {
+        case "cleaning":
+            return "sparkles"
+        case "maintenance":
+            return "wrench.and.screwdriver"
+        case "sanitation":
+            return "trash"
+        case "security":
+            return "lock.shield"
+        case "inspection":
+            return "checkmark.circle"
+        default:
+            return "square.grid.2x2"
+        }
+    }
+    
+    private func getStatusColor(_ status: String) -> Color {
+        switch status.lowercased() {
+        case "completed":
+            return .green
+        case "pending":
+            return .orange
+        case "overdue":
+            return .red
+        case "in_progress":
+            return .blue
+        default:
+            return .gray
+        }
     }
     
     private func weatherRiskItem(_ building: FrancoSphere.NamedCoordinate) -> some View {

@@ -2,7 +2,7 @@
 //  MapOverlayView.swift
 //  FrancoSphere
 //
-//  ✅ PHASE 2 - HOUR 2: ZERO GESTURE CONFLICTS
+//  ✅ PHASE 2 - ZERO GESTURE CONFLICTS SYSTEM
 //  ✅ Enhanced gesture priority system with smart detection
 //  ✅ Smooth map panning + building taps + swipe dismiss
 //  ✅ Production-ready gesture handling with haptic feedback
@@ -80,13 +80,13 @@ struct MapOverlayView: View {
     private let gestureTimeout: TimeInterval = 0.3
     
     init(buildings: [FrancoSphere.NamedCoordinate],
-         allBuildings: [FrancoSphere.NamedCoordinate],
-         currentBuildingId: String?,
-         focusBuilding: FrancoSphere.NamedCoordinate?,
+         allBuildings: [FrancoSphere.NamedCoordinate] = [],
+         currentBuildingId: String? = nil,
+         focusBuilding: FrancoSphere.NamedCoordinate? = nil,
          isPresented: Binding<Bool>,
          onBuildingDetail: ((FrancoSphere.NamedCoordinate) -> Void)? = nil) {
         self.buildings = buildings
-        self.allBuildings = allBuildings
+        self.allBuildings = allBuildings.isEmpty ? buildings : allBuildings
         self.currentBuildingId = currentBuildingId
         self.focusBuilding = focusBuilding
         self._isPresented = isPresented
@@ -399,7 +399,7 @@ struct MapOverlayView: View {
         }
     }
     
-    // MARK: - Top Controls (Unchanged but with better hit testing)
+    // MARK: - Top Controls with Enhanced Haptic Feedback
     
     private var topControls: some View {
         HStack {
@@ -458,7 +458,7 @@ struct MapOverlayView: View {
         .padding(.top, 10)
     }
     
-    // MARK: - Bottom Controls (Enhanced with real data)
+    // MARK: - Bottom Controls with Real Data
     
     private var bottomControls: some View {
         HStack(spacing: 16) {
@@ -637,5 +637,35 @@ struct MapOverlayActionButtonStyle: ButtonStyle {
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Preview Support
+
+struct MapOverlayView_Previews: PreviewProvider {
+    static var previews: some View {
+        MapOverlayView(
+            buildings: [
+                FrancoSphere.NamedCoordinate(
+                    id: "1",
+                    name: "131 Perry Street",
+                    latitude: 40.7359,
+                    longitude: -74.0059,
+                    imageAssetName: "perry_131"
+                ),
+                FrancoSphere.NamedCoordinate(
+                    id: "2",
+                    name: "68 Perry Street",
+                    latitude: 40.7357,
+                    longitude: -74.0055,
+                    imageAssetName: "perry_68"
+                )
+            ],
+            allBuildings: [],
+            currentBuildingId: "1",
+            focusBuilding: nil,
+            isPresented: .constant(true),
+            onBuildingDetail: nil
+        )
     }
 }

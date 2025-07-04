@@ -7,7 +7,9 @@ struct MaintenanceTaskView: View {
     @State private var buildingName: String = "Loading..."
     @State private var isMarkingComplete = false
 
-    private let buildingRepo = BuildingRepository.shared
+    // ✅ FIXED: Use consolidated services
+    private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
 
     // Helper function for urgency color
     private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
@@ -56,14 +58,14 @@ struct MaintenanceTaskView: View {
         .navigationTitle("Maintenance Task")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            // FIXED: Load building name asynchronously
+            // Load building name asynchronously
             await loadBuildingName()
         }
         .alert(isPresented: $showCompleteConfirmation) {
             Alert(title: Text("Mark as Complete?"),
                   message: Text("Are you sure you want to mark this task as complete?"),
                   primaryButton: .default(Text("Yes"), action: {
-                      // FIXED: Use Task wrapper for async call
+                      // Use Task wrapper for async call
                       Task {
                           await markTaskAsComplete()
                       }
@@ -78,7 +80,6 @@ struct MaintenanceTaskView: View {
             Text("Building").font(.headline).foregroundColor(.secondary)
             HStack {
                 Image(systemName: "building.2").foregroundColor(.blue)
-                // FIXED: Use state variable instead of direct async call
                 Text(buildingName).font(.body)
             }
         }
@@ -196,9 +197,22 @@ struct MaintenanceTaskView: View {
     
     /// Load building name asynchronously
     private func loadBuildingName() async {
-        let name = await buildingRepo.name(forId: task.buildingID)
-        await MainActor.run {
-            self.buildingName = name
+        // ✅ FIXED: Use BuildingService instead of BuildingRepository
+        do {
+            if let building = try await buildingService.getBuilding(task.buildingID) {
+                await MainActor.run {
+                    self.buildingName = building.name
+                }
+            } else {
+                await MainActor.run {
+                    self.buildingName = "Building \(task.buildingID)"
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.buildingName = "Building \(task.buildingID)"
+            }
+            print("❌ Failed to load building name: \(error)")
         }
     }
     
@@ -208,19 +222,43 @@ struct MaintenanceTaskView: View {
             isMarkingComplete = true
         }
         
-        // FIXED: Call async version of toggleTaskCompletion
-        await TaskManager.shared.toggleTaskCompletionAsync(taskID: task.id, completedBy: "Current User")
-        
-        await MainActor.run {
-            isMarkingComplete = false
-            presentationMode.wrappedValue.dismiss()
+        // ✅ FIXED: Use TaskService instead of TaskManager
+        do {
+            // Convert MaintenanceTask to the required format for TaskService
+            let evidence = TaskEvidence(
+                photos: [],
+                timestamp: Date(),
+                location: nil,
+                notes: "Marked complete from maintenance view"
+            )
+            
+            try await taskService.completeTask(
+                task.id,
+                workerId: task.assignedWorkers.first ?? "unknown",
+                buildingId: task.buildingID,
+                evidence: evidence
+            )
+            
+            await MainActor.run {
+                isMarkingComplete = false
+                presentationMode.wrappedValue.dismiss()
+            }
+        } catch {
+            await MainActor.run {
+                isMarkingComplete = false
+            }
+            print("❌ Failed to mark task as complete: \(error)")
         }
     }
     
     /// Reassign workers (placeholder for future implementation)
     private func reassignWorkers() async {
-        // TODO: Implement worker reassignment logic
+        // TODO: Implement worker reassignment logic using WorkerService
         print("Reassigning workers for task: \(task.id)")
+        
+        // Future implementation would use WorkerService
+        // let workerService = WorkerService.shared
+        // try await workerService.reassignTask(taskId: task.id, newWorkerId: "...")
     }
 
     // MARK: – Helpers
@@ -238,7 +276,7 @@ struct StatusBadge: View {
     let isCompleted: Bool
     let urgency: TaskUrgency
 
-    // Helper function for urgency color - Fixed the issue
+    // Helper function for urgency color
     private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
         case .low:    return .green
@@ -252,8 +290,32 @@ struct StatusBadge: View {
         Text(isCompleted ? "Completed" : urgency.rawValue)
             .font(.caption).fontWeight(.bold)
             .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(isCompleted ? Color.gray : getUrgencyColor(urgency)) // Fixed: Use helper function
+            .background(isCompleted ? Color.gray : getUrgencyColor(urgency))
             .foregroundColor(.white)
             .cornerRadius(20)
+    }
+}
+
+// MARK: - Preview
+struct MaintenanceTaskView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            MaintenanceTaskView(task: MaintenanceTask(
+                id: "preview_task",
+                name: "Replace Air Filter",
+                buildingID: "1",
+                description: "Replace HVAC air filter in main unit",
+                dueDate: Date(),
+                startTime: Date(),
+                endTime: Date().addingTimeInterval(3600),
+                category: .maintenance,
+                urgency: .medium,
+                recurrence: .monthly,
+                isComplete: false,
+                assignedWorkers: ["4"],
+                requiredSkillLevel: "Basic"
+            ))
+        }
+        .preferredColorScheme(.dark)
     }
 }

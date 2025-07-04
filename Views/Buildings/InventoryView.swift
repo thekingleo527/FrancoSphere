@@ -1,7 +1,10 @@
 // InventoryView.swift
 // FrancoSphere
 // Created by Shawn Magloire on 3/3/25.
-// Updated with error handling and UI improvements
+// ✅ FIXED: Updated to use BuildingService instead of InventoryManager
+// ✅ REMOVED: References to eliminated InventoryManager
+// ✅ FIXED: Removed duplicate property declarations
+// ✅ PRESERVED: All inventory functionality with new service architecture
 
 import SwiftUI
 
@@ -16,6 +19,7 @@ extension FrancoSphere.InventoryItem {
         }
     }
 }
+
 /// Displays and manages inventory for a selected building.
 struct InventoryView: View {
     @State private var inventoryItems: [FrancoSphere.InventoryItem] = []
@@ -263,22 +267,27 @@ struct InventoryView: View {
         isLoading = true
         errorMessage = nil
         
-        // FIXED: Use InventoryManager instead of SQLiteManager
-        do {
-            inventoryItems = InventoryManager.shared.getInventoryItems(forBuilding: buildingID)
-            isLoading = false
-        } catch {
-            isLoading = false
-            errorMessage = "Failed to load inventory: \(error.localizedDescription)"
+        Task { @MainActor in
+            do {
+                let items = try await BuildingService.shared.getInventoryItems(for: buildingID)
+                inventoryItems = items
+                isLoading = false
+            } catch {
+                isLoading = false
+                errorMessage = "Failed to load inventory: \(error.localizedDescription)"
+            }
         }
     }
     
     private func deleteItem(_ item: FrancoSphere.InventoryItem) {
-        // FIXED: Use InventoryManager instead of SQLiteManager
-        if InventoryManager.shared.deleteInventoryItem(itemId: item.id) {
-            // Remove item from local array
-            if let index = inventoryItems.firstIndex(where: { $0.id == item.id }) {
-                inventoryItems.remove(at: index)
+        Task { @MainActor in
+            do {
+                try await BuildingService.shared.deleteInventoryItem(itemId: item.id)
+                if let index = inventoryItems.firstIndex(where: { $0.id == item.id }) {
+                    inventoryItems.remove(at: index)
+                }
+            } catch {
+                errorMessage = "Failed to delete item: \(error.localizedDescription)"
             }
         }
     }
@@ -310,8 +319,9 @@ struct InventoryItemRow: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    if item.shouldReorder {
-                        Text(item.statusText)
+                    // ✅ FIXED: Use item properties that exist in FrancoSphere.InventoryItem
+                    if item.needsReorder {
+                        Text(item.quantity <= 0 ? "Out of Stock" : "Low Stock")
                             .font(.caption)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -382,7 +392,8 @@ struct InventoryItemDetailView: View {
                     LabeledContent("Last Updated", value: formattedDate)
                 }
                 
-                if item.shouldReorder {
+                // ✅ FIXED: Use correct property name
+                if item.needsReorder {
                     HStack {
                         Image(systemName: "exclamationmark.triangle")
                             .foregroundColor(item.statusColor)
@@ -448,22 +459,25 @@ struct InventoryItemDetailView: View {
     private func saveQuantityChange() {
         isUpdating = true
         
-        // FIXED: Use InventoryManager with proper parameters
-        let success = InventoryManager.shared.updateItemQuantity(
-            itemId: item.id,
-            newQuantity: newQuantity,
-            workerId: "system" // You might want to get the actual worker ID
-        )
-        
-        if success {
-            isEditing = false
-            onUpdate() // Notify parent to refresh
-            withAnimation {
-                showUpdateSuccess = true
+        Task { @MainActor in
+            do {
+                try await BuildingService.shared.updateInventoryItemQuantity(
+                    itemId: item.id,
+                    newQuantity: newQuantity,
+                    workerId: "system"
+                )
+                
+                isEditing = false
+                onUpdate()
+                withAnimation {
+                    showUpdateSuccess = true
+                }
+                isUpdating = false
+            } catch {
+                isUpdating = false
+                print("Failed to update quantity: \(error)")
             }
         }
-        
-        isUpdating = false
     }
     
     // Updated to handle Date instead of String
@@ -582,7 +596,6 @@ public struct AddInventoryItemView: View {
         
         isSubmitting = true
         
-        // FIXED: Create InventoryItem and use InventoryManager
         let newItem = FrancoSphere.InventoryItem(
             name: trimmedName,
             buildingID: buildingID,
@@ -596,15 +609,19 @@ public struct AddInventoryItemView: View {
             notes: notes.isEmpty ? nil : notes
         )
         
-        let success = InventoryManager.shared.saveInventoryItem(newItem)
-        
-        isSubmitting = false
-        
-        if success {
-            onComplete(true)
-        } else {
-            errorMessage = "Failed to add inventory item. Please try again."
-            showError = true
+        Task { @MainActor in
+            do {
+                try await BuildingService.shared.saveInventoryItem(newItem)
+                isSubmitting = false
+                onComplete(true)
+            } catch {
+                isSubmitting = false
+                errorMessage = "Failed to add inventory item. Please try again."
+                showError = true
+            }
         }
     }
 }
+
+// ✅ REMOVED: Duplicate property declarations for shouldReorder and statusText
+// These properties are already defined in the FrancoSphere.InventoryItem type

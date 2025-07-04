@@ -3,6 +3,7 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: Updated to use consolidated services (TaskService, WorkerService, BuildingService)
+//  ✅ FIXED: Use TSTaskProgress from TaskService instead of TaskProgress
 //  ✅ REMOVED: References to old TaskManagementService and WorkerManager
 //  ✅ PRESERVED: All functionality with new service architecture
 //
@@ -92,12 +93,21 @@ class WorkerDashboardIntegration: ObservableObject {
         return try await taskService.getTasks(for: workerId, date: Date())
     }
     
-    private func calculateTaskProgress(for workerId: String) async -> TaskProgress {
+    // MARK: - FIXED: Use TSTaskProgress from TaskService
+    private func calculateTaskProgress(for workerId: String) async -> TSTaskProgress {
         do {
             return try await taskService.getTaskProgress(for: workerId)
         } catch {
             print("Failed to calculate task progress: \(error)")
-            return TaskProgress(completed: 0, total: 0, remaining: 0, percentage: 0, overdueTasks: 0)
+            return TSTaskProgress(
+                completed: 0,
+                total: 0,
+                remaining: 0,
+                percentage: 0,
+                overdueTasks: 0,
+                averageCompletionTime: 0,
+                onTimeCompletionRate: 0
+            )
         }
     }
     
@@ -173,12 +183,20 @@ class WorkerDashboardIntegration: ObservableObject {
         guard !workerId.isEmpty else { return }
         
         do {
-            // Update through consolidated TaskService
+            // Create task evidence (optional)
+            let evidence = TSTaskEvidence(
+                photos: [],
+                timestamp: Date(),
+                location: nil,
+                notes: nil
+            )
+            
+            // ✅ FIXED: Use correct TaskService.completeTask method signature
             try await taskService.completeTask(
                 taskId,
                 workerId: workerId,
                 buildingId: buildingId,
-                evidence: nil
+                evidence: evidence
             )
             
             print("✅ Task \(taskId) completed")
@@ -305,13 +323,13 @@ class WorkerDashboardIntegration: ObservableObject {
     }
 }
 
-// MARK: - Dashboard Data Model (UPDATED: Use TaskProgress from TaskService)
+// MARK: - Dashboard Data Model (UPDATED: Use TSTaskProgress from TaskService)
 
 struct DashboardData {
     let workerId: String
     let assignedBuildings: [FrancoSphere.NamedCoordinate]
     let todaysTasks: [ContextualTask]
-    let taskProgress: TaskProgress  // Use TaskProgress from TaskService
+    let taskProgress: TSTaskProgress  // ✅ FIXED: Use TSTaskProgress from TaskService
     let lastUpdated: Date
     
     // Computed properties for easy access
@@ -486,3 +504,10 @@ func mapContextualTasksToMaintenanceTasks(_ contextualTasks: [ContextualTask]) -
         )
     }
 }
+
+// MARK: - Convenience Typealias for Compatibility
+
+/// Convenience typealias to maintain compatibility with other files
+typealias TaskProgress = TSTaskProgress
+typealias TaskEvidence = TSTaskEvidence
+typealias TaskCompletion = TSTaskCompletion

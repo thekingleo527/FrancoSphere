@@ -3,6 +3,10 @@
 //  FrancoSphere
 //
 //  Created by Shawn Magloire on 3/4/25.
+//  ✅ FIXED: Updated to use consolidated services
+//  ✅ BuildingRepository → BuildingService
+//  ✅ InventoryManager → BuildingService (inventory consolidated)
+//  ✅ TaskManager → TaskService
 //
 
 import SwiftUI
@@ -25,14 +29,14 @@ struct TaskRequestView: View {
     @State private var showPhotoSelector = false
     @State private var requiredInventory: [String: Int] = [:]
     @State private var showInventorySelector = false
-    @State private var availableInventory: [InventoryItem] = []
+    @State private var availableInventory: [FrancoSphere.InventoryItem] = []
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var suggestions: [TaskSuggestion] = []
     @State private var showSuggestions = false
     @Environment(\.presentationMode) var presentationMode
     
-    // FIXED: Load buildings asynchronously instead of in property initializer
+    // ✅ FIXED: Load buildings asynchronously instead of in property initializer
     @State private var buildingOptions: [FrancoSphere.NamedCoordinate] = []
     @State private var isLoadingBuildings = true
     
@@ -114,7 +118,7 @@ struct TaskRequestView: View {
     
     // MARK: - Helper Functions
     
-    // FIXED: Add urgency color helper function
+    // ✅ FIXED: Add urgency color helper function
     private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
         case .low:    return .green
@@ -144,7 +148,7 @@ struct TaskRequestView: View {
                     .autocapitalization(.sentences)
             }
             
-            // FIXED: Simplified urgency picker
+            // ✅ FIXED: Simplified urgency picker
             Picker("Urgency", selection: $selectedUrgency) {
                 ForEach(TaskUrgency.allCases, id: \.self) { urgency in
                     HStack {
@@ -180,7 +184,9 @@ struct TaskRequestView: View {
                 
                 // Link to select inventory items
                 Button(action: {
-                    loadInventory()
+                    Task {
+                        await loadInventory()
+                    }
                     showInventorySelector = true
                 }) {
                     HStack {
@@ -220,7 +226,7 @@ struct TaskRequestView: View {
             if addEndTime {
                 DatePicker("End Time", selection: $endTime, displayedComponents: .hourAndMinute)
                     .disabled(!addStartTime)
-                    // FIXED: Updated onChange syntax for iOS 17+
+                    // ✅ FIXED: Updated onChange syntax for iOS 17+
                     .onChange(of: startTime) {
                         if endTime < startTime {
                             endTime = startTime.addingTimeInterval(3600) // 1 hour later
@@ -396,7 +402,7 @@ struct TaskRequestView: View {
                (!attachPhoto || photo != nil)
     }
     
-    private func getInventoryItem(_ itemId: String) -> InventoryItem? {
+    private func getInventoryItem(_ itemId: String) -> FrancoSphere.InventoryItem? {
         return availableInventory.first { $0.id == itemId }
     }
     
@@ -421,7 +427,7 @@ struct TaskRequestView: View {
         }
     }
     
-    // FIXED: Renamed to avoid confusion and use helper function
+    // ✅ FIXED: Renamed to avoid confusion and use helper function
     private func getUrgencyColorFromString(_ urgency: String) -> Color {
         if let urgency = TaskUrgency(rawValue: urgency) {
             return getUrgencyColor(urgency)
@@ -431,13 +437,19 @@ struct TaskRequestView: View {
     
     // MARK: - Data Loading
     
-    // FIXED: Load buildings asynchronously
+    // ✅ FIXED: Load buildings from BuildingService instead of BuildingRepository
     private func loadBuildings() async {
         do {
-            let buildings = await BuildingRepository.shared.allBuildings
+            let buildings = try await BuildingService.shared.getAllBuildings()
             await MainActor.run {
                 self.buildingOptions = buildings
                 self.isLoadingBuildings = false
+            }
+        } catch {
+            await MainActor.run {
+                self.buildingOptions = []
+                self.isLoadingBuildings = false
+                self.errorMessage = "Failed to load buildings: \(error.localizedDescription)"
             }
         }
     }
@@ -479,10 +491,21 @@ struct TaskRequestView: View {
         }
     }
     
-    private func loadInventory() {
+    // ✅ FIXED: Load inventory from BuildingService instead of InventoryManager
+    private func loadInventory() async {
         guard !selectedBuildingID.isEmpty else { return }
         
-        availableInventory = InventoryManager.shared.getInventoryItems(forBuilding: selectedBuildingID)
+        do {
+            let items = try await BuildingService.shared.getInventoryItems(for: selectedBuildingID)
+            await MainActor.run {
+                self.availableInventory = items
+            }
+        } catch {
+            await MainActor.run {
+                self.availableInventory = []
+                print("Failed to load inventory: \(error)")
+            }
+        }
     }
     
     // MARK: - Actions
@@ -502,7 +525,7 @@ struct TaskRequestView: View {
         }
     }
     
-    // FIXED: Make task submission async
+    // ✅ FIXED: Use TaskService instead of TaskManager
     private func submitTaskRequest() async {
         guard isFormValid else { return }
         
@@ -531,25 +554,28 @@ struct TaskRequestView: View {
             }
         }
         
-        // Create the task
-        let task = MaintenanceTask(
+        // Create the task using ContextualTask structure
+        let task = ContextualTask(
+            id: UUID().uuidString,
             name: taskName,
-            buildingID: selectedBuildingID,
-            description: taskDescription,
-            dueDate: dueDate,
-            startTime: startTimeValue,
-            endTime: endTimeValue,
-            category: selectedCategory,
-            urgency: selectedUrgency,
-            recurrence: .oneTime,
-            isComplete: false
+            buildingId: selectedBuildingID,
+            buildingName: buildingOptions.first(where: { $0.id == selectedBuildingID })?.name ?? "",
+            category: selectedCategory.rawValue,
+            startTime: startTimeValue?.formatted(.dateTime.hour().minute()) ?? "",
+            endTime: endTimeValue?.formatted(.dateTime.hour().minute()) ?? "",
+            recurrence: "one-off",
+            skillLevel: selectedUrgency.rawValue,
+            status: "pending",
+            urgencyLevel: selectedUrgency.rawValue,
+            assignedWorkerName: authManager.currentUser?.name ?? "",
+            scheduledDate: dueDate
         )
         
-        // FIXED: Use async version of createTask
-        let success = await TaskManager.shared.createTaskAsync(task)
-        
-        await MainActor.run {
-            if success {
+        do {
+            // ✅ FIXED: Use TaskService for task creation
+            try await TaskService.shared.createTask(task)
+            
+            await MainActor.run {
                 // Record inventory requirements if specified
                 if !requiredInventory.isEmpty {
                     recordInventoryRequirements(for: task.id)
@@ -562,11 +588,13 @@ struct TaskRequestView: View {
                 
                 // Show completion alert
                 showCompletionAlert = true
-            } else {
-                errorMessage = "Failed to create task. Please try again."
+                isSubmitting = false
             }
-            
-            isSubmitting = false
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to create task: \(error.localizedDescription)"
+                isSubmitting = false
+            }
         }
     }
     
@@ -594,7 +622,7 @@ struct InventorySelectionView: View {
     @Binding var selectedItems: [String: Int]
     var onDismiss: (() -> Void)? = nil
     
-    @State private var inventoryItems: [InventoryItem] = []
+    @State private var inventoryItems: [FrancoSphere.InventoryItem] = []
     @State private var isLoading = true
     @State private var searchText = ""
     @State private var tempQuantities: [String: Int] = [:]
@@ -678,7 +706,9 @@ struct InventorySelectionView: View {
                 }
             )
             .onAppear {
-                loadInventory()
+                Task {
+                    await loadInventory()
+                }
                 
                 // Initialize temp quantities from selected items
                 tempQuantities = selectedItems
@@ -686,7 +716,7 @@ struct InventorySelectionView: View {
         }
     }
     
-    private func inventoryItemRow(_ item: InventoryItem) -> some View {
+    private func inventoryItemRow(_ item: FrancoSphere.InventoryItem) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -723,7 +753,7 @@ struct InventorySelectionView: View {
         .padding(.vertical, 4)
     }
     
-    private var filteredItems: [InventoryItem] {
+    private var filteredItems: [FrancoSphere.InventoryItem] {
         if searchText.isEmpty {
             return inventoryItems
         } else {
@@ -750,13 +780,25 @@ struct InventorySelectionView: View {
         }
     }
     
-    private func loadInventory() {
-        isLoading = true
+    // ✅ FIXED: Load inventory from BuildingService instead of InventoryManager
+    private func loadInventory() async {
+        await MainActor.run {
+            isLoading = true
+        }
         
-        // Load inventory from database
-        inventoryItems = InventoryManager.shared.getInventoryItems(forBuilding: buildingId)
-        
-        isLoading = false
+        do {
+            let items = try await BuildingService.shared.getInventoryItems(for: buildingId)
+            await MainActor.run {
+                self.inventoryItems = items
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.inventoryItems = []
+                self.isLoading = false
+                print("Failed to load inventory: \(error)")
+            }
+        }
     }
 }
 
