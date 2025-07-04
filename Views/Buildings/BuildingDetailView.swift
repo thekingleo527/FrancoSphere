@@ -180,7 +180,7 @@ struct BuildingDetailView: View {
         isLoading = true
         
         // Load CSV routine data for this building
-        await loadCSVRoutinesForBuilding()
+        await loadOperationalRoutinesForBuilding()
         
         // Validate and repair data pipeline
         let repairsMade = await contextEngine.validateAndRepairDataPipelineFixed()
@@ -200,8 +200,8 @@ struct BuildingDetailView: View {
         isLoading = false
     }
     
-    private func loadCSVRoutinesForBuilding() async {
-        // ✅ Get routines from CSV data using existing OperationalDataManager methods
+    private func loadOperationalRoutinesForBuilding() async {
+        // ✅ Get routines from operational data using existing OperationalDataManager methods
         let buildingName = getBuildingNameForCSV(building.id)
         
         print("🏢 Loading CSV routines for building \(building.id) (\(buildingName))")
@@ -797,7 +797,7 @@ struct BuildingDetailView: View {
                 } else {
                     Button("Refresh Data") {
                         Task {
-                            await loadCSVRoutinesForBuilding()
+                            await loadOperationalRoutinesForBuilding()
                         }
                     }
                     .font(.caption)
