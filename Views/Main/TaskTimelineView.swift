@@ -199,6 +199,35 @@ struct TaskTimelineView: View {
         case .urgent: return .purple
         }
     }
+    
+    // Convert MaintenanceTask to FSTaskItem for existing TaskDetailView
+    private func convertToFSTaskItem(_ task: FrancoSphere.MaintenanceTask) -> FSTaskItem {
+        // Convert String IDs to Int64 safely
+        let buildingIdInt64: Int64
+        if let buildingInt = Int64(task.buildingID) {
+            buildingIdInt64 = buildingInt
+        } else {
+            buildingIdInt64 = 0
+        }
+        
+        let workerIdInt64: Int64
+        if let firstWorker = task.assignedWorkers.first, let workerInt = Int64(firstWorker) {
+            workerIdInt64 = workerInt
+        } else {
+            workerIdInt64 = Int64(workerId)
+        }
+        
+        // Create FSTaskItem using the typealias (which points to FrancoSphere.FSTaskItem)
+        return FSTaskItem(
+            id: Int64(abs(task.id.hashValue)),
+            name: task.name,
+            description: task.description,
+            buildingId: buildingIdInt64,
+            workerId: workerIdInt64,
+            isCompleted: task.isComplete,
+            scheduledDate: task.dueDate
+        )
+    }
 }
 
 // MARK: - Task Timeline Card
