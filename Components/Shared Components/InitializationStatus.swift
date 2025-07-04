@@ -1,3 +1,4 @@
+// UPDATED: Using centralized TypeRegistry for all types
 //
 // DataImporters.swift
 // FrancoSphere Data Importers and Types

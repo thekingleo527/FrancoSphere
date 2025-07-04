@@ -1,3 +1,4 @@
+// UPDATED: Using centralized TypeRegistry for all types
 //
 //  TimeBasedTaskFilter.swift - PHASE-2 WORKER-SPECIFIC FILTERING
 //  FrancoSphere

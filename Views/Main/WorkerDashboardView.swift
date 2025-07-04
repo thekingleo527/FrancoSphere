@@ -1,3 +1,4 @@
+// UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerDashboardView.swift
 //  FrancoSphere

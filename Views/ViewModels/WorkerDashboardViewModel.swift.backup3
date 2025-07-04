@@ -17,7 +17,7 @@
 //  ✅ Comprehensive error handling and recovery
 //  ✅ Performance monitoring and telemetry
 //  ✅ Real-world data integration priority system
-//  ✅ Uses existing services: WorkerService, TaskService, BuildingService
+//  ✅ Uses existing services: FrancoSphere.WorkerService, TaskService, BuildingService
 //  ✅ Fixes compilation errors and method references
 //
 
@@ -46,10 +46,10 @@ class WorkerDashboardViewModel: ObservableObject {
     @Published var isLoading = false
     
     // MARK: - Dependencies (Using Existing Services)
-    private let workerService: WorkerService
+    private let workerService: FrancoSphere.WorkerService
     private let taskService: TaskService
     private let buildingService: BuildingService
-    private let contextEngine: WorkerContextEngine
+    private let contextEngine: FrancoSphere.WorkerContextEngine
     private let weatherManager: WeatherManager
     private let operationalDataManager: OperationalDataManager
     private let authManager: NewAuthManager
@@ -62,10 +62,10 @@ class WorkerDashboardViewModel: ObservableObject {
     private var lastEmergencyRepair: Date = Date.distantPast
     
     // MARK: - Initialization
-    init(workerService: WorkerService = WorkerService.shared,
+    init(workerService: FrancoSphere.WorkerService = WorkerService.shared,
          taskService: TaskService = TaskService.shared,
          buildingService: BuildingService = BuildingService.shared,
-         contextEngine: WorkerContextEngine = WorkerContextEngine.shared,
+         contextEngine: FrancoSphere.WorkerContextEngine = WorkerContextEngine.shared,
          weatherManager: WeatherManager = WeatherManager.shared,
          operationalDataManager: OperationalDataManager = OperationalDataManager.shared,
          authManager: NewAuthManager = NewAuthManager.shared) {

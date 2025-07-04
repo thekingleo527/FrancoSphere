@@ -279,18 +279,3 @@ enum WorkerError: LocalizedError {
 
 // MARK: - Worker Shift Model
 
-struct WorkerShift {
-    let id: String
-    let workerId: String
-    let workerName: String
-    let buildingId: Int64
-    let startTime: Date
-    var endTime: Date?
-    var status: ShiftStatus
-    
-    enum ShiftStatus {
-        case active
-        case completed
-        case cancelled
-    }
-}

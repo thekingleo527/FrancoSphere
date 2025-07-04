@@ -1,4 +1,3 @@
-// UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerService.swift
 //  FrancoSphere
@@ -18,181 +17,9 @@ import Combine
 // MARK: - Worker Data Model (Local Definition)
 
 /// Worker data model for WorkerService
-public struct Worker {
-    let id: Int64
-    let name: String
-    let email: String
-    let password: String
-    let role: String
-    let phone: String
-    let hourlyRate: Double
-    let skills: [String]
-    let isActive: Bool
-    let profileImagePath: String?
-    let address: String
-    let emergencyContact: String
-    let notes: String
-    let buildingIds: [String]?
-    
-    public init(
-        id: Int64,
-        name: String,
-        email: String,
-        password: String,
-        role: String,
-        phone: String,
-        hourlyRate: Double,
-        skills: [String],
-        isActive: Bool,
-        profileImagePath: String? = nil,
-        address: String,
-        emergencyContact: String,
-        notes: String,
-        buildingIds: [String]? = nil
-    ) {
-        self.id = id
-        self.name = name
-        self.email = email
-        self.password = password
-        self.role = role
-        self.phone = phone
-        self.hourlyRate = hourlyRate
-        self.skills = skills
-        self.isActive = isActive
-        self.profileImagePath = profileImagePath
-        self.address = address
-        self.emergencyContact = emergencyContact
-        self.notes = notes
-        self.buildingIds = buildingIds
-    }
-}
 
 // MARK: - Building-Based Task Queries (for TaskScheduleView compatibility)
 
-extension TaskService {
-    
-    /// Fetch tasks for a specific building (used by TaskScheduleView)
-    func fetchTasks(forBuilding buildingId: String, includePastTasks: Bool = false) async -> [MaintenanceTask] {
-        await telemetryService.trackOperation("fetchTasks(forBuilding:)") {
-            do {
-                // Convert buildingId to appropriate format for database query
-                let buildingIdInt = Int64(buildingId) ?? Int64(0)
-                
-                let query = """
-                    SELECT t.*, b.name as building_name FROM AllTasks t
-                    LEFT JOIN buildings b ON t.building_id = b.id
-                    WHERE t.building_id = ?
-                    \(includePastTasks ? "" : "AND t.scheduled_date >= DATE('now')")
-                    ORDER BY t.scheduled_date, t.start_time
-                """
-                
-                let rows = try await sqliteManager.query(query, [buildingIdInt])
-                
-                return rows.compactMap { row in
-                    convertToMaintenanceTask(row: row, buildingId: buildingId)
-                }
-                
-            } catch {
-                print("❌ Error fetching tasks for building \(buildingId): \(error)")
-                return []
-            }
-        }
-    }
-    
-    /// Convert database row to MaintenanceTask for TaskScheduleView
-    private func convertToMaintenanceTask(row: [String: Any], buildingId: String) -> MaintenanceTask? {
-        guard let taskName = row["name"] as? String else { return nil }
-        
-        let description = row["description"] as? String ?? ""
-        let category = parseTaskCategory(row["category"] as? String ?? "maintenance")
-        let urgency = parseTaskUrgency(row["urgency"] as? String ?? "medium")
-        let recurrence = parseTaskRecurrence(row["recurrence"] as? String ?? "one-off")
-        
-        // Parse dates
-        let dueDateString = row["scheduled_date"] as? String ?? ""
-        let dueDate = parseDateFromString(dueDateString) ?? Date()
-        
-        let startTime = parseTimeFromString(row["start_time"] as? String)
-        let endTime = parseTimeFromString(row["end_time"] as? String)
-        
-        let isComplete = (row["status"] as? String)?.lowercased() == "completed"
-        
-        return MaintenanceTask(
-            name: taskName,
-            buildingID: buildingId,
-            description: description,
-            dueDate: dueDate,
-            startTime: startTime,
-            endTime: endTime,
-            category: category,
-            urgency: urgency,
-            recurrence: recurrence,
-            isComplete: isComplete
-        )
-    }
-    
-    // MARK: - Helper Methods for MaintenanceTask Conversion
-    
-    private func parseTaskCategory(_ categoryString: String) -> TaskCategory {
-        switch categoryString.lowercased() {
-        case "cleaning": return .cleaning
-        case "maintenance": return .maintenance
-        case "repair": return .repair
-        case "sanitation": return .sanitation
-        case "inspection": return .inspection
-        default: return .maintenance
-        }
-    }
-    
-    private func parseTaskUrgency(_ urgencyString: String) -> TaskUrgency {
-        switch urgencyString.lowercased() {
-        case "low": return .low
-        case "medium": return .medium
-        case "high": return .high
-        case "urgent": return .urgent
-        default: return .medium
-        }
-    }
-    
-    private func parseTaskRecurrence(_ recurrenceString: String) -> TaskRecurrence {
-        switch recurrenceString.lowercased() {
-        case "daily": return .daily
-        case "weekly": return .weekly
-        case "monthly": return .monthly
-        case "yearly": return .yearly
-        default: return .oneTime
-        }
-    }
-    
-    private func parseDateFromString(_ dateString: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.date(from: dateString)
-    }
-    
-    private func parseTimeFromString(_ timeString: String?) -> Date? {
-        guard let timeString = timeString else { return nil }
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        // Create a date with today's date and the specified time
-        if let time = formatter.date(from: timeString) {
-            let calendar = Calendar.current
-            let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
-            let today = Date()
-            let dateComponents = calendar.dateComponents([.year, .month, .day], from: today)
-            
-            var combinedComponents = dateComponents
-            combinedComponents.hour = timeComponents.hour
-            combinedComponents.minute = timeComponents.minute
-            
-            return calendar.date(from: combinedComponents)
-        }
-        
-        return nil
-    }
-}
 
 // MARK: - MaintenanceTask Definition (for TaskScheduleView compatibility)
 
@@ -277,7 +104,7 @@ actor WorkerService {
     static let shared = WorkerService()
     
     // MARK: - Dependencies
-    private var workersCache: [String: Worker] = [:]
+    private var workersCache: [String: FrancoSphere.Worker] = [:]
     private let sqliteManager = SQLiteManager.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -378,7 +205,7 @@ actor WorkerService {
     
     // MARK: - Worker Data Management
     
-    func getWorker(_ id: String) async throws -> Worker? {
+    func getFrancoSphere.Worker(_ id: String) async throws -> FrancoSphere.Worker? {
         // Check cache first
         if let cachedWorker = workersCache[id] {
             return cachedWorker
@@ -415,7 +242,7 @@ actor WorkerService {
             let workerNotes = row["notes"] as? String ?? ""
             let workerBuildingIds = Self.workerBuildingAssignments[id] ?? []
             
-            let worker = Worker(
+            let worker = FrancoSphere.Worker(
                 id: workerId,
                 name: workerName,
                 email: workerEmail,
@@ -534,7 +361,7 @@ actor WorkerService {
             throw WorkerServiceError.invalidAssignment
         }
         
-        let worker = try await getWorker(workerId)
+        let worker = try await getFrancoSphere.Worker(workerId)
         let workerName = worker?.name ?? Self.workerNames[workerId] ?? "Unknown Worker"
         
         // Create shift record
@@ -613,7 +440,7 @@ actor WorkerService {
     func getWorkerSchedule(_ workerId: String, date: Date) async throws -> [ContextualTask] {
         // Priority 1: Real operational data (source of truth)
         let operationalManager = OperationalDataManager.shared
-        let operationalTasks = await operationalManager.getTasksForWorker(workerId, date: date)
+        let operationalTasks = await operationalManager.getTasksForFrancoSphere.Worker(workerId, date: date)
         
         if !operationalTasks.isEmpty {
             print("✅ Using operational schedule for worker \(workerId): \(operationalTasks.count) tasks")
@@ -770,7 +597,7 @@ actor WorkerService {
             let workerEmergencyContact = row["emergencyContact"] as? String ?? ""
             let workerNotes = row["notes"] as? String ?? ""
             
-            return Worker(
+            return FrancoSphere.Worker(
                 id: workerId,
                 name: workerName,
                 email: workerEmail,
@@ -863,7 +690,7 @@ actor WorkerService {
     
     // MARK: - Worker Profile Management
     
-    func updateWorkerProfile(_ worker: Worker) async throws {
+    func updateWorkerProfile(_ worker: FrancoSphere.Worker) async throws {
         let updateQuery = """
             UPDATE workers 
             SET name = ?, email = ?, role = ?, phone = ?, hourlyRate = ?, 

@@ -44,21 +44,4 @@ extension ContextualTask {
     }
     
     /// Create a new ContextualTask with both status and urgency updated
-    func withUpdatedStatusAndUrgency(status: String, urgency: String) -> ContextualTask {
-        return ContextualTask(
-            id: self.id,
-            name: self.name,
-            buildingId: self.buildingId,
-            buildingName: self.buildingName,
-            category: self.category,
-            startTime: self.startTime,
-            endTime: self.endTime,
-            recurrence: self.recurrence,
-            skillLevel: self.skillLevel,
-            status: status,
-            urgencyLevel: urgency,
-            assignedWorkerName: self.assignedWorkerName,
-            scheduledDate: self.scheduledDate
-        )
-    }
 }

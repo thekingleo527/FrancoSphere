@@ -1,3 +1,4 @@
+// UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerRoutineViewModel.swift
 //  FrancoSphere
@@ -33,7 +34,7 @@ class WorkerRoutineViewModel: ObservableObject {
     @Published var selectedDate = Date()
     @Published var showingMapView = false
     @Published var errorMessage: String?
-    @Published var dataHealthStatus: DataHealthStatus = .unknown
+    @Published var dataHealthStatus: FrancoSphere.DataHealthStatus = .unknown
     
     // MARK: - Dependencies (Using Existing Services)
     private let taskService = TaskService.shared                 // ✅ EXISTS
@@ -701,12 +702,6 @@ class WorkerRoutineViewModel: ObservableObject {
 
 // MARK: - Supporting Types
 
-enum DataHealthStatus: Equatable {
-    case unknown
-    case healthy
-    case warning([String])
-    case critical([String])
-}
 
 // MARK: - Worker Routine View
 struct WorkerRoutineView: View {

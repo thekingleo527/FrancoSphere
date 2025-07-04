@@ -44,7 +44,8 @@ class WorkerDashboardIntegration: ObservableObject {
     
     // MARK: - Dashboard Data Integration
     
-    func loadDashboardData(for workerId: String) async {
+    // DEPRECATED: Use DataCoordinator instead
+    // func loadDashboardData(for workerId: String) async {
         isLoading = true
         error = nil
         

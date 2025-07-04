@@ -818,51 +818,8 @@ class BuildingDetailViewModel: ObservableObject {
 
 // MARK: - Supporting Types
 
-enum BuildingTab: String, CaseIterable {
-    case overview = "Overview"
-    case routines = "Routines"
-    case workers = "Workers"
-    
-    var icon: String {
-        switch self {
-        case .overview: return "house.fill"
-        case .routines: return "repeat.circle.fill"
-        case .workers: return "person.2.fill"
-        }
-    }
-}
 
-struct BuildingStatistics {
-    let dailyRoutineCount: Int
-    let totalTasksToday: Int
-    let completedTasksToday: Int
-    let totalWorkersAssigned: Int
-    let workersCurrentlyOnSite: Int
-    let completionRate: Double
-    
-    init(dailyRoutineCount: Int = 0,
-         totalTasksToday: Int = 0,
-         completedTasksToday: Int = 0,
-         totalWorkersAssigned: Int = 0,
-         workersCurrentlyOnSite: Int = 0,
-         completionRate: Double = 0.0) {
-        
-        self.dailyRoutineCount = dailyRoutineCount
-        self.totalTasksToday = totalTasksToday
-        self.completedTasksToday = completedTasksToday
-        self.totalWorkersAssigned = totalWorkersAssigned
-        self.workersCurrentlyOnSite = workersCurrentlyOnSite
-        self.completionRate = completionRate
-    }
-}
 
-struct BuildingInsight {
-    let title: String
-    let description: String
-    let color: Color
-    let icon: String
-    let keyPoints: [String]
-}
 
 // MARK: - Extension for Computed Properties
 extension BuildingDetailViewModel {

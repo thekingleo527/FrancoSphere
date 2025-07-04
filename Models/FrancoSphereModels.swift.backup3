@@ -1,4 +1,3 @@
-// UPDATED: Using centralized TypeRegistry for all types
 // FrancoSphereModels.swift
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 // "Source of truth" for all FrancoSphere-wide models.
@@ -1878,100 +1877,162 @@ extension FrancoSphere.NamedCoordinate {
         }
     }
 }
-// MARK: - Missing Type Definitions (Compilation Fix)
+
+
+// MARK: - WorkerShift Definition (Corrected for WorkerManager)
 
 extension FrancoSphere {
-    
-    // Worker Management Types
-    public struct Worker: Identifiable, Codable {
-        public let id: String
-        public let workerId: String
-        public let name: String
-        public let email: String
-        public let role: String
-        public let quickbooksEmployeeId: String?
-        public let hourlyRate: Decimal?
-        public let isActive: Bool
-        
-        public init(id: String = UUID().uuidString, workerId: String, name: String, email: String, role: String, quickbooksEmployeeId: String? = nil, hourlyRate: Decimal? = nil, isActive: Bool = true) {
-            self.id = id
-            self.workerId = workerId
-            self.name = name
-            self.email = email
-            self.role = role
-            self.quickbooksEmployeeId = quickbooksEmployeeId
-            self.hourlyRate = hourlyRate
-            self.isActive = isActive
-        }
-    }
-    
-    // Worker Shift Management
     public struct WorkerShift: Identifiable, Codable {
         public let id: String
         public let workerId: String
+        public let workerName: String
+        public let buildingId: Int64
         public let startTime: Date
-        public let endTime: Date?
-        public let startBuilding: String
-        public let status: ShiftStatus
+        public var endTime: Date?  // var allows mutation
+        public var status: ShiftStatus  // var allows mutation
         
         public enum ShiftStatus: String, Codable, CaseIterable {
-            case active = "Active"
-            case completed = "Completed"
-            case paused = "Paused"
+            case active = "active"
+            case completed = "completed"
+            case paused = "paused"
         }
         
-        public init(id: String = UUID().uuidString, workerId: String, startTime: Date, endTime: Date? = nil, startBuilding: String, status: ShiftStatus = .active) {
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            workerName: String,
+            buildingId: Int64,
+            startTime: Date,
+            endTime: Date? = nil,
+            status: ShiftStatus = .active
+        ) {
             self.id = id
             self.workerId = workerId
+            self.workerName = workerName
+            self.buildingId = buildingId
             self.startTime = startTime
             self.endTime = endTime
-            self.startBuilding = startBuilding
             self.status = status
+        }
+        
+        public var duration: TimeInterval? {
+            guard let endTime = endTime else { return nil }
+            return endTime.timeIntervalSince(startTime)
+        }
+    }
+}
+
+// Type alias for convenience
+public typealias WorkerShift = FrancoSphere.WorkerShift
+
+// MARK: - Missing Type Definitions (Final Fix)
+
+extension FrancoSphere {
+    
+    // Worker Definition
+    public struct Worker: Identifiable, Codable {
+        public let id: String
+        public let name: String
+        public let email: String
+        public let role: String
+        public let isActive: Bool
+        public let hourlyRate: Double?
+        public let skills: [String]
+        public let buildingIds: [String]
+        
+        public init(
+            id: String,
+            name: String,
+            email: String,
+            role: String,
+            isActive: Bool = true,
+            hourlyRate: Double? = nil,
+            skills: [String] = [],
+            buildingIds: [String] = []
+        ) {
+            self.id = id
+            self.name = name
+            self.email = email
+            self.role = role
+            self.isActive = isActive
+            self.hourlyRate = hourlyRate
+            self.skills = skills
+            self.buildingIds = buildingIds
         }
     }
     
-    // Data Health Management
+    // DataHealthStatus Definition
     public enum DataHealthStatus: Equatable {
         case unknown
         case healthy
         case warning([String])
         case critical([String])
         
-        public var description: String {
+        public var statusText: String {
             switch self {
             case .unknown: return "Unknown"
             case .healthy: return "Healthy"
-            case .warning(let issues): return "Warning: \(issues.joined(separator: ", "))"
-            case .critical(let issues): return "Critical: \(issues.joined(separator: ", "))"
+            case .warning: return "Warning"
+            case .critical: return "Critical"
+            }
+        }
+        
+        public var color: Color {
+            switch self {
+            case .unknown: return .gray
+            case .healthy: return .green
+            case .warning: return .orange
+            case .critical: return .red
             }
         }
     }
     
-    // Task Progress Tracking
+    // Enhanced TaskProgress Definition
     public struct TaskProgress {
         public let completed: Int
         public let total: Int
         public let remaining: Int
         public let percentage: Double
         public let overdueTasks: Int
+        public let averageCompletionTime: TimeInterval
+        public let onTimeCompletionRate: Double
         
-        public init(completed: Int, total: Int, remaining: Int, percentage: Double, overdueTasks: Int) {
+        public init(
+            completed: Int,
+            total: Int,
+            remaining: Int,
+            percentage: Double,
+            overdueTasks: Int,
+            averageCompletionTime: TimeInterval = 0,
+            onTimeCompletionRate: Double = 0
+        ) {
             self.completed = completed
             self.total = total
             self.remaining = remaining
             self.percentage = percentage
             self.overdueTasks = overdueTasks
+            self.averageCompletionTime = averageCompletionTime
+            self.onTimeCompletionRate = onTimeCompletionRate
+        }
+        
+        public var isComplete: Bool {
+            return remaining == 0 && total > 0
         }
     }
     
-    // Weather Impact Analysis
+    // WeatherImpact Definition
     public struct WeatherImpact {
         public let condition: WeatherCondition
         public let temperature: Double
-        public let affectedTasks: [ContextualTask]
+        public let affectedTasks: [String]
         public let recommendation: String
         
-        public init(condition: WeatherCondition, temperature: Double, affectedTasks: [ContextualTask], recommendation: String) {
+        public init(
+            condition: WeatherCondition,
+            temperature: Double,
+            affectedTasks: [String],
+            recommendation: String
+        ) {
             self.condition = condition
             self.temperature = temperature
             self.affectedTasks = affectedTasks
@@ -1979,198 +2040,44 @@ extension FrancoSphere {
         }
     }
     
-    // Clock-in Status Management
-    public enum ClockInStatus {
+    // ClockInStatus Definition
+    public enum ClockInStatus: Equatable {
         case clockedOut
-        case clockedIn(buildingId: String, startTime: Date)
-        case onBreak(buildingId: String, breakStart: Date)
-        case clockedInRemote(startTime: Date)
+        case clockedIn(building: String)
+        
+        public var isActive: Bool {
+            switch self {
+            case .clockedOut: return false
+            case .clockedIn: return true
+            }
+        }
     }
     
-    // Task Evidence for Completion
+    // TaskEvidence Definition
     public struct TaskEvidence {
         public let photos: [Data]
         public let timestamp: Date
         public let location: CLLocation?
         public let notes: String?
         
-        public init(photos: [Data], timestamp: Date, location: CLLocation? = nil, notes: String? = nil) {
+        public init(
+            photos: [Data],
+            timestamp: Date,
+            location: CLLocation? = nil,
+            notes: String? = nil
+        ) {
             self.photos = photos
             self.timestamp = timestamp
             self.location = location
             self.notes = notes
         }
     }
-    
-    // Building Detail Types
-    public enum BuildingTab: String, CaseIterable {
-        case overview = "Overview"
-        case routines = "Routines"
-        case workers = "Workers"
-        
-        public var icon: String {
-            switch self {
-            case .overview: return "house.fill"
-            case .routines: return "repeat.circle.fill"
-            case .workers: return "person.2.fill"
-            }
-        }
-    }
-    
-    public struct BuildingStatistics {
-        public let completionRate: Double
-        public let tasksCompleted: Int
-        public let tasksRemaining: Int
-        public let averageTaskTime: TimeInterval
-        public let lastUpdated: Date
-        
-        public init(completionRate: Double = 0, tasksCompleted: Int = 0, tasksRemaining: Int = 0, averageTaskTime: TimeInterval = 0, lastUpdated: Date = Date()) {
-            self.completionRate = completionRate
-            self.tasksCompleted = tasksCompleted
-            self.tasksRemaining = tasksRemaining
-            self.averageTaskTime = averageTaskTime
-            self.lastUpdated = lastUpdated
-        }
-    }
-    
-    public struct BuildingInsight {
-        public let type: InsightType
-        public let title: String
-        public let description: String
-        public let actionRequired: Bool
-        
-        public enum InsightType {
-            case efficiency
-            case weather
-            case maintenance
-            case scheduling
-        }
-        
-        public init(type: InsightType, title: String, description: String, actionRequired: Bool = false) {
-            self.type = type
-            self.title = title
-            self.description = description
-            self.actionRequired = actionRequired
-        }
-    }
-    
-    // Task Analysis Types
-    public struct TaskCompletionStats {
-        public let completedToday: Int
-        public let completedThisWeek: Int
-        public let averageCompletionTime: TimeInterval
-        public let onTimeRate: Double
-        
-        public init(completedToday: Int, completedThisWeek: Int, averageCompletionTime: TimeInterval, onTimeRate: Double) {
-            self.completedToday = completedToday
-            self.completedThisWeek = completedThisWeek
-            self.averageCompletionTime = averageCompletionTime
-            self.onTimeRate = onTimeRate
-        }
-    }
-    
-    public enum Timeframe: String, CaseIterable {
-        case today = "Today"
-        case week = "This Week"
-        case month = "This Month"
-        case quarter = "This Quarter"
-    }
-    
-    public struct DayProgress {
-        public let date: Date
-        public let completed: Int
-        public let total: Int
-        public let percentage: Double
-        
-        public init(date: Date, completed: Int, total: Int, percentage: Double) {
-            self.date = date
-            self.completed = completed
-            self.total = total
-            self.percentage = percentage
-        }
-    }
-    
-    public struct TaskTrends {
-        public let weeklyCompletion: [DayProgress]
-        public let categoryBreakdown: [CategoryProgress]
-        public let trend: TrendDirection
-        
-        public enum TrendDirection {
-            case improving
-            case declining
-            case stable
-        }
-        
-        public init(weeklyCompletion: [DayProgress], categoryBreakdown: [CategoryProgress], trend: TrendDirection) {
-            self.weeklyCompletion = weeklyCompletion
-            self.categoryBreakdown = categoryBreakdown
-            self.trend = trend
-        }
-    }
-    
-    public struct CategoryProgress {
-        public let category: String
-        public let completed: Int
-        public let total: Int
-        public let percentage: Double
-        
-        public init(category: String, completed: Int, total: Int, percentage: Double) {
-            self.category = category
-            self.completed = completed
-            self.total = total
-            self.percentage = percentage
-        }
-    }
-    
-    public struct PerformanceMetrics {
-        public let efficiency: Double
-        public let quality: Double
-        public let speed: Double
-        public let consistency: Double
-        
-        public init(efficiency: Double, quality: Double, speed: Double, consistency: Double) {
-            self.efficiency = efficiency
-            self.quality = quality
-            self.speed = speed
-            self.consistency = consistency
-        }
-    }
-    
-    public enum ProductivityTrend {
-        case increasing
-        case decreasing
-        case stable
-        case insufficient_data
-    }
-    
-    public struct StreakData {
-        public let currentStreak: Int
-        public let longestStreak: Int
-        public let lastCompletionDate: Date?
-        
-        public init(currentStreak: Int, longestStreak: Int, lastCompletionDate: Date? = nil) {
-            self.currentStreak = currentStreak
-            self.longestStreak = longestStreak
-            self.lastCompletionDate = lastCompletionDate
-        }
-    }
 }
 
-// Add type aliases for backwards compatibility
+// Type aliases for convenience
 public typealias Worker = FrancoSphere.Worker
-public typealias WorkerShift = FrancoSphere.WorkerShift
 public typealias DataHealthStatus = FrancoSphere.DataHealthStatus
+public typealias TaskProgress = FrancoSphere.TaskProgress
 public typealias WeatherImpact = FrancoSphere.WeatherImpact
 public typealias ClockInStatus = FrancoSphere.ClockInStatus
-public typealias BuildingTab = FrancoSphere.BuildingTab
-public typealias BuildingStatistics = FrancoSphere.BuildingStatistics
-public typealias BuildingInsight = FrancoSphere.BuildingInsight
-public typealias TaskCompletionStats = FrancoSphere.TaskCompletionStats
-public typealias Timeframe = FrancoSphere.Timeframe
-public typealias DayProgress = FrancoSphere.DayProgress
-public typealias TaskTrends = FrancoSphere.TaskTrends
-public typealias CategoryProgress = FrancoSphere.CategoryProgress
-public typealias PerformanceMetrics = FrancoSphere.PerformanceMetrics
-public typealias ProductivityTrend = FrancoSphere.ProductivityTrend
-public typealias StreakData = FrancoSphere.StreakData
-
+public typealias TaskEvidence = FrancoSphere.TaskEvidence
