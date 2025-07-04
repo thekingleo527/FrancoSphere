@@ -63,7 +63,7 @@ class QuickBooksPayrollExporter: ObservableObject {
     
     // MARK: - Initialization
     
-    init() {
+    private init() {
         loadEmployeeMapping()
         loadExportStats()
         calculateCurrentPayPeriod()

@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 7/4/25.
 //
 
-
 //
 //  EnhancedClockInGlassCard.swift
 //  FrancoSphere
@@ -19,9 +18,6 @@
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // MARK: - Enhanced ClockInGlassCard with QuickBooks Integration
 
@@ -78,7 +74,7 @@ struct EnhancedClockInGlassCard: View {
                             )
                     )
                     .shadow(
-                        color: clockInManager.isClockedIn ? 
+                        color: clockInManager.isClockedIn ?
                             .green.opacity(0.3) : .blue.opacity(0.3),
                         radius: 8,
                         x: 0,
@@ -89,7 +85,7 @@ struct EnhancedClockInGlassCard: View {
                 VStack(spacing: 8) {
                     // Clock icon with sync indicator
                     ZStack {
-                        Image(systemName: clockInManager.isClockedIn ? 
+                        Image(systemName: clockInManager.isClockedIn ?
                               "clock.badge.checkmark.fill" : "clock.fill")
                             .font(.system(size: 24, weight: .medium))
                             .foregroundColor(clockInManager.isClockedIn ? .green : .blue)
@@ -174,7 +170,7 @@ struct EnhancedClockInGlassCard: View {
             
             // Export Progress (when exporting)
             if qbExporter.isExporting {
-                ProgressView(value: qbExporter.exportProgress)
+                ProgressView(value: Double(qbExporter.exportProgress.processedEntries) / Double(max(qbExporter.exportProgress.totalEntries, 1)))
                     .progressViewStyle(LinearProgressViewStyle(tint: .orange))
                     .frame(width: 35, height: 2)
                     .scaleEffect(0.8)
@@ -274,11 +270,11 @@ struct EnhancedClockInGlassCard: View {
                     Spacer()
                     
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(Int(qbExporter.exportProgress * 100))%")
+                        Text("\(Int(Double(qbExporter.exportProgress.processedEntries) / Double(max(qbExporter.exportProgress.totalEntries, 1)) * 100))%")
                             .font(.subheadline)
                             .foregroundColor(.orange)
                         
-                        ProgressView(value: qbExporter.exportProgress)
+                        ProgressView(value: Double(qbExporter.exportProgress.processedEntries) / Double(max(qbExporter.exportProgress.totalEntries, 1)))
                             .progressViewStyle(LinearProgressViewStyle(tint: .orange))
                             .frame(width: 80)
                     }
@@ -291,7 +287,7 @@ struct EnhancedClockInGlassCard: View {
                     
                     Spacer()
                     
-                    Text(qbExporter.exportStatus.displayText)
+                    Text(qbExporter.exportProgress.displayText)
                         .font(.subheadline)
                         .foregroundColor(.orange)
                 }
@@ -372,22 +368,17 @@ struct EnhancedClockInGlassCard: View {
     
     private func exportToQuickBooks() async {
         do {
-            // Create current pay period (last 2 weeks)
-            let endDate = Date()
-            let startDate = Calendar.current.date(byAdding: .day, value: -14, to: endDate)!
-            let period = qbExporter.createPayPeriod(startDate: startDate, endDate: endDate)
-            
-            // Export time entries
-            let result = try await qbExporter.exportTimeEntries(for: period)
+            // Export current pay period
+            try await qbExporter.exportCurrentPayPeriod()
             
             // Update last sync time
-            lastSyncTime = result.exportDate
+            lastSyncTime = qbExporter.lastExportDate
             
             // Success feedback
             let notificationFeedback = UINotificationFeedbackGenerator()
             notificationFeedback.notificationOccurred(.success)
             
-            print("✅ QuickBooks export completed: \(result.successfulEntries)/\(result.totalEntries) entries")
+            print("✅ QuickBooks export completed successfully")
             
         } catch {
             // Error feedback
@@ -401,26 +392,29 @@ struct EnhancedClockInGlassCard: View {
     private func autoSyncToQuickBooks() async {
         // Only auto-sync if there are pending entries
         do {
-            let pendingEntries = try await qbExporter.getPendingTimeEntries()
-            
-            if pendingEntries.count > 0 {
-                print("🔄 Auto-syncing \(pendingEntries.count) pending entries to QuickBooks...")
+            // Check if auto-sync is enabled and perform export
+            if qbOAuth.isAuthenticated {
+                print("🔄 Auto-syncing pending entries to QuickBooks...")
                 await exportToQuickBooks()
             }
         } catch {
-            print("⚠️ Auto-sync check failed: \(error)")
+            print("⚠️ Auto-sync failed: \(error)")
         }
     }
     
     private func testQuickBooksConnection() async {
         do {
-            let companyInfo = try await qbOAuth.testConnection()
+            let success = try await qbExporter.testExportConnection()
             
-            // Success feedback
-            let notificationFeedback = UINotificationFeedbackGenerator()
-            notificationFeedback.notificationOccurred(.success)
-            
-            print("✅ QuickBooks connection test successful: \(companyInfo.name)")
+            if success {
+                // Success feedback
+                let notificationFeedback = UINotificationFeedbackGenerator()
+                notificationFeedback.notificationOccurred(.success)
+                
+                print("✅ QuickBooks connection test successful")
+            } else {
+                throw QuickBooksError.connectionFailed
+            }
             
         } catch {
             // Error feedback
@@ -556,11 +550,30 @@ extension ClockInManager {
         // Plus enhanced features:
         
         // 1. Calculate total hours worked
-        // 2. Calculate overtime if applicable  
+        // 2. Calculate overtime if applicable
         // 3. Prepare data for QB export
         // 4. Stop GPS tracking
         
         print("✅ Enhanced clock out completed")
+    }
+}
+
+// MARK: - Supporting Types
+
+enum QuickBooksError: LocalizedError {
+    case connectionFailed
+    case exportFailed
+    case authenticationRequired
+    
+    var errorDescription: String? {
+        switch self {
+        case .connectionFailed:
+            return "QuickBooks connection failed"
+        case .exportFailed:
+            return "Export to QuickBooks failed"
+        case .authenticationRequired:
+            return "QuickBooks authentication required"
+        }
     }
 }
 

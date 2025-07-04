@@ -339,7 +339,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getRiskColor(_ risk: WeatherData.OutdoorWorkRisk) -> Color {
+    private func getRiskColor(_ risk: FrancoSphere.WeatherData.OutdoorWorkRisk) -> Color {
         switch risk {
         case .low:      return .green
         case .moderate: return .yellow

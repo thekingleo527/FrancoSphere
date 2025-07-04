@@ -9,6 +9,12 @@
 //
 
 import SwiftUI
+
+// AIScenarioData is available from AIAssistantManager.swift
+
+// MARK: - AIScenarioData Type Reference
+// Using the same definition as in AIAssistantManager.swift
+// AIScenarioData should be imported from where it is defined
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 

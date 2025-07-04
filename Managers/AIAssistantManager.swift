@@ -147,20 +147,3 @@ class AIAssistantManager: ObservableObject {
 }
 
 // MARK: - QuickBooks Integration Support
-class QuickBooksPayrollExporter: ObservableObject {
-    @Published var exportProgress: Double = 0.0
-    @Published var isExporting = false
-    
-    func createPayPeriod() async {
-        // Implementation for creating pay period
-    }
-    
-    func exportTimeEntries() async {
-        // Implementation for exporting time entries
-    }
-    
-    func getPendingTimeEntries() async -> [String] {
-        // Implementation for getting pending time entries
-        return []
-    }
-}

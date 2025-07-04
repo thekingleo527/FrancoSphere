@@ -1,5 +1,10 @@
 // WeatherManager import added
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in the project
+// WeatherManager is in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -19,18 +24,38 @@ import Foundation
 //
 
 import SwiftUI
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in the project
+// WeatherManager is in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import MapKit
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in the project
+// WeatherManager is in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import CoreLocation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in the project
+// WeatherManager is in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import Combine
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in the project
+// WeatherManager is in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -52,7 +77,7 @@ struct WorkerDashboardView: View {
     // MARK: - State Management
     @StateObject private var authManager = NewAuthManager.shared
     @StateObject private var contextEngine = WorkerContextEngine.shared
-    @StateObject private var weatherManager = WeatherManager.shared
+    @StateObject private var weatherManager = WeatherDataProvider.shared
     @StateObject private var aiManager = AIAssistantManager.shared
     
     // MARK: - UI State Variables

@@ -6,10 +6,14 @@
 //
 
 import SwiftUI
+
+// WeatherImpact is defined in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import Combine
+
+// WeatherImpact is defined in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -70,7 +74,7 @@ class WorkerDashboardViewModel: ObservableObject {
         }
     }
     
-    func completeTask(_ task: ContextualTask, evidence: TaskEvidence?) async {
+    func completeTask(_ task: ContextualTask, evidence: FrancoSphere.TaskEvidence?) async {
         guard let workerId = NewAuthManager.shared.workerId else { return }
         
         do {

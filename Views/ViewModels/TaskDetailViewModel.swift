@@ -1,13 +1,25 @@
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import SwiftUI
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 // WeatherManager import added
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -42,22 +54,42 @@ import Foundation
 //
 
 import SwiftUI
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import CoreLocation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import Combine
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import PhotosUI
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -71,7 +103,7 @@ class TaskDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var taskStatus: TaskStatus = .pending
     @Published var completionProgress: Double = 0.0
-    @Published var evidence: TaskEvidenceCollection = TaskEvidenceCollection()
+    @Published var evidence: [FrancoSphere.TaskEvidence] = [FrancoSphere.TaskEvidence]()
     @Published var errorMessage: String?
     @Published var successMessage: String?
     @Published var locationPermissionStatus: LocationPermissionStatus = .unknown
@@ -122,7 +154,7 @@ class TaskDetailViewModel: ObservableObject {
          securityManager: SecurityManager = SecurityManager.shared,
          telemetryService: TelemetryService = TelemetryService.shared,
          authManager: NewAuthManager = NewAuthManager.shared,
-         weatherManager: WeatherManager = WeatherManager.shared) {
+         weatherManager: WeatherManager = WeatherDataProvider.shared) {
         
         self.task = task
         self.taskService = taskService

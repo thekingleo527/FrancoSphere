@@ -54,9 +54,9 @@ class TodayTasksViewModel: ObservableObject {
     // MARK: - Enhanced Progress Analytics (New Functionality)
     @Published var selectedTimeframe: Timeframe = .today
     @Published var weeklyProgress: [DayProgress] = []
-    @Published var monthlyTrends: TaskTrends = TaskTrends(weeklyCompletion: [], categoryBreakdown: [], trend: .stable)
-    @Published var performanceMetrics: PerformanceMetrics = PerformanceMetrics(efficiency: 0.0, quality: 0.0, speed: 0.0, consistency: 0.0)
-    @Published var streakData: StreakData = StreakData(currentStreak: 0, longestStreak: 0)
+    @Published var monthlyTrends: TaskTrends = TaskTrends(weeklyCompletion: [], categoryBreakdown: [:])
+    @Published var performanceMetrics: PerformanceMetrics = PerformanceMetrics(efficiency: 0.0, quality: 0.0, speed: 0.0, consistency: 0.0);)
+    @Published var streakData: StreakData = StreakData(currentStreak: 0, longestStreak: 0, lastUpdate: Date())
     @Published var completionGoal: Double = 90.0 // 90% completion goal
     @Published var errorMessage: String?
     @Published var isRefreshing = false
@@ -252,11 +252,7 @@ class TodayTasksViewModel: ObservableObject {
                 categoryBreakdown.append(categoryProgress)
             }
             
-            monthlyTrends = TaskTrends(
-                completionRate: completionRate,
-                totalTasks: totalTasks,
-                completedTasks: totalCompleted,
-                averageTasksPerDay: Double(totalTasks) / 30.0,
+            monthlyTrends = TaskTrends(weeklyCompletion: [], categoryBreakdown: [:]) / 30.0,
                 categoryBreakdown: categoryBreakdown,
                 improvementTrend: calculateImprovementTrend(monthlyTasks)
             )
@@ -333,7 +329,7 @@ class TodayTasksViewModel: ObservableObject {
             
         } catch {
             print("Failed to calculate performance metrics: \(error)")
-            return PerformanceMetrics(efficiency: 0.0, quality: 0.0, speed: 0.0, consistency: 0.0)
+            return PerformanceMetrics(efficiency: 0.0, quality: 0.0, speed: 0.0, consistency: 0.0))
         }
     }
     
@@ -366,16 +362,14 @@ class TodayTasksViewModel: ObservableObject {
                 }
             }
             
-            return StreakData(
-                currentStreak: currentStreak,
-                longestStreak: longestStreak,
+            return StreakData(currentStreak: currentStreak, longestStreak: longestStreak,
                 streakGoal: 7, // 1 week goal
-                daysUntilGoal: max(0, 7 - currentStreak)
+                daysUntilGoal: max(0, 7 - currentStreak, lastUpdate: Date())
             )
             
         } catch {
             print("Failed to calculate streak data: \(error)")
-            return StreakData(currentStreak: 0, longestStreak: 0)
+            return StreakData(currentStreak: 0, longestStreak: 0, lastUpdate: Date())
         }
     }
     
@@ -386,9 +380,7 @@ class TodayTasksViewModel: ObservableObject {
         
         if completionRate >= completionGoal && streakData.currentStreak == 0 {
             // Started a new streak today
-            streakData = StreakData(
-                currentStreak: 1,
-                longestStreak: max(1, streakData.longestStreak),
+            streakData = StreakData(currentStreak: 1, longestStreak: max(1, streakData.longestStreak, lastUpdate: Date()),
                 streakGoal: streakData.streakGoal,
                 daysUntilGoal: max(0, streakData.streakGoal - 1)
             )

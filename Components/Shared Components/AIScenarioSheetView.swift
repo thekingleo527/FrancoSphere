@@ -13,6 +13,8 @@
 //
 
 import SwiftUI
+
+// AIScenarioData is imported from AIAssistantManager.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 

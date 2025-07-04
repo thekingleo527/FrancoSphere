@@ -1,13 +1,25 @@
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import SwiftUI
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 // WeatherManager import added
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -33,18 +45,34 @@ import Foundation
 //
 
 import SwiftUI
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import Foundation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import CoreLocation
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
 import Combine
+
+// MARK: - Type Aliases
+typealias WeatherDataProvider = WeatherManager
+// WeatherManager is available in FrancoSphereTypes.swift
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -80,7 +108,7 @@ class BuildingDetailViewModel: ObservableObject {
     init(building: NamedCoordinate,
          contextEngine: WorkerContextEngine = WorkerContextEngine.shared,
          operationalDataManager: OperationalDataManager = OperationalDataManager.shared,
-         weatherManager: WeatherManager = WeatherManager.shared,
+         weatherManager: WeatherManager = WeatherDataProvider.shared,
          authManager: NewAuthManager = NewAuthManager.shared) {
         
         self.building = building

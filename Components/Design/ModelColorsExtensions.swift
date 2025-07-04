@@ -108,8 +108,8 @@ extension InventoryCategory {
     }
 }
 
-// MARK: - WeatherData.OutdoorWorkRisk Color Extension
-extension WeatherData.OutdoorWorkRisk {
+// MARK: - FrancoSphere.WeatherData.OutdoorWorkRisk Color Extension
+extension FrancoSphere.WeatherData.OutdoorWorkRisk {
     var color: Color {
         switch self {
         case .low:      return .green
