@@ -234,21 +234,43 @@ class NewAuthManager: ObservableObject {
         return getAssignedBuildingsFromDB() ?? getRealWorldAssignments()
     }
     
-    /// Get assigned buildings from database via WorkerAssignmentManager
+    /// Get assigned buildings from database via WorkerService (synchronous wrapper)
     private func getAssignedBuildingsFromDB() -> [String]? {
-        let manager = WorkerAssignmentManager.shared
-        var assignedBuildings: [String] = []
+        guard !workerId.isEmpty else { return nil }
         
-        // Check each building for this worker's assignments
-        for buildingId in Array(1...18).map({ String($0) }) {
-            let assignedWorkers = manager.getWorkersForBuilding(buildingId: buildingId)
-            if assignedWorkers.contains(where: { $0.id == workerId }) {
-                assignedBuildings.append(buildingId)
+        // Since WorkerService is an actor, we need to handle async calls properly
+        var result: [String]? = nil
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                let workerService = WorkerService.shared
+                let assignedBuildings = try await workerService.getAssignedBuildings(workerId)
+                
+                // Convert NamedCoordinate objects to building ID strings
+                let buildingIds = assignedBuildings.map { $0.id }
+                result = buildingIds.isEmpty ? nil : buildingIds
+                
+                print("✅ Got \(buildingIds.count) buildings from WorkerService for worker \(workerId)")
+                
+            } catch {
+                print("❌ Error getting assigned buildings from WorkerService: \(error)")
+                result = nil
             }
+            semaphore.signal()
         }
         
-        return assignedBuildings.isEmpty ? nil : assignedBuildings
+        // Wait for the async operation to complete (with timeout)
+        let timeoutResult = semaphore.wait(timeout: .now() + 2.0)
+        
+        if timeoutResult == .timedOut {
+            print("⚠️ WorkerService call timed out for worker \(workerId)")
+            return nil
+        }
+        
+        return result
     }
+
     
     /// Real-world accurate assignments (updated with Kevin's expanded duties)
     private func getRealWorldAssignments() -> [String] {

@@ -2,10 +2,9 @@
 //  WorkerDashboardIntegration.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved (Date unwrapping issues)
-//  ✅ UPDATED: Uses existing managers (WorkerManager, TaskManagementService)
-//  ✅ PRESERVED: All functionality from both versions
-//  ✅ ENHANCED: Complete dashboard integration with real-world data
+//  ✅ FIXED: Updated to use consolidated services (TaskService, WorkerService, BuildingService)
+//  ✅ REMOVED: References to old TaskManagementService and WorkerManager
+//  ✅ PRESERVED: All functionality with new service architecture
 //
 
 import Foundation
@@ -17,11 +16,12 @@ import Combine
 @MainActor
 class WorkerDashboardIntegration: ObservableObject {
     
-    // MARK: - Service Dependencies (FIXED: Uses existing managers)
-    private let taskManagementService = TaskManagementService.shared  // FIXED: Use existing service
-    private let workerManager = WorkerManager.shared                  // FIXED: Use existing manager
+    // MARK: - Service Dependencies (UPDATED: Use consolidated services)
+    private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
+    private let buildingService = BuildingService.shared
     private let contextEngine = WorkerContextEngine.shared
-    private let csvImporter = OperationalDataManager.shared
+    private let operationalManager = OperationalDataManager.shared
     
     // MARK: - Published Properties
     @Published var dashboardData: DashboardData?
@@ -50,11 +50,11 @@ class WorkerDashboardIntegration: ObservableObject {
         do {
             print("🔄 Loading dashboard data for worker \(workerId)")
             
-            // Ensure CSV data is loaded first
-            await ensureCSVDataLoaded()
+            // Ensure operational data is loaded first
+            await ensureOperationalDataLoaded()
             
-            // Load data using existing managers
-            async let buildings = workerManager.loadWorkerBuildings(workerId)
+            // Load data using consolidated services
+            async let buildings = loadWorkerBuildings(workerId)
             async let tasks = loadTasksForWorker(workerId)
             async let progress = calculateTaskProgress(for: workerId)
             
@@ -82,80 +82,81 @@ class WorkerDashboardIntegration: ObservableObject {
         }
     }
     
-    // MARK: - Task Loading (FIXED: Use existing services)
+    // MARK: - Data Loading (UPDATED: Use consolidated services)
+    
+    private func loadWorkerBuildings(_ workerId: String) async throws -> [FrancoSphere.NamedCoordinate] {
+        return try await workerService.getAssignedBuildings(workerId)
+    }
     
     private func loadTasksForWorker(_ workerId: String) async throws -> [ContextualTask] {
-        // Use WorkerContextEngine for consistent task loading
-        await contextEngine.loadWorkerContext(workerId: workerId)
-        return contextEngine.getTodaysTasks()
+        return try await taskService.getTasks(for: workerId, date: Date())
     }
     
-    private func calculateTaskProgress(for workerId: String) async -> TimeBasedTaskFilter.TaskProgress {
-        // Get tasks from context engine
-        let tasks = contextEngine.getTodaysTasks()
-        
-        // Use existing TimeBasedTaskFilter method
-        return TimeBasedTaskFilter.calculateTaskProgress(tasks: tasks)
+    private func calculateTaskProgress(for workerId: String) async -> TaskProgress {
+        do {
+            return try await taskService.getTaskProgress(for: workerId)
+        } catch {
+            print("Failed to calculate task progress: \(error)")
+            return TaskProgress(completed: 0, total: 0, remaining: 0, percentage: 0, overdueTasks: 0)
+        }
     }
     
-    // MARK: - CSV Data Management (FIXED: Updated to use existing services)
+    // MARK: - Operational Data Management (UPDATED: Use OperationalDataManager)
     
-    /// Ensure CSV data is loaded into the system
-    private func ensureCSVDataLoaded() async {
+    /// Ensure operational data is loaded into the system
+    private func ensureOperationalDataLoaded() async {
         do {
             // Check if already imported
-            let hasImported = await checkIfCSVImported()
+            let hasImported = await checkIfDataImported()
             if hasImported {
-                print("✅ CSV tasks already imported")
+                print("✅ Operational data already loaded")
                 return
             }
             
-            print("🔄 Importing CSV data...")
+            print("🔄 Loading operational data...")
             csvImportProgress = 0.1
             
             // Use OperationalDataManager to load real tasks
-            let (imported, errors) = try await csvImporter.importRealWorldTasks()
+            let (imported, errors) = try await operationalManager.importRealWorldTasks()
             
             csvImportProgress = 1.0
             
-            print("✅ Imported \(imported) real tasks from CSV")
+            print("✅ Loaded \(imported) real tasks from operational data")
             
             if !errors.isEmpty {
                 print("⚠️ Import errors: \(errors)")
             }
             
         } catch {
-            print("❌ Failed to import CSV tasks: \(error)")
+            print("❌ Failed to load operational data: \(error)")
             self.error = error
         }
     }
     
-    /// Check if CSV has been imported
-    private func checkIfCSVImported() async -> Bool {
+    /// Check if operational data has been imported
+    private func checkIfDataImported() async -> Bool {
         do {
-            // FIXED: workerId is non-optional String, just check if empty
             let workerId = NewAuthManager.shared.workerId
             guard !workerId.isEmpty else {
                 return false
             }
             
-            // Get all tasks and check for CSV pattern or sufficient task count
+            // Get all tasks and check for operational data pattern
             let allTasks = try await loadTasksForWorker(workerId)
             
-            // Check for CSV-imported tasks (should have external_id pattern or sufficient count)
-            let csvTasks = allTasks.filter { task in
-                task.id.contains("CSV") || task.id.contains("csv") ||
-                (task.assignedWorkerName?.isEmpty == false)
+            // Check for operational data tasks (should have sufficient count)
+            let operationalTasks = allTasks.filter { task in
+                !task.assignedWorkerName.isNilOrEmpty
             }
             
             // We expect at least 20+ tasks for active workers
             let hasMinimumTasks = allTasks.count >= 20
-            let hasCsvPattern = csvTasks.count > 0
+            let hasOperationalPattern = operationalTasks.count > 0
             
-            return hasMinimumTasks || hasCsvPattern
+            return hasMinimumTasks || hasOperationalPattern
             
         } catch {
-            print("❌ Error checking CSV import status: \(error)")
+            print("❌ Error checking operational data status: \(error)")
             return false
         }
     }
@@ -169,27 +170,31 @@ class WorkerDashboardIntegration: ObservableObject {
     
     func updateTaskCompletion(_ taskId: String, buildingId: String) async {
         guard let workerId = dashboardData?.workerId else { return }
-        
-        // FIXED: workerId is non-optional String, just check if empty
         guard !workerId.isEmpty else { return }
         
-        // Update through TaskManagementService
-        await taskManagementService.toggleTaskCompletion(
-            taskID: taskId,
-            workerID: workerId,
-            buildingID: buildingId
-        )
-        
-        print("✅ Task \(taskId) completed")
-        
-        // Refresh dashboard to reflect changes
-        await refreshDashboard()
+        do {
+            // Update through consolidated TaskService
+            try await taskService.completeTask(
+                taskId,
+                workerId: workerId,
+                buildingId: buildingId,
+                evidence: nil
+            )
+            
+            print("✅ Task \(taskId) completed")
+            
+            // Refresh dashboard to reflect changes
+            await refreshDashboard()
+            
+        } catch {
+            print("❌ Failed to complete task: \(error)")
+            self.error = error
+        }
     }
     
     // MARK: - Context Engine Integration
     
     func syncWithContextEngine() async {
-        // FIXED: workerId is non-optional String, just check if empty
         let workerId = NewAuthManager.shared.workerId
         guard !workerId.isEmpty else { return }
         
@@ -232,10 +237,10 @@ class WorkerDashboardIntegration: ObservableObject {
     static func setupDashboard(for workerId: String) async {
         let integration = WorkerDashboardIntegration.shared
         
-        // 1. Ensure CSV data is loaded
-        await integration.ensureCSVDataLoaded()
+        // 1. Ensure operational data is loaded
+        await integration.ensureOperationalDataLoaded()
         
-        // 2. Load worker context (this pulls from tasks table)
+        // 2. Load worker context
         await WorkerContextEngine.shared.loadWorkerContext(workerId: workerId)
         
         // 3. Load dashboard data
@@ -265,7 +270,7 @@ class WorkerDashboardIntegration: ObservableObject {
             issues.append("No tasks scheduled for today")
         }
         
-        if data.taskProgress.totalTasks == 0 {
+        if data.taskProgress.total == 0 {
             issues.append("Task progress calculation failed")
         }
         
@@ -290,7 +295,7 @@ class WorkerDashboardIntegration: ObservableObject {
             "buildingCount": data.buildingCount,
             "taskCount": data.totalTasks,
             "completionRate": data.completionPercentage,
-            "lastRefresh": data.lastUpdated.timeIntervalSince1970  // FIXED: Direct access to non-optional
+            "lastRefresh": data.lastUpdated.timeIntervalSince1970
         ]
     }
     
@@ -300,24 +305,21 @@ class WorkerDashboardIntegration: ObservableObject {
     }
 }
 
-// MARK: - Dashboard Data Model
+// MARK: - Dashboard Data Model (UPDATED: Use TaskProgress from TaskService)
 
 struct DashboardData {
     let workerId: String
     let assignedBuildings: [FrancoSphere.NamedCoordinate]
     let todaysTasks: [ContextualTask]
-    let taskProgress: TimeBasedTaskFilter.TaskProgress  // FIXED: Use existing TaskProgress
+    let taskProgress: TaskProgress  // Use TaskProgress from TaskService
     let lastUpdated: Date
     
     // Computed properties for easy access
     var buildingCount: Int { assignedBuildings.count }
     var totalTasks: Int { todaysTasks.count }
-    var completedTasks: Int { taskProgress.completedTasks }  // FIXED: Use correct property
-    var remainingTasks: Int { taskProgress.totalTasks - taskProgress.completedTasks }  // FIXED: Calculate from existing properties
-    var completionPercentage: Double {
-        let total = max(taskProgress.totalTasks, 1)
-        return Double(taskProgress.completedTasks) / Double(total) * 100
-    }
+    var completedTasks: Int { taskProgress.completed }
+    var remainingTasks: Int { taskProgress.remaining }
+    var completionPercentage: Double { taskProgress.percentage }
     
     // Task status breakdown
     var pendingTasks: [ContextualTask] {
@@ -325,21 +327,21 @@ struct DashboardData {
     }
     
     var overdueTasks: [ContextualTask] {
-        todaysTasks.filter { isTaskOverdue($0) }  // FIXED: Use helper function
+        todaysTasks.filter { isTaskOverdue($0) }
     }
     
     var currentTasks: [ContextualTask] {
-        todaysTasks.filter { isTaskCurrent($0) }  // FIXED: Use helper function
+        todaysTasks.filter { isTaskCurrent($0) }
     }
     
     var upcomingTasks: [ContextualTask] {
-        todaysTasks.filter { isTaskUpcoming($0) }  // FIXED: Use helper function
+        todaysTasks.filter { isTaskUpcoming($0) }
     }
     
-    // MARK: - Helper methods with proper Date unwrapping
+    // MARK: - Helper methods with proper Date handling
     private func isTaskOverdue(_ task: ContextualTask) -> Bool {
         guard let endTime = task.endTime,
-              let endDate = parseTaskTime(endTime) else { return false }  // FIXED: Proper unwrapping
+              let endDate = parseTaskTime(endTime) else { return false }
         return endDate < Date() && task.status != "completed"
     }
     
@@ -347,7 +349,7 @@ struct DashboardData {
         guard let startTime = task.startTime,
               let endTime = task.endTime,
               let startDate = parseTaskTime(startTime),
-              let endDate = parseTaskTime(endTime) else { return false }  // FIXED: Proper unwrapping
+              let endDate = parseTaskTime(endTime) else { return false }
         
         let now = Date()
         return now >= startDate && now <= endDate && task.status != "completed"
@@ -355,13 +357,13 @@ struct DashboardData {
     
     private func isTaskUpcoming(_ task: ContextualTask) -> Bool {
         guard let startTime = task.startTime,
-              let startDate = parseTaskTime(startTime) else { return false }  // FIXED: Proper unwrapping
+              let startDate = parseTaskTime(startTime) else { return false }
         
         return startDate > Date() && task.status != "completed"
     }
 }
 
-// MARK: - Time Status Extension for ContextualTask (PRESERVED)
+// MARK: - Time Status Extension for ContextualTask
 
 extension ContextualTask {
     
@@ -394,42 +396,18 @@ extension ContextualTask {
         let difference = taskTotalMinutes - currentTotalMinutes
         
         if difference < -30 {
-            // More than 30 minutes late
             return "overdue"
         } else if difference >= -30 && difference <= 30 {
-            // Within 30 minute window (in progress)
             return "current"
         } else {
-            // Upcoming
             return "upcoming"
         }
     }
 }
 
-// MARK: - Helper Functions for UI Compatibility (PRESERVED)
+// MARK: - Helper Functions
 
-/// Helper to map ContextualTask to MaintenanceTask for UI compatibility
-func mapContextualTasksToMaintenanceTasks(_ contextualTasks: [ContextualTask]) -> [MaintenanceTask] {
-    contextualTasks.map { task in
-        MaintenanceTask(
-            id: task.id,
-            name: task.name,
-            buildingID: task.buildingId,
-            description: "", // Not in ContextualTask
-            dueDate: Date(), // Today
-            startTime: parseTimeString(task.startTime),
-            endTime: parseTimeString(task.endTime),
-            category: TaskCategory(rawValue: task.category) ?? .maintenance,
-            urgency: TaskUrgency(rawValue: task.urgencyLevel) ?? .medium,
-            recurrence: TaskRecurrence(rawValue: task.recurrence) ?? .oneTime,
-            isComplete: task.status == "completed",
-            assignedWorkers: [], // Initialize as empty array
-            requiredSkillLevel: task.skillLevel
-        )
-    }
-}
-
-/// Parse time string to Date (FIXED: Proper optional handling)
+/// Parse time string to Date
 private func parseTimeString(_ timeStr: String?) -> Date? {
     guard let timeStr = timeStr else { return nil }
     
@@ -448,7 +426,7 @@ private func parseTimeString(_ timeStr: String?) -> Date? {
     return nil
 }
 
-/// Helper function to parse task time (FIXED: Proper optional handling)
+/// Helper function to parse task time
 private func parseTaskTime(_ timeStr: String) -> Date? {
     return parseTimeString(timeStr)
 }
@@ -459,7 +437,7 @@ enum DashboardIntegrationError: LocalizedError {
     case noWorkerID
     case dataLoadFailed(Error)
     case contextSyncFailed(Error)
-    case csvImportFailed(Error)
+    case operationalDataFailed(Error)
     case serviceUnavailable(String)
     
     var errorDescription: String? {
@@ -470,8 +448,8 @@ enum DashboardIntegrationError: LocalizedError {
             return "Failed to load dashboard data: \(error.localizedDescription)"
         case .contextSyncFailed(let error):
             return "Failed to sync with context engine: \(error.localizedDescription)"
-        case .csvImportFailed(let error):
-            return "Failed to import CSV data: \(error.localizedDescription)"
+        case .operationalDataFailed(let error):
+            return "Failed to load operational data: \(error.localizedDescription)"
         case .serviceUnavailable(let service):
             return "Service unavailable: \(service)"
         }
@@ -480,8 +458,31 @@ enum DashboardIntegrationError: LocalizedError {
 
 // MARK: - String Extension Helper
 
-extension String {
-    var isNotEmpty: Bool {
-        return !isEmpty
+extension String? {
+    var isNilOrEmpty: Bool {
+        return self?.isEmpty ?? true
+    }
+}
+
+// MARK: - Legacy Support (if needed by other files)
+
+/// Helper to map ContextualTask to MaintenanceTask for UI compatibility
+func mapContextualTasksToMaintenanceTasks(_ contextualTasks: [ContextualTask]) -> [MaintenanceTask] {
+    return contextualTasks.map { task in
+        MaintenanceTask(
+            id: task.id,
+            name: task.name,
+            buildingID: task.buildingId,
+            description: "",
+            dueDate: Date(),
+            startTime: parseTimeString(task.startTime),
+            endTime: parseTimeString(task.endTime),
+            category: TaskCategory(rawValue: task.category) ?? .maintenance,
+            urgency: TaskUrgency(rawValue: task.urgencyLevel) ?? .medium,
+            recurrence: TaskRecurrence(rawValue: task.recurrence) ?? .oneTime,
+            isComplete: task.status == "completed",
+            assignedWorkers: [],
+            requiredSkillLevel: task.skillLevel
+        )
     }
 }
