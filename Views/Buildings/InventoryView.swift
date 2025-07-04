@@ -7,6 +7,9 @@
 // ✅ PRESERVED: All inventory functionality with new service architecture
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 extension FrancoSphere.InventoryItem {
     var statusColor: Color {

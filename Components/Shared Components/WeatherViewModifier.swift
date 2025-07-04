@@ -1,4 +1,19 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // A ViewModifier to add weather-sensitive styling to task views
 struct WeatherSensitiveTaskModifier: ViewModifier {

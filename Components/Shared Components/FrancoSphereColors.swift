@@ -8,6 +8,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 public enum FrancoSphereColors {
     // Primary backgrounds

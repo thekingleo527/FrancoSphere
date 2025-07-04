@@ -9,6 +9,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct AIAvatarOverlayView: View {
     @StateObject private var aiManager = AIAssistantManager.shared

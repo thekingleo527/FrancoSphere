@@ -8,6 +8,9 @@
 
 // Components/AbstractFrancoSphereLogo.swift
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct AbstractFrancoSphereLogo: View {
     let size: CGFloat

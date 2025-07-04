@@ -2,6 +2,9 @@
 // Fixed version
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 @MainActor
 class DatabaseInitializationCoordinator: ObservableObject {

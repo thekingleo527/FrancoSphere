@@ -10,6 +10,9 @@
 // Create this as a new file in the Components folder
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct RouteStatItem: View {
     let title: String

@@ -13,9 +13,21 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SQLite
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // ✅ Type alias for SQLite.Binding clarity
 typealias SQLiteBinding = SQLite.Binding

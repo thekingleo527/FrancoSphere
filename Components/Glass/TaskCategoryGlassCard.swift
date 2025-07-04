@@ -1,3 +1,4 @@
+import Foundation
 //
 //  TaskCategoryGlassCard.swift
 //  FrancoSphere

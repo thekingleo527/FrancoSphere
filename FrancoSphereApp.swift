@@ -214,7 +214,7 @@ struct InitializationView: View {
             
         case "Importing building assignments...":
             // Ensure operational data is imported if needed
-            let operationalManager = OperationalDataManager.shared  // ✅ CHANGED: from CSVDataImporter
+            let operationalManager = OperationalDataManager.shared  // ✅ CHANGED: from OperationalDataManager
             await MainActor.run {
                 operationalManager.sqliteManager = SQLiteManager.shared
             }

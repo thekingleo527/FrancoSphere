@@ -6,6 +6,9 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Utility class for seeding the database with test data
 class DatabaseSeeder {

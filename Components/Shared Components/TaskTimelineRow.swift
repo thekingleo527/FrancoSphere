@@ -7,6 +7,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Task Timeline Row Component
 struct TaskTimelineRow: View {

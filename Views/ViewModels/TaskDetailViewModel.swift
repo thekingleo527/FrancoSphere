@@ -1,3 +1,16 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+// WeatherManager import added
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  TaskDetailViewModel.swift
 //  FrancoSphere
@@ -29,10 +42,25 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import PhotosUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 @MainActor
 class TaskDetailViewModel: ObservableObject {
@@ -951,10 +979,6 @@ enum LocationPermissionStatus {
     case denied
 }
 
-struct TaskEvidenceCollection {
-    var notes: String?
-    var lastSaved: Date?
-}
 
 struct TaskPhoto {
     let id: String

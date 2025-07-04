@@ -18,7 +18,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import UIKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Utility for loading the AI Assistant image with multiple fallback options
 struct AIAssistantImageLoader {

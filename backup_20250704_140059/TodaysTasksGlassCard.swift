@@ -1,3 +1,4 @@
+import Foundation
 //
 //  TodaysTasksGlassCard.swift
 //  FrancoSphere
@@ -207,7 +208,7 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        BuildingRepository.shared.getBuildingName(forId: task.buildingID)
+        BuildingService.shared.getBuildingName(forId: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -403,7 +404,7 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        BuildingRepository.shared.getBuildingName(forId: task.buildingID)
+        BuildingService.shared.getBuildingName(forId: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {

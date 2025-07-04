@@ -132,7 +132,6 @@
 		236106F12E17AE0200463A59 /* EnhancedClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */; };
 		236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */; };
 		237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237DE3FE2E182F510002A14D /* TelemetryService.swift */; };
-		2381D1752E185F5800773DC4 /* WeatherManager 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2381D1742E185F5800773DC4 /* WeatherManager 2.swift */; };
 		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
@@ -311,7 +310,6 @@
 		236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
 		236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
 		237DE3FE2E182F510002A14D /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
-		2381D1742E185F5800773DC4 /* WeatherManager 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeatherManager 2.swift"; sourceTree = "<group>"; };
 		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
@@ -578,7 +576,6 @@
 		234580DD2DF78E3D00355F0A /* Managers */ = {
 			isa = PBXGroup;
 			children = (
-				2381D1742E185F5800773DC4 /* WeatherManager 2.swift */,
 				234580C52DF78E3D00355F0A /* Extensions */,
 				234580C72DF78E3D00355F0A /* Migrations */,
 				234580C82DF78E3D00355F0A /* AIAssistantManager.swift */,
@@ -1020,7 +1017,6 @@
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
-				2381D1752E185F5800773DC4 /* WeatherManager 2.swift in Sources */,
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,
 				234581872DF78E3D00355F0A /* LoginView.swift in Sources */,
 				234581892DF78E3D00355F0A /* OperationalDataManager.swift in Sources */,

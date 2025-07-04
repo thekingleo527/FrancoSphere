@@ -8,6 +8,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TodaysRoutineSummaryView: View {
     @EnvironmentObject private var contextEngine: WorkerContextEngine

@@ -103,7 +103,7 @@ struct BuildingImageDiagnostic: View {
     }
     
     private func loadBuildings() async {
-        buildings = await BuildingRepository.shared.allBuildings
+        buildings = await BuildingService.shared.allBuildings
         isLoading = false
     }
 }

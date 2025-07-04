@@ -6,7 +6,13 @@
 // ✅ PRESERVED: All functionality with new service architecture
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import PhotosUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TaskDetailView: View {
     let task: FSTaskItem

@@ -1,3 +1,4 @@
+import Foundation
 //
 //  DashboardTaskDetailView.swift
 //  FrancoSphere
@@ -433,7 +434,7 @@ struct DashboardTaskDetailView: View {
         // FIXED: Proper struct handling without [weak self]
         Task { [taskBuildingID = task.buildingID] in
             // Use BuildingRepository to get building name with explicit type annotation
-            let buildingName: String = await BuildingRepository.shared.name(forId: taskBuildingID)
+            let buildingName: String = await BuildingService.shared.name(forId: taskBuildingID)
             
             // FIXED: Direct property access since structs are value types
             await MainActor.run {

@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct ClockInGlassCard: View {
     @ObservedObject var clockInManager = ClockInManager.shared // Use singleton

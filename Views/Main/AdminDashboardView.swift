@@ -1,3 +1,7 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  AdminDashboardView.swift
 //  FrancoSphere
@@ -8,7 +12,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct AdminDashboardView: View {
     @StateObject private var authManager = NewAuthManager.shared

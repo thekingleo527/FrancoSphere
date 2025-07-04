@@ -19,6 +19,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Enhanced ClockInGlassCard with QuickBooks Integration
 

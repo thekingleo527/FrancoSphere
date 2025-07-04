@@ -9,6 +9,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TrackableScrollView<Content: View>: View {
     @Binding var contentOffset: CGFloat

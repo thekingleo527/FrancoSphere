@@ -9,7 +9,13 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SQLite
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Service for generating DSNY-compliant sanitation tasks
 actor DSNYTaskGenerator {

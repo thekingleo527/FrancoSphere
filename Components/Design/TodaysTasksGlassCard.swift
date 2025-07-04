@@ -1,3 +1,15 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  TodaysTasksGlassCard.swift
 //  FrancoSphere
@@ -9,6 +21,9 @@
 // Today's tasks in glass card format
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TodaysTasksGlassCard: View {
     let tasks: [MaintenanceTask]
@@ -207,7 +222,7 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        BuildingRepository.shared.getBuildingName(forId: task.buildingID)
+        BuildingService.shared.getBuildingName(forId: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -403,7 +418,7 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        BuildingRepository.shared.getBuildingName(forId: task.buildingID)
+        BuildingService.shared.getBuildingName(forId: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {

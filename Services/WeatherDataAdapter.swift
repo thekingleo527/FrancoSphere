@@ -11,8 +11,17 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Weather Error Enum (Standalone - Final Version)
 

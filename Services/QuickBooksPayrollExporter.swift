@@ -20,8 +20,17 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SQLite // ✅ ADDED: Required for SQLite.Binding type
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - QuickBooks Payroll Exporter
 

@@ -5,7 +5,13 @@
 //  Super minimal version - removes ALL potential type conversion issues
 //
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Essential Extensions Only
 extension String {

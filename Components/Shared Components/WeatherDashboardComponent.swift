@@ -1,7 +1,22 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 // WeatherDashboardComponent.swift
 // Fixed to use proper FrancoSphere models and WeatherDataAdapter
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct WeatherDashboardComponent: View {
     let building: NamedCoordinate  // Using the correct model

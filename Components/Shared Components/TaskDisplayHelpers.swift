@@ -18,6 +18,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Display helpers optimized for real-world FrancoSphere operations data
 struct TaskDisplayHelpers {

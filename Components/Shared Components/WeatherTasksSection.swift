@@ -1,7 +1,22 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 // WeatherTasksSection.swift
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct WeatherTasksSection: View {
     @StateObject private var weatherAdapter = WeatherDataAdapter.shared

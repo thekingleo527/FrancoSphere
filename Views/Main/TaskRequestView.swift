@@ -1,3 +1,11 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  TaskRequestView.swift
 //  FrancoSphere
@@ -10,6 +18,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TaskRequestView: View {
     @StateObject private var authManager = NewAuthManager.shared

@@ -12,6 +12,9 @@
 // Using numeric IDs 1-7, 8-10 as Strings
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct WorkerConstants {
     

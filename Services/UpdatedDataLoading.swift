@@ -11,8 +11,17 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Enhanced Data Loading with Real-time Context Updates
 
@@ -134,7 +143,7 @@ class UpdatedDataLoading: ObservableObject {
     
     private func loadWorkerBuildings(workerId: String) async throws -> [FrancoSphere.NamedCoordinate] {
         // Use WorkerManager for building loading
-        let workerManager = WorkerManager.shared
+        let workerManager = WorkerService.shared
         return try await workerManager.loadWorkerBuildings(workerId)
     }
     

@@ -1,7 +1,19 @@
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - ContextualTask Extensions for Immutable Updates
 extension ContextualTask {
@@ -42,9 +54,9 @@ class TodayTasksViewModel: ObservableObject {
     // MARK: - Enhanced Progress Analytics (New Functionality)
     @Published var selectedTimeframe: Timeframe = .today
     @Published var weeklyProgress: [DayProgress] = []
-    @Published var monthlyTrends: TaskTrends = TaskTrends()
-    @Published var performanceMetrics: PerformanceMetrics = PerformanceMetrics()
-    @Published var streakData: StreakData = StreakData()
+    @Published var monthlyTrends: TaskTrends = TaskTrends(weeklyCompletion: [], categoryBreakdown: [], trend: .stable)
+    @Published var performanceMetrics: PerformanceMetrics = PerformanceMetrics(efficiency: 0.0, quality: 0.0, speed: 0.0, consistency: 0.0)
+    @Published var streakData: StreakData = StreakData(currentStreak: 0, longestStreak: 0)
     @Published var completionGoal: Double = 90.0 // 90% completion goal
     @Published var errorMessage: String?
     @Published var isRefreshing = false
@@ -321,7 +333,7 @@ class TodayTasksViewModel: ObservableObject {
             
         } catch {
             print("Failed to calculate performance metrics: \(error)")
-            return PerformanceMetrics()
+            return PerformanceMetrics(efficiency: 0.0, quality: 0.0, speed: 0.0, consistency: 0.0)
         }
     }
     
@@ -363,7 +375,7 @@ class TodayTasksViewModel: ObservableObject {
             
         } catch {
             print("Failed to calculate streak data: \(error)")
-            return StreakData()
+            return StreakData(currentStreak: 0, longestStreak: 0)
         }
     }
     

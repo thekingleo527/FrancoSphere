@@ -7,7 +7,13 @@
 
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import UIKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Dedicated photo uploader for task verification
 struct TaskPhotoUploader: View {

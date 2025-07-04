@@ -1,3 +1,7 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  TaskTimelineView.swift
 //  FrancoSphere
@@ -10,6 +14,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TaskTimelineView: View {
     let workerId: Int64

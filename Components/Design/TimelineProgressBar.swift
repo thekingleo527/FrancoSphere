@@ -2,6 +2,9 @@
 // Visual timeline for task progression
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TimelineProgressBar: View {
     @State private var currentTime = Date()

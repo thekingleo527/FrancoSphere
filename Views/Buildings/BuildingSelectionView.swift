@@ -10,8 +10,17 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct BuildingSelectionView: View {
     let buildings: [FrancoSphere.NamedCoordinate]

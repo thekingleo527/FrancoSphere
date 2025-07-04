@@ -3,6 +3,9 @@
 // Defines spacing, typography, animations, and design tokens
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Design System
 enum FrancoSphereDesign {

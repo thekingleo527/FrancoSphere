@@ -1,3 +1,8 @@
+// WorkerManager import added
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  WorkerContextEngine.swift
 //  FrancoSphere
@@ -10,8 +15,17 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Supporting Types
 
@@ -118,8 +132,8 @@ public class WorkerContextEngine: ObservableObject {
     internal var lastUpdateTime: Date?
     
     // MARK: - Manager References (FIXED: Use existing managers)
-    private var workerManager: WorkerManager {
-        return WorkerManager.shared
+    private var workerManager: WorkerService {
+        return WorkerService.shared
     }
     
     private var authManager: NewAuthManager {

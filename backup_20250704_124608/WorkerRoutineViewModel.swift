@@ -38,7 +38,7 @@ class WorkerRoutineViewModel: ObservableObject {
     
     // MARK: - Dependencies (Using Existing Services)
     private let taskService = TaskService.shared                 // ✅ EXISTS
-    private let workerManager = WorkerManager.shared             // ✅ EXISTS
+    private let workerManager = WorkerService.shared             // ✅ EXISTS
     private let contextEngine = WorkerContextEngine.shared       // ✅ EXISTS
     private let operationalDataManager = OperationalDataManager.shared // ✅ EXISTS
     private var cancellables = Set<AnyCancellable>()
@@ -702,12 +702,6 @@ class WorkerRoutineViewModel: ObservableObject {
 
 // MARK: - Supporting Types
 
-enum DataHealthStatus: Equatable {
-    case unknown
-    case healthy
-    case warning([String])
-    case critical([String])
-}
 
 // MARK: - Worker Routine View
 struct WorkerRoutineView: View {

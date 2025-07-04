@@ -1,3 +1,16 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+// WeatherManager import added
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  BuildingDetailViewModel.swift
 //  FrancoSphere
@@ -20,9 +33,21 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 @MainActor
 class BuildingDetailViewModel: ObservableObject {

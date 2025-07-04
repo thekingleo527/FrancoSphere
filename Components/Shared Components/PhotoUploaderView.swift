@@ -1,5 +1,11 @@
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import UIKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // Rename to avoid conflicts with other implementations
 public struct FSPhotoUploaderView: View {

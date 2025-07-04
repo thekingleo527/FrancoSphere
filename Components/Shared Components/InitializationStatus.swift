@@ -8,6 +8,9 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Building Data Importer
 @MainActor

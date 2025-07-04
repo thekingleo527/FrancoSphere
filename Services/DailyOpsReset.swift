@@ -6,7 +6,13 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import UIKit // Added for UIApplication
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Manages the daily operations reset for the Franco Sphere system
 class DailyOpsReset {
@@ -136,7 +142,7 @@ class DailyOpsReset {
         let taskManager = TaskManager.shared
         
         // Fixed: Use async access to BuildingRepository
-        let allBuildings = await BuildingRepository.shared.allBuildings
+        let allBuildings = await BuildingService.shared.allBuildings
         for building in allBuildings {
             // Fixed: Use async retrieveTasks call
             let buildingTasks = await taskManager.fetchTasksAsync(forBuilding: building.id, includePastTasks: true)
@@ -166,7 +172,7 @@ class DailyOpsReset {
     private func generateNewTasks() async {
         // For each building, schedule recurring tasks based on the current day
         // Fixed: Use async access to BuildingRepository
-        let allBuildings = await BuildingRepository.shared.allBuildings
+        let allBuildings = await BuildingService.shared.allBuildings
         for building in allBuildings {
             // Fixed: For now, we'll just generate weather-related tasks
             await generateWeatherRelatedTasks(for: building)

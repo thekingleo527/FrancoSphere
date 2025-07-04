@@ -4,10 +4,13 @@
 //
 //  ✅ UPDATED: Removed all CSV file parsing dependencies
 //  ✅ PRESERVED: All hardcoded data and database insertion logic
-//  ✅ CHANGED: CSVDataImporter → OperationalDataManager reference
+//  ✅ CHANGED: OperationalDataManager → OperationalDataManager reference
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - DataBootstrapper
 enum DataBootstrapper {
@@ -71,7 +74,7 @@ enum DataBootstrapper {
     private static func importRealWorldTasks(manager: SQLiteManager) async {
         print("📋 Importing real-world tasks using OperationalDataManager...")
         
-        let operationalManager = OperationalDataManager.shared  // ✅ CHANGED: from CSVDataImporter
+        let operationalManager = OperationalDataManager.shared  // ✅ CHANGED: from OperationalDataManager
         operationalManager.sqliteManager = manager
         
         do {

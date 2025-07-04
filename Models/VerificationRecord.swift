@@ -7,7 +7,13 @@
 
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// Represents a verification record for a completed task
 struct VerificationRecord: Identifiable, Codable, Hashable {

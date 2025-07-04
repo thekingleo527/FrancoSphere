@@ -1,3 +1,16 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+// WorkerManager import added
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 // UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerRoutineViewModel.swift
@@ -14,10 +27,25 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Worker Routine View Model
 @MainActor
@@ -38,7 +66,7 @@ class WorkerRoutineViewModel: ObservableObject {
     
     // MARK: - Dependencies (Using Existing Services)
     private let taskService = TaskService.shared                 // ✅ EXISTS
-    private let workerManager = WorkerManager.shared             // ✅ EXISTS
+    private let workerManager = WorkerService.shared             // ✅ EXISTS
     private let contextEngine = WorkerContextEngine.shared       // ✅ EXISTS
     private let operationalDataManager = OperationalDataManager.shared // ✅ EXISTS
     private var cancellables = Set<AnyCancellable>()

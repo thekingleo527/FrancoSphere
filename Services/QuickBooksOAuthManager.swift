@@ -19,10 +19,25 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import AuthenticationServices
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CryptoKit // ✅ ADDED: Required for SHA256 in PKCE generation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - QuickBooks OAuth Manager
 

@@ -9,6 +9,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct HeroStatusCard: View {
     let clockedInStatus: (isClockedIn: Bool, buildingId: Int64?)

@@ -7,7 +7,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import UIKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct ImagePicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType

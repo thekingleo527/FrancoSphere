@@ -1,6 +1,12 @@
 // UPDATED: Using centralized TypeRegistry for all types
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Worker Skill Models
 

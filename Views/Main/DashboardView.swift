@@ -1,3 +1,15 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  DashboardView.swift - FIXED FOR CONSOLIDATED ARCHITECTURE
 //  FrancoSphere
@@ -9,7 +21,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct DashboardView: View {
     // MARK: - State Properties

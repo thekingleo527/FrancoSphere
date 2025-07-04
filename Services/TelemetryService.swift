@@ -13,9 +13,21 @@
 //
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import OSLog
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import UIKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - TelemetryService Actor
 

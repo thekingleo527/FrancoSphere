@@ -1,3 +1,15 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  DashboardTaskDetailView.swift
 //  FrancoSphere
@@ -10,6 +22,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct DashboardTaskDetailView: View {
     let task: MaintenanceTask
@@ -433,7 +448,7 @@ struct DashboardTaskDetailView: View {
         // FIXED: Proper struct handling without [weak self]
         Task { [taskBuildingID = task.buildingID] in
             // Use BuildingRepository to get building name with explicit type annotation
-            let buildingName: String = await BuildingRepository.shared.name(forId: taskBuildingID)
+            let buildingName: String = await BuildingService.shared.name(forId: taskBuildingID)
             
             // FIXED: Direct property access since structs are value types
             await MainActor.run {

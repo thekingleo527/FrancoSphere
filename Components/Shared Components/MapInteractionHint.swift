@@ -8,6 +8,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct MapInteractionHint: View {
     @Binding var showHint: Bool

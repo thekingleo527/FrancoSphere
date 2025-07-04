@@ -1,3 +1,4 @@
+// UPDATED: Using centralized TypeRegistry for all types
 // FrancoSphereModels.swift
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 // "Source of truth" for all FrancoSphere-wide models.
@@ -6,11 +7,20 @@
 // top-level typealiases at the bottom.
 //
 // Fixed compilation errors: duplicate color properties and WeatherAlert redeclaration
-// ✅ UPDATED: References to OperationalDataManager (renamed from CSVDataImporter)
+// ✅ UPDATED: References to OperationalDataManager (renamed from OperationalDataManager)
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: — FrancoSphere Namespace
 public enum FrancoSphere {
@@ -1877,207 +1887,93 @@ extension FrancoSphere.NamedCoordinate {
         }
     }
 }
-
-
-// MARK: - WorkerShift Definition (Corrected for WorkerManager)
-
-extension FrancoSphere {
-    public struct WorkerShift: Identifiable, Codable {
-        public let id: String
-        public let workerId: String
-        public let workerName: String
-        public let buildingId: Int64
-        public let startTime: Date
-        public var endTime: Date?  // var allows mutation
-        public var status: ShiftStatus  // var allows mutation
-        
-        public enum ShiftStatus: String, Codable, CaseIterable {
-            case active = "active"
-            case completed = "completed"
-            case paused = "paused"
-        }
-        
-        public init(
-            id: String = UUID().uuidString,
-            workerId: String,
-            workerName: String,
-            buildingId: Int64,
-            startTime: Date,
-            endTime: Date? = nil,
-            status: ShiftStatus = .active
-        ) {
-            self.id = id
-            self.workerId = workerId
-            self.workerName = workerName
-            self.buildingId = buildingId
-            self.startTime = startTime
-            self.endTime = endTime
-            self.status = status
-        }
-        
-        public var duration: TimeInterval? {
-            guard let endTime = endTime else { return nil }
-            return endTime.timeIntervalSince(startTime)
-        }
-    }
-}
-
-// Type alias for convenience
-public typealias WorkerShift = FrancoSphere.WorkerShift
-
-// MARK: - Missing Type Definitions (Final Fix)
+// MARK: - Missing Type Definitions (Compilation Fix)
 
 extension FrancoSphere {
     
-    // Worker Definition
+    // Worker Management Types
     public struct Worker: Identifiable, Codable {
         public let id: String
+        public let workerId: String
         public let name: String
         public let email: String
         public let role: String
+        public let quickbooksEmployeeId: String?
+        public let hourlyRate: Decimal?
         public let isActive: Bool
-        public let hourlyRate: Double?
-        public let skills: [String]
-        public let buildingIds: [String]
         
-        public init(
-            id: String,
-            name: String,
-            email: String,
-            role: String,
-            isActive: Bool = true,
-            hourlyRate: Double? = nil,
-            skills: [String] = [],
-            buildingIds: [String] = []
-        ) {
+        public init(id: String = UUID().uuidString, workerId: String, name: String, email: String, role: String, quickbooksEmployeeId: String? = nil, hourlyRate: Decimal? = nil, isActive: Bool = true) {
             self.id = id
+            self.workerId = workerId
             self.name = name
             self.email = email
             self.role = role
-            self.isActive = isActive
+            self.quickbooksEmployeeId = quickbooksEmployeeId
             self.hourlyRate = hourlyRate
-            self.skills = skills
-            self.buildingIds = buildingIds
+            self.isActive = isActive
         }
     }
     
-    // DataHealthStatus Definition
-    public enum DataHealthStatus: Equatable {
-        case unknown
-        case healthy
-        case warning([String])
-        case critical([String])
+    // Worker Shift Management
+    public struct WorkerShift: Identifiable, Codable {
+        public let id: String
+        public let workerId: String
+        public let startTime: Date
+        public let endTime: Date?
+        public let startBuilding: String
+        public let status: ShiftStatus
         
-        public var statusText: String {
-            switch self {
-            case .unknown: return "Unknown"
-            case .healthy: return "Healthy"
-            case .warning: return "Warning"
-            case .critical: return "Critical"
-            }
+        public enum ShiftStatus: String, Codable, CaseIterable {
+            case active = "Active"
+            case completed = "Completed"
+            case paused = "Paused"
         }
         
-        public var color: Color {
-            switch self {
-            case .unknown: return .gray
-            case .healthy: return .green
-            case .warning: return .orange
-            case .critical: return .red
-            }
-        }
-    }
-    
-    // Enhanced TaskProgress Definition
-    public struct TaskProgress {
-        public let completed: Int
-        public let total: Int
-        public let remaining: Int
-        public let percentage: Double
-        public let overdueTasks: Int
-        public let averageCompletionTime: TimeInterval
-        public let onTimeCompletionRate: Double
-        
-        public init(
-            completed: Int,
-            total: Int,
-            remaining: Int,
-            percentage: Double,
-            overdueTasks: Int,
-            averageCompletionTime: TimeInterval = 0,
-            onTimeCompletionRate: Double = 0
-        ) {
-            self.completed = completed
-            self.total = total
-            self.remaining = remaining
-            self.percentage = percentage
-            self.overdueTasks = overdueTasks
-            self.averageCompletionTime = averageCompletionTime
-            self.onTimeCompletionRate = onTimeCompletionRate
-        }
-        
-        public var isComplete: Bool {
-            return remaining == 0 && total > 0
+        public init(id: String = UUID().uuidString, workerId: String, startTime: Date, endTime: Date? = nil, startBuilding: String, status: ShiftStatus = .active) {
+            self.id = id
+            self.workerId = workerId
+            self.startTime = startTime
+            self.endTime = endTime
+            self.startBuilding = startBuilding
+            self.status = status
         }
     }
     
-    // WeatherImpact Definition
-    public struct WeatherImpact {
-        public let condition: WeatherCondition
-        public let temperature: Double
-        public let affectedTasks: [String]
-        public let recommendation: String
-        
-        public init(
-            condition: WeatherCondition,
-            temperature: Double,
-            affectedTasks: [String],
-            recommendation: String
-        ) {
-            self.condition = condition
-            self.temperature = temperature
-            self.affectedTasks = affectedTasks
-            self.recommendation = recommendation
-        }
-    }
-    
-    // ClockInStatus Definition
-    public enum ClockInStatus: Equatable {
-        case clockedOut
-        case clockedIn(building: String)
-        
-        public var isActive: Bool {
-            switch self {
-            case .clockedOut: return false
-            case .clockedIn: return true
-            }
-        }
-    }
-    
-    // TaskEvidence Definition
-    public struct TaskEvidence {
-        public let photos: [Data]
-        public let timestamp: Date
-        public let location: CLLocation?
-        public let notes: String?
-        
-        public init(
-            photos: [Data],
-            timestamp: Date,
-            location: CLLocation? = nil,
-            notes: String? = nil
-        ) {
-            self.photos = photos
-            self.timestamp = timestamp
-            self.location = location
-            self.notes = notes
-        }
-    }
-}
+    // Data Health Management
 
-// Type aliases for convenience
+// Add type aliases for backwards compatibility
 public typealias Worker = FrancoSphere.Worker
+public typealias WorkerShift = FrancoSphere.WorkerShift
 public typealias DataHealthStatus = FrancoSphere.DataHealthStatus
-public typealias TaskProgress = FrancoSphere.TaskProgress
 public typealias WeatherImpact = FrancoSphere.WeatherImpact
 public typealias ClockInStatus = FrancoSphere.ClockInStatus
-public typealias TaskEvidence = FrancoSphere.TaskEvidence
+public typealias BuildingTab = FrancoSphere.BuildingTab
+public typealias BuildingStatistics = FrancoSphere.BuildingStatistics
+public typealias BuildingInsight = FrancoSphere.BuildingInsight
+public typealias TaskCompletionStats = FrancoSphere.TaskCompletionStats
+public typealias Timeframe = FrancoSphere.Timeframe
+public typealias DayProgress = FrancoSphere.DayProgress
+public typealias TaskTrends = FrancoSphere.TaskTrends
+public typealias CategoryProgress = FrancoSphere.CategoryProgress
+public typealias PerformanceMetrics = FrancoSphere.PerformanceMetrics
+public typealias ProductivityTrend = FrancoSphere.ProductivityTrend
+public typealias StreakData = FrancoSphere.StreakData
+
+
+
+// MARK: - Public WorkerShift (Fix visibility issues)
+public struct WorkerShiftPublic {
+    public let id: String
+    public let workerId: String
+    public let startTime: Date
+    public let endTime: Date?
+    public let status: String
+    
+    public init(id: String, workerId: String, startTime: Date, endTime: Date? = nil, status: String = "active") {
+        self.id = id
+        self.workerId = workerId
+        self.startTime = startTime
+        self.endTime = endTime
+        self.status = status
+    }
+}

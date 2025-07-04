@@ -1,3 +1,15 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  TaskFormView.swift
 //  FrancoSphere
@@ -7,6 +19,9 @@
 
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct TaskFormView: View {
     let buildingID: String

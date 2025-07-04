@@ -984,7 +984,7 @@ class OperationalDataManager: ObservableObject {
 
     /// Enhanced building mapping using BuildingRepository
     private func mapBuildingNameToId(_ buildingName: String) async throws -> Int {
-        if let idStr = await BuildingRepository.shared.id(forName: buildingName),
+        if let idStr = await BuildingService.shared.id(forName: buildingName),
            let id = Int(idStr) {
             return id
         }

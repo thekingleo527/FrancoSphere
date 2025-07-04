@@ -1,3 +1,15 @@
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 //
 //  WeatherTaskTimelineCard.swift
 //  FrancoSphere
@@ -8,6 +20,9 @@
 
 // Components/Weather/WeatherTaskTimelineCard.swift
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct WeatherTaskTimelineCard: View {
     let temperature: Int

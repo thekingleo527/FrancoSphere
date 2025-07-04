@@ -8,7 +8,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct BuildingPreviewPopover: View {
     let building: FrancoSphere.NamedCoordinate

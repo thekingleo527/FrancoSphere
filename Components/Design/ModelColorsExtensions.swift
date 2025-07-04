@@ -11,6 +11,9 @@
 // Place this file in the Extensions folder
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - WeatherCondition Color Extension
 extension WeatherCondition {

@@ -1,3 +1,8 @@
+// WeatherManager import added
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 // UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerDashboardView.swift
@@ -14,9 +19,21 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import CoreLocation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import Combine
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // MARK: - Supporting Types
 private struct ScrollOffsetPreferenceKey: PreferenceKey {

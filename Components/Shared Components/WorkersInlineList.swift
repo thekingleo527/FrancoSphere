@@ -12,6 +12,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct WorkersInlineList: View {
     let buildingId: String

@@ -10,6 +10,9 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct ProfileBadge: View {
     let workerName: String

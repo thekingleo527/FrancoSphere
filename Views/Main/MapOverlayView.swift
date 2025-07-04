@@ -10,7 +10,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct MapOverlayView: View {
     let buildings: [FrancoSphere.NamedCoordinate]           // Assigned buildings ("My Sites")

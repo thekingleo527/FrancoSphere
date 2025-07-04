@@ -1,4 +1,7 @@
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 /// A simple model representing an assigned building.
 struct AssignedBuilding: Identifiable, Codable, Hashable {

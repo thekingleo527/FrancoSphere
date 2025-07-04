@@ -2,7 +2,13 @@
 // Handles existing table schema properly
 
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SQLite
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 @MainActor
 class RealWorldDataSeeder {

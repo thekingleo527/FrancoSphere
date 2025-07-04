@@ -7,7 +7,13 @@
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import MapKit
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct BuildingsView: View {
     
@@ -144,7 +150,7 @@ struct BuildingsView: View {
         isLoading = true
         
         // Load buildings from the actor-based repository
-        let loadedBuildings = await BuildingRepository.shared.allBuildings
+        let loadedBuildings = await BuildingService.shared.allBuildings
         
         // Update on main thread
         await MainActor.run {
@@ -294,10 +300,10 @@ struct BuildingDetailPlaceholder: View {
         .preferredColorScheme(.dark)
         .task {
             // Load assigned workers
-            assignedWorkers = await BuildingRepository.shared.getAssignedWorkersFormatted(for: building.id)
+            assignedWorkers = await BuildingService.shared.getAssignedWorkersFormatted(for: building.id)
             
             // Load routine tasks
-            routineTasks = await BuildingRepository.shared.routineTasks(for: building.id)
+            routineTasks = await BuildingService.shared.routineTasks(for: building.id)
         }
     }
 }
