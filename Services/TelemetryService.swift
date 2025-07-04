@@ -200,18 +200,18 @@ actor TelemetryService {
         if totalLoadTime > maxDashboardLoadTime {
             let alert = PerformanceAlert(
                 type: .dashboardLoadSlow,
-                message: "Dashboard load exceeded \(maxDashboardLoadTime)s target: \(String(format: "%.3f", totalLoadTime))s",
-                severity: totalLoadTime > maxDashboardLoadTime * 1.5 ? .critical : .warning,
+                message: "Dashboard load exceeded \(self.maxDashboardLoadTime)s target: \(String(format: "%.3f", totalLoadTime))s",
+                severity: totalLoadTime > self.maxDashboardLoadTime * 1.5 ? .critical : .warning,
                 context: ["workerId": workerId, "totalTime": "\(totalLoadTime)s"]
             )
-            performanceAlerts.append(alert)
+            self.performanceAlerts.append(alert)
             
-            logger.error("🚨 DASHBOARD PERFORMANCE ALERT: Load time \(String(format: "%.3f", totalLoadTime))s exceeds \(maxDashboardLoadTime)s target for worker \(workerId)")
+            logger.error("🚨 DASHBOARD PERFORMANCE ALERT: Load time \(String(format: "%.3f", totalLoadTime))s exceeds \(self.maxDashboardLoadTime)s target for worker \(workerId)")
         }
         
         // Kevin-specific dashboard tracking
         if workerId == "4" {
-            dashboardMetrics.kevinLoadTimes.append(totalLoadTime)
+            self.dashboardMetrics.kevinLoadTimes.append(totalLoadTime)
             let avgKevinLoad = dashboardMetrics.kevinLoadTimes.reduce(0, +) / Double(dashboardMetrics.kevinLoadTimes.count)
             
             performanceLogger.info("🎯 Kevin Dashboard: Current \(String(format: "%.3f", totalLoadTime))s, Average \(String(format: "%.3f", avgKevinLoad))s")
@@ -224,15 +224,15 @@ actor TelemetryService {
         memoryDelta: Int
     ) {
         // Update Kevin workflow metrics
-        kevinWorkflowMetrics.actionMetrics[action, default: ActionMetrics()].addMeasurement(duration: duration, memoryDelta: memoryDelta)
-        kevinWorkflowMetrics.totalActions += 1
-        kevinWorkflowMetrics.totalWorkflowTime += duration
+        self.kevinWorkflowMetrics.actionMetrics[action, default: ActionMetrics()].addMeasurement(duration: duration, memoryDelta: memoryDelta)
+        self.kevinWorkflowMetrics.totalActions += 1
+        self.kevinWorkflowMetrics.totalWorkflowTime += duration
         
         performanceLogger.info("""
         🎯 Kevin Workflow: \(action.rawValue)
            Duration: \(String(format: "%.3f", duration))s
            Memory: \(String(format: "%.2f", Double(abs(memoryDelta)) / (1024 * 1024)))MB
-           Total Actions: \(kevinWorkflowMetrics.totalActions)
+           Total Actions: \(self.kevinWorkflowMetrics.totalActions)
         """)
         
         // Track Kevin's building assignments validation
@@ -244,7 +244,7 @@ actor TelemetryService {
                     severity: .warning,
                     context: ["action": action.rawValue, "duration": "\(duration)s"]
                 )
-                performanceAlerts.append(alert)
+                self.performanceAlerts.append(alert)
             }
         }
     }
@@ -263,13 +263,13 @@ actor TelemetryService {
                 severity: duration > (isDashboardOperation ? maxDashboardLoadTime * 2 : 5.0) ? .critical : .warning,
                 context: ["operation": operation, "duration": "\(duration)s"]
             )
-            performanceAlerts.append(alert)
+            self.performanceAlerts.append(alert)
             
             logger.warning("⚠️ Slow operation: \(operation) took \(String(format: "%.3f", duration))s")
         }
         
         // Check memory budgets
-        if memoryDelta > maxMemoryBudget / 10 { // Alert on 10% of budget spike
+        if memoryDelta > self.maxMemoryBudget / 10 { // Alert on 10% of budget spike
             let memoryMB = Double(memoryDelta) / (1024 * 1024)
             let alert = PerformanceAlert(
                 type: .memorySpike,
@@ -277,7 +277,7 @@ actor TelemetryService {
                 severity: memoryDelta > maxMemoryBudget / 5 ? .critical : .warning,
                 context: ["operation": operation, "memoryMB": "\(memoryMB)MB"]
             )
-            performanceAlerts.append(alert)
+            self.performanceAlerts.append(alert)
             
             memoryLogger.warning("⚠️ Memory spike: \(operation) used \(String(format: "%.2f", memoryMB))MB")
         }
@@ -290,11 +290,11 @@ actor TelemetryService {
                 type: .memoryBudgetExceeded,
                 message: "App memory usage \(String(format: "%.2f", memoryMB))MB exceeds budget",
                 severity: .critical,
-                context: ["currentMemoryMB": "\(memoryMB)MB", "budgetMB": "\(maxMemoryBudget / (1024 * 1024))MB"]
+                context: ["currentMemoryMB": "\(memoryMB)MB", "budgetMB": "\(self.maxMemoryBudget / (1024 * 1024))MB"]
             )
-            performanceAlerts.append(alert)
+            self.performanceAlerts.append(alert)
             
-            memoryLogger.error("🚨 MEMORY BUDGET EXCEEDED: \(String(format: "%.2f", memoryMB))MB > \(maxMemoryBudget / (1024 * 1024))MB budget")
+            memoryLogger.error("🚨 MEMORY BUDGET EXCEEDED: \(String(format: "%.2f", memoryMB))MB > \(self.maxMemoryBudget / (1024 * 1024))MB budget")
         }
     }
     
@@ -332,19 +332,19 @@ actor TelemetryService {
     }
     
     private func handleMemoryWarning() {
-        memoryWarningCount += 1
+        self.memoryWarningCount += 1
         let currentMemory = getCurrentMemoryUsage()
         let memoryMB = Double(currentMemory) / (1024 * 1024)
         
         let alert = PerformanceAlert(
             type: .memoryWarning,
-            message: "Memory warning #\(memoryWarningCount) - Current usage: \(String(format: "%.2f", memoryMB))MB",
-            severity: memoryWarningCount > 3 ? .critical : .warning,
-            context: ["warningCount": "\(memoryWarningCount)", "memoryMB": "\(memoryMB)MB"]
+            message: "Memory warning #\(self.memoryWarningCount) - Current usage: \(String(format: "%.2f", memoryMB))MB",
+            severity: self.memoryWarningCount > 3 ? .critical : .warning,
+            context: ["warningCount": "\(self.memoryWarningCount)", "memoryMB": "\(memoryMB)MB"]
         )
-        performanceAlerts.append(alert)
+        self.performanceAlerts.append(alert)
         
-        memoryLogger.error("🚨 MEMORY WARNING #\(memoryWarningCount): Current usage \(String(format: "%.2f", memoryMB))MB")
+        memoryLogger.error("🚨 MEMORY WARNING #\(self.memoryWarningCount): Current usage \(String(format: "%.2f", memoryMB))MB")
         
         // Trigger cleanup if too many warnings
         if memoryWarningCount > 2 {
@@ -369,7 +369,7 @@ actor TelemetryService {
         sessionMetrics.sessionStart = Date()
         sessionMetrics.initialMemoryUsage = getCurrentMemoryUsage()
         
-        logger.info("📊 Telemetry session started - Initial memory: \(getCurrentMemoryUsageFormatted())")
+        logger.info("📊 Telemetry session started - Initial memory: \(self.getCurrentMemoryUsageFormatted())")
     }
     
     // MARK: - Analytics & Reporting
@@ -407,13 +407,13 @@ actor TelemetryService {
     
     func getKevinWorkflowReport() -> KevinWorkflowReport {
         return KevinWorkflowReport(
-            totalActions: kevinWorkflowMetrics.totalActions,
-            totalWorkflowTime: kevinWorkflowMetrics.totalWorkflowTime,
-            averageActionTime: kevinWorkflowMetrics.totalActions > 0 ?
-                kevinWorkflowMetrics.totalWorkflowTime / Double(kevinWorkflowMetrics.totalActions) : 0,
-            actionBreakdown: kevinWorkflowMetrics.actionMetrics.mapValues { $0.averageDuration },
-            rubinMuseumTasksCompleted: kevinWorkflowMetrics.rubinMuseumTasksCompleted,
-            buildingAssignmentValidations: kevinWorkflowMetrics.buildingAssignmentValidations
+            totalActions: self.kevinWorkflowMetrics.totalActions,
+            totalWorkflowTime: self.kevinWorkflowMetrics.totalWorkflowTime,
+            averageActionTime: self.kevinWorkflowMetrics.totalActions > 0 ?
+                self.kevinWorkflowMetrics.totalWorkflowTime / Double(self.kevinWorkflowMetrics.totalActions) : 0,
+            actionBreakdown: self.kevinWorkflowMetrics.actionMetrics.mapValues { $0.averageDuration },
+            rubinMuseumTasksCompleted: self.kevinWorkflowMetrics.rubinMuseumTasksCompleted,
+            buildingAssignmentValidations: self.kevinWorkflowMetrics.buildingAssignmentValidations
         )
     }
     
@@ -440,21 +440,21 @@ actor TelemetryService {
         
         // Dashboard load time validation
         if dashboardPerf.meetsTarget {
-            successes.append("✅ Dashboard loads within \(maxDashboardLoadTime)s target (\(String(format: "%.3f", dashboardPerf.averageLoadTime))s)")
+            successes.append("✅ Dashboard loads within \(self.maxDashboardLoadTime)s target (\(String(format: "%.3f", dashboardPerf.averageLoadTime))s)")
         } else {
-            issues.append("❌ Dashboard load time \(String(format: "%.3f", dashboardPerf.averageLoadTime))s exceeds \(maxDashboardLoadTime)s target")
+            issues.append("❌ Dashboard load time \(String(format: "%.3f", dashboardPerf.averageLoadTime))s exceeds \(self.maxDashboardLoadTime)s target")
         }
         
         // Memory budget validation
         if memoryWithinBudget {
-            successes.append("✅ Memory usage within budget: \(getCurrentMemoryUsageFormatted()) / \(maxMemoryBudget / (1024 * 1024))MB")
+            successes.append("✅ Memory usage within budget: \(self.getCurrentMemoryUsageFormatted()) / \(self.maxMemoryBudget / (1024 * 1024))MB")
         } else {
-            issues.append("❌ Memory usage exceeds budget: \(getCurrentMemoryUsageFormatted()) > \(maxMemoryBudget / (1024 * 1024))MB")
+            issues.append("❌ Memory usage exceeds budget: \(self.getCurrentMemoryUsageFormatted()) > \(self.maxMemoryBudget / (1024 * 1024))MB")
         }
         
         // Kevin workflow validation
-        if kevinWorkflowMetrics.totalActions > 0 {
-            let avgKevinAction = kevinWorkflowMetrics.totalWorkflowTime / Double(kevinWorkflowMetrics.totalActions)
+        if self.kevinWorkflowMetrics.totalActions > 0 {
+            let avgKevinAction = self.kevinWorkflowMetrics.totalWorkflowTime / Double(self.kevinWorkflowMetrics.totalActions)
             if avgKevinAction <= 2.0 {
                 successes.append("✅ Kevin workflow actions average \(String(format: "%.3f", avgKevinAction))s")
             } else {
@@ -480,16 +480,16 @@ actor TelemetryService {
     // MARK: - Kevin-Specific Tracking Methods
     
     func recordKevinRubinMuseumTask() {
-        kevinWorkflowMetrics.rubinMuseumTasksCompleted += 1
-        performanceLogger.info("🎯 Kevin completed Rubin Museum task #\(kevinWorkflowMetrics.rubinMuseumTasksCompleted)")
+        self.kevinWorkflowMetrics.rubinMuseumTasksCompleted += 1
+        performanceLogger.info("🎯 Kevin completed Rubin Museum task #\(self.kevinWorkflowMetrics.rubinMuseumTasksCompleted)")
     }
     
     func recordKevinBuildingAssignmentValidation(success: Bool) {
-        kevinWorkflowMetrics.buildingAssignmentValidations += 1
+        self.kevinWorkflowMetrics.buildingAssignmentValidations += 1
         if success {
-            performanceLogger.info("✅ Kevin building assignment validation #\(kevinWorkflowMetrics.buildingAssignmentValidations) succeeded")
+            performanceLogger.info("✅ Kevin building assignment validation #\(self.kevinWorkflowMetrics.buildingAssignmentValidations) succeeded")
         } else {
-            logger.warning("⚠️ Kevin building assignment validation #\(kevinWorkflowMetrics.buildingAssignmentValidations) failed")
+            logger.warning("⚠️ Kevin building assignment validation #\(self.kevinWorkflowMetrics.buildingAssignmentValidations) failed")
         }
     }
     

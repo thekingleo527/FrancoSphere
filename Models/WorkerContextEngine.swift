@@ -234,12 +234,12 @@ public class WorkerContextEngine: ObservableObject {
         // Kevin's CORRECTED assignments (Rubin Museum replaces Franklin, expanded from Jose's duties)
         let kevinBuildings = [
             FrancoSphere.NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
-            FrancoSphere.NamedCoordinate(id: "5", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
-            FrancoSphere.NamedCoordinate(id: "12", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-            FrancoSphere.NamedCoordinate(id: "13", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
-            FrancoSphere.NamedCoordinate(id: "16", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-            FrancoSphere.NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29"),
-            FrancoSphere.NamedCoordinate(id: "17", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
+            FrancoSphere.NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
+            FrancoSphere.NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
+            FrancoSphere.NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
+            FrancoSphere.NamedCoordinate(id: "9", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
+            FrancoSphere.NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29"),
+            FrancoSphere.NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
             // ✅ CORRECTED: Rubin Museum instead of 104 Franklin (Kevin's new responsibility)
             FrancoSphere.NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum")
         ]
@@ -270,6 +270,278 @@ public class WorkerContextEngine: ObservableObject {
         // Trigger task reload for the assigned buildings
         await refreshTasksForBuildings(kevinBuildings)
     }
+    
+    /// ✅ ADDED: Load routines for worker with optional building filter (FIXES BuildingDetailView COMPILATION)
+    public func loadRoutinesForWorker(_ workerId: String, buildingId: String? = nil) async {
+        print("🔄 Loading routines for worker \(workerId), building: \(buildingId ?? "all")")
+        
+        let allRoutines = getRoutinesForBuilding(buildingId ?? "")
+        
+        // Filter to daily routines if specific building provided
+        let filteredRoutines = buildingId != nil
+            ? allRoutines.filter { $0.buildingId == buildingId }
+            : allRoutines
+        
+        self.dailyRoutines = filteredRoutines
+        
+        print("✅ Loaded \(filteredRoutines.count) routines for worker \(workerId)")
+    }
+    
+    /// ✅ ADDED: Get daily routine count for building (FIXES BuildingDetailView COMPILATION)
+    public func getDailyRoutineCount(for buildingId: String) -> Int {
+        let buildingRoutines = getRoutinesForBuilding(buildingId)
+        let dailyRoutines = buildingRoutines.filter {
+            $0.recurrence.lowercased().contains("daily")
+        }
+        
+        print("📊 Building \(buildingId) has \(dailyRoutines.count) daily routines")
+        return dailyRoutines.count
+    }
+    
+    /// ✅ ADDED: Enhanced data validation and repair (FIXES WorkerDashboardView COMPILATION)
+    public func validateAndRepairDataPipelineFixed() async -> Bool {
+        var repairsMade = false
+        
+        print("🔧 ENHANCED REPAIR: Starting comprehensive data validation...")
+        
+        // Check 1: Worker validation
+        if currentWorker == nil {
+            print("🔧 REPAIR: Loading worker context...")
+            await loadWorkerContext(workerId: getWorkerId())
+            repairsMade = true
+        }
+        
+        // Check 2: Building assignments validation
+        if assignedBuildings.isEmpty {
+            print("🔧 REPAIR: Loading building assignments...")
+            if getWorkerId() == "4" {
+                await applyKevinEmergencyFixWithRubin()  // Use corrected version
+            } else {
+                // Try to reload assignments for other workers
+                await refreshContext()
+            }
+            repairsMade = true
+        }
+        
+        // Check 3: Task pipeline validation (CRITICAL)
+        if todaysTasks.isEmpty {
+            print("🔧 REPAIR: Tasks empty, running comprehensive task reload...")
+            await forceReloadBuildingTasksFixed()
+            repairsMade = true
+        }
+        
+        // Check 4: Task count validation per building
+        let buildingsWithZeroTasks = assignedBuildings.filter { building in
+            todaysTasks.filter { $0.buildingId == building.id }.isEmpty
+        }
+        
+        if !buildingsWithZeroTasks.isEmpty {
+            print("🔧 REPAIR: \(buildingsWithZeroTasks.count) buildings have zero tasks, creating emergency tasks...")
+            await createEmergencyTasksForBuildings(buildingsWithZeroTasks)
+            repairsMade = true
+        }
+        
+        // Final validation
+        let finalTaskCount = todaysTasks.count
+        let finalBuildingCount = assignedBuildings.count
+        
+        print("✅ ENHANCED REPAIR: Final state - \(finalBuildingCount) buildings, \(finalTaskCount) tasks, repairs: \(repairsMade)")
+        
+        return repairsMade
+    }
+    
+    /// ✅ ADDED: Force reload building tasks (FIXES WorkerDashboardView COMPILATION)
+    public func forceReloadBuildingTasksFixed() async {
+        print("🔄 EMERGENCY FIX: Starting comprehensive task reload...")
+        
+        guard let manager = sqliteManager else {
+            print("❌ EMERGENCY FIX: SQLiteManager not available")
+            return
+        }
+        
+        var allDiscoveredTasks: [ContextualTask] = []
+        let workerId = getWorkerId()
+        let workerName = getWorkerName()
+        
+        print("🔄 EMERGENCY FIX: Loading tasks for worker \(workerName) (ID: \(workerId))")
+        
+        // Method 1: Direct AllTasks query (primary approach)
+        do {
+            let allTasksResults = try await manager.query("""
+                SELECT 
+                    id, name, building_id, building_name, category, status,
+                    start_time, end_time, recurrence, skill_level, urgency_level,
+                    assigned_worker_name, assigned_worker_id
+                FROM AllTasks 
+                WHERE (assigned_worker_id = ? OR assigned_worker_name LIKE ?)
+                ORDER BY building_id, start_time ASC
+            """, [workerId, "%\(workerName)%"])
+            
+            print("🔍 EMERGENCY FIX: Found \(allTasksResults.count) tasks in AllTasks table")
+            
+            for row in allTasksResults {
+                if let task = createTaskFromRowFixed(row) {
+                    allDiscoveredTasks.append(task)
+                    print("✅ Task: \(task.name) at \(task.buildingName)")
+                }
+            }
+            
+        } catch {
+            print("❌ EMERGENCY FIX: AllTasks query failed: \(error)")
+        }
+        
+        // Method 2: Real-world CSV data fallback
+        if allDiscoveredTasks.isEmpty {
+            print("🆘 EMERGENCY FIX: No database tasks found, using real-world CSV data...")
+            allDiscoveredTasks = await generateRealWorldTasks(for: workerId)
+        }
+        
+        // Method 3: Absolute fallback - create minimum viable tasks
+        if allDiscoveredTasks.isEmpty {
+            print("🆘 EMERGENCY FIX: Creating absolute fallback tasks...")
+            allDiscoveredTasks = createAbsoluteFallbackTasks()
+        }
+        
+        // Apply the discovered tasks
+        self.todaysTasks = allDiscoveredTasks
+        print("✅ EMERGENCY FIX: Applied \(allDiscoveredTasks.count) tasks")
+        
+        // Log task distribution by building
+        let tasksByBuilding = Dictionary(grouping: allDiscoveredTasks) { $0.buildingId }
+        for (buildingId, tasks) in tasksByBuilding {
+            let buildingName = assignedBuildings.first(where: { $0.id == buildingId })?.name ?? "Building \(buildingId)"
+            print("   📋 \(buildingName): \(tasks.count) tasks")
+        }
+    }
+    
+    // MARK: - Worker Data Loading & Context Management
+    
+    public func loadWorkerContext(workerId: String) async {
+        isLoading = true
+        error = nil
+        
+        do {
+            print("🔄 Loading worker context for ID: \(workerId)")
+            
+            // Validate worker ID
+            guard !workerId.isEmpty else {
+                throw WorkerContextError.noWorkerID
+            }
+            
+            // Jose Santos prevention
+            if workerId == "3" {
+                throw WorkerContextError.joseNotAllowed
+            }
+            
+            // Load worker from existing database query
+            let workerData = try await loadWorkerData(workerId: workerId)
+            
+            self.currentWorker = workerData
+            
+            // Load assigned buildings using existing WorkerManager
+            await loadAssignedBuildings(workerId: workerId)
+            
+            // Load today's tasks
+            await loadTodaysTasks(workerId: workerId)
+            
+            // Apply Kevin-specific fixes if needed
+            if workerId == "4" && assignedBuildings.count < 6 {
+                await applyKevinEmergencyFixWithRubin()
+            }
+            
+            print("✅ Worker context loaded successfully")
+            
+        } catch {
+            self.error = error
+            print("❌ Worker context load failed: \(error)")
+        }
+        
+        self.isLoading = false
+    }
+    
+    private func loadWorkerData(workerId: String) async throws -> InternalWorkerContext {
+        // Load using existing SQLiteManager query
+        guard let manager = sqliteManager else {
+            throw DatabaseError.notInitialized
+        }
+        
+        let results = try await manager.query("""
+            SELECT id, name, email, role FROM workers WHERE id = ? LIMIT 1
+        """, [workerId])
+        
+        guard let row = results.first else {
+            throw WorkerContextError.workerNotFound(workerId)
+        }
+        
+        let workerIdString: String
+        if let idInt = row["id"] as? Int64 {
+            workerIdString = String(idInt)
+        } else if let idString = row["id"] as? String {
+            workerIdString = idString
+        } else {
+            workerIdString = workerId
+        }
+        
+        return InternalWorkerContext(
+            workerId: workerIdString,
+            workerName: row["name"] as? String ?? "",
+            email: row["email"] as? String ?? "",
+            role: row["role"] as? String ?? "",
+            primaryBuildingId: nil
+        )
+    }
+    
+    private func loadAssignedBuildings(workerId: String) async {
+        do {
+            // FIXED: Use existing WorkerManager.loadWorkerBuildings method
+            let buildings = try await workerManager.loadWorkerBuildings(workerId)
+            
+            self.assignedBuildings = buildings
+            
+            print("✅ Loaded \(buildings.count) assigned buildings")
+            
+        } catch {
+            print("❌ Failed to load assigned buildings: \(error)")
+            
+            // Fallback to emergency fix if Kevin
+            if workerId == "4" {
+                await applyKevinEmergencyFixWithRubin()
+            }
+        }
+    }
+    
+    private func loadTodaysTasks(workerId: String) async {
+        do {
+            // Load tasks using existing database query methods
+            let tasks = try await loadTasksFromDatabase(workerId: workerId)
+            
+            self.todaysTasks = tasks
+            
+            print("✅ Loaded \(tasks.count) today's tasks")
+            
+        } catch {
+            print("❌ Failed to load today's tasks: \(error)")
+            
+            // Fallback to emergency task creation
+            await forceReloadBuildingTasksFixed()
+        }
+    }
+    
+    private func loadTasksFromDatabase(workerId: String) async throws -> [ContextualTask] {
+        guard let manager = sqliteManager else {
+            throw DatabaseError.notInitialized
+        }
+        
+        let results = try await manager.query("""
+            SELECT * FROM AllTasks 
+            WHERE assigned_worker_id = ? 
+            ORDER BY start_time ASC
+        """, [workerId])
+        
+        return results.compactMap { createTaskFromRowFixed($0) }
+    }
+    
+    // MARK: - Task Generation & Data Creation Methods
     
     /// Generate Kevin's expanded task list (taking over Jose's duties + original + Rubin)
     private func generateKevinExpandedTasks() async {
@@ -361,130 +633,6 @@ public class WorkerContextEngine: ObservableObject {
         print("✅ Generated \(kevinTasks.count) expanded tasks for Kevin (daily: \(kevinTaskCount.daily), weekly: \(kevinTaskCount.weekly), monthly: \(kevinTaskCount.monthly))")
     }
     
-    /// ✅ ADDED: Load routines for worker with optional building filter (FIXES BuildingDetailView COMPILATION)
-    public func loadRoutinesForWorker(_ workerId: String, buildingId: String? = nil) async {
-        print("🔄 Loading routines for worker \(workerId), building: \(buildingId ?? "all")")
-        
-        let allRoutines = getRoutinesForBuilding(buildingId ?? "")
-        
-        // Filter to daily routines if specific building provided
-        let filteredRoutines = buildingId != nil
-            ? allRoutines.filter { $0.buildingId == buildingId }
-            : allRoutines
-        
-        self.dailyRoutines = filteredRoutines
-        
-        print("✅ Loaded \(filteredRoutines.count) routines for worker \(workerId)")
-    }
-    
-    /// ✅ ADDED: Get daily routine count for building (FIXES BuildingDetailView COMPILATION)
-    public func getDailyRoutineCount(for buildingId: String) -> Int {
-        let buildingRoutines = getRoutinesForBuilding(buildingId)
-        let dailyRoutines = buildingRoutines.filter {
-            $0.recurrence.lowercased().contains("daily")
-        }
-        
-        print("📊 Building \(buildingId) has \(dailyRoutines.count) daily routines")
-        return dailyRoutines.count
-    }
-    
-    /// FIXED: Added missing refreshTasksForBuildings method
-    private func refreshTasksForBuildings(_ buildings: [FrancoSphere.NamedCoordinate]) async {
-        print("🔄 Refreshing tasks for \(buildings.count) buildings...")
-        
-        var allTasks: [ContextualTask] = []
-        
-        for building in buildings {
-            // Create emergency task if needed
-            let emergencyTask = createEmergencyTaskForBuilding(building)
-            allTasks.append(emergencyTask)
-        }
-        
-        self.todaysTasks.append(contentsOf: allTasks)
-        print("✅ Added \(allTasks.count) emergency tasks")
-    }
-    
-    /// FIXED: Create emergency task for building
-    private func createEmergencyTaskForBuilding(_ building: FrancoSphere.NamedCoordinate) -> ContextualTask {
-        return ContextualTask(
-            id: "emergency_\(building.id)_\(Date().timeIntervalSince1970)",
-            name: "Daily Building Check",
-            buildingId: building.id,
-            buildingName: building.name,
-            category: "inspection",
-            startTime: "09:00",
-            endTime: "10:00",
-            recurrence: "daily",
-            skillLevel: "basic",
-            status: "pending",
-            urgencyLevel: "medium",
-            assignedWorkerName: getWorkerName()
-        )
-    }
-    
-    public func forceReloadBuildingTasksFixed() async {
-        print("🔄 EMERGENCY FIX: Starting comprehensive task reload...")
-        
-        guard let manager = sqliteManager else {
-            print("❌ EMERGENCY FIX: SQLiteManager not available")
-            return
-        }
-        
-        var allDiscoveredTasks: [ContextualTask] = []
-        let workerId = getWorkerId()
-        let workerName = getWorkerName()
-        
-        print("🔄 EMERGENCY FIX: Loading tasks for worker \(workerName) (ID: \(workerId))")
-        
-        // Method 1: Direct AllTasks query (primary approach)
-        do {
-            let allTasksResults = try await manager.query("""
-                SELECT 
-                    id, name, building_id, building_name, category, status,
-                    start_time, end_time, recurrence, skill_level, urgency_level,
-                    assigned_worker_name, assigned_worker_id
-                FROM AllTasks 
-                WHERE (assigned_worker_id = ? OR assigned_worker_name LIKE ?)
-                ORDER BY building_id, start_time ASC
-            """, [workerId, "%\(workerName)%"])
-            
-            print("🔍 EMERGENCY FIX: Found \(allTasksResults.count) tasks in AllTasks table")
-            
-            for row in allTasksResults {
-                if let task = createTaskFromRowFixed(row) {
-                    allDiscoveredTasks.append(task)
-                    print("✅ Task: \(task.name) at \(task.buildingName)")
-                }
-            }
-            
-        } catch {
-            print("❌ EMERGENCY FIX: AllTasks query failed: \(error)")
-        }
-        
-        // Method 2: Real-world CSV data fallback
-        if allDiscoveredTasks.isEmpty {
-            print("🆘 EMERGENCY FIX: No database tasks found, using real-world CSV data...")
-            allDiscoveredTasks = await generateRealWorldTasks(for: workerId)
-        }
-        
-        // Method 3: Absolute fallback - create minimum viable tasks
-        if allDiscoveredTasks.isEmpty {
-            print("🆘 EMERGENCY FIX: Creating absolute fallback tasks...")
-            allDiscoveredTasks = createAbsoluteFallbackTasks()
-        }
-        
-        // Apply the discovered tasks
-        self.todaysTasks = allDiscoveredTasks
-        print("✅ EMERGENCY FIX: Applied \(allDiscoveredTasks.count) tasks")
-        
-        // Log task distribution by building
-        let tasksByBuilding = Dictionary(grouping: allDiscoveredTasks) { $0.buildingId }
-        for (buildingId, tasks) in tasksByBuilding {
-            let buildingName = assignedBuildings.first(where: { $0.id == buildingId })?.name ?? "Building \(buildingId)"
-            print("   📋 \(buildingName): \(tasks.count) tasks")
-        }
-    }
-    
     /// Generate real-world tasks based on CSV data for specific worker
     private func generateRealWorldTasks(for workerId: String) async -> [ContextualTask] {
         print("🌟 Generating real-world tasks for worker \(workerId)")
@@ -530,83 +678,6 @@ public class WorkerContextEngine: ObservableObject {
         
         print("✅ Generated \(realWorldTasks.count) real-world tasks for worker \(workerId)")
         return realWorldTasks
-    }
-    
-    /// Greg Hutson's task generation (reduced hours)
-    private func generateGregTasks(buildings: [String], taskCount: (daily: Int, weekly: Int, monthly: Int, onDemand: Int)) -> [ContextualTask] {
-        var tasks: [ContextualTask] = []
-        
-        let gregTaskTemplates = [
-            ("Morning Building Check", "inspection", "09:00", "09:30"),
-            ("Basic Maintenance", "maintenance", "09:30", "11:00"),
-            ("Tenant Issues", "maintenance", "11:00", "12:00"),
-            ("Afternoon Rounds", "inspection", "13:00", "14:00"),
-            ("System Check", "maintenance", "14:00", "15:00")
-        ]
-        
-        for buildingId in buildings {
-            let buildingName = getBuildingNameFromId(buildingId)
-            
-            for (index, template) in gregTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "greg_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Greg Hutson"
-                )
-                tasks.append(task)
-            }
-        }
-        
-        return tasks
-    }
-    
-    /// Edwin Lema's task generation (early shift)
-    private func generateEdwinTasks(buildings: [String], taskCount: (daily: Int, weekly: Int, monthly: Int, onDemand: Int)) -> [ContextualTask] {
-        var tasks: [ContextualTask] = []
-        
-        let edwinTaskTemplates = [
-            ("Early Morning Prep", "operations", "06:00", "06:30"),
-            ("Security Check", "security", "06:30", "07:00"),
-            ("Building Unlock", "operations", "07:00", "07:15"),
-            ("Lobby Cleaning", "cleaning", "07:15", "08:00"),
-            ("Hallway Maintenance", "maintenance", "08:00", "09:00"),
-            ("Tenant Services", "operations", "09:00", "11:00"),
-            ("System Checks", "inspection", "11:00", "12:00"),
-            ("Midday Maintenance", "maintenance", "13:00", "15:00")
-        ]
-        
-        for buildingId in buildings {
-            let buildingName = getBuildingNameFromId(buildingId)
-            
-            for (index, template) in edwinTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "edwin_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Edwin Lema"
-                )
-                tasks.append(task)
-            }
-        }
-        
-        return tasks
     }
     
     /// Kevin Dutan's expanded task matrix (took over Jose's duties + original + Rubin)
@@ -682,6 +753,85 @@ public class WorkerContextEngine: ObservableObject {
                     )
                     tasks.append(task)
                 }
+            }
+        }
+        
+        return tasks
+    }
+    
+    // MARK: - Worker-Specific Task Generators
+    
+    /// Greg Hutson's task generation (reduced hours)
+    private func generateGregTasks(buildings: [String], taskCount: (daily: Int, weekly: Int, monthly: Int, onDemand: Int)) -> [ContextualTask] {
+        var tasks: [ContextualTask] = []
+        
+        let gregTaskTemplates = [
+            ("Morning Building Check", "inspection", "09:00", "09:30"),
+            ("Basic Maintenance", "maintenance", "09:30", "11:00"),
+            ("Tenant Issues", "maintenance", "11:00", "12:00"),
+            ("Afternoon Rounds", "inspection", "13:00", "14:00"),
+            ("System Check", "maintenance", "14:00", "15:00")
+        ]
+        
+        for buildingId in buildings {
+            let buildingName = getBuildingNameFromId(buildingId)
+            
+            for (index, template) in gregTaskTemplates.prefix(taskCount.daily).enumerated() {
+                let task = ContextualTask(
+                    id: "greg_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
+                    name: template.0,
+                    buildingId: buildingId,
+                    buildingName: buildingName,
+                    category: template.1,
+                    startTime: template.2,
+                    endTime: template.3,
+                    recurrence: "daily",
+                    skillLevel: "basic",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: "Greg Hutson"
+                )
+                tasks.append(task)
+            }
+        }
+        
+        return tasks
+    }
+    
+    /// Edwin Lema's task generation (early shift)
+    private func generateEdwinTasks(buildings: [String], taskCount: (daily: Int, weekly: Int, monthly: Int, onDemand: Int)) -> [ContextualTask] {
+        var tasks: [ContextualTask] = []
+        
+        let edwinTaskTemplates = [
+            ("Early Morning Prep", "operations", "06:00", "06:30"),
+            ("Security Check", "security", "06:30", "07:00"),
+            ("Building Unlock", "operations", "07:00", "07:15"),
+            ("Lobby Cleaning", "cleaning", "07:15", "08:00"),
+            ("Hallway Maintenance", "maintenance", "08:00", "09:00"),
+            ("Tenant Services", "operations", "09:00", "11:00"),
+            ("System Checks", "inspection", "11:00", "12:00"),
+            ("Midday Maintenance", "maintenance", "13:00", "15:00")
+        ]
+        
+        for buildingId in buildings {
+            let buildingName = getBuildingNameFromId(buildingId)
+            
+            for (index, template) in edwinTaskTemplates.prefix(taskCount.daily).enumerated() {
+                let task = ContextualTask(
+                    id: "edwin_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
+                    name: template.0,
+                    buildingId: buildingId,
+                    buildingName: buildingName,
+                    category: template.1,
+                    startTime: template.2,
+                    endTime: template.3,
+                    recurrence: "daily",
+                    skillLevel: "intermediate",
+                    status: "pending",
+                    urgencyLevel: "medium",
+                    assignedWorkerName: "Edwin Lema"
+                )
+                tasks.append(task)
             }
         }
         
@@ -837,6 +987,9 @@ public class WorkerContextEngine: ObservableObject {
         
         return tasks
     }
+    
+    // MARK: - Helper Methods for Building Detail View
+    
     /// Get detailed worker information for a specific building (FIXES BuildingDetailView compilation)
     public func getDetailedWorkers(for buildingId: String, includeDSNY: Bool = false) -> [DetailedWorker] {
         print("🔍 Getting detailed workers for building \(buildingId), includeDSNY: \(includeDSNY)")
@@ -887,102 +1040,10 @@ public class WorkerContextEngine: ObservableObject {
         print("📋 Building \(buildingId) has \(buildingTasks.count) tasks")
         return buildingTasks
     }
-
-    // MARK: - 🔧 HELPER METHODS FOR DetailedWorker
-
-    /// Get DSNY workers for a specific building
-    private func getDSNYWorkersForBuilding(_ buildingId: String) -> Set<String> {
-        // Check if building has DSNY schedule
-        let buildingName = getBuildingNameFromId(buildingId)
-        
-        // DSNY workers based on real-world assignments
-        let dsnyWorkers: Set<String> = [
-            "Angel Guirachocha", // Evening DSNY specialist
-            "Kevin Dutan"        // Expanded duties include DSNY
-        ]
-        
-        // Filter to workers who actually service this building
-        let relevantWorkers = dsnyWorkers.filter { workerName in
-            todaysTasks.contains { task in
-                task.buildingId == buildingId &&
-                task.assignedWorkerName == workerName &&
-                (task.category.lowercased().contains("dsny") || task.name.lowercased().contains("trash"))
-            }
-        }
-        
-        return Set(relevantWorkers)
-    }
-
-    /// Generate worker ID from name
-    private func generateWorkerId(from name: String) -> String {
-        // Map real worker names to their IDs
-        let workerIdMapping: [String: String] = [
-            "Kevin Dutan": "4",
-            "Edwin Lema": "2",
-            "Greg Hutson": "1",
-            "Mercedes Inamagua": "5",
-            "Luis Lopez": "6",
-            "Angel Guirachocha": "7",
-            "Shawn Magloire": "8"
-        ]
-        
-        return workerIdMapping[name] ?? "worker_\(name.prefix(3).lowercased())"
-    }
-
-    /// Infer worker role from name
-    private func inferWorkerRole(from name: String) -> String {
-        let roleMapping: [String: String] = [
-            "Kevin Dutan": "Maintenance Specialist",
-            "Edwin Lema": "Facilities Supervisor",
-            "Greg Hutson": "Operations Manager",
-            "Mercedes Inamagua": "Cleaning Specialist",
-            "Luis Lopez": "Maintenance Worker",
-            "Angel Guirachocha": "Evening Operations",
-            "Shawn Magloire": "Museum Specialist"
-        ]
-        
-        return roleMapping[name] ?? "Maintenance Worker"
-    }
-
-    /// Infer worker shift from name and current schedule
-    private func inferWorkerShift(from name: String) -> String {
-        let shiftMapping: [String: String] = [
-            "Kevin Dutan": "06:00-17:00 (Expanded)",
-            "Edwin Lema": "06:00-15:00 (Early)",
-            "Greg Hutson": "09:00-15:00 (Reduced)",
-            "Mercedes Inamagua": "06:30-11:00 & 13:00-17:00 (Split)",
-            "Luis Lopez": "07:00-16:00 (Standard)",
-            "Angel Guirachocha": "18:00-22:00 (Evening)",
-            "Shawn Magloire": "08:00-17:00 (Flexible)"
-        ]
-        
-        return shiftMapping[name] ?? "Standard Shift"
-    }
-
-    /// Check if worker is currently on-site based on schedule and time
-    private func isWorkerOnSite(_ name: String) -> Bool {
-        let currentHour = Calendar.current.component(.hour, from: Date())
-        
-        // Check if worker should be on-site based on their schedule
-        switch name {
-        case "Kevin Dutan":
-            return currentHour >= 6 && currentHour < 17  // 6 AM - 5 PM
-        case "Edwin Lema":
-            return currentHour >= 6 && currentHour < 15  // 6 AM - 3 PM
-        case "Greg Hutson":
-            return currentHour >= 9 && currentHour < 15  // 9 AM - 3 PM
-        case "Mercedes Inamagua":
-            return (currentHour >= 6 && currentHour < 11) || (currentHour >= 13 && currentHour < 17) // Split shift
-        case "Luis Lopez":
-            return currentHour >= 7 && currentHour < 16  // 7 AM - 4 PM
-        case "Angel Guirachocha":
-            return currentHour >= 18 && currentHour < 22 // 6 PM - 10 PM
-        case "Shawn Magloire":
-            return currentHour >= 8 && currentHour < 17  // 8 AM - 5 PM
-        default:
-            return currentHour >= 9 && currentHour < 17  // Default business hours
-        }
-    }    /// FIXED: Create task from database row with comprehensive error handling (FIXED OPTIONAL UNWRAPPING)
+    
+    // MARK: - Utility Methods
+    
+    /// FIXED: Create task from database row with comprehensive error handling
     private func createTaskFromRowFixed(_ row: [String: Any]) -> ContextualTask? {
         // Extract ID with multiple type support
         let taskId: String
@@ -1078,58 +1139,6 @@ public class WorkerContextEngine: ObservableObject {
         return fallbackTasks
     }
     
-    /// Enhanced data validation and repair
-    public func validateAndRepairDataPipelineFixed() async -> Bool {
-        var repairsMade = false
-        
-        print("🔧 ENHANCED REPAIR: Starting comprehensive data validation...")
-        
-        // Check 1: Worker validation
-        if currentWorker == nil {
-            print("🔧 REPAIR: Loading worker context...")
-            await loadWorkerContext(workerId: getWorkerId())
-            repairsMade = true
-        }
-        
-        // Check 2: Building assignments validation
-        if assignedBuildings.isEmpty {
-            print("🔧 REPAIR: Loading building assignments...")
-            if getWorkerId() == "4" {
-                await applyKevinEmergencyFixWithRubin()  // Use corrected version
-            } else {
-                // Try to reload assignments for other workers
-                await refreshContext()
-            }
-            repairsMade = true
-        }
-        
-        // Check 3: Task pipeline validation (CRITICAL)
-        if todaysTasks.isEmpty {
-            print("🔧 REPAIR: Tasks empty, running comprehensive task reload...")
-            await forceReloadBuildingTasksFixed()
-            repairsMade = true
-        }
-        
-        // Check 4: Task count validation per building
-        let buildingsWithZeroTasks = assignedBuildings.filter { building in
-            todaysTasks.filter { $0.buildingId == building.id }.isEmpty
-        }
-        
-        if !buildingsWithZeroTasks.isEmpty {
-            print("🔧 REPAIR: \(buildingsWithZeroTasks.count) buildings have zero tasks, creating emergency tasks...")
-            await createEmergencyTasksForBuildings(buildingsWithZeroTasks)
-            repairsMade = true
-        }
-        
-        // Final validation
-        let finalTaskCount = todaysTasks.count
-        let finalBuildingCount = assignedBuildings.count
-        
-        print("✅ ENHANCED REPAIR: Final state - \(finalBuildingCount) buildings, \(finalTaskCount) tasks, repairs: \(repairsMade)")
-        
-        return repairsMade
-    }
-    
     /// Create emergency tasks for buildings without tasks
     private func createEmergencyTasksForBuildings(_ buildings: [FrancoSphere.NamedCoordinate]) async {
         var emergencyTasks: [ContextualTask] = []
@@ -1143,131 +1152,131 @@ public class WorkerContextEngine: ObservableObject {
         print("✅ Created \(emergencyTasks.count) emergency tasks for buildings without tasks")
     }
     
-    // MARK: - Core Context Management (PRESERVED)
-    
-    public func loadWorkerContext(workerId: String) async {
-        isLoading = true
-        error = nil
-        
-        do {
-            print("🔄 Loading worker context for ID: \(workerId)")
-            
-            // Validate worker ID
-            guard !workerId.isEmpty else {
-                throw WorkerContextError.noWorkerID
-            }
-            
-            // Jose Santos prevention
-            if workerId == "1" {
-                throw WorkerContextError.joseNotAllowed
-            }
-            
-            // Load worker from existing database query
-            let workerData = try await loadWorkerData(workerId: workerId)
-            
-            self.currentWorker = workerData
-            
-            // Load assigned buildings using existing WorkerManager
-            await loadAssignedBuildings(workerId: workerId)
-            
-            // Load today's tasks
-            await loadTodaysTasks(workerId: workerId)
-            
-            // Apply Kevin-specific fixes if needed
-            if workerId == "4" && assignedBuildings.count < 6 {
-                await applyKevinEmergencyFixWithRubin()
-            }
-            
-            print("✅ Worker context loaded successfully")
-            
-        } catch {
-            self.error = error
-            print("❌ Worker context load failed: \(error)")
-        }
-        
-        self.isLoading = false
-    }
-    
-    private func loadWorkerData(workerId: String) async throws -> InternalWorkerContext {
-        // Load using existing SQLiteManager query
-        guard let manager = sqliteManager else {
-            throw DatabaseError.notInitialized
-        }
-        
-        let results = try await manager.query("""
-            SELECT id, name, email, role FROM workers WHERE id = ? LIMIT 1
-        """, [workerId])
-        
-        guard let row = results.first else {
-            throw WorkerContextError.workerNotFound(workerId)
-        }
-        
-        let workerIdString: String
-        if let idInt = row["id"] as? Int64 {
-            workerIdString = String(idInt)
-        } else if let idString = row["id"] as? String {
-            workerIdString = idString
-        } else {
-            workerIdString = workerId
-        }
-        
-        return InternalWorkerContext(
-            workerId: workerIdString,
-            workerName: row["name"] as? String ?? "",
-            email: row["email"] as? String ?? "",
-            role: row["role"] as? String ?? "",
-            primaryBuildingId: nil
+    /// Create emergency task for building
+    private func createEmergencyTaskForBuilding(_ building: FrancoSphere.NamedCoordinate) -> ContextualTask {
+        return ContextualTask(
+            id: "emergency_\(building.id)_\(Date().timeIntervalSince1970)",
+            name: "Daily Building Check",
+            buildingId: building.id,
+            buildingName: building.name,
+            category: "inspection",
+            startTime: "09:00",
+            endTime: "10:00",
+            recurrence: "daily",
+            skillLevel: "basic",
+            status: "pending",
+            urgencyLevel: "medium",
+            assignedWorkerName: getWorkerName()
         )
     }
     
-    private func loadAssignedBuildings(workerId: String) async {
-        do {
-            // FIXED: Use existing WorkerManager.loadWorkerBuildings method
-            let buildings = try await workerManager.loadWorkerBuildings(workerId)
-            
-            self.assignedBuildings = buildings
-            
-            print("✅ Loaded \(buildings.count) assigned buildings")
-            
-        } catch {
-            print("❌ Failed to load assigned buildings: \(error)")
-            
-            // Fallback to emergency fix if Kevin
-            if workerId == "4" {
-                await applyKevinEmergencyFixWithRubin()
+    /// FIXED: Add missing refreshTasksForBuildings method
+    private func refreshTasksForBuildings(_ buildings: [FrancoSphere.NamedCoordinate]) async {
+        print("🔄 Refreshing tasks for \(buildings.count) buildings...")
+        
+        var allTasks: [ContextualTask] = []
+        
+        for building in buildings {
+            // Create emergency task if needed
+            let emergencyTask = createEmergencyTaskForBuilding(building)
+            allTasks.append(emergencyTask)
+        }
+        
+        self.todaysTasks.append(contentsOf: allTasks)
+        print("✅ Added \(allTasks.count) emergency tasks")
+    }
+    
+    // MARK: - Worker Helper Methods for DetailedWorker
+    
+    /// Get DSNY workers for a specific building
+    private func getDSNYWorkersForBuilding(_ buildingId: String) -> Set<String> {
+        // DSNY workers based on real-world assignments
+        let dsnyWorkers: Set<String> = [
+            "Angel Guirachocha", // Evening DSNY specialist
+            "Kevin Dutan"        // Expanded duties include DSNY
+        ]
+        
+        // Filter to workers who actually service this building
+        let relevantWorkers = dsnyWorkers.filter { workerName in
+            todaysTasks.contains { task in
+                task.buildingId == buildingId &&
+                task.assignedWorkerName == workerName &&
+                (task.category.lowercased().contains("dsny") || task.name.lowercased().contains("trash"))
             }
         }
-    }
-    
-    private func loadTodaysTasks(workerId: String) async {
-        do {
-            // Load tasks using existing database query methods
-            let tasks = try await loadTasksFromDatabase(workerId: workerId)
-            
-            self.todaysTasks = tasks
-            
-            print("✅ Loaded \(tasks.count) today's tasks")
-            
-        } catch {
-            print("❌ Failed to load today's tasks: \(error)")
-            
-            // Fallback to emergency task creation
-            await forceReloadBuildingTasksFixed()
-        }
-    }
-    
-    private func loadTasksFromDatabase(workerId: String) async throws -> [ContextualTask] {
-        guard let manager = sqliteManager else {
-            throw DatabaseError.notInitialized
-        }
         
-        let results = try await manager.query("""
-            SELECT * FROM AllTasks 
-            WHERE assigned_worker_id = ? 
-            ORDER BY start_time ASC
-        """, [workerId])
+        return Set(relevantWorkers)
+    }
+
+    /// Generate worker ID from name
+    private func generateWorkerId(from name: String) -> String {
+        // Map real worker names to their IDs
+        let workerIdMapping: [String: String] = [
+            "Kevin Dutan": "4",
+            "Edwin Lema": "2",
+            "Greg Hutson": "1",
+            "Mercedes Inamagua": "5",
+            "Luis Lopez": "6",
+            "Angel Guirachocha": "7",
+            "Shawn Magloire": "8"
+        ]
         
-        return results.compactMap { createTaskFromRowFixed($0) }
+        return workerIdMapping[name] ?? "worker_\(name.prefix(3).lowercased())"
+    }
+
+    /// Infer worker role from name
+    private func inferWorkerRole(from name: String) -> String {
+        let roleMapping: [String: String] = [
+            "Kevin Dutan": "Maintenance Specialist",
+            "Edwin Lema": "Facilities Supervisor",
+            "Greg Hutson": "Operations Manager",
+            "Mercedes Inamagua": "Cleaning Specialist",
+            "Luis Lopez": "Maintenance Worker",
+            "Angel Guirachocha": "Evening Operations",
+            "Shawn Magloire": "Museum Specialist"
+        ]
+        
+        return roleMapping[name] ?? "Maintenance Worker"
+    }
+
+    /// Infer worker shift from name and current schedule
+    private func inferWorkerShift(from name: String) -> String {
+        let shiftMapping: [String: String] = [
+            "Kevin Dutan": "06:00-17:00 (Expanded)",
+            "Edwin Lema": "06:00-15:00 (Early)",
+            "Greg Hutson": "09:00-15:00 (Reduced)",
+            "Mercedes Inamagua": "06:30-11:00 & 13:00-17:00 (Split)",
+            "Luis Lopez": "07:00-16:00 (Standard)",
+            "Angel Guirachocha": "18:00-22:00 (Evening)",
+            "Shawn Magloire": "08:00-17:00 (Flexible)"
+        ]
+        
+        return shiftMapping[name] ?? "Standard Shift"
+    }
+
+    /// Check if worker is currently on-site based on schedule and time
+    private func isWorkerOnSite(_ name: String) -> Bool {
+        let currentHour = Calendar.current.component(.hour, from: Date())
+        
+        // Check if worker should be on-site based on their schedule
+        switch name {
+        case "Kevin Dutan":
+            return currentHour >= 6 && currentHour < 17  // 6 AM - 5 PM
+        case "Edwin Lema":
+            return currentHour >= 6 && currentHour < 15  // 6 AM - 3 PM
+        case "Greg Hutson":
+            return currentHour >= 9 && currentHour < 15  // 9 AM - 3 PM
+        case "Mercedes Inamagua":
+            return (currentHour >= 6 && currentHour < 11) || (currentHour >= 13 && currentHour < 17) // Split shift
+        case "Luis Lopez":
+            return currentHour >= 7 && currentHour < 16  // 7 AM - 4 PM
+        case "Angel Guirachocha":
+            return currentHour >= 18 && currentHour < 22 // 6 PM - 10 PM
+        case "Shawn Magloire":
+            return currentHour >= 8 && currentHour < 17  // 8 AM - 5 PM
+        default:
+            return currentHour >= 9 && currentHour < 17  // Default business hours
+        }
     }
     
     // MARK: - Weather Override System
@@ -1330,29 +1339,24 @@ public class WorkerContextEngine: ObservableObject {
         )
     }
     
-    // MARK: - Public Interface Methods (FIXED: Internal visibility issues)
+    // MARK: - Public Interface Methods
     
     public func getWorkerId() -> String {
-        // FIXED: Use correct NewAuthManager property (workerId, not workerName)
         return currentWorker?.workerId ?? authManager.workerId
     }
     
     public func getWorkerName() -> String {
-        // FIXED: Use correct NewAuthManager property (currentWorkerName)
         return currentWorker?.workerName ?? authManager.currentWorkerName
     }
     
-    // FIXED: Changed to internal to avoid visibility issues
     internal func getAssignedBuildings() -> [FrancoSphere.NamedCoordinate] {
         return assignedBuildings
     }
     
-    // FIXED: Changed to internal to avoid visibility issues
     internal func getTodaysTasks() -> [ContextualTask] {
         return todaysTasks
     }
     
-    // FIXED: Changed to internal to avoid visibility issues
     internal func getDailyRoutines() -> [ContextualTask] {
         return dailyRoutines
     }
@@ -1370,7 +1374,7 @@ public class WorkerContextEngine: ObservableObject {
         return building?.name ?? "Building \(buildingId)"
     }
     
-    // MARK: - Worker Validation & Emergency Repair Systems (PRESERVED)
+    // MARK: - Worker Validation & Emergency Repair Systems
     
     /// Validate worker assignments with real-world data
     internal func validateWorkerAssignments() -> (isValid: Bool, issues: [String]) {
@@ -1428,7 +1432,7 @@ public class WorkerContextEngine: ObservableObject {
         }
     }
     
-    // MARK: - Context Updates
+    // MARK: - Context Updates & Management
     
     public func refreshContext() async {
         print("🔄 Refreshing worker context...")
@@ -1536,5 +1540,13 @@ public class WorkerContextEngine: ObservableObject {
     deinit {
         cancellables.removeAll()
         weatherCancellable?.cancel()
+    }
+}
+
+// MARK: - Extensions
+
+extension Date {
+    var iso8601String: String {
+        ISO8601DateFormatter().string(from: self)
     }
 }

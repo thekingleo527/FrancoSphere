@@ -366,6 +366,11 @@
 			path = Security;
 			sourceTree = "<group>";
 		};
+		238375EB2E18480200EC410D /* ViewModels */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 		23AD7FB22DF5A95D00BDF90A /* SeedDatabase */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -731,6 +736,7 @@
 		234581292DF78E3D00355F0A /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				238375EB2E18480200EC410D /* ViewModels */,
 				234581112DF78E3D00355F0A /* Auth */,
 				2345811C2DF78E3D00355F0A /* Buildings */,
 				234581272DF78E3D00355F0A /* Main */,
@@ -769,6 +775,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				236106EB2E17AD0700463A59 /* Security */,
+				238375EB2E18480200EC410D /* ViewModels */,
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
