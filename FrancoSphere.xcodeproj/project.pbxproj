@@ -35,7 +35,6 @@
 		2345813B2DF78E3D00355F0A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */; };
 		2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 234580F92DF78E3D00355F0A /* AIAssistant.png */; };
 		2345813D2DF78E3D00355F0A /* 123_1st_Avenue.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F32DF78E3D00355F0A /* 123_1st_Avenue.jpg */; };
-		2345813E2DF78E3D00355F0A /* csv2sql.sh in Resources */ = {isa = PBXBuildFile; fileRef = 234580882DF78E3D00355F0A /* csv2sql.sh */; };
 		2345813F2DF78E3D00355F0A /* 131_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F42DF78E3D00355F0A /* 131_Perry_Street.jpg */; };
 		234581402DF78E3D00355F0A /* FrancoSphereSeed.sql in Resources */ = {isa = PBXBuildFile; fileRef = 234581002DF78E3D00355F0A /* FrancoSphereSeed.sql */; };
 		234581422DF78E3D00355F0A /* 36_Walker_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580ED2DF78E3D00355F0A /* 36_Walker_Street.jpg */; };
@@ -121,7 +120,6 @@
 		234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B32DF78E3D00355F0A /* WeatherDashboardComponent.swift */; };
 		234581A52DF78E3D00355F0A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B82DF78E3D00355F0A /* ContentView.swift */; };
 		234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581032DF78E3D00355F0A /* DailyOpsReset.swift */; };
-		234581A72DF78E3D00355F0A /* CSVLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581022DF78E3D00355F0A /* CSVLoader.swift */; };
 		234581A82DF78E3D00355F0A /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810C2DF78E3D00355F0A /* WeatherService.swift */; };
 		234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581182DF78E3D00355F0A /* MaintenanceHistoryView.swift */; };
 		234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A52DF78E3D00355F0A /* TaskCategoryGlassCard.swift */; };
@@ -198,7 +196,6 @@
 		23423DB72D739D6800AACE3E /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		234580882DF78E3D00355F0A /* csv2sql.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = csv2sql.sh; sourceTree = "<group>"; };
 		2345808B2DF78E3D00355F0A /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
 		2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHeaderGlassOverlay.swift; sourceTree = "<group>"; };
@@ -289,7 +286,6 @@
 		234580FC2DF78E3D00355F0A /* Stuyvesant_Cove_Park.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Stuyvesant_Cove_Park.jpg; sourceTree = "<group>"; };
 		234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		234581002DF78E3D00355F0A /* FrancoSphereSeed.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = FrancoSphereSeed.sql; sourceTree = "<group>"; };
-		234581022DF78E3D00355F0A /* CSVLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVLoader.swift; sourceTree = "<group>"; };
 		234581032DF78E3D00355F0A /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
 		234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializationCoordinator.swift; sourceTree = "<group>"; };
 		234581052DF78E3D00355F0A /* DatabaseSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSeeder.swift; sourceTree = "<group>"; };
@@ -412,7 +408,6 @@
 			isa = PBXGroup;
 			children = (
 				233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */,
-				234580892DF78E3D00355F0A /* build_scripts */,
 				2345808B2DF78E3D00355F0A /* CLAUDE.md */,
 				234580B72DF78E3D00355F0A /* Components */,
 				234580B82DF78E3D00355F0A /* ContentView.swift */,
@@ -441,14 +436,6 @@
 				23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		234580892DF78E3D00355F0A /* build_scripts */ = {
-			isa = PBXGroup;
-			children = (
-				234580882DF78E3D00355F0A /* csv2sql.sh */,
-			);
-			path = build_scripts;
 			sourceTree = "<group>";
 		};
 		234580962DF78E3D00355F0A /* Design */ = {
@@ -681,7 +668,6 @@
 				2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */,
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				233F94DF2DF7B67100901707 /* WorkerDashboardIntegration.swift */,
-				234581022DF78E3D00355F0A /* CSVLoader.swift */,
 				234581032DF78E3D00355F0A /* DailyOpsReset.swift */,
 				234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */,
 				234581052DF78E3D00355F0A /* DatabaseSeeder.swift */,
@@ -915,7 +901,6 @@
 				2345813B2DF78E3D00355F0A /* Preview Assets.xcassets in Resources */,
 				2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */,
 				2345813D2DF78E3D00355F0A /* 123_1st_Avenue.jpg in Resources */,
-				2345813E2DF78E3D00355F0A /* csv2sql.sh in Resources */,
 				2345813F2DF78E3D00355F0A /* 131_Perry_Street.jpg in Resources */,
 				234581402DF78E3D00355F0A /* FrancoSphereSeed.sql in Resources */,
 				234581422DF78E3D00355F0A /* 36_Walker_Street.jpg in Resources */,
@@ -1082,7 +1067,6 @@
 				234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */,
 				234581A52DF78E3D00355F0A /* ContentView.swift in Sources */,
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
-				234581A72DF78E3D00355F0A /* CSVLoader.swift in Sources */,
 				23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */,
 				23B117972DFE01B50065F39E /* ProfileBadge.swift in Sources */,
 				234581A82DF78E3D00355F0A /* WeatherService.swift in Sources */,

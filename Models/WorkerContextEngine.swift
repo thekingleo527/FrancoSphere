@@ -837,8 +837,152 @@ public class WorkerContextEngine: ObservableObject {
         
         return tasks
     }
-    
-    /// FIXED: Create task from database row with comprehensive error handling (FIXED OPTIONAL UNWRAPPING)
+    /// Get detailed worker information for a specific building (FIXES BuildingDetailView compilation)
+    public func getDetailedWorkers(for buildingId: String, includeDSNY: Bool = false) -> [DetailedWorker] {
+        print("🔍 Getting detailed workers for building \(buildingId), includeDSNY: \(includeDSNY)")
+        
+        // Get all tasks for this building today
+        let buildingTasks = todaysTasks.filter { $0.buildingId == buildingId }
+        
+        // Extract unique worker names from tasks
+        var workerNames = Set<String>()
+        
+        for task in buildingTasks {
+            if let assignedWorker = task.assignedWorkerName, !assignedWorker.isEmpty {
+                workerNames.insert(assignedWorker)
+            }
+        }
+        
+        // Add DSNY workers if requested
+        if includeDSNY {
+            let dsnyWorkers = getDSNYWorkersForBuilding(buildingId)
+            workerNames.formUnion(dsnyWorkers)
+        }
+        
+        // Convert worker names to DetailedWorker objects
+        let detailedWorkers = workerNames.compactMap { name in
+            DetailedWorker(
+                id: generateWorkerId(from: name),
+                name: name,
+                role: inferWorkerRole(from: name),
+                shift: inferWorkerShift(from: name),
+                buildingId: buildingId,
+                isOnSite: isWorkerOnSite(name)
+            )
+        }
+        
+        print("✅ Found \(detailedWorkers.count) detailed workers for building \(buildingId)")
+        return detailedWorkers.sorted { $0.name < $1.name }
+    }
+
+    /// Get weather postponement reasons (FIXES BuildingDetailView compilation)
+    public func getWeatherPostponements() -> [String: String] {
+        print("🌤️ Getting weather postponements: \(routineOverrides.count) items")
+        return routineOverrides
+    }
+
+    /// Get tasks for a specific building (FIXES BuildingDetailView compilation)
+    internal func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
+        let buildingTasks = todaysTasks.filter { $0.buildingId == buildingId }
+        print("📋 Building \(buildingId) has \(buildingTasks.count) tasks")
+        return buildingTasks
+    }
+
+    // MARK: - 🔧 HELPER METHODS FOR DetailedWorker
+
+    /// Get DSNY workers for a specific building
+    private func getDSNYWorkersForBuilding(_ buildingId: String) -> Set<String> {
+        // Check if building has DSNY schedule
+        let buildingName = getBuildingNameFromId(buildingId)
+        
+        // DSNY workers based on real-world assignments
+        let dsnyWorkers: Set<String> = [
+            "Angel Guirachocha", // Evening DSNY specialist
+            "Kevin Dutan"        // Expanded duties include DSNY
+        ]
+        
+        // Filter to workers who actually service this building
+        let relevantWorkers = dsnyWorkers.filter { workerName in
+            todaysTasks.contains { task in
+                task.buildingId == buildingId &&
+                task.assignedWorkerName == workerName &&
+                (task.category.lowercased().contains("dsny") || task.name.lowercased().contains("trash"))
+            }
+        }
+        
+        return Set(relevantWorkers)
+    }
+
+    /// Generate worker ID from name
+    private func generateWorkerId(from name: String) -> String {
+        // Map real worker names to their IDs
+        let workerIdMapping: [String: String] = [
+            "Kevin Dutan": "4",
+            "Edwin Lema": "2",
+            "Greg Hutson": "1",
+            "Mercedes Inamagua": "5",
+            "Luis Lopez": "6",
+            "Angel Guirachocha": "7",
+            "Shawn Magloire": "8"
+        ]
+        
+        return workerIdMapping[name] ?? "worker_\(name.prefix(3).lowercased())"
+    }
+
+    /// Infer worker role from name
+    private func inferWorkerRole(from name: String) -> String {
+        let roleMapping: [String: String] = [
+            "Kevin Dutan": "Maintenance Specialist",
+            "Edwin Lema": "Facilities Supervisor",
+            "Greg Hutson": "Operations Manager",
+            "Mercedes Inamagua": "Cleaning Specialist",
+            "Luis Lopez": "Maintenance Worker",
+            "Angel Guirachocha": "Evening Operations",
+            "Shawn Magloire": "Museum Specialist"
+        ]
+        
+        return roleMapping[name] ?? "Maintenance Worker"
+    }
+
+    /// Infer worker shift from name and current schedule
+    private func inferWorkerShift(from name: String) -> String {
+        let shiftMapping: [String: String] = [
+            "Kevin Dutan": "06:00-17:00 (Expanded)",
+            "Edwin Lema": "06:00-15:00 (Early)",
+            "Greg Hutson": "09:00-15:00 (Reduced)",
+            "Mercedes Inamagua": "06:30-11:00 & 13:00-17:00 (Split)",
+            "Luis Lopez": "07:00-16:00 (Standard)",
+            "Angel Guirachocha": "18:00-22:00 (Evening)",
+            "Shawn Magloire": "08:00-17:00 (Flexible)"
+        ]
+        
+        return shiftMapping[name] ?? "Standard Shift"
+    }
+
+    /// Check if worker is currently on-site based on schedule and time
+    private func isWorkerOnSite(_ name: String) -> Bool {
+        let currentHour = Calendar.current.component(.hour, from: Date())
+        
+        // Check if worker should be on-site based on their schedule
+        switch name {
+        case "Kevin Dutan":
+            return currentHour >= 6 && currentHour < 17  // 6 AM - 5 PM
+        case "Edwin Lema":
+            return currentHour >= 6 && currentHour < 15  // 6 AM - 3 PM
+        case "Greg Hutson":
+            return currentHour >= 9 && currentHour < 15  // 9 AM - 3 PM
+        case "Mercedes Inamagua":
+            return (currentHour >= 6 && currentHour < 11) || (currentHour >= 13 && currentHour < 17) // Split shift
+        case "Luis Lopez":
+            return currentHour >= 7 && currentHour < 16  // 7 AM - 4 PM
+        case "Angel Guirachocha":
+            return currentHour >= 18 && currentHour < 22 // 6 PM - 10 PM
+        case "Shawn Magloire":
+            return currentHour >= 8 && currentHour < 17  // 8 AM - 5 PM
+        default:
+            return currentHour >= 9 && currentHour < 17  // Default business hours
+        }
+    }    /// FIXED: Create task from database row with comprehensive error handling (FIXED OPTIONAL UNWRAPPING)
     private func createTaskFromRowFixed(_ row: [String: Any]) -> ContextualTask? {
         // Extract ID with multiple type support
         let taskId: String

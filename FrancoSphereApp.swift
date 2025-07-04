@@ -5,6 +5,8 @@
 //  ✅ FIXED: SchemaMigrationPatch.applyPatch() instance method error
 //  ✅ FIXED: AdminDashboardPlaceholder redeclaration (uses existing AdminDashboardView)
 //  ✅ FIXED: Proper async context for schema migration
+//  ✅ FIXED: Missing workerId parameter in loadWorkerContext call
+//  ✅ FIXED: getAssignedBuildingsCount() method doesn't exist
 //  ✅ READY: For immediate compilation without errors
 //
 
@@ -202,20 +204,23 @@ struct InitializationView: View {
             }
             
         case "Loading worker data...":
-            // Pre-load WorkerContextEngine if authenticated
+            // ✅ FIXED: Pre-load WorkerContextEngine with workerId if authenticated
             if NewAuthManager.shared.isAuthenticated {
-                await WorkerContextEngine.shared.loadWorkerContext()
+                let workerId = NewAuthManager.shared.workerId
+                if !workerId.isEmpty {
+                    await WorkerContextEngine.shared.loadWorkerContext(workerId: workerId)
+                }
             }
             
         case "Importing building assignments...":
-            // Ensure CSV data is imported if needed
-            let importer = OperationalDataManager.shared
+            // Ensure operational data is imported if needed
+            let operationalManager = OperationalDataManager.shared  // ✅ CHANGED: from CSVDataImporter
             await MainActor.run {
-                importer.sqliteManager = SQLiteManager.shared
+                operationalManager.sqliteManager = SQLiteManager.shared
             }
             
             do {
-                let (imported, errors) = try await importer.importRealWorldTasks()
+                let (imported, errors) = try await operationalManager.importRealWorldTasks()
                 if imported > 0 {
                     print("✅ Imported \(imported) tasks during initialization")
                 }
@@ -223,20 +228,22 @@ struct InitializationView: View {
                     print("⚠️ Import warnings: \(errors.count) issues")
                 }
             } catch {
-                print("⚠️ CSV import warning: \(error)")
-                // Don't fail initialization for CSV import issues
+                print("⚠️ Operational data import warning: \(error)")
+                // Don't fail initialization for import issues
             }
             
         case "Finalizing setup...":
-            // Final validation
+            // ✅ FIXED: Final validation with proper method calls
             if NewAuthManager.shared.isAuthenticated && NewAuthManager.shared.workerId == "4" {
-                // Special validation for Kevin
-                let buildingCount = WorkerContextEngine.shared.getAssignedBuildingsCount()
-                if buildingCount == 0 {
+                // Special validation for Kevin - use existing methods
+                let assignedBuildings = WorkerContextEngine.shared.getAssignedBuildings()
+                if assignedBuildings.isEmpty {
                     print("⚠️ Kevin has no buildings assigned, but continuing...")
                     await MainActor.run {
                         initializationError = "Building assignments may need refresh"
                     }
+                } else {
+                    print("✅ Kevin has \(assignedBuildings.count) buildings assigned")
                 }
             }
             
