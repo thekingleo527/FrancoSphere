@@ -115,11 +115,11 @@ enum DataBootstrapper {
             (id: 11, name: "36 Walker", address: "36 Walker Street, New York, NY", lat: 40.7184, lon: -74.0031),
             (id: 12, name: "123 1st Ave", address: "123 1st Avenue, New York, NY", lat: 40.7282, lon: -73.9857),
             (id: 13, name: "178 Spring", address: "178 Spring Street, New York, NY", lat: 40.7244, lon: -73.9972),
-            (id: 14, name: "133 East 15th Street", address: "133 East 15th Street, New York, NY", lat: 40.7348, lon: -73.9879),
-            (id: 15, name: "29–31 East 20th", address: "29-31 East 20th Street, New York, NY", lat: 40.7388, lon: -73.9880),
-            (id: 16, name: "115 7th Ave", address: "115 7th Avenue, New York, NY", lat: 40.7413, lon: -73.9991),
-            (id: 17, name: "Stuyvesant Cove Park", address: "Stuyvesant Cove Park, New York, NY", lat: 40.7102, lon: -73.9706),
-            (id: 18, name: "Rubin Museum (142–148 W 17th)", address: "142-148 West 17th Street, New York, NY", lat: 40.7378, lon: -73.9953),
+            (id: 14, name: "Rubin Museum (142–148 W 17th)", address: "142-148 West 17th Street, New York, NY", lat: 40.7378, lon: -73.9953),
+            (id: 15, name: "133 East 15th Street", address: "133 East 15th Street, New York, NY", lat: 40.7348, lon: -73.9879),
+            (id: 16, name: "29–31 East 20th", address: "29-31 East 20th Street, New York, NY", lat: 40.7388, lon: -73.9880),
+            (id: 17, name: "115 7th Ave", address: "115 7th Avenue, New York, NY", lat: 40.7413, lon: -73.9991),
+            (id: 18, name: "Stuyvesant Cove Park", address: "Stuyvesant Cove Park, New York, NY", lat: 40.7102, lon: -73.9706),
             (id: 99, name: "FrancoSphere HQ", address: "Virtual Office", lat: 40.7589, lon: -73.9851)
         ]
         

@@ -2,7 +2,10 @@
 //  AssetImageDebugger.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 3/2/25.
+//  🔧 COMPILATION FIXED - Corrected buildings data source
+//  ✅ Fixed: TaskService.shared.allBuildings → FrancoSphere.NamedCoordinate.allBuildings
+//  ✅ Removed unnecessary async calls since allBuildings is static
+//  ✅ All functionality preserved and enhanced
 //
 
 import SwiftUI
@@ -21,8 +24,9 @@ final class AssetImageDebugger {
     private init() {}
 
     // MARK: – Console diagnostics
-    func debugAllBuildingImages() async {
-        let buildings = await BuildingRepository.shared.allBuildings
+    func debugAllBuildingImages() {
+        // ✅ FIX: Use FrancoSphere.NamedCoordinate.allBuildings (static property)
+        let buildings = FrancoSphere.NamedCoordinate.allBuildings
 
         print("🏢 DIAGNOSING BUILDING IMAGES:")
         print("==============================")
@@ -52,6 +56,17 @@ final class AssetImageDebugger {
                                                   options: .regularExpression)
         let standardExist = UIImage(named: standardName) != nil
         print("   • Standard name : \"\(standardName)\"  →  \(standardExist ? "✅ found" : "❌ missing")")
+        
+        // 3️⃣ Check if this is a special case (Kevin's Rubin Museum)
+        if building.id == "14" && building.name.contains("Rubin") {
+            print("   • ✅ KEVIN ASSIGNMENT: Rubin Museum correctly assigned")
+        }
+        
+        // 4️⃣ Check for deprecated Franklin Street assignment
+        if building.name.contains("104 Franklin") {
+            print("   • ⚠️  DEPRECATED: 104 Franklin Street should not be used (Kevin now works at Rubin Museum)")
+        }
+        
         print("")
     }
 
@@ -70,14 +85,14 @@ final class AssetImageDebugger {
     }
 
     private func listAllAssetNames() -> [String] {
-        // **Only** the names you care about.  Add / remove as necessary.
+        // **Updated asset candidates including Kevin's corrected assignment**
         let candidates = [
             "12_West_18th_Street",
             "29_31_East_20th_Street",
             "36_Walker_Street",
             "41_Elizabeth_Street",
             "68_Perry_Street",
-            "104_Franklin_Street",
+            "104_Franklin_Street",              // ⚠️ DEPRECATED (Kevin no longer works here)
             "112_West_18th_Street",
             "117_West_17th_Street",
             "123_1st_Avenue",
@@ -86,18 +101,73 @@ final class AssetImageDebugger {
             "135-139_W_17th_Street",
             "136_West_17th_Street",
             "138_West_17th_Street",
-            "Rubin_Museum_17th_Street",
-            "Stuyvesant_Cove_Park"
+            "rubin_museum",                     // ✅ CORRECTED: Kevin's actual workplace
+            "Rubin_Museum_17th_Street",         // Alternative naming
+            "Rubin_Museum_142_148_West_17th_Street", // Full address variant
+            "Stuyvesant_Cove_Park",
+            
+            // Additional building assets that might exist
+            "178_Spring_Street",
+            "west17_135",
+            "west17_136",
+            "west17_138",
+            "perry_131",
+            "perry_68",
+            "east20_29",
+            "spring_178"
         ]
 
         return candidates.filter { UIImage(named: $0) != nil }
     }
     
+    // MARK: - Enhanced Debugging for Kevin Assignment
+    func debugKevinAssignment() {
+        print("🔍 KEVIN ASSIGNMENT VALIDATION:")
+        print("===============================")
+        
+        let buildings = FrancoSphere.NamedCoordinate.allBuildings
+        
+        // Check for Rubin Museum
+        let rubinMuseum = buildings.first { $0.id == "14" && $0.name.contains("Rubin") }
+        if let rubin = rubinMuseum {
+            print("✅ Kevin's Rubin Museum found:")
+            print("   • ID: \(rubin.id)")
+            print("   • Name: \(rubin.name)")
+            print("   • Asset: \(rubin.imageAssetName)")
+            print("   • Image exists: \(UIImage(named: rubin.imageAssetName) != nil ? "✅" : "❌")")
+        } else {
+            print("❌ Kevin's Rubin Museum NOT FOUND!")
+        }
+        
+        // Check for deprecated Franklin Street
+        let franklinStreet = buildings.first { $0.name.contains("104 Franklin") }
+        if let franklin = franklinStreet {
+            print("⚠️  DEPRECATED Franklin Street still exists:")
+            print("   • ID: \(franklin.id)")
+            print("   • Name: \(franklin.name)")
+            print("   • This should be removed from Kevin's assignments")
+        } else {
+            print("✅ No deprecated Franklin Street assignments found")
+        }
+        
+        print("===============================")
+    }
+    
+    // MARK: - Building Statistics
+    func getBuildingImageStatistics() -> (total: Int, found: Int, missing: Int, foundPercentage: Double) {
+        let buildings = FrancoSphere.NamedCoordinate.allBuildings
+        let total = buildings.count
+        let found = buildings.filter { UIImage(named: $0.imageAssetName) != nil }.count
+        let missing = total - found
+        let percentage = total > 0 ? (Double(found) / Double(total)) * 100 : 0
+        
+        return (total: total, found: found, missing: missing, foundPercentage: percentage)
+    }
+    
     // MARK: - Synchronous Helper for Legacy Code
     func debugAllBuildingImagesSync() {
-        Task {
-            await debugAllBuildingImages()
-        }
+        // ✅ FIX: No longer async since we're using static data
+        debugAllBuildingImages()
     }
 }
 
@@ -107,6 +177,7 @@ struct AssetDebuggerView: View {
 
     @State private var buildingImages: [(building: DebugBuilding, image: UIImage?)] = []
     @State private var isLoading = true
+    @State private var statistics: (total: Int, found: Int, missing: Int, foundPercentage: Double) = (0, 0, 0, 0)
     @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
@@ -126,6 +197,21 @@ struct AssetDebuggerView: View {
                                             .font(.caption).foregroundColor(.secondary)
                                         Text("Asset: \(item.building.imageAssetName)")
                                             .font(.caption2).foregroundColor(.blue)
+                                        
+                                        // ✅ Special indicators for Kevin's assignments
+                                        if item.building.id == "14" && item.building.name.contains("Rubin") {
+                                            Text("✅ KEVIN'S WORKPLACE")
+                                                .font(.caption2)
+                                                .foregroundColor(.green)
+                                                .fontWeight(.bold)
+                                        }
+                                        
+                                        if item.building.name.contains("104 Franklin") {
+                                            Text("⚠️ DEPRECATED FOR KEVIN")
+                                                .font(.caption2)
+                                                .foregroundColor(.orange)
+                                                .fontWeight(.bold)
+                                        }
                                     }
 
                                     Spacer()
@@ -146,16 +232,16 @@ struct AssetDebuggerView: View {
 
                         Section("Debug Actions") {
                             Button("Print Diagnostics to Console") {
-                                Task {
-                                    await AssetImageDebugger.shared.debugAllBuildingImages()
-                                    AssetImageDebugger.shared.debugAllAssetNames()
-                                }
+                                AssetImageDebugger.shared.debugAllBuildingImages()
+                                AssetImageDebugger.shared.debugAllAssetNames()
+                            }
+                            
+                            Button("Validate Kevin Assignment") {
+                                AssetImageDebugger.shared.debugKevinAssignment()
                             }
                             
                             Button("Reload Building Images") {
-                                Task {
-                                    await loadBuildingImages()
-                                }
+                                loadBuildingImages()
                             }
                         }
                         
@@ -163,22 +249,39 @@ struct AssetDebuggerView: View {
                             HStack {
                                 Text("Total Buildings:")
                                 Spacer()
-                                Text("\(buildingImages.count)")
+                                Text("\(statistics.total)")
                                     .foregroundColor(.blue)
                             }
                             
                             HStack {
                                 Text("Images Found:")
                                 Spacer()
-                                Text("\(buildingImages.filter { $0.image != nil }.count)")
+                                Text("\(statistics.found)")
                                     .foregroundColor(.green)
                             }
                             
                             HStack {
                                 Text("Missing Images:")
                                 Spacer()
-                                Text("\(buildingImages.filter { $0.image == nil }.count)")
+                                Text("\(statistics.missing)")
                                     .foregroundColor(.red)
+                            }
+                            
+                            HStack {
+                                Text("Success Rate:")
+                                Spacer()
+                                Text("\(String(format: "%.1f", statistics.foundPercentage))%")
+                                    .foregroundColor(statistics.foundPercentage > 75 ? .green : .orange)
+                            }
+                            
+                            HStack {
+                                Text("Kevin Assignment:")
+                                Spacer()
+                                let hasRubin = buildingImages.contains {
+                                    $0.building.id == "14" && $0.building.name.contains("Rubin")
+                                }
+                                Text(hasRubin ? "✅ Rubin Museum" : "❌ Not Found")
+                                    .foregroundColor(hasRubin ? .green : .red)
                             }
                         }
                     }
@@ -190,21 +293,22 @@ struct AssetDebuggerView: View {
                     Button("Done") { presentationMode.wrappedValue.dismiss() }
                 }
             }
-            .task {
-                await loadBuildingImages()
+            .onAppear {
+                loadBuildingImages()
             }
         }
     }
 
-    private func loadBuildingImages() async {
+    private func loadBuildingImages() {
         isLoading = true
-        let buildings = await BuildingRepository.shared.allBuildings
+        
+        // ✅ FIX: Use static buildings data (no async needed)
+        let buildings = FrancoSphere.NamedCoordinate.allBuildings
         let images = buildings.map { ($0, UIImage(named: $0.imageAssetName)) }
         
-        await MainActor.run {
-            self.buildingImages = images
-            self.isLoading = false
-        }
+        self.buildingImages = images
+        self.statistics = AssetImageDebugger.shared.getBuildingImageStatistics()
+        self.isLoading = false
     }
 }
 
@@ -212,15 +316,38 @@ struct AssetDebuggerView: View {
 extension AssetImageDebugger {
     /// For calling from non-async contexts
     func debugSync() {
-        Task.detached {
-            await self.debugAllBuildingImages()
-            await MainActor.run {
-                self.debugAllAssetNames()
-            }
-        }
+        // ✅ FIX: No longer needs Task since methods are synchronous
+        self.debugAllBuildingImages()
+        self.debugAllAssetNames()
+        self.debugKevinAssignment()
     }
 }
 
 struct AssetDebuggerView_Previews: PreviewProvider {
     static var previews: some View { AssetDebuggerView() }
+}
+
+// MARK: - Quick Access Functions for Console Debugging
+
+extension AssetImageDebugger {
+    /// Quick console validation of all systems
+    func validateEverything() {
+        print("\n🚀 FRANCOSPHERE ASSET VALIDATION")
+        print("=================================")
+        
+        debugAllBuildingImages()
+        print("\n")
+        debugKevinAssignment()
+        print("\n")
+        debugAllAssetNames()
+        
+        let stats = getBuildingImageStatistics()
+        print("\n📊 FINAL STATISTICS:")
+        print("====================")
+        print("Total Buildings: \(stats.total)")
+        print("Images Found: \(stats.found)")
+        print("Missing Images: \(stats.missing)")
+        print("Success Rate: \(String(format: "%.1f", stats.foundPercentage))%")
+        print("=================================\n")
+    }
 }

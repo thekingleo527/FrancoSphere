@@ -914,7 +914,7 @@ struct TaskScheduleView: View {
         
         Task {
             // Make it async
-            let fetchedTasks = await TaskManager.shared.fetchTasks(
+            let fetchedTasks = await TaskService.shared.fetchTasks(
                 forBuilding: buildingID,
                 includePastTasks: true
             )

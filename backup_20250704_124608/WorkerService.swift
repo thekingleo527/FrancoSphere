@@ -68,6 +68,130 @@ public struct Worker {
 
 // MARK: - Building-Based Task Queries (for TaskScheduleView compatibility)
 
+extension TaskService {
+    
+    /// Fetch tasks for a specific building (used by TaskScheduleView)
+    func fetchTasks(forBuilding buildingId: String, includePastTasks: Bool = false) async -> [MaintenanceTask] {
+        await telemetryService.trackOperation("fetchTasks(forBuilding:)") {
+            do {
+                // Convert buildingId to appropriate format for database query
+                let buildingIdInt = Int64(buildingId) ?? Int64(0)
+                
+                let query = """
+                    SELECT t.*, b.name as building_name FROM AllTasks t
+                    LEFT JOIN buildings b ON t.building_id = b.id
+                    WHERE t.building_id = ?
+                    \(includePastTasks ? "" : "AND t.scheduled_date >= DATE('now')")
+                    ORDER BY t.scheduled_date, t.start_time
+                """
+                
+                let rows = try await sqliteManager.query(query, [buildingIdInt])
+                
+                return rows.compactMap { row in
+                    convertToMaintenanceTask(row: row, buildingId: buildingId)
+                }
+                
+            } catch {
+                print("❌ Error fetching tasks for building \(buildingId): \(error)")
+                return []
+            }
+        }
+    }
+    
+    /// Convert database row to MaintenanceTask for TaskScheduleView
+    private func convertToMaintenanceTask(row: [String: Any], buildingId: String) -> MaintenanceTask? {
+        guard let taskName = row["name"] as? String else { return nil }
+        
+        let description = row["description"] as? String ?? ""
+        let category = parseTaskCategory(row["category"] as? String ?? "maintenance")
+        let urgency = parseTaskUrgency(row["urgency"] as? String ?? "medium")
+        let recurrence = parseTaskRecurrence(row["recurrence"] as? String ?? "one-off")
+        
+        // Parse dates
+        let dueDateString = row["scheduled_date"] as? String ?? ""
+        let dueDate = parseDateFromString(dueDateString) ?? Date()
+        
+        let startTime = parseTimeFromString(row["start_time"] as? String)
+        let endTime = parseTimeFromString(row["end_time"] as? String)
+        
+        let isComplete = (row["status"] as? String)?.lowercased() == "completed"
+        
+        return MaintenanceTask(
+            name: taskName,
+            buildingID: buildingId,
+            description: description,
+            dueDate: dueDate,
+            startTime: startTime,
+            endTime: endTime,
+            category: category,
+            urgency: urgency,
+            recurrence: recurrence,
+            isComplete: isComplete
+        )
+    }
+    
+    // MARK: - Helper Methods for MaintenanceTask Conversion
+    
+    private func parseTaskCategory(_ categoryString: String) -> TaskCategory {
+        switch categoryString.lowercased() {
+        case "cleaning": return .cleaning
+        case "maintenance": return .maintenance
+        case "repair": return .repair
+        case "sanitation": return .sanitation
+        case "inspection": return .inspection
+        default: return .maintenance
+        }
+    }
+    
+    private func parseTaskUrgency(_ urgencyString: String) -> TaskUrgency {
+        switch urgencyString.lowercased() {
+        case "low": return .low
+        case "medium": return .medium
+        case "high": return .high
+        case "urgent": return .urgent
+        default: return .medium
+        }
+    }
+    
+    private func parseTaskRecurrence(_ recurrenceString: String) -> TaskRecurrence {
+        switch recurrenceString.lowercased() {
+        case "daily": return .daily
+        case "weekly": return .weekly
+        case "monthly": return .monthly
+        case "yearly": return .yearly
+        default: return .oneTime
+        }
+    }
+    
+    private func parseDateFromString(_ dateString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: dateString)
+    }
+    
+    private func parseTimeFromString(_ timeString: String?) -> Date? {
+        guard let timeString = timeString else { return nil }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        // Create a date with today's date and the specified time
+        if let time = formatter.date(from: timeString) {
+            let calendar = Calendar.current
+            let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
+            let today = Date()
+            let dateComponents = calendar.dateComponents([.year, .month, .day], from: today)
+            
+            var combinedComponents = dateComponents
+            combinedComponents.hour = timeComponents.hour
+            combinedComponents.minute = timeComponents.minute
+            
+            return calendar.date(from: combinedComponents)
+        }
+        
+        return nil
+    }
+}
 
 // MARK: - MaintenanceTask Definition (for TaskScheduleView compatibility)
 

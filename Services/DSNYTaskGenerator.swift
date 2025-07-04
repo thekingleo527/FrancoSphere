@@ -300,8 +300,8 @@ actor DSNYTaskGenerator {
             "11": "133 East 15th Street",
             "12": "135 West 17th Street",
             "13": "136 West 17th Street",
-            "14": "138 West 17th Street",
-            "15": "Rubin Museum (142-148 West 17th Street)",
+            "14": "Rubin Museum (142-148 West 17th Street)",
+            "15": "138 West 17th Street",
             "16": "Stuyvesant Cove Park"
         ]
         

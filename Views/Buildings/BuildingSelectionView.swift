@@ -31,6 +31,8 @@ struct BuildingSelectionView: View {
     @State private var assignedBuildings: [String] = []
     @State private var hasLocationAccess = false
     @State private var showBuildingDetail = false
+    @StateObject private var contextEngine = WorkerContextEngine.shared
+    @State private var recentClockIns: [String: Date] = [:]
     
     // Type alias for convenience
     private typealias NamedCoordinate = FrancoSphere.NamedCoordinate
@@ -148,6 +150,7 @@ struct BuildingSelectionView: View {
                 requestLocationAccess()
                 loadAssignedBuildings()
                 centerMapOnUserLocation()
+                loadRecentClockIns()
             }
         }
         .preferredColorScheme(.dark)
@@ -266,6 +269,12 @@ struct BuildingSelectionView: View {
                                 .font(.caption2)
                                 .foregroundColor(.blue)
                         }
+                    }
+
+                    if let last = lastClockInText(for: building) {
+                        Text("Last visit \(last)")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.6))
                     }
                 }
                 
@@ -556,16 +565,65 @@ struct BuildingSelectionView: View {
         // ✅ Load from WorkerContextEngine instead of hardcoded data
         assignedBuildings = WorkerContextEngine.shared.getAssignedBuildings().map { $0.id }
     }
-    
+
+    private func loadRecentClockIns() {
+        Task {
+            let workerId = contextEngine.getWorkerId()
+            guard let workerIdInt = Int64(workerId) else { return }
+
+            do {
+                let rows = try await SQLiteManager.shared.query(
+                    """
+                    SELECT buildingId, clockInTime
+                    FROM worker_time_logs
+                    WHERE workerId = ?
+                    ORDER BY clockInTime DESC
+                    LIMIT 20;
+                    """,
+                    [workerIdInt]
+                )
+
+                var history: [String: Date] = [:]
+                let formatter = logDateFormatter
+                for row in rows {
+                    if let bId = row["buildingId"] as? Int64,
+                       let timeStr = row["clockInTime"] as? String,
+                       let date = formatter.date(from: timeStr) {
+                        let key = String(bId)
+                        if history[key] == nil {
+                            history[key] = date
+                        }
+                    }
+                }
+
+                await MainActor.run {
+                    recentClockIns = history
+                }
+            } catch {
+                print("❌ Failed to load clock-in history: \(error)")
+            }
+        }
+    }
+
     private func isAssignedBuilding(_ building: NamedCoordinate) -> Bool {
         assignedBuildings.contains(building.id)
     }
-    
+
     private func isRecentlyVisited(_ building: NamedCoordinate) -> Bool {
-        // ✅ TODO: Load from real clock-in history instead of hardcoded
-        ["1", "3", "5"].contains(building.id) // Placeholder logic
+        guard let date = recentClockIns[building.id] else { return false }
+        if let days = Calendar.current.dateComponents([.day], from: date, to: Date()).day {
+            return days < 7
+        }
+        return false
     }
-    
+
+    private func lastClockInText(for building: NamedCoordinate) -> String? {
+        guard let date = recentClockIns[building.id] else { return nil }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
     private func requestLocationAccess() {
         hasLocationAccess = true
         // ✅ NYC Chelsea/SoHo location as default
@@ -605,6 +663,13 @@ struct BuildingSelectionView: View {
             let miles = distance / 1609.34
             return String(format: "%.1f mi", miles)
         }
+    }
+
+    private var logDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter
     }
 }
 

@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 7/4/25.
 //
 
-
 //
 //  QuickBooksOAuthManager.swift
 //  FrancoSphere
@@ -16,12 +15,14 @@
 //  ✅ Secure token storage via SecurityManager
 //  ✅ Connection status monitoring
 //  ✅ Error handling and retry logic
+//  🔧 FIXED: Added missing CryptoKit import for SHA256
 //
 
 import Foundation
 import SwiftUI
 import AuthenticationServices
 import Combine
+import CryptoKit // ✅ ADDED: Required for SHA256 in PKCE generation
 
 // MARK: - QuickBooks OAuth Manager
 

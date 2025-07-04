@@ -151,7 +151,7 @@ public enum FrancoSphere {
                     imageAssetName: "136_West_17th_Street"
                 ),
                 NamedCoordinate(
-                    id: "14",
+                    id: "15",
                     name: "138 West 17th Street",
                     latitude: 40.7399,
                     longitude: -73.9965,
@@ -159,7 +159,7 @@ public enum FrancoSphere {
                     imageAssetName: "138West17thStreet"
                 ),
                 NamedCoordinate(
-                    id: "15",
+                    id: "14",
                     name: "Rubin Museum (142-148 W 17th)",
                     latitude: 40.7405,
                     longitude: -73.9980,
@@ -233,7 +233,7 @@ public enum FrancoSphere {
             case "Stuyvesant Cove", "Stuyvesant Cove Park":
                 return "16"
             case "Rubin Museum", "Rubin Museum (142–148 W 17th)", "Rubin Museum (142-148 W 17th)":
-                return "15"
+                return "14"
             case "117 W 17th", "117 West 17th Street":
                 return "8"
             case "112 W 18th", "112 West 18th Street":
@@ -241,7 +241,7 @@ public enum FrancoSphere {
             case "117 W 17th + 112 W 18th":
                 return "8" // Return first building for combined
             case "138 W 17th", "138 West 17th Street":
-                return "14"
+                return "15"
             case "12 W 18th", "12 West 18th Street":
                 return "1"
             case "68 Perry", "68 Perry Street":
@@ -1811,10 +1811,6 @@ public typealias WeatherData          = FrancoSphere.WeatherData
 public typealias WeatherAlert         = FrancoSphere.WeatherAlertModel
 
 // Task Models
-public typealias TaskUrgency          = FrancoSphere.TaskUrgency
-public typealias TaskCategory         = FrancoSphere.TaskCategory
-public typealias MaintenanceTask      = FrancoSphere.MaintenanceTask
-public typealias TaskRecurrence       = FrancoSphere.TaskRecurrence
 public typealias VerificationStatus   = FrancoSphere.VerificationStatus
 public typealias TaskCompletionInfo   = FrancoSphere.TaskCompletionInfo
 public typealias TaskCompletionRecord = FrancoSphere.TaskCompletionRecord
@@ -1872,8 +1868,8 @@ extension FrancoSphere.NamedCoordinate {
         case "11": return "133 East 15th Street, New York, NY"
         case "12": return "135-139 West 17th Street, New York, NY"
         case "13": return "136 West 17th Street, New York, NY"
-        case "14": return "138 West 17th Street, New York, NY"
-        case "15": return "142-148 West 17th Street, New York, NY"
+        case "14": return "142-148 West 17th Street, New York, NY"
+        case "15": return "138 West 17th Street, New York, NY"
         case "16": return "20 Waterside Plaza, New York, NY 10010"
         case "17": return "178 Spring Street, New York, NY"
         case "18": return "115 7th Avenue, New York, NY"

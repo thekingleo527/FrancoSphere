@@ -16,13 +16,13 @@
       "location" : "https://github.com/open-meteo/sdk.git",
       "state" : {
         "branch" : "main",
-        "revision" : "166afbee6ef4deb38992458b378107a32d8b8c01"
+        "revision" : "faa1a3ac1d0ffa5292d949f8ad6f26f4a7d5603c"
       }
     },
     {
       "identity" : "sqlite.swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stephencelis/SQLite.swift.git",
+      "location" : "https://github.com/stephencelis/SQLite.swift",
       "state" : {
         "revision" : "392dd6058624d9f6c5b4c769d165ddd8c7293394",
         "version" : "0.15.4"

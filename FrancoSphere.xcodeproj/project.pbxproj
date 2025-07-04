@@ -112,7 +112,6 @@
 		234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B32DF78E3D00355F0A /* WeatherDashboardComponent.swift */; };
 		234581A52DF78E3D00355F0A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B82DF78E3D00355F0A /* ContentView.swift */; };
 		234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581032DF78E3D00355F0A /* DailyOpsReset.swift */; };
-		234581A82DF78E3D00355F0A /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810C2DF78E3D00355F0A /* WeatherService.swift */; };
 		234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581182DF78E3D00355F0A /* MaintenanceHistoryView.swift */; };
 		234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A52DF78E3D00355F0A /* TaskCategoryGlassCard.swift */; };
 		234581AB2DF78E3D00355F0A /* BuildingImageDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */; };
@@ -132,6 +131,8 @@
 		236106E82E1788EC00463A59 /* BuildingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E72E1788EC00463A59 /* BuildingService.swift */; };
 		236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */; };
 		236106F12E17AE0200463A59 /* EnhancedClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */; };
+		236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */; };
+		237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237DE3FE2E182F510002A14D /* TelemetryService.swift */; };
 		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
@@ -283,7 +284,6 @@
 		234581072DF78E3D00355F0A /* RealWorldDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldDataSeeder.swift; sourceTree = "<group>"; };
 		2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
 		2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
-		2345810C2DF78E3D00355F0A /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
 		2345810E2DF78E3D00355F0A /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
 		2345810F2DF78E3D00355F0A /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		234581102DF78E3D00355F0A /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
@@ -312,6 +312,8 @@
 		236106E72E1788EC00463A59 /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
 		236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksOAuthManager.swift; sourceTree = "<group>"; };
 		236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
+		236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
+		237DE3FE2E182F510002A14D /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
 		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
@@ -657,6 +659,8 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				237DE3FE2E182F510002A14D /* TelemetryService.swift */,
+				236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */,
 				236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */,
 				236106E72E1788EC00463A59 /* BuildingService.swift */,
 				236106E52E17804400463A59 /* WorkerService.swift */,
@@ -671,7 +675,6 @@
 				234581072DF78E3D00355F0A /* RealWorldDataSeeder.swift */,
 				2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */,
 				2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */,
-				2345810C2DF78E3D00355F0A /* WeatherService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1031,6 +1034,7 @@
 				236106E62E17804400463A59 /* WorkerService.swift in Sources */,
 				2345818D2DF78E3D00355F0A /* ImagePicker.swift in Sources */,
 				2345818E2DF78E3D00355F0A /* WeatherTasksSection.swift in Sources */,
+				236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */,
 				2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */,
 				236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
@@ -1052,6 +1056,7 @@
 				2345819E2DF78E3D00355F0A /* GlassNavigationBar.swift in Sources */,
 				2345819F2DF78E3D00355F0A /* AssetImageDebugger.swift in Sources */,
 				234581A02DF78E3D00355F0A /* TaskScheduleView.swift in Sources */,
+				237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
@@ -1062,7 +1067,6 @@
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
 				23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */,
 				23B117972DFE01B50065F39E /* ProfileBadge.swift in Sources */,
-				234581A82DF78E3D00355F0A /* WeatherService.swift in Sources */,
 				23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */,
 				234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,

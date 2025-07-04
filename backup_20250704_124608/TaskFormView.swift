@@ -1,0 +1,55 @@
+//
+//  TaskFormView.swift
+//  FrancoSphere
+//
+//  Created by Shawn Magloire on 3/13/25.
+//
+
+
+import SwiftUI
+
+struct TaskFormView: View {
+    let buildingID: String
+    var onTaskCreated: ((MaintenanceTask) -> Void)?
+    
+    @Environment(\.presentationMode) var presentationMode
+    
+    @State private var taskName: String = ""
+    @State private var taskDescription: String = ""
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Task Details")) {
+                    TextField("Task Name", text: $taskName)
+                    TextField("Task Description", text: $taskDescription)
+                }
+            }
+            .navigationTitle("New Task")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        // Create a new task with basic data. Customize as needed.
+                        let newTask = MaintenanceTask(
+                            name: taskName,
+                            buildingID: buildingID,
+                            description: taskDescription,
+                            dueDate: Date(),
+                            category: .maintenance,
+                            urgency: .medium,
+                            recurrence: .oneTime,
+                            isComplete: false
+                        )
+                        onTaskCreated?(newTask)
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
+    }
+}

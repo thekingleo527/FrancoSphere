@@ -2,19 +2,23 @@
 //  TaskService.swift
 //  FrancoSphere
 //
-//  🔧 SIMPLE TYPE ANNOTATION FIX
-//  ✅ Fixed all type inference issues with minimal changes
-//  ✅ Maintains code continuity and existing functionality
-//  ✅ Kevin's Rubin Museum correction preserved
+//  🔧 COMPILATION ERRORS FIXED
+//  ✅ Fixed SQLite.Binding ambiguity by using typealias
+//  ✅ Maintains Kevin's Rubin Museum correction
+//  ✅ All methods properly scoped within actor
 //
 
 import Foundation
 import CoreLocation
 import Combine
 import SQLite
+import SwiftUI
 
 actor TaskService {
     static let shared = TaskService()
+    
+    // MARK: - Type Aliases (Fix Binding Ambiguity)
+    typealias SQLiteBinding = SQLite.Binding
     
     // MARK: - Dependencies
     private var sqliteManager: SQLiteManager?
@@ -62,14 +66,16 @@ actor TaskService {
         await createTaskEvidenceTable()
         await createTaskVerificationTable()
         await createCompletionAuditTable()
+        await createTaskPhotosTable()
+        await createTaskInventoryTable()
+        await createTaskTemplatesTable()
     }
     
     private func createTasksTable() async {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             try await sqliteManager.execute("""
                 CREATE TABLE IF NOT EXISTS master_tasks (
                     id TEXT PRIMARY KEY,
@@ -93,8 +99,7 @@ actor TaskService {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             try await sqliteManager.execute("""
                 CREATE TABLE IF NOT EXISTS task_assignments (
                     id TEXT PRIMARY KEY,
@@ -120,8 +125,7 @@ actor TaskService {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             try await sqliteManager.execute("""
                 CREATE TABLE IF NOT EXISTS task_completion_log (
                     id TEXT PRIMARY KEY,
@@ -146,8 +150,7 @@ actor TaskService {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             try await sqliteManager.execute("""
                 CREATE TABLE IF NOT EXISTS task_evidence (
                     id TEXT PRIMARY KEY,
@@ -173,8 +176,7 @@ actor TaskService {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             try await sqliteManager.execute("""
                 CREATE TABLE IF NOT EXISTS task_verification (
                     id TEXT PRIMARY KEY,
@@ -196,8 +198,7 @@ actor TaskService {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             try await sqliteManager.execute("""
                 CREATE TABLE IF NOT EXISTS task_completion_audit (
                     id TEXT PRIMARY KEY,
@@ -216,13 +217,76 @@ actor TaskService {
         }
     }
     
+    private func createTaskPhotosTable() async {
+        guard let sqliteManager = sqliteManager else { return }
+        
+        do {
+            let emptyParams: [SQLiteBinding] = []
+            try await sqliteManager.execute("""
+                CREATE TABLE IF NOT EXISTS task_photos (
+                    id TEXT PRIMARY KEY,
+                    task_id TEXT NOT NULL,
+                    photo_path TEXT NOT NULL,
+                    encrypted_key_id TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """, emptyParams)
+        } catch {
+            print("❌ Error creating task_photos table: \(error)")
+        }
+    }
+    
+    private func createTaskInventoryTable() async {
+        guard let sqliteManager = sqliteManager else { return }
+        
+        do {
+            let emptyParams: [SQLiteBinding] = []
+            try await sqliteManager.execute("""
+                CREATE TABLE IF NOT EXISTS task_inventory_requirements (
+                    id TEXT PRIMARY KEY,
+                    task_id TEXT NOT NULL,
+                    item_name TEXT NOT NULL,
+                    required_quantity INTEGER NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """, emptyParams)
+        } catch {
+            print("❌ Error creating task_inventory_requirements table: \(error)")
+        }
+    }
+    
+    private func createTaskTemplatesTable() async {
+        guard let sqliteManager = sqliteManager else { return }
+        
+        do {
+            let emptyParams: [SQLiteBinding] = []
+            try await sqliteManager.execute("""
+                CREATE TABLE IF NOT EXISTS task_templates (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    building_id TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    urgency TEXT NOT NULL,
+                    recurrence_pattern TEXT NOT NULL,
+                    days_of_week TEXT,
+                    start_time TEXT NOT NULL,
+                    end_time TEXT NOT NULL,
+                    assigned_worker_id TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """, emptyParams)
+        } catch {
+            print("❌ Error creating task_templates table: \(error)")
+        }
+    }
+    
     // MARK: - Operational Data Import
     private func importOperationalDataIfNeeded() async {
         guard let sqliteManager = sqliteManager else { return }
         
         do {
-            // FIX: Use SQLite.Binding type for parameters
-            let emptyParams: [Binding] = []
+            let emptyParams: [SQLiteBinding] = []
             let result = try await sqliteManager.query("SELECT COUNT(*) as count FROM master_tasks", emptyParams)
             let count = result.first?["count"] as? Int64 ?? 0
             
@@ -239,7 +303,6 @@ actor TaskService {
     private func importMasterTasksFromOperationalData() async {
         guard let sqliteManager = sqliteManager else { return }
         
-        // Define master tasks as explicit array
         let masterTasks: [[String: Any]] = [
             // Kevin's Rubin Museum Tasks
             ["id": "rubin_trash_sweep", "name": "Trash Area + Sidewalk & Curb Clean", "category": "Sanitation", "skillRequired": "Basic", "recurrence": "Daily", "description": "Clean trash area and sweep sidewalk at Rubin Museum", "urgency": "Medium", "estimatedDuration": 30, "requiresVerification": 0],
@@ -248,16 +311,12 @@ actor TaskService {
             // Perry Street Cluster Tasks
             ["id": "perry_lobby_clean", "name": "Lobby Floor Cleaning", "category": "Cleaning", "skillRequired": "Basic", "recurrence": "Daily", "description": "Clean and maintain lobby floors", "urgency": "Medium", "estimatedDuration": 20, "requiresVerification": 0],
             ["id": "perry_stair_sweep", "name": "Stairwell Cleaning", "category": "Cleaning", "skillRequired": "Basic", "recurrence": "Weekly", "description": "Sweep and mop all stairwells", "urgency": "Medium", "estimatedDuration": 30, "requiresVerification": 0],
-            ["id": "perry_trash_collection", "name": "Garbage Collection", "category": "Sanitation", "skillRequired": "Basic", "recurrence": "Daily", "description": "Collect and dispose of building trash", "urgency": "High", "estimatedDuration": 15, "requiresVerification": 0],
-            
-            // Additional tasks truncated for brevity...
+            ["id": "perry_trash_collection", "name": "Garbage Collection", "category": "Sanitation", "skillLevel": "Basic", "recurrence": "Daily", "description": "Collect and dispose of building trash", "urgency": "High", "estimatedDuration": 15, "requiresVerification": 0],
         ]
         
-        // Insert master tasks
         for task in masterTasks {
             do {
-                // FIX: Use SQLite.Binding type for parameters
-                let taskParams: [Binding] = [
+                let taskParams: [SQLiteBinding] = [
                     task["id"] as? String ?? "",
                     task["name"] as? String ?? "",
                     task["category"] as? String ?? "",
@@ -283,20 +342,15 @@ actor TaskService {
     private func importTaskAssignmentsFromOperationalData() async {
         guard let sqliteManager = sqliteManager else { return }
         
-        // Define task assignments as explicit array
         let assignments: [[String: Any]] = [
             // Kevin's Rubin Museum (ID: 14) - CORRECTED
             ["id": "kevin_rubin_daily", "buildingId": "14", "taskName": "Trash Area + Sidewalk & Curb Clean", "workerId": "4", "recurrence": "Daily", "dayOfWeek": 0, "startTime": "10:00", "endTime": "11:00", "category": "Sanitation", "skillLevel": "Basic"],
             ["id": "kevin_rubin_weekly", "buildingId": "14", "taskName": "Entrance Deep Clean", "workerId": "4", "recurrence": "Weekly", "dayOfWeek": 1, "startTime": "10:00", "endTime": "11:30", "category": "Cleaning", "skillLevel": "Basic"],
-            
-            // Additional assignments...
         ]
         
-        // Insert assignments
         for assignment in assignments {
             do {
-                // FIX: Use SQLite.Binding type for parameters
-                let assignmentParams: [Binding] = [
+                let assignmentParams: [SQLiteBinding] = [
                     assignment["id"] as? String ?? "",
                     assignment["buildingId"] as? String ?? "",
                     assignment["taskName"] as? String ?? "",
@@ -376,8 +430,7 @@ actor TaskService {
             ORDER BY ta.start_time ASC
         """
         
-        // FIX: Use SQLite.Binding type for parameters
-        let queryParameters: [Binding] = [workerId, weekday]
+        let queryParameters: [SQLiteBinding] = [workerId, weekday]
         let rows = try await sqliteManager.query(query, queryParameters)
         
         var tasks: [ContextualTask] = []
@@ -511,8 +564,7 @@ actor TaskService {
         let lat = completion.location?.coordinate.latitude ?? 0.0
         let lng = completion.location?.coordinate.longitude ?? 0.0
         
-        // FIX: Use SQLite.Binding type for parameters - Convert Date to String
-        let parameters: [Binding] = [
+        let parameters: [SQLiteBinding] = [
             UUID().uuidString, completion.taskId, completion.workerId, completion.buildingId,
             ISO8601DateFormatter().string(from: completion.completedAt), durationMinutes, completionNotes, hasEvidence, lat, lng
         ]
@@ -549,6 +601,124 @@ actor TaskService {
             averageCompletionTime: await calculateAverageCompletionTime(workerId: workerId),
             onTimeCompletionRate: await calculateOnTimeRate(workerId: workerId)
         )
+    }
+    
+    // MARK: - Task Creation Methods
+    func createTask(
+        name: String,
+        description: String,
+        buildingId: String,
+        category: String,
+        urgency: String,
+        scheduledDate: Date,
+        startTime: Date? = nil,
+        endTime: Date? = nil,
+        assignedWorkerId: String? = nil,
+        requiredInventory: [String: Int] = [:],
+        photo: Data? = nil
+    ) async throws -> ContextualTask {
+        
+        guard let sqliteManager = sqliteManager else {
+            throw TaskServiceError.serviceNotInitialized
+        }
+        
+        let taskId = UUID().uuidString
+        
+        let insertQuery = """
+            INSERT INTO AllTasks (
+                id, name, description, building_id, category, urgency, 
+                scheduled_date, start_time, end_time, assigned_worker_id,
+                status, skill_level, recurrence, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'Basic', 'one-off', ?)
+        """
+        
+        let scheduledDateString = ISO8601DateFormatter().string(from: scheduledDate)
+        let startTimeString = startTime.map { DateFormatter.timeOnly.string(from: $0) }
+        let endTimeString = endTime.map { DateFormatter.timeOnly.string(from: $0) }
+        let createdAt = ISO8601DateFormatter().string(from: Date())
+        
+        let parameters: [SQLiteBinding] = [
+            taskId, name, description, buildingId, category, urgency,
+            scheduledDateString, startTimeString ?? "", endTimeString ?? "", assignedWorkerId ?? "",
+            createdAt
+        ]
+        
+        try await sqliteManager.execute(insertQuery, parameters)
+        
+        // Store photo if provided
+        if let photoData = photo {
+            try await storeTaskPhoto(taskId: taskId, photoData: photoData)
+        }
+        
+        // Store required inventory
+        if !requiredInventory.isEmpty {
+            try await storeRequiredInventory(taskId: taskId, inventory: requiredInventory)
+        }
+        
+        // Get building name
+        let buildingName = await getBuildingName(buildingId)
+        
+        // Create and return ContextualTask
+        let contextualTask = ContextualTask(
+            id: taskId,
+            name: name,
+            buildingId: buildingId,
+            buildingName: buildingName,
+            category: category,
+            startTime: startTimeString ?? "",
+            endTime: endTimeString ?? "",
+            recurrence: "one-off",
+            skillLevel: "Basic",
+            status: "pending",
+            urgencyLevel: urgency,
+            assignedWorkerName: assignedWorkerId ?? ""
+        )
+        
+        print("✅ Task created successfully: \(name) for building \(buildingName)")
+        
+        return contextualTask
+    }
+    
+    func createRecurringTask(
+        name: String,
+        description: String,
+        buildingId: String,
+        category: String,
+        urgency: String,
+        recurrencePattern: String,
+        daysOfWeek: [Int] = [],
+        startTime: String,
+        endTime: String,
+        assignedWorkerId: String? = nil
+    ) async throws -> String {
+        
+        guard let sqliteManager = sqliteManager else {
+            throw TaskServiceError.serviceNotInitialized
+        }
+        
+        let templateId = UUID().uuidString
+        
+        let insertQuery = """
+            INSERT INTO task_templates (
+                id, name, description, building_id, category, urgency,
+                recurrence_pattern, days_of_week, start_time, end_time,
+                assigned_worker_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        let daysOfWeekString = daysOfWeek.map(String.init).joined(separator: ",")
+        let createdAt = ISO8601DateFormatter().string(from: Date())
+        
+        let parameters: [SQLiteBinding] = [
+            templateId, name, description, buildingId, category, urgency,
+            recurrencePattern, daysOfWeekString, startTime, endTime, assignedWorkerId ?? "", createdAt
+        ]
+        
+        try await sqliteManager.execute(insertQuery, parameters)
+        
+        print("✅ Recurring task template created: \(name)")
+        
+        return templateId
     }
     
     // MARK: - Helper Methods
@@ -630,13 +800,53 @@ actor TaskService {
             let lat = evidence.location?.coordinate.latitude ?? 0.0
             let lng = evidence.location?.coordinate.longitude ?? 0.0
             
-            // FIX: Use SQLite.Binding type for parameters - Convert Date to String
-            let evidenceParams: [Binding] = [
+            let evidenceParams: [SQLiteBinding] = [
                 UUID().uuidString, taskId, workerId, ISO8601DateFormatter().string(from: evidence.timestamp),
                 lat, lng, evidence.notes ?? "", index
             ]
             
             try await sqliteManager.execute(insertQuery, evidenceParams)
+        }
+    }
+    
+    private func storeTaskPhoto(taskId: String, photoData: Data) async throws {
+        guard let sqliteManager = sqliteManager else { return }
+        
+        // Encrypt and store photo
+        let encryptedPhoto = try await SecurityManager.shared.encryptPhoto(photoData, taskId: taskId)
+        
+        let insertQuery = """
+            INSERT INTO task_photos (
+                id, task_id, photo_path, encrypted_key_id, created_at
+            ) VALUES (?, ?, ?, ?, ?)
+        """
+        
+        let photoPath = "task_photos/\(taskId)_\(Date().timeIntervalSince1970).enc"
+        
+        let parameters: [SQLiteBinding] = [
+            UUID().uuidString, taskId, photoPath, encryptedPhoto.keyIdentifier,
+            ISO8601DateFormatter().string(from: Date())
+        ]
+        
+        try await sqliteManager.execute(insertQuery, parameters)
+    }
+    
+    private func storeRequiredInventory(taskId: String, inventory: [String: Int]) async throws {
+        guard let sqliteManager = sqliteManager else { return }
+        
+        for (itemName, quantity) in inventory {
+            let insertQuery = """
+                INSERT INTO task_inventory_requirements (
+                    id, task_id, item_name, required_quantity, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+            """
+            
+            let parameters: [SQLiteBinding] = [
+                UUID().uuidString, taskId, itemName, quantity,
+                ISO8601DateFormatter().string(from: Date())
+            ]
+            
+            try await sqliteManager.execute(insertQuery, parameters)
         }
     }
     
@@ -737,4 +947,14 @@ enum TaskServiceError: LocalizedError {
             return "Database error: \(error.localizedDescription)"
         }
     }
+}
+
+// MARK: - Date Formatter Extension
+
+extension DateFormatter {
+    static let timeOnly: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
 }

@@ -65,6 +65,14 @@ class WeatherDataAdapter: ObservableObject {
     
     // Enhanced cache with in-memory backing
     private var weatherCache: [String: (data: [FrancoSphere.WeatherData], timestamp: Date)] = [:]
+
+    // Disk cache configuration
+    private let cacheFileName = "weatherCache.json"
+
+    private struct DiskCacheEntry: Codable {
+        let data: [FrancoSphere.WeatherData]
+        let timestamp: Date
+    }
     private let cacheExpirationTime: TimeInterval = 14400 // 4 hours
     private let apiCallMinInterval: TimeInterval = 300 // 5 minutes rate limiting
     
@@ -74,9 +82,10 @@ class WeatherDataAdapter: ObservableObject {
     
     // Weather API configuration - Using OpenMeteo (free, no API key needed)
     private let openMeteoBaseURL = "https://api.open-meteo.com/v1/forecast"
-    
+
     private init() {
         print("🌤️ WeatherDataAdapter initialized with unified error handling")
+        loadCacheFromDisk()
     }
     
     // MARK: - Enhanced Fetch with Real API Support
@@ -133,6 +142,9 @@ class WeatherDataAdapter: ObservableObject {
             
             // Cache in memory
             weatherCache[buildingId] = (data: weatherData, timestamp: Date())
+
+            // Persist to disk
+            saveCacheToDisk()
             
             // Update API call tracking
             lastApiCallTime[buildingId] = Date()
@@ -142,9 +154,16 @@ class WeatherDataAdapter: ObservableObject {
         } catch let weatherError as WeatherError {
             self.error = weatherError
             print("❌ Weather fetch error for \(building.name): \(weatherError.localizedDescription)")
-            
-            // Fallback to stale cache if available
-            if let staleCache = weatherCache[buildingId] {
+
+            // Fallback to disk cache when offline or to stale memory cache
+            if case .networkError = weatherError,
+               let diskCache = loadWeatherFromDisk(for: buildingId) {
+                self.forecast = diskCache.data
+                self.currentWeather = diskCache.data.first
+                self.lastUpdate = diskCache.timestamp
+                weatherCache[buildingId] = (diskCache.data, diskCache.timestamp)
+                print("📂 Using disk cache due to network error for \(building.name)")
+            } else if let staleCache = weatherCache[buildingId] {
                 self.forecast = staleCache.data
                 self.currentWeather = staleCache.data.first
                 print("📦 Using stale cache due to error for \(building.name)")
@@ -560,6 +579,68 @@ class WeatherDataAdapter: ObservableObject {
     
     func getCachedWeatherCount() -> Int {
         return weatherCache.count
+    }
+
+    // MARK: - Disk Cache Helpers
+
+    private var cacheFileURL: URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return docs.appendingPathComponent(cacheFileName)
+    }
+
+    private func saveCacheToDisk() {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let diskData = weatherCache.mapValues { entry in
+            DiskCacheEntry(data: entry.data, timestamp: entry.timestamp)
+        }
+
+        do {
+            let data = try encoder.encode(diskData)
+            try data.write(to: cacheFileURL, options: .atomic)
+            print("💾 Weather cache saved to disk")
+        } catch {
+            print("❌ Failed to save weather cache: \(error)")
+        }
+    }
+
+    private func loadCacheFromDisk() {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        guard let data = try? Data(contentsOf: cacheFileURL) else { return }
+
+        do {
+            let diskData = try decoder.decode([String: DiskCacheEntry].self, from: data)
+            let now = Date()
+            for (key, entry) in diskData {
+                if now.timeIntervalSince(entry.timestamp) < cacheExpirationTime {
+                    weatherCache[key] = (entry.data, entry.timestamp)
+                }
+            }
+
+            if let first = weatherCache.first {
+                forecast = first.value.data
+                currentWeather = first.value.data.first
+                lastUpdate = first.value.timestamp
+            }
+
+            print("📂 Loaded weather cache from disk with \(weatherCache.count) entries")
+        } catch {
+            print("❌ Failed to load weather cache: \(error)")
+        }
+    }
+
+    private func loadWeatherFromDisk(for id: String) -> (data: [FrancoSphere.WeatherData], timestamp: Date)? {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        guard let data = try? Data(contentsOf: cacheFileURL) else { return nil }
+
+        guard let diskData = try? decoder.decode([String: DiskCacheEntry].self, from: data),
+              let entry = diskData[id] else { return nil }
+
+        return (entry.data, entry.timestamp)
     }
     
     // MARK: - Private Helper Methods
