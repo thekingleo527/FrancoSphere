@@ -1,3 +1,5 @@
+// Import Models
+
 //
 //  WorkerRoutineViewModel.swift
 //  FrancoSphere
@@ -20,7 +22,7 @@ class WorkerRoutineViewModel: ObservableObject {
     @Published var dailyRoute: WorkerDailyRoute?
     @Published var routeOptimizations: [RouteOptimization] = []
     @Published var scheduleConflicts: [ScheduleConflict] = []
-    @Published var dataHealthStatus: DataHealthStatus = .unknown
+    @Published var dataHealthStatus: DataHealthStatus = DataHealthStatus.unknown
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
     @Published var performanceMetrics: PerformanceMetrics

@@ -17,6 +17,8 @@ extension WeatherCondition {
         case .foggy, .fog: return .gray
         case .stormy, .storm: return .purple
         case .windy: return .green
+        
+        default: return .gray
         }
     }
 }
@@ -28,6 +30,8 @@ extension TaskUrgency {
         case .medium: return .orange
         case .high: return .red
         case .critical, .urgent: return .purple
+        
+        default: return .gray
         }
     }
 }
@@ -39,9 +43,13 @@ extension VerificationStatus {
         case .approved, .verified: return .green
         case .rejected, .failed: return .red
         case .requiresReview: return .blue
+        
+        default: return .gray
+        }
+        default: return .gray
         }
     }
-}
+
 
 extension WorkerSkill {
     var skillColor: Color {
@@ -59,6 +67,8 @@ extension WorkerSkill {
         case .landscaping: return .green
         case .security: return .gray
         case .specialized: return .indigo
+        
+        default: return .gray
         }
     }
 }
@@ -73,6 +83,8 @@ extension RestockStatus {
         case .inTransit: return .purple
         case .delivered: return .green
         case .cancelled: return .gray
+        
+        default: return .gray
         }
     }
 }
@@ -91,6 +103,8 @@ extension InventoryCategory {
         case .paint: return .purple
         case .hardware: return .brown
         case .seasonal: return .green
+        
+        default: return .gray
         }
     }
 }
@@ -106,6 +120,8 @@ extension WeatherData {
             return .extreme
         case .foggy, .fog, .windy:
             return .medium
+        
+        default: return .gray
         }
     }
 }

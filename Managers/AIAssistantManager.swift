@@ -1,3 +1,4 @@
+// AI Types Import
 //  Import AI types for proper enum resolution
 
 //
