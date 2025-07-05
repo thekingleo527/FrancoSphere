@@ -117,11 +117,11 @@ struct WeatherStatusBuildingModifier: ViewModifier {
             return .blue
         case .snow:
             return .cyan
-        case .thunderstorm:
+        case .stormy:
             return .purple
         case .fog:
             return .gray
-        case .other:
+        case .cloudy:
             return .red
         default:
             break

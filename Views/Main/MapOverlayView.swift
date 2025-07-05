@@ -2,40 +2,26 @@
 //  MapOverlayView.swift
 //  FrancoSphere
 //
-//  ✅ PHASE 2 - ZERO GESTURE CONFLICTS SYSTEM
-//  ✅ Enhanced gesture priority system with smart detection
-//  ✅ Smooth map panning + building taps + swipe dismiss
-//  ✅ Production-ready gesture handling with haptic feedback
-//  ✅ No gesture competition or stuck states
+//  ✅ FIXED: Lines 317-318 optional unwrapping, removed redeclarations
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import MapKit
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct MapOverlayView: View {
-    let buildings: [NamedCoordinate]           // Assigned buildings ("My Sites")
-    let allBuildings: [NamedCoordinate]        // All buildings in portfolio ("All Sites")
+    let buildings: [NamedCoordinate]
+    let allBuildings: [NamedCoordinate]
     let currentBuildingId: String?
     let focusBuilding: NamedCoordinate?
     @Binding var isPresented: Bool
     let onBuildingDetail: ((NamedCoordinate) -> Void)?
     
-    // Enhanced toggle state with fallback detection
     @State private var showAll: Bool = false
-    
-    // ✅ ENHANCED: Smart gesture state management
     @State private var gestureState: MapGestureState = .idle
     @State private var dragStartLocation: CGPoint = .zero
     @State private var dragVelocity: CGSize = .zero
     @State private var lastGestureUpdate: Date = Date()
     
-    // ✅ FAIL-SOFT: Real data with automatic fallback
     private var datasource: [NamedCoordinate] {
         if showAll {
             return allBuildings.isEmpty ? buildings : allBuildings
@@ -48,7 +34,6 @@ struct MapOverlayView: View {
         return buildings
     }
     
-    // ✅ UI state computed properties
     private var isInFallbackMode: Bool {
         buildings.isEmpty && !showAll
     }
@@ -63,7 +48,6 @@ struct MapOverlayView: View {
         }
     }
     
-    // ✅ REAL NYC COORDINATES: Chelsea/SoHo area
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.733, longitude: -73.995),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
@@ -79,10 +63,9 @@ struct MapOverlayView: View {
     @State private var selectedBuilding: NamedCoordinate?
     @State private var showBuildingPreview: MapBuildingPreviewData?
     
-    // ✅ ENHANCED: Gesture constants for zero conflicts
     private let dismissThreshold: CGFloat = 120
     private let mapPanThreshold: CGFloat = 15
-    private let verticalBias: Double = 0.7  // 70% vertical movement required for dismiss
+    private let verticalBias: Double = 0.7
     private let gestureTimeout: TimeInterval = 0.3
     
     init(buildings: [NamedCoordinate],
@@ -102,11 +85,9 @@ struct MapOverlayView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // ✅ ENHANCED: Map with smart gesture detection
                 mapView
                     .ignoresSafeArea()
                     .simultaneousGesture(
-                        // Map interaction detection (lowest priority)
                         DragGesture(minimumDistance: 3)
                             .onChanged { value in
                                 detectGestureIntent(value)
@@ -116,7 +97,6 @@ struct MapOverlayView: View {
                             }
                     )
                 
-                // ✅ ENHANCED: Overlay controls with gesture isolation
                 VStack {
                     topControls
                         .allowsHitTesting(true)
@@ -132,7 +112,6 @@ struct MapOverlayView: View {
             }
             .offset(y: dragOffset)
             .gesture(
-                // ✅ ENHANCED: Smart dismiss gesture with intent detection
                 DragGesture(minimumDistance: 8)
                     .onChanged { value in
                         handleDismissGestureChanged(value)
@@ -171,7 +150,7 @@ struct MapOverlayView: View {
         .preferredColorScheme(.dark)
     }
     
-    // MARK: - ✅ ENHANCED: Smart Gesture Detection
+    // MARK: - Gesture Detection
     
     private enum MapGestureState {
         case idle
@@ -185,7 +164,6 @@ struct MapOverlayView: View {
         let translation = value.translation
         let distance = sqrt(translation.width * translation.width + translation.height * translation.height)
         
-        // Update gesture state based on movement pattern
         if gestureState == .idle && distance > 5 {
             gestureState = .detectingIntent
             dragStartLocation = value.startLocation
@@ -196,10 +174,8 @@ struct MapOverlayView: View {
             let verticalRatio = abs(translation.height) / distance
             
             if horizontalRatio > verticalBias || (translation.height < 0) {
-                // Horizontal movement or upward movement = map panning
                 gestureState = .mapPanning
             } else if translation.height > 0 && verticalRatio > verticalBias {
-                // Vertical downward movement = potential dismiss
                 gestureState = .verticalDismiss
             }
         }
@@ -210,7 +186,6 @@ struct MapOverlayView: View {
     private func handleDismissGestureChanged(_ value: DragGesture.Value) {
         let translation = value.translation
         
-        // Only handle dismiss if gesture intent is vertical or undetermined
         if gestureState != .mapPanning && translation.height > 0 {
             let verticalRatio = abs(translation.height) / max(1, sqrt(translation.width * translation.width + translation.height * translation.height))
             
@@ -218,7 +193,6 @@ struct MapOverlayView: View {
                 gestureState = .verticalDismiss
                 dragOffset = translation.height
                 
-                // Provide subtle haptic feedback for dismiss intent
                 if translation.height > dismissThreshold * 0.7 && dragOffset < dismissThreshold * 0.8 {
                     let selectionFeedback = UISelectionFeedbackGenerator()
                     selectionFeedback.selectionChanged()
@@ -232,18 +206,15 @@ struct MapOverlayView: View {
         let currentTime = Date()
         let gestureTime = currentTime.timeIntervalSince(lastGestureUpdate)
         
-        // Calculate velocity safely
         let velocity = CGSize(
             width: translation.width / max(0.1, gestureTime),
             height: translation.height / max(0.1, gestureTime)
         )
         
-        // Dismiss if strong vertical intent or passed threshold
         if gestureState == .verticalDismiss &&
            (translation.height > dismissThreshold || velocity.height > 300) {
             dismissOverlay()
         } else {
-            // Reset drag offset with spring animation
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 dragOffset = 0
             }
@@ -253,7 +224,6 @@ struct MapOverlayView: View {
     }
     
     private func resetGestureState() {
-        // Reset gesture state after a brief delay to prevent conflicts
         DispatchQueue.main.asyncAfter(deadline: .now() + gestureTimeout) {
             gestureState = .idle
         }
@@ -268,7 +238,7 @@ struct MapOverlayView: View {
         }
     }
     
-    // MARK: - ✅ ENHANCED: Map View with Isolated Building Interactions
+    // MARK: - Map View
     
     @ViewBuilder
     private var mapView: some View {
@@ -310,12 +280,14 @@ struct MapOverlayView: View {
         }
     }
     
-    // ✅ ENHANCED: Building marker with improved tap area
+    // ✅ FIXED: Lines 317-318 - Proper optional handling
     private func buildingMarker(_ building: NamedCoordinate) -> some View {
         ZStack {
             // Background with building image or color
-            if !building.imageAssetName.isEmpty {
-                Image(building.imageAssetName)
+            // Line 317 FIXED: Proper boolean logic with safe unwrapping
+            if let imageAssetName = building.imageAssetName, !imageAssetName.isEmpty {
+                // Line 318 FIXED: Safe optional unwrapping
+                Image(imageAssetName)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 34, height: 34)
@@ -334,7 +306,6 @@ struct MapOverlayView: View {
                     )
             }
             
-            // Current building indicator
             if building.id == currentBuildingId {
                 Image(systemName: "person.fill")
                     .font(.system(size: 14, weight: .bold))
@@ -345,7 +316,6 @@ struct MapOverlayView: View {
         .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
         .scaleEffect(building.id == currentBuildingId ? 1.1 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: building.id == currentBuildingId)
-        // ✅ ENHANCED: Larger tap area for better UX
         .contentShape(Circle().inset(by: -10))
     }
     
@@ -363,10 +333,9 @@ struct MapOverlayView: View {
         return .white
     }
     
-    // ✅ ENHANCED: Building interaction handlers with gesture state awareness
+    // MARK: - Building Interaction
     
     private func handleBuildingTap(_ building: NamedCoordinate) {
-        // Only respond to taps when not in conflict with other gestures
         guard gestureState == .idle || gestureState == .buildingInteraction else { return }
         
         gestureState = .buildingInteraction
@@ -378,7 +347,6 @@ struct MapOverlayView: View {
             showBuildingPreview = MapBuildingPreviewData(building: building)
         }
         
-        // Reset gesture state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             gestureState = .idle
         }
@@ -390,26 +358,19 @@ struct MapOverlayView: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         
-        // Dismiss any preview first
         showBuildingPreview = nil
-        
-        // Show BuildingDetailView with real data
         selectedBuilding = building
-        
-        // Call optional callback
         onBuildingDetail?(building)
         
-        // Reset gesture state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             gestureState = .idle
         }
     }
     
-    // MARK: - Top Controls with Enhanced Haptic Feedback
+    // MARK: - Top Controls
     
     private var topControls: some View {
         HStack {
-            // Mode toggle with haptic feedback
             HStack(spacing: 12) {
                 Button(action: {
                     let selectionFeedback = UISelectionFeedbackGenerator()
@@ -446,7 +407,6 @@ struct MapOverlayView: View {
             
             Spacer()
             
-            // ✅ REAL DATA: Current mode indicator
             VStack(alignment: .trailing, spacing: 2) {
                 Text(effectiveMode)
                     .font(.caption)
@@ -464,7 +424,7 @@ struct MapOverlayView: View {
         .padding(.top, 10)
     }
     
-    // MARK: - Bottom Controls with Real Data
+    // MARK: - Bottom Controls
     
     private var bottomControls: some View {
         HStack(spacing: 16) {
@@ -522,7 +482,7 @@ struct MapOverlayView: View {
         .frame(maxWidth: .infinity)
     }
     
-    // MARK: - Building Preview Overlay (Enhanced)
+    // MARK: - Building Preview Overlay
     
     @ViewBuilder
     private var buildingPreviewOverlay: some View {
@@ -544,11 +504,10 @@ struct MapOverlayView: View {
         }
     }
     
-    // MARK: - Map Setup and Actions (Enhanced with real data)
+    // MARK: - Map Setup
     
     private func setupMapPosition() {
         if let focusBuilding = focusBuilding {
-            // Focus on specific building with smooth animation
             let region = MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: focusBuilding.latitude, longitude: focusBuilding.longitude),
                 span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
@@ -561,14 +520,12 @@ struct MapOverlayView: View {
                 }
             }
         } else {
-            // Fit to show all relevant buildings
             fitMapToBuildings()
         }
     }
     
     private func fitMapToBuildings() {
         guard !datasource.isEmpty else {
-            // Fallback to default NYC area if no buildings
             let defaultRegion = MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: 40.733, longitude: -73.995),
                 span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
@@ -594,7 +551,6 @@ struct MapOverlayView: View {
         let centerLat = (minLat + maxLat) / 2
         let centerLng = (minLng + maxLng) / 2
         
-        // Add padding around buildings
         let latDelta = max(0.01, (maxLat - minLat) * 1.3)
         let lngDelta = max(0.01, (maxLng - minLng) * 1.3)
         

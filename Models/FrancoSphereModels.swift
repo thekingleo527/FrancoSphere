@@ -621,3 +621,10 @@ public typealias ImportError = FrancoSphere.ImportError
 // Legacy compatibility
 public typealias FSTaskItem = ContextualTask
 public typealias DetailedWorker = WorkerProfile
+
+// MARK: - WeatherData Extension for UI
+extension FrancoSphere.WeatherData {
+    public var formattedTemperature: String {
+        return "\(Int(temperature))°"
+    }
+}

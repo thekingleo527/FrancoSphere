@@ -471,8 +471,8 @@ class NotificationManager: ObservableObject {
     @MainActor
     private func shouldTaskBeRescheduledForWeather(_ task: ContextualTask, weatherAdapter: WeatherDataAdapter) -> Bool {
         // Check if the task is outdoor-related and weather sensitive
-        let taskCategory = task.category.lowercased()
-        let taskName = task.name.lowercased()
+        let taskCategory = task.category.rawValue.lowercased()
+        let taskName = task.title.lowercased()
         
         let isOutdoorTask = taskCategory.contains("cleaning") ||
                            taskCategory.contains("maintenance") ||

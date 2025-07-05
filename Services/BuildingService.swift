@@ -179,7 +179,7 @@ actor BuildingService {
                 return nil
             }
             
-            let building = NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng)"
+            let building = NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng)""
             )
             
             buildingsCache[id] = building
