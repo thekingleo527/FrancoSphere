@@ -92,8 +92,7 @@ struct WorkerBuildingRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Building image or icon
-            if let imageAssetName = building.imageAssetName,
-               let image = UIImage(named: imageAssetName) {
+            if let image = UIImage(named: building.imageAssetName) {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
