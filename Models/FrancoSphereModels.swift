@@ -699,3 +699,41 @@ extension FrancoSphere.WeatherData {
         return "\(Int(temperature))°"
     }
 }
+
+// MARK: - Enum Extensions for String Conversion
+extension FrancoSphere.TaskUrgency {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+extension FrancoSphere.VerificationStatus {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+extension FrancoSphere.TaskCategory {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+// MARK: - Enum Extensions for String Conversion
+extension FrancoSphere.TaskUrgency {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+extension FrancoSphere.VerificationStatus {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+extension FrancoSphere.TaskCategory {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}

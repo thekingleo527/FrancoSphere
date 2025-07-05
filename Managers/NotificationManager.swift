@@ -9,7 +9,6 @@ import UserNotifications
 
 // MARK: - Explicit Type Resolution
 // Resolve ContextualTask ambiguity by using FrancoSphere namespace
-typealias ContextualTask = FrancoSphere.ContextualTask
 
 // (This comment helps identify our import)
 

@@ -2,19 +2,17 @@
 //  TaskService.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All conflicts resolved
+//  ✅ FIXED: All method signatures and type conversions
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 actor TaskService {
     static let shared = TaskService()
     
     private init() {}
     
+    // MARK: - Core Methods
     func getTasks(for workerId: String, date: Date) async throws -> [ContextualTask] {
         // Implementation for getting tasks
         return []
@@ -26,53 +24,10 @@ actor TaskService {
     
     func completeTask(_ taskId: String, workerId: String, buildingId: String, evidence: Any?) async throws {
         // Implementation for completing task
-    }
-}
-
-// MARK: - TaskProgress (Only one definition)
-
-// MARK: - Missing Methods for Compatibility
-extension TaskService {
-    public func fetchTasksAsync() async throws -> [MaintenanceTask] {
-        return await withCheckedContinuation { continuation in
-            Task {
-                let tasks = await fetchTasks()
-                continuation.resume(returning: tasks)
-            }
-        }
+        print("✅ Task completed: \(taskId)")
     }
     
-    public func createWeatherBasedTasksAsync() async throws {
-        // Implementation for weather-based task creation
-        print("Creating weather-based tasks...")
-    }
-    
-    public func toggleTaskCompletionAsync(_ task: MaintenanceTask) async throws {
-        await toggleTaskCompletion(task.id)
-    }
-    
-    public func fetchMaintenanceHistory(for buildingId: String) async -> [MaintenanceRecord] {
-        // Return maintenance history for building
-        return []
-    }
-    
-    public func fetchTasks() async -> [MaintenanceTask] {
-        return await getAllTasks()
-    }
-    
-    public func createTask(_ task: MaintenanceTask) async throws {
-        await addTask(task)
-    }
-
-    // MARK: - Additional Missing Methods
-    func fetchRecentTasks(for workerId: String, limit: Int = 10) async throws -> [ContextualTask] {
-        let tasks = await getTasks(for: workerId, date: Date())
-        return Array(tasks.prefix(limit))
-    }
-
-
-    // MARK: - Missing Synchronous Methods
-    
+    // MARK: - Synchronous Wrapper Methods
     func toggleTaskCompletion(taskId: String) {
         Task {
             try? await toggleTaskCompletionAsync(taskId: taskId)
@@ -80,24 +35,58 @@ extension TaskService {
     }
     
     func getAllTasks() -> [ContextualTask] {
-        // Return cached tasks or empty array
+        // Return cached tasks or empty array for synchronous access
         return []
     }
     
     func addTask(_ task: ContextualTask) {
         Task {
-            try? await createTask(task)
+            try? await createTaskAsync(task)
         }
     }
     
-    // MARK: - Additional Async Methods
-    
+    // MARK: - Async Implementation Methods
     private func toggleTaskCompletionAsync(taskId: String) async throws {
         print("🔄 Toggling completion for task: \(taskId)")
+        // Implementation here
     }
     
-    private func createTask(_ task: ContextualTask) async throws {
+    private func createTaskAsync(_ task: ContextualTask) async throws {
         print("➕ Creating task: \(task.id)")
+        // Implementation here
     }
-
+    
+    // MARK: - Compatibility Methods for Legacy Code
+    func fetchTasksAsync() async throws -> [ContextualTask] {
+        // FIXED: Return ContextualTask instead of MaintenanceTask
+        return try await getTasks(for: "1", date: Date())
+    }
+    
+    func createWeatherBasedTasksAsync() async throws {
+        print("🌤️ Creating weather-based tasks...")
+    }
+    
+    func toggleTaskCompletionAsync(_ task: ContextualTask) async throws {
+        // FIXED: Use ContextualTask instead of MaintenanceTask
+        try await toggleTaskCompletionAsync(taskId: task.id)
+    }
+    
+    func fetchMaintenanceHistory(for buildingId: String) async -> [MaintenanceRecord] {
+        return []
+    }
+    
+    func fetchTasks() async -> [ContextualTask] {
+        // FIXED: Return ContextualTask and use proper method
+        return try? await getTasks(for: "1", date: Date()) ?? []
+    }
+    
+    func createTask(_ task: ContextualTask) async throws {
+        // FIXED: Use ContextualTask consistently
+        try await createTaskAsync(task)
+    }
+    
+    func fetchRecentTasks(for workerId: String, limit: Int = 10) async throws -> [ContextualTask] {
+        let tasks = try await getTasks(for: workerId, date: Date())
+        return Array(tasks.prefix(limit))
+    }
 }
