@@ -395,9 +395,9 @@ public class SQLiteManager {
         try db.run(sql, parameters)
     }
     
-    // MARK: - Worker Methods (Using FrancoSphere.WorkerProfile)
+    // MARK: - Worker Methods (Using WorkerProfile)
     
-    public func getWorker(byEmail email: String) throws -> FrancoSphere.WorkerProfile? {
+    public func getWorker(byEmail email: String) throws -> WorkerProfile? {
         guard let db = db else { return nil }
         
         let query = workers.filter(workerEmail == email)
@@ -410,20 +410,20 @@ public class SQLiteManager {
             let roleString = row[workerRole]
             
             // Convert role string to UserRole
-            let userRole: FrancoSphere.UserRole
+            let userRole: UserRole
             switch roleString.lowercased() {
             case "admin": userRole = .admin
             case "client": userRole = .worker
             default: userRole = .worker
             }
             
-            return FrancoSphere.WorkerProfile(id: workerId, name: name, email: email, role: userRole)
+            return WorkerProfile(id: workerId, name: name, email: email, role: userRole)
         }
         
         return nil
     }
     
-    public func insertWorker(_ worker: FrancoSphere.WorkerProfile) throws -> Int64 {
+    public func insertWorker(_ worker: WorkerProfile) throws -> Int64 {
         guard let db = db else { throw NSError(domain: "SQLiteManager", code: 0) }
         
         let insert = workers.insert(
@@ -444,10 +444,10 @@ public class SQLiteManager {
         return try db.run(insert)
     }
     
-    public func getAllWorkers() throws -> [FrancoSphere.WorkerProfile] {
+    public func getAllWorkers() throws -> [WorkerProfile] {
         guard let db = db else { return [] }
         
-        var workersList: [FrancoSphere.WorkerProfile] = []
+        var workersList: [WorkerProfile] = []
         
         for row in try db.prepare(workers) {
             let workerId = String(row[workerId])
@@ -456,14 +456,14 @@ public class SQLiteManager {
             let roleString = row[workerRole]
             
             // Convert role string to UserRole
-            let userRole: FrancoSphere.UserRole
+            let userRole: UserRole
             switch roleString.lowercased() {
             case "admin": userRole = .admin
             case "client": userRole = .worker
             default: userRole = .worker
             }
             
-            let worker = FrancoSphere.WorkerProfile(id: workerId, name: name, email: email, role: userRole)
+            let worker = WorkerProfile(id: workerId, name: name, email: email, role: userRole)
             workersList.append(worker)
         }
         

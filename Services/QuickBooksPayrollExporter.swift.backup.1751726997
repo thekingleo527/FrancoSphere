@@ -1,4 +1,3 @@
-// Import added for type access
 //
 //  QuickBooksPayrollExporter.swift
 //  FrancoSphere
@@ -41,7 +40,7 @@ class QuickBooksPayrollExporter: ObservableObject {
     static let shared = QuickBooksPayrollExporter()
     
     // MARK: - Published Properties for UI
-    @Published var exportProgress: QBExportProgress = QBExportProgress()
+    @Published var exportProgress: ExportProgress = ExportProgress()
     @Published var isExporting = false
     @Published var lastExportDate: Date?
     @Published var exportError: PayrollExportError?
@@ -94,7 +93,7 @@ class QuickBooksPayrollExporter: ObservableObject {
         
         isExporting = true
         exportError = nil
-        exportProgress = QBExportProgress()
+        exportProgress = ExportProgress()
         
         defer {
             isExporting = false
@@ -664,7 +663,7 @@ struct PayPeriod {
     }
 }
 
-struct QBExportProgress {
+struct ExportProgress {
     var totalEntries = 0
     var processedEntries = 0
     var totalWorkers = 0

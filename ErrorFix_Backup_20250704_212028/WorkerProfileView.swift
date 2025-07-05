@@ -1,3 +1,4 @@
+// Import added for type access
 // UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerProfileView.swift
@@ -477,7 +478,7 @@ struct WorkerProfileView: View {
         }
         
         let buildingIds = Set(workerTasks.map { $0.buildingId })
-        return FrancoSphere.NamedCoordinate.allBuildings.filter { buildingIds.contains($0.id) }
+        return NamedCoordinate.allBuildings.filter { buildingIds.contains($0.id) }
     }
     
     private func getBuildingTaskCount(_ buildingId: String) -> Int {

@@ -17,7 +17,7 @@ struct BuildingSelectionView: View {
     @State private var searchText = ""
     @State private var viewMode: ViewMode = .list
     @State private var selectedBuilding: NamedCoordinate? = nil
-    @State private var currentTab: FrancoSphere.BuildingTab = .overview
+    @State private var currentTab: BuildingTab = .overview
     
     enum ViewMode {
         case list

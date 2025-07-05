@@ -16,8 +16,8 @@ import Combine
 public class WorkerManager: ObservableObject {
     public static let shared = WorkerService()
     
-    @Published public var currentWorker: FrancoSphere.WorkerProfile?
-    @Published public var allWorkers: [FrancoSphere.WorkerProfile] = []
+    @Published public var currentWorker: WorkerProfile?
+    @Published public var allWorkers: [WorkerProfile] = []
     @Published public var isLoading = false
     @Published public var error: Error?
     
@@ -28,10 +28,10 @@ public class WorkerManager: ObservableObject {
     }
     
     private func loadWorkers() {
-        allWorkers = FrancoSphere.WorkerProfile.allWorkers
+        allWorkers = WorkerProfile.allWorkers
     }
     
-    public func getWorker(by id: String) -> FrancoSphere.WorkerProfile? {
+    public func getWorker(by id: String) -> WorkerProfile? {
         return allWorkers.first { $0.id == id }
     }
     
@@ -39,7 +39,7 @@ public class WorkerManager: ObservableObject {
         currentWorker = getWorker(by: workerId)
     }
     
-    public func getAllActiveWorkers() -> [FrancoSphere.WorkerProfile] {
+    public func getAllActiveWorkers() -> [WorkerProfile] {
         return allWorkers.filter { $0.isActive }
     }
     

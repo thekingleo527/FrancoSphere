@@ -16,16 +16,16 @@ class TodayTasksViewModel: ObservableObject {
     @Published var completedTasks: [ContextualTask] = []
     @Published var pendingTasks: [ContextualTask] = []
     @Published var isLoading = false
-    @Published var progress: FrancoSphere.TaskProgress = FrancoSphere.TaskProgress(
+    @Published var progress: TaskProgress = TaskProgress(
         completed: 0,
         total: 0,
         remaining: 0,
         percentage: 0,
         overdueTasks: 0
     )
-    @Published var taskTrends: FrancoSphere.TaskTrends = FrancoSphere.TaskTrends(weeklyCompletion: [0.8, 0.7, 0.9], categoryBreakdown: [:], changePercentage: 5.2, comparisonPeriod: "last week", trend: .up)
-    @Published var performanceMetrics: FrancoSphere.PerformanceMetrics = FrancoSphere.PerformanceMetrics(efficiency: 0.85, tasksCompleted: 42, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date())
-    @Published var streakData: FrancoSphere.StreakData = FrancoSphere.StreakData(currentStreak: 7, longestStreak: 14, lastUpdate: Date())
+    @Published var taskTrends: TaskTrends = TaskTrends(weeklyCompletion: [0.8, 0.7, 0.9], categoryBreakdown: [:], changePercentage: 5.2, comparisonPeriod: "last week", trend: .up)
+    @Published var performanceMetrics: PerformanceMetrics = PerformanceMetrics(efficiency: 0.85, tasksCompleted: 42, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date())
+    @Published var streakData: StreakData = StreakData(currentStreak: 7, longestStreak: 14, lastUpdate: Date())
     
     private let taskService = TaskService.shared
     private let contextEngine = WorkerContextEngine.shared
@@ -93,11 +93,11 @@ class TodayTasksViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func calculateStreakData() -> FrancoSphere.StreakData {
+    private func calculateStreakData() -> StreakData {
         let currentStreak = calculateCurrentStreak()
         let longestStreak = calculateLongestStreak()
         
-        return FrancoSphere.StreakData(currentStreak: currentStreak, longestStreak: longestStreak, lastUpdate: Date())
+        return StreakData(currentStreak: currentStreak, longestStreak: longestStreak, lastUpdate: Date())
             currentStreak: currentStreak,
             longestStreak: longestStreak)
     }
@@ -110,10 +110,10 @@ class TodayTasksViewModel: ObservableObject {
         return max(completedTasks.count, 0)
     }
     
-    private func calculatePerformanceMetrics() -> FrancoSphere.PerformanceMetrics {
+    private func calculatePerformanceMetrics() -> PerformanceMetrics {
         let efficiency = Double(completedTasks.count) / max(Double(tasks.count), 1.0)
         
-        return FrancoSphere.PerformanceMetrics(efficiency: efficiency * 100, tasksCompleted: completedTasks.count, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date())
+        return PerformanceMetrics(efficiency: efficiency * 100, tasksCompleted: completedTasks.count, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date())
             efficiency: efficiency * 100,
             quality: 85.0,
             speed: 75.0,
@@ -121,7 +121,7 @@ class TodayTasksViewModel: ObservableObject {
         )
     }
     
-    private func calculateTaskTrends() -> FrancoSphere.TaskTrends {
-        return FrancoSphere.TaskTrends(weeklyCompletion: [0.8, 0.7, 0.9], categoryBreakdown: [:], changePercentage: 5.2, comparisonPeriod: "last week", trend: .up)
+    private func calculateTaskTrends() -> TaskTrends {
+        return TaskTrends(weeklyCompletion: [0.8, 0.7, 0.9], categoryBreakdown: [:], changePercentage: 5.2, comparisonPeriod: "last week", trend: .up)
     }
 }

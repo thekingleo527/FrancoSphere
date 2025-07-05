@@ -1,3 +1,4 @@
+// Import added for type access
 //
 //  FrancoSphereTypes.swift
 //  FrancoSphere
@@ -23,26 +24,26 @@ public typealias WeatherData = WeatherData
 // MARK: - Task Types
 public typealias TaskUrgency = TaskUrgency
 public typealias TaskCategory = TaskCategory
-public typealias TaskRecurrence = FrancoSphere.TaskRecurrence
+public typealias TaskRecurrence = TaskRecurrence
 public typealias MaintenanceTask = MaintenanceTask
-public typealias VerificationStatus = FrancoSphere.VerificationStatus
+public typealias VerificationStatus = VerificationStatus
 
 // MARK: - Worker Types
-public typealias WorkerSkill = FrancoSphere.WorkerSkill
-public typealias UserRole = FrancoSphere.UserRole
-public typealias WorkerProfile = FrancoSphere.WorkerProfile
-public typealias WorkerAssignment = FrancoSphere.WorkerAssignment
+public typealias WorkerSkill = WorkerSkill
+public typealias UserRole = UserRole
+public typealias WorkerProfile = WorkerProfile
+public typealias WorkerAssignment = WorkerAssignment
 
 // MARK: - Inventory Types
-public typealias InventoryCategory = FrancoSphere.InventoryCategory
-public typealias InventoryItem = FrancoSphere.InventoryItem
-public typealias RestockStatus = FrancoSphere.RestockStatus
+public typealias InventoryCategory = InventoryCategory
+public typealias InventoryItem = InventoryItem
+public typealias RestockStatus = RestockStatus
 
 // MARK: - AI Types
 public typealias AIScenario = AIScenario
 
 // MARK: - Service Types
-public typealias BuildingStatus = FrancoSphere.BuildingStatus
+public typealias BuildingStatus = BuildingStatus
 
 // MARK: - View Model Types
 public enum DataHealthStatus: Equatable {

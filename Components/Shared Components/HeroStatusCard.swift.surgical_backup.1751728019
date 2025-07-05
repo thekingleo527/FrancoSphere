@@ -153,20 +153,6 @@ struct HeroStatusCard: View {
         case .snow: return "cloud.snow.fill"
         case .fog: return "cloud.fog.fill"
         case .storm: return "cloud.bolt.fill"
-        case .sunny:
-            return "sun.max.fill"
-        case .rainy:
-            return "cloud.rain.fill"
-        case .snowy:
-            return "cloud.snow.fill"
-        case .stormy:
-            return "cloud.bolt.fill"
-        case .foggy:
-            return "cloud.fog.fill"
-        case .sunny, .rainy, .snowy, .stormy, .foggy:
-
-            return "sun.max.fill"
-
         }
     }
     
@@ -178,20 +164,6 @@ struct HeroStatusCard: View {
         case .snow: return .cyan
         case .fog: return .gray
         case .storm: return .purple
-        case .sunny:
-            return "sun.max.fill"
-        case .rainy:
-            return "cloud.rain.fill"
-        case .snowy:
-            return "cloud.snow.fill"
-        case .stormy:
-            return "cloud.bolt.fill"
-        case .foggy:
-            return "cloud.fog.fill"
-        case .sunny, .rainy, .snowy, .stormy, .foggy:
-
-            return "sun.max.fill"
-
         }
     }
 }

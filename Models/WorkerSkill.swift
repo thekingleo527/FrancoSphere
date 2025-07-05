@@ -10,7 +10,7 @@ import SwiftUI
 
 // MARK: - Worker Skill Models
 
-/// Use a namespace to avoid ambiguity with FrancoSphere.WorkerSkill
+/// Use a namespace to avoid ambiguity with WorkerSkill
 enum LocalModels {
     /// Represents a skill for a worker.
     struct WorkerSkill: Identifiable, Codable, Hashable, Equatable {

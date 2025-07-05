@@ -9,8 +9,8 @@ import SwiftUI
 import CoreLocation
 
 struct WeatherDashboardComponent: View {
-    let building: FrancoSphere.NamedCoordinate
-    let weather: FrancoSphere.WeatherData?
+    let building: NamedCoordinate
+    let weather: WeatherData?
     let tasks: [ContextualTask]
     let onTaskTap: (ContextualTask) -> Void
     
@@ -66,7 +66,7 @@ struct WeatherDashboardComponent: View {
     
     // MARK: - Weather Icon View
     @ViewBuilder
-    private func weatherIconView(_ weather: FrancoSphere.WeatherData) -> some View {
+    private func weatherIconView(_ weather: WeatherData) -> some View {
         VStack(spacing: 4) {
             Image(systemName: getWeatherIcon(for: weather.condition))
                 .font(.title2)
@@ -84,7 +84,7 @@ struct WeatherDashboardComponent: View {
     
     // MARK: - Weather Impact View
     @ViewBuilder
-    private func weatherImpactView(_ weather: FrancoSphere.WeatherData) -> some View {
+    private func weatherImpactView(_ weather: WeatherData) -> some View {
         let risk = calculateOutdoorWorkRisk(weather)
         
         HStack {
@@ -163,7 +163,7 @@ struct WeatherDashboardComponent: View {
     }
     
     @ViewBuilder
-    private func weatherImpactIndicator(for task: ContextualTask, weather: FrancoSphere.WeatherData) -> some View {
+    private func weatherImpactIndicator(for task: ContextualTask, weather: WeatherData) -> some View {
         let impact = getTaskWeatherImpact(task, weather: weather)
         
         VStack(spacing: 2) {
@@ -192,7 +192,7 @@ struct WeatherDashboardComponent: View {
         return formatter.string(from: date)
     }
     
-    private func getWeatherIcon(for condition: FrancoSphere.WeatherCondition) -> String {
+    private func getWeatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
         case .clear: return "sun.max.fill"
         case .cloudy: return "cloud.fill"
@@ -209,7 +209,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getWeatherColor(for condition: FrancoSphere.WeatherCondition) -> Color {
+    private func getWeatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
         case .clear: return .yellow
         case .cloudy: return .gray
@@ -226,7 +226,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func calculateOutdoorWorkRisk(_ weather: FrancoSphere.WeatherData) -> FrancoSphere.OutdoorWorkRisk {
+    private func calculateOutdoorWorkRisk(_ weather: WeatherData) -> OutdoorWorkRisk {
         switch weather.condition {
         case .clear, .cloudy:
             return weather.temperature < 32 ? .medium : .low
@@ -246,7 +246,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getRiskIcon(for risk: FrancoSphere.OutdoorWorkRisk) -> String {
+    private func getRiskIcon(for risk: OutdoorWorkRisk) -> String {
         switch risk {
         case .low: return "checkmark.circle.fill"
         case .medium: return "exclamationmark.triangle.fill"
@@ -257,7 +257,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getRiskColor(for risk: FrancoSphere.OutdoorWorkRisk) -> Color {
+    private func getRiskColor(for risk: OutdoorWorkRisk) -> Color {
         switch risk {
         case .low: return .green
         case .medium: return .yellow
@@ -268,7 +268,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getRiskLevel(for risk: FrancoSphere.OutdoorWorkRisk) -> String {
+    private func getRiskLevel(for risk: OutdoorWorkRisk) -> String {
         switch risk {
         case .low: return "Low"
         case .medium: return "Medium"
@@ -279,7 +279,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getRiskDescription(for risk: FrancoSphere.OutdoorWorkRisk) -> String {
+    private func getRiskDescription(for risk: OutdoorWorkRisk) -> String {
         switch risk {
         case .low: return "Safe for outdoor work"
         case .medium: return "Use caution outdoors"
@@ -290,7 +290,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func isTaskAffectedByWeather(_ task: ContextualTask, weather: FrancoSphere.WeatherData) -> Bool {
+    private func isTaskAffectedByWeather(_ task: ContextualTask, weather: WeatherData) -> Bool {
         let outdoorCategories = ["sanitation", "cleaning", "maintenance"]
         let taskCategory = task.category.rawValue.lowercased()
         
@@ -313,7 +313,7 @@ struct WeatherDashboardComponent: View {
         }
     }
     
-    private func getTaskWeatherImpact(_ task: ContextualTask, weather: FrancoSphere.WeatherData) -> (icon: String, color: Color, text: String) {
+    private func getTaskWeatherImpact(_ task: ContextualTask, weather: WeatherData) -> (icon: String, color: Color, text: String) {
         let risk = calculateOutdoorWorkRisk(weather)
         
         switch risk {
@@ -334,16 +334,17 @@ struct WeatherDashboardComponent: View {
 // MARK: - Preview
 #Preview {
     WeatherDashboardComponent(
-        building: FrancoSphere.NamedCoordinate(
+        building: NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
             latitude: 40.7402,
             longitude: -73.9980,
+            address: "150 W 17th St, New York, NY 10011",
             imageAssetName: "rubin_museum"
         ),
-        weather: FrancoSphere.WeatherData(
+        weather: WeatherData(
             temperature: 45,
-            condition: .rain,
+            condition: WeatherCondition.rain,
             humidity: 80,
             windSpeed: 15,
             timestamp: Date()

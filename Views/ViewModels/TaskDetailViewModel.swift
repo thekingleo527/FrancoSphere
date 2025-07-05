@@ -16,8 +16,8 @@ class TaskDetailViewModel: ObservableObject {
     @Published var showCamera = false
     @Published var showError = false
     @Published var errorMessage = ""
-    @Published var evidence: FrancoSphere.TaskEvidence?
-    @Published var weather: FrancoSphere.WeatherData?
+    @Published var evidence: TaskEvidence?
+    @Published var weather: WeatherData?
     @Published var isSubmitting = false
     
     private let taskService = TaskService.shared
@@ -40,7 +40,7 @@ class TaskDetailViewModel: ObservableObject {
             let photoData = capturedPhotos.compactMap { $0.jpegData(compressionQuality: 0.8) }
             let currentLocation = getCurrentLocation()
             
-            let taskEvidence = FrancoSphere.TaskEvidence(
+            let taskEvidence = TaskEvidence(
                 photos: photoData,
                 timestamp: Date(),
                 location: currentLocation,

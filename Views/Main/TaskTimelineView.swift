@@ -224,7 +224,7 @@ struct TaskTimelineView: View {
             workerIdInt64 = Int64(workerId)
         }
         
-        // Create ContextualTask using the typealias (which points to FrancoSphere.ContextualTask)
+        // Create ContextualTask using the typealias (which points to ContextualTask)
         return ContextualTask(
             id: Int64(abs(task.id.hashValue)),
             name: task.name,
@@ -527,7 +527,7 @@ class TaskTimelineViewModel: ObservableObject {
     }
     
     // ✅ FIXED: Recurrence mapping function
-    private func mapRecurrence(_ recurrence: String) -> FrancoSphere.TaskRecurrence {
+    private func mapRecurrence(_ recurrence: String) -> TaskRecurrence {
         switch recurrence.lowercased() {
         case "daily": return .daily
         case "weekly": return .weekly

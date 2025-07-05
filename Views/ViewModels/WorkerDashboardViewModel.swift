@@ -75,7 +75,7 @@ class WorkerDashboardViewModel: ObservableObject {
         }
     }
     
-    func completeTask(_ task: ContextualTask, evidence: FrancoSphere.TaskEvidence?) async {
+    func completeTask(_ task: ContextualTask, evidence: TaskEvidence?) async {
         let workerId = NewAuthManager.shared.workerId
         guard !workerId.isEmpty else { return }
         

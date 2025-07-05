@@ -62,7 +62,7 @@ class WorkerRoutineViewModel: ObservableObject {
     @Published var selectedDate = Date()
     @Published var showingMapView = false
     @Published var errorMessage: String?
-    @Published var dataHealthStatus: FrancoSphere.DataHealthStatus = .unknown
+    @Published var dataHealthStatus: DataHealthStatus = .unknown
     
     // MARK: - Dependencies (Using Existing Services)
     private let taskService = TaskService.shared                 // ✅ EXISTS

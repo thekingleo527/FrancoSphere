@@ -12,8 +12,8 @@ import Combine
 class AIAssistantManager: ObservableObject {
     static let shared = AIAssistantManager()
     
-    @Published var activeScenarios: [FrancoSphere.AIScenario] = []
-    @Published var suggestions: [FrancoSphere.AISuggestion] = []
+    @Published var activeScenarios: [AIScenario] = []
+    @Published var suggestions: [AISuggestion] = []
     @Published var isAnalyzing = false
     
     private let contextEngine = WorkerContextEngine.shared
@@ -81,24 +81,24 @@ class AIAssistantManager: ObservableObject {
     }
     
     private func generateScenarios(from summary: WorkerSummary) async {
-        var scenarios: [FrancoSphere.AIScenario] = []
+        var scenarios: [AIScenario] = []
         
         // Scenario 1: Task completion guidance
         if summary.completedTasks < summary.totalTasks / 2 {
             let suggestions = [
-                FrancoSphere.AISuggestion(
+                AISuggestion(
                     id: "suggest_priority",
                     text: "Focus on high-priority tasks first",
                     priority: .high
                 ),
-                FrancoSphere.AISuggestion(
+                AISuggestion(
                     id: "suggest_schedule",
                     text: "Review your schedule for today",
                     priority: .medium
                 )
             ]
             
-            scenarios.append(FrancoSphere.AIScenario(
+            scenarios.append(AIScenario(
                 id: "incomplete_tasks",
                 title: "Task Completion Guidance",
                 description: "You have several tasks remaining today",
@@ -109,19 +109,19 @@ class AIAssistantManager: ObservableObject {
         // Scenario 2: Data health issues
         if summary.dataHealth == .critical {
             let suggestions = [
-                FrancoSphere.AISuggestion(
+                AISuggestion(
                     id: "refresh_data",
                     text: "Refresh your task data",
                     priority: .urgent
                 ),
-                FrancoSphere.AISuggestion(
+                AISuggestion(
                     id: "check_assignments",
                     text: "Verify your building assignments",
                     priority: .high
                 )
             ]
             
-            scenarios.append(FrancoSphere.AIScenario(
+            scenarios.append(AIScenario(
                 id: "data_issues",
                 title: "Data Sync Issue",
                 description: "Your task data may need refreshing",
@@ -132,19 +132,19 @@ class AIAssistantManager: ObservableObject {
         // Scenario 3: Productivity optimization
         if summary.completedTasks > 0 {
             let suggestions = [
-                FrancoSphere.AISuggestion(
+                AISuggestion(
                     id: "route_optimize",
                     text: "Optimize your route between buildings",
                     priority: .medium
                 ),
-                FrancoSphere.AISuggestion(
+                AISuggestion(
                     id: "time_tracking",
                     text: "Track time for similar tasks",
                     priority: .low
                 )
             ]
             
-            scenarios.append(FrancoSphere.AIScenario(
+            scenarios.append(AIScenario(
                 id: "productivity_tips",
                 title: "Productivity Optimization",
                 description: "Tips to improve your workflow",

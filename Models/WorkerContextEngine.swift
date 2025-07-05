@@ -93,9 +93,9 @@ public class WorkerContextEngine: ObservableObject {
     // MARK: - Singleton
     public static let shared = WorkerContextEngine()
 
-    public func getCurrentWeather() -> FrancoSphere.WeatherData? {
+    public func getCurrentWeather() -> WeatherData? {
         // Return current weather data - implementation depends on your weather service
-        return FrancoSphere.WeatherData(
+        return WeatherData(
             temperature: 72.0,
             condition: .clear,
             humidity: 65.0,
@@ -1556,7 +1556,7 @@ public class WorkerContextEngine: ObservableObject {
 
 // MARK: - Additional Methods for Data Loading
 extension WorkerContextEngine {
-    func updateAssignedBuildings(_ buildings: [FrancoSphere.NamedCoordinate]) {
+    func updateAssignedBuildings(_ buildings: [NamedCoordinate]) {
         self.assignedBuildings = buildings
     }
     

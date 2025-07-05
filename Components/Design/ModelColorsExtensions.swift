@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension FrancoSphere.WeatherCondition {
+extension WeatherCondition {
     var conditionColor: Color {
         switch self {
         case .sunny, .clear: return .yellow
@@ -21,7 +21,7 @@ extension FrancoSphere.WeatherCondition {
     }
 }
 
-extension FrancoSphere.TaskUrgency {
+extension TaskUrgency {
     var urgencyColor: Color {
         switch self {
         case .low: return .green
@@ -32,7 +32,7 @@ extension FrancoSphere.TaskUrgency {
     }
 }
 
-extension FrancoSphere.VerificationStatus {
+extension VerificationStatus {
     var statusColor: Color {
         switch self {
         case .pending: return .orange
@@ -43,7 +43,7 @@ extension FrancoSphere.VerificationStatus {
     }
 }
 
-extension FrancoSphere.WorkerSkill {
+extension WorkerSkill {
     var skillColor: Color {
         switch self {
         case .basic: return .blue
@@ -63,7 +63,7 @@ extension FrancoSphere.WorkerSkill {
     }
 }
 
-extension FrancoSphere.RestockStatus {
+extension RestockStatus {
     var statusColor: Color {
         switch self {
         case .inStock: return .green
@@ -77,7 +77,7 @@ extension FrancoSphere.RestockStatus {
     }
 }
 
-extension FrancoSphere.InventoryCategory {
+extension InventoryCategory {
     var categoryColor: Color {
         switch self {
         case .cleaning: return .blue
@@ -95,8 +95,8 @@ extension FrancoSphere.InventoryCategory {
     }
 }
 
-extension FrancoSphere.WeatherData {
-    var outdoorWorkRisk: FrancoSphere.OutdoorWorkRisk {
+extension WeatherData {
+    var outdoorWorkRisk: OutdoorWorkRisk {
         switch condition {
         case .sunny, .clear, .cloudy:
             return temperature < 32 ? .medium : .low

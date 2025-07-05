@@ -11,7 +11,7 @@ import SwiftUI
 // (This comment helps identify our import)
 
 
-extension FrancoSphere.InventoryItem {
+extension InventoryItem {
     var statusColor: Color {
         if quantity <= 0 {
             return .red
@@ -25,8 +25,8 @@ extension FrancoSphere.InventoryItem {
 
 /// Displays and manages inventory for a selected building.
 struct InventoryView: View {
-    @State private var inventoryItems: [FrancoSphere.InventoryItem] = []
-    @State private var selectedCategory: FrancoSphere.InventoryCategory? = nil
+    @State private var inventoryItems: [InventoryItem] = []
+    @State private var selectedCategory: InventoryCategory? = nil
     @State private var searchText: String = ""
     @State private var isLoading = true
     @State private var errorMessage: String? = nil
@@ -34,7 +34,7 @@ struct InventoryView: View {
     
     let buildingID: String
     
-    var filteredItems: [FrancoSphere.InventoryItem] {
+    var filteredItems: [InventoryItem] {
         let filtered = inventoryItems.filter { item in
             (selectedCategory == nil || item.category == selectedCategory) &&
             (searchText.isEmpty || item.name.localizedCaseInsensitiveContains(searchText))
@@ -56,7 +56,7 @@ struct InventoryView: View {
                         HStack(spacing: 8) {
                             categoryButton(nil, label: "All")
                             
-                            ForEach(FrancoSphere.InventoryCategory.allCases, id: \.self) { category in
+                            ForEach(InventoryCategory.allCases, id: \.self) { category in
                                 categoryButton(category, label: category.rawValue.capitalized)
                             }
                         }
@@ -238,7 +238,7 @@ struct InventoryView: View {
         }
     }
     
-    private func categoryButton(_ category: FrancoSphere.InventoryCategory?, label: String) -> some View {
+    private func categoryButton(_ category: InventoryCategory?, label: String) -> some View {
         Button(action: {
             withAnimation {
                 selectedCategory = category
@@ -282,7 +282,7 @@ struct InventoryView: View {
         }
     }
     
-    private func deleteItem(_ item: FrancoSphere.InventoryItem) {
+    private func deleteItem(_ item: InventoryItem) {
         Task { @MainActor in
             do {
                 try await BuildingService.shared.deleteInventoryItem(itemId: item.id)
@@ -298,7 +298,7 @@ struct InventoryView: View {
 
 /// Represents a row in the inventory list.
 struct InventoryItemRow: View {
-    let item: FrancoSphere.InventoryItem
+    let item: InventoryItem
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -322,7 +322,7 @@ struct InventoryItemRow: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    // ✅ FIXED: Use item properties that exist in FrancoSphere.InventoryItem
+                    // ✅ FIXED: Use item properties that exist in InventoryItem
                     if item.needsReorder {
                         Text(item.quantity <= 0 ? "Out of Stock" : "Low Stock")
                             .font(.caption)
@@ -362,7 +362,7 @@ struct InventoryItemRow: View {
 // MARK: - Detail View
 
 struct InventoryItemDetailView: View {
-    let item: FrancoSphere.InventoryItem
+    let item: InventoryItem
     let onUpdate: () -> Void
     @State private var newQuantity: Int
     @State private var isEditing = false
@@ -370,7 +370,7 @@ struct InventoryItemDetailView: View {
     @State private var isUpdating = false
     @Environment(\.presentationMode) var presentationMode
     
-    init(item: FrancoSphere.InventoryItem, onUpdate: @escaping () -> Void = {}) {
+    init(item: InventoryItem, onUpdate: @escaping () -> Void = {}) {
         self.item = item
         self.onUpdate = onUpdate
         _newQuantity = State(initialValue: item.quantity)
@@ -502,7 +502,7 @@ public struct AddInventoryItemView: View {
     @State private var quantity = 1
     @State private var unit = "pcs"
     @State private var minimumQuantity = 1
-    @State private var selectedCategory: FrancoSphere.InventoryCategory = .other
+    @State private var selectedCategory: InventoryCategory = .other
     @State private var location = ""
     @State private var notes = ""
     @State private var showError = false
@@ -535,7 +535,7 @@ public struct AddInventoryItemView: View {
                     Stepper("Minimum Quantity: \(minimumQuantity)", value: $minimumQuantity, in: 1...100)
                     
                     Picker("Category", selection: $selectedCategory) {
-                        ForEach(FrancoSphere.InventoryCategory.allCases, id: \.self) { category in
+                        ForEach(InventoryCategory.allCases, id: \.self) { category in
                             HStack {
                                 Image(systemName: category.systemImage)
                                 Text(category.rawValue.capitalized)
@@ -599,7 +599,7 @@ public struct AddInventoryItemView: View {
         
         isSubmitting = true
         
-        let newItem = FrancoSphere.InventoryItem(
+        let newItem = InventoryItem(
             name: trimmedName,
             buildingID: buildingID,
             category: selectedCategory,
@@ -627,4 +627,4 @@ public struct AddInventoryItemView: View {
 }
 
 // ✅ REMOVED: Duplicate property declarations for shouldReorder and statusText
-// These properties are already defined in the FrancoSphere.InventoryItem type
+// These properties are already defined in the InventoryItem type

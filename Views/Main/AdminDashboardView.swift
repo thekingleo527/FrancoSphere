@@ -28,9 +28,9 @@ struct AdminDashboardView: View {
     @State private var isLoadingBuildings = false
     
     // State variables
-    @State private var activeWorkers: [FrancoSphere.WorkerProfile] = []
+    @State private var activeWorkers: [WorkerProfile] = []
     @State private var ongoingTasks: [ContextualTask] = []  // ✅ FIXED: Use ContextualTask from consolidated services
-    @State private var inventoryAlerts: [FrancoSphere.InventoryItem] = []
+    @State private var inventoryAlerts: [InventoryItem] = []
     @State private var selectedTab = 0
     @State private var showNewTaskSheet = false
     @State private var isRefreshing = false
@@ -327,7 +327,7 @@ struct AdminDashboardView: View {
         }
     }
     
-    private func workerCard(_ worker: FrancoSphere.WorkerProfile) -> some View {
+    private func workerCard(_ worker: WorkerProfile) -> some View {
         VStack(alignment: .center, spacing: 8) {
             // Worker avatar
             ZStack {
@@ -362,7 +362,7 @@ struct AdminDashboardView: View {
         .cornerRadius(12)
     }
     
-    private func getWorkerRoleColor(_ role: FrancoSphere.UserRole) -> Color {
+    private func getWorkerRoleColor(_ role: UserRole) -> Color {
         switch role {
         case .admin:
             return .purple
@@ -477,7 +477,7 @@ struct AdminDashboardView: View {
         }
     }
     
-    private func inventoryAlertItem(_ item: FrancoSphere.InventoryItem) -> some View {
+    private func inventoryAlertItem(_ item: InventoryItem) -> some View {
         NavigationLink(destination: Text("Inventory Detail")) {
             HStack(spacing: 12) {
                 // Category icon
@@ -597,7 +597,7 @@ struct AdminDashboardView: View {
     // ✅ FIXED: Use consolidated services instead of legacy managers
     private func loadDashboardData() async {
         // Load active workers (mock data for now)
-        activeWorkers = FrancoSphere.WorkerProfile.allWorkers
+        activeWorkers = WorkerProfile.allWorkers
         
         // Load ongoing tasks from all buildings using TaskService
         await loadOngoingTasks()
@@ -627,7 +627,7 @@ struct AdminDashboardView: View {
     }
     
     private func loadInventoryAlerts() async {
-        var allInventoryAlerts: [FrancoSphere.InventoryItem] = []
+        var allInventoryAlerts: [InventoryItem] = []
         
         for building in buildings {
             // Create mock inventory items since InventoryManager might not exist
@@ -768,10 +768,10 @@ struct AdminDashboardView: View {
         .cornerRadius(12)
     }
     
-    private func createMockInventoryItems(forBuilding buildingId: String) -> [FrancoSphere.InventoryItem] {
+    private func createMockInventoryItems(forBuilding buildingId: String) -> [InventoryItem] {
         // Create mock inventory items for demo
         return [
-            FrancoSphere.InventoryItem(
+            InventoryItem(
                 name: "Paper Towels",
                 buildingID: buildingId,
                 category: .cleaning,
@@ -780,7 +780,7 @@ struct AdminDashboardView: View {
                 minimumQuantity: 5,
                 needsReorder: true
             ),
-            FrancoSphere.InventoryItem(
+            InventoryItem(
                 name: "Light Bulbs",
                 buildingID: buildingId,
                 category: .electrical,

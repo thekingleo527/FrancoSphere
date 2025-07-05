@@ -1,3 +1,4 @@
+// Import added for type access
 // UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerProfileView.swift

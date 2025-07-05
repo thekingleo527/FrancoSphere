@@ -40,7 +40,7 @@ struct TaskRequestView: View {
     @State private var showPhotoSelector = false
     @State private var requiredInventory: [String: Int] = [:]
     @State private var showInventorySelector = false
-    @State private var availableInventory: [FrancoSphere.InventoryItem] = []
+    @State private var availableInventory: [InventoryItem] = []
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var suggestions: [TaskSuggestion] = []
@@ -413,7 +413,7 @@ struct TaskRequestView: View {
                (!attachPhoto || photo != nil)
     }
     
-    private func getInventoryItem(_ itemId: String) -> FrancoSphere.InventoryItem? {
+    private func getInventoryItem(_ itemId: String) -> InventoryItem? {
         return availableInventory.first { $0.id == itemId }
     }
     
@@ -633,7 +633,7 @@ struct InventorySelectionView: View {
     @Binding var selectedItems: [String: Int]
     var onDismiss: (() -> Void)? = nil
     
-    @State private var inventoryItems: [FrancoSphere.InventoryItem] = []
+    @State private var inventoryItems: [InventoryItem] = []
     @State private var isLoading = true
     @State private var searchText = ""
     @State private var tempQuantities: [String: Int] = [:]
@@ -727,7 +727,7 @@ struct InventorySelectionView: View {
         }
     }
     
-    private func inventoryItemRow(_ item: FrancoSphere.InventoryItem) -> some View {
+    private func inventoryItemRow(_ item: InventoryItem) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -764,7 +764,7 @@ struct InventorySelectionView: View {
         .padding(.vertical, 4)
     }
     
-    private var filteredItems: [FrancoSphere.InventoryItem] {
+    private var filteredItems: [InventoryItem] {
         if searchText.isEmpty {
             return inventoryItems
         } else {

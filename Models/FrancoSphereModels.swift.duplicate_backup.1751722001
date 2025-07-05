@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🎯 COMPLETE - ALL MISSING TYPES INCLUDED
+//  ✅ REBUILT - Clean type definitions with proper structure
 //
 
 import Foundation
@@ -23,6 +23,15 @@ public enum FrancoSphere {
         
         public var coordinate: CLLocationCoordinate2D {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        
+        public init(id: String, name: String, latitude: Double, longitude: Double, address: String? = nil, imageAssetName: String? = nil) {
+            self.id = id
+            self.name = name
+            self.latitude = latitude
+            self.longitude = longitude
+            self.address = address
+            self.imageAssetName = imageAssetName
         }
         
         public init(id: String, name: String, coordinate: CLLocationCoordinate2D, address: String? = nil, imageAssetName: String? = nil) {
@@ -235,7 +244,6 @@ public enum FrancoSphere {
         }
     }
     
-    // ✅ MISSING: WorkerAssignment
     public struct WorkerAssignment: Identifiable, Codable {
         public let id: String
         public let workerId: String
@@ -303,7 +311,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Core Task Type
+    // MARK: - Task Context Models
     public struct ContextualTask: Identifiable, Codable {
         public let id: String
         public let maintenanceTask: MaintenanceTask
@@ -323,7 +331,6 @@ public enum FrancoSphere {
             self.buildingName = buildingName
         }
         
-        // Legacy constructor for WeatherDashboardComponent
         public init(id: String, name: String, description: String, buildingId: String, workerId: String, isCompleted: Bool) {
             let task = MaintenanceTask(
                 id: id,
@@ -339,7 +346,7 @@ public enum FrancoSphere {
         }
     }
     
-    // ✅ MISSING: Worker Routine Types
+    // MARK: - Worker Routine Models
     public struct WorkerRoutineSummary: Codable {
         public let totalRoutines: Int
         public let completedToday: Int
@@ -424,7 +431,7 @@ public enum FrancoSphere {
         }
     }
     
-    // ✅ MISSING: Building Insight
+    // MARK: - Building Models
     public struct BuildingInsight: Identifiable, Codable {
         public let id: String
         public let title: String
@@ -441,39 +448,21 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Additional Required Types
-    public struct MaintenanceRecord: Identifiable, Codable {
-        public let id: String
-        public let taskId: String
-        public let completedDate: Date
-        public let notes: String
-        
-        public init(id: String, taskId: String, completedDate: Date, notes: String) {
-            self.id = id
-            self.taskId = taskId
-            self.completedDate = completedDate
-            self.notes = notes
-        }
+    public enum BuildingTab: String, CaseIterable, Codable {
+        case overview = "Overview"
+        case tasks = "Tasks"
+        case inventory = "Inventory"
+        case insights = "Insights"
     }
     
-    public struct TaskCompletionRecord: Identifiable, Codable {
-        public let id: String
-        public let taskId: String
-        public let workerId: String
-        public let completedAt: Date
-        public let photoPath: String?
-        public let notes: String?
-        
-        public init(id: String = UUID().uuidString, taskId: String, workerId: String, completedAt: Date, photoPath: String? = nil, notes: String? = nil) {
-            self.id = id
-            self.taskId = taskId
-            self.workerId = workerId
-            self.completedAt = completedAt
-            self.photoPath = photoPath
-            self.notes = notes
-        }
+    public enum BuildingStatus: String, CaseIterable, Codable {
+        case active = "Active"
+        case maintenance = "Maintenance"
+        case inspection = "Inspection"
+        case emergency = "Emergency"
     }
     
+    // MARK: - Performance Models
     public struct TaskTrends: Codable {
         public let weeklyCompletion: [Double]
         public let categoryBreakdown: [String: Int]
@@ -536,6 +525,7 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - Task Evidence and Progress
     public struct TaskEvidence: Codable {
         public let photos: [Data]
         public let timestamp: Date
@@ -564,6 +554,7 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - AI Models
     public enum AIScenario: String, Codable, CaseIterable {
         case routineIncomplete = "routineIncomplete"
         case pendingTasks = "pendingTasks"
@@ -575,7 +566,6 @@ public enum FrancoSphere {
         case inventoryLow = "inventoryLow"
     }
     
-    // ✅ MISSING: AISuggestion
     public struct AISuggestion: Identifiable, Codable {
         public let id: String
         public let title: String
@@ -596,7 +586,6 @@ public enum FrancoSphere {
         }
     }
     
-    // ✅ MISSING: AIScenarioData
     public struct AIScenarioData: Identifiable, Codable {
         public let id: String
         public let scenario: AIScenario
@@ -615,6 +604,7 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - Weather Impact
     public struct WeatherImpact: Codable {
         public let condition: WeatherCondition
         public let temperature: Double
@@ -629,6 +619,7 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - System Models
     public enum DataHealthStatus: Codable, Equatable {
         case unknown
         case healthy
@@ -636,21 +627,40 @@ public enum FrancoSphere {
         case critical([String])
     }
     
-    public enum BuildingTab: String, CaseIterable, Codable {
-        case overview = "Overview"
-        case tasks = "Tasks"
-        case inventory = "Inventory"
-        case insights = "Insights"
+    // MARK: - Additional Records
+    public struct MaintenanceRecord: Identifiable, Codable {
+        public let id: String
+        public let taskId: String
+        public let completedDate: Date
+        public let notes: String
+        
+        public init(id: String, taskId: String, completedDate: Date, notes: String) {
+            self.id = id
+            self.taskId = taskId
+            self.completedDate = completedDate
+            self.notes = notes
+        }
     }
     
-    public enum BuildingStatus: String, CaseIterable, Codable {
-        case active = "Active"
-        case maintenance = "Maintenance"
-        case inspection = "Inspection"
-        case emergency = "Emergency"
+    public struct TaskCompletionRecord: Identifiable, Codable {
+        public let id: String
+        public let taskId: String
+        public let workerId: String
+        public let completedAt: Date
+        public let photoPath: String?
+        public let notes: String?
+        
+        public init(id: String = UUID().uuidString, taskId: String, workerId: String, completedAt: Date, photoPath: String? = nil, notes: String? = nil) {
+            self.id = id
+            self.taskId = taskId
+            self.workerId = workerId
+            self.completedAt = completedAt
+            self.photoPath = photoPath
+            self.notes = notes
+        }
     }
     
-    // Export/Import types
+    // MARK: - Export Models
     public struct ExportProgress {
         public let completed: Int
         public let total: Int
@@ -678,7 +688,7 @@ public enum FrancoSphere {
     }
 }
 
-// ✅ CLEAN TYPE ALIASES - NO CIRCULAR REFERENCES
+// MARK: - Clean Type Aliases
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
 public typealias WeatherCondition = FrancoSphere.WeatherCondition
 public typealias WeatherData = FrancoSphere.WeatherData
@@ -702,8 +712,8 @@ public typealias RouteOptimization = FrancoSphere.RouteOptimization
 public typealias ScheduleConflict = FrancoSphere.ScheduleConflict
 public typealias RouteStop = FrancoSphere.RouteStop
 public typealias BuildingInsight = FrancoSphere.BuildingInsight
-public typealias MaintenanceRecord = FrancoSphere.MaintenanceRecord
-public typealias TaskCompletionRecord = FrancoSphere.TaskCompletionRecord
+public typealias BuildingTab = FrancoSphere.BuildingTab
+public typealias BuildingStatus = FrancoSphere.BuildingStatus
 public typealias TaskTrends = FrancoSphere.TaskTrends
 public typealias PerformanceMetrics = FrancoSphere.PerformanceMetrics
 public typealias StreakData = FrancoSphere.StreakData
@@ -716,8 +726,8 @@ public typealias AISuggestion = FrancoSphere.AISuggestion
 public typealias AIScenarioData = FrancoSphere.AIScenarioData
 public typealias WeatherImpact = FrancoSphere.WeatherImpact
 public typealias DataHealthStatus = FrancoSphere.DataHealthStatus
-public typealias BuildingTab = FrancoSphere.BuildingTab
-public typealias BuildingStatus = FrancoSphere.BuildingStatus
+public typealias MaintenanceRecord = FrancoSphere.MaintenanceRecord
+public typealias TaskCompletionRecord = FrancoSphere.TaskCompletionRecord
 public typealias ExportProgress = FrancoSphere.ExportProgress
 public typealias ImportError = FrancoSphere.ImportError
 

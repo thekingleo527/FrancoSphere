@@ -194,7 +194,7 @@ class NewAuthManager: ObservableObject {
     // MARK: - Helper Methods
     
     /// Get current worker profile
-    func getCurrentWorkerProfile() -> FrancoSphere.WorkerProfile? {
+    func getCurrentWorkerProfile() -> WorkerProfile? {
         guard !workerId.isEmpty else { return nil }
         return getWorkerProfile(byId: workerId)
     }
@@ -472,7 +472,7 @@ class NewAuthManager: ObservableObject {
     }
     
     // Helper method for WorkerProfile lookup
-    private func getWorkerProfile(byId workerId: String) -> FrancoSphere.WorkerProfile? {
+    private func getWorkerProfile(byId workerId: String) -> WorkerProfile? {
         // Return nil for now - implement actual lookup if needed
         return nil
     }

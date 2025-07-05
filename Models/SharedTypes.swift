@@ -1,3 +1,4 @@
+// Import added for type access
 //
 //  SharedTypes.swift
 //  FrancoSphere
