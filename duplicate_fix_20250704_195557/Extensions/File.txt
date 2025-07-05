@@ -1,0 +1,57 @@
+//
+//  SQLiteManager+Extensions.swift
+//  FrancoSphere
+//
+//  Async extensions for SQLiteManager
+//
+
+import Foundation
+
+extension SQLiteManager {
+    // Async wrapper for clock-in check
+    func isWorkerClockedInAsync(workerId: Int64) async -> (isClockedIn: Bool, buildingId: Int64?) {
+        return await withCheckedContinuation { continuation in
+            let result = isWorkerClockedIn(workerId: workerId)
+            continuation.resume(returning: result)
+        }
+    }
+    
+    // Async wrapper for clock-in logging
+    func logClockInAsync(workerId: Int64, buildingId: Int64, timestamp: Date) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                try logClockIn(workerId: workerId, buildingId: buildingId, timestamp: timestamp)
+                continuation.resume()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    // Async wrapper for clock-out logging
+    func logClockOutAsync(workerId: Int64, timestamp: Date) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                try logClockOut(workerId: workerId, timestamp: timestamp)
+                continuation.resume()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+}
+
+// Extension to ensure SQLiteManager is accessible as a singleton
+extension SQLiteManager {
+    static var shared: SQLiteManager {
+        // This assumes SQLiteManager has a singleton or we need to create one
+        // If not, you may need to modify SQLiteManager to have a shared instance
+        return try! SQLiteManager.start()
+    }
+    
+    func isDatabaseReady() -> Bool {
+        // Check if database is initialized and ready
+        // This is a placeholder - implement based on your SQLiteManager
+        return true
+    }
+}

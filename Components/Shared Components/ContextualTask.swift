@@ -1,106 +1,73 @@
-// FILE: Components/Shared Components/ContextualTask.swift
 //
 //  ContextualTask.swift
 //  FrancoSphere
 //
-//  ✅ ENHANCED CONTEXTUAL TASK with computed properties
-//  ✅ Added compatibility properties for existing code
-//  ✅ Real data integration ready
+//  Fixed version with proper Codable conformance
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
+import CoreLocation
 
-import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-
-// MARK: - ContextualTask Model
-
-/// Core task model with building context and time information
-struct ContextualTask: Identifiable, Hashable, Codable {
-    let id: String
-    let name: String
-    let buildingId: String
-    let buildingName: String
-    let category: String
-    let startTime: String?
-    let endTime: String?
-    let recurrence: String
-    let skillLevel: String
-    let status: String
-    let urgencyLevel: String
-    let assignedWorkerName: String?
-    let scheduledDate: Date?
+public struct ContextualTask: Identifiable, Codable, Hashable {
+    public let id: String
+    public let name: String
+    public let buildingId: String
+    public let buildingName: String
+    public let category: String
+    public let startTime: String
+    public let endTime: String
+    public let recurrence: String
+    public let skillLevel: String
+    public var status: String
+    public let urgencyLevel: String
+    public let assignedWorkerName: String
+    public var scheduledDate: Date?
+    public var completedAt: Date?
+    public var notes: String?
     
-    // MARK: - Computed Properties
+    // Location is not Codable, so we store coordinates separately
+    private var locationLatitude: Double?
+    private var locationLongitude: Double?
     
-    /// Compatibility property for existing code
-    var isCompleted: Bool {
-        return status == "completed"
-    }
-    
-    /// Check if task is weather-dependent
-    var isWeatherDependent: Bool {
-        let weatherKeywords = ["outdoor", "exterior", "roof", "gutter", "window", "clean", "sweep", "park", "sidewalk", "hose"]
-        return weatherKeywords.contains { keyword in
-            name.lowercased().contains(keyword) || category.lowercased().contains(keyword)
+    // Computed property for location
+    public var location: CLLocation? {
+        get {
+            guard let lat = locationLatitude, let lng = locationLongitude else { return nil }
+            return CLLocation(latitude: lat, longitude: lng)
+        }
+        set {
+            locationLatitude = newValue?.coordinate.latitude
+            locationLongitude = newValue?.coordinate.longitude
         }
     }
     
-    /// Check if task is overdue based on current time
-    var isOverdue: Bool {
-        guard let startTime = startTime else { return false }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        if let taskTime = formatter.date(from: startTime) {
-            let calendar = Calendar.current
-            let now = Date()
-            let taskComponents = calendar.dateComponents([.hour, .minute], from: taskTime)
-            let nowComponents = calendar.dateComponents([.hour, .minute], from: now)
-            
-            if let taskHour = taskComponents.hour, let taskMinute = taskComponents.minute,
-               let nowHour = nowComponents.hour, let nowMinute = nowComponents.minute {
-                let taskMinutes = taskHour * 60 + taskMinute
-                let nowMinutes = nowHour * 60 + nowMinute
-                return nowMinutes > taskMinutes && status == "pending"
-            }
-        }
-        return false
-    }
-    
-    /// Color coding based on urgency and overdue status
-    var urgencyColor: Color {
-        if isOverdue { return .red }
-        switch urgencyLevel.lowercased() {
-        case "urgent", "high": return .orange
-        case "medium": return .yellow
-        default: return .green
-        }
-    }
-    
-    /// Time display for UI
-    var timeDisplay: String {
-        if let start = startTime, let end = endTime {
-            return "\(start) - \(end)"
-        } else if let start = startTime {
-            return start
-        } else {
-            return "Flexible"
-        }
-    }
-    
-    /// Formatted building name for display
-    var buildingDisplayName: String {
-        return buildingName.isEmpty ? "Building \(buildingId)" : buildingName
+    // MARK: - CodingKeys
+    private enum CodingKeys: String, CodingKey {
+        case id, name, buildingId, buildingName, category
+        case startTime, endTime, recurrence, skillLevel, status
+        case urgencyLevel, assignedWorkerName, scheduledDate, completedAt, notes
+        case locationLatitude, locationLongitude
     }
     
     // MARK: - Initializers
-    
-    init(id: String, name: String, buildingId: String, buildingName: String, category: String, startTime: String?, endTime: String?, recurrence: String, skillLevel: String, status: String, urgencyLevel: String, assignedWorkerName: String? = nil, scheduledDate: Date? = nil) {
+    public init(
+        id: String = UUID().uuidString,
+        name: String,
+        buildingId: String,
+        buildingName: String,
+        category: String,
+        startTime: String,
+        endTime: String,
+        recurrence: String,
+        skillLevel: String,
+        status: String,
+        urgencyLevel: String,
+        assignedWorkerName: String,
+        scheduledDate: Date? = nil,
+        completedAt: Date? = nil,
+        location: CLLocation? = nil,
+        notes: String? = nil
+    ) {
         self.id = id
         self.name = name
         self.buildingId = buildingId
@@ -114,106 +81,176 @@ struct ContextualTask: Identifiable, Hashable, Codable {
         self.urgencyLevel = urgencyLevel
         self.assignedWorkerName = assignedWorkerName
         self.scheduledDate = scheduledDate
+        self.completedAt = completedAt
+        self.notes = notes
+        
+        // Handle location
+        self.locationLatitude = location?.coordinate.latitude
+        self.locationLongitude = location?.coordinate.longitude
     }
     
-    // MARK: - Hashable & Identifiable
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
+    // MARK: - Codable Implementation
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        buildingId = try container.decode(String.self, forKey: .buildingId)
+        buildingName = try container.decode(String.self, forKey: .buildingName)
+        category = try container.decode(String.self, forKey: .category)
+        startTime = try container.decode(String.self, forKey: .startTime)
+        endTime = try container.decode(String.self, forKey: .endTime)
+        recurrence = try container.decode(String.self, forKey: .recurrence)
+        skillLevel = try container.decode(String.self, forKey: .skillLevel)
+        status = try container.decode(String.self, forKey: .status)
+        urgencyLevel = try container.decode(String.self, forKey: .urgencyLevel)
+        assignedWorkerName = try container.decode(String.self, forKey: .assignedWorkerName)
+        
+        scheduledDate = try container.decodeIfPresent(Date.self, forKey: .scheduledDate)
+        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        
+        locationLatitude = try container.decodeIfPresent(Double.self, forKey: .locationLatitude)
+        locationLongitude = try container.decodeIfPresent(Double.self, forKey: .locationLongitude)
     }
     
-    static func == (lhs: ContextualTask, rhs: ContextualTask) -> Bool {
-        return lhs.id == rhs.id
-    }
-}
-
-// MARK: - ContextualTask Factory Methods
-
-extension ContextualTask {
-    
-    /// Create a ContextualTask from database row
-    static func fromDatabaseRow(_ row: [String: Any]) -> ContextualTask {
-        return ContextualTask(
-            id: String(describing: row["id"] ?? ""),
-            name: row["name"] as? String ?? "",
-            buildingId: String(row["buildingId"] as? Int64 ?? 0),
-            buildingName: row["buildingName"] as? String ?? "",
-            category: row["category"] as? String ?? "general",
-            startTime: row["startTime"] as? String,
-            endTime: row["endTime"] as? String,
-            recurrence: row["recurrence"] as? String ?? "oneTime",
-            skillLevel: row["skillLevel"] as? String ?? "Basic",
-            status: row["status"] as? String ?? "pending",
-            urgencyLevel: row["urgencyLevel"] as? String ?? "medium",
-            assignedWorkerName: row["assignedWorkerName"] as? String,
-            scheduledDate: row["scheduledDate"] as? Date
-        )
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(buildingId, forKey: .buildingId)
+        try container.encode(buildingName, forKey: .buildingName)
+        try container.encode(category, forKey: .category)
+        try container.encode(startTime, forKey: .startTime)
+        try container.encode(endTime, forKey: .endTime)
+        try container.encode(recurrence, forKey: .recurrence)
+        try container.encode(skillLevel, forKey: .skillLevel)
+        try container.encode(status, forKey: .status)
+        try container.encode(urgencyLevel, forKey: .urgencyLevel)
+        try container.encode(assignedWorkerName, forKey: .assignedWorkerName)
+        
+        try container.encodeIfPresent(scheduledDate, forKey: .scheduledDate)
+        try container.encodeIfPresent(completedAt, forKey: .completedAt)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        
+        try container.encodeIfPresent(locationLatitude, forKey: .locationLatitude)
+        try container.encodeIfPresent(locationLongitude, forKey: .locationLongitude)
     }
     
-    /// Create sample task for testing
-    static func sampleTask(
-        id: String = "sample_1",
-        name: String = "Sample Task",
-        buildingId: String = "1",
-        buildingName: String = "Sample Building"
+    // MARK: - Computed Properties
+    public var isCompleted: Bool {
+        return status.lowercased() == "completed"
+    }
+    
+    public var isOverdue: Bool {
+        guard let scheduledDate = scheduledDate else { return false }
+        return scheduledDate < Date() && !isCompleted
+    }
+    
+    public var priorityScore: Int {
+        switch urgencyLevel.lowercased() {
+        case "urgent": return 4
+        case "high": return 3
+        case "medium": return 2
+        case "low": return 1
+        default: return 2
+        }
+    }
+    
+    public var categoryColor: String {
+        switch category.lowercased() {
+        case "maintenance": return "orange"
+        case "cleaning": return "blue"
+        case "inspection": return "green"
+        case "sanitation": return "purple"
+        case "repair": return "red"
+        default: return "gray"
+        }
+    }
+    
+    public var urgencyColor: String {
+        switch urgencyLevel.lowercased() {
+        case "urgent": return "red"
+        case "high": return "orange"
+        case "medium": return "yellow"
+        case "low": return "green"
+        default: return "gray"
+        }
+    }
+    
+    // MARK: - Helper Methods
+    public func formattedStartTime() -> String {
+        return startTime
+    }
+    
+    public func formattedEndTime() -> String {
+        return endTime
+    }
+    
+    public func estimatedDuration() -> TimeInterval {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        guard let start = formatter.date(from: startTime),
+              let end = formatter.date(from: endTime) else {
+            return 3600 // Default 1 hour
+        }
+        
+        return end.timeIntervalSince(start)
+    }
+    
+    // MARK: - Static Factory Methods
+    public static func createMaintenanceTask(
+        name: String,
+        buildingId: String,
+        buildingName: String,
+        assignedWorker: String
     ) -> ContextualTask {
         return ContextualTask(
-            id: id,
             name: name,
             buildingId: buildingId,
             buildingName: buildingName,
-            category: "maintenance",
+            category: "Maintenance",
             startTime: "09:00",
             endTime: "10:00",
-            recurrence: "daily",
+            recurrence: "Daily",
             skillLevel: "Basic",
             status: "pending",
-            urgencyLevel: "medium"
+            urgencyLevel: "Medium",
+            assignedWorkerName: assignedWorker
+        )
+    }
+    
+    public static func createCleaningTask(
+        name: String,
+        buildingId: String,
+        buildingName: String,
+        assignedWorker: String
+    ) -> ContextualTask {
+        return ContextualTask(
+            name: name,
+            buildingId: buildingId,
+            buildingName: buildingName,
+            category: "Cleaning",
+            startTime: "08:00",
+            endTime: "09:00",
+            recurrence: "Daily",
+            skillLevel: "Basic",
+            status: "pending",
+            urgencyLevel: "Medium",
+            assignedWorkerName: assignedWorker
         )
     }
 }
 
-// MARK: - ContextualTask Array Extensions
-
-extension Array where Element == ContextualTask {
-    
-    /// Filter tasks by building ID
-    func forBuilding(_ buildingId: String) -> [ContextualTask] {
-        return self.filter { $0.buildingId == buildingId }
+// MARK: - Hash Implementation
+extension ContextualTask {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
     
-    /// Filter tasks by status
-    func withStatus(_ status: String) -> [ContextualTask] {
-        return self.filter { $0.status == status }
-    }
-    
-    /// Get only overdue tasks
-    var overdue: [ContextualTask] {
-        return self.filter { $0.isOverdue }
-    }
-    
-    /// Get only urgent tasks
-    var urgent: [ContextualTask] {
-        return self.filter { $0.urgencyLevel.lowercased() == "urgent" }
-    }
-    
-    /// Get only pending tasks
-    var pending: [ContextualTask] {
-        return self.filter { $0.status == "pending" }
-    }
-    
-    /// Get only completed tasks
-    var completed: [ContextualTask] {
-        return self.filter { $0.status == "completed" }
-    }
-    
-    /// Count of incomplete tasks
-    var incompleteCount: Int {
-        return self.filter { $0.status != "completed" }.count
-    }
-    
-    /// Count of weather-dependent tasks
-    var weatherDependentCount: Int {
-        return self.filter { $0.isWeatherDependent }.count
+    public static func == (lhs: ContextualTask, rhs: ContextualTask) -> Bool {
+        return lhs.id == rhs.id
     }
 }
