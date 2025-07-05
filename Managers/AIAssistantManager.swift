@@ -1,3 +1,5 @@
+//  Import AI types for proper enum resolution
+
 //
 //  AIAssistantManager.swift
 //  FrancoSphere
@@ -6,6 +8,69 @@
 //
 
 import Foundation
+
+// MARK: - Scenario Types
+public enum AIScenarioType: String, CaseIterable {
+    case routineIncomplete = "routine_incomplete"
+    case taskCompletion = "task_completion"
+    case pendingTasks = "pending_tasks"
+    case buildingArrival = "building_arrival"
+    case weatherAlert = "weather_alert"
+    case maintenanceRequired = "maintenance_required"
+    case scheduleConflict = "schedule_conflict"
+    case emergencyResponse = "emergency_response"
+    
+    // MARK: - Scenario Management
+        func addScenario(_ scenarioType: AIScenarioType) {
+        let scenario = AIScenario()
+        activeScenarios.append(scenario)
+        hasActiveScenarios = !activeScenarios.isEmpty
+        print("📱 Added AI scenario: \(scenarioType.rawValue)")
+    }
+    
+    func dismissScenario(_ scenarioId: String) {
+        activeScenarios.removeAll { $0.id == scenarioId }
+        hasActiveScenarios = !activeScenarios.isEmpty
+    }
+    
+    func clearAllScenarios() {
+        activeScenarios.removeAll()
+        suggestions.removeAll()
+        hasActiveScenarios = false
+        currentScenario = nil
+        currentScenarioData = nil
+    }
+    
+    private func generateSuggestions(for scenarioType: AIScenarioType) -> [AISuggestion] {
+        switch scenarioType {
+        case .routineIncomplete:
+            return [
+                AISuggestion(id: "check_tasks", text: "Review incomplete tasks", priority: .high),
+                AISuggestion(id: "update_status", text: "Update task status", priority: .medium)
+            ]
+        case .taskCompletion:
+            return [
+                AISuggestion(id: "mark_complete", text: "Mark task as complete", priority: .high),
+                AISuggestion(id: "add_notes", text: "Add completion notes", priority: .low)
+            ]
+        case .pendingTasks:
+            return [
+                AISuggestion(id: "prioritize", text: "Prioritize pending tasks", priority: .high),
+                AISuggestion(id: "reschedule", text: "Reschedule if needed", priority: .medium)
+            ]
+        case .buildingArrival:
+            return [
+                AISuggestion(id: "clock_in", text: "Clock in at building", priority: .high),
+                AISuggestion(id: "check_schedule", text: "Review today's schedule", priority: .medium)
+            ]
+        default:
+            return [
+                AISuggestion(id: "generic_action", text: "Take appropriate action", priority: .medium)
+            ]
+        }
+    }
+}
+
 import Combine
 
 @MainActor
@@ -13,6 +78,14 @@ class AIAssistantManager: ObservableObject {
     static let shared = AIAssistantManager()
     
     @Published var activeScenarios: [AIScenario] = []
+
+    @Published var aiSuggestions: [AISuggestion] = []
+    @Published var currentScenarioData: AIScenarioData? = nil
+    @Published var hasActiveScenarios: Bool = false
+    @Published var isProcessing: Bool = false
+    @Published var contextualMessage: String = ""
+    @Published var currentScenario: AIScenario? = nil
+    @Published var avatarImage: String = "person.circle"
     @Published var suggestions: [AISuggestion] = []
     @Published var isAnalyzing = false
     
@@ -157,6 +230,56 @@ class AIAssistantManager: ObservableObject {
             self.suggestions = scenarios.flatMap { $0.suggestions }
         }
     }
+    
+    // MARK: - Scenario Management
+        func addScenario(_ scenarioType: AIScenarioType) {
+        let scenario = AIScenario()
+        activeScenarios.append(scenario)
+        hasActiveScenarios = !activeScenarios.isEmpty
+        print("📱 Added AI scenario: \(scenarioType.rawValue)")
+    }
+    
+    func dismissScenario(_ scenarioId: String) {
+        activeScenarios.removeAll { $0.id == scenarioId }
+        hasActiveScenarios = !activeScenarios.isEmpty
+    }
+    
+    func clearAllScenarios() {
+        activeScenarios.removeAll()
+        suggestions.removeAll()
+        hasActiveScenarios = false
+        currentScenario = nil
+        currentScenarioData = nil
+    }
+    
+    private func generateSuggestions(for scenarioType: AIScenarioType) -> [AISuggestion] {
+        switch scenarioType {
+        case .routineIncomplete:
+            return [
+                AISuggestion(id: "check_tasks", text: "Review incomplete tasks", priority: .high),
+                AISuggestion(id: "update_status", text: "Update task status", priority: .medium)
+            ]
+        case .taskCompletion:
+            return [
+                AISuggestion(id: "mark_complete", text: "Mark task as complete", priority: .high),
+                AISuggestion(id: "add_notes", text: "Add completion notes", priority: .low)
+            ]
+        case .pendingTasks:
+            return [
+                AISuggestion(id: "prioritize", text: "Prioritize pending tasks", priority: .high),
+                AISuggestion(id: "reschedule", text: "Reschedule if needed", priority: .medium)
+            ]
+        case .buildingArrival:
+            return [
+                AISuggestion(id: "clock_in", text: "Clock in at building", priority: .high),
+                AISuggestion(id: "check_schedule", text: "Review today's schedule", priority: .medium)
+            ]
+        default:
+            return [
+                AISuggestion(id: "generic_action", text: "Take appropriate action", priority: .medium)
+            ]
+        }
+    }
 }
 
 // MARK: - Supporting Types
@@ -166,8 +289,125 @@ private struct WorkerSummary {
     let completedTasks: Int
     let assignedBuildings: Int
     let dataHealth: DataHealthLevel
+    
+    // MARK: - Scenario Management
+        func addScenario(_ scenarioType: AIScenarioType) {
+        let scenario = AIScenario()
+        activeScenarios.append(scenario)
+        hasActiveScenarios = !activeScenarios.isEmpty
+        print("📱 Added AI scenario: \(scenarioType.rawValue)")
+    }
+    
+    func dismissScenario(_ scenarioId: String) {
+        activeScenarios.removeAll { $0.id == scenarioId }
+        hasActiveScenarios = !activeScenarios.isEmpty
+    }
+    
+    func clearAllScenarios() {
+        activeScenarios.removeAll()
+        suggestions.removeAll()
+        hasActiveScenarios = false
+        currentScenario = nil
+        currentScenarioData = nil
+    }
+    
+    private func generateSuggestions(for scenarioType: AIScenarioType) -> [AISuggestion] {
+        switch scenarioType {
+        case .routineIncomplete:
+            return [
+                AISuggestion(id: "check_tasks", text: "Review incomplete tasks", priority: .high),
+                AISuggestion(id: "update_status", text: "Update task status", priority: .medium)
+            ]
+        case .taskCompletion:
+            return [
+                AISuggestion(id: "mark_complete", text: "Mark task as complete", priority: .high),
+                AISuggestion(id: "add_notes", text: "Add completion notes", priority: .low)
+            ]
+        case .pendingTasks:
+            return [
+                AISuggestion(id: "prioritize", text: "Prioritize pending tasks", priority: .high),
+                AISuggestion(id: "reschedule", text: "Reschedule if needed", priority: .medium)
+            ]
+        case .buildingArrival:
+            return [
+                AISuggestion(id: "clock_in", text: "Clock in at building", priority: .high),
+                AISuggestion(id: "check_schedule", text: "Review today's schedule", priority: .medium)
+            ]
+        default:
+            return [
+                AISuggestion(id: "generic_action", text: "Take appropriate action", priority: .medium)
+            ]
+        }
+    }
 }
 
 private enum DataHealthLevel {
     case healthy, warning, critical
+    
+    // MARK: - Scenario Management
+        func addScenario(_ scenarioType: AIScenarioType) {
+        let scenario = AIScenario()
+        activeScenarios.append(scenario)
+        hasActiveScenarios = !activeScenarios.isEmpty
+        print("📱 Added AI scenario: \(scenarioType.rawValue)")
+    }
+    
+    func dismissScenario(_ scenarioId: String) {
+        activeScenarios.removeAll { $0.id == scenarioId }
+        hasActiveScenarios = !activeScenarios.isEmpty
+    }
+    
+    func clearAllScenarios() {
+        activeScenarios.removeAll()
+        suggestions.removeAll()
+        hasActiveScenarios = false
+        currentScenario = nil
+        currentScenarioData = nil
+    }
+    
+    private func generateSuggestions(for scenarioType: AIScenarioType) -> [AISuggestion] {
+        switch scenarioType {
+        case .routineIncomplete:
+            return [
+                AISuggestion(id: "check_tasks", text: "Review incomplete tasks", priority: .high),
+                AISuggestion(id: "update_status", text: "Update task status", priority: .medium)
+            ]
+        case .taskCompletion:
+            return [
+                AISuggestion(id: "mark_complete", text: "Mark task as complete", priority: .high),
+                AISuggestion(id: "add_notes", text: "Add completion notes", priority: .low)
+            ]
+        case .pendingTasks:
+            return [
+                AISuggestion(id: "prioritize", text: "Prioritize pending tasks", priority: .high),
+                AISuggestion(id: "reschedule", text: "Reschedule if needed", priority: .medium)
+            ]
+        case .buildingArrival:
+            return [
+                AISuggestion(id: "clock_in", text: "Clock in at building", priority: .high),
+                AISuggestion(id: "check_schedule", text: "Review today's schedule", priority: .medium)
+            ]
+        default:
+            return [
+                AISuggestion(id: "generic_action", text: "Take appropriate action", priority: .medium)
+            ]
+        }
+    }
 }
+
+    
+        func addScenario(_ scenarioType: AIScenarioType) {
+        let scenario = AIScenario()
+        activeScenarios.append(scenario)
+        hasActiveScenarios = !activeScenarios.isEmpty
+        print("📱 Added AI scenario: \(scenarioType.rawValue)")
+    }
+    
+    func dismissCurrentScenario() {
+        currentScenario = nil
+        currentScenarioData = nil
+    }
+    
+    func performAction(_ action: String) {
+        print("Performing AI action: \(action)")
+    }

@@ -501,7 +501,7 @@ public struct AddInventoryItemView: View {
     @State private var itemName = ""
     @State private var quantity = 1
     @State private var unit = "pcs"
-    @State private var item.minimumQuantity = 1
+            let otherCategory = InventoryCategory.other
     @State private var selectedCategory: InventoryCategory = .other
     @State private var location = ""
     @State private var notes = ""

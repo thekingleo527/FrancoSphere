@@ -1,0 +1,245 @@
+//
+//  HeroStatusCard.swift
+//  FrancoSphere
+//
+
+import SwiftUI
+import CoreLocation
+
+
+// Sample data for previews and testing
+private let sampleLocation = NamedCoordinate(
+    id: "sample",
+    name: "Sample Location",
+    coordinate: CLLocationCoordinate2D(latitude: 40.7589, longitude: -73.9851)
+)
+
+private let sampleWeather = WeatherData(
+    date: Date(),
+    temperature: 72.0,
+    feelsLike: 75.0,
+    humidity: 60,
+    windSpeed: 5.0,
+    windDirection: 180,
+    precipitation: 0.0,
+    snow: 0.0,
+    condition: .clear,
+    uvIndex: 5,
+    visibility: 10.0,
+    description: "Clear skies"
+)
+
+
+    total: 10,
+    remaining: 5,
+    percentage: 50.0,
+    overdueTasks: 2
+)
+
+struct HeroStatusCard: View {
+    let workerId: String
+    let currentBuilding: String?
+    let weather: WeatherData?
+    let progress: TaskProgress
+    let onClockInTap: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header with worker status
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Dashboard")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("Worker ID: \(workerId)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Weather info
+                if let weather = weather {
+                    weatherView(weather)
+                }
+            }
+            
+            // Progress Section
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Today's Progress")
+                    Spacer()
+                }
+                
+                ProgressView(value: progress.calculatedPercentage, total: 100)
+                
+                HStack {
+                    Text("\(Int(progress.calculatedPercentage))% Complete")
+                    
+                    Spacer()
+                    
+                    if progress.overdueTasks > 0 {
+                        Text("\(progress.overdueTasks) Overdue")
+                    }
+                }
+            }
+            
+            // Current Building Status
+            if let building = currentBuilding {
+                buildingStatusView(building)
+            } else {
+                clockInPromptView()
+            }
+        }
+            RoundedRectangle(cornerRadius: 16)
+        )
+    }
+    
+    @ViewBuilder
+    private func weatherView(_ weather: WeatherData) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: weatherIcon(for: weather.condition))
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(Int(weather.temperature))°F")
+                
+                Text(weather.condition.rawValue.capitalized)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func buildingStatusView(_ building: String) -> some View {
+        HStack {
+            Image(systemName: "building.2.fill")
+            
+            Text("Current: \(building)")
+            
+            Spacer()
+            
+            Button("Clock Out") {
+                onClockInTap()
+            }
+        }
+            RoundedRectangle(cornerRadius: 12)
+        )
+    }
+    
+    @ViewBuilder
+    private func clockInPromptView() -> some View {
+        HStack {
+            Image(systemName: "location.circle")
+            
+            Text("Ready to start your shift")
+            
+            Spacer()
+            
+            Button("Clock In") {
+                onClockInTap()
+            }
+        }
+            RoundedRectangle(cornerRadius: 12)
+        )
+    }
+    
+    private func weatherIcon(for condition: WeatherCondition) -> String {
+        switch condition {
+        case .clear, .sunny:
+            return "sun.max.fill"
+        case .cloudy:
+            return "cloud.fill"
+        case .rainy, .rainy:
+            return "cloud.rainy.fill"
+        case .snowy, .snowy:
+            return "cloud.snowy.fill"
+        case .stormy, .stormy:
+            return "cloud.bolt.fill"
+        case .foggy, .foggy:
+            return "cloud.foggy.fill"
+        case .windy:
+            return "wind"
+        
+        default:
+            return "questionmark.circle"
+    }
+    }
+    
+    private func weatherColor(for condition: WeatherCondition) -> Color {
+        switch condition {
+        case .clear, .sunny:
+            return .yellow
+        case .cloudy:
+            return .gray
+        case .rainy, .rainy:
+            return .blue
+        case .snowy, .snowy:
+            return .cyan
+        case .stormy, .stormy:
+            return .purple
+        case .foggy, .foggy:
+            return .gray
+        case .windy:
+            return .green
+        
+        default:
+            return "questionmark.circle"
+    }
+    }
+}
+
+#Preview {
+    HeroStatusCard(progress: sampleProgress, onClockInTap: {})
+        // workerId: "4",
+
+
+        WeatherData(
+            date: Date(),
+            temperature: 72.0,
+            feelsLike: 75.0,
+            humidity: 60,
+            windSpeed: 5.0,
+            windDirection: 180,
+            precipitation: 0.0,
+            snow: 0.0,
+            condition: .clear,
+            uvIndex: 5,
+            visibility: 10.0,
+            description: "Clear skies"
+        ),
+            temperature: 72,
+            condition: WeatherCondition.clear,
+            humidity: 65,
+            windSpeed: 8,
+            timestamp: Date()
+        ),
+        progress: TaskProgress(
+            total: 12,
+            remaining: 4,
+            percentage: 66.7,
+            overdueTasks: 1
+        ),
+        onClockInTap: do {}
+    // )
+}
+
+    // MARK: - Sample Data
+    private let sampleWeatherData = WeatherData(
+        date: Date(),
+        temperature: 72.0,
+        feelsLike: 75.0,
+        humidity: 65.0,
+        windSpeed: 8.0,
+        windDirection: "NE",
+        precipitation: 0.0,
+        snow: 0.0,
+        condition: .clear,
+        uvIndex: 5,
+        visibility: 10.0,
+        description: "Clear skies"
+    )
+    
+    private let sampleProgressData = TaskProgress(
+        totalTasks: 12,
+        completionPercentage: 67.0
+    )

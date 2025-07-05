@@ -122,6 +122,8 @@ class TaskDetailViewModel: ObservableObject {
             return "Low visibility - exercise caution"
         case .storm, .stormy, .windy:
             return "Severe weather - consider postponing outdoor tasks"
+        default:
+            break
         }
     }
 }
@@ -139,6 +141,8 @@ enum TaskError: LocalizedError {
             return "Invalid task data"
         case .submissionFailed:
             return "Failed to submit task completion"
+        default:
+            break
         }
     }
 }

@@ -79,6 +79,21 @@ class WeatherDataAdapter: ObservableObject {
     private let cacheFileName = "weatherCache.json"
 
     private struct DiskCacheEntry: Codable {
+        enum CodingKeys: String, CodingKey {
+            case data, timestamp
+        }
+        
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            data = try container.decode(WeatherData.self, forKey: .data)
+            timestamp = try container.decode(Date.self, forKey: .timestamp)
+        }
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(data, forKey: .data)
+            try container.encode(timestamp, forKey: .timestamp)
+        }
         let data: [WeatherData]
         let timestamp: Date
     }
@@ -303,9 +318,9 @@ class WeatherDataAdapter: ObservableObject {
             precipitation: precipitation,
             snow: condition == .snow ? precipitation : 0,
             visibility: 10000, // Default good visibility
-            pressure: 1013, // Default sea level pressure
+             // Default sea level pressure
             condition: condition,
-            icon: condition.icon
+            description: condition.icon
         )
     }
     
@@ -344,9 +359,9 @@ class WeatherDataAdapter: ObservableObject {
                 precipitation: precipitation,
                 snow: condition == .snow ? precipitation : 0,
                 visibility: 10000,
-                pressure: 1013,
+                
                 condition: condition,
-                icon: condition.icon
+                description: condition.icon
             ))
         }
         
@@ -364,9 +379,9 @@ class WeatherDataAdapter: ObservableObject {
             precipitation: 0.0,
             snow: 0.0,
             visibility: 10000,
-            pressure: 1013,
+            
             condition: .clear,
-            icon: "sun.max.fill"
+            description: "sun.max.fill"
         )
     }
     

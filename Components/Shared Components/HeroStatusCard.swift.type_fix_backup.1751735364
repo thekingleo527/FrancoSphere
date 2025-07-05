@@ -1,0 +1,146 @@
+//
+//  HeroStatusCard.swift
+//  FrancoSphere
+//
+
+import SwiftUI
+import CoreLocation
+
+struct HeroStatusCard: View {
+    let workerId: String
+    let currentBuilding: NamedCoordinate
+    let weather: WeatherData
+    let progress: TaskProgressData
+    let completedTasks: Int
+    let totalTasks: Int
+    let onClockInTap: () -> Void
+    
+    init(workerId: String, currentBuilding: NamedCoordinate, weather: WeatherData, progress: TaskProgressData, completedTasks: Int, totalTasks: Int, onClockInTap: @escaping () -> Void) {
+        self.workerId = workerId
+        self.currentBuilding = currentBuilding
+        self.weather = weather
+        self.progress = progress
+        self.completedTasks = completedTasks
+        self.totalTasks = totalTasks
+        self.onClockInTap = onClockInTap
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Today's Progress")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text(currentBuilding.name)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Button(action: onClockInTap) {
+                    Text("Clock In")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                }
+            }
+            
+            // Progress Section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Tasks Completed")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(completedTasks)/\(totalTasks)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                }
+                
+                ProgressView(value: Double(completedTasks), total: Double(totalTasks))
+                    .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+            }
+            
+            // Weather Section
+            HStack {
+                Image(systemName: weatherIcon)
+                    .foregroundColor(.blue)
+                
+                Text("\(Int(weather.temperature))°F")
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                
+                Text(weather.description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+    }
+    
+    private var weatherIcon: String {
+        switch weather.condition {
+        case .sunny: return "sun.max"
+        case .cloudy: return "cloud"
+        case .rainy: return "cloud.rain"
+        case .snowy: return "cloud.snow"
+        default: return "cloud"
+        }
+    }
+}
+
+// MARK: - Preview
+
+struct HeroStatusCard_Previews: PreviewProvider {
+    static var previews: some View {
+        let sampleProgress = TaskProgressData(
+            completed: 12,
+            total: 15,
+            efficiency: 0.85,
+            trend: .up
+        )
+        
+        let sampleBuilding = NamedCoordinate(
+            id: "14",
+            name: "Rubin Museum",
+            coordinate: CLLocationCoordinate2D(latitude: 40.7402, longitude: -73.9980),
+            address: "150 W 17th St, New York, NY 10011"
+        )
+        
+        let sampleWeather = WeatherData(
+            condition: .sunny,
+            temperature: 72,
+            humidity: 65,
+            windSpeed: 8.5,
+            description: "Clear skies"
+        )
+        
+        HeroStatusCard(
+            workerId: "kevin",
+            currentBuilding: sampleBuilding,
+            weather: sampleWeather,
+            progress: sampleProgress,
+            completedTasks: 12,
+            totalTasks: 15,
+            onClockInTap: { print("Clock in tapped") }
+        )
+        .padding()
+        .background(Color.black)
+        .preferredColorScheme(.dark)
+    }
+}

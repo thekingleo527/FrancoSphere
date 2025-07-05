@@ -22,7 +22,7 @@ struct FSWeatherAlert: Identifiable {
     let buildingName: String
     let title: String
     let message: String
-    let icon: String
+    let description: String
     let color: Color
     let timestamp: Date
     
@@ -106,7 +106,7 @@ struct FSWeatherData: Identifiable {
         case storm = "Storm"
         case extreme = "Extreme"
         
-        var icon: String {
+        var description: String {
             switch self {
             case .clear: return "sun.max.fill"
             case .partlyCloudy: return "cloud.sun.fill"

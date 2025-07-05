@@ -73,3 +73,34 @@ extension VerificationRecord {
         )
     }
 }
+
+// MARK: - Codable Conformance
+extension VerificationRecord {
+    enum CodingKeys: String, CodingKey {
+        case id, taskId, buildingId, workerId, verificationDate, status, notes, photoPaths
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        taskId = try container.decode(String.self, forKey: .taskId)
+        buildingId = try container.decode(String.self, forKey: .buildingId)
+        workerId = try container.decode(String.self, forKey: .workerId)
+        verificationDate = try container.decode(Date.self, forKey: .verificationDate)
+        status = try container.decode(VerificationStatus.self, forKey: .status)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        photoPaths = try container.decode([String].self, forKey: .photoPaths)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(taskId, forKey: .taskId)
+        try container.encode(buildingId, forKey: .buildingId)
+        try container.encode(workerId, forKey: .workerId)
+        try container.encode(verificationDate, forKey: .verificationDate)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encode(photoPaths, forKey: .photoPaths)
+    }
+}

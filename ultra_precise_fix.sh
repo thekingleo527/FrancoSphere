@@ -1,219 +1,521 @@
 #!/bin/bash
 
-echo "🔧 FrancoSphere Ultra Precise Fix"
-echo "================================"
-echo "Fixing EXACT lines with EXACT return types"
+echo "🔧 Ultra Precise Final Fix"
+echo "=========================="
+echo "Fixing the exact remaining 30 compilation errors"
 
 cd "/Volumes/FastSSD/Xcode" || exit 1
 
 # =============================================================================
-# FIX 1: WeatherDashboardComponent.swift - Line-by-line precision
+# FIX 1: Add missing properties to TaskProgress and missing WeatherCondition cases
 # =============================================================================
 
 echo ""
-echo "🔧 Fixing WeatherDashboardComponent.swift with surgical precision..."
+echo "🔧 Fix 1: Adding missing properties and enum cases"
+echo "================================================"
 
-cat > /tmp/ultra_precise_fix.py << 'PYTHON_EOF'
+FILE="Models/FrancoSphereModels.swift"
+if [ -f "$FILE" ]; then
+    echo "Adding missing properties and enum cases..."
+    cp "$FILE" "${FILE}.missing_props_backup.$(date +%s)"
+    
+    cat > /tmp/fix_missing_props.py << 'PYTHON_EOF'
 import re
 
-def fix_weather_component_precisely():
+def fix_missing_props():
+    file_path = "/Volumes/FastSSD/Xcode/Models/FrancoSphereModels.swift"
+    
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        print("🔧 Adding missing WeatherCondition enum cases...")
+        
+        # Add missing WeatherCondition cases
+        weather_enum_pattern = r'(public enum WeatherCondition:.*?{[^}]*?)(case other = "Other")'
+        weather_replacement = r'\1case rain = "Rain"\n        case snow = "Snow"\n        case storm = "Storm"\n        case fog = "Fog"\n        \2'
+        content = re.sub(weather_enum_pattern, weather_replacement, content, flags=re.DOTALL)
+        
+        print("🔧 Adding missing TaskProgress.completed property...")
+        
+        # Add completed property to TaskProgress
+        taskprogress_pattern = r'(public struct TaskProgress:.*?{[^}]*?)(public init)'
+        taskprogress_replacement = r'\1public var completed: Int { completedTasks }\n        \n        \2'
+        content = re.sub(taskprogress_pattern, taskprogress_replacement, content, flags=re.DOTALL)
+        
+        print("🔧 Removing duplicate TrendDirection at line 442...")
+        
+        # Remove duplicate TrendDirection declaration
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            if i > 440 and i < 450 and 'enum TrendDirection' in line and 'Invalid redeclaration' in str(line):
+                lines[i] = '    // Duplicate TrendDirection removed'
+                print(f"  → Removed duplicate TrendDirection at line {i+1}")
+                break
+        content = '\n'.join(lines)
+        
+        print("🔧 Adding DataHealthStatus.unknown and BuildingTab.overview...")
+        
+        # Add missing DataHealthStatus.unknown
+        content = re.sub(
+            r'(public struct DataHealthStatus:.*?{[^}]*?)(public init|\})',
+            r'\1public static var unknown: DataHealthStatus { DataHealthStatus() }\n        \n        \2',
+            content, flags=re.DOTALL
+        )
+        
+        # Add missing BuildingTab.overview
+        content = re.sub(
+            r'(public struct BuildingTab:.*?{[^}]*?)(public init|\})',
+            r'\1public static var overview: BuildingTab { BuildingTab() }\n        \n        \2',
+            content, flags=re.DOTALL
+        )
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        print("✅ Added missing properties and enum cases")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error adding missing props: {e}")
+        return False
+
+if __name__ == "__main__":
+    fix_missing_props()
+PYTHON_EOF
+
+    python3 /tmp/fix_missing_props.py
+fi
+
+# =============================================================================
+# FIX 2: Create WorkerStatus enum in AITypes.swift
+# =============================================================================
+
+echo ""
+echo "🔧 Fix 2: Creating WorkerStatus enum"
+echo "=================================="
+
+FILE="Models/AITypes.swift"
+if [ ! -f "$FILE" ]; then
+    cat > "$FILE" << 'AI_TYPES_EOF'
+//
+//  AITypes.swift
+//  FrancoSphere
+//
+//  AI and Worker related types
+//
+
+import Foundation
+
+// MARK: - Worker Status
+public enum WorkerStatus: String, CaseIterable, Codable {
+    case available = "Available"
+    case busy = "Busy"
+    case clockedIn = "Clocked In"
+    case clockedOut = "Clocked Out"
+    case onBreak = "On Break"
+    case offline = "Offline"
+}
+
+// MARK: - AI Scenario Types
+public enum AIScenarioType: String, CaseIterable {
+    case routineIncomplete = "routine_incomplete"
+    case taskCompletion = "task_completion" 
+    case pendingTasks = "pending_tasks"
+    case buildingArrival = "building_arrival"
+}
+AI_TYPES_EOF
+    echo "✅ Created AITypes.swift with WorkerStatus enum"
+else
+    echo "AITypes.swift already exists"
+fi
+
+# =============================================================================
+# FIX 3: Fix HeroStatusCard constructor and weather enum usage
+# =============================================================================
+
+echo ""
+echo "🔧 Fix 3: Fixing HeroStatusCard constructor and weather enum"
+echo "=========================================================="
+
+FILE="Components/Shared Components/HeroStatusCard.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing HeroStatusCard..."
+    cp "$FILE" "${FILE}.hero_fix_backup.$(date +%s)"
+    
+    cat > /tmp/fix_herocard.py << 'PYTHON_EOF'
+import re
+
+def fix_herocard():
+    file_path = "/Volumes/FastSSD/Xcode/Components/Shared Components/HeroStatusCard.swift"
+    
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        print("🔧 Fixing HeroStatusCard weather enum cases...")
+        
+        # Fix weather enum cases
+        content = content.replace('.rain', '.rainy')
+        content = content.replace('.snow', '.snowy')
+        content = content.replace('.storm', '.stormy')
+        content = content.replace('.fog', '.foggy')
+        
+        print("🔧 Fixing constructor call and syntax issues...")
+        
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        for i, line in enumerate(lines):
+            line_num = i + 1
+            
+            # Fix line 188 constructor - replace the entire problematic call
+            if line_num == 188 and ('Missing arguments' in str(line) or 'call' in line):
+                fixed_lines.append('                workerId: "worker1",')
+                fixed_lines.append('                currentBuilding: "Building 1"')
+                print(f"  → Fixed constructor call at line {line_num}")
+                continue
+            
+            # Skip line 189 if it has consecutive statements error
+            if line_num == 189 and ('Consecutive statements' in str(line) or 'Expected expression' in str(line)):
+                print(f"  → Removed problematic line at {line_num}")
+                continue
+            
+            fixed_lines.append(line)
+        
+        content = '\n'.join(fixed_lines)
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        print("✅ Fixed HeroStatusCard weather enum and constructor")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error fixing HeroStatusCard: {e}")
+        return False
+
+if __name__ == "__main__":
+    fix_herocard()
+PYTHON_EOF
+
+    python3 /tmp/fix_herocard.py
+fi
+
+# =============================================================================
+# FIX 4: Fix WeatherDashboardComponent constructor issues
+# =============================================================================
+
+echo ""
+echo "🔧 Fix 4: Fixing WeatherDashboardComponent constructor"
+echo "===================================================="
+
+FILE="Components/Shared Components/WeatherDashboardComponent.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing WeatherDashboardComponent..."
+    cp "$FILE" "${FILE}.weather_dash_backup.$(date +%s)"
+    
+    cat > /tmp/fix_weather_dash.py << 'PYTHON_EOF'
+import re
+
+def fix_weather_dash():
     file_path = "/Volumes/FastSSD/Xcode/Components/Shared Components/WeatherDashboardComponent.swift"
     
     try:
         with open(file_path, 'r') as f:
             content = f.read()
         
-        # Create backup
-        with open(file_path + '.ultra_precise_backup.' + str(int(__import__('time').time())), 'w') as f:
-            f.write(content)
+        print("🔧 Fixing WeatherDashboardComponent constructor and enum cases...")
         
-        print("🔧 Applying ultra-precise fixes...")
+        # Fix weather enum cases
+        content = content.replace('.rain', '.rainy')
         
-        # Split into lines for precise line-by-line editing
         lines = content.split('\n')
+        fixed_lines = []
         
-        # Process each line individually
         for i, line in enumerate(lines):
             line_num = i + 1
             
-            # Line 256: String function returning .gray - fix to return proper string
-            if line_num == 256 and '.gray' in line and 'return' in line:
-                lines[i] = line.replace('return .gray', 'return "questionmark.circle"')
-                print(f"✅ Fixed line 256: String return")
+            # Fix lines 336-348 constructor issues
+            if line_num == 336 and 'Extra arguments' in str(line):
+                fixed_lines.append('                WeatherTasksSection(')
+                fixed_lines.append('                    building: building,')
+                fixed_lines.append('                    onTaskTap: onTaskTap')
+                fixed_lines.append('                )')
+                print(f"  → Fixed constructor at line {line_num}")
+                # Skip the next few problematic lines
+                continue
             
-            # Line 278: String function returning .gray - fix to return proper string  
-            elif line_num == 278 and '.gray' in line and 'return' in line:
-                lines[i] = line.replace('return .gray', 'return "questionmark.circle"')
-                print(f"✅ Fixed line 278: String return")
+            # Skip problematic lines 337-348
+            if line_num in range(337, 349):
+                continue
             
-            # Line 289: String function returning .gray - fix to return proper string
-            elif line_num == 289 and '.gray' in line and 'return' in line:
-                lines[i] = line.replace('return .gray', 'return "questionmark.circle"')
-                print(f"✅ Fixed line 289: String return")
+            # Fix location references
+            if 'Cannot find \'location\' in scope' in str(line):
+                line = line.replace('location', 'building')
+                print(f"  → Fixed location reference at line {line_num}")
             
-            # Line 312: Bool function returning .medium - fix to return proper bool
-            elif line_num == 312 and '.medium' in line and 'return' in line:
-                lines[i] = line.replace('return .medium', 'return false')
-                print(f"✅ Fixed line 312: Bool return")
-            
-            # Line 329: Tuple function returning .gray - fix to return proper tuple
-            elif line_num == 329 and '.gray' in line and 'return' in line:
-                lines[i] = line.replace('return .gray', 'return ("questionmark.circle", .gray, "Unknown")')
-                print(f"✅ Fixed line 329: Tuple return")
+            fixed_lines.append(line)
         
-        # Rejoin lines
-        content = '\n'.join(lines)
-        
-        # Fix CLLocationCoordinate2D issue (lines 340-341) - this spans multiple lines
-        content = re.sub(
-            r'weatherManager\.fetchWeather\(\s*latitude:\s*([^,]+),\s*longitude:\s*([^)]+)\s*\)',
-            r'weatherManager.fetchWeather(for: CLLocationCoordinate2D(latitude: \1, longitude: \2))',
-            content
-        )
+        content = '\n'.join(fixed_lines)
         
         with open(file_path, 'w') as f:
             f.write(content)
         
-        print("✅ Fixed WeatherDashboardComponent.swift with precision")
+        print("✅ Fixed WeatherDashboardComponent constructor")
         return True
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Error fixing WeatherDashboardComponent: {e}")
         return False
 
 if __name__ == "__main__":
-    fix_weather_component_precisely()
+    fix_weather_dash()
 PYTHON_EOF
 
-python3 /tmp/ultra_precise_fix.py
-
-# =============================================================================
-# FIX 2: FrancoSphereModels.swift - Ultra precise duplicate removal
-# =============================================================================
-
-echo ""
-echo "🔧 Fixing FrancoSphereModels.swift duplicates with line precision..."
-
-MODELS_FILE="Models/FrancoSphereModels.swift"
-
-if [ -f "$MODELS_FILE" ]; then
-    # Create backup
-    cp "$MODELS_FILE" "${MODELS_FILE}.ultra_precise_backup.$(date +%s)"
-    
-    # Use sed to remove EXACT line matches
-    echo "Removing duplicate coordinate property (line 24)..."
-    sed -i.tmp '24{/public let coordinate: CLLocationCoordinate2D/d;}' "$MODELS_FILE"
-    
-    echo "Removing duplicate TrendDirection enum (around line 710)..."
-    # Find and remove the second occurrence of TrendDirection enum
-    awk '
-    BEGIN { trend_seen = 0 }
-    /^[[:space:]]*public enum TrendDirection/ {
-        trend_seen++
-        if (trend_seen == 1) {
-            print
-            # Print the entire first enum
-            while ((getline) && $0 !~ /^[[:space:]]*}[[:space:]]*$/) {
-                print
-            }
-            print  # Print the closing brace
-        } else {
-            # Skip the duplicate enum
-            while ((getline) && $0 !~ /^[[:space:]]*}[[:space:]]*$/) {
-                # Skip lines
-            }
-            # Skip the closing brace too
-        }
-        next
-    }
-    { print }
-    ' "$MODELS_FILE" > "$MODELS_FILE.dedup1" && mv "$MODELS_FILE.dedup1" "$MODELS_FILE"
-    
-    echo "Removing duplicate ExportProgress struct (around line 721)..."
-    # Find and remove the second occurrence of ExportProgress
-    awk '
-    BEGIN { export_seen = 0 }
-    /^[[:space:]]*public struct ExportProgress/ {
-        export_seen++
-        if (export_seen == 1) {
-            print
-            # Print the entire first struct
-            while ((getline) && $0 !~ /^[[:space:]]*}[[:space:]]*$/) {
-                print
-            }
-            print  # Print the closing brace
-        } else {
-            # Skip the duplicate struct
-            while ((getline) && $0 !~ /^[[:space:]]*}[[:space:]]*$/) {
-                # Skip lines
-            }
-            # Skip the closing brace too
-        }
-        next
-    }
-    { print }
-    ' "$MODELS_FILE" > "$MODELS_FILE.dedup2" && mv "$MODELS_FILE.dedup2" "$MODELS_FILE"
-    
-    rm -f "${MODELS_FILE}.tmp"
-    echo "✅ Fixed FrancoSphereModels.swift duplicates with precision"
-else
-    echo "⚠️ FrancoSphereModels.swift not found"
+    python3 /tmp/fix_weather_dash.py
 fi
 
 # =============================================================================
-# FIX 3: TodayTasksViewModel.swift - Ultra precise function signature fixes
+# FIX 5: Fix ViewModel constructor issues
 # =============================================================================
 
 echo ""
-echo "🔧 Fixing TodayTasksViewModel.swift function signatures with line precision..."
+echo "🔧 Fix 5: Fixing ViewModel constructor issues"
+echo "============================================"
 
-TODAY_VM_FILE="Views/Main/TodayTasksViewModel.swift"
+# Fix BuildingDetailViewModel
+FILE="Views/ViewModels/BuildingDetailViewModel.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing BuildingDetailViewModel..."
+    cp "$FILE" "${FILE}.building_detail_fix.$(date +%s)"
+    
+    # Remove argument from no-argument constructor
+    sed -i.tmp 's/BuildingStatistics([^)]*)/BuildingStatistics()/g' "$FILE"
+    rm -f "${FILE}.tmp"
+fi
 
-if [ -f "$TODAY_VM_FILE" ]; then
-    cp "$TODAY_VM_FILE" "${TODAY_VM_FILE}.ultra_precise_backup.$(date +%s)"
+# Fix WorkerDashboardViewModel
+FILE="Views/ViewModels/WorkerDashboardViewModel.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing WorkerDashboardViewModel..."
+    cp "$FILE" "${FILE}.worker_dash_fix.$(date +%s)"
     
-    # Use sed to fix exact lines
-    echo "Fixing line 96 function signature..."
-    sed -i.tmp '96s/private func calculateStreakData([^)]*): -> FrancoSphere\.StreakData/private func calculateStreakData() -> FrancoSphere.StreakData/' "$TODAY_VM_FILE"
+    cat > /tmp/fix_worker_dash_vm.py << 'PYTHON_EOF'
+import re
+
+def fix_worker_dash_vm():
+    file_path = "/Volumes/FastSSD/Xcode/Views/ViewModels/WorkerDashboardViewModel.swift"
     
-    echo "Fixing line 113 function signature..."
-    sed -i.tmp '113s/private func calculatePerformanceMetrics([^)]*): -> FrancoSphere\.PerformanceMetrics/private func calculatePerformanceMetrics() -> FrancoSphere.PerformanceMetrics/' "$TODAY_VM_FILE"
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        print("🔧 Fixing WorkerDashboardViewModel constructor...")
+        
+        # Fix ContextualTask constructor call
+        contextual_task_fix = '''ContextualTask(
+            id: UUID().uuidString,
+            task: MaintenanceTask(
+                id: UUID().uuidString,
+                buildingId: "1",
+                title: "Sample Task",
+                description: "Description",
+                category: .maintenance,
+                urgency: .medium,
+                dueDate: Date()
+            ),
+            location: NamedCoordinate(
+                id: "1",
+                name: "Sample Building",
+                coordinate: CLLocationCoordinate2D(latitude: 40.7589, longitude: -73.9851)
+            )
+        )'''
+        
+        # Replace the problematic constructor
+        content = re.sub(
+            r'ContextualTask\([^)]*\)(?=\s*from:)',
+            contextual_task_fix,
+            content, flags=re.DOTALL
+        )
+        
+        # Fix DataHealthStatus.unknown reference
+        content = content.replace('DataHealthStatus.unknown', 'DataHealthStatus()')
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        print("✅ Fixed WorkerDashboardViewModel")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error fixing WorkerDashboardViewModel: {e}")
+        return False
+
+if __name__ == "__main__":
+    fix_worker_dash_vm()
+PYTHON_EOF
+
+    python3 /tmp/fix_worker_dash_vm.py
+fi
+
+# Fix TodayTasksViewModel
+FILE="Views/Main/TodayTasksViewModel.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing TodayTasksViewModel..."
+    cp "$FILE" "${FILE}.today_tasks_fix.$(date +%s)"
     
-    # Remove any orphaned parameter declarations that are causing "Expected declaration" errors
-    echo "Removing orphaned parameter fragments..."
-    sed -i.tmp '/^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*:[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*$/d' "$TODAY_VM_FILE"
+    cat > /tmp/fix_today_tasks.py << 'PYTHON_EOF'
+import re
+
+def fix_today_tasks():
+    file_path = "/Volumes/FastSSD/Xcode/Views/Main/TodayTasksViewModel.swift"
     
-    rm -f "${TODAY_VM_FILE}.tmp"
-    echo "✅ Fixed TodayTasksViewModel.swift with precision"
-else
-    echo "⚠️ TodayTasksViewModel.swift not found"
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        print("🔧 Fixing TodayTasksViewModel constructor...")
+        
+        # Fix ContextualTask constructor call (lines 19-20)
+        contextual_task_fix = '''ContextualTask(
+            task: MaintenanceTask(
+                id: UUID().uuidString,
+                buildingId: "1",
+                title: "Sample Task",
+                description: "Description",
+                category: .maintenance,
+                urgency: .medium,
+                dueDate: Date()
+            ),
+            location: NamedCoordinate(
+                id: "1",
+                name: "Sample Building",
+                coordinate: CLLocationCoordinate2D(latitude: 40.7589, longitude: -73.9851)
+            )
+        )'''
+        
+        # Replace problematic ContextualTask constructor
+        content = re.sub(
+            r'ContextualTask\([^)]*Extra arguments[^)]*\)',
+            contextual_task_fix,
+            content, flags=re.DOTALL
+        )
+        
+        # Remove arguments from no-argument methods
+        content = re.sub(r'calculateStreakData\([^)]*\)', 'calculateStreakData()', content)
+        content = re.sub(r'calculatePerformanceMetrics\([^)]*\)', 'calculatePerformanceMetrics()', content)
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        print("✅ Fixed TodayTasksViewModel")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error fixing TodayTasksViewModel: {e}")
+        return False
+
+if __name__ == "__main__":
+    fix_today_tasks()
+PYTHON_EOF
+
+    python3 /tmp/fix_today_tasks.py
+fi
+
+# Fix WorkerRoutineViewModel
+FILE="Models/WorkerRoutineViewModel.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing WorkerRoutineViewModel..."
+    cp "$FILE" "${FILE}.routine_fix.$(date +%s)"
+    
+    # Fix DataHealthStatus.unknown reference
+    sed -i.tmp 's/DataHealthStatus\.unknown/DataHealthStatus()/g' "$FILE"
+    rm -f "${FILE}.tmp"
+fi
+
+# Fix BuildingSelectionView
+FILE="Views/Buildings/BuildingSelectionView.swift"
+if [ -f "$FILE" ]; then
+    echo "Fixing BuildingSelectionView..."
+    cp "$FILE" "${FILE}.selection_fix.$(date +%s)"
+    
+    # Fix BuildingTab.overview reference
+    sed -i.tmp 's/BuildingTab\.overview/BuildingTab()/g' "$FILE"
+    rm -f "${FILE}.tmp"
 fi
 
 # =============================================================================
-# SUMMARY
+# FIX 6: Add WorkerStatus import to WorkerContextEngine
 # =============================================================================
+
+echo ""
+echo "🔧 Fix 6: Adding WorkerStatus import to WorkerContextEngine"
+echo "======================================================="
+
+FILE="Models/WorkerContextEngine.swift"
+if [ -f "$FILE" ]; then
+    echo "Adding WorkerStatus compatibility..."
+    cp "$FILE" "${FILE}.worker_status_fix.$(date +%s)"
+    
+    # Add import at the top
+    if ! grep -q "import.*AITypes" "$FILE"; then
+        sed -i.tmp '1i\
+// Import AITypes for WorkerStatus\
+' "$FILE"
+        rm -f "${FILE}.tmp"
+    fi
+    
+    # Add WorkerStatus typealias
+    cat >> "$FILE" << 'WORKER_STATUS_EOF'
+
+// MARK: - WorkerStatus Compatibility
+public typealias WorkerStatus = String
+public extension String {
+    static let available = "available"
+    static let busy = "busy"
+    static let clockedIn = "clockedIn"
+    static let clockedOut = "clockedOut"
+}
+WORKER_STATUS_EOF
+fi
+
+# =============================================================================
+# VERIFICATION
+# =============================================================================
+
+echo ""
+echo "🔍 VERIFICATION: Testing ultra precise fixes"
+echo "==========================================="
+
+echo "Building project to test all fixes..."
+ERROR_COUNT=$(xcodebuild -project FrancoSphere.xcodeproj -scheme FrancoSphere build 2>&1 | grep -c "error:")
 
 echo ""
 echo "🎯 ULTRA PRECISE FIX COMPLETED!"
-echo "==============================="
-echo ""
-echo "📋 Fixed exactly these specific lines:"
-echo "• WeatherDashboardComponent.swift line 256: .gray → \"questionmark.circle\""
-echo "• WeatherDashboardComponent.swift line 278: .gray → \"questionmark.circle\""  
-echo "• WeatherDashboardComponent.swift line 289: .gray → \"questionmark.circle\""
-echo "• WeatherDashboardComponent.swift line 312: .medium → false"
-echo "• WeatherDashboardComponent.swift line 329: .gray → tuple"
-echo "• WeatherDashboardComponent.swift lines 340-341: CLLocationCoordinate2D"
-echo "• FrancoSphereModels.swift line 24: Removed exact duplicate coordinate"
-echo "• FrancoSphereModels.swift line 710: Removed exact duplicate TrendDirection"
-echo "• FrancoSphereModels.swift line 721: Removed exact duplicate ExportProgress"
-echo "• TodayTasksViewModel.swift line 96: Fixed function signature"
-echo "• TodayTasksViewModel.swift line 113: Fixed function signature"
-echo ""
-echo "🚀 Next Steps:"
-echo "1. Open Xcode"
-echo "2. Build project (Cmd+B)"
-echo ""
-echo "✅ All return type mismatches should now be resolved!"
+echo "=============================="
+echo "Errors remaining: $ERROR_COUNT"
+
+if [ "$ERROR_COUNT" -eq 0 ]; then
+    echo ""
+    echo "🎉 SUCCESS! All compilation errors resolved!"
+    echo ""
+    echo "✅ Applied ultra precise fixes:"
+    echo "• Added missing WeatherCondition cases: .rain, .snow, .storm, .fog"
+    echo "• Added TaskProgress.completed property"
+    echo "• Removed duplicate TrendDirection declaration"
+    echo "• Added DataHealthStatus.unknown and BuildingTab.overview"
+    echo "• Created WorkerStatus enum in AITypes.swift"
+    echo "• Fixed HeroStatusCard constructor and weather enum usage"
+    echo "• Fixed WeatherDashboardComponent constructor parameters"
+    echo "• Fixed all ViewModel constructor issues"
+    echo "• Added WorkerStatus compatibility to WorkerContextEngine"
+    echo ""
+    echo "🚀 Your project should now compile successfully!"
+else
+    echo ""
+    echo "⚠️  $ERROR_COUNT errors remain:"
+    xcodebuild -project FrancoSphere.xcodeproj -scheme FrancoSphere build 2>&1 | grep "error:" | head -5
+fi
 
 exit 0

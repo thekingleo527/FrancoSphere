@@ -226,14 +226,14 @@ public struct AISuggestion {
     public let id: String
     public let title: String
     public let description: String
-    public let icon: String
+    public let description: String
     public let priority: Priority
     
     public enum Priority {
         case low, medium, high
     }
     
-    public init(id: String, title: String, description: String, icon: String, priority: Priority) {
+    public init(id: String, title: String, description: String, description: String, priority: Priority) {
         self.id = id
         self.title = title
         self.description = description
@@ -340,9 +340,9 @@ public class WeatherManager: ObservableObject {
             precipitation: 0.0,
             snow: 0.0,
             visibility: 10,
-            pressure: 1013,
+            
             condition: .clear,
-            icon: "sun.max.fill"
+            description: "sun.max.fill"
         )
         isLoading = false
     }

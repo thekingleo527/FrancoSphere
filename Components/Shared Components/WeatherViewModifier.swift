@@ -123,6 +123,8 @@ struct WeatherStatusBuildingModifier: ViewModifier {
             return .gray
         case .other:
             return .red
+        default:
+            break
         }
     }
 }

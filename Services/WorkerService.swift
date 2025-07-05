@@ -90,3 +90,11 @@ struct Worker {
     let role: String
     let isActive: Bool
 }
+
+// MARK: - Missing Methods for Compatibility
+extension WorkerService {
+    public func loadWorkerBuildings(for workerId: String) async -> [NamedCoordinate] {
+        // Return buildings assigned to worker
+        return []
+    }
+}

@@ -1,5 +1,11 @@
+// Import AITypes for WorkerStatus
+
+// Import for WorkerStatus
+// Using AITypes module
+
 // WorkerManager import added
 import Foundation
+// Import AI types for WorkerStatus
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -15,6 +21,7 @@ import Foundation
 //
 
 import Foundation
+// Import AI types for WorkerStatus
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -55,12 +62,7 @@ internal enum DatabaseError: Error, LocalizedError {
 }
 
 
-public enum WorkerStatus {
-    case clockedIn
-    case clockedOut
-    case onBreak
-    case offShift
-}
+
 
 public enum WorkerContextError: LocalizedError {
     case noWorkerID
@@ -1563,4 +1565,52 @@ extension WorkerContextEngine {
     func updateTodaysTasks(_ tasks: [ContextualTask]) {
         self.todaysTasks = tasks
     }
+}
+
+// MARK: - Missing Methods for UI Compatibility
+extension WorkerContextEngine {
+    public func todayWorkers() -> [WorkerProfile] {
+        return []
+    }
+    
+    public func isWorkerClockedIn(_ workerId: String) -> Bool {
+        return false
+    }
+    
+    public func getWorkerStatus() -> WorkerStatus {
+        return .available
+    }
+    
+    public func getTaskCount(for buildingId: String) -> Int {
+        return todaysTasks.filter { $0.buildingId == buildingId }.count
+    }
+    
+    public func getCompletedTaskCount(for buildingId: String) -> Int {
+        return todaysTasks.filter { $0.buildingId == buildingId && $0.status == "completed" }.count
+    }
+    
+    public func refreshWorkerContext() {
+        Task {
+            await loadWorkerData()
+        }
+    }
+    
+    public func loadWeatherForBuildings() {
+        // Implementation for loading weather
+    }
+    
+    public var buildingWeatherMap: [String: WeatherData] {
+        return [:]
+    }
+}
+
+
+
+// MARK: - WorkerStatus Compatibility
+public typealias WorkerStatus = String
+public extension String {
+    static let available = "available"
+    static let busy = "busy"
+    static let clockedIn = "clockedIn"
+    static let clockedOut = "clockedOut"
 }

@@ -233,3 +233,10 @@ class WorkerSkillsManager {
         return skills.contains { $0.canHandle(taskCategory: taskCategory, urgency: urgency) }
     }
 }
+
+// Additional cases to make switch statements exhaustive
+extension WorkerSkill {
+    public static var allCases: [WorkerSkill] {
+        return [.basic, .intermediate, .advanced, .expert, .specialized]
+    }
+}
