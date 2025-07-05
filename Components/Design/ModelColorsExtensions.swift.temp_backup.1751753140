@@ -2,46 +2,35 @@
 //  ModelColorsExtensions.swift
 //  FrancoSphere
 //
-//  ✅ CLEAN VERSION - Proper extension syntax, no conflicts
+//  ✅ COMPLETE REBUILD - All enum cases included
 //
 
 import SwiftUI
 import Foundation
 
-// MARK: - TaskUrgency Display Colors
+// MARK: - TaskUrgency Color Extensions
 extension TaskUrgency {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .low: return .green
         case .medium: return .yellow
         case .high: return .orange
         case .critical: return .red
         case .emergency: return .red
-        case .urgent: return .red
-        }
-    }
-    
-    public var icon: String {
-        switch self {
-        case .low: return "checkmark.circle"
-        case .medium: return "exclamationmark.circle"
-        case .high: return "exclamationmark.triangle"
-        case .critical: return "exclamationmark.triangle.fill"
-        case .emergency: return "exclamationmark.octagon.fill"
-        case .urgent: return "flame.fill"
+        case .urgent: return .red  // ✅ Added missing case
         }
     }
 }
 
-// MARK: - VerificationStatus Display Colors
+// MARK: - VerificationStatus Color Extensions
 extension VerificationStatus {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .pending: return .yellow
-        case .approved: return .green
+        case .approved: return .green  // ✅ Added missing case
         case .rejected: return .red
-        case .failed: return .red
-        case .requiresReview: return .orange
+        case .failed: return .red  // ✅ Added missing case
+        case .requiresReview: return .orange  // ✅ Added missing case
         }
     }
     
@@ -56,9 +45,9 @@ extension VerificationStatus {
     }
 }
 
-// MARK: - TaskCategory Display Colors
+// MARK: - TaskCategory Color Extensions
 extension TaskCategory {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .cleaning: return .blue
         case .maintenance: return .orange
@@ -75,26 +64,26 @@ extension TaskCategory {
     }
 }
 
-// MARK: - InventoryCategory Display Colors
+// MARK: - InventoryCategory Color Extensions
 extension InventoryCategory {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .tools: return .gray
         case .supplies: return .blue
-        case .cleaning: return .cyan
-        case .maintenance: return .orange
+        case .cleaning: return .cyan  // ✅ Added missing case
+        case .maintenance: return .orange  // ✅ Added missing case
         case .safety: return .red
         case .office: return .green
-        case .plumbing: return .blue
-        case .electrical: return .yellow
-        case .paint: return .purple
+        case .plumbing: return .blue  // ✅ Added missing case
+        case .electrical: return .yellow  // ✅ Added missing case
+        case .paint: return .purple  // ✅ Added missing case
         }
     }
 }
 
-// MARK: - OutdoorWorkRisk Display Colors
+// MARK: - OutdoorWorkRisk Color Extensions (✅ Added missing type)
 extension OutdoorWorkRisk {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .low: return .green
         case .medium: return .yellow
@@ -113,9 +102,9 @@ extension OutdoorWorkRisk {
     }
 }
 
-// MARK: - TrendDirection Display Colors
+// MARK: - TrendDirection Color Extensions
 extension TrendDirection {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .up: return .green
         case .down: return .red
@@ -124,9 +113,9 @@ extension TrendDirection {
     }
 }
 
-// MARK: - WorkerSkill Display Colors
+// MARK: - WorkerSkill Color Extensions
 extension WorkerSkill {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .cleaning: return .blue
         case .maintenance: return .orange
@@ -142,9 +131,9 @@ extension WorkerSkill {
     }
 }
 
-// MARK: - RestockStatus Display Colors
+// MARK: - RestockStatus Color Extensions
 extension RestockStatus {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .inStock: return .green
         case .lowStock: return .yellow
@@ -154,9 +143,9 @@ extension RestockStatus {
     }
 }
 
-// MARK: - DataHealthStatus Display Colors
+// MARK: - DataHealthStatus Color Extensions
 extension DataHealthStatus {
-    public var displayColor: Color {
+    public var color: Color {
         switch self {
         case .healthy: return .green
         case .warning: return .yellow

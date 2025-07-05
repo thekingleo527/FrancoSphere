@@ -109,7 +109,6 @@
 		234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CE2DF78E3D00355F0A /* DatabaseManager.swift */; };
 		234581A32DF78E3D00355F0A /* WorkerConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E52DF78E3D00355F0A /* WorkerConstants.swift */; };
 		234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B32DF78E3D00355F0A /* WeatherDashboardComponent.swift */; };
-		234581A52DF78E3D00355F0A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B82DF78E3D00355F0A /* ContentView.swift */; };
 		234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581032DF78E3D00355F0A /* DailyOpsReset.swift */; };
 		234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581182DF78E3D00355F0A /* MaintenanceHistoryView.swift */; };
 		234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A52DF78E3D00355F0A /* TaskCategoryGlassCard.swift */; };
@@ -226,7 +225,6 @@
 		234580B32DF78E3D00355F0A /* WeatherDashboardComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDashboardComponent.swift; sourceTree = "<group>"; };
 		234580B42DF78E3D00355F0A /* WeatherTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTasksSection.swift; sourceTree = "<group>"; };
 		234580B52DF78E3D00355F0A /* WeatherViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewModifier.swift; sourceTree = "<group>"; };
-		234580B82DF78E3D00355F0A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		234580BD2DF78E3D00355F0A /* FrancoSphere.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FrancoSphere.xcodeproj; sourceTree = "<group>"; };
 		234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereTests.swift; sourceTree = "<group>"; };
 		234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereUITests.swift; sourceTree = "<group>"; };
@@ -405,7 +403,6 @@
 				233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */,
 				2345808B2DF78E3D00355F0A /* CLAUDE.md */,
 				234580B72DF78E3D00355F0A /* Components */,
-				234580B82DF78E3D00355F0A /* ContentView.swift */,
 				234580BC2DF78E3D00355F0A /* Data */,
 				234580BD2DF78E3D00355F0A /* FrancoSphere.xcodeproj */,
 				234580BF2DF78E3D00355F0A /* FrancoSphereTests */,
@@ -1051,7 +1048,6 @@
 				234581A32DF78E3D00355F0A /* WorkerConstants.swift in Sources */,
 				23B117A12DFE2BC40065F39E /* ContextualTask.swift in Sources */,
 				234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */,
-				234581A52DF78E3D00355F0A /* ContentView.swift in Sources */,
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
 				23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */,
 				23B117972DFE01B50065F39E /* ProfileBadge.swift in Sources */,
