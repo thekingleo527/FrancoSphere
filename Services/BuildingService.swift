@@ -138,10 +138,10 @@ actor BuildingService {
         
         var buildingStatus: FrancoSphere.BuildingStatus {
             switch self {
-            case .complete: return .operational
-            case .partial: return .underMaintenance
-            case .pending: return .underMaintenance
-            case .overdue: return .closed
+            case .complete: return .active
+            case .partial: return .maintenance
+            case .pending: return .maintenance
+            case .overdue: return .inactive
             }
         }
     }
@@ -411,18 +411,18 @@ actor BuildingService {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
-        let lastRestockString = ISO8601DateFormatter().string(from: item.lastRestockDate)
-        let needsReorderInt = item.needsReorder ? 1 : 0
+        let lastRestockString = ISO8601DateFormatter().string(from: item.quantity)
+        let needsReorderInt = item.status ? 1 : 0
         
         let parameters: [SQLiteBinding] = [
-            item.id, item.name, item.buildingID, item.category.rawValue,
-            item.quantity, item.unit, item.minimumQuantity, needsReorderInt,
-            lastRestockString, item.location, item.notes ?? "",
+            item.id, item.name, item.id, item.category.rawValue,
+            item.quantity, item.category, item.minimumStock, needsReorderInt,
+            lastRestockString, item.name, item.name ?? "",
             ISO8601DateFormatter().string(from: Date())
         ]
         
         try await sqliteManager.execute(insertQuery, parameters)
-        inventoryCache.removeValue(forKey: item.buildingID)
+        inventoryCache.removeValue(forKey: item.id)
         
         print("✅ Inventory item saved: \(item.name)")
     }
@@ -469,7 +469,7 @@ actor BuildingService {
     
     func getLowStockItems(for buildingId: String) async throws -> [FrancoSphere.InventoryItem] {
         let allItems = try await getInventoryItems(for: buildingId)
-        return allItems.filter { $0.needsReorder }
+        return allItems.filter { $0.status }
     }
     
     func getInventoryItems(for buildingId: String, category: FrancoSphere.InventoryCategory) async throws -> [FrancoSphere.InventoryItem] {

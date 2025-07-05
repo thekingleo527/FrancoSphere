@@ -49,7 +49,8 @@ class WorkerDashboardViewModel: ObservableObject {
     }
     
     func loadDashboardData() async {
-        guard let workerId = NewAuthManager.shared.workerId else {
+        let workerId = NewAuthManager.shared.workerId
+        guard !workerId.isEmpty else {
             errorMessage = "No worker ID available"
             return
         }
@@ -75,7 +76,8 @@ class WorkerDashboardViewModel: ObservableObject {
     }
     
     func completeTask(_ task: ContextualTask, evidence: FrancoSphere.TaskEvidence?) async {
-        guard let workerId = NewAuthManager.shared.workerId else { return }
+        let workerId = NewAuthManager.shared.workerId
+        guard !workerId.isEmpty else { return }
         
         do {
             try await taskService.completeTask(task.id, workerId: workerId, buildingId: task.buildingId, evidence: evidence)
@@ -110,7 +112,7 @@ class WorkerDashboardViewModel: ObservableObject {
     }
     
     private func setupReactiveBindings() {
-        WeatherManager.shared.$currentWeather
+        WeatherDataAdapter.shared.$currentWeather
             .receive(on: DispatchQueue.main)
             .sink { [weak self] weather in
                 // Update weather impact

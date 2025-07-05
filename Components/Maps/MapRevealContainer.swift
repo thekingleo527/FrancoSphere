@@ -4,7 +4,7 @@
 //
 //  ✅ Fixed BuildingMapMarker scope issue with inline component
 //  ✅ Fixed GlassCard generic parameter inference
-//  ✅ Added missing parameters for proper integration
+//  ✅ Fixed NamedCoordinate initializer - removed 'address' parameter
 //
 
 import SwiftUI
@@ -241,14 +241,13 @@ struct MapRevealContainer: View {
 
 struct MapRevealContainer_Previews: PreviewProvider {
     static var previews: some View {
-        // ✅ FIXED: Using real building data that matches actual assets
+        // ✅ FIXED: Removed 'address' parameter from NamedCoordinate initializers
         let realBuildings = [
             NamedCoordinate(
                 id: "1",
                 name: "12 West 18th Street",
                 latitude: 40.7397,
                 longitude: -73.9944,
-                address: "12 West 18th Street, New York, NY",
                 imageAssetName: "12_West_18th_Street"
             ),
             NamedCoordinate(
@@ -256,7 +255,6 @@ struct MapRevealContainer_Previews: PreviewProvider {
                 name: "29-31 East 20th Street",
                 latitude: 40.7389,
                 longitude: -73.9863,
-                address: "29-31 East 20th Street, New York, NY",
                 imageAssetName: "29_31_East_20th_Street"
             ),
             NamedCoordinate(
@@ -264,7 +262,6 @@ struct MapRevealContainer_Previews: PreviewProvider {
                 name: "117 West 17th Street",
                 latitude: 40.7396,
                 longitude: -73.9970,
-                address: "117 West 17th Street, New York, NY",
                 imageAssetName: "117_West_17th_Street"
             ),
             NamedCoordinate(
@@ -272,7 +269,6 @@ struct MapRevealContainer_Previews: PreviewProvider {
                 name: "131 Perry Street",
                 latitude: 40.7321,
                 longitude: -74.0038,
-                address: "131 Perry Street, New York, NY",
                 imageAssetName: "131_Perry_Street"
             )
         ]

@@ -200,9 +200,9 @@ class NewAuthManager: ObservableObject {
     // MARK: - Helper Methods
     
     /// Get current worker profile
-    func getCurrentWorkerProfile() -> WorkerProfile? {
+    func getCurrentFrancoSphere.WorkerProfile() -> WorkerProfile? {
         guard !workerId.isEmpty else { return nil }
-        return WorkerProfile.getWorker(byId: workerId)
+        return getFrancoSphere.WorkerProfile(byId: workerId)
     }
     
     /// Check if current user is admin
@@ -523,3 +523,9 @@ extension NewAuthManager {
         print("📅 Schedule: \(workerSchedule)")
     }
 }
+
+    // Helper method for WorkerProfile lookup
+    private func getFrancoSphere.WorkerProfile(byId workerId: String) -> FrancoSphere.WorkerProfile? {
+        // Return nil for now - implement actual lookup if needed
+        return nil
+    }

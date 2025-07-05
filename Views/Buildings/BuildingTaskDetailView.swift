@@ -399,7 +399,7 @@ struct BuildingTaskDetailView: View {
                         .background(Color.blue.opacity(0.1))
                         .cornerRadius(8)
                     if !isComplete {
-                        Button(action: { removeInventoryItem(itemId) }) {
+                        Button(action: { removeFrancoSphere.InventoryItem(itemId) }) {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.red)
                         }
@@ -562,7 +562,7 @@ struct BuildingTaskDetailView: View {
     
     private func loadInventory() {
         availableInventory = [
-            InventoryItem(
+            FrancoSphere.InventoryItem(
                 id: "item1",
                 name: "All-Purpose Cleaner",
                 buildingID: task.buildingID,
@@ -572,7 +572,7 @@ struct BuildingTaskDetailView: View {
                 minimumQuantity: 2,
                 location: "Janitor Closet"
             ),
-            InventoryItem(
+            FrancoSphere.InventoryItem(
                 id: "item2",
                 name: "Screwdriver Set",
                 buildingID: task.buildingID,
@@ -611,7 +611,7 @@ struct BuildingTaskDetailView: View {
         loadAssignedWorkers()
     }
     
-    private func removeInventoryItem(_ itemId: String) {
+    private func removeFrancoSphere.InventoryItem(_ itemId: String) {
         selectedInventoryItems.removeValue(forKey: itemId)
     }
     
@@ -877,7 +877,7 @@ struct BuildingTaskInventorySelectionView: View {
     
     private func loadInventoryItems() {
         availableItems = [
-            InventoryItem(
+            FrancoSphere.InventoryItem(
                 id: "item1",
                 name: "All-Purpose Cleaner",
                 buildingID: buildingId,
@@ -887,7 +887,7 @@ struct BuildingTaskInventorySelectionView: View {
                 minimumQuantity: 2,
                 location: "Janitor Closet"
             ),
-            InventoryItem(
+            FrancoSphere.InventoryItem(
                 id: "item2",
                 name: "Screwdriver Set",
                 buildingID: buildingId,

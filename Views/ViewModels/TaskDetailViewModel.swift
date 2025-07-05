@@ -47,7 +47,8 @@ class TaskDetailViewModel: ObservableObject {
                 notes: completionNotes.isEmpty ? nil : completionNotes
             )
             
-            guard let workerId = NewAuthManager.shared.workerId else {
+            let workerId = NewAuthManager.shared.workerId
+        guard !workerId.isEmpty else {
                 throw TaskError.noWorkerID
             }
             

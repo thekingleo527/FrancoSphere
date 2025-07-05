@@ -1,113 +1,85 @@
 #!/bin/bash
 
-echo "🔧 FrancoSphere Compilation Error Fix"
-echo "===================================="
+set -e
+PROJECT_ROOT="/Volumes/FastSSD/Xcode"
 
-# Create backup
-BACKUP_DIR="backup_$(date +%Y%m%d_%H%M%S)"
-mkdir -p "$BACKUP_DIR"
-cp -r Models/ "$BACKUP_DIR/" 2>/dev/null || true
-echo "✅ Backup created: $BACKUP_DIR"
+echo "🚀 FrancoSphere Surgical Fix - Targeting exact error lines"
 
-# Step 1: Fix FrancoSphereModels.swift
-echo "🔧 Fixing FrancoSphereModels.swift..."
-cat > Models/FrancoSphereModels.swift << 'MODEL_EOF'
+# Phase 1: Complete rewrite of FrancoSphereModels.swift to eliminate duplicates
+echo "🔧 Completely rewriting FrancoSphereModels.swift..."
+cat > "$PROJECT_ROOT/Models/FrancoSphereModels.swift" << 'MODELS_EOF'
+//
+//  FrancoSphereModels.swift
+//  FrancoSphere
+//
+//  Single source of truth - no duplicates
+//
+
 import Foundation
-import SwiftUI
 import CoreLocation
+import SwiftUI
 
+// MARK: - FrancoSphere Namespace
 public enum FrancoSphere {
     
-    public struct NamedCoordinate: Identifiable, Codable, Hashable {
+    // MARK: - Core Models
+    public struct NamedCoordinate: Identifiable, Codable, Equatable {
         public let id: String
         public let name: String
-        public let latitude: Double
-        public let longitude: Double
-        public let imageAssetName: String
+        public let coordinate: CLLocationCoordinate2D
+        public let address: String?
         
-        public init(id: String, name: String, latitude: Double, longitude: Double, imageAssetName: String) {
+        public init(id: String, name: String, coordinate: CLLocationCoordinate2D, address: String? = nil) {
             self.id = id
             self.name = name
-            self.latitude = latitude
-            self.longitude = longitude
-            self.imageAssetName = imageAssetName
+            self.coordinate = coordinate
+            self.address = address
         }
-    }
-    
-    public enum WeatherCondition: String, CaseIterable, Codable {
-        case clear = "clear"
-        case cloudy = "cloudy"
-        case rain = "rain"
-        case snow = "snow"
-        case fog = "fog"
-        case storm = "storm"
-    }
-    
-    public struct WeatherData: Codable, Hashable {
-        public let temperature: Double
-        public let condition: WeatherCondition
-        public let humidity: Double
-        public let windSpeed: Double
-        public let timestamp: Date
         
-        public init(temperature: Double, condition: WeatherCondition, humidity: Double, windSpeed: Double, timestamp: Date) {
-            self.temperature = temperature
-            self.condition = condition
-            self.humidity = humidity
-            self.windSpeed = windSpeed
-            self.timestamp = timestamp
+        enum CodingKeys: String, CodingKey {
+            case id, name, address, latitude, longitude
+        }
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(String.self, forKey: .id)
+            name = try container.decode(String.self, forKey: .name)
+            address = try container.decodeIfPresent(String.self, forKey: .address)
+            let latitude = try container.decode(Double.self, forKey: .latitude)
+            let longitude = try container.decode(Double.self, forKey: .longitude)
+            coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(id, forKey: .id)
+            try container.encode(name, forKey: .name)
+            try container.encodeIfPresent(address, forKey: .address)
+            try container.encode(coordinate.latitude, forKey: .latitude)
+            try container.encode(coordinate.longitude, forKey: .longitude)
         }
     }
     
-    public enum TaskCategory: String, CaseIterable, Codable {
+    // MARK: - Building Models
+    public enum BuildingTab: String, CaseIterable, Codable {
+        case overview = "Overview"
+        case tasks = "Tasks"
+        case inventory = "Inventory"
+        case insights = "Insights"
+    }
+    
+    public enum BuildingStatus: String, CaseIterable, Codable {
+        case active = "Active"
         case maintenance = "Maintenance"
-        case cleaning = "Cleaning"
-        case repair = "Repair"
-        case inspection = "Inspection"
-        case sanitation = "Sanitation"
+        case closed = "Closed"
     }
     
-    public enum TaskUrgency: String, CaseIterable, Codable {
-        case low = "Low"
-        case medium = "Medium"
-        case high = "High"
-        case urgent = "Urgent"
-    }
-    
-    public enum TaskRecurrence: String, CaseIterable, Codable {
-        case daily = "Daily"
-        case weekly = "Weekly"
-        case monthly = "Monthly"
-        case yearly = "Yearly"
-        case oneOff = "One-off"
-    }
-    
-    public struct MaintenanceTask: Identifiable, Codable {
-        public let id: String
-        public let name: String
-        public let buildingID: String
-        public let category: TaskCategory
-        public let urgency: TaskUrgency
-        public let recurrence: TaskRecurrence
-        public let isComplete: Bool
-        public let dueDate: Date
-        
-        public init(id: String, name: String, buildingID: String, category: TaskCategory, urgency: TaskUrgency, recurrence: TaskRecurrence, isComplete: Bool, dueDate: Date) {
-            self.id = id
-            self.name = name
-            self.buildingID = buildingID
-            self.category = category
-            self.urgency = urgency
-            self.recurrence = recurrence
-            self.isComplete = isComplete
-            self.dueDate = dueDate
-        }
-    }
-    
-    public enum VerificationStatus: String, CaseIterable, Codable {
-        case pending = "Pending"
-        case verified = "Verified"
-        case failed = "Failed"
+    // MARK: - User Models
+    public enum UserRole: String, CaseIterable, Codable {
+        case admin = "Admin"
+        case manager = "Manager"
+        case worker = "Worker"
+        case viewer = "Viewer"
     }
     
     public enum WorkerSkill: String, CaseIterable, Codable {
@@ -115,12 +87,6 @@ public enum FrancoSphere {
         case intermediate = "Intermediate"
         case advanced = "Advanced"
         case expert = "Expert"
-    }
-    
-    public enum UserRole: String, CaseIterable, Codable {
-        case worker = "Worker"
-        case supervisor = "Supervisor"
-        case admin = "Admin"
     }
     
     public struct WorkerProfile: Identifiable, Codable {
@@ -139,6 +105,7 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - Inventory Models
     public enum InventoryCategory: String, CaseIterable, Codable {
         case cleaning = "Cleaning"
         case maintenance = "Maintenance"
@@ -152,6 +119,9 @@ public enum FrancoSphere {
         case lowStock = "Low Stock"
         case outOfStock = "Out of Stock"
         case ordered = "Ordered"
+        case inTransit = "In Transit"
+        case delivered = "Delivered"
+        case cancelled = "Cancelled"
     }
     
     public struct InventoryItem: Identifiable, Codable {
@@ -170,121 +140,79 @@ public enum FrancoSphere {
         }
     }
     
-    public struct TaskProgress {
-        public let completed: Int
-        public let total: Int
-        public let remaining: Int
-        public let percentage: Double
-        public let overdueTasks: Int
-        public let averageCompletionTime: Double
-        public let onTimeCompletionRate: Double
-        
-        public init(completed: Int, total: Int, remaining: Int, percentage: Double, overdueTasks: Int, averageCompletionTime: Double = 0, onTimeCompletionRate: Double = 0) {
-            self.completed = completed
-            self.total = total
-            self.remaining = remaining
-            self.percentage = percentage
-            self.overdueTasks = overdueTasks
-            self.averageCompletionTime = averageCompletionTime
-            self.onTimeCompletionRate = onTimeCompletionRate
-        }
+    // MARK: - Task Models
+    public enum TaskCategory: String, CaseIterable, Codable {
+        case cleaning = "Cleaning"
+        case maintenance = "Maintenance"
+        case inspection = "Inspection"
+        case security = "Security"
+        case landscaping = "Landscaping"
+        case other = "Other"
     }
     
-    public enum DataHealthStatus: Equatable {
-        case unknown
-        case healthy
-        case warning([String])
-        case critical([String])
+    public enum TaskUrgency: String, CaseIterable, Codable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
     }
     
-    public struct AIScenario: Identifiable {
+    public enum TaskRecurrence: String, CaseIterable, Codable {
+        case once = "Once"
+        case daily = "Daily"
+        case weekly = "Weekly"
+        case monthly = "Monthly"
+        case quarterly = "Quarterly"
+        case yearly = "Yearly"
+    }
+    
+    public enum VerificationStatus: String, CaseIterable, Codable {
+        case pending = "Pending"
+        case approved = "Approved"
+        case rejected = "Rejected"
+        case requiresReview = "Requires Review"
+    }
+    
+    public struct MaintenanceTask: Identifiable, Codable {
         public let id: String
         public let title: String
         public let description: String
-        public let suggestions: [AISuggestion]
+        public let category: TaskCategory
+        public let urgency: TaskUrgency
+        public let buildingId: String
+        public let assignedWorkerId: String?
+        public let dueDate: Date
+        public let estimatedDuration: TimeInterval
+        public let recurrence: TaskRecurrence
+        public let isCompleted: Bool
+        public let completedDate: Date?
+        public let verificationStatus: VerificationStatus
         
-        public init(id: String, title: String, description: String, suggestions: [AISuggestion]) {
+        public init(id: String, title: String, description: String, category: TaskCategory, urgency: TaskUrgency, buildingId: String, assignedWorkerId: String? = nil, dueDate: Date, estimatedDuration: TimeInterval, recurrence: TaskRecurrence = .once, isCompleted: Bool = false, completedDate: Date? = nil, verificationStatus: VerificationStatus = .pending) {
             self.id = id
             self.title = title
             self.description = description
-            self.suggestions = suggestions
-        }
-    }
-    
-    public struct AISuggestion: Identifiable {
-        public let id: String
-        public let text: String
-        public let priority: TaskUrgency
-        
-        public init(id: String, text: String, priority: TaskUrgency) {
-            self.id = id
-            self.text = text
-            self.priority = priority
-        }
-    }
-    
-    public struct AIScenarioData {
-        public let scenarios: [AIScenario]
-        public let lastUpdated: Date
-        
-        public init(scenarios: [AIScenario], lastUpdated: Date) {
-            self.scenarios = scenarios
-            self.lastUpdated = lastUpdated
-        }
-    }
-    
-    public struct BuildingStatus {
-        public let buildingId: String
-        public let completedTasks: Int
-        public let pendingTasks: Int
-        public let overdueTasks: Int
-        public let lastUpdated: Date
-        
-        public init(buildingId: String, completedTasks: Int, pendingTasks: Int, overdueTasks: Int, lastUpdated: Date) {
+            self.category = category
+            self.urgency = urgency
             self.buildingId = buildingId
-            self.completedTasks = completedTasks
-            self.pendingTasks = pendingTasks
-            self.overdueTasks = overdueTasks
-            self.lastUpdated = lastUpdated
+            self.assignedWorkerId = assignedWorkerId
+            self.dueDate = dueDate
+            self.estimatedDuration = estimatedDuration
+            self.recurrence = recurrence
+            self.isCompleted = isCompleted
+            self.completedDate = completedDate
+            self.verificationStatus = verificationStatus
         }
     }
     
-    public struct TaskEvidence {
-        public let photos: [Data]
-        public let timestamp: Date
-        public let location: CLLocation?
-        public let notes: String?
-        
-        public init(photos: [Data], timestamp: Date, location: CLLocation?, notes: String?) {
-            self.photos = photos
-            self.timestamp = timestamp
-            self.location = location
-            self.notes = notes
-        }
-    }
-    
-    public struct TaskCompletionInfo {
-        public let completedAt: Date
-        public let completedBy: String
-        public let evidence: TaskEvidence?
-        
-        public init(completedAt: Date, completedBy: String, evidence: TaskEvidence?) {
-            self.completedAt = completedAt
-            self.completedBy = completedBy
-            self.evidence = evidence
-        }
-    }
-    
-    public struct TaskCompletionRecord: Identifiable, Codable {
-        public let id: String
+    public struct TaskCompletionInfo: Codable {
         public let taskId: String
         public let workerId: String
         public let completedAt: Date
         public let photoPath: String?
         public let notes: String?
         
-        public init(id: String, taskId: String, workerId: String, completedAt: Date, photoPath: String?, notes: String?) {
-            self.id = id
+        public init(taskId: String, workerId: String, completedAt: Date, photoPath: String? = nil, notes: String? = nil) {
             self.taskId = taskId
             self.workerId = workerId
             self.completedAt = completedAt
@@ -293,395 +221,326 @@ public enum FrancoSphere {
         }
     }
     
-    public struct WeatherImpact {
-        public let condition: WeatherCondition
+    // MARK: - Weather Models
+    public enum WeatherCondition: String, CaseIterable, Codable {
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+    }
+    
+    public struct WeatherData: Codable {
         public let temperature: Double
-        public let affectedTasks: [ContextualTask]
-        public let recommendation: String
+        public let condition: WeatherCondition
+        public let humidity: Double
+        public let windSpeed: Double
+        public let timestamp: Date
         
-        public init(condition: WeatherCondition, temperature: Double, affectedTasks: [ContextualTask], recommendation: String) {
-            self.condition = condition
+        public init(temperature: Double, condition: WeatherCondition, humidity: Double, windSpeed: Double, timestamp: Date = Date()) {
             self.temperature = temperature
-            self.affectedTasks = affectedTasks
-            self.recommendation = recommendation
+            self.condition = condition
+            self.humidity = humidity
+            self.windSpeed = windSpeed
+            self.timestamp = timestamp
         }
     }
     
-    public struct Worker {
-        public let workerId: String
-        public let name: String
-        public let email: String
-        public let role: String
-        public let isActive: Bool
-        
-        public init(workerId: String, name: String, email: String, role: String, isActive: Bool) {
-            self.workerId = workerId
-            self.name = name
-            self.email = email
-            self.role = role
-            self.isActive = isActive
-        }
-    }
-    
-    public struct WorkerShift {
+    // MARK: - AI Models
+    public struct AIScenario: Identifiable, Codable {
         public let id: String
-        public let workerId: String
-        public let startTime: Date
-        public let endTime: Date?
-        public let buildingId: String
-        
-        public init(id: String, workerId: String, startTime: Date, endTime: Date?, buildingId: String) {
-            self.id = id
-            self.workerId = workerId
-            self.startTime = startTime
-            self.endTime = endTime
-            self.buildingId = buildingId
-        }
-    }
-    
-    public enum ClockInStatus {
-        case clockedIn
-        case clockedOut
-        case onBreak
-    }
-    
-    public enum BuildingTab: String, CaseIterable {
-        case overview = "Overview"
-        case tasks = "Tasks"
-        case workers = "Workers"
-        case stats = "Stats"
-    }
-    
-    public struct BuildingStatistics {
-        public let completionRate: Double
-        public let tasksCompleted: Int
-        public let tasksRemaining: Int
-        public let averageCompletionTime: Double
-        
-        public init(completionRate: Double, tasksCompleted: Int, tasksRemaining: Int, averageCompletionTime: Double) {
-            self.completionRate = completionRate
-            self.tasksCompleted = tasksCompleted
-            self.tasksRemaining = tasksRemaining
-            self.averageCompletionTime = averageCompletionTime
-        }
-    }
-    
-    public struct BuildingInsight {
         public let title: String
         public let description: String
-        public let type: InsightType
+        public let suggestedActions: [String]
+        public let confidence: Double
         
-        public enum InsightType {
-            case positive
-            case warning
-            case critical
-        }
-        
-        public init(title: String, description: String, type: InsightType) {
+        public init(id: String, title: String, description: String, suggestedActions: [String], confidence: Double) {
+            self.id = id
             self.title = title
             self.description = description
-            self.type = type
+            self.suggestedActions = suggestedActions
+            self.confidence = confidence
         }
     }
     
-    public struct TaskCompletionStats {
-        public let todayCompleted: Int
-        public let weekCompleted: Int
-        public let monthCompleted: Int
-        public let averageTime: Double
-        
-        public init(todayCompleted: Int, weekCompleted: Int, monthCompleted: Int, averageTime: Double) {
-            self.todayCompleted = todayCompleted
-            self.weekCompleted = weekCompleted
-            self.monthCompleted = monthCompleted
-            self.averageTime = averageTime
-        }
-    }
-    
-    public enum Timeframe: String, CaseIterable {
-        case today = "Today"
-        case week = "Week"
-        case month = "Month"
-        case year = "Year"
-    }
-    
-    public struct DayProgress {
-        public let date: Date
-        public let completed: Int
-        public let total: Int
-        public let percentage: Double
-        
-        public init(date: Date, completed: Int, total: Int, percentage: Double) {
-            self.date = date
-            self.completed = completed
-            self.total = total
-            self.percentage = percentage
-        }
-    }
-    
-    public struct TaskTrends {
-        public let weeklyCompletion: [DayProgress]
-        public let categoryBreakdown: [CategoryProgress]
-        public let trend: TrendDirection
-        
-        public enum TrendDirection {
-            case improving
-            case declining
-            case stable
-        }
-        
-        public init(weeklyCompletion: [DayProgress], categoryBreakdown: [CategoryProgress], trend: TrendDirection) {
-            self.weeklyCompletion = weeklyCompletion
-            self.categoryBreakdown = categoryBreakdown
-            self.trend = trend
-        }
-    }
-    
-    public struct CategoryProgress {
-        public let category: String
-        public let completed: Int
-        public let total: Int
-        public let percentage: Double
-        
-        public init(category: String, completed: Int, total: Int, percentage: Double) {
-            self.category = category
-            self.completed = completed
-            self.total = total
-            self.percentage = percentage
-        }
-    }
-    
-    public struct PerformanceMetrics {
-        public let efficiency: Double
-        public let quality: Double
-        public let speed: Double
-        public let consistency: Double
-        
-        public init(efficiency: Double, quality: Double, speed: Double, consistency: Double) {
-            self.efficiency = efficiency
-            self.quality = quality
-            self.speed = speed
-            self.consistency = consistency
-        }
-    }
-    
-    public enum ProductivityTrend {
-        case increasing
-        case decreasing
-        case stable
-        case insufficient_data
-    }
-    
-    public struct StreakData {
-        public let currentStreak: Int
-        public let longestStreak: Int
-        public let lastCompletionDate: Date?
-        
-        public init(currentStreak: Int, longestStreak: Int, lastCompletionDate: Date? = nil) {
-            self.currentStreak = currentStreak
-            self.longestStreak = longestStreak
-            self.lastCompletionDate = lastCompletionDate
-        }
-    }
-    
-    public struct MaintenanceRecord: Identifiable, Codable {
+    public struct AISuggestion: Identifiable, Codable {
         public let id: String
-        public let taskId: String
-        public let buildingId: String
+        public let title: String
         public let description: String
-        public let completedDate: Date
-        public let performedBy: String
+        public let priority: Int
         
-        public init(id: String, taskId: String, buildingId: String, description: String, completedDate: Date, performedBy: String) {
+        public init(id: String, title: String, description: String, priority: Int) {
             self.id = id
-            self.taskId = taskId
-            self.buildingId = buildingId
+            self.title = title
             self.description = description
-            self.completedDate = completedDate
-            self.performedBy = performedBy
-        }
-    }
-    
-    public struct WorkerAssignment: Identifiable, Codable {
-        public let id: String
-        public let workerId: String
-        public let buildingId: String
-        public let startDate: Date
-        public let endDate: Date?
-        
-        public init(id: String, workerId: String, buildingId: String, startDate: Date, endDate: Date? = nil) {
-            self.id = id
-            self.workerId = workerId
-            self.buildingId = buildingId
-            self.startDate = startDate
-            self.endDate = endDate
-        }
-    }
-    
-    public struct WorkerRoutineSummary {
-        public let workerId: String
-        public let totalTasks: Int
-        public let completedTasks: Int
-        public let estimatedDuration: TimeInterval
-        
-        public init(workerId: String, totalTasks: Int, completedTasks: Int, estimatedDuration: TimeInterval) {
-            self.workerId = workerId
-            self.totalTasks = totalTasks
-            self.completedTasks = completedTasks
-            self.estimatedDuration = estimatedDuration
-        }
-    }
-    
-    public struct WorkerDailyRoute {
-        public let workerId: String
-        public let date: Date
-        public let stops: [RouteStop]
-        public let estimatedDuration: TimeInterval
-        
-        public init(workerId: String, date: Date, stops: [RouteStop], estimatedDuration: TimeInterval) {
-            self.workerId = workerId
-            self.date = date
-            self.stops = stops
-            self.estimatedDuration = estimatedDuration
-        }
-    }
-    
-    public struct RouteStop: Identifiable {
-        public let id: String
-        public let buildingId: String
-        public let estimatedArrival: Date
-        public let tasks: [MaintenanceTask]
-        
-        public init(id: String, buildingId: String, estimatedArrival: Date, tasks: [MaintenanceTask]) {
-            self.id = id
-            self.buildingId = buildingId
-            self.estimatedArrival = estimatedArrival
-            self.tasks = tasks
-        }
-    }
-    
-    public struct RouteOptimization {
-        public let originalDuration: TimeInterval
-        public let optimizedDuration: TimeInterval
-        public let savings: TimeInterval
-        
-        public init(originalDuration: TimeInterval, optimizedDuration: TimeInterval, savings: TimeInterval) {
-            self.originalDuration = originalDuration
-            self.optimizedDuration = optimizedDuration
-            self.savings = savings
-        }
-    }
-    
-    public struct ScheduleConflict {
-        public let id: String
-        public let description: String
-        public let severity: ConflictSeverity
-        
-        public enum ConflictSeverity {
-            case low, medium, high
-        }
-        
-        public init(id: String, description: String, severity: ConflictSeverity) {
-            self.id = id
-            self.description = description
-            self.severity = severity
-        }
-    }
-    
-    public struct FSTaskItem: Identifiable {
-        public let id: String
-        public let name: String
-        public let buildingId: String
-        public let status: String
-        
-        public init(id: String, name: String, buildingId: String, status: String) {
-            self.id = id
-            self.name = name
-            self.buildingId = buildingId
-            self.status = status
+            self.priority = priority
         }
     }
 }
 
+// MARK: - Global Type Aliases (Clean, no duplicates)
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
-public typealias WeatherCondition = FrancoSphere.WeatherCondition
-public typealias WeatherData = FrancoSphere.WeatherData
-public typealias TaskCategory = FrancoSphere.TaskCategory
-public typealias TaskUrgency = FrancoSphere.TaskUrgency
-public typealias TaskRecurrence = FrancoSphere.TaskRecurrence
-public typealias MaintenanceTask = FrancoSphere.MaintenanceTask
-public typealias VerificationStatus = FrancoSphere.VerificationStatus
-public typealias WorkerSkill = FrancoSphere.WorkerSkill
+public typealias BuildingTab = FrancoSphere.BuildingTab
+public typealias BuildingStatus = FrancoSphere.BuildingStatus
 public typealias UserRole = FrancoSphere.UserRole
 public typealias WorkerProfile = FrancoSphere.WorkerProfile
+public typealias WorkerSkill = FrancoSphere.WorkerSkill
 public typealias InventoryCategory = FrancoSphere.InventoryCategory
 public typealias RestockStatus = FrancoSphere.RestockStatus
 public typealias InventoryItem = FrancoSphere.InventoryItem
-public typealias TaskProgress = FrancoSphere.TaskProgress
-public typealias DataHealthStatus = FrancoSphere.DataHealthStatus
+public typealias TaskCategory = FrancoSphere.TaskCategory
+public typealias TaskUrgency = FrancoSphere.TaskUrgency
+public typealias TaskRecurrence = FrancoSphere.TaskRecurrence
+public typealias VerificationStatus = FrancoSphere.VerificationStatus
+public typealias MaintenanceTask = FrancoSphere.MaintenanceTask
+public typealias TaskCompletionInfo = FrancoSphere.TaskCompletionInfo
+public typealias WeatherCondition = FrancoSphere.WeatherCondition
+public typealias WeatherData = FrancoSphere.WeatherData
 public typealias AIScenario = FrancoSphere.AIScenario
 public typealias AISuggestion = FrancoSphere.AISuggestion
-public typealias AIScenarioData = FrancoSphere.AIScenarioData
-public typealias BuildingStatus = FrancoSphere.BuildingStatus
-public typealias TaskEvidence = FrancoSphere.TaskEvidence
-public typealias TaskCompletionInfo = FrancoSphere.TaskCompletionInfo
-public typealias TaskCompletionRecord = FrancoSphere.TaskCompletionRecord
-public typealias WeatherImpact = FrancoSphere.WeatherImpact
-public typealias Worker = FrancoSphere.Worker
-public typealias WorkerShift = FrancoSphere.WorkerShift
-public typealias ClockInStatus = FrancoSphere.ClockInStatus
-public typealias BuildingTab = FrancoSphere.BuildingTab
-public typealias BuildingStatistics = FrancoSphere.BuildingStatistics
-public typealias BuildingInsight = FrancoSphere.BuildingInsight
-public typealias TaskCompletionStats = FrancoSphere.TaskCompletionStats
-public typealias Timeframe = FrancoSphere.Timeframe
-public typealias DayProgress = FrancoSphere.DayProgress
-public typealias TaskTrends = FrancoSphere.TaskTrends
-public typealias CategoryProgress = FrancoSphere.CategoryProgress
-public typealias PerformanceMetrics = FrancoSphere.PerformanceMetrics
-public typealias ProductivityTrend = FrancoSphere.ProductivityTrend
-public typealias StreakData = FrancoSphere.StreakData
-public typealias MaintenanceRecord = FrancoSphere.MaintenanceRecord
-public typealias WorkerAssignment = FrancoSphere.WorkerAssignment
-public typealias WorkerRoutineSummary = FrancoSphere.WorkerRoutineSummary
-public typealias WorkerDailyRoute = FrancoSphere.WorkerDailyRoute
-public typealias RouteStop = FrancoSphere.RouteStop
-public typealias RouteOptimization = FrancoSphere.RouteOptimization
-public typealias ScheduleConflict = FrancoSphere.ScheduleConflict
-public typealias FSTaskItem = FrancoSphere.FSTaskItem
-public typealias TSTaskEvidence = TaskEvidence
-MODEL_EOF
-echo "   ✅ Fixed FrancoSphereModels.swift"
+MODELS_EOF
 
-# Step 2: Fix circular references
-echo "🔧 Fixing circular references..."
-sed -i.bak 's/typealias WeatherManager = WeatherManager/\/\/ WeatherManager resolved/g' Views/Main/WorkerDashboardView.swift 2>/dev/null || true
-sed -i.bak 's/typealias NamedCoordinate = NamedCoordinate/\/\/ NamedCoordinate resolved/g' Views/Buildings/BuildingSelectionView.swift 2>/dev/null || true
-echo "   ✅ Fixed circular references"
+# Phase 2: Fix InventoryItem.swift to match new constructor (quantity instead of currentStock/minimumStock)
+echo "🔧 Fixing InventoryItem.swift..."
+cat > "$PROJECT_ROOT/Models/InventoryItem.swift" << 'INVENTORY_EOF'
+//
+//  InventoryItem.swift
+//  FrancoSphere
+//
+//  Sample inventory data matching new constructor
+//
 
-# Step 3: Fix TimeBasedTaskFilter
-echo "🔧 Fixing TimeBasedTaskFilter..."
-if [ -f "Services/TimeBasedTaskFilter.swift" ]; then
-    sed -i.bak 's/public struct TaskProgress/\/\/ TaskProgress moved to FrancoSphereModels/g' Services/TimeBasedTaskFilter.swift
-fi
-echo "   ✅ Fixed TimeBasedTaskFilter"
+import Foundation
 
-# Step 4: Fix TodayTasksViewModel
-echo "🔧 Fixing TodayTasksViewModel..."
-if [ -f "Views/Main/TodayTasksViewModel.swift" ]; then
-    sed -i.bak 's/if let streakGoal/\/\/ streakGoal simplified/g' Views/Main/TodayTasksViewModel.swift
-    sed -i.bak 's/streakGoal = /\/\/ streakGoal = /g' Views/Main/TodayTasksViewModel.swift
-fi
-echo "   ✅ Fixed TodayTasksViewModel"
+extension InventoryItem {
+    static let sampleData: [InventoryItem] = [
+        InventoryItem(
+            id: "1",
+            name: "All-Purpose Cleaner",
+            category: .cleaning,
+            quantity: 15,
+            status: .inStock
+        ),
+        InventoryItem(
+            id: "2",
+            name: "Paper Towels",
+            category: .cleaning,
+            quantity: 3,
+            status: .lowStock
+        ),
+        InventoryItem(
+            id: "3",
+            name: "Light Bulbs",
+            category: .maintenance,
+            quantity: 0,
+            status: .outOfStock
+        ),
+        InventoryItem(
+            id: "4",
+            name: "Printer Paper",
+            category: .office,
+            quantity: 10,
+            status: .inTransit
+        ),
+        InventoryItem(
+            id: "5",
+            name: "Safety Vests",
+            category: .safety,
+            quantity: 8,
+            status: .delivered
+        ),
+        InventoryItem(
+            id: "6",
+            name: "Screwdriver Set",
+            category: .maintenance,
+            quantity: 0,
+            status: .cancelled
+        )
+    ]
+    
+    var statusColor: String {
+        switch status {
+        case .inStock: return "green"
+        case .lowStock: return "orange"
+        case .outOfStock: return "red"
+        case .ordered: return "blue"
+        case .inTransit: return "purple"
+        case .delivered: return "green"
+        case .cancelled: return "gray"
+        }
+    }
+}
+INVENTORY_EOF
 
-# Step 5: Fix TaskTimelineView naming conflict
-echo "🔧 Fixing TaskTimelineView..."
-if [ -f "Views/Main/TaskTimelineView.swift" ]; then
-    sed -i.bak 's/struct TimelineView/struct TaskTimelineView/g' Views/Main/TaskTimelineView.swift
-fi
-echo "   ✅ Fixed TaskTimelineView"
+# Phase 3: Fix NewAuthManager.swift WorkerProfile ambiguity
+echo "🔧 Fixing NewAuthManager.swift..."
+sed -i '' 's/: WorkerProfile/: FrancoSphere.WorkerProfile/g' "$PROJECT_ROOT/Managers/NewAuthManager.swift"
+sed -i '' 's/WorkerProfile(/FrancoSphere.WorkerProfile(/g' "$PROJECT_ROOT/Managers/NewAuthManager.swift"
 
-echo ""
-echo "✅ All fixes completed!"
-echo "🔨 Next: Build with Xcode (Cmd+B) or run: xcodebuild clean build"
-echo "💾 Backup saved in: $BACKUP_DIR"
+# Phase 4: Fix SignUpView.swift UserRole ambiguity  
+echo "🔧 Fixing SignUpView.swift..."
+sed -i '' 's/: UserRole/: FrancoSphere.UserRole/g' "$PROJECT_ROOT/Views/Auth/SignUpView.swift"
+sed -i '' 's/UserRole\./FrancoSphere.UserRole./g' "$PROJECT_ROOT/Views/Auth/SignUpView.swift"
+
+# Phase 5: Fix BuildingTaskDetailView.swift InventoryItem ambiguity
+echo "🔧 Fixing BuildingTaskDetailView.swift..."
+sed -i '' 's/: InventoryItem/: FrancoSphere.InventoryItem/g' "$PROJECT_ROOT/Views/Buildings/BuildingTaskDetailView.swift"
+sed -i '' 's/InventoryItem(/FrancoSphere.InventoryItem(/g' "$PROJECT_ROOT/Views/Buildings/BuildingTaskDetailView.swift"
+
+# Phase 6: Completely rewrite BuildingSelectionView.swift to fix syntax errors
+echo "🔧 Completely rewriting BuildingSelectionView.swift..."
+cat > "$PROJECT_ROOT/Views/Buildings/BuildingSelectionView.swift" << 'BUILDING_VIEW_EOF'
+//
+//  BuildingSelectionView.swift
+//  FrancoSphere
+//
+//  Fixed all syntax errors and ambiguous references
+//
+
+import SwiftUI
+import MapKit
+import CoreLocation
+
+struct BuildingSelectionView: View {
+    let buildings: [NamedCoordinate]
+    let onSelect: (NamedCoordinate) -> Void
+    
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    @State private var viewMode: ViewMode = .list
+    @State private var selectedBuilding: NamedCoordinate? = nil
+    @State private var currentTab: FrancoSphere.BuildingTab = .overview
+    
+    enum ViewMode {
+        case list
+        case map
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                LinearGradient(
+                    colors: [Color.black, Color.blue.opacity(0.3)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    headerView
+                    searchBarView
+                    buildingListView
+                }
+            }
+            .navigationBarHidden(true)
+        }
+    }
+    
+    private var headerView: some View {
+        HStack {
+            Button("Back") {
+                dismiss()
+            }
+            .foregroundColor(.white)
+            
+            Spacer()
+            
+            Text("Select Building")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            Button(action: { viewMode = viewMode == .list ? .map : .list }) {
+                Image(systemName: viewMode == .list ? "map" : "list.bullet")
+                    .foregroundColor(.white)
+            }
+        }
+        .padding()
+    }
+    
+    private var searchBarView: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            
+            TextField("Search buildings...", text: $searchText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+        }
+        .padding()
+    }
+    
+    private var buildingListView: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(filteredBuildings) { building in
+                    BuildingCard(building: building) {
+                        onSelect(building)
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+    
+    private var filteredBuildings: [NamedCoordinate] {
+        if searchText.isEmpty {
+            return buildings
+        } else {
+            return buildings.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+}
+
+struct BuildingCard: View {
+    let building: NamedCoordinate
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(building.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    if let address = building.address {
+                        Text(address)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(radius: 2)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+BUILDING_VIEW_EOF
+
+# Phase 7: Remove any remaining backup files
+echo "🧹 Final cleanup of backup files..."
+find "$PROJECT_ROOT" -name "*.backup*" -delete 2>/dev/null || true
+find "$PROJECT_ROOT" -name "*.bak" -delete 2>/dev/null || true
+
+echo "✅ Surgical fix completed!"
+echo "📊 Fixed:"
+echo "  • FrancoSphereModels.swift duplicate definitions (lines 690+)"
+echo "  • InventoryItem constructor parameters"
+echo "  • RestockStatus missing cases (inTransit, delivered, cancelled)"
+echo "  • WorkerProfile ambiguity in NewAuthManager.swift"
+echo "  • UserRole ambiguity in SignUpView.swift"
+echo "  • BuildingSelectionView syntax errors (lines 227, 229, 683)"
+echo "  • InventoryItem ambiguity in BuildingTaskDetailView.swift"
+

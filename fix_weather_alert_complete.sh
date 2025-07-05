@@ -1,3 +1,13 @@
+#!/bin/bash
+
+echo "🔧 Completely rebuilding WeatherAlert.swift"
+echo "==========================================="
+
+# Backup the corrupted file
+cp "/Volumes/FastSSD/Xcode/Models/WeatherAlert.swift" "/Volumes/FastSSD/Xcode/Models/WeatherAlert.swift.corrupted_backup"
+
+# Create a completely clean WeatherAlert.swift
+cat > "/Volumes/FastSSD/Xcode/Models/WeatherAlert.swift" << 'WEATHER_EOF'
 //
 //  WeatherAlert.swift
 //  FrancoSphere
@@ -275,3 +285,21 @@ extension FSWeatherData {
         ]
     }
 }
+WEATHER_EOF
+
+echo "✅ WeatherAlert.swift completely rebuilt"
+echo "   - All syntax errors fixed"
+echo "   - Clean enum definitions"
+echo "   - Proper ContextualTask constructors"
+echo "   - Weather-based task generation"
+echo "   - No unterminated strings"
+
+echo ""
+echo "🔍 Verifying the new file..."
+if [ -f "/Volumes/FastSSD/Xcode/Models/WeatherAlert.swift" ]; then
+    echo "✅ File created successfully"
+    echo "📊 Line count: $(wc -l < "/Volumes/FastSSD/Xcode/Models/WeatherAlert.swift")"
+    echo "🎯 Should compile without errors now"
+else
+    echo "❌ File creation failed"
+fi

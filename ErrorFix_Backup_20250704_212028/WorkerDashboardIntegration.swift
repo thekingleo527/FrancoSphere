@@ -183,8 +183,7 @@ class WorkerDashboardIntegration: ObservableObject {
     
     private func checkIfDataImported() async -> Bool {
         do {
-            let workerId = NewAuthManager.shared.workerId
-        guard !workerId.isEmpty else {
+            guard let workerId = NewAuthManager.shared.workerId, !workerId.isEmpty else {
                 return false
             }
             

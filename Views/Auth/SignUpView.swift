@@ -18,7 +18,7 @@ struct SignUpView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
-    @State private var selectedRole: UserRole = .worker
+    @State private var selectedRole: FrancoSphere.UserRole = .worker
     @State private var phoneNumber = ""
     @State private var selectedBuildings: Set<String> = []
     
@@ -753,7 +753,7 @@ struct BuildingSelectionChip: View {
 }
 
 struct RoleSelectionCard: View {
-    let role: UserRole
+    let role: FrancoSphere.UserRole
     let title: String
     let description: String
     let icon: String

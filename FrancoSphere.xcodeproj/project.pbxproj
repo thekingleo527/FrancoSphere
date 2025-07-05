@@ -114,7 +114,6 @@
 		234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581032DF78E3D00355F0A /* DailyOpsReset.swift */; };
 		234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581182DF78E3D00355F0A /* MaintenanceHistoryView.swift */; };
 		234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A52DF78E3D00355F0A /* TaskCategoryGlassCard.swift */; };
-		234581AB2DF78E3D00355F0A /* BuildingImageDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */; };
 		234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */; };
 		234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A42DF78E3D00355F0A /* PressableGlassCard.swift */; };
 		234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581162DF78E3D00355F0A /* BuildingTaskDetailView.swift */; };
@@ -302,7 +301,6 @@
 		234581222DF78E3D00355F0A /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		234581232DF78E3D00355F0A /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
-		234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingImageDiagnostic.swift; sourceTree = "<group>"; };
 		236106D82E16F2F100463A59 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
 		236106E52E17804400463A59 /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
 		236106E72E1788EC00463A59 /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
@@ -731,7 +729,6 @@
 				234581112DF78E3D00355F0A /* Auth */,
 				2345811C2DF78E3D00355F0A /* Buildings */,
 				234581272DF78E3D00355F0A /* Main */,
-				234581282DF78E3D00355F0A /* BuildingImageDiagnostic.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1066,7 +1063,6 @@
 				234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,
 				23B117932DFE008D0065F39E /* HeroStatusCard.swift in Sources */,
-				234581AB2DF78E3D00355F0A /* BuildingImageDiagnostic.swift in Sources */,
 				234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */,
 				234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */,
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,

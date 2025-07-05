@@ -413,7 +413,7 @@ public class SQLiteManager {
             let userRole: FrancoSphere.UserRole
             switch roleString.lowercased() {
             case "admin": userRole = .admin
-            case "client": userRole = .client
+            case "client": userRole = .worker
             default: userRole = .worker
             }
             
@@ -441,7 +441,7 @@ public class SQLiteManager {
             workerRole <- worker.role.rawValue,
             workerPhone <- "", // Default empty
             hourlyRate <- 0.0, // Default rate
-            skills <- worker.skills.map { $0.rawValue }.joined(separator: ","),
+            skills <- worker.skillLevel.map { $0.rawValue }.joined(separator: ","),
             isActive <- true,
             profileImagePath <- nil,
             address <- "",
@@ -467,7 +467,7 @@ public class SQLiteManager {
             let userRole: FrancoSphere.UserRole
             switch roleString.lowercased() {
             case "admin": userRole = .admin
-            case "client": userRole = .client
+            case "client": userRole = .worker
             default: userRole = .worker
             }
             

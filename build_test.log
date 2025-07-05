@@ -5,12 +5,12 @@ Resolve Package Graph
 
 
 Resolved source packages:
-  FlatBuffers: https://github.com/google/flatbuffers.git @ 25.2.10
-  swift-toolchain-sqlite: https://github.com/swiftlang/swift-toolchain-sqlite @ 1.0.4
-  SQLite.swift: https://github.com/stephencelis/SQLite.swift @ 0.15.4
   OpenMeteoSdk: https://github.com/open-meteo/sdk.git @ main (faa1a3a)
+  FlatBuffers: https://github.com/google/flatbuffers.git @ 25.2.10
+  SQLite.swift: https://github.com/stephencelis/SQLite.swift @ 0.15.4
+  swift-toolchain-sqlite: https://github.com/swiftlang/swift-toolchain-sqlite @ 1.0.4
 
-2025-07-04 18:38:39.611 xcodebuild[50219:1058994] Writing error result bundle to /var/folders/gb/vjfpz5wn03q8j9hmp0ztqk200000gn/T/ResultBundle_2025-04-07_18-38-0039.xcresult
+2025-07-04 20:32:26.981 xcodebuild[55610:1203239] Writing error result bundle to /var/folders/gb/vjfpz5wn03q8j9hmp0ztqk200000gn/T/ResultBundle_2025-04-07_20-32-0026.xcresult
 xcodebuild: error: Unable to find a device matching the provided destination specifier:
 		{ platform:iOS Simulator, OS:latest, name:iPhone 15 }
 

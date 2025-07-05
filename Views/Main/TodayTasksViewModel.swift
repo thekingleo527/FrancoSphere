@@ -2,6 +2,10 @@
 //  TodayTasksViewModel.swift
 //  FrancoSphere
 //
+//  🔧 FIXED: Optional binding errors with NewAuthManager.workerId
+//  ✅ Changed from guard let to direct String access and empty check
+//  ✅ Uses proper error handling for empty workerId
+//
 
 import SwiftUI
 import Combine
@@ -46,7 +50,9 @@ class TodayTasksViewModel: ObservableObject {
     func loadTodaysTasks() async {
         isLoading = true
         
-        guard let workerId = NewAuthManager.shared.workerId else {
+        // FIXED: Use direct access to workerId (String) and check for empty
+        let workerId = NewAuthManager.shared.workerId
+        guard !workerId.isEmpty else {
             isLoading = false
             return
         }
@@ -70,7 +76,9 @@ class TodayTasksViewModel: ObservableObject {
     }
     
     func completeTask(_ task: ContextualTask) async {
-        guard let workerId = NewAuthManager.shared.workerId else { return }
+        // FIXED: Use direct access to workerId (String) and check for empty
+        let workerId = NewAuthManager.shared.workerId
+        guard !workerId.isEmpty else { return }
         
         do {
             try await taskService.completeTask(

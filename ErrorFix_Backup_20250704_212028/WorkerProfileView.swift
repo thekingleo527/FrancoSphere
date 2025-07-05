@@ -455,13 +455,13 @@ struct WorkerProfileView: View {
     
     private func getTodaysTaskCount() -> Int {
         return contextEngine.getTodaysTasks().filter { 
-            $0.assignedWorkerName.lowercased().contains(workerName.lowercased()) == true 
+            $0.assignedWorkerName?.lowercased().contains(workerName.lowercased()) == true 
         }.count
     }
     
     private func getCompletedTaskCount() -> Int {
         return contextEngine.getTodaysTasks().filter { 
-            $0.assignedWorkerName.lowercased().contains(workerName.lowercased()) == true && 
+            $0.assignedWorkerName?.lowercased().contains(workerName.lowercased()) == true && 
             $0.status == "completed"
         }.count
     }
@@ -470,44 +470,20 @@ struct WorkerProfileView: View {
         return getAssignedBuildings().count
     }
     
-    private func getAllAvailableBuildings() -> [NamedCoordinate] {
-        // Return all buildings from the standard building list
-        return [
-            NamedCoordinate(id: "1", name: "104 Franklin Street", latitude: 40.7234, longitude: -74.0048, imageAssetName: "franklin_104"),
-            NamedCoordinate(id: "2", name: "116 Franklin Street", latitude: 40.7236, longitude: -74.0046, imageAssetName: "franklin_116"),
-            NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-            NamedCoordinate(id: "4", name: "117 West 17th Street", latitude: 40.7397, longitude: -73.9974, imageAssetName: "west17_117"),
-            NamedCoordinate(id: "5", name: "106 Spring Street", latitude: 40.7243, longitude: -73.9965, imageAssetName: "spring_106"),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
-            NamedCoordinate(id: "8", name: "Stuyvesant Cove Park", latitude: 40.7328, longitude: -73.9734, imageAssetName: "stuyvesant_cove"),
-            NamedCoordinate(id: "9", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-            NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
-            NamedCoordinate(id: "11", name: "40 Essex Street", latitude: 40.7148, longitude: -73.9886, imageAssetName: "essex_40"),
-            NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
-            NamedCoordinate(id: "13", name: "12 West 18th Street", latitude: 40.7403, longitude: -73.9952, imageAssetName: "west18_12"),
-            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum"),
-            NamedCoordinate(id: "15", name: "Spring Street Residential", latitude: 40.7246, longitude: -73.9969, imageAssetName: "spring_residential"),
-            NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29"),
-            NamedCoordinate(id: "17", name: "250 Spring Street", latitude: 40.7248, longitude: -73.9963, imageAssetName: "spring_250"),
-            NamedCoordinate(id: "18", name: "Greenwich Village Community", latitude: 40.7335, longitude: -74.0027, imageAssetName: "greenwich_community")
-        ]
-    }
-    
     private func getAssignedBuildings() -> [NamedCoordinate] {
         // Get buildings assigned to this worker
         let workerTasks = contextEngine.getTodaysTasks().filter { 
-            $0.assignedWorkerName.lowercased().contains(workerName.lowercased()) == true 
+            $0.assignedWorkerName?.lowercased().contains(workerName.lowercased()) == true 
         }
         
         let buildingIds = Set(workerTasks.map { $0.buildingId })
-        return getAvailableBuildings().filter { buildingIds.contains($0.id) }
+        return FrancoSphere.NamedCoordinate.allBuildings.filter { buildingIds.contains($0.id) }
     }
     
     private func getBuildingTaskCount(_ buildingId: String) -> Int {
         return contextEngine.getTodaysTasks().filter { 
             $0.buildingId == buildingId && 
-            $0.assignedWorkerName.lowercased().contains(workerName.lowercased()) == true 
+            $0.assignedWorkerName?.lowercased().contains(workerName.lowercased()) == true 
         }.count
     }
     
@@ -559,20 +535,6 @@ struct WorkerProfileView: View {
                 icon: "camera",
                 color: .purple
             )
-        ]
-    }
-
-    private func getAvailableBuildings() -> [NamedCoordinate] {
-        return [
-            NamedCoordinate(id: "1", name: "12 West 18th Street", latitude: 40.7390, longitude: -73.9930, imageAssetName: "12_West_18th_Street"),
-            NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.7380, longitude: -73.9880, imageAssetName: "29_31_East_20th_Street"),
-            NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-            NamedCoordinate(id: "4", name: "104 Franklin Street", latitude: 40.7180, longitude: -74.0060, imageAssetName: "104_Franklin_Street"),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7350, longitude: -74.0050, imageAssetName: "68_Perry_Street"),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7402, longitude: -73.9970, imageAssetName: "136_West_17th_Street"),
-            NamedCoordinate(id: "8", name: "41 Elizabeth Street", latitude: 40.7170, longitude: -73.9970, imageAssetName: "41_Elizabeth_Street"),
-            NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7340, longitude: -74.0060, imageAssetName: "131_Perry_Street"),
-            NamedCoordinate(id: "14", name: "Rubin Museum (142-148 W 17th)", latitude: 40.7398, longitude: -73.9975, imageAssetName: "rubin_museum")
         ]
     }
 }
