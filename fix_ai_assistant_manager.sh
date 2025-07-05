@@ -1,3 +1,19 @@
+#!/bin/bash
+set -e
+
+echo "🔧 Fixing AIAssistantManager.swift - Complete Rebuild"
+echo "===================================================="
+
+cd "/Volumes/FastSSD/Xcode" || exit 1
+
+# =============================================================================
+# 🔧 FIX 1: Completely rebuild AIAssistantManager.swift
+# =============================================================================
+
+echo ""
+echo "🔧 Completely rebuilding AIAssistantManager.swift..."
+
+cat > "Managers/AIAssistantManager.swift" << 'AI_MANAGER_EOF'
 //
 //  AIAssistantManager.swift
 //  FrancoSphere
@@ -33,9 +49,7 @@ class AIAssistantManager: ObservableObject {
     private func setupBindings() {
         $activeScenarios
             .map { !$0.isEmpty }
-            .sink { [weak self] hasScenarios in
-                self?.hasActiveScenarios = hasScenarios
-            }
+            .assign(to: \.hasActiveScenarios, on: self)
             .store(in: &cancellables)
     }
     
@@ -216,3 +230,52 @@ extension AIAssistantManager {
         static let emergencyResponse = "emergencyResponse"
     }
 }
+AI_MANAGER_EOF
+
+echo "✅ Completely rebuilt AIAssistantManager.swift"
+
+# =============================================================================
+# 🔧 BUILD TEST
+# =============================================================================
+
+echo ""
+echo "🔨 Testing build after AIAssistantManager rebuild..."
+
+BUILD_OUTPUT=$(xcodebuild -project FrancoSphere.xcodeproj -scheme FrancoSphere build -destination "platform=iOS Simulator,name=iPhone 15 Pro" 2>&1)
+
+ERROR_COUNT=$(echo "$BUILD_OUTPUT" | grep -c " error:" || echo "0")
+AI_MANAGER_ERRORS=$(echo "$BUILD_OUTPUT" | grep -c "AIAssistantManager\|Cannot find.*in scope" || echo "0")
+
+echo ""
+echo "📊 Build Results:"
+echo "• Total errors: $ERROR_COUNT"
+echo "• AIAssistantManager errors: $AI_MANAGER_ERRORS"
+
+if [ "$ERROR_COUNT" -eq 0 ]; then
+    echo ""
+    echo "🟢 ✅ BUILD SUCCESS"
+    echo "=================="
+    echo "🎉 AIAssistantManager completely fixed!"
+    echo "✅ FrancoSphere compiles successfully"
+elif [ "$AI_MANAGER_ERRORS" -eq 0 ]; then
+    echo ""
+    echo "🟡 ✅ AI MANAGER FIXED"
+    echo "====================="
+    echo "✅ No more AIAssistantManager errors"
+    echo "⚠️  $ERROR_COUNT other errors remain"
+    echo ""
+    echo "📋 Remaining errors:"
+    echo "$BUILD_OUTPUT" | grep " error:" | head -10
+else
+    echo ""
+    echo "🔴 ❌ AI MANAGER ERRORS PERSIST"
+    echo "=============================="
+    echo "❌ $AI_MANAGER_ERRORS AIAssistantManager errors remain"
+    echo ""
+    echo "📋 AIAssistantManager errors:"
+    echo "$BUILD_OUTPUT" | grep -E "(AIAssistantManager|Cannot find.*in scope)" | head -10
+fi
+
+echo ""
+echo "🔧 AIAssistantManager Rebuild Complete"
+echo "====================================="
