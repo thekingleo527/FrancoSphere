@@ -1,0 +1,38 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project FrancoSphere.xcodeproj -scheme FrancoSphere -destination "platform=iOS Simulator,name=iPhone 15" build
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  OpenMeteoSdk: https://github.com/open-meteo/sdk.git @ main (faa1a3a)
+  SQLite.swift: https://github.com/stephencelis/SQLite.swift @ 0.15.4
+  swift-toolchain-sqlite: https://github.com/swiftlang/swift-toolchain-sqlite @ 1.0.4
+  FlatBuffers: https://github.com/google/flatbuffers.git @ 25.2.10
+
+2025-07-05 17:47:43.067 xcodebuild[99082:2366971] Writing error result bundle to /var/folders/gb/vjfpz5wn03q8j9hmp0ztqk200000gn/T/ResultBundle_2025-05-07_17-47-0043.xcresult
+xcodebuild: error: Unable to find a device matching the provided destination specifier:
+		{ platform:iOS Simulator, OS:latest, name:iPhone 15 }
+
+	The requested device could not be found because no available devices matched the request.
+
+	Available destinations for the "FrancoSphere" scheme:
+		{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00008132-001614E62269001C, name:My Mac }
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+		{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+		{ platform:iOS Simulator, arch:arm64, id:36DD5E4A-92F6-4F34-80AB-7FD8A07125C8, OS:18.5, name:iPad Air 11-inch (M3) }
+		{ platform:iOS Simulator, arch:x86_64, id:36DD5E4A-92F6-4F34-80AB-7FD8A07125C8, OS:18.5, name:iPad Air 11-inch (M3) }
+		{ platform:iOS Simulator, arch:arm64, id:D78B1244-95CB-43F0-BCF3-8829469DF830, OS:18.3.1, name:iPad Air 13-inch (M3) }
+		{ platform:iOS Simulator, arch:x86_64, id:D78B1244-95CB-43F0-BCF3-8829469DF830, OS:18.3.1, name:iPad Air 13-inch (M3) }
+		{ platform:iOS Simulator, arch:arm64, id:BE6130D8-D8EA-47D7-A807-9BA67E3AF69E, OS:18.3.1, name:iPad Pro 11-inch (M4) }
+		{ platform:iOS Simulator, arch:x86_64, id:BE6130D8-D8EA-47D7-A807-9BA67E3AF69E, OS:18.3.1, name:iPad Pro 11-inch (M4) }
+		{ platform:iOS Simulator, arch:arm64, id:6CCB6052-60F8-496C-9E94-E67EB4460284, OS:18.3.1, name:iPad Pro 13-inch (M4) }
+		{ platform:iOS Simulator, arch:x86_64, id:6CCB6052-60F8-496C-9E94-E67EB4460284, OS:18.3.1, name:iPad Pro 13-inch (M4) }
+		{ platform:iOS Simulator, arch:arm64, id:01737F0D-2D18-4BB0-A579-DFCB3FBBE6F2, OS:18.3.1, name:iPad mini (A17 Pro) }
+		{ platform:iOS Simulator, arch:x86_64, id:01737F0D-2D18-4BB0-A579-DFCB3FBBE6F2, OS:18.3.1, name:iPad mini (A17 Pro) }
+		{ platform:iOS Simulator, arch:arm64, id:81199F25-2ADB-4C53-AA4D-6C92711C54DF, OS:18.3.1, name:iPhone 16 Pro Max }
+		{ platform:iOS Simulator, arch:x86_64, id:81199F25-2ADB-4C53-AA4D-6C92711C54DF, OS:18.3.1, name:iPhone 16 Pro Max }
+		{ platform:iOS Simulator, arch:arm64, id:92C436AF-D591-4098-BF61-354DDF0BF18C, OS:18.4, name:iPhone 16 Pro Max }
+		{ platform:iOS Simulator, arch:x86_64, id:92C436AF-D591-4098-BF61-354DDF0BF18C, OS:18.4, name:iPhone 16 Pro Max }
+		{ platform:iOS Simulator, arch:arm64, id:1C97568F-9897-4659-98D0-73740371714E, OS:18.3.1, name:iPhone 16e }
+		{ platform:iOS Simulator, arch:x86_64, id:1C97568F-9897-4659-98D0-73740371714E, OS:18.3.1, name:iPhone 16e }

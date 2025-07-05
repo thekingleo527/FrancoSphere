@@ -21,7 +21,7 @@ public enum FrancoSphere {
         public let address: String?
         public let imageAssetName: String?
         
-
+        public var coordinate: CLLocationCoordinate2D {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         }
         
@@ -418,7 +418,6 @@ public enum FrancoSphere {
     }
     
     public enum TaskRecurrence: String, Codable, CaseIterable {
-        case none = "None"
         case once = "once"
         case daily = "daily"
         case weekly = "weekly"
@@ -465,12 +464,6 @@ public enum FrancoSphere {
         case carpentry = "carpentry"
         case painting = "painting"
         case landscaping = "landscaping"
-        case specialized = "Specialized"
-        case security = "Security"
-        case expert = "Expert"
-        case advanced = "Advanced"
-        case intermediate = "Intermediate"
-        case basic = "Basic"
     }
     
     public enum UserRole: String, Codable, CaseIterable {
@@ -524,10 +517,6 @@ public enum FrancoSphere {
         case tools = "tools"
         case equipment = "equipment"
         case safety = "safety"
-        case seasonal = "Seasonal"
-        case hardware = "Hardware"
-        case other = "Other"
-        case office = "Office"
     }
     
     public enum RestockStatus: String, Codable, CaseIterable {
@@ -535,12 +524,6 @@ public enum FrancoSphere {
         case low = "low"
         case critical = "critical"
         case outOfStock = "outOfStock"
-        case cancelled = "Cancelled"
-        case delivered = "Delivered"
-        case inTransit = "In Transit"
-        case ordered = "Ordered"
-        case lowStock = "Low Stock"
-        case inStock = "In Stock"
     }
     
     public struct InventoryItem: Identifiable, Codable {

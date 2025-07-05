@@ -63,11 +63,4 @@ extension TaskService {
     public func createTask(_ task: MaintenanceTask) async throws {
         await addTask(task)
     }
-
-    // MARK: - Additional Missing Methods
-    func fetchRecentTasks(for workerId: String, limit: Int = 10) async throws -> [ContextualTask] {
-        let tasks = await getTasks(for: workerId, date: Date())
-        return Array(tasks.prefix(limit))
-    }
-
 }

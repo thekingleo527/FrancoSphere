@@ -113,16 +113,15 @@ extension WeatherData {
     var outdoorWorkRisk: OutdoorWorkRisk {
         switch condition {
         case .sunny, .clear, .cloudy:
-            return temperature < 32 ? .high : .low
+            return temperature < 32 ? .medium : .low
         case .rainy, .rain, .snowy, .snow:
             return .high
         case .stormy, .storm:
             return .extreme
         case .foggy, .fog, .windy:
             return .medium
-        default:
-            return .low
+        
+        default: return .gray
         }
     }
-}
 }

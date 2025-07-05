@@ -97,14 +97,4 @@ extension WorkerService {
         // Return buildings assigned to worker
         return []
     }
-
-    // MARK: - Missing Methods for Compatibility
-    func fetchWorker(id: String) async throws -> WorkerProfile? {
-        return await getWorker(id)
-    }
-    
-    func fetchPerformanceMetrics(for workerId: String) async throws -> WorkerPerformanceMetrics {
-        return await getPerformanceMetrics(workerId)
-    }
-
 }
