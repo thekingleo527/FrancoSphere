@@ -2,7 +2,7 @@
 //  CLLocationCoordinate2DExtension.swift
 //  FrancoSphere
 //
-//  Extension to make CLLocationCoordinate2D Codable
+//  Codable support for CLLocationCoordinate2D
 //
 
 import Foundation
