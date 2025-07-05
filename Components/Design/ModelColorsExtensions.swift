@@ -2,18 +2,21 @@
 //  ModelColorsExtensions.swift
 //  FrancoSphere
 //
+//  Fixed exhaustive switch statements for all enum cases
+//
 
 import SwiftUI
 
 extension FrancoSphere.WeatherCondition {
     var conditionColor: Color {
         switch self {
-        case .clear: return .yellow
+        case .sunny, .clear: return .yellow
         case .cloudy: return .gray
-        case .rain: return .blue
-        case .snow: return .cyan
-        case .fog: return .gray
-        case .storm: return .purple
+        case .rainy, .rain: return .blue
+        case .snowy, .snow: return .cyan
+        case .foggy, .fog: return .gray
+        case .stormy, .storm: return .purple
+        case .windy: return .green
         }
     }
 }
@@ -24,7 +27,7 @@ extension FrancoSphere.TaskUrgency {
         case .low: return .green
         case .medium: return .orange
         case .high: return .red
-        case .urgent: return .purple
+        case .critical, .urgent: return .purple
         }
     }
 }
@@ -33,8 +36,9 @@ extension FrancoSphere.VerificationStatus {
     var statusColor: Color {
         switch self {
         case .pending: return .orange
-        case .verified: return .green
-        case .failed: return .red
+        case .approved, .verified: return .green
+        case .rejected, .failed: return .red
+        case .requiresReview: return .blue
         }
     }
 }
@@ -57,6 +61,9 @@ extension FrancoSphere.RestockStatus {
         case .lowStock: return .orange
         case .outOfStock: return .red
         case .ordered: return .blue
+        case .inTransit: return .purple
+        case .delivered: return .green
+        case .cancelled: return .gray
         }
     }
 }
@@ -76,13 +83,13 @@ extension FrancoSphere.InventoryCategory {
 extension FrancoSphere.WeatherData {
     var outdoorWorkRisk: FrancoSphere.OutdoorWorkRisk {
         switch condition {
-        case .clear, .cloudy:
+        case .sunny, .clear, .cloudy:
             return temperature < 32 ? .medium : .low
-        case .rain, .snow:
+        case .rainy, .rain, .snowy, .snow:
             return .high
-        case .storm:
+        case .stormy, .storm:
             return .extreme
-        case .fog:
+        case .foggy, .fog, .windy:
             return .medium
         }
     }
@@ -91,12 +98,13 @@ extension FrancoSphere.WeatherData {
 extension FrancoSphere.WeatherCondition {
     var icon: String {
         switch self {
-        case .clear: return "sun.max.fill"
+        case .sunny, .clear: return "sun.max.fill"
         case .cloudy: return "cloud.fill"
-        case .rain: return "cloud.rain.fill"
-        case .snow: return "cloud.snow.fill"
-        case .fog: return "cloud.fog.fill"
-        case .storm: return "cloud.bolt.fill"
+        case .rainy, .rain: return "cloud.rain.fill"
+        case .snowy, .snow: return "cloud.snow.fill"
+        case .foggy, .fog: return "cloud.fog.fill"
+        case .stormy, .storm: return "cloud.bolt.fill"
+        case .windy: return "wind"
         }
     }
 }

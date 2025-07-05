@@ -422,8 +422,6 @@ public class SQLiteManager {
                 name: name,
                 email: email,
                 role: userRole,
-                skills: [],
-                assignedBuildings: [],
                 skillLevel: .basic
             )
         }
@@ -441,7 +439,7 @@ public class SQLiteManager {
             workerRole <- worker.role.rawValue,
             workerPhone <- "", // Default empty
             hourlyRate <- 0.0, // Default rate
-            skills <- worker.skillLevel.map { $0.rawValue }.joined(separator: ","),
+            skills <- worker.skillLevel.rawValue,
             isActive <- true,
             profileImagePath <- nil,
             address <- "",
@@ -476,8 +474,6 @@ public class SQLiteManager {
                 name: name,
                 email: email,
                 role: userRole,
-                skills: [],
-                assignedBuildings: [],
                 skillLevel: .basic
             )
             workersList.append(worker)

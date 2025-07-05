@@ -399,7 +399,7 @@ struct BuildingTaskDetailView: View {
                         .background(Color.blue.opacity(0.1))
                         .cornerRadius(8)
                     if !isComplete {
-                        Button(action: { removeFrancoSphere.InventoryItem(itemId) }) {
+                        Button(action: { removeFrancoSphere.FrancoSphere.FrancoSphere.InventoryItem(itemId) }) {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.red)
                         }
@@ -522,7 +522,7 @@ struct BuildingTaskDetailView: View {
         return true // Allow all users to manage workers for now
     }
     
-    private func workerRoleDisplay(for assignment: WorkerAssignment) -> String {
+    private func workerRoleDisplay(for assignment() -> [FrancoSphere.WorkerAssignment]) -> String {
         return "Maintenance Worker"
     }
     
@@ -562,7 +562,7 @@ struct BuildingTaskDetailView: View {
     
     private func loadInventory() {
         availableInventory = [
-            FrancoSphere.InventoryItem(
+            FrancoSphere.FrancoSphere.FrancoSphere.InventoryItem(
                 id: "item1",
                 name: "All-Purpose Cleaner",
                 buildingID: task.buildingID,
@@ -572,7 +572,7 @@ struct BuildingTaskDetailView: View {
                 minimumQuantity: 2,
                 location: "Janitor Closet"
             ),
-            FrancoSphere.InventoryItem(
+            FrancoSphere.FrancoSphere.FrancoSphere.InventoryItem(
                 id: "item2",
                 name: "Screwdriver Set",
                 buildingID: task.buildingID,
@@ -611,7 +611,7 @@ struct BuildingTaskDetailView: View {
         loadAssignedWorkers()
     }
     
-    private func removeFrancoSphere.InventoryItem(_ itemId: String) {
+    private func removeFrancoSphere.FrancoSphere.FrancoSphere.InventoryItem(_ itemId: String) {
         selectedInventoryItems.removeValue(forKey: itemId)
     }
     
@@ -877,7 +877,7 @@ struct BuildingTaskInventorySelectionView: View {
     
     private func loadInventoryItems() {
         availableItems = [
-            FrancoSphere.InventoryItem(
+            FrancoSphere.FrancoSphere.FrancoSphere.InventoryItem(
                 id: "item1",
                 name: "All-Purpose Cleaner",
                 buildingID: buildingId,
@@ -887,7 +887,7 @@ struct BuildingTaskInventorySelectionView: View {
                 minimumQuantity: 2,
                 location: "Janitor Closet"
             ),
-            FrancoSphere.InventoryItem(
+            FrancoSphere.FrancoSphere.FrancoSphere.InventoryItem(
                 id: "item2",
                 name: "Screwdriver Set",
                 buildingID: buildingId,

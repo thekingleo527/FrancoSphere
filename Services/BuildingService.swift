@@ -52,25 +52,25 @@ actor BuildingService {
     private init() {
         // ✅ CRITICAL: Building definitions with Kevin's corrected assignments
         self.buildings = [
-            NamedCoordinate(id: "1", name: "12 West 18th Street", latitude: 40.7390, longitude: -73.9930, imageAssetName: "12_West_18th_Street"),
-            NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.7380, longitude: -73.9880, imageAssetName: "29_31_East_20th_Street"),
-            NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-            NamedCoordinate(id: "4", name: "104 Franklin Street", latitude: 40.7180, longitude: -74.0060, imageAssetName: "104_Franklin_Street"),
-            NamedCoordinate(id: "5", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7350, longitude: -74.0050, imageAssetName: "68_Perry_Street"),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7402, longitude: -73.9970, imageAssetName: "136_West_17th_Street"),
-            NamedCoordinate(id: "8", name: "41 Elizabeth Street", latitude: 40.7170, longitude: -73.9970, imageAssetName: "41_Elizabeth_Street"),
-            NamedCoordinate(id: "9", name: "117 West 17th Street", latitude: 40.7395, longitude: -73.9950, imageAssetName: "117_West_17th_Street"),
-            NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7340, longitude: -74.0060, imageAssetName: "131_Perry_Street"),
-            NamedCoordinate(id: "11", name: "123 1st Avenue", latitude: 40.7270, longitude: -73.9850, imageAssetName: "123_1st_Avenue"),
-            NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7250, longitude: -74.0020, imageAssetName: "178_Spring_Street"),
-            NamedCoordinate(id: "13", name: "112 West 18th Street", latitude: 40.7400, longitude: -73.9940, imageAssetName: "112_West_18th_Street"),
+            NamedCoordinate(id: "1", name: "12 West 18th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7390, longitude: -73.9930), imageAssetName: "12_West_18th_Street"),
+            NamedCoordinate(id: "2", name: "29-31 East 20th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7380, longitude: -73.9880), imageAssetName: "29_31_East_20th_Street"),
+            NamedCoordinate(id: "3", name: "135-139 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7398, longitude: -73.9972), imageAssetName: "west17_135"),
+            NamedCoordinate(id: "4", name: "104 Franklin Street", coordinate: CLLocationCoordinate2D(latitude: 40.7180, longitude: -74.0060), imageAssetName: "104_Franklin_Street"),
+            NamedCoordinate(id: "5", name: "138 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7400, longitude: -73.9970), imageAssetName: "west17_138"),
+            NamedCoordinate(id: "6", name: "68 Perry Street", coordinate: CLLocationCoordinate2D(latitude: 40.7350, longitude: -74.0050), imageAssetName: "68_Perry_Street"),
+            NamedCoordinate(id: "7", name: "136 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7402, longitude: -73.9970), imageAssetName: "136_West_17th_Street"),
+            NamedCoordinate(id: "8", name: "41 Elizabeth Street", coordinate: CLLocationCoordinate2D(latitude: 40.7170, longitude: -73.9970), imageAssetName: "41_Elizabeth_Street"),
+            NamedCoordinate(id: "9", name: "117 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7395, longitude: -73.9950), imageAssetName: "117_West_17th_Street"),
+            NamedCoordinate(id: "10", name: "131 Perry Street", coordinate: CLLocationCoordinate2D(latitude: 40.7340, longitude: -74.0060), imageAssetName: "131_Perry_Street"),
+            NamedCoordinate(id: "11", name: "123 1st Avenue", coordinate: CLLocationCoordinate2D(latitude: 40.7270, longitude: -73.9850), imageAssetName: "123_1st_Avenue"),
+            NamedCoordinate(id: "12", name: "178 Spring Street", coordinate: CLLocationCoordinate2D(latitude: 40.7250, longitude: -74.0020), imageAssetName: "178_Spring_Street"),
+            NamedCoordinate(id: "13", name: "112 West 18th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7400, longitude: -73.9940), imageAssetName: "112_West_18th_Street"),
             // ✅ CRITICAL CORRECTION: Kevin works at Rubin Museum, NOT Franklin Street
-            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum"),
-            NamedCoordinate(id: "15", name: "133 East 15th Street", latitude: 40.7345, longitude: -73.9875, imageAssetName: "133_East_15th_Street"),
-            NamedCoordinate(id: "16", name: "Stuyvesant Cove Park", latitude: 40.7318, longitude: -73.9740, imageAssetName: "Stuyvesant_Cove_Park"),
-            NamedCoordinate(id: "17", name: "36 Walker Street", latitude: 40.7190, longitude: -74.0050, imageAssetName: "36_Walker_Street"),
-            NamedCoordinate(id: "18", name: "115 7th Avenue", latitude: 40.7380, longitude: -73.9980, imageAssetName: "115_7th_Avenue")
+            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", coordinate: CLLocationCoordinate2D(latitude: 40.7402, longitude: -73.9980), imageAssetName: "rubin_museum"),
+            NamedCoordinate(id: "15", name: "133 East 15th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7345, longitude: -73.9875), imageAssetName: "133_East_15th_Street"),
+            NamedCoordinate(id: "16", name: "Stuyvesant Cove Park", coordinate: CLLocationCoordinate2D(latitude: 40.7318, longitude: -73.9740), imageAssetName: "Stuyvesant_Cove_Park"),
+            NamedCoordinate(id: "17", name: "36 Walker Street", coordinate: CLLocationCoordinate2D(latitude: 40.7190, longitude: -74.0050), imageAssetName: "36_Walker_Street"),
+            NamedCoordinate(id: "18", name: "115 7th Avenue", coordinate: CLLocationCoordinate2D(latitude: 40.7380, longitude: -73.9980), imageAssetName: "115_7th_Avenue")
         ]
         
         // Initialize caches asynchronously
@@ -213,15 +213,15 @@ actor BuildingService {
     // ✅ CRITICAL: Kevin's Corrected Building Assignments (Reality Fix)
     private func getKevinCorrectedAssignments() async -> [NamedCoordinate] {
         return [
-            NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
-            NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
-            NamedCoordinate(id: "5", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-            NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29"),
-            NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
+            NamedCoordinate(id: "10", name: "131 Perry Street", coordinate: CLLocationCoordinate2D(latitude: 40.7359, longitude: -74.0059), imageAssetName: "perry_131"),
+            NamedCoordinate(id: "6", name: "68 Perry Street", coordinate: CLLocationCoordinate2D(latitude: 40.7357, longitude: -74.0055), imageAssetName: "perry_68"),
+            NamedCoordinate(id: "3", name: "135-139 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7398, longitude: -73.9972), imageAssetName: "west17_135"),
+            NamedCoordinate(id: "7", name: "136 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7399, longitude: -73.9971), imageAssetName: "west17_136"),
+            NamedCoordinate(id: "5", name: "138 West 17th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7400, longitude: -73.9970), imageAssetName: "west17_138"),
+            NamedCoordinate(id: "2", name: "29-31 East 20th Street", coordinate: CLLocationCoordinate2D(latitude: 40.7388, longitude: -73.9892), imageAssetName: "east20_29"),
+            NamedCoordinate(id: "12", name: "178 Spring Street", coordinate: CLLocationCoordinate2D(latitude: 40.7245, longitude: -73.9968), imageAssetName: "spring_178"),
             // ✅ CORRECTED: Rubin Museum instead of 104 Franklin Street
-            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum")
+            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", coordinate: CLLocationCoordinate2D(latitude: 40.7402, longitude: -73.9980), imageAssetName: "rubin_museum")
         ]
     }
     
@@ -381,19 +381,7 @@ actor BuildingService {
             let category = FrancoSphere.InventoryCategory(rawValue: categoryString) ?? .other
             let lastRestockDate = ISO8601DateFormatter().date(from: lastRestockTimestamp) ?? Date()
             
-            return FrancoSphere.InventoryItem(
-                id: id,
-                name: name,
-                buildingID: buildingID,
-                category: category,
-                quantity: Int(quantity),
-                unit: unit,
-                minimumQuantity: Int(minimumQuantity),
-                needsReorder: needsReorder == 1,
-                lastRestockDate: lastRestockDate,
-                location: row["location"] as? String ?? "Unknown",
-                notes: row["notes"] as? String
-            )
+            return FrancoSphere.InventoryItem(id: id, name: name, category: category, quantity: Int(Int(quantity)), status: .inStock, minimumStock: Int(Int(minimumQuantity)))
         }
         
         inventoryCache[buildingId] = items
@@ -411,12 +399,12 @@ actor BuildingService {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
-        let lastRestockString = ISO8601DateFormatter().string(from: item.quantity)
-        let needsReorderInt = item.status ? 1 : 0
+        let lastRestockString = ISO8601DateFormatter().string(from: Date())
+        let needsReorderInt = (item.status == .lowStock || item.status == .outOfStock) ? 1 : 0
         
         let parameters: [SQLiteBinding] = [
             item.id, item.name, item.id, item.category.rawValue,
-            item.quantity, item.category, item.minimumStock, needsReorderInt,
+            item.quantity, item.category.rawValue, item.minimumStock, needsReorderInt,
             lastRestockString, item.name, item.name ?? "",
             ISO8601DateFormatter().string(from: Date())
         ]
@@ -469,7 +457,7 @@ actor BuildingService {
     
     func getLowStockItems(for buildingId: String) async throws -> [FrancoSphere.InventoryItem] {
         let allItems = try await getInventoryItems(for: buildingId)
-        return allItems.filter { $0.status }
+        return allItems.filter { $0.status == .lowStock || $0.status == .outOfStock }
     }
     
     func getInventoryItems(for buildingId: String, category: FrancoSphere.InventoryCategory) async throws -> [FrancoSphere.InventoryItem] {

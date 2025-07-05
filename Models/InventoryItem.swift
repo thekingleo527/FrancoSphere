@@ -2,7 +2,7 @@
 //  InventoryItem.swift
 //  FrancoSphere
 //
-//  Sample inventory data matching new constructor
+//  Sample inventory data with fixed constructor
 //
 
 import Foundation
@@ -14,54 +14,48 @@ extension InventoryItem {
             name: "All-Purpose Cleaner",
             category: .cleaning,
             quantity: 15,
-            status: .inStock
+            status: .inStock,
+            minimumStock: 5
         ),
         InventoryItem(
             id: "2",
             name: "Paper Towels",
             category: .cleaning,
             quantity: 3,
-            status: .lowStock
+            status: .lowStock,
+            minimumStock: 10
         ),
         InventoryItem(
             id: "3",
             name: "Light Bulbs",
             category: .maintenance,
             quantity: 0,
-            status: .outOfStock
+            status: .outOfStock,
+            minimumStock: 5
         ),
         InventoryItem(
             id: "4",
             name: "Printer Paper",
             category: .office,
             quantity: 10,
-            status: .inTransit
+            status: .inTransit,
+            minimumStock: 8
         ),
         InventoryItem(
             id: "5",
             name: "Safety Vests",
             category: .safety,
             quantity: 8,
-            status: .delivered
+            status: .delivered,
+            minimumStock: 3
         ),
         InventoryItem(
             id: "6",
             name: "Screwdriver Set",
             category: .maintenance,
             quantity: 0,
-            status: .cancelled
+            status: .cancelled,
+            minimumStock: 2
         )
     ]
-    
-    var statusColor: String {
-        switch status {
-        case .inStock: return "green"
-        case .lowStock: return "orange"
-        case .outOfStock: return "red"
-        case .ordered: return "blue"
-        case .inTransit: return "purple"
-        case .delivered: return "green"
-        case .cancelled: return "gray"
-        }
-    }
 }

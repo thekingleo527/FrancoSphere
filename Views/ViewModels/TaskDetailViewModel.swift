@@ -110,17 +110,17 @@ class TaskDetailViewModel: ObservableObject {
         guard let weather = weather else { return "Weather data unavailable" }
         
         switch weather.condition {
-        case .clear:
+        case .clear, .sunny:
             return "Perfect conditions for outdoor work"
         case .cloudy:
             return "Good conditions, overcast sky"
-        case .rain:
+        case .rain, .rainy:
             return "Wet conditions - take extra precautions"
-        case .snow:
+        case .snow, .snowy:
             return "Snowy conditions - be careful on walkways"
-        case .fog:
+        case .fog, .foggy:
             return "Low visibility - exercise caution"
-        case .storm:
+        case .storm, .stormy, .windy:
             return "Severe weather - consider postponing outdoor tasks"
         }
     }

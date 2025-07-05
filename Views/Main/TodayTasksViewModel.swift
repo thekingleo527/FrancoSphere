@@ -25,8 +25,8 @@ class TodayTasksViewModel: ObservableObject {
     )
     @Published var taskTrends: FrancoSphere.TaskTrends = FrancoSphere.TaskTrends(
         weeklyCompletion: [],
-        categoryBreakdown: [],
-        trend: .stable
+        categoryBreakdown: [:],
+        changePercentage: 0.0
     )
     @Published var performanceMetrics: FrancoSphere.PerformanceMetrics = FrancoSphere.PerformanceMetrics(
         efficiency: 0,

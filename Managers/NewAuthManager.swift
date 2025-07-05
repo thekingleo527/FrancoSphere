@@ -9,13 +9,7 @@
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 @MainActor
 class NewAuthManager: ObservableObject {
@@ -200,9 +194,9 @@ class NewAuthManager: ObservableObject {
     // MARK: - Helper Methods
     
     /// Get current worker profile
-    func getCurrentFrancoSphere.WorkerProfile() -> WorkerProfile? {
+    func getCurrentWorkerProfile() -> FrancoSphere.WorkerProfile? {
         guard !workerId.isEmpty else { return nil }
-        return getFrancoSphere.WorkerProfile(byId: workerId)
+        return getWorkerProfile(byId: workerId)
     }
     
     /// Check if current user is admin
@@ -476,6 +470,12 @@ class NewAuthManager: ObservableObject {
         default: return "General worker"
         }
     }
+    
+    // Helper method for WorkerProfile lookup
+    private func getWorkerProfile(byId workerId: String) -> FrancoSphere.WorkerProfile? {
+        // Return nil for now - implement actual lookup if needed
+        return nil
+    }
 }
 
 // MARK: - ✅ PHASE-2: Extensions
@@ -523,9 +523,3 @@ extension NewAuthManager {
         print("📅 Schedule: \(workerSchedule)")
     }
 }
-
-    // Helper method for WorkerProfile lookup
-    private func getFrancoSphere.WorkerProfile(byId workerId: String) -> FrancoSphere.WorkerProfile? {
-        // Return nil for now - implement actual lookup if needed
-        return nil
-    }
