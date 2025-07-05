@@ -42,7 +42,7 @@ struct MaintenanceTaskView: View {
 
                 // Header
                 HStack {
-                    Text(task.name).font(.title).bold()
+                    Text(task.title).font(.title).bold()
                     Spacer()
                     StatusBadge(isCompleted: task.isComplete, urgency: task.urgency)
                 }
@@ -214,18 +214,18 @@ struct MaintenanceTaskView: View {
     private func loadBuildingName() async {
         // ✅ FIXED: Use BuildingService instead of BuildingRepository
         do {
-            if let building = try await buildingService.getBuilding(task.buildingID) {
+            if let building = try await buildingService.getBuilding(task.buildingId) {
                 await MainActor.run {
                     self.buildingName = building.name
                 }
             } else {
                 await MainActor.run {
-                    self.buildingName = "Building \(task.buildingID)"
+                    self.buildingName = "Building \(task.buildingId)"
                 }
             }
         } catch {
             await MainActor.run {
-                self.buildingName = "Building \(task.buildingID)"
+                self.buildingName = "Building \(task.buildingId)"
             }
             print("❌ Failed to load building name: \(error)")
         }
@@ -250,7 +250,7 @@ struct MaintenanceTaskView: View {
             try await taskService.completeTask(
                 task.id,
                 workerId: task.assignedWorkers.first ?? "unknown",
-                buildingId: task.buildingID,
+                buildingId: task.buildingId,
                 evidence: evidence
             )
             

@@ -1,19 +1,43 @@
-# Xcode & Swift build artefacts
+# Xcode
 DerivedData/
 build/
-*.xcworkspace/xcuserdata
+*.xcworkspace/xcuserdata/
 *.xcuserstate
 xcuserdata/
-# Swift Package caches
-.swiftpm/
-# Tests & snapshots (if generated)
-*.xcresult
-# Personal secrets or config files
-Secrets.plist
-
-# Xcode runtime cruft
-DerivedData/
-*.xcuserstate
-
-*.xcuserstate
 *.xcuserdatad/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# Build artifacts
+*.xcresult
+
+# Debug and development files
+*.backup.*
+*.sh
+!build_scripts/*.sh
+build_test.log
+xcodebuild_output.log
+compile_log.txt
+error_analysis.txt
+
+# Development documentation
+CLAUDE.md
+*PUNCHLIST.md
+DEBUG_*.md
+SCRIPT_*.md
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# macOS
+.DS_Store
+Icon?
+._*
+
+# IDE
+.vscode/
+.idea/

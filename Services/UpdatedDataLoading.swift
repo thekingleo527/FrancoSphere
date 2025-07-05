@@ -135,8 +135,8 @@ class UpdatedDataLoading: ObservableObject {
         // Filter tasks for this specific worker using real worker name
         let workerName = getRealWorkerName(for: workerId)
         let filteredTasks = tasks.filter { task in
-            task.assignedWorkerName.lowercased().contains(workerName.lowercased()) ||
-            task.assignedWorkerName == workerName
+            task.assignedWorkerName ?? "Unknown".lowercased().contains(workerName.lowercased()) ||
+            task.assignedWorkerName ?? "Unknown" == workerName
         }
         
         contextualTasks = filteredTasks
@@ -234,15 +234,15 @@ class UpdatedDataLoading: ObservableObject {
     
     /// Check if a task is overdue
     func isTaskOverdue(_ task: ContextualTask) -> Bool {
-        let timeString = task.endTime
+        let timeString = task.endTime ?? Date()
         let timeComponents = timeString.split(separator: ":").map { String($0) }
         
         guard timeComponents.count >= 2 else {
             return false
         }
         
-        let hourString = timeComponents[0].trimmingCharacters(in: .whitespaces)
-        let minuteString = timeComponents[1].trimmingCharacters(in: .whitespaces)
+        let hourString = timeComponents[0].trimmingCharacters(in: CharacterSet.whitespaces)
+        let minuteString = timeComponents[1].trimmingCharacters(in: CharacterSet.whitespaces)
         
         guard let hour = Int(hourString),
               let minute = Int(minuteString),
@@ -267,7 +267,7 @@ class UpdatedDataLoading: ObservableObject {
     
     /// Get urgency color for a task
     func urgencyColor(for task: ContextualTask) -> Color {
-        switch task.urgencyLevel.lowercased() {
+        switch task.urgency.lowercased() {
         case "high", "urgent":
             return .red
         case "medium", "moderate":
@@ -290,15 +290,15 @@ class UpdatedDataLoading: ObservableObject {
     
     /// Get time until task
     func getTimeUntilTask(_ task: ContextualTask) -> String? {
-        let timeString = task.startTime
+        let timeString = task.startTime ?? Date()
         let timeComponents = timeString.split(separator: ":").map { String($0) }
         
         guard timeComponents.count >= 2 else {
             return nil
         }
         
-        let hourString = timeComponents[0].trimmingCharacters(in: .whitespaces)
-        let minuteString = timeComponents[1].trimmingCharacters(in: .whitespaces)
+        let hourString = timeComponents[0].trimmingCharacters(in: CharacterSet.whitespaces)
+        let minuteString = timeComponents[1].trimmingCharacters(in: CharacterSet.whitespaces)
         
         guard let hour = Int(hourString),
               let minute = Int(minuteString),
@@ -335,7 +335,7 @@ class UpdatedDataLoading: ObservableObject {
     
     /// Check if task is urgent
     func isTaskUrgent(_ task: ContextualTask) -> Bool {
-        return task.urgencyLevel.lowercased() == "urgent" || task.urgencyLevel.lowercased() == "high"
+        return task.urgency.lowercased() == "urgent" || task.urgency.lowercased() == "high"
     }
     
     /// Get building weather data
@@ -358,8 +358,8 @@ class UpdatedDataLoading: ObservableObject {
     func getFilteredTasks(for workerId: String, category: String? = nil) -> [ContextualTask] {
         let workerName = getRealWorkerName(for: workerId)
         var filtered = contextualTasks.filter { task in
-            task.assignedWorkerName.lowercased().contains(workerName.lowercased()) ||
-            task.assignedWorkerName == workerName
+            task.assignedWorkerName ?? "Unknown".lowercased().contains(workerName.lowercased()) ||
+            task.assignedWorkerName ?? "Unknown" == workerName
         }
         
         if let category = category {

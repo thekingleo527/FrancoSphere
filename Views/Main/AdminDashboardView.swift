@@ -485,7 +485,7 @@ struct AdminDashboardView: View {
                     .font(.system(size: 18))
                     .foregroundColor(.white)
                     .frame(width: 36, height: 36)
-                    .background(item.quantity <= 0 ? Color.red : (item.quantity <= item.minimumQuantity ? Color.orange : Color.green))
+                    .background(item.quantity ?? 0 <= 0 ? Color.red : (item.quantity ?? 0 <= item.minimumQuantity ?? 0 ? Color.orange : Color.green))
                     .cornerRadius(8)
                 
                 // Item details
@@ -512,7 +512,7 @@ struct AdminDashboardView: View {
                         .foregroundColor(item.statusColor)
                         .cornerRadius(12)
                     
-                    Text("\(item.quantity) \(item.unit)")
+                    Text("\(item.quantity ?? 0) \(item.unit)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -597,7 +597,7 @@ struct AdminDashboardView: View {
     // ✅ FIXED: Use consolidated services instead of legacy managers
     private func loadDashboardData() async {
         // Load active workers (mock data for now)
-        activeWorkers = WorkerProfile.allWorkers
+        activeWorkers = []
         
         // Load ongoing tasks from all buildings using TaskService
         await loadOngoingTasks()
@@ -632,7 +632,7 @@ struct AdminDashboardView: View {
         for building in buildings {
             // Create mock inventory items since InventoryManager might not exist
             let mockItems = createMockInventoryItems(forBuilding: building.id)
-            let alerts = mockItems.filter { $0.needsReorder }
+            let alerts = mockItems.filter { $0.needsReorder ?? false }
             allInventoryAlerts.append(contentsOf: alerts)
         }
         

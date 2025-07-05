@@ -364,7 +364,11 @@ public enum FrancoSphere {
         public let lastRestocked: Date?
         public let status: RestockStatus
         
-        public init(id: String = UUID().uuidString, name: String, category: InventoryCategory, 
+            public let quantity: Int
+    public let minimumQuantity: Int
+    public let needsReorder: Bool
+    
+    public init(id: String = UUID().uuidString, name: String, category: InventoryCategory, 
                    currentStock: Int, minimumStock: Int, location: String? = nil, 
                    lastRestocked: Date? = nil, status: RestockStatus = .inStock) {
             self.id = id
@@ -397,7 +401,18 @@ public enum FrancoSphere {
         public let weatherSensitive: Bool
         public let requiredSkills: [WorkerSkill]
         
-        public init(id: String = UUID().uuidString, title: String, description: String, 
+            
+    // Additional properties for NotificationManager compatibility
+    public let assignedWorkerName: String?
+    public let endTime: Date?
+    public let urgencyLevel: TaskUrgency // Alias for urgency
+    public let startTime: Date?
+    public let scheduledDate: Date?
+    public let workerId: String?
+    public let name: String // Alias for title
+    public let isCompleted: Bool
+    
+    public init(id: String = UUID().uuidString, title: String, description: String, 
                    category: TaskCategory, urgency: TaskUrgency, buildingId: String, 
                    buildingName: String, assignedTo: String? = nil, dueDate: Date? = nil, 
                    estimatedDuration: TimeInterval = 3600, status: VerificationStatus = .pending, 
@@ -544,7 +559,23 @@ public enum FrancoSphere {
     }
     
     // MARK: - Placeholder Types (to be implemented)
-    public struct MaintenanceRecord: Codable { public let id: String; public init(id: String) { self.id = id } }
+    public struct MaintenanceRecord: Identifiable, Codable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let buildingId: String
+        public let priority: TaskUrgency
+        public let dueDate: Date?
+        
+        public init(id: String = UUID().uuidString, title: String, description: String, buildingId: String, priority: TaskUrgency, dueDate: Date? = nil) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.buildingId = buildingId
+            self.priority = priority
+            self.dueDate = dueDate
+        }
+    }
     public struct TaskCompletionRecord: Codable { public let id: String; public init(id: String) { self.id = id } }
     public struct BuildingStatistics: Codable { public let id: String; public init(id: String) { self.id = id } }
     public struct BuildingInsight: Codable { public let id: String; public init(id: String) { self.id = id } }
@@ -554,9 +585,49 @@ public enum FrancoSphere {
     public struct RouteOptimization: Codable { public let id: String; public init(id: String) { self.id = id } }
     public struct ScheduleConflict: Codable { public let id: String; public init(id: String) { self.id = id } }
     public struct WorkerRoutineSummary: Codable { public let id: String; public init(id: String) { self.id = id } }
-    public struct AIScenario: Codable { public let id: String; public init(id: String) { self.id = id } }
-    public struct AISuggestion: Codable { public let id: String; public init(id: String) { self.id = id } }
-    public struct AIScenarioData: Codable { public let id: String; public init(id: String) { self.id = id } }
+    public struct AIScenario: Identifiable, Codable {
+        public let id: String
+        public let type: String
+        public let title: String
+        public let description: String
+        public let priority: TaskUrgency
+        public let timestamp: Date
+        
+        public init(id: String = UUID().uuidString, type: String, title: String = "AI Scenario", description: String = "Generated scenario", priority: TaskUrgency = .medium, timestamp: Date = Date()) {
+            self.id = id
+            self.type = type
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.timestamp = timestamp
+        }
+    }
+    public struct AISuggestion: Identifiable, Codable {
+        public let id: String
+        public let text: String
+        public let actionType: String
+        public let confidence: Double
+        
+        public init(id: String = UUID().uuidString, text: String, actionType: String, confidence: Double = 0.8) {
+            self.id = id
+            self.text = text
+            self.actionType = actionType
+            self.confidence = confidence
+        }
+    }
+    public struct AIScenarioData: Identifiable, Codable {
+        public let id: String
+        public let context: String
+        public let metadata: [String: String]
+        public let timestamp: Date
+        
+        public init(id: String = UUID().uuidString, context: String, metadata: [String: String] = [:], timestamp: Date = Date()) {
+            self.id = id
+            self.context = context
+            self.metadata = metadata
+            self.timestamp = timestamp
+        }
+    }
     public struct ExportProgress: Codable { public let id: String; public init(id: String) { self.id = id } }
     public struct RouteStop: Codable { public let id: String; public init(id: String) { self.id = id } }
     

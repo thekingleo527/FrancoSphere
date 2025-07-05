@@ -1,0 +1,82 @@
+//
+//  ContextualTask.swift
+//  FrancoSphere
+//
+//  Reconstructed with all required properties
+//
+
+import Foundation
+import CoreLocation
+
+public struct ContextualTask: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String // Used as 'name' in some contexts
+    public let buildingId: String
+    public let buildingName: String
+    public let category: TaskCategory
+    public let urgency: TaskUrgency
+    public let description: String
+    public let dueDate: Date?
+    public var status: String
+    
+    // Additional properties that code expects
+    public let assignedWorkerName: String?
+    public let endTime: Date?
+    public let urgencyLevel: TaskUrgency // Alias for urgency
+    public let startTime: Date?
+    public let scheduledDate: Date?
+    public let workerId: String?
+    public let name: String // Alias for title
+    public let isCompleted: Bool
+    
+    // Location handling
+    private let locationLatitude: Double?
+    private let locationLongitude: Double?
+    
+    public var location: CLLocation? {
+        guard let lat = locationLatitude, let lon = locationLongitude else { return nil }
+        return CLLocation(latitude: lat, longitude: lon)
+    }
+    
+    public init(
+        id: String = UUID().uuidString,
+        title: String,
+        buildingId: String,
+        buildingName: String,
+        category: TaskCategory,
+        urgency: TaskUrgency,
+        description: String,
+        dueDate: Date? = nil,
+        status: String = "pending",
+        assignedWorkerName: String? = nil,
+        endTime: Date? = nil,
+        startTime: Date? = nil,
+        scheduledDate: Date? = nil,
+        workerId: String? = nil,
+        location: CLLocation? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.category = category
+        self.urgency = urgency
+        self.description = description
+        self.dueDate = dueDate
+        self.status = status
+        self.assignedWorkerName = assignedWorkerName
+        self.endTime = endTime
+        self.startTime = startTime
+        self.scheduledDate = scheduledDate
+        self.workerId = workerId
+        
+        // Set aliases
+        self.urgencyLevel = urgency
+        self.name = title
+        self.isCompleted = status.lowercased() == "completed"
+        
+        // Handle location
+        self.locationLatitude = location?.coordinate.latitude
+        self.locationLongitude = location?.coordinate.longitude
+    }
+}

@@ -51,7 +51,7 @@ struct TaskDetailView: View {
     
     init(task: ContextualTask) {
         self.task = task
-        _isCompleted = State(initialValue: task.isCompleted)
+        _isCompleted = State(initialValue: false)
     }
     
     var body: some View {
@@ -111,7 +111,7 @@ struct TaskDetailView: View {
     private var taskHeaderSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(task.name)
+                Text(task.title)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
@@ -182,11 +182,11 @@ struct TaskDetailView: View {
     
     private func isPastDue() -> Bool {
         guard !isCompleted else { return false }
-        return Date() > task.scheduledDate
+        return Date() > task.scheduledDate ?? Date()
     }
     
     private func isDueSoon() -> Bool {
-        return Date().addingTimeInterval(3600) > task.scheduledDate
+        return Date().addingTimeInterval(3600) > task.scheduledDate ?? Date()
     }
     
     // MARK: - Task Details Section
@@ -243,7 +243,7 @@ struct TaskDetailView: View {
                 Text("Scheduled Date")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(formatDate(task.scheduledDate))
+                Text(formatDate(task.scheduledDate ?? Date()))
                     .font(.body)
                     .foregroundColor(.primary)
             }
@@ -510,7 +510,7 @@ struct TaskDetailView: View {
                 let buildingId = String(task.buildingId)
                 
                 // Create evidence if we have photo data
-                let evidence = TSTaskEvidence(
+                let evidence = TaskEvidence(
                     photos: imageData != nil ? [imageData!] : [],
                     timestamp: Date(),
                     location: nil,

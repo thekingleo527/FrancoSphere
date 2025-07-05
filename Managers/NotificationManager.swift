@@ -1,15 +1,21 @@
+//
+//  NotificationManager.swift
+//  FrancoSphere
+//
+
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import Combine
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import UserNotifications
-// FrancoSphere Types Import
+
+// MARK: - Explicit Type Resolution
+// Resolve ContextualTask ambiguity by using FrancoSphere namespace
+typealias ContextualTask = FrancoSphere.ContextualTask
+
 // (This comment helps identify our import)
 
+// (This comment helps identify our import)
+
+// (This comment helps identify our import)
 
 // MARK: - Notification Models
 

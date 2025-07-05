@@ -142,7 +142,6 @@
 		23B117972DFE01B50065F39E /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117962DFE01B50065F39E /* ProfileBadge.swift */; };
 		23B1179D2DFE22A80065F39E /* DatabaseSchemaVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1179C2DFE22A80065F39E /* DatabaseSchemaVerifier.swift */; };
 		23B1179F2DFE23B00065F39E /* SchemaMigrationPatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1179E2DFE23B00065F39E /* SchemaMigrationPatch.swift */; };
-		23B117A12DFE2BC40065F39E /* ContextualTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117A02DFE2BC40065F39E /* ContextualTask.swift */; };
 		23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581232DF78E3D00355F0A /* TaskRequestView.swift */; };
 		23B117A62DFE3A490065F39E /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811E2DF78E3D00355F0A /* DashboardTaskDetailView.swift */; };
 		23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */; };
@@ -317,7 +316,6 @@
 		23B117962DFE01B50065F39E /* ProfileBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBadge.swift; sourceTree = "<group>"; };
 		23B1179C2DFE22A80065F39E /* DatabaseSchemaVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSchemaVerifier.swift; sourceTree = "<group>"; };
 		23B1179E2DFE23B00065F39E /* SchemaMigrationPatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaMigrationPatch.swift; sourceTree = "<group>"; };
-		23B117A02DFE2BC40065F39E /* ContextualTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTask.swift; sourceTree = "<group>"; };
 		23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineView.swift; sourceTree = "<group>"; };
 		23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingPreviewPopover.swift; sourceTree = "<group>"; };
 		23BBD75F2E0018DD00013D90 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
@@ -489,7 +487,6 @@
 				23BBD76B2E030EA500013D90 /* RoutinePriority.swift */,
 				23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */,
 				23BBD75F2E0018DD00013D90 /* Building.swift */,
-				23B117A02DFE2BC40065F39E /* ContextualTask.swift */,
 				23B117962DFE01B50065F39E /* ProfileBadge.swift */,
 				23B117942DFE00A40065F39E /* MapInteractionHint.swift */,
 				23B117922DFE008D0065F39E /* HeroStatusCard.swift */,
@@ -1046,7 +1043,6 @@
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
 				234581A32DF78E3D00355F0A /* WorkerConstants.swift in Sources */,
-				23B117A12DFE2BC40065F39E /* ContextualTask.swift in Sources */,
 				234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */,
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
 				23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */,
