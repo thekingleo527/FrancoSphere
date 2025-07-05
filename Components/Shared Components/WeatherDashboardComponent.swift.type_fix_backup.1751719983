@@ -242,7 +242,7 @@ struct WeatherDashboardComponent: View {
         case .foggy: return .medium
         case .windy: return .medium
         default:
-            return .medium
+            return false
         }
     }
     
@@ -264,7 +264,7 @@ struct WeatherDashboardComponent: View {
         case .high: return .orange
         case .extreme: return .red
         @unknown default:
-            return .gray
+            return "questionmark.circle"
         }
     }
     
@@ -326,7 +326,7 @@ struct WeatherDashboardComponent: View {
         case .extreme:
             return ("exclamationmark.octagon", .red, "Avoid")
         @unknown default:
-            return ("questionmark.circle", .gray, "Unknown")
+            return "questionmark.circle"
         }
     }
 }

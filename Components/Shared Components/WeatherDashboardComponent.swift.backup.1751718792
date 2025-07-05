@@ -200,12 +200,6 @@ struct WeatherDashboardComponent: View {
         case .snow: return "cloud.snow.fill"
         case .fog: return "cloud.fog.fill"
         case .storm: return "cloud.bolt.fill"
-        case .sunny: return "sun.max.fill"
-        case .rainy: return "cloud.rain.fill"
-        case .snowy: return "cloud.snow.fill"
-        case .stormy: return "cloud.bolt.fill"
-        case .foggy: return "cloud.fog.fill"
-        case .windy: return "wind"
         }
     }
     
@@ -217,12 +211,6 @@ struct WeatherDashboardComponent: View {
         case .snow: return .cyan
         case .fog: return .gray
         case .storm: return .purple
-        case .sunny: return .yellow
-        case .rainy: return .blue
-        case .snowy: return .cyan
-        case .stormy: return .purple
-        case .foggy: return .gray
-        case .windy: return .green
         }
     }
     
@@ -236,13 +224,6 @@ struct WeatherDashboardComponent: View {
             return .extreme
         case .fog:
             return .medium
-        case .sunny: return weather.temperature > 90 ? .medium : .low
-        case .rainy, .snowy: return .high
-        case .stormy: return .extreme
-        case .foggy: return .medium
-        case .windy: return .medium
-        default:
-            return .medium
         }
     }
     
@@ -252,8 +233,6 @@ struct WeatherDashboardComponent: View {
         case .medium: return "exclamationmark.triangle.fill"
         case .high: return "xmark.circle.fill"
         case .extreme: return "exclamationmark.octagon.fill"
-        @unknown default:
-            return "questionmark.circle"
         }
     }
     
@@ -263,8 +242,6 @@ struct WeatherDashboardComponent: View {
         case .medium: return .yellow
         case .high: return .orange
         case .extreme: return .red
-        @unknown default:
-            return .gray
         }
     }
     
@@ -274,8 +251,6 @@ struct WeatherDashboardComponent: View {
         case .medium: return "Medium"
         case .high: return "High"
         case .extreme: return "Extreme"
-        @unknown default:
-            return "questionmark.circle"
         }
     }
     
@@ -285,8 +260,6 @@ struct WeatherDashboardComponent: View {
         case .medium: return "Use caution outdoors"
         case .high: return "Limited outdoor work recommended"
         case .extreme: return "Avoid outdoor work"
-        @unknown default:
-            return "questionmark.circle"
         }
     }
     
@@ -308,8 +281,6 @@ struct WeatherDashboardComponent: View {
             return true
         case .clear, .cloudy, .fog:
             return weather.temperature < 32 || weather.temperature > 90
-        default:
-            return false
         }
     }
     
@@ -325,8 +296,6 @@ struct WeatherDashboardComponent: View {
             return ("xmark", .orange, "Limited")
         case .extreme:
             return ("exclamationmark.octagon", .red, "Avoid")
-        @unknown default:
-            return ("questionmark.circle", .gray, "Unknown")
         }
     }
 }
@@ -349,7 +318,20 @@ struct WeatherDashboardComponent: View {
             timestamp: Date()
         ),
         tasks: [
-            ContextualTask(id: "1", name: "Sample Task", description: "Weather affected task", buildingId: "14", workerId: "kevin", isCompleted: false)
+            ContextualTask(id: UUID().uuidString, name: "Weather Task", description: "Weather affected task", buildingId: "1", workerId: "1", isCompleted: false
+                id: "1",
+                name: "Sidewalk Cleaning",
+                buildingId: "14",
+                buildingName: "Rubin Museum",
+                category: "Cleaning",
+                startTime: "10:00",
+                endTime: "11:00",
+                recurrence: "Daily",
+                skillLevel: "Basic",
+                status: "pending",
+                urgencyLevel: "Medium",
+                assignedWorkerName: "Kevin Dutan"
+            )
         ]
     ) { task in
         print("Tapped task: \(task.name)")

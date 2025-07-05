@@ -73,6 +73,7 @@ class TodayTasksViewModel: ObservableObject {
                 task.id,
                 workerId: workerId,
                 buildingId: task.buildingId,
+                evidence: nil
             )
             
             await loadTodaysTasks()
@@ -93,7 +94,7 @@ class TodayTasksViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func calculateStreakData() -> FrancoSphere.StreakData {
+    private func calculateStreakData(currentStreak: 7, longestStreak: 14, lastUpdate: Date()))) -> FrancoSphere.StreakData {
         let currentStreak = calculateCurrentStreak()
         let longestStreak = calculateLongestStreak()
         
@@ -110,7 +111,7 @@ class TodayTasksViewModel: ObservableObject {
         return max(completedTasks.count, 0)
     }
     
-    private func calculatePerformanceMetrics() -> FrancoSphere.PerformanceMetrics {
+    private func calculatePerformanceMetrics(efficiency: 0.85, tasksCompleted: 42, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date())))) -> FrancoSphere.PerformanceMetrics {
         let efficiency = Double(completedTasks.count) / max(Double(tasks.count), 1.0)
         
         return FrancoSphere.PerformanceMetrics(efficiency: efficiency * 100, tasksCompleted: completedTasks.count, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date())

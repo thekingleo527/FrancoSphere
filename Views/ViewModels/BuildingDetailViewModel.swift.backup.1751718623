@@ -9,7 +9,12 @@ import Foundation
 import SwiftUI
 
 class BuildingDetailViewModel: ObservableObject {
-    @Published var buildingStats: FrancoSphere.BuildingStatistics = FrancoSphere.BuildingStatistics(completionRate: 85.0, totalTasks: 20, completedTasks: 17)
+    @Published var buildingStats: FrancoSphere.BuildingStatistics = FrancoSphere.BuildingStatistics(
+        totalTasks: 0,
+        completedTasks: 0, 
+        efficiency: 0.0,
+        lastUpdated: Date()
+    )
     
     @Published var insights: [FrancoSphere.BuildingInsight] = []
     @Published var isLoading = false
@@ -28,7 +33,12 @@ class BuildingDetailViewModel: ObservableObject {
         
         // Simulate loading
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.buildingStats = FrancoSphere.BuildingStatistics(completionRate: 85.0, totalTasks: 20, completedTasks: 17)
+            self.buildingStats = FrancoSphere.BuildingStatistics(
+                totalTasks: 25,
+                completedTasks: 18,
+                efficiency: 0.72,
+                lastUpdated: Date()
+            )
             
             self.insights = [
                 FrancoSphere.BuildingInsight(
@@ -42,6 +52,7 @@ class BuildingDetailViewModel: ObservableObject {
                     title: "Scheduled Maintenance",
                     description: "HVAC system due for quarterly check",
                     priority: 2
+                )
             ]
             
             self.isLoading = false

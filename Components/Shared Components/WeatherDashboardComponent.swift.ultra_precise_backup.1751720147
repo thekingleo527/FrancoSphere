@@ -253,7 +253,7 @@ struct WeatherDashboardComponent: View {
         case .high: return "xmark.circle.fill"
         case .extreme: return "exclamationmark.octagon.fill"
         @unknown default:
-            return "questionmark.circle"
+            return .gray
         }
     }
     
@@ -275,7 +275,7 @@ struct WeatherDashboardComponent: View {
         case .high: return "High"
         case .extreme: return "Extreme"
         @unknown default:
-            return "questionmark.circle"
+            return .gray
         }
     }
     
@@ -286,7 +286,7 @@ struct WeatherDashboardComponent: View {
         case .high: return "Limited outdoor work recommended"
         case .extreme: return "Avoid outdoor work"
         @unknown default:
-            return "questionmark.circle"
+            return .gray
         }
     }
     
@@ -309,7 +309,7 @@ struct WeatherDashboardComponent: View {
         case .clear, .cloudy, .fog:
             return weather.temperature < 32 || weather.temperature > 90
         default:
-            return false
+            return .medium
         }
     }
     
@@ -326,7 +326,7 @@ struct WeatherDashboardComponent: View {
         case .extreme:
             return ("exclamationmark.octagon", .red, "Avoid")
         @unknown default:
-            return ("questionmark.circle", .gray, "Unknown")
+            return .gray
         }
     }
 }
