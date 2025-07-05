@@ -10,7 +10,7 @@ struct HeroStatusCard: View {
     let workerId: String
     let currentBuilding: String?
     let weather: WeatherData?
-    let progress: TaskProgress
+    let progress: FrancoSphere.TaskProgress
     let onClockInTap: () -> Void
     
     var body: some View {
@@ -185,7 +185,7 @@ struct HeroStatusCard: View {
     }
 }
 
-// MARK: - Preview (Technically Correct)
+// MARK: - Preview
 #Preview {
     HeroStatusCard(
         workerId: "kevin",
@@ -197,7 +197,7 @@ struct HeroStatusCard: View {
             windSpeed: 8.5,
             description: "Clear skies"
         ),
-        progress: TaskProgress(
+        progress: FrancoSphere.TaskProgress(
             completed: 8,
             total: 12,
             remaining: 4,

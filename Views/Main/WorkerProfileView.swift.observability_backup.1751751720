@@ -8,6 +8,9 @@ import Foundation
 
 struct WorkerProfileView: View {
     let workerId: String
+    @ObservedObject var workerService: WorkerService
+    @ObservedObject var taskService: TaskService
+    @ObservedObject var buildingService: BuildingService
     
     @State private var worker: WorkerProfile?
     @State private var isLoading = true
@@ -427,18 +430,18 @@ struct WorkerProfileView: View {
         defer { isLoading = false }
         
         do {
-            // Load worker profile using shared service instances
-            worker = await WorkerService.shared.fetchWorker(id: workerId)
+            // Load worker profile
+            worker = await workerService.fetchWorker(id: workerId)
             
             // Load performance metrics
-            performanceMetrics = await WorkerService.shared.fetchPerformanceMetrics(for: workerId)
+            performanceMetrics = await workerService.fetchPerformanceMetrics(for: workerId)
             
             // Load recent tasks
-            recentTasks = await TaskService.shared.fetchRecentTasks(for: workerId, limit: 10)
+            recentTasks = await taskService.fetchRecentTasks(for: workerId, limit: 10)
             
             // Load current building assignment
             if let buildingId = worker?.currentBuildingId {
-                currentBuilding = await BuildingService.shared.fetchBuilding(id: buildingId)
+                currentBuilding = await buildingService.fetchBuilding(id: buildingId)
             }
             
         } catch {
@@ -545,7 +548,12 @@ struct TaskDetailSheet: View {
 // MARK: - Preview
 #Preview {
     NavigationView {
-        WorkerProfileView(workerId: "kevin")
+        WorkerProfileView(
+            workerId: "kevin",
+            workerService: WorkerService.shared,
+            taskService: TaskService.shared,
+            buildingService: BuildingService.shared
+        )
     }
     .preferredColorScheme(.dark)
 }

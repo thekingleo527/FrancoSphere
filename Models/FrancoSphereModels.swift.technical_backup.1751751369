@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  Technically responsible rebuild addressing root cause type dependencies
+//  Complete rebuild with all required types - No scripts, clean generation
 //
 
 import Foundation
@@ -44,7 +44,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Core Task Types
+    // MARK: - Task Types
     public struct TaskProgress: Codable, Equatable {
         public let completed: Int
         public let total: Int
@@ -160,7 +160,7 @@ public enum FrancoSphere {
         case insights = "insights"
     }
     
-    // MARK: - Worker Management Types
+    // MARK: - Worker Types
     public struct WorkerDailyRoute: Identifiable, Codable {
         public let id: String
         public let workerId: String
@@ -219,7 +219,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Performance & Analytics Types
+    // MARK: - Performance Types
     public struct PerformanceMetrics: Codable, Equatable {
         public let efficiency: Double
         public let tasksCompleted: Int
@@ -270,7 +270,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Data Health & Weather Types
+    // MARK: - Data Health Types
     public enum DataHealthStatus: String, Codable {
         case healthy = "healthy"
         case warning = "warning"
@@ -291,6 +291,77 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - AI Types (Complete Implementation)
+    public struct AIScenario: Identifiable, Codable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: String
+        public let category: String
+        public let estimatedTime: TimeInterval
+        public let confidence: Double
+        
+        public init(id: String, title: String, description: String, priority: String, category: String, estimatedTime: TimeInterval, confidence: Double = 0.8) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.category = category
+            self.estimatedTime = estimatedTime
+            self.confidence = confidence
+        }
+    }
+    
+    public struct AISuggestion: Identifiable, Codable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: SuggestionPriority
+        public let category: SuggestionCategory
+        public let actionRequired: Bool
+        public let confidence: Double
+        
+        public enum SuggestionPriority: String, Codable {
+            case high = "high"
+            case medium = "medium"
+            case low = "low"
+        }
+        
+        public enum SuggestionCategory: String, Codable {
+            case weatherAlert = "weatherAlert"
+            case pendingTasks = "pendingTasks"
+            case maintenance = "maintenance"
+            case efficiency = "efficiency"
+        }
+        
+        public init(id: String, title: String, description: String, priority: SuggestionPriority, category: SuggestionCategory, actionRequired: Bool, confidence: Double = 0.7) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.category = category
+            self.actionRequired = actionRequired
+            self.confidence = confidence
+        }
+    }
+    
+    public struct AIScenarioData: Codable {
+        public let currentScenario: String
+        public let confidence: Double
+        public let recommendations: [String]
+        public let lastUpdated: Date
+        public let priority: String
+        
+        public init(currentScenario: String, confidence: Double, recommendations: [String], lastUpdated: Date, priority: String = "medium") {
+            self.currentScenario = currentScenario
+            self.confidence = confidence
+            self.recommendations = recommendations
+            self.lastUpdated = lastUpdated
+            self.priority = priority
+        }
+    }
+    
+    // MARK: - Weather Types
     public enum WeatherCondition: String, Codable, CaseIterable {
         case clear = "clear"
         case sunny = "sunny"
@@ -322,86 +393,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - AI Assistant Types (ROOT CAUSE RESOLUTION)
-    public struct AIScenario: Identifiable, Codable {
-        public let id: String
-        public let title: String
-        public let description: String
-        public let priority: String
-        public let category: String
-        public let estimatedTime: TimeInterval
-        public let confidence: Double
-        public let workerId: String?
-        public let buildingId: String?
-        
-        public init(id: String = UUID().uuidString, title: String, description: String, priority: String = "medium", category: String = "general", estimatedTime: TimeInterval = 0, confidence: Double = 0.8, workerId: String? = nil, buildingId: String? = nil) {
-            self.id = id
-            self.title = title
-            self.description = description
-            self.priority = priority
-            self.category = category
-            self.estimatedTime = estimatedTime
-            self.confidence = confidence
-            self.workerId = workerId
-            self.buildingId = buildingId
-        }
-    }
-    
-    public struct AISuggestion: Identifiable, Codable {
-        public let id: String
-        public let title: String
-        public let description: String
-        public let priority: SuggestionPriority
-        public let category: SuggestionCategory
-        public let actionRequired: Bool
-        public let confidence: Double
-        public let contextData: [String: String]
-        
-        public enum SuggestionPriority: String, Codable {
-            case high = "high"
-            case medium = "medium"
-            case low = "low"
-        }
-        
-        public enum SuggestionCategory: String, Codable {
-            case weatherAlert = "weatherAlert"
-            case pendingTasks = "pendingTasks"
-            case maintenance = "maintenance"
-            case efficiency = "efficiency"
-            case safety = "safety"
-        }
-        
-        public init(id: String = UUID().uuidString, title: String, description: String, priority: SuggestionPriority = .medium, category: SuggestionCategory = .efficiency, actionRequired: Bool = false, confidence: Double = 0.7, contextData: [String: String] = [:]) {
-            self.id = id
-            self.title = title
-            self.description = description
-            self.priority = priority
-            self.category = category
-            self.actionRequired = actionRequired
-            self.confidence = confidence
-            self.contextData = contextData
-        }
-    }
-    
-    public struct AIScenarioData: Codable {
-        public let currentScenario: String
-        public let confidence: Double
-        public let recommendations: [String]
-        public let lastUpdated: Date
-        public let priority: String
-        public let contextualFactors: [String: String]
-        
-        public init(currentScenario: String, confidence: Double, recommendations: [String], lastUpdated: Date = Date(), priority: String = "medium", contextualFactors: [String: String] = [:]) {
-            self.currentScenario = currentScenario
-            self.confidence = confidence
-            self.recommendations = recommendations
-            self.lastUpdated = lastUpdated
-            self.priority = priority
-            self.contextualFactors = contextualFactors
-        }
-    }
-    
-    // MARK: - Task Management Enums
+    // MARK: - Task Management Types
     public enum TaskCategory: String, Codable, CaseIterable {
         case cleaning = "cleaning"
         case maintenance = "maintenance"
@@ -430,7 +422,6 @@ public enum FrancoSphere {
         case rejected = "rejected"
     }
     
-    // MARK: - Task & Worker Types
     public struct MaintenanceTask: Identifiable, Codable {
         public let id: String
         public let title: String
@@ -455,6 +446,7 @@ public enum FrancoSphere {
         }
     }
     
+    // MARK: - Worker Management Types
     public enum WorkerSkill: String, Codable, CaseIterable {
         case cleaning = "cleaning"
         case maintenance = "maintenance"
@@ -546,7 +538,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Contextual Task (Critical for UI Components)
+    // MARK: - Contextual Task Type
     public struct ContextualTask: Identifiable, Codable {
         public let id: String
         public let title: String
@@ -579,7 +571,7 @@ public enum FrancoSphere {
     }
 }
 
-// MARK: - Global Type Aliases (Dependency Resolution)
+// MARK: - Type Aliases for Global Access
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
 public typealias TaskProgress = FrancoSphere.TaskProgress
 public typealias MaintenanceRecord = FrancoSphere.MaintenanceRecord

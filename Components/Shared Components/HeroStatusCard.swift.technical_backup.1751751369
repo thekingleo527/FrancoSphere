@@ -185,7 +185,7 @@ struct HeroStatusCard: View {
     }
 }
 
-// MARK: - Preview (Technically Correct)
+// MARK: - Preview
 #Preview {
     HeroStatusCard(
         workerId: "kevin",

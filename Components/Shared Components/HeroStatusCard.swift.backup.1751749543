@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import Foundation
 
 struct HeroStatusCard: View {
     let workerId: String
@@ -148,7 +147,7 @@ struct HeroStatusCard: View {
     
     private func weatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
-        case .clear, .sunny:
+        case Color.clear, .sunny:
             return "sun.max.fill"
         case .cloudy:
             return "cloud.fill"
@@ -167,7 +166,7 @@ struct HeroStatusCard: View {
     
     private func weatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
-        case .clear, .sunny:
+        case Color.clear, .sunny:
             return .yellow
         case .cloudy:
             return .gray
@@ -185,17 +184,16 @@ struct HeroStatusCard: View {
     }
 }
 
-// MARK: - Preview (Technically Correct)
 #Preview {
     HeroStatusCard(
-        workerId: "kevin",
+        workerId: "4",
         currentBuilding: "Rubin Museum",
         weather: WeatherData(
-            condition: .sunny,
-            temperature: 72.0,
+            temperature: 72,
+            condition: Color.clear,
             humidity: 65,
-            windSpeed: 8.5,
-            description: "Clear skies"
+            windSpeed: 8,
+            timestamp: Date()
         ),
         progress: TaskProgress(
             completed: 8,
@@ -204,9 +202,7 @@ struct HeroStatusCard: View {
             percentage: 66.7,
             overdueTasks: 1
         ),
-        onClockInTap: { print("Clock in tapped") }
+        onClockInTap: {}
     )
     .padding()
-    .background(Color.black)
-    .preferredColorScheme(.dark)
 }
