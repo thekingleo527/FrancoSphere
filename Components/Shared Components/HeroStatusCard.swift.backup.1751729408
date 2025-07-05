@@ -145,41 +145,37 @@ struct HeroStatusCard: View {
         )
     }
     
-    private func weatherIcon(for condition: WeatherCondition) -> String {
+        private func weatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
-        case .clear, .sunny:
-            return "sun.max.fill"
-        case .cloudy:
-            return "cloud.fill"
-        case .rain, .rainy:
-            return "cloud.rain.fill"
-        case .snow, .snowy:
-            return "cloud.snow.fill"
-        case .storm, .stormy:
-            return "cloud.bolt.fill"
-        case .fog, .foggy:
-            return "cloud.fog.fill"
-        case .windy:
-            return "wind"
+        case .clear: return "sun.max.fill"
+        case .sunny: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .rainy: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .snowy: return "cloud.snow.fill"
+        case .storm: return "cloud.bolt.fill"
+        case .stormy: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .foggy: return "cloud.fog.fill"
+        case .windy: return "wind"
         }
     }
     
-    private func weatherColor(for condition: WeatherCondition) -> Color {
+        private func weatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
-        case .clear, .sunny:
-            return .yellow
-        case .cloudy:
-            return .gray
-        case .rain, .rainy:
-            return .blue
-        case .snow, .snowy:
-            return .cyan
-        case .storm, .stormy:
-            return .purple
-        case .fog, .foggy:
-            return .gray
-        case .windy:
-            return .green
+        case .clear: return .yellow
+        case .sunny: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .rainy: return .blue
+        case .snow: return .cyan
+        case .snowy: return .cyan
+        case .storm: return .purple
+        case .stormy: return .purple
+        case .fog: return .gray
+        case .foggy: return .gray
+        case .windy: return .green
         }
     }
 }
@@ -189,11 +185,24 @@ struct HeroStatusCard: View {
         workerId: "4",
         currentBuilding: "Rubin Museum",
         weather: WeatherData(
+            date: Date(),
+            temperature: 72,
+            feelsLike: 75,
+            humidity: 65,
+            windSpeed: 8,
+            windDirection: 180,
+            precipitation: 0,
+            snow: 0,
+            condition: .clear,
+            uvIndex: 5,
+            visibility: 10,
+            description: "Clear weather"
+        ), 
             temperature: 72,
             condition: .clear,
             humidity: 65,
             windSpeed: 8,
-            timestamp: Date()
+            description: "Clear weather"
         ),
         progress: TaskProgress(
             completed: 8,

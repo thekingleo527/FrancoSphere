@@ -147,39 +147,51 @@ struct HeroStatusCard: View {
     
     private func weatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
-        case .clear, .sunny:
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .fog: return "cloud.fog.fill"
+        case .storm: return "cloud.bolt.fill"
+        case .sunny:
             return "sun.max.fill"
-        case .cloudy:
-            return "cloud.fill"
-        case .rain, .rainy:
+        case .rainy:
             return "cloud.rain.fill"
-        case .snow, .snowy:
+        case .snowy:
             return "cloud.snow.fill"
-        case .storm, .stormy:
+        case .stormy:
             return "cloud.bolt.fill"
-        case .fog, .foggy:
+        case .foggy:
             return "cloud.fog.fill"
-        case .windy:
-            return "wind"
+        case .sunny, .rainy, .snowy, .stormy, .foggy:
+
+            return "sun.max.fill"
+
         }
     }
     
     private func weatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
-        case .clear, .sunny:
-            return .yellow
-        case .cloudy:
-            return .gray
-        case .rain, .rainy:
-            return .blue
-        case .snow, .snowy:
-            return .cyan
-        case .storm, .stormy:
-            return .purple
-        case .fog, .foggy:
-            return .gray
-        case .windy:
-            return .green
+        case .clear: return .yellow
+        case .cloudy: return .gray
+        case .rain: return .blue
+        case .snow: return .cyan
+        case .fog: return .gray
+        case .storm: return .purple
+        case .sunny:
+            return "sun.max.fill"
+        case .rainy:
+            return "cloud.rain.fill"
+        case .snowy:
+            return "cloud.snow.fill"
+        case .stormy:
+            return "cloud.bolt.fill"
+        case .foggy:
+            return "cloud.fog.fill"
+        case .sunny, .rainy, .snowy, .stormy, .foggy:
+
+            return "sun.max.fill"
+
         }
     }
 }

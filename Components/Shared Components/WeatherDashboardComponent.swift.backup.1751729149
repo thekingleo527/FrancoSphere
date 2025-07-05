@@ -334,20 +334,20 @@ struct WeatherDashboardComponent: View {
 // MARK: - Preview
 #Preview {
     WeatherDashboardComponent(
-        building: NamedCoordinate(id: "14", name: "Rubin Museum", 
+        building: NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
-            coordinate: CLLocationCoordinate2D(latitude: 40.7402, longitude: -73.9980),
-            
+            latitude: 40.7402,
+            longitude: -73.9980,
             address: "150 W 17th St, New York, NY 10011",
             imageAssetName: "rubin_museum"
         ),
-        weather: WeatherData(date: Date(), 
+        weather: WeatherData(
             temperature: 45,
             condition: WeatherCondition.rain,
             humidity: 80,
             windSpeed: 15,
-            description: "Rainy weather"
+            timestamp: Date()
         ),
         tasks: [
             ContextualTask(id: "1", name: "Sample Task", description: "Weather affected task", buildingId: "14", workerId: "kevin", isCompleted: false)

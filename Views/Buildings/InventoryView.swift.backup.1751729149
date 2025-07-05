@@ -15,7 +15,7 @@ extension InventoryItem {
     var statusColor: Color {
         if quantity <= 0 {
             return .red
-        } else if quantity <= item.minimumQuantity {
+        } else if quantity <= minimumQuantity {
             return .orange
         } else {
             return .green
@@ -246,7 +246,7 @@ struct InventoryView: View {
         }) {
             HStack(spacing: 4) {
                 if let category = category {
-                    Image(systemName: category.icon)
+                    Image(systemName: category.systemImage)
                         .font(.caption)
                 } else {
                     Image(systemName: "tag")
@@ -285,7 +285,7 @@ struct InventoryView: View {
     private func deleteItem(_ item: InventoryItem) {
         Task { @MainActor in
             do {
-                try await BuildingService.shared.deleteInventoryItem(id: UUID().uuidString, itemId: item.id)
+                try await BuildingService.shared.deleteInventoryItem(itemId: item.id)
                 if let index = inventoryItems.firstIndex(where: { $0.id == item.id }) {
                     inventoryItems.remove(at: index)
                 }
@@ -308,7 +308,7 @@ struct InventoryItemRow: View {
                     .fill(item.statusColor.opacity(0.2))
                     .frame(width: 40, height: 40)
                 
-                Image(systemName: item.category.icon)
+                Image(systemName: item.category.systemImage)
                     .foregroundColor(item.statusColor)
             }
             
@@ -349,7 +349,7 @@ struct InventoryItemRow: View {
                         .foregroundColor(.secondary)
                 }
                 
-                Text("Min: \(item.item.minimumQuantity)")
+                Text("Min: \(item.minimumQuantity)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -378,7 +378,7 @@ struct InventoryItemDetailView: View {
     
     var body: some View {
         Form {
-            Section("Item Details") {
+            Section(header: Text("Item Details")) {
                 LabeledContent("Name", value: item.name)
                 
                 if isEditing {
@@ -387,7 +387,7 @@ struct InventoryItemDetailView: View {
                     LabeledContent("Quantity", value: "\(item.quantity) \(item.unit)")
                 }
                 
-                LabeledContent("Min Quantity", value: "\(item.item.minimumQuantity) \(item.unit)")
+                LabeledContent("Min Quantity", value: "\(item.minimumQuantity) \(item.unit)")
                 LabeledContent("Category", value: item.category.rawValue.capitalized)
                 
                 // Format the date appropriately
@@ -501,7 +501,7 @@ public struct AddInventoryItemView: View {
     @State private var itemName = ""
     @State private var quantity = 1
     @State private var unit = "pcs"
-    @State private var item.minimumQuantity = 1
+    @State private var minimumQuantity = 1
     @State private var selectedCategory: InventoryCategory = .other
     @State private var location = ""
     @State private var notes = ""
@@ -520,7 +520,7 @@ public struct AddInventoryItemView: View {
     public var body: some View {
         NavigationView {
             Form {
-                Section("Item Details") {
+                Section(header: Text("Item Details")) {
                     TextField("Item Name", text: $itemName)
                         .autocapitalization(.words)
                     
@@ -532,12 +532,12 @@ public struct AddInventoryItemView: View {
                         }
                     }
                     
-                    Stepper("Minimum Quantity: \(item.minimumQuantity)", value: $item.minimumQuantity, in: 1...100)
+                    Stepper("Minimum Quantity: \(minimumQuantity)", value: $minimumQuantity, in: 1...100)
                     
                     Picker("Category", selection: $selectedCategory) {
                         ForEach(InventoryCategory.allCases, id: \.self) { category in
                             HStack {
-                                Image(systemName: category.icon)
+                                Image(systemName: category.systemImage)
                                 Text(category.rawValue.capitalized)
                             }.tag(category)
                         }
@@ -599,14 +599,14 @@ public struct AddInventoryItemView: View {
         
         isSubmitting = true
         
-        let newItem = InventoryItem(id: UUID().uuidString, 
+        let newItem = InventoryItem(
             name: trimmedName,
             buildingID: buildingID,
             category: selectedCategory,
             quantity: quantity,
             unit: unit,
-            item.minimumQuantity: item.minimumQuantity,
-            needsReorder: quantity <= item.minimumQuantity,
+            minimumQuantity: minimumQuantity,
+            needsReorder: quantity <= minimumQuantity,
             lastRestockDate: Date(),
             location: location.isEmpty ? "Unknown" : location,
             notes: notes.isEmpty ? nil : notes
@@ -614,7 +614,7 @@ public struct AddInventoryItemView: View {
         
         Task { @MainActor in
             do {
-                try await BuildingService.shared.saveInventoryItem(id: UUID().uuidString, newItem)
+                try await BuildingService.shared.saveInventoryItem(newItem)
                 isSubmitting = false
                 onComplete(true)
             } catch {

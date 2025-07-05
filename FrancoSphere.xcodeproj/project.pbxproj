@@ -53,7 +53,6 @@
 		234581582DF78E3D00355F0A /* FrancoSphereDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580912DF78E3D00355F0A /* FrancoSphereDesign.swift */; };
 		2345815A2DF78E3D00355F0A /* NewAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D42DF78E3D00355F0A /* NewAuthManager.swift */; };
 		2345815B2DF78E3D00355F0A /* SQLiteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D72DF78E3D00355F0A /* SQLiteManager.swift */; };
-		2345815C2DF78E3D00355F0A /* InventoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580DF2DF78E3D00355F0A /* InventoryItem.swift */; };
 		2345815D2DF78E3D00355F0A /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581142DF78E3D00355F0A /* BuildingSelectionView.swift */; };
 		2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C62DF78E3D00355F0A /* V003_WorkerAssignments.swift */; };
 		234581602DF78E3D00355F0A /* TaskPhotoUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B22DF78E3D00355F0A /* TaskPhotoUploader.swift */; };
@@ -246,7 +245,6 @@
 		234580D52DF78E3D00355F0A /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		234580D72DF78E3D00355F0A /* SQLiteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteManager.swift; sourceTree = "<group>"; };
 		234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
-		234580DF2DF78E3D00355F0A /* InventoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryItem.swift; sourceTree = "<group>"; };
 		234580E32DF78E3D00355F0A /* VerificationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerificationRecord.swift; sourceTree = "<group>"; };
 		234580E42DF78E3D00355F0A /* WeatherAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAlert.swift; sourceTree = "<group>"; };
 		234580E52DF78E3D00355F0A /* WorkerConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerConstants.swift; sourceTree = "<group>"; };
@@ -596,7 +594,6 @@
 			children = (
 				23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */,
 				234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */,
-				234580DF2DF78E3D00355F0A /* InventoryItem.swift */,
 				234580E32DF78E3D00355F0A /* VerificationRecord.swift */,
 				234580E42DF78E3D00355F0A /* WeatherAlert.swift */,
 				234580E52DF78E3D00355F0A /* WorkerConstants.swift */,
@@ -969,7 +966,6 @@
 				234581582DF78E3D00355F0A /* FrancoSphereDesign.swift in Sources */,
 				2345815A2DF78E3D00355F0A /* NewAuthManager.swift in Sources */,
 				2345815B2DF78E3D00355F0A /* SQLiteManager.swift in Sources */,
-				2345815C2DF78E3D00355F0A /* InventoryItem.swift in Sources */,
 				2345815D2DF78E3D00355F0A /* BuildingSelectionView.swift in Sources */,
 				23B1179D2DFE22A80065F39E /* DatabaseSchemaVerifier.swift in Sources */,
 				2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */,

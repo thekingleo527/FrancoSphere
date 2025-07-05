@@ -141,7 +141,7 @@ actor BuildingService {
             case .complete: return .active
             case .partial: return .maintenance
             case .pending: return .maintenance
-            case .overdue: return .offline
+            case .overdue: return .inactive
             }
         }
     }
@@ -404,7 +404,7 @@ actor BuildingService {
         
         let parameters: [SQLiteBinding] = [
             item.id, item.name, item.id, item.category.rawValue,
-            item.quantity, item.category.rawValue, item.minimumQuantity, needsReorderInt,
+            item.quantity, item.category.rawValue, item.minimumStock, needsReorderInt,
             lastRestockString, item.name, item.name ?? "",
             ISO8601DateFormatter().string(from: Date())
         ]
