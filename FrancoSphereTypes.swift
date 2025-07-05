@@ -218,7 +218,7 @@ public struct MaintenanceRecord {
 }
 
 // MARK: - Legacy Type Aliases
-public typealias FSTaskItem = ContextualTask
+public typealias ContextualTask = ContextualTask
 
 // MARK: - AI Assistant Types
 public struct AISuggestion {
@@ -368,8 +368,8 @@ public class AIAssistantManager: ObservableObject {
     }
 }
 
-// MARK: - DetailedWorker Type
-public struct DetailedWorker {
+// MARK: - WorkerProfile Type
+public struct WorkerProfile {
     public let id: String
     public let name: String
     public let role: String

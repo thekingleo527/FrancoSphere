@@ -156,7 +156,7 @@ class DailyOpsReset {
                 print("Missed task: \(task.name) in building \(building.name)")
                 
                 // If this task is recurring, we should create the next occurrence
-                if task.recurrence != .oneTime {
+                if task.recurrence != .none {
                     // We'd create the next occurrence here
                     // This is handled by TaskManager when marking a task complete,
                     // but for missed tasks we might need special handling

@@ -59,7 +59,7 @@ struct TaskTimelineView: View {
                 TaskFilterView(filterOptions: $viewModel.filterOptions)
             }
             .sheet(item: $showingTaskDetail) { task in
-                TaskDetailView(task: convertToFSTaskItem(task))
+                TaskDetailView(task: convertToContextualTask(task))
             }
             .onAppear {
                 Task {
@@ -207,8 +207,8 @@ struct TaskTimelineView: View {
         }
     }
     
-    // Convert MaintenanceTask to FSTaskItem for existing TaskDetailView
-    private func convertToFSTaskItem(_ task: MaintenanceTask) -> FSTaskItem {
+    // Convert MaintenanceTask to ContextualTask for existing TaskDetailView
+    private func convertToContextualTask(_ task: MaintenanceTask) -> ContextualTask {
         // Convert String IDs to Int64 safely
         let buildingIdInt64: Int64
         if let buildingInt = Int64(task.buildingID) {
@@ -224,8 +224,8 @@ struct TaskTimelineView: View {
             workerIdInt64 = Int64(workerId)
         }
         
-        // Create FSTaskItem using the typealias (which points to FrancoSphere.FSTaskItem)
-        return FSTaskItem(
+        // Create ContextualTask using the typealias (which points to FrancoSphere.ContextualTask)
+        return ContextualTask(
             id: Int64(abs(task.id.hashValue)),
             name: task.name,
             description: task.description,
@@ -486,13 +486,13 @@ class TaskTimelineViewModel: ObservableObject {
         return nil
     }
     
-    // Convert MaintenanceTask to FSTaskItem for existing TaskDetailView
-    private func convertToFSTaskItem(_ task: MaintenanceTask) -> FSTaskItem {
+    // Convert MaintenanceTask to ContextualTask for existing TaskDetailView
+    private func convertToContextualTask(_ task: MaintenanceTask) -> ContextualTask {
         // Convert String IDs to Int64
         let buildingId = Int64(task.buildingID) ?? 0
         let workerId = Int64(task.assignedWorkers.first ?? "0") ?? Int64(workerId)
         
-        return FSTaskItem(
+        return ContextualTask(
             id: Int64(task.id.hashValue), // Use hash of string ID
             name: task.name,
             description: task.description,
@@ -536,7 +536,7 @@ class TaskTimelineViewModel: ObservableObject {
         case "quarterly": return .quarterly
         case "semiannual": return .semiannual
         case "annual": return .annual
-        default: return .oneTime
+        default: return .none
         }
     }
 }

@@ -407,7 +407,7 @@ class WeatherDataAdapter: ObservableObject {
                     dueDate: calendar.date(byAdding: .hour, value: -12, to: dueDate) ?? dueDate,
                     category: .maintenance,
                     urgency: .high,
-                    recurrence: .oneTime
+                    recurrence: .none
                 ))
             }
             
@@ -420,7 +420,7 @@ class WeatherDataAdapter: ObservableObject {
                     dueDate: calendar.date(byAdding: .hour, value: -6, to: dueDate) ?? dueDate,
                     category: .inspection,
                     urgency: day.windSpeed > 40 ? .urgent : .high,
-                    recurrence: .oneTime
+                    recurrence: .none
                 ))
             }
             
@@ -433,7 +433,7 @@ class WeatherDataAdapter: ObservableObject {
                     dueDate: Date(),
                     category: .maintenance,
                     urgency: day.temperature < 20 ? .urgent : .high,
-                    recurrence: .oneTime
+                    recurrence: .none
                 ))
             }
             
@@ -446,7 +446,7 @@ class WeatherDataAdapter: ObservableObject {
                     dueDate: dueDate,
                     category: .maintenance,
                     urgency: day.temperature > 95 ? .high : .medium,
-                    recurrence: .oneTime
+                    recurrence: .none
                 ))
             }
         }
@@ -510,7 +510,7 @@ class WeatherDataAdapter: ObservableObject {
             endTime: calendar.date(byAdding: .hour, value: 2, to: now),
             category: taskCategory,
             urgency: .urgent,
-            recurrence: .oneTime,
+            recurrence: .none,
             isComplete: false,
             assignedWorkers: []
         )

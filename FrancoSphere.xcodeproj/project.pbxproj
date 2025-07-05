@@ -124,6 +124,7 @@
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
+		2360344B2E18D839001F7D76 /* FrancoSphereTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2360344A2E18D839001F7D76 /* FrancoSphereTypes.swift */; };
 		236106D92E16F2F100463A59 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106D82E16F2F100463A59 /* TaskService.swift */; };
 		236106E62E17804400463A59 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E52E17804400463A59 /* WorkerService.swift */; };
 		236106E82E1788EC00463A59 /* BuildingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E72E1788EC00463A59 /* BuildingService.swift */; };
@@ -301,6 +302,7 @@
 		234581222DF78E3D00355F0A /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		234581232DF78E3D00355F0A /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
+		2360344A2E18D839001F7D76 /* FrancoSphereTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereTypes.swift; sourceTree = "<group>"; };
 		236106D82E16F2F100463A59 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
 		236106E52E17804400463A59 /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
 		236106E72E1788EC00463A59 /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
@@ -489,6 +491,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				2360344A2E18D839001F7D76 /* FrancoSphereTypes.swift */,
 				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
 				239956072E11079F00B3F105 /* AIScenarioSheetView.swift */,
 				23BBD76B2E030EA500013D90 /* RoutinePriority.swift */,
@@ -995,6 +998,7 @@
 				234581712DF78E3D00355F0A /* BuildingStatsGlassCard.swift in Sources */,
 				233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */,
 				234581732DF78E3D00355F0A /* ForgotPasswordView.swift in Sources */,
+				2360344B2E18D839001F7D76 /* FrancoSphereTypes.swift in Sources */,
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
 				233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */,
 				234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */,

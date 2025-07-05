@@ -126,6 +126,19 @@ class InventoryDataImporter {
 }
 
 // MARK: - Error Types
+enum ImportError: LocalizedError {
+    case noSQLiteManager
+    case invalidData(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .noSQLiteManager:
+            return "SQLiteManager not initialized"
+        case .invalidData(let message):
+            return "Invalid data: \(message)"
+        }
+    }
+}
 
 // MARK: - FrancoSphere Models Namespace
 // This should match your existing models structure

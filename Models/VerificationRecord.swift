@@ -14,7 +14,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
     public let id: String
     public let taskId: String
     public let workerId: String
-    public let verificationStatus: VerificationStatus
+    public let verificationStatus: FrancoSphere.VerificationStatus
     public let verifiedAt: Date
     public let notes: String?
     public let photoPath: String?
@@ -23,7 +23,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
         id: String = UUID().uuidString,
         taskId: String,
         workerId: String,
-        verificationStatus: VerificationStatus,
+        verificationStatus: FrancoSphere.VerificationStatus,
         verifiedAt: Date = Date(),
         notes: String? = nil,
         photoPath: String? = nil

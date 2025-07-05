@@ -294,7 +294,7 @@ struct FSWeatherData: Identifiable {
                 endTime: nil,
                 category: .maintenance,
                 urgency: .medium,
-                recurrence: .oneTime,
+                recurrence: .none,
                 isComplete: false,
                 assignedWorkers: []
             ))
@@ -313,7 +313,7 @@ struct FSWeatherData: Identifiable {
                 endTime: nil,
                 category: .maintenance,
                 urgency: .high,
-                recurrence: .oneTime,
+                recurrence: .none,
                 isComplete: false,
                 assignedWorkers: []
             ))
@@ -332,7 +332,7 @@ struct FSWeatherData: Identifiable {
                 endTime: nil,
                 category: .maintenance,
                 urgency: .high,
-                recurrence: .oneTime,
+                recurrence: .none,
                 isComplete: false,
                 assignedWorkers: []
             ))
@@ -351,7 +351,7 @@ struct FSWeatherData: Identifiable {
                 endTime: nil,
                 category: .maintenance,
                 urgency: .medium,
-                recurrence: .oneTime,
+                recurrence: .none,
                 isComplete: false,
                 assignedWorkers: []
             ))

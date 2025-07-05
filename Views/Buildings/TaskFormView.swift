@@ -57,7 +57,7 @@ struct TaskFormView: View {
                             dueDate: Date(),
                             category: .maintenance,
                             urgency: .medium,
-                            recurrence: .oneTime,
+                            recurrence: .none,
                             isComplete: false
                         )
                         onTaskCreated?(newTask)

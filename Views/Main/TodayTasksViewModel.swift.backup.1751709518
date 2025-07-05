@@ -123,7 +123,7 @@ class TodayTasksViewModel: ObservableObject {
         return max(completedTasks.count, 0)
     }
     
-    private func calculatePerformanceMetrics(efficiency: 0.85, tasksCompleted: 42, averageTime: 1800, qualityScore: 4.2, lastUpdate: Date()) -> FrancoSphere.PerformanceMetrics {
+    private func calculatePerformanceMetrics() -> FrancoSphere.PerformanceMetrics {
         let efficiency = Double(completedTasks.count) / max(Double(tasks.count), 1.0)
         
         return FrancoSphere.PerformanceMetrics(

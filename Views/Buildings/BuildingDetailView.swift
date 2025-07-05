@@ -1,3 +1,4 @@
+import Foundation
 //
 //  BuildingDetailView.swift
 //  FrancoSphere
@@ -325,7 +326,7 @@ struct BuildingDetailView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    private func workerRow(_ worker: DetailedWorker) -> some View {
+    private func workerRow(_ worker: WorkerProfile) -> some View {
         HStack(spacing: 12) {
             Circle()
                 .fill(worker.isOnSite ? .green : .gray)
@@ -594,7 +595,7 @@ struct BuildingDetailView: View {
         }
     }
     
-    private func workerCard(_ worker: DetailedWorker) -> some View {
+    private func workerCard(_ worker: WorkerProfile) -> some View {
         HStack(spacing: 12) {
             ProfileBadge(
                 workerName: worker.name,

@@ -557,7 +557,7 @@ struct TaskScheduleView: View {
                             .font(.caption2)
                             .foregroundColor(.secondary)
                         
-                        if task.recurrence != .oneOff {
+                        if task.recurrence != .none {
                             Label(task.recurrence.rawValue, systemImage: "repeat")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
@@ -623,7 +623,7 @@ struct TaskScheduleView: View {
         @State private var taskDescription: String = ""
         @State private var category: TaskCategory = .maintenance
         @State private var urgency: TaskUrgency = .medium
-        @State private var recurrence: TaskRecurrence = .oneOff
+        @State private var recurrence: TaskRecurrence = .none
         @State private var addStartTime = false
         @State private var startTime: Date
         @State private var addEndTime = false

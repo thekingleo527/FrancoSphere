@@ -255,8 +255,8 @@ struct WorkersInlineList: View {
             isLoading = true
         }
         
-        // FIXED: Use correct method name and get DetailedWorker objects directly
-        let detailedWorkers = contextEngine.getDetailedWorkers(for: buildingId, includeDSNY: showDSNYWorkers)
+        // FIXED: Use correct method name and get WorkerProfile objects directly
+        let detailedWorkers = contextEngine.getWorkerProfiles(for: buildingId, includeDSNY: showDSNYWorkers)
         
         var loadedWorkers: [WorkerInfo] = []
         

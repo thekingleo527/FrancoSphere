@@ -54,6 +54,23 @@ internal enum DatabaseError: Error, LocalizedError {
     }
 }
 
+public struct WorkerProfile: Identifiable {
+    public let id: String
+    public let name: String
+    public let role: String
+    public let shift: String
+    public let buildingId: String
+    public let isOnSite: Bool
+    
+    public init(id: String, name: String, role: String, shift: String, buildingId: String, isOnSite: Bool) {
+        self.id = id
+        self.name = name
+        self.role = role
+        self.shift = shift
+        self.buildingId = buildingId
+        self.isOnSite = isOnSite
+    }
+}
 
 public enum WorkerStatus {
     case clockedIn

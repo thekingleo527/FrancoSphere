@@ -417,13 +417,7 @@ public class SQLiteManager {
             default: userRole = .worker
             }
             
-            return FrancoSphere.WorkerProfile(
-                id: workerId,
-                name: name,
-                email: email,
-                role: userRole,
-                skillLevel: .basic
-            )
+            return FrancoSphere.WorkerProfile(id: workerId, name: name, email: email, role: userRole)
         }
         
         return nil
@@ -439,7 +433,7 @@ public class SQLiteManager {
             workerRole <- worker.role.rawValue,
             workerPhone <- "", // Default empty
             hourlyRate <- 0.0, // Default rate
-            skills <- worker.skillLevel.rawValue,
+            skills <- worker.skills.map { $0.rawValue }.joined(separator: ","),
             isActive <- true,
             profileImagePath <- nil,
             address <- "",
@@ -469,13 +463,7 @@ public class SQLiteManager {
             default: userRole = .worker
             }
             
-            let worker = FrancoSphere.WorkerProfile(
-                id: workerId,
-                name: name,
-                email: email,
-                role: userRole,
-                skillLevel: .basic
-            )
+            let worker = FrancoSphere.WorkerProfile(id: workerId, name: name, email: email, role: userRole)
             workersList.append(worker)
         }
         

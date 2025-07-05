@@ -15,7 +15,7 @@ import PhotosUI
 
 
 struct TaskDetailView: View {
-    let task: FSTaskItem
+    let task: ContextualTask
     @State private var isCompleted: Bool
     @State private var showingCompletionDialog = false
     @State private var selectedItem: PhotosPickerItem?
@@ -49,7 +49,7 @@ struct TaskDetailView: View {
     @State private var verificationStatus: LocalVerificationStatus = .pending
     @Environment(\.presentationMode) var presentationMode
     
-    init(task: FSTaskItem) {
+    init(task: ContextualTask) {
         self.task = task
         _isCompleted = State(initialValue: task.isCompleted)
     }
@@ -225,7 +225,7 @@ struct TaskDetailView: View {
         HStack {
             Image(systemName: "wrench.fill")
                 .foregroundColor(.white)
-            Text("Maintenance")  // Static, since FSTaskItem has no category field
+            Text("Maintenance")  // Static, since ContextualTask has no category field
                 .font(.caption)
                 .foregroundColor(.white)
         }
@@ -599,7 +599,7 @@ struct TaskDetailView: View {
 struct TaskDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            let previewTask = FSTaskItem(
+            let previewTask = ContextualTask(
                 id: 1,
                 name: "Inspect HVAC System",
                 description: "Regular maintenance inspection of HVAC units",

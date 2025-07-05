@@ -8,241 +8,241 @@
 import Foundation
 import CoreLocation
 
-public struct ContextualTask: Identifiable, Codable, Hashable {
-    public let id: String
-    public let name: String
-    public let buildingId: String
-    public let buildingName: String
-    public let category: String
-    public let startTime: String
-    public let endTime: String
-    public let recurrence: String
-    public let skillLevel: String
-    public var status: String
-    public let urgencyLevel: String
-    public let assignedWorkerName: String
-    public var scheduledDate: Date?
-    public var completedAt: Date?
-    public var notes: String?
-    
-    // Location is not Codable, so we store coordinates separately
-    private var locationLatitude: Double?
-    private var locationLongitude: Double?
-    
-    // Computed property for location
-    public var location: CLLocation? {
-        get {
-            guard let lat = locationLatitude, let lng = locationLongitude else { return nil }
-            return CLLocation(latitude: lat, longitude: lng)
-        }
-        set {
-            locationLatitude = newValue?.coordinate.latitude
-            locationLongitude = newValue?.coordinate.longitude
-        }
-    }
-    
-    // MARK: - CodingKeys
-    private enum CodingKeys: String, CodingKey {
-        case id, name, buildingId, buildingName, category
-        case startTime, endTime, recurrence, skillLevel, status
-        case urgencyLevel, assignedWorkerName, scheduledDate, completedAt, notes
-        case locationLatitude, locationLongitude
-    }
-    
-    // MARK: - Initializers
-    public init(
-        id: String = UUID().uuidString,
-        name: String,
-        buildingId: String,
-        buildingName: String,
-        category: String,
-        startTime: String,
-        endTime: String,
-        recurrence: String,
-        skillLevel: String,
-        status: String,
-        urgencyLevel: String,
-        assignedWorkerName: String,
-        scheduledDate: Date? = nil,
-        completedAt: Date? = nil,
-        location: CLLocation? = nil,
-        notes: String? = nil
-    ) {
-        self.id = id
-        self.name = name
-        self.buildingId = buildingId
-        self.buildingName = buildingName
-        self.category = category
-        self.startTime = startTime
-        self.endTime = endTime
-        self.recurrence = recurrence
-        self.skillLevel = skillLevel
-        self.status = status
-        self.urgencyLevel = urgencyLevel
-        self.assignedWorkerName = assignedWorkerName
-        self.scheduledDate = scheduledDate
-        self.completedAt = completedAt
-        self.notes = notes
-        
-        // Handle location
-        self.locationLatitude = location?.coordinate.latitude
-        self.locationLongitude = location?.coordinate.longitude
-    }
-    
-    // MARK: - Codable Implementation
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        id = try container.decode(String.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        buildingId = try container.decode(String.self, forKey: .buildingId)
-        buildingName = try container.decode(String.self, forKey: .buildingName)
-        category = try container.decode(String.self, forKey: .category)
-        startTime = try container.decode(String.self, forKey: .startTime)
-        endTime = try container.decode(String.self, forKey: .endTime)
-        recurrence = try container.decode(String.self, forKey: .recurrence)
-        skillLevel = try container.decode(String.self, forKey: .skillLevel)
-        status = try container.decode(String.self, forKey: .status)
-        urgencyLevel = try container.decode(String.self, forKey: .urgencyLevel)
-        assignedWorkerName = try container.decode(String.self, forKey: .assignedWorkerName)
-        
-        scheduledDate = try container.decodeIfPresent(Date.self, forKey: .scheduledDate)
-        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
-        notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        
-        locationLatitude = try container.decodeIfPresent(Double.self, forKey: .locationLatitude)
-        locationLongitude = try container.decodeIfPresent(Double.self, forKey: .locationLongitude)
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(buildingId, forKey: .buildingId)
-        try container.encode(buildingName, forKey: .buildingName)
-        try container.encode(category, forKey: .category)
-        try container.encode(startTime, forKey: .startTime)
-        try container.encode(endTime, forKey: .endTime)
-        try container.encode(recurrence, forKey: .recurrence)
-        try container.encode(skillLevel, forKey: .skillLevel)
-        try container.encode(status, forKey: .status)
-        try container.encode(urgencyLevel, forKey: .urgencyLevel)
-        try container.encode(assignedWorkerName, forKey: .assignedWorkerName)
-        
-        try container.encodeIfPresent(scheduledDate, forKey: .scheduledDate)
-        try container.encodeIfPresent(completedAt, forKey: .completedAt)
-        try container.encodeIfPresent(notes, forKey: .notes)
-        
-        try container.encodeIfPresent(locationLatitude, forKey: .locationLatitude)
-        try container.encodeIfPresent(locationLongitude, forKey: .locationLongitude)
-    }
-    
-    // MARK: - Computed Properties
-    public var isCompleted: Bool {
-        return status.lowercased() == "completed"
-    }
-    
-    public var isOverdue: Bool {
-        guard let scheduledDate = scheduledDate else { return false }
-        return scheduledDate < Date() && !isCompleted
-    }
-    
-    public var priorityScore: Int {
-        switch urgencyLevel.lowercased() {
-        case "urgent": return 4
-        case "high": return 3
-        case "medium": return 2
-        case "low": return 1
-        default: return 2
-        }
-    }
-    
-    public var categoryColor: String {
-        switch category.lowercased() {
-        case "maintenance": return "orange"
-        case "cleaning": return "blue"
-        case "inspection": return "green"
-        case "sanitation": return "purple"
-        case "repair": return "red"
-        default: return "gray"
-        }
-    }
-    
-    public var urgencyColor: String {
-        switch urgencyLevel.lowercased() {
-        case "urgent": return "red"
-        case "high": return "orange"
-        case "medium": return "yellow"
-        case "low": return "green"
-        default: return "gray"
-        }
-    }
-    
-    // MARK: - Helper Methods
-    public func formattedStartTime() -> String {
-        return startTime
-    }
-    
-    public func formattedEndTime() -> String {
-        return endTime
-    }
-    
-    public func estimatedDuration() -> TimeInterval {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        guard let start = formatter.date(from: startTime),
-              let end = formatter.date(from: endTime) else {
-            return 3600 // Default 1 hour
-        }
-        
-        return end.timeIntervalSince(start)
-    }
-    
-    // MARK: - Static Factory Methods
-    public static func createMaintenanceTask(
-        name: String,
-        buildingId: String,
-        buildingName: String,
-        assignedWorker: String
-    ) -> ContextualTask {
-        return ContextualTask(
-            name: name,
-            buildingId: buildingId,
-            buildingName: buildingName,
-            category: "Maintenance",
-            startTime: "09:00",
-            endTime: "10:00",
-            recurrence: "Daily",
-            skillLevel: "Basic",
-            status: "pending",
-            urgencyLevel: "Medium",
-            assignedWorkerName: assignedWorker
-        )
-    }
-    
-    public static func createCleaningTask(
-        name: String,
-        buildingId: String,
-        buildingName: String,
-        assignedWorker: String
-    ) -> ContextualTask {
-        return ContextualTask(
-            name: name,
-            buildingId: buildingId,
-            buildingName: buildingName,
-            category: "Cleaning",
-            startTime: "08:00",
-            endTime: "09:00",
-            recurrence: "Daily",
-            skillLevel: "Basic",
-            status: "pending",
-            urgencyLevel: "Medium",
-            assignedWorkerName: assignedWorker
-        )
-    }
-}
+// REMOVED DUPLICATE: public struct ContextualTask: Identifiable, Codable, Hashable {
+// REMOVED DUPLICATE:     public let id: String
+// REMOVED DUPLICATE:     public let name: String
+// REMOVED DUPLICATE:     public let buildingId: String
+// REMOVED DUPLICATE:     public let buildingName: String
+// REMOVED DUPLICATE:     public let category: String
+// REMOVED DUPLICATE:     public let startTime: String
+// REMOVED DUPLICATE:     public let endTime: String
+// REMOVED DUPLICATE:     public let recurrence: String
+// REMOVED DUPLICATE:     public let skillLevel: String
+// REMOVED DUPLICATE:     public var status: String
+// REMOVED DUPLICATE:     public let urgencyLevel: String
+// REMOVED DUPLICATE:     public let assignedWorkerName: String
+// REMOVED DUPLICATE:     public var scheduledDate: Date?
+// REMOVED DUPLICATE:     public var completedAt: Date?
+// REMOVED DUPLICATE:     public var notes: String?
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // Location is not Codable, so we store coordinates separately
+// REMOVED DUPLICATE:     private var locationLatitude: Double?
+// REMOVED DUPLICATE:     private var locationLongitude: Double?
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // Computed property for location
+// REMOVED DUPLICATE:     public var location: CLLocation? {
+// REMOVED DUPLICATE:         get {
+// REMOVED DUPLICATE:             guard let lat = locationLatitude, let lng = locationLongitude else { return nil }
+// REMOVED DUPLICATE:             return CLLocation(latitude: lat, longitude: lng)
+// REMOVED DUPLICATE:         }
+// REMOVED DUPLICATE:         set {
+// REMOVED DUPLICATE:             locationLatitude = newValue?.coordinate.latitude
+// REMOVED DUPLICATE:             locationLongitude = newValue?.coordinate.longitude
+// REMOVED DUPLICATE:         }
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // MARK: - CodingKeys
+// REMOVED DUPLICATE:     private enum CodingKeys: String, CodingKey {
+// REMOVED DUPLICATE:         case id, name, buildingId, buildingName, category
+// REMOVED DUPLICATE:         case startTime, endTime, recurrence, skillLevel, status
+// REMOVED DUPLICATE:         case urgencyLevel, assignedWorkerName, scheduledDate, completedAt, notes
+// REMOVED DUPLICATE:         case locationLatitude, locationLongitude
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // MARK: - Initializers
+// REMOVED DUPLICATE:     public init(
+// REMOVED DUPLICATE:         id: String = UUID().uuidString,
+// REMOVED DUPLICATE:         name: String,
+// REMOVED DUPLICATE:         buildingId: String,
+// REMOVED DUPLICATE:         buildingName: String,
+// REMOVED DUPLICATE:         category: String,
+// REMOVED DUPLICATE:         startTime: String,
+// REMOVED DUPLICATE:         endTime: String,
+// REMOVED DUPLICATE:         recurrence: String,
+// REMOVED DUPLICATE:         skillLevel: String,
+// REMOVED DUPLICATE:         status: String,
+// REMOVED DUPLICATE:         urgencyLevel: String,
+// REMOVED DUPLICATE:         assignedWorkerName: String,
+// REMOVED DUPLICATE:         scheduledDate: Date? = nil,
+// REMOVED DUPLICATE:         completedAt: Date? = nil,
+// REMOVED DUPLICATE:         location: CLLocation? = nil,
+// REMOVED DUPLICATE:         notes: String? = nil
+// REMOVED DUPLICATE:     ) {
+// REMOVED DUPLICATE:         self.id = id
+// REMOVED DUPLICATE:         self.name = name
+// REMOVED DUPLICATE:         self.buildingId = buildingId
+// REMOVED DUPLICATE:         self.buildingName = buildingName
+// REMOVED DUPLICATE:         self.category = category
+// REMOVED DUPLICATE:         self.startTime = startTime
+// REMOVED DUPLICATE:         self.endTime = endTime
+// REMOVED DUPLICATE:         self.recurrence = recurrence
+// REMOVED DUPLICATE:         self.skillLevel = skillLevel
+// REMOVED DUPLICATE:         self.status = status
+// REMOVED DUPLICATE:         self.urgencyLevel = urgencyLevel
+// REMOVED DUPLICATE:         self.assignedWorkerName = assignedWorkerName
+// REMOVED DUPLICATE:         self.scheduledDate = scheduledDate
+// REMOVED DUPLICATE:         self.completedAt = completedAt
+// REMOVED DUPLICATE:         self.notes = notes
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         // Handle location
+// REMOVED DUPLICATE:         self.locationLatitude = location?.coordinate.latitude
+// REMOVED DUPLICATE:         self.locationLongitude = location?.coordinate.longitude
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // MARK: - Codable Implementation
+// REMOVED DUPLICATE:     public init(from decoder: Decoder) throws {
+// REMOVED DUPLICATE:         let container = try decoder.container(keyedBy: CodingKeys.self)
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         id = try container.decode(String.self, forKey: .id)
+// REMOVED DUPLICATE:         name = try container.decode(String.self, forKey: .name)
+// REMOVED DUPLICATE:         buildingId = try container.decode(String.self, forKey: .buildingId)
+// REMOVED DUPLICATE:         buildingName = try container.decode(String.self, forKey: .buildingName)
+// REMOVED DUPLICATE:         category = try container.decode(String.self, forKey: .category)
+// REMOVED DUPLICATE:         startTime = try container.decode(String.self, forKey: .startTime)
+// REMOVED DUPLICATE:         endTime = try container.decode(String.self, forKey: .endTime)
+// REMOVED DUPLICATE:         recurrence = try container.decode(String.self, forKey: .recurrence)
+// REMOVED DUPLICATE:         skillLevel = try container.decode(String.self, forKey: .skillLevel)
+// REMOVED DUPLICATE:         status = try container.decode(String.self, forKey: .status)
+// REMOVED DUPLICATE:         urgencyLevel = try container.decode(String.self, forKey: .urgencyLevel)
+// REMOVED DUPLICATE:         assignedWorkerName = try container.decode(String.self, forKey: .assignedWorkerName)
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         scheduledDate = try container.decodeIfPresent(Date.self, forKey: .scheduledDate)
+// REMOVED DUPLICATE:         completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+// REMOVED DUPLICATE:         notes = try container.decodeIfPresent(String.self, forKey: .notes)
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         locationLatitude = try container.decodeIfPresent(Double.self, forKey: .locationLatitude)
+// REMOVED DUPLICATE:         locationLongitude = try container.decodeIfPresent(Double.self, forKey: .locationLongitude)
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public func encode(to encoder: Encoder) throws {
+// REMOVED DUPLICATE:         var container = encoder.container(keyedBy: CodingKeys.self)
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         try container.encode(id, forKey: .id)
+// REMOVED DUPLICATE:         try container.encode(name, forKey: .name)
+// REMOVED DUPLICATE:         try container.encode(buildingId, forKey: .buildingId)
+// REMOVED DUPLICATE:         try container.encode(buildingName, forKey: .buildingName)
+// REMOVED DUPLICATE:         try container.encode(category, forKey: .category)
+// REMOVED DUPLICATE:         try container.encode(startTime, forKey: .startTime)
+// REMOVED DUPLICATE:         try container.encode(endTime, forKey: .endTime)
+// REMOVED DUPLICATE:         try container.encode(recurrence, forKey: .recurrence)
+// REMOVED DUPLICATE:         try container.encode(skillLevel, forKey: .skillLevel)
+// REMOVED DUPLICATE:         try container.encode(status, forKey: .status)
+// REMOVED DUPLICATE:         try container.encode(urgencyLevel, forKey: .urgencyLevel)
+// REMOVED DUPLICATE:         try container.encode(assignedWorkerName, forKey: .assignedWorkerName)
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         try container.encodeIfPresent(scheduledDate, forKey: .scheduledDate)
+// REMOVED DUPLICATE:         try container.encodeIfPresent(completedAt, forKey: .completedAt)
+// REMOVED DUPLICATE:         try container.encodeIfPresent(notes, forKey: .notes)
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         try container.encodeIfPresent(locationLatitude, forKey: .locationLatitude)
+// REMOVED DUPLICATE:         try container.encodeIfPresent(locationLongitude, forKey: .locationLongitude)
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // MARK: - Computed Properties
+// REMOVED DUPLICATE:     public var isCompleted: Bool {
+// REMOVED DUPLICATE:         return status.lowercased() == "completed"
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public var isOverdue: Bool {
+// REMOVED DUPLICATE:         guard let scheduledDate = scheduledDate else { return false }
+// REMOVED DUPLICATE:         return scheduledDate < Date() && !isCompleted
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public var priorityScore: Int {
+// REMOVED DUPLICATE:         switch urgencyLevel.lowercased() {
+// REMOVED DUPLICATE:         case "urgent": return 4
+// REMOVED DUPLICATE:         case "high": return 3
+// REMOVED DUPLICATE:         case "medium": return 2
+// REMOVED DUPLICATE:         case "low": return 1
+// REMOVED DUPLICATE:         default: return 2
+// REMOVED DUPLICATE:         }
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public var categoryColor: String {
+// REMOVED DUPLICATE:         switch category.lowercased() {
+// REMOVED DUPLICATE:         case "maintenance": return "orange"
+// REMOVED DUPLICATE:         case "cleaning": return "blue"
+// REMOVED DUPLICATE:         case "inspection": return "green"
+// REMOVED DUPLICATE:         case "sanitation": return "purple"
+// REMOVED DUPLICATE:         case "repair": return "red"
+// REMOVED DUPLICATE:         default: return "gray"
+// REMOVED DUPLICATE:         }
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public var urgencyColor: String {
+// REMOVED DUPLICATE:         switch urgencyLevel.lowercased() {
+// REMOVED DUPLICATE:         case "urgent": return "red"
+// REMOVED DUPLICATE:         case "high": return "orange"
+// REMOVED DUPLICATE:         case "medium": return "yellow"
+// REMOVED DUPLICATE:         case "low": return "green"
+// REMOVED DUPLICATE:         default: return "gray"
+// REMOVED DUPLICATE:         }
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // MARK: - Helper Methods
+// REMOVED DUPLICATE:     public func formattedStartTime() -> String {
+// REMOVED DUPLICATE:         return startTime
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public func formattedEndTime() -> String {
+// REMOVED DUPLICATE:         return endTime
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public func estimatedDuration() -> TimeInterval {
+// REMOVED DUPLICATE:         let formatter = DateFormatter()
+// REMOVED DUPLICATE:         formatter.dateFormat = "HH:mm"
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         guard let start = formatter.date(from: startTime),
+// REMOVED DUPLICATE:               let end = formatter.date(from: endTime) else {
+// REMOVED DUPLICATE:             return 3600 // Default 1 hour
+// REMOVED DUPLICATE:         }
+// REMOVED DUPLICATE:         
+// REMOVED DUPLICATE:         return end.timeIntervalSince(start)
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     // MARK: - Static Factory Methods
+// REMOVED DUPLICATE:     public static func createMaintenanceTask(
+// REMOVED DUPLICATE:         name: String,
+// REMOVED DUPLICATE:         buildingId: String,
+// REMOVED DUPLICATE:         buildingName: String,
+// REMOVED DUPLICATE:         assignedWorker: String
+// REMOVED DUPLICATE:     ) -> ContextualTask {
+// REMOVED DUPLICATE:         return ContextualTask(
+// REMOVED DUPLICATE:             name: name,
+// REMOVED DUPLICATE:             buildingId: buildingId,
+// REMOVED DUPLICATE:             buildingName: buildingName,
+// REMOVED DUPLICATE:             category: "Maintenance",
+// REMOVED DUPLICATE:             startTime: "09:00",
+// REMOVED DUPLICATE:             endTime: "10:00",
+// REMOVED DUPLICATE:             recurrence: "Daily",
+// REMOVED DUPLICATE:             skillLevel: "Basic",
+// REMOVED DUPLICATE:             status: "pending",
+// REMOVED DUPLICATE:             urgencyLevel: "Medium",
+// REMOVED DUPLICATE:             assignedWorkerName: assignedWorker
+// REMOVED DUPLICATE:         )
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE:     
+// REMOVED DUPLICATE:     public static func createCleaningTask(
+// REMOVED DUPLICATE:         name: String,
+// REMOVED DUPLICATE:         buildingId: String,
+// REMOVED DUPLICATE:         buildingName: String,
+// REMOVED DUPLICATE:         assignedWorker: String
+// REMOVED DUPLICATE:     ) -> ContextualTask {
+// REMOVED DUPLICATE:         return ContextualTask(
+// REMOVED DUPLICATE:             name: name,
+// REMOVED DUPLICATE:             buildingId: buildingId,
+// REMOVED DUPLICATE:             buildingName: buildingName,
+// REMOVED DUPLICATE:             category: "Cleaning",
+// REMOVED DUPLICATE:             startTime: "08:00",
+// REMOVED DUPLICATE:             endTime: "09:00",
+// REMOVED DUPLICATE:             recurrence: "Daily",
+// REMOVED DUPLICATE:             skillLevel: "Basic",
+// REMOVED DUPLICATE:             status: "pending",
+// REMOVED DUPLICATE:             urgencyLevel: "Medium",
+// REMOVED DUPLICATE:             assignedWorkerName: assignedWorker
+// REMOVED DUPLICATE:         )
+// REMOVED DUPLICATE:     }
+// REMOVED DUPLICATE: }
 
 // MARK: - Hash Implementation
 extension ContextualTask {
