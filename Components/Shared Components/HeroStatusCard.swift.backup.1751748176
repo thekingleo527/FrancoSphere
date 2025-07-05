@@ -147,7 +147,7 @@ struct HeroStatusCard: View {
     
     private func weatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
-        case Color.clear, .sunny:
+        case .clear, .sunny:
             return "sun.max.fill"
         case .cloudy:
             return "cloud.fill"
@@ -166,7 +166,7 @@ struct HeroStatusCard: View {
     
     private func weatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
-        case Color.clear, .sunny:
+        case .clear, .sunny:
             return .yellow
         case .cloudy:
             return .gray
@@ -190,7 +190,7 @@ struct HeroStatusCard: View {
         currentBuilding: "Rubin Museum",
         weather: WeatherData(
             temperature: 72,
-            condition: Color.clear,
+            condition: .clear,
             humidity: 65,
             windSpeed: 8,
             timestamp: Date()

@@ -16,7 +16,7 @@ class WorkerDashboardViewModel: ObservableObject {
     
     // Use nil initialization to avoid constructor issues
     @Published var progress: TaskProgress?
-    @Published var dataHealthStatus: FrancoSphere.FrancoSphere.DataHealthStatus = .unknown
+    @Published var dataHealthStatus: FrancoSphere.DataHealthStatus = .unknown
     @Published var weatherImpact: WeatherImpact?
     
     private let workerService: WorkerService
@@ -42,7 +42,7 @@ class WorkerDashboardViewModel: ObservableObject {
         isRefreshing = false
     }
     
-    private func assessDataHealth() -> FrancoSphere.FrancoSphere.DataHealthStatus {
+    private func assessDataHealth() -> FrancoSphere.DataHealthStatus {
         return .healthy
     }
     

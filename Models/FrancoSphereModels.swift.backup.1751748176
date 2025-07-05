@@ -2,36 +2,32 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  Complete working model definitions - REBUILT
+//  🎯 SINGLE SOURCE OF TRUTH for all types
+//  ✅ Complete rebuild with all missing types
 //
 
 import Foundation
-import CoreLocation
 import SwiftUI
+import CoreLocation
 
-// MARK: - FrancoSphere Namespace
 public enum FrancoSphere {
     
-    // MARK: - Core Geographic Types
-    public struct NamedCoordinate: Identifiable, Codable, Equatable {
+    // MARK: - Location Types
+    public struct NamedCoordinate: Identifiable, Codable, Hashable {
         public let id: String
         public let name: String
         public let latitude: Double
         public let longitude: Double
-        public let address: String?
-        public let imageAssetName: String?
         
-        public var coordinate: CLLocationCoordinate2D {
+        // Fixed: removed duplicate coordinate property
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         }
         
-        public init(id: String, name: String, latitude: Double, longitude: Double, address: String? = nil, imageAssetName: String? = nil) {
+        public init(id: String, name: String, latitude: Double, longitude: Double) {
             self.id = id
             self.name = name
             self.latitude = latitude
             self.longitude = longitude
-            self.address = address
-            self.imageAssetName = imageAssetName
         }
     }
     
@@ -434,30 +430,24 @@ public enum FrancoSphere {
         }
     }
     
-    public struct TaskEvidence: Identifiable, Codable, Hashable, Equatable {
+    public struct TaskEvidence: Identifiable, Codable, Hashable {
         public let id: String
         public let taskId: String
         public let photoURL: String?
         public let notes: String
-        public let latitude: Double?
-        public let longitude: Double?
+        public let location: CLLocationCoordinate2D?
         public let timestamp: Date
-        
-        public var location: CLLocationCoordinate2D? {
-            guard let lat = latitude, let lng = longitude else { return nil }
-            return CLLocationCoordinate2D(latitude: lat, longitude: lng)
-        }
         
         public init(id: String = UUID().uuidString, taskId: String, photoURL: String?, notes: String, location: CLLocationCoordinate2D?, timestamp: Date) {
             self.id = id
             self.taskId = taskId
             self.photoURL = photoURL
             self.notes = notes
-            self.latitude = location?.latitude
-            self.longitude = location?.longitude
+            self.location = location
             self.timestamp = timestamp
         }
         
+        // MARK: - Hashable & Equatable
         public func hash(into hasher: inout Hasher) {
             hasher.combine(id)
             hasher.combine(taskId)
@@ -466,6 +456,42 @@ public enum FrancoSphere {
         
         public static func == (lhs: TaskEvidence, rhs: TaskEvidence) -> Bool {
             return lhs.id == rhs.id && lhs.taskId == rhs.taskId
+        }
+    }
+        
+        // Custom Codable implementation for CLLocationCoordinate2D
+        private enum CodingKeys: String, CodingKey {
+            case id, taskId, photoURL, notes, timestamp, latitude, longitude
+        }
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(String.self, forKey: .id)
+            taskId = try container.decode(String.self, forKey: .taskId)
+            photoURL = try container.decodeIfPresent(String.self, forKey: .photoURL)
+            notes = try container.decode(String.self, forKey: .notes)
+            timestamp = try container.decode(Date.self, forKey: .timestamp)
+            
+            if let lat = try container.decodeIfPresent(Double.self, forKey: .latitude),
+               let lng = try container.decodeIfPresent(Double.self, forKey: .longitude) {
+                location = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+            } else {
+                location = nil
+            }
+        }
+        
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(id, forKey: .id)
+            try container.encode(taskId, forKey: .taskId)
+            try container.encodeIfPresent(photoURL, forKey: .photoURL)
+            try container.encode(notes, forKey: .notes)
+            try container.encode(timestamp, forKey: .timestamp)
+            
+            if let location = location {
+                try container.encode(location.latitude, forKey: .latitude)
+                try container.encode(location.longitude, forKey: .longitude)
+            }
         }
     }
     
@@ -570,7 +596,43 @@ public enum FrancoSphere {
         case error(String)
         case unknown
         
-        public static let unknown = DataHealthStatus.unknown
+        // Fixed: removed duplicate unknown
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let type = try container.decode(String.self, forKey: .type)
+            
+            switch type {
+            case "healthy": self = .healthy
+            case "warning":
+                let message = try container.decode(String.self, forKey: .message)
+                self = .warning(message)
+            case "error":
+                let message = try container.decode(String.self, forKey: .message)
+                self = .error(message)
+            case "unknown": self = .unknown
+            default: self = .unknown
+            }
+        }
+        
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            
+            switch self {
+            case .healthy: try container.encode("healthy", forKey: .type)
+            case .warning(let message):
+                try container.encode("warning", forKey: .type)
+                try container.encode(message, forKey: .message)
+            case .error(let message):
+                try container.encode("error", forKey: .type)
+                try container.encode(message, forKey: .message)
+            case .unknown: try container.encode("unknown", forKey: .type)
+            }
+        }
+        
+        private enum CodingKeys: String, CodingKey {
+            case type, message
+        }
     }
     
     // MARK: - Export/Import Types
@@ -619,7 +681,7 @@ public typealias WorkerAssignment = FrancoSphere.WorkerAssignment
 public typealias InventoryCategory = FrancoSphere.InventoryCategory
 public typealias RestockStatus = FrancoSphere.RestockStatus
 public typealias InventoryItem = FrancoSphere.InventoryItem
-public typealias TrendDirection = FrancoSphere.TrendDirection
+// Fixed: removed duplicate TrendDirection
 public typealias TaskProgress = FrancoSphere.TaskProgress
 public typealias TaskTrends = FrancoSphere.TaskTrends
 public typealias PerformanceMetrics = FrancoSphere.PerformanceMetrics

@@ -46,7 +46,7 @@ extension VerificationStatus {
         
         default: return .gray
         }
-        // Fixed: removed orphaned default
+        default: return .gray
         }
     }
 

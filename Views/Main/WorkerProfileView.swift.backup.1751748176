@@ -356,7 +356,7 @@ struct WorkerProfileView: View {
         .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
     }
     
-    private func performanceMetric(title: String, value: String, trend: FrancoSphere.TrendDirection, percentage: Int) -> some View {
+    private func performanceMetric(title: String, value: String, trend: TrendDirection, percentage: Int) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -580,7 +580,7 @@ struct WorkerProfileView: View {
 
 // MARK: - Supporting Models
 
-enum FrancoSphere.TrendDirection {
+enum TrendDirection {
     case up, down
 }
 

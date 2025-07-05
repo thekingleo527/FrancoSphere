@@ -1,4 +1,121 @@
+#!/bin/bash
+set -e
+
+echo "🩺 FrancoSphere Surgical Build-Doctor v3.0"
+echo "=========================================="
+echo "Ultra-precise refactor bot targeting exact compilation errors"
+
+cd "/Volumes/FastSSD/Xcode" || exit 1
+
+TIMESTAMP=$(date +%s)
+
+# =============================================================================
+# 🔧 BACKUP ALL TARGET FILES
+# =============================================================================
+
+echo ""
+echo "🔧 Creating timestamped backups..."
+
+TARGET_FILES=(
+    "Components/Design/ModelColorsExtensions.swift"
+    "Components/Shared Components/AIScenarioSheetView.swift"
+    "Components/Shared Components/HeroStatusCard.swift"
+    "Components/Shared Components/AIAvatarOverlayView.swift"
+    "Managers/AIAssistantManager.swift"
+    "Models/FrancoSphereModels.swift"
+    "Services/BuildingService.swift"
+    "Views/ViewModels/WorkerDashboardViewModel.swift"
+    "Views/Main/WorkerProfileView.swift"
+)
+
+for FILE in "${TARGET_FILES[@]}"; do
+    if [ -f "$FILE" ]; then
+        cp "$FILE" "$FILE.backup.$TIMESTAMP"
+        echo "✅ Backed up $FILE"
+    fi
+done
+
+# =============================================================================
+# 🔧 FIX 1: Create AIModels.swift for missing AI types
+# =============================================================================
+
+echo ""
+echo "🔧 Creating Models/AIModels.swift for AI types..."
+
+cat > "Models/AIModels.swift" << 'AI_MODELS_EOF'
 //
+//  AIModels.swift
+//  FrancoSphere
+//
+//  AI Assistant type definitions
+//
+
+import Foundation
+
+// MARK: - AI Scenario Types
+public struct AIScenario: Identifiable, Codable {
+    public let id: String
+    public let type: String
+    public let title: String
+    public let description: String
+    public let timestamp: Date
+    
+    public init(id: String = UUID().uuidString, type: String = "general", title: String = "AI Scenario", description: String = "AI-generated scenario", timestamp: Date = Date()) {
+        self.id = id
+        self.type = type
+        self.title = title
+        self.description = description
+        self.timestamp = timestamp
+    }
+}
+
+public struct AISuggestion: Identifiable, Codable {
+    public let id: String
+    public let text: String
+    public let actionType: String
+    public let confidence: Double
+    
+    public init(id: String = UUID().uuidString, text: String, actionType: String = "general", confidence: Double = 0.8) {
+        self.id = id
+        self.text = text
+        self.actionType = actionType
+        self.confidence = confidence
+    }
+}
+
+public struct AIScenarioData: Identifiable, Codable {
+    public let id: String
+    public let context: String
+    public let workerId: String?
+    public let buildingId: String?
+    public let taskId: String?
+    public let timestamp: Date
+    
+    public init(id: String = UUID().uuidString, context: String, workerId: String? = nil, buildingId: String? = nil, taskId: String? = nil, timestamp: Date = Date()) {
+        self.id = id
+        self.context = context
+        self.workerId = workerId
+        self.buildingId = buildingId
+        self.taskId = taskId
+        self.timestamp = timestamp
+    }
+}
+AI_MODELS_EOF
+
+echo "✅ Created AIModels.swift"
+
+# =============================================================================
+# 🔧 FIX 2: Completely rebuild FrancoSphereModels.swift
+# =============================================================================
+
+echo ""
+echo "🔧 Completely rebuilding FrancoSphereModels.swift..."
+
+cat > /tmp/rebuild_models.py << 'PYTHON_EOF'
+def rebuild_francosphere_models():
+    file_path = "/Volumes/FastSSD/Xcode/Models/FrancoSphereModels.swift"
+    
+    content = '''//
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
@@ -595,7 +712,7 @@ public enum FrancoSphere {
             case .noSQLiteManager:
                 return "SQLiteManager not initialized"
             case .invalidData(let message):
-                return "Invalid data: \(message)"
+                return "Invalid data: \\(message)"
             }
         }
     }
@@ -640,3 +757,160 @@ public typealias WeatherImpact = FrancoSphere.WeatherImpact
 public typealias DataHealthStatus = FrancoSphere.DataHealthStatus
 public typealias ExportProgress = FrancoSphere.ExportProgress
 public typealias ImportError = FrancoSphere.ImportError
+'''
+    
+    with open(file_path, 'w') as f:
+        f.write(content)
+    
+    print("✅ Completely rebuilt FrancoSphereModels.swift")
+
+if __name__ == "__main__":
+    rebuild_francosphere_models()
+PYTHON_EOF
+
+python3 /tmp/rebuild_models.py
+
+# =============================================================================
+# 🔧 FIX 3: Add AIModels imports to AI-related files
+# =============================================================================
+
+echo ""
+echo "🔧 Adding AIModels imports to AI-related files..."
+
+AI_FILES=(
+    "Components/Shared Components/AIScenarioSheetView.swift"
+    "Components/Shared Components/AIAvatarOverlayView.swift"
+    "Managers/AIAssistantManager.swift"
+)
+
+for FILE in "${AI_FILES[@]}"; do
+    if [ -f "$FILE" ]; then
+        if ! grep -q "import.*AIModels" "$FILE" 2>/dev/null; then
+            sed -i '' '/import Foundation/a\
+import AIModels
+' "$FILE"
+            echo "✅ Added AIModels import to $FILE"
+        fi
+    fi
+done
+
+# =============================================================================
+# 🔧 FIX 4: Fix specific syntax issues
+# =============================================================================
+
+echo ""
+echo "🔧 Fixing specific syntax issues..."
+
+# Fix ModelColorsExtensions.swift line 49 - remove orphaned default
+if [ -f "Components/Design/ModelColorsExtensions.swift" ]; then
+    sed -i '' '49s/.*default.*/        \/\/ Fixed: removed orphaned default/' "Components/Design/ModelColorsExtensions.swift"
+    echo "✅ Fixed orphaned default in ModelColorsExtensions.swift"
+fi
+
+# Fix HeroStatusCard.swift line 193 - Color.clear ambiguity
+if [ -f "Components/Shared Components/HeroStatusCard.swift" ]; then
+    sed -i '' 's/\.clear/Color.clear/g' "Components/Shared Components/HeroStatusCard.swift"
+    echo "✅ Fixed Color.clear ambiguity in HeroStatusCard.swift"
+fi
+
+# =============================================================================
+# 🔧 FIX 5: Fix BuildingService.swift actor isolation and constructor
+# =============================================================================
+
+echo ""
+echo "🔧 Fixing BuildingService.swift..."
+
+cat > /tmp/fix_building_service.py << 'PYTHON_EOF'
+import re
+
+def fix_building_service():
+    file_path = "/Volumes/FastSSD/Xcode/Services/BuildingService.swift"
+    
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        # Fix actor isolation by using 'self' instead of BuildingService.shared
+        content = re.sub(r'BuildingService\.shared', 'self', content)
+        
+        # Fix NamedCoordinate constructor calls - replace coordinate: with latitude:, longitude:
+        def fix_constructor(match):
+            coord_match = re.search(r'CLLocationCoordinate2D\s*\(\s*latitude:\s*([\d.-]+)\s*,\s*longitude:\s*([\d.-]+)\s*\)', match.group(0))
+            if coord_match:
+                lat = coord_match.group(1)
+                lng = coord_match.group(2)
+                result = match.group(0).replace(f'coordinate: CLLocationCoordinate2D(latitude: {lat}, longitude: {lng})', f'latitude: {lat}, longitude: {lng}')
+                return result
+            return match.group(0)
+        
+        pattern = r'NamedCoordinate\([^)]*coordinate:\s*CLLocationCoordinate2D[^)]*\)[^)]*\)'
+        content = re.sub(pattern, fix_constructor, content)
+        
+        with open(file_path, 'w') as f:
+            f.write(content)
+        
+        print("✅ Fixed BuildingService.swift")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error fixing BuildingService: {e}")
+        return False
+
+if __name__ == "__main__":
+    fix_building_service()
+PYTHON_EOF
+
+python3 /tmp/fix_building_service.py
+
+# =============================================================================
+# 🔧 FIX 6: Fix ambiguous type references
+# =============================================================================
+
+echo ""
+echo "🔧 Fixing ambiguous type references..."
+
+# Fix WorkerDashboardViewModel.swift
+if [ -f "Views/ViewModels/WorkerDashboardViewModel.swift" ]; then
+    sed -i '' 's/DataHealthStatus/FrancoSphere.DataHealthStatus/g' "Views/ViewModels/WorkerDashboardViewModel.swift"
+    echo "✅ Fixed DataHealthStatus references in WorkerDashboardViewModel.swift"
+fi
+
+# Fix WorkerProfileView.swift
+if [ -f "Views/Main/WorkerProfileView.swift" ]; then
+    sed -i '' 's/TrendDirection/FrancoSphere.TrendDirection/g' "Views/Main/WorkerProfileView.swift"
+    echo "✅ Fixed TrendDirection references in WorkerProfileView.swift"
+fi
+
+# =============================================================================
+# 🔧 BUILD TEST
+# =============================================================================
+
+echo ""
+echo "🔨 Running final build test..."
+
+BUILD_OUTPUT=$(xcodebuild -project FrancoSphere.xcodeproj -scheme FrancoSphere build -destination "platform=iOS Simulator,name=iPhone 15 Pro" 2>&1)
+
+ERROR_COUNT=$(echo "$BUILD_OUTPUT" | grep -c " error:" || echo "0")
+
+if [ "$ERROR_COUNT" -eq 0 ]; then
+    echo ""
+    echo "🟢 ✅ BUILD CLEAN"
+    echo "================="
+    echo "🎉 FrancoSphere compiled successfully with 0 errors!"
+    echo "🧹 Cleaning up old backups..."
+    find . -name "*.backup.*" -mtime +7 -delete 2>/dev/null || true
+    echo "✅ All fixes applied successfully"
+else
+    echo ""
+    echo "🔴 ❌ BUILD FAILED"
+    echo "=================="
+    echo "❌ $ERROR_COUNT compilation errors remain"
+    echo ""
+    echo "📋 First 20 remaining errors:"
+    echo "$BUILD_OUTPUT" | grep " error:" | head -20
+    exit 1
+fi
+
+echo ""
+echo "🩺 Surgical Build-Doctor v3.0 - COMPLETE"
+echo "========================================"
