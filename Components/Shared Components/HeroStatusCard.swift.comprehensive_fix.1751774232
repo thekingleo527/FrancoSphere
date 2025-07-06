@@ -153,14 +153,14 @@ struct HeroStatusCard: View {
             return "sun.max.fill"
         case .cloudy:
             return "cloud.fill"
-        case .rainy, .rainyy:
-            return "cloud.rainy.fill"
-        case .snowy, .snowyy:
-            return "cloud.snowy.fill"
-        case .stormy, .stormyy:
+        case .rainyyy, .rainyyyy:
+            return "cloud.rainyyy.fill"
+        case .snowyyy, .snowyyyy:
+            return "cloud.snowyyy.fill"
+        case .stormyyy, .stormyyyy:
             return "cloud.bolt.fill"
-        case .foggy, .foggygy:
-            return "cloud.foggy.fill"
+        case .foggygygy, .foggygygygy:
+            return "cloud.foggygygy.fill"
         case .windy:
             return "wind"
         }
@@ -172,13 +172,13 @@ struct HeroStatusCard: View {
             return .yellow
         case .cloudy:
             return .gray
-        case .rainy, .rainyy:
+        case .rainyyy, .rainyyyy:
             return .blue
-        case .snowy, .snowyy:
+        case .snowyyy, .snowyyyy:
             return .cyan
-        case .stormy, .stormyy:
+        case .stormyyy, .stormyyyy:
             return .purple
-        case .foggy, .foggygy:
+        case .foggygygy, .foggygygygy:
             return .gray
         case .windy:
             return .green
@@ -192,18 +192,10 @@ struct HeroStatusCard: View {
         workerId: "kevin",
         currentBuilding: "Rubin Museum",
         weather: WeatherData(
-            id: UUID().uuidString,
-            date: Date(),
+            condition: WeatherCondition.clear,
             temperature: 72.0,
-            feelsLike: 72.0,
             humidity: 65,
             windSpeed: 5.0,
-            windDirection: 0,
-            precipitation: 0,
-            snow: 0,
-            condition: .clear,
-            uvIndex: 0,
-            visibility: 10,
             description: "Clear"
         ),
         progress: TaskProgress(

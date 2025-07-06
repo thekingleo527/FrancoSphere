@@ -2,10 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 CORRUPTION FIX: Rebuilt from backup analysis
-//  ✅ Fixed line 16 syntax error
-//  ✅ Complete FrancoSphere enum with all type definitions
-//  ✅ All typealias mappings restored
+//  🔧 RESTORED from working backup - Complete type definitions
 //
 
 import Foundation
@@ -137,10 +134,6 @@ public enum FrancoSphere {
         case urgent = "Urgent"
         case critical = "Critical"
         case emergency = "Emergency"
-        case installation = "Installation"
-        case utilities = "Utilities"
-        case renovation = "Renovation"
-        case sanitation = "Sanitation"
     }
     
     public enum TaskRecurrence: String, Codable, CaseIterable {
@@ -365,13 +358,15 @@ public enum FrancoSphere {
     public struct TaskEvidence: Codable {
         public let photos: [Data]
         public let timestamp: Date
-        public let location: CLLocation?
+        public let locationLatitude: Double?
+        public let locationLongitude: Double?
         public let notes: String?
         
-        public init(photos: [Data], timestamp: Date, location: CLLocation?, notes: String?) {
+        public init(photos: [Data], timestamp: Date, locationLatitude: Double? = nil, locationLongitude: Double? = nil, notes: String?) {
             self.photos = photos
             self.timestamp = timestamp
-            self.location = location
+            self.locationLatitude = locationLatitude
+            self.locationLongitude = locationLongitude
             self.notes = notes
         }
     }
@@ -387,18 +382,18 @@ public enum FrancoSphere {
     public struct WeatherImpact: Codable {
         public let condition: WeatherCondition
         public let temperature: Double
-        public let affectedTasks: [ContextualTask]
+        public let affectedTaskIds: [String]
         public let recommendation: String
         
-        public init(condition: WeatherCondition, temperature: Double, affectedTasks: [ContextualTask], recommendation: String) {
+        public init(condition: WeatherCondition, temperature: Double, affectedTaskIds: [String], recommendation: String) {
             self.condition = condition
             self.temperature = temperature
-            self.affectedTasks = affectedTasks
+            self.affectedTaskIds = affectedTaskIds
             self.recommendation = recommendation
         }
     }
     
-    // MARK: - AI and Optimization Models
+    // MARK: - Additional Models
     public struct AIScenario: Identifiable, Codable {
         public let id: String
         public let scenario: String
@@ -427,16 +422,11 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Building and Status Models
     public enum BuildingStatus: String, Codable, CaseIterable {
         case operational = "Operational"
         case maintenance = "Under Maintenance"
         case offline = "Offline"
         case emergency = "Emergency"
-        case installation = "Installation"
-        case utilities = "Utilities"
-        case renovation = "Renovation"
-        case sanitation = "Sanitation"
     }
     
     public struct BuildingInsight: Identifiable, Codable {
@@ -470,7 +460,6 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Performance and Metrics Models
     public struct PerformanceMetrics: Codable {
         public let efficiency: Double
         public let completionRate: Double
@@ -511,7 +500,6 @@ public enum FrancoSphere {
         case stable = "Stable"
     }
     
-    // MARK: - Record and History Models
     public struct MaintenanceRecord: Identifiable, Codable {
         public let id: String
         public let recordId: String
@@ -532,7 +520,6 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Workflow and Route Models
     public struct WorkerRoutineSummary: Codable {
         public let summary: String
         
@@ -577,7 +564,6 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Import/Export Models
     public struct ExportProgress: Codable {
         public let progress: Double
         

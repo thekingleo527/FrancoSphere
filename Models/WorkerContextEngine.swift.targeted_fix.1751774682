@@ -250,22 +250,6 @@ public class WorkerContextEngine: ObservableObject {
         return []
     }
     
-
-    // MARK: - Context Management
-    public func refreshContext() async {
-        print("🔄 Refreshing worker context...")
-        
-        let workerId = getWorkerId()
-        do {
-            try await loadWorkerData(workerId: workerId)
-            lastUpdateTime = Date()
-            print("✅ Context refreshed successfully")
-        } catch {
-            print("❌ Failed to refresh context: \(error)")
-            self.error = error
-        }
-    }
-
     // MARK: - Cleanup
     deinit {
         cancellables.removeAll()

@@ -288,7 +288,7 @@ struct ProfileView: View {
         VStack(spacing: 12) {
             Button(action: {
                 HapticManager.impact(.medium)
-                Task { @MainActor in
+                Task {
                     await contextEngine.refreshContext()
                 }
             }) {
@@ -358,7 +358,7 @@ struct ProfileView: View {
     // ✅ Fixed: Calculate urgent tasks count instead of calling non-existent method
     private func getUrgentTasksCount() -> Int {
         return contextEngine.getTodaysTasks().filter { 
-            $0.urgency == .high || $0.urgency == .critical
+            $0.urgencyLevel.lowercased() == "urgent" || $0.urgencyLevel.lowercased() == "high"
         }.count
     }
 }

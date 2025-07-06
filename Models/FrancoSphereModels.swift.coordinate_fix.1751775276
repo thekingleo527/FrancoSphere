@@ -2,10 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 CORRUPTION FIX: Rebuilt from backup analysis
-//  ✅ Fixed line 16 syntax error
-//  ✅ Complete FrancoSphere enum with all type definitions
-//  ✅ All typealias mappings restored
+//  🔧 RESTORED from working backup - Complete type definitions
 //
 
 import Foundation
@@ -25,7 +22,6 @@ public enum FrancoSphere {
         public let imageAssetName: String?
         
         public var coordinate: CLLocationCoordinate2D {
-            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         }
         
         public init(id: String, name: String, latitude: Double, longitude: Double, address: String? = nil, imageAssetName: String? = nil) {
@@ -110,6 +106,7 @@ public enum FrancoSphere {
     public enum OutdoorWorkRisk: String, Codable, CaseIterable {
         case low = "Low"
         case moderate = "Moderate"
+        case medium = "Medium"
         case high = "High"
         case extreme = "Extreme"
     }
@@ -136,10 +133,6 @@ public enum FrancoSphere {
         case urgent = "Urgent"
         case critical = "Critical"
         case emergency = "Emergency"
-        case installation = "Installation"
-        case utilities = "Utilities"
-        case renovation = "Renovation"
-        case sanitation = "Sanitation"
     }
     
     public enum TaskRecurrence: String, Codable, CaseIterable {
@@ -207,6 +200,11 @@ public enum FrancoSphere {
         case security = "Security"
         case cleaning = "Cleaning"
         case general = "General Maintenance"
+        case maintenance = "Maintenance"
+        case inspection = "Inspection"
+        case repair = "Repair"
+        case installation = "Installation"
+        case utilities = "Utilities"
     }
     
     public enum UserRole: String, Codable, CaseIterable {
@@ -270,6 +268,7 @@ public enum FrancoSphere {
         case plumbing = "Plumbing"
         case electrical = "Electrical"
         case paint = "Paint"
+        case other = "Other"
     }
     
     public enum RestockStatus: String, Codable, CaseIterable {
@@ -358,13 +357,15 @@ public enum FrancoSphere {
     public struct TaskEvidence: Codable {
         public let photos: [Data]
         public let timestamp: Date
-        public let location: CLLocation?
+        public let locationLatitude: Double?
+        public let locationLongitude: Double?
         public let notes: String?
         
-        public init(photos: [Data], timestamp: Date, location: CLLocation?, notes: String?) {
+        public init(photos: [Data], timestamp: Date, locationLatitude: Double? = nil, locationLongitude: Double? = nil, notes: String?) {
             self.photos = photos
             self.timestamp = timestamp
-            self.location = location
+            self.locationLatitude = locationLatitude
+            self.locationLongitude = locationLongitude
             self.notes = notes
         }
     }
@@ -374,23 +375,24 @@ public enum FrancoSphere {
         case warning = "Warning"
         case critical = "Critical"
         case unknown = "Unknown"
+        case error = "Error"
     }
     
     public struct WeatherImpact: Codable {
         public let condition: WeatherCondition
         public let temperature: Double
-        public let affectedTasks: [ContextualTask]
+        public let affectedTaskIds: [String]
         public let recommendation: String
         
-        public init(condition: WeatherCondition, temperature: Double, affectedTasks: [ContextualTask], recommendation: String) {
+        public init(condition: WeatherCondition, temperature: Double, affectedTaskIds: [String], recommendation: String) {
             self.condition = condition
             self.temperature = temperature
-            self.affectedTasks = affectedTasks
+            self.affectedTaskIds = affectedTaskIds
             self.recommendation = recommendation
         }
     }
     
-    // MARK: - AI and Optimization Models
+    // MARK: - Additional Models
     public struct AIScenario: Identifiable, Codable {
         public let id: String
         public let scenario: String
@@ -419,16 +421,11 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Building and Status Models
     public enum BuildingStatus: String, Codable, CaseIterable {
         case operational = "Operational"
         case maintenance = "Under Maintenance"
         case offline = "Offline"
         case emergency = "Emergency"
-        case installation = "Installation"
-        case utilities = "Utilities"
-        case renovation = "Renovation"
-        case sanitation = "Sanitation"
     }
     
     public struct BuildingInsight: Identifiable, Codable {
@@ -462,7 +459,6 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Performance and Metrics Models
     public struct PerformanceMetrics: Codable {
         public let efficiency: Double
         public let completionRate: Double
@@ -503,7 +499,6 @@ public enum FrancoSphere {
         case stable = "Stable"
     }
     
-    // MARK: - Record and History Models
     public struct MaintenanceRecord: Identifiable, Codable {
         public let id: String
         public let recordId: String
@@ -524,7 +519,6 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Workflow and Route Models
     public struct WorkerRoutineSummary: Codable {
         public let summary: String
         
@@ -569,7 +563,6 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Import/Export Models
     public struct ExportProgress: Codable {
         public let progress: Double
         

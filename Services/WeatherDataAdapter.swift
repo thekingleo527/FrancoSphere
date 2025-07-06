@@ -73,14 +73,7 @@ class WeatherDataAdapter: ObservableObject {
     private struct DiskCacheEntry: Codable {
         let data: [WeatherData]
         let timestamp: Date
-    
-    
-    enum CodingKeys: String, CodingKey {
-        case data
-        case timestamp
-        case expiryDate
     }
-}
     
     private let cacheExpirationTime: TimeInterval = 14400 // 4 hours
     private let apiCallMinInterval: TimeInterval = 300 // 5 minutes rate limiting
