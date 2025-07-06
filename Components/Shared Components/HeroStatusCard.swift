@@ -1,11 +1,15 @@
 //
 //  HeroStatusCard.swift
-import CoreLocation
 //  FrancoSphere
+//
+//  ✅ FIXED: All WeatherCondition references corrected
+//  ✅ FIXED: Removed typos in weather condition cases
+//  ✅ FIXED: Proper Color vs WeatherCondition usage
 //
 
 import SwiftUI
 import Foundation
+import CoreLocation
 
 struct HeroStatusCard: View {
     let workerId: String
@@ -147,38 +151,40 @@ struct HeroStatusCard: View {
         )
     }
     
+    // MARK: - ✅ FIXED: Weather Icon Function
     private func weatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
-        case Color.clear, .sunny:
+        case .clear, .sunny:
             return "sun.max.fill"
         case .cloudy:
             return "cloud.fill"
-        case .rainy, .rainyy:
-            return "cloud.rainy.fill"
-        case .snowy, .snowyy:
-            return "cloud.snowy.fill"
-        case .stormy, .stormyy:
+        case .rainy:
+            return "cloud.rain.fill"
+        case .snowy:
+            return "cloud.snow.fill"
+        case .stormy:
             return "cloud.bolt.fill"
-        case .foggy, .foggygy:
-            return "cloud.foggy.fill"
+        case .foggy:
+            return "cloud.fog.fill"
         case .windy:
             return "wind"
         }
     }
     
+    // MARK: - ✅ FIXED: Weather Color Function
     private func weatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
-        case Color.clear, .sunny:
+        case .clear, .sunny:
             return .yellow
         case .cloudy:
             return .gray
-        case .rainy, .rainyy:
+        case .rainy:
             return .blue
-        case .snowy, .snowyy:
+        case .snowy:
             return .cyan
-        case .stormy, .stormyy:
+        case .stormy:
             return .purple
-        case .foggy, .foggygy:
+        case .foggy:
             return .gray
         case .windy:
             return .green
@@ -186,7 +192,7 @@ struct HeroStatusCard: View {
     }
 }
 
-// MARK: - Preview (Technically Correct)
+// MARK: - ✅ FIXED: Preview
 #Preview {
     HeroStatusCard(
         workerId: "kevin",
@@ -201,10 +207,10 @@ struct HeroStatusCard: View {
             windDirection: 0,
             precipitation: 0,
             snow: 0,
-            condition: Color.clear,
+            condition: .clear,
             uvIndex: 0,
             visibility: 10,
-            description: "Clear"
+            description: "Clear skies"
         ),
         progress: TaskProgress(
             completed: 8,
@@ -217,5 +223,5 @@ struct HeroStatusCard: View {
     )
     .padding()
     .background(Color.black)
-    .preferredColorScheme(ColorScheme.dark)
+    .preferredColorScheme(.dark)
 }

@@ -1,10 +1,9 @@
-// Import Models
-
 //
 //  WorkerRoutineViewModel.swift
 //  FrancoSphere
 //
-//  Completely rebuilt to fix structural issues
+//  ✅ COMPLETELY FIXED to match FrancoSphereModels structure
+//  ✅ All initializers and properties corrected
 //
 
 import SwiftUI
@@ -22,7 +21,7 @@ class WorkerRoutineViewModel: ObservableObject {
     @Published var dailyRoute: WorkerDailyRoute?
     @Published var routeOptimizations: [RouteOptimization] = []
     @Published var scheduleConflicts: [ScheduleConflict] = []
-    @Published var dataHealthStatus: DataHealthStatus = DataHealthStatus.unknown
+    @Published var dataHealthStatus: DataHealthStatus = .unknown
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
     @Published var performanceMetrics: PerformanceMetrics
@@ -36,23 +35,15 @@ class WorkerRoutineViewModel: ObservableObject {
     
     // MARK: - Initialization
     init() {
-        // Initialize with default values
+        // Initialize with default values matching exact FrancoSphereModels structure
         self.performanceMetrics = PerformanceMetrics(
             efficiency: 0.0,
-            tasksCompleted: 0,
-            averageTime: 0.0,
-            qualityScore: 0.0,
-            lastUpdate: Date()
+            completionRate: 0.0,
+            averageTime: 0.0
         )
         
         self.routineSummary = WorkerRoutineSummary(
-            workerId: "4",
-            date: Date(),
-            totalTasks: 0,
-            completedTasks: 0,
-            totalDistance: 0.0,
-            averageTaskTime: 0.0,
-            buildings: []
+            summary: "Loading worker routine data..."
         )
         
         setupBindings()
@@ -79,24 +70,21 @@ class WorkerRoutineViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        do {
-            // Load routine tasks
-            await loadRoutineTasks()
-            
-            // Generate daily route
-            await generateDailyRoute()
-            
-            // Load optimizations and conflicts
-            await loadRouteOptimizations()
-            await loadScheduleConflicts()
-            
-            // Update data health
-            updateDataHealth()
-            
-        } catch {
-            errorMessage = "Failed to load worker data: \(error.localizedDescription)"
-            dataHealthStatus = .critical
-        }
+        // Load routine tasks
+        await loadRoutineTasks()
+        
+        // Generate daily route
+        await generateDailyRoute()
+        
+        // Load optimizations and conflicts
+        await loadRouteOptimizations()
+        await loadScheduleConflicts()
+        
+        // Update data health
+        updateDataHealth()
+        
+        // Update routine summary
+        updateRoutineSummary()
     }
     
     private func loadRoutineTasks() async {
@@ -106,12 +94,20 @@ class WorkerRoutineViewModel: ObservableObject {
                 self.routineTasks = tasks.compactMap { task in
                     MaintenanceTask(
                         id: task.id,
-                        buildingId: task.buildingId,
-                        title: task.name,
+                        name: task.name,
                         description: task.description,
                         category: task.category,
-                        urgency: .medium,
-                        dueDate: task.dueDate ?? Date()
+                        urgency: task.urgency,
+                        recurrence: .none,
+                        estimatedDuration: task.estimatedDuration,
+                        requiredSkills: [],
+                        buildingId: task.buildingId,
+                        assignedWorkerId: task.workerId,
+                        scheduledDate: task.dueDate,
+                        completedDate: nil,
+                        isCompleted: task.isCompleted,
+                        notes: nil,
+                        verificationStatus: .pending
                     )
                 }
                 
@@ -126,41 +122,22 @@ class WorkerRoutineViewModel: ObservableObject {
     private func generateDailyRoute() async {
         guard !routineTasks.isEmpty else { return }
         
-        // Generate route stops from tasks
-        let stops = routineTasks.compactMap { task -> RouteStop? in
-            let estimatedStart = Calendar.current.date(byAdding: .hour, value: 8, to: selectedDate) ?? Date()
-            let estimatedEnd = Calendar.current.date(byAdding: .hour, value: 1, to: estimatedStart) ?? Date()
-            
-            return RouteStop(
-                id: UUID().uuidString,
-                buildingId: task.buildingId,
-                address: "Building \(task.buildingId)",
-                estimatedArrival: estimatedStart,
-                estimatedDeparture: estimatedEnd,
-                tasks: [task.id]
-            )
-        }
+        // Generate route from buildings with tasks
+        let route = Array(buildingsWithTasks.keys).sorted()
         
         await MainActor.run {
             self.dailyRoute = WorkerDailyRoute(
-                workerId: selectedWorker,
-                date: selectedDate,
-                stops: stops,
-                totalDistance: 10.5,
-                estimatedDuration: 28800, // 8 hours
-                optimizedOrder: stops.map { $0.id }
+                route: route
             )
         }
     }
     
     private func loadRouteOptimizations() async {
-        // Generate sample optimizations
+        // Generate sample optimizations using correct structure
         let optimization = RouteOptimization(
-            originalRoute: ["Building1", "Building2", "Building3"],
-            optimizedRoute: ["Building1", "Building3", "Building2"],
-            distanceSaved: 2.3,
-            timeSaved: 1800, // 30 minutes
-            efficiency: 0.85
+            optimizedRoute: ["14", "1", "2"],
+            estimatedTime: 7200, // 2 hours
+            efficiencyGain: 0.15
         )
         
         await MainActor.run {
@@ -187,6 +164,36 @@ class WorkerRoutineViewModel: ObservableObject {
         }
     }
     
+    private func updateRoutineSummary() {
+        let summary = generateSummaryText()
+        self.routineSummary = WorkerRoutineSummary(summary: summary)
+        
+        // Update performance metrics
+        let completedTasks = routineTasks.filter { $0.isCompleted }.count
+        let totalTasks = routineTasks.count
+        let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
+        
+        self.performanceMetrics = PerformanceMetrics(
+            efficiency: completionRate * 0.85 + 0.15, // Sample calculation
+            completionRate: completionRate,
+            averageTime: 3600.0 // 1 hour average
+        )
+    }
+    
+    private func generateSummaryText() -> String {
+        let completedCount = routineTasks.filter { $0.isCompleted }.count
+        let totalCount = routineTasks.count
+        let buildingCount = buildingsWithTasks.count
+        
+        return """
+        Worker: \(selectedWorker == "4" ? "Kevin Dutan" : "Worker \(selectedWorker)")
+        Date: \(formatDate(selectedDate))
+        Tasks: \(completedCount)/\(totalCount) completed
+        Buildings: \(buildingCount) assigned
+        Status: \(dataHealthStatus.description)
+        """
+    }
+    
     // MARK: - Route Analysis
     func analyzeRouteEfficiency() -> (geographic: Double, time: Double, skill: Double) {
         return (
@@ -197,7 +204,7 @@ class WorkerRoutineViewModel: ObservableObject {
     }
     
     private func analyzeGeographicEfficiency() -> Double {
-        guard let route = dailyRoute, !route.stops.isEmpty else { return 0.0 }
+        guard let route = dailyRoute, !route.route.isEmpty else { return 0.0 }
         return 0.85 // Sample efficiency score
     }
     
@@ -218,55 +225,50 @@ class WorkerRoutineViewModel: ObservableObject {
         guard let currentRoute = dailyRoute else { return }
         
         // Perform route optimization
-        let optimizedStops = currentRoute.stops.shuffled() // Simple optimization
+        let optimizedRoute = currentRoute.route.shuffled() // Simple optimization
         
-        let optimizedRoute = WorkerDailyRoute(
-            workerId: currentRoute.workerId,
-            date: currentRoute.date,
-            stops: optimizedStops,
-            totalDistance: currentRoute.totalDistance * 0.9,
-            estimatedDuration: currentRoute.estimatedDuration * 0.9,
-            optimizedOrder: optimizedStops.map { $0.id }
+        let newRoute = WorkerDailyRoute(
+            route: optimizedRoute
         )
         
         await MainActor.run {
-            self.dailyRoute = optimizedRoute
+            self.dailyRoute = newRoute
         }
     }
     
     func completeTask(_ taskId: String) async {
         guard let taskIndex = routineTasks.firstIndex(where: { $0.id == taskId }) else { return }
         
-        var updatedTask = routineTasks[taskIndex]
-        updatedTask = MaintenanceTask(
-            id: updatedTask.id,
-            buildingId: updatedTask.buildingId,
-            title: updatedTask.title,
-            description: updatedTask.description,
-            category: updatedTask.category,
-            urgency: updatedTask.urgency,
-            dueDate: updatedTask.dueDate,
-            completedDate: Date()
+        let task = routineTasks[taskIndex]
+        let updatedTask = MaintenanceTask(
+            id: task.id,
+            name: task.name,
+            description: task.description,
+            category: task.category,
+            urgency: task.urgency,
+            recurrence: task.recurrence,
+            estimatedDuration: task.estimatedDuration,
+            requiredSkills: task.requiredSkills,
+            buildingId: task.buildingId,
+            assignedWorkerId: task.assignedWorkerId,
+            scheduledDate: task.scheduledDate,
+            completedDate: Date(),
+            isCompleted: true,
+            notes: task.notes,
+            verificationStatus: .approved
         )
         
         await MainActor.run {
             self.routineTasks[taskIndex] = updatedTask
+            updateRoutineSummary()
         }
     }
     
     // MARK: - Utility Methods
-    private func parseTimeDouble(_ timeString: String) -> Double {
-        return Double(timeString) ?? 0.0
-    }
-    
-    private func assessDataHealth() -> DataHealthStatus {
-        if routineTasks.isEmpty {
-            return .warning
-        } else if !scheduleConflicts.isEmpty {
-            return .critical
-        } else {
-            return .healthy
-        }
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
     }
     
     private func formatDuration(_ duration: TimeInterval) -> String {
@@ -296,6 +298,24 @@ class WorkerRoutineViewModel: ObservableObject {
     }
 }
 
+// MARK: - DataHealthStatus Extension
+extension DataHealthStatus {
+    var description: String {
+        switch self {
+        case .healthy:
+            return "Healthy"
+        case .warning:
+            return "Warning"
+        case .critical:
+            return "Critical"
+        case .unknown:
+            return "Unknown"
+        case .error:
+            return "Error"
+        }
+    }
+}
+
 // MARK: - Sample Data Extension
 extension WorkerRoutineViewModel {
     static func sampleViewModel() -> WorkerRoutineViewModel {
@@ -303,16 +323,28 @@ extension WorkerRoutineViewModel {
         
         // Add sample data for previews
         let sampleTask = MaintenanceTask(
-            buildingId: "14",
-            title: "Rubin Museum Cleaning",
-            description: "Daily cleaning routine",
+            id: UUID().uuidString,
+            name: "Rubin Museum Cleaning",
+            description: "Daily cleaning routine for Rubin Museum",
             category: .cleaning,
             urgency: .medium,
-            dueDate: Date()
+            recurrence: .daily,
+            estimatedDuration: 3600,
+            requiredSkills: [.cleaning],
+            buildingId: "14",
+            assignedWorkerId: "4",
+            scheduledDate: Date(),
+            completedDate: nil,
+            isCompleted: false,
+            notes: nil,
+            verificationStatus: .pending
         )
         
         vm.routineTasks = [sampleTask]
         vm.dataHealthStatus = .healthy
+        vm.routineSummary = WorkerRoutineSummary(
+            summary: "Kevin Dutan - 1 task assigned to Rubin Museum"
+        )
         
         return vm
     }
