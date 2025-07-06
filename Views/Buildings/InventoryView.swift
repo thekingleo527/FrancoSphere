@@ -6,6 +6,22 @@
 // ✅ FIXED: Removed duplicate property declarations
 // ✅ PRESERVED: All inventory functionality with new service architecture
 
+extension InventoryItem {
+    var quantity: Int {
+        return currentStock
+    }
+    
+    var minimumQuantity: Int {
+        return minimumStock
+    }
+    
+    var needsReorder: Bool {
+        return currentStock <= minimumStock
+    }
+}
+
+
+
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
@@ -383,7 +399,7 @@ struct InventoryItemDetailView: View {
                 if isEditing {
                     Stepper("Quantity: \(newQuantity) \(item.unit)", value: $newQuantity, in: 0...1000)
                 } else {
-                    LabeledContent("Quantity", value: "\(item.currentStock) \(item.unit)") \(item.unit)")
+                    LabeledContent("Quantity", value: "\(item.currentStock) \(item.unit)") \(item.unit)"")
                 }
                 
                 LabeledContent("Min Quantity", value: "\(item.item.minimumStock) \(item.unit)")

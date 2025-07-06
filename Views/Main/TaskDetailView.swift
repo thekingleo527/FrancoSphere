@@ -16,6 +16,7 @@ import PhotosUI
 
 struct TaskDetailView: View {
     let task: ContextualTask
+    @State private var isPastDue = false
     @State private var isCompleted: Bool
     @State private var showingCompletionDialog = false
     @State private var selectedItem: PhotosPickerItem?
@@ -439,7 +440,7 @@ struct TaskDetailView: View {
         let buildingIdString = String(task.buildingId)
         
         // Try NamedCoordinate first
-        if let building = NamedCoordinate.getBuilding(byId: buildingIdString) {
+        if let building = NamedCoordinate.getBuilding( buildingIdString) {
             return building.name
         }
         
@@ -606,5 +607,3 @@ struct TaskDetailView_Previews: PreviewProvider {
             
             TaskDetailView(task: previewTask)
         }
-    }
-}
