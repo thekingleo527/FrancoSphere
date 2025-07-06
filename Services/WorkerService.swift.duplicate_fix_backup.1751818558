@@ -33,7 +33,7 @@ actor WorkerService {
     // MARK: - Core Actor Methods
     
     /// Get worker from database (returns internal Worker type)
-    private func getWorker(_ id: String) async throws -> Worker? {
+    private private func getWorker(_ id: String) async throws -> Worker? {
         if let cachedWorker = workersCache[id] {
             return cachedWorker
         }

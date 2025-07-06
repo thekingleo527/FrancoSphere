@@ -66,7 +66,7 @@ struct BuildingMapDetailView: View {
                 }
                 
                 ToolbarItem(placement: .principal) {
-                    Text(building.shortName ?? building.name)
+                    Text(building.shortName)
                         .font(.headline)
                         .foregroundColor(.white)
                 }
@@ -84,7 +84,7 @@ struct BuildingMapDetailView: View {
         VStack(spacing: 12) {
             // Building image
             if building.hasValidImageAsset {
-                Image(building.imageAssetName)
+                Image(building.imageAssetName ?? "building_default")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 150)
