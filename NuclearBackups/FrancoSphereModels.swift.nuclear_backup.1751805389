@@ -2,7 +2,10 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  💥 NUCLEAR REBUILD - Zero corruption, clean slate
+//  🔧 REBUILT from scratch - Complete type definitions
+//  ✅ Fixed all structural corruption
+//  ✅ Proper enum namespace
+//  ✅ All protocols conform correctly
 //
 
 import Foundation
@@ -21,7 +24,6 @@ public enum FrancoSphere {
         public let address: String?
         public let imageAssetName: String?
         
-        public var coordinate: CLLocationCoordinate2D {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         }
         

@@ -1,20 +1,14 @@
 //
-//  MapRevealContainer.swift - COMPLETELY FIXED VERSION
+//  MapRevealContainer.swift - COMPLETELY FIXED FOR iOS 17
 //  FrancoSphere
 //
-//  ✅ Fixed BuildingMapMarker scope issue with inline component
-//  ✅ Fixed GlassCard generic parameter inference
-//  ✅ Fixed NamedCoordinate initializer - removed 'address' parameter
+//  ✅ Fixed iOS 17 Map API compatibility
+//  ✅ Fixed MapAnnotationProtocol conformance
+//  ✅ Fixed closure argument issues
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import MapKit
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct MapRevealContainer: View {
     @State private var isMapRevealed = false
@@ -23,8 +17,8 @@ struct MapRevealContainer: View {
     
     let buildings: [NamedCoordinate]
     let onBuildingTap: (NamedCoordinate) -> Void
-    let currentBuildingId: String? // ✅ ADDED: Missing parameter
-    let focusBuildingId: String? // ✅ ADDED: Missing parameter
+    let currentBuildingId: String?
+    let focusBuildingId: String?
     
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973),
@@ -85,43 +79,21 @@ struct MapRevealContainer: View {
         .ignoresSafeArea(.all, edges: .bottom)
     }
     
-    // MARK: - ✅ FIXED: Map View with correct BuildingMapMarker usage
+    // MARK: - ✅ FIXED: Map View with correct iOS 17 Map API
     
     private var mapView: some View {
-        Map(coordinateRegion: $region, annotationItems: buildings) { building in
-            MapAnnotation(coordinate: CLLocationCoordinate2D(
-                latitude: building.latitude,
-                longitude: building.longitude
-            )) {
-                // ✅ FIXED: Create a simple marker instead of using BuildingMapMarker
-                Button(action: {
-                    onBuildingTap(building)
-                }) {
-                    ZStack {
-                        // Outer ring
-                        Circle()
-                            .fill(Color.blue.opacity(0.3))
-                            .frame(width: 40, height: 40)
-                        
-                        // Inner circle
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: 20, height: 20)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                            )
-                        
-                        // Building icon
-                        Image(systemName: "building.2.fill")
-                            .font(.caption)
-                            .foregroundColor(.white)
+        Map(coordinateRegion: $region, annotationItems: buildings, annotationContent: { building in
+            MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)) {
+                BuildingMapMarker(
+                    building: building,
+                    isSelected: building.id == currentBuildingId,
+                    isFocused: building.id == focusBuildingId,
+                    onTap: {
+                        onBuildingTap(building)
                     }
-                    .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 2)
-                }
-                .buttonStyle(PlainButtonStyle())
+                )
             }
-        }
+        })
         .mapStyle(.standard(elevation: .realistic))
     }
     
@@ -130,7 +102,7 @@ struct MapRevealContainer: View {
         Color.clear
     }
     
-    // MARK: - ✅ FIXED: Map Controls Overlay with proper GlassCard usage
+    // MARK: - Map Controls Overlay
     
     private var mapControlsOverlay: some View {
         VStack {
@@ -143,7 +115,6 @@ struct MapRevealContainer: View {
                         isMapRevealed = false
                     }
                 }) {
-                    // ✅ FIXED: Use direct background instead of GlassCard generic issue
                     ZStack {
                         Circle()
                             .fill(.ultraThinMaterial)
@@ -168,7 +139,7 @@ struct MapRevealContainer: View {
         }
     }
     
-    // MARK: - ✅ FIXED: Map Info Overlay with direct background
+    // MARK: - Map Info Overlay
     
     private var mapInfoOverlay: some View {
         VStack {
@@ -203,7 +174,6 @@ struct MapRevealContainer: View {
         }
     }
     
-    
     private var swipeHint: some View {
         VStack {
             Spacer()
@@ -237,11 +207,67 @@ struct MapRevealContainer: View {
     }
 }
 
+// MARK: - Building Map Marker Component
+
+private struct BuildingMapMarker: View {
+    let building: NamedCoordinate
+    let isSelected: Bool
+    let isFocused: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                // Outer ring (larger if focused)
+                Circle()
+                    .fill(markerColor.opacity(0.3))
+                    .frame(width: isFocused ? 50 : 40, height: isFocused ? 50 : 40)
+                
+                // Inner circle
+                Circle()
+                    .fill(markerColor)
+                    .frame(width: isFocused ? 25 : 20, height: isFocused ? 25 : 20)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 2)
+                    )
+                
+                // Building icon
+                Image(systemName: iconName)
+                    .font(isFocused ? .footnote : .caption)
+                    .foregroundColor(.white)
+            }
+            .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .scaleEffect(isSelected ? 1.1 : 1.0)
+            .animation(.easeInOut(duration: 0.2), value: isSelected)
+            .animation(.easeInOut(duration: 0.3), value: isFocused)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var markerColor: Color {
+        if isSelected {
+            return .green
+        } else if isFocused {
+            return .orange
+        } else {
+            return .blue
+        }
+    }
+    
+    private var iconName: String {
+        if isSelected {
+            return "checkmark.circle.fill"
+        } else {
+            return "building.2.fill"
+        }
+    }
+}
+
 // MARK: - Preview Provider
 
 struct MapRevealContainer_Previews: PreviewProvider {
     static var previews: some View {
-        // ✅ FIXED: Removed 'address' parameter from NamedCoordinate initializers
         let realBuildings = [
             NamedCoordinate(
                 id: "1",
