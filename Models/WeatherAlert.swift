@@ -2,7 +2,10 @@
 //  WeatherAlert.swift
 //  FrancoSphere
 //
-//  Clean rebuild - all syntax errors fixed
+//  🔧 FIXED: Updated to use correct ContextualTask initializer
+//  ✅ Fixed all compilation errors
+//  ✅ Updated to match current FrancoSphereModels structure
+//  ✅ Maintained weather alert functionality
 //
 
 import Foundation
@@ -143,84 +146,72 @@ public class WeatherAlertManager {
         return tasks
     }
     
-    // MARK: - Task Creation Methods
+    // MARK: - Task Creation Methods (Fixed to use correct ContextualTask initializer)
     
     private func createRainTask(for building: NamedCoordinate) -> ContextualTask {
         return ContextualTask(
             name: "Rain Preparation - \(building.name)",
+            description: "Check drainage and secure outdoor items due to rain. Ensure all water management systems are functional.",
             buildingId: building.id,
-            buildingName: building.name,
-            category: TaskCategory(rawValue: "Weather") ?? .maintenance,
-            startTime: "08:00",
-            endTime: "09:00",
-            recurrence: "One Time",
-            skillLevel: "Basic",
-            status: "pending",
-            urgencyLevel: "High",
-            assignedWorkerName: "Weather System",
-            notes: "Check drainage and secure outdoor items due to rain"
+            workerId: "weather_system", // Default weather system worker ID
+            category: .maintenance,
+            urgency: .high,
+            isCompleted: false,
+            dueDate: Date().addingTimeInterval(3600), // Due in 1 hour
+            estimatedDuration: 3600 // 1 hour
         )
     }
     
     private func createSnowTask(for building: NamedCoordinate) -> ContextualTask {
         return ContextualTask(
             name: "Snow Management - \(building.name)",
+            description: "Clear walkways and apply salt for safety. Remove snow accumulation from critical areas.",
             buildingId: building.id,
-            buildingName: building.name,
-            category: TaskCategory(rawValue: "Weather") ?? .maintenance,
-            startTime: "06:00",
-            endTime: "08:00",
-            recurrence: "One Time",
-            skillLevel: "Basic",
-            status: "pending",
-            urgencyLevel: "High",
-            assignedWorkerName: "Weather System",
-            notes: "Clear walkways and apply salt for safety"
+            workerId: "weather_system", // Default weather system worker ID
+            category: .maintenance,
+            urgency: .high,
+            isCompleted: false,
+            dueDate: Date().addingTimeInterval(1800), // Due in 30 minutes
+            estimatedDuration: 7200 // 2 hours
         )
     }
     
     private func createWindTask(for building: NamedCoordinate) -> ContextualTask {
         return ContextualTask(
             name: "Wind Damage Check - \(building.name)",
+            description: "Inspect for wind damage and secure loose items. Check building exterior for any weather-related issues.",
             buildingId: building.id,
-            buildingName: building.name,
-            category: TaskCategory(rawValue: "Weather") ?? .maintenance,
-            startTime: "09:00",
-            endTime: "10:00",
-            recurrence: "One Time",
-            skillLevel: "Intermediate",
-            status: "pending",
-            urgencyLevel: "Medium",
-            assignedWorkerName: "Weather System",
-            notes: "Inspect for wind damage and secure loose items"
+            workerId: "weather_system", // Default weather system worker ID
+            category: .inspection,
+            urgency: .medium,
+            isCompleted: false,
+            dueDate: Date().addingTimeInterval(5400), // Due in 1.5 hours
+            estimatedDuration: 3600 // 1 hour
         )
     }
     
     private func createTemperatureTask(for building: NamedCoordinate, temperature: Double) -> ContextualTask {
         let taskName: String
-        let notes: String
+        let description: String
         
         if temperature < 32 {
             taskName = "Freeze Protection - \(building.name)"
-            notes = "Check for frozen pipes and heating system operation"
+            description = "Check for frozen pipes and heating system operation. Ensure all weather protection measures are in place."
         } else {
             taskName = "Heat Management - \(building.name)"
-            notes = "Monitor cooling systems and check for heat-related issues"
+            description = "Monitor cooling systems and check for heat-related issues. Ensure proper ventilation and temperature control."
         }
         
         return ContextualTask(
             name: taskName,
+            description: description,
             buildingId: building.id,
-            buildingName: building.name,
-            category: TaskCategory(rawValue: "Weather") ?? .maintenance,
-            startTime: "10:00",
-            endTime: "11:00",
-            recurrence: "One Time",
-            skillLevel: "Intermediate",
-            status: "pending",
-            urgencyLevel: "Medium",
-            assignedWorkerName: "Weather System",
-            notes: notes
+            workerId: "weather_system", // Default weather system worker ID
+            category: .maintenance,
+            urgency: .medium,
+            isCompleted: false,
+            dueDate: Date().addingTimeInterval(7200), // Due in 2 hours
+            estimatedDuration: 3600 // 1 hour
         )
     }
     
@@ -234,6 +225,78 @@ public class WeatherAlertManager {
         } else {
             return "Low weather impact - normal operations can proceed"
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Get appropriate task category for weather conditions
+    private func getCategoryForWeather(_ condition: FSWeatherData.WeatherCondition) -> TaskCategory {
+        switch condition {
+        case .rain, .snow, .storm:
+            return .emergency
+        case .extreme:
+            return .emergency
+        case .fog, .cloudy:
+            return .inspection
+        case .clear:
+            return .maintenance
+        }
+    }
+    
+    /// Get appropriate urgency for weather conditions
+    private func getUrgencyForWeather(_ condition: FSWeatherData.WeatherCondition, temperature: Double) -> TaskUrgency {
+        switch condition {
+        case .storm, .extreme:
+            return .urgent
+        case .rain, .snow:
+            return .high
+        case .fog:
+            return .medium
+        case .cloudy, .clear:
+            if temperature < 20 || temperature > 95 {
+                return .high
+            } else {
+                return .low
+            }
+        }
+    }
+    
+    /// Create weather-specific tasks with worker assignment
+    public func createWeatherTasksForWorker(workerId: String, building: NamedCoordinate, weather: FSWeatherData) -> [ContextualTask] {
+        var tasks: [ContextualTask] = []
+        
+        // Create tasks based on weather conditions
+        if weather.hasPrecipitation {
+            let precipitationTask = ContextualTask(
+                name: "Weather Response - \(building.name)",
+                description: "Address precipitation-related building maintenance and safety concerns.",
+                buildingId: building.id,
+                workerId: workerId,
+                category: getCategoryForWeather(weather.condition),
+                urgency: getUrgencyForWeather(weather.condition, temperature: weather.temperature),
+                isCompleted: false,
+                dueDate: Date().addingTimeInterval(3600),
+                estimatedDuration: 3600
+            )
+            tasks.append(precipitationTask)
+        }
+        
+        if weather.hasHighWinds {
+            let windTask = ContextualTask(
+                name: "Wind Safety Check - \(building.name)",
+                description: "Perform safety inspection due to high wind conditions.",
+                buildingId: building.id,
+                workerId: workerId,
+                category: .inspection,
+                urgency: .medium,
+                isCompleted: false,
+                dueDate: Date().addingTimeInterval(5400),
+                estimatedDuration: 1800
+            )
+            tasks.append(windTask)
+        }
+        
+        return tasks
     }
 }
 

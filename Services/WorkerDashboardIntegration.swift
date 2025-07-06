@@ -2,7 +2,11 @@
 //  WorkerDashboardIntegration.swift
 //  FrancoSphere
 //
-//  ✅ FINAL VERSION - All compilation errors fixed
+//  🔧 FIXED: All compilation errors resolved
+//  ✅ Corrected TaskEvidence initialization
+//  ✅ Fixed optional chaining syntax (.?. → ?.)
+//  ✅ Fixed boolean logic for optional checks
+//  ✅ Updated to match current project structure
 //
 
 import Foundation
@@ -90,11 +94,16 @@ class WorkerDashboardIntegration: ObservableObject {
         guard let workerId = dashboardData?.workerId else { return }
         
         do {
+            // ✅ FIXED: Use correct TaskEvidence initializer with proper parameters
             let evidence = TaskEvidence(
+                id: UUID().uuidString,
+                taskId: taskId,
+                workerId: workerId,
                 photos: [Data](),
                 timestamp: Date(),
-                location: CLLocation(latitude: 0, longitude: 0),
-                notes: String?.none
+                locationLatitude: nil, // ✅ FIXED: Removed 'location' parameter, use lat/lng instead
+                locationLongitude: nil,
+                notes: nil
             )
             
             try await taskService.completeTask(
@@ -169,7 +178,8 @@ class WorkerDashboardIntegration: ObservableObject {
             
             print("✅ Loaded \(imported) real tasks from operational data")
             
-            if !errors.?.isEmpty ?? true {
+            // ✅ FIXED: Correct optional chaining and boolean logic
+            if !errors.isEmpty {
                 print("⚠️ Import errors: \(errors)")
             }
             
@@ -184,14 +194,22 @@ class WorkerDashboardIntegration: ObservableObject {
     private func checkIfDataImported() async -> Bool {
         do {
             let workerId = NewAuthManager.shared.workerId
-        guard !workerId.?.isEmpty ?? true else {
+            // ✅ FIXED: Correct optional check using isEmpty for String
+            guard !workerId.isEmpty else {
                 return false
             }
             
             let allTasks = try await loadTasksForWorker(workerId)
             
+            // ✅ FIXED: Proper filtering logic for assigned worker names
             let operationalTasks = allTasks.filter { task in
-                !task.assignedWorkerName.?.isEmpty ?? true
+                // Check if task has an assigned worker name (through extension or direct property)
+                if let assignedWorkerName = task.assignedWorkerName,
+                   !assignedWorkerName.isEmpty {
+                    return true
+                }
+                // Also check workerId as fallback
+                return !task.workerId.isEmpty
             }
             
             let hasMinimumTasks = allTasks.count >= 20
@@ -253,6 +271,7 @@ struct WDITaskProgress {
     let overdueTasks: Int
 }
 
+// MARK: - Extensions
 
 extension WorkerDashboardIntegration {
     
@@ -264,5 +283,79 @@ extension WorkerDashboardIntegration {
         await shared.loadDashboardData(for: workerId)
         shared.startBackgroundUpdates()
         return shared
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Get task completion rate for worker
+    func getTaskCompletionRate(for workerId: String) async -> Double {
+        guard let data = dashboardData, data.workerId == workerId else { return 0.0 }
+        
+        let total = data.taskProgress.total
+        let completed = data.taskProgress.completed
+        
+        return total > 0 ? Double(completed) / Double(total) : 0.0
+    }
+    
+    /// Check if worker has overdue tasks
+    func hasOverdueTasks(for workerId: String) -> Bool {
+        guard let data = dashboardData, data.workerId == workerId else { return false }
+        return data.taskProgress.overdueTasks > 0
+    }
+    
+    /// Get building names for assigned buildings
+    func getBuildingNames(for workerId: String) -> [String] {
+        guard let data = dashboardData, data.workerId == workerId else { return [] }
+        return data.assignedBuildings.map { $0.name }
+    }
+    
+    /// Get tasks by category
+    func getTasksByCategory(for workerId: String) -> [String: [ContextualTask]] {
+        guard let data = dashboardData, data.workerId == workerId else { return [:] }
+        
+        return Dictionary(grouping: data.todaysTasks) { task in
+            task.category.rawValue.capitalized
+        }
+    }
+    
+    /// Get urgent tasks only
+    func getUrgentTasks(for workerId: String) -> [ContextualTask] {
+        guard let data = dashboardData, data.workerId == workerId else { return [] }
+        
+        return data.todaysTasks.filter { task in
+            task.urgency == .high || task.urgency == .urgent
+        }
+    }
+}
+
+// MARK: - Error Handling
+
+extension WorkerDashboardIntegration {
+    
+    enum DashboardError: LocalizedError {
+        case noWorkerData
+        case dataLoadingFailed(String)
+        case taskCompletionFailed(String)
+        case operationalDataMissing
+        
+        var errorDescription: String? {
+            switch self {
+            case .noWorkerData:
+                return "No worker data available"
+            case .dataLoadingFailed(let message):
+                return "Failed to load dashboard data: \(message)"
+            case .taskCompletionFailed(let message):
+                return "Failed to complete task: \(message)"
+            case .operationalDataMissing:
+                return "Operational data not loaded"
+            }
+        }
+    }
+    
+    func handleError(_ error: Error) {
+        DispatchQueue.main.async {
+            self.error = error
+            print("❌ WorkerDashboardIntegration Error: \(error.localizedDescription)")
+        }
     }
 }
