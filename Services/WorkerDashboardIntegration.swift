@@ -101,7 +101,7 @@ class WorkerDashboardIntegration: ObservableObject {
                 workerId: workerId,
                 photos: [Data](),
                 timestamp: Date(),
-                locationLatitude: nil, // ✅ FIXED: Removed 'location' parameter, use lat/lng instead
+                locationLatitude: nil,
                 locationLongitude: nil,
                 notes: nil
             )

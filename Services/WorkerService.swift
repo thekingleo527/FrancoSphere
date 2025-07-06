@@ -113,7 +113,7 @@ extension WorkerService {
     // ✅ FIXED: Worker to WorkerProfile conversion
     func getWorker(_ id: String) async -> WorkerProfile? {
         // Convert Worker to WorkerProfile if needed
-        return await fetchWorker(id: id)
+        return try try await fetchWorker(id: id)
     }
     
     // ✅ FIXED: Add missing getPerformanceMetrics method

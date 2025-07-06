@@ -66,7 +66,7 @@ struct BuildingMapDetailView: View {
                 }
                 
                 ToolbarItem(placement: .principal) {
-                    Text(building.shortName)
+                    Text(building.shortName ?? building.name)
                         .font(.headline)
                         .foregroundColor(.white)
                 }
