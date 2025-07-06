@@ -181,8 +181,6 @@ struct TaskDetailView: View {
         }
     }
     
-    private func isPastDue() -> Bool {
-        guard !isCompleted else { return false }
         return Date() > task.scheduledDate ?? Date()
     }
     
@@ -315,15 +313,12 @@ struct TaskDetailView: View {
                 }
             }
             
-            if let imageData, let uiImage = UIImage(data: imageData) {
+    @State private var displayImage: UIImage?
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 200)
                     .cornerRadius(8)
-            }
-        }
-    }
     
     // MARK: - Verification Status Section
     
@@ -595,15 +590,31 @@ struct TaskDetailView: View {
 struct TaskDetailView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            let previewTask = ContextualTask(
-                id: 1,
-                name: "Inspect HVAC System",
-                description: "Regular maintenance inspection of HVAC units",
-                buildingId: 101,
-                workerId: 1001,
-                isCompleted: false,
-                dueDate: Date()
+            TaskDetailView(
+                task: ContextualTask(
+                    name: "Sample Task",
+                    description: "Sample description",
+                    buildingId: "1",
+                    workerId: "1",
+                    category: .maintenance,
+                    urgency: .medium
+                )
             )
-            
-            TaskDetailView(task: previewTask)
         }
+    }
+}
+static var previews: some View {
+    NavigationView {
+        let previewTask = ContextualTask(
+            id: 1,
+            name: "Inspect HVAC System",
+            description: "Regular maintenance inspection of HVAC units",
+            buildingId: 101,
+            workerId: 1001,
+            isCompleted: false,
+            dueDate: Date()
+        )
+        
+        TaskDetailView(task: previewTask)
+    }
+}
