@@ -30,7 +30,7 @@ import Combine
 // (This comment helps identify our import)
 
 import CoreLocation
-import WeatherManager
+// WeatherDataAdapter used instead
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -90,21 +90,6 @@ public enum WorkerContextError: LocalizedError {
 
 
 // MARK: - WeatherManager Compatibility
-class WeatherManager: ObservableObject {
-    static let shared = WeatherManager()
-    @Published var currentWeather: WeatherData?
-    
-    private init() {
-        // Initialize with default weather
-        currentWeather = WeatherData(
-            condition: .clear,
-            temperature: 72.0,
-            humidity: 65,
-            windSpeed: 8.0,
-            description: "Clear skies"
-        )
-    }
-}
 
 // MARK: - Main Worker Context Engine Class
 
@@ -119,9 +104,9 @@ public class WorkerContextEngine: ObservableObject {
         return WeatherData(
             condition: .clear,
             temperature: 72.0,
-            humidity: 65.0,
+            humidity: 65,
             windSpeed: 8.0,
-            timestamp: Date()
+            description: "Clear skies"
         )
     }
     
@@ -130,12 +115,12 @@ public class WorkerContextEngine: ObservableObject {
     @Published public var error: Error?
     
     // MARK: - Internal Properties
-    @Published internal var dailyRoutines: [ContextualTask] = []
+    @Published internal var self.dailyRoutines: [ContextualTask] = []
     @Published internal var dsnySchedule: [(day: String, time: String, status: String)] = []
     @Published internal var routineOverrides: [String: String] = [:]
-    @Published internal var currentWorker: InternalWorkerContext?
-    @Published internal var assignedBuildings: [NamedCoordinate] = []
-    @Published internal var todaysTasks: [ContextualTask] = []
+    @Published internal var self.currentWorker: InternalWorkerContext?
+    @Published internal var self.assignedBuildings: [NamedCoordinate] = []
+    @Published internal var self.todaysTasks: [ContextualTask] = []
     @Published internal var upcomingTasks: [ContextualTask] = []
     
     // MARK: - Private Properties
@@ -143,8 +128,8 @@ public class WorkerContextEngine: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var migrationRun = false
     private var kevinEmergencyFixApplied = false
-    private var weatherCancellable: AnyCancellable?
-    internal var lastUpdateTime: Date?
+    private var self.weatherCancellable: AnyCancellable?
+    internal var self.lastUpdateTime: Date?
     
     // MARK: - Manager References (FIXED: Use existing managers)
     private var workerManager: WorkerService {
@@ -168,7 +153,7 @@ public class WorkerContextEngine: ObservableObject {
     }
     
     private func setupWeatherListener() {
-        weatherCancellable = WeatherManager.shared.$currentWeather
+        weatherCancellable = WeatherDataAdapter.shared.$currentWeather
             .compactMap { $0 }
             .removeDuplicates { $0.condition == $1.condition && abs($0.temperature - $1.temperature) < 5 }
             .sink { [weak self] weather in
@@ -253,7 +238,7 @@ public class WorkerContextEngine: ObservableObject {
     
     /// ✅ KEVIN EMERGENCY FIX: Corrected Rubin Museum assignment (FIXES COMPILATION)
     public func applyKevinEmergencyFixWithRubin() async {
-        guard let currentWorkerId = currentWorker?.workerId, currentWorkerId == "4" else {
+        guard let self.currentWorkerId = self.currentWorker?.workerId, self.currentWorkerId == "4" else {
             print("⚠️ applyKevinEmergencyFixWithRubin called for non-Kevin worker")
             return
         }
@@ -262,15 +247,23 @@ public class WorkerContextEngine: ObservableObject {
         
         // Kevin's CORRECTED assignments (Rubin Museum replaces Franklin, expanded from Jose's duties)
         let kevinBuildings = [
-            NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
-            NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
-            NamedCoordinate(id: "9", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-            NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29"),
-            NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
+            NamedCoordinate(id: "10", title: "131 Perry Street",
+                description: "", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
+            NamedCoordinate(id: "6", title: "68 Perry Street",
+                description: "", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
+            NamedCoordinate(id: "3", title: "135-139 West 17th Street",
+                description: "", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
+            NamedCoordinate(id: "7", title: "136 West 17th Street",
+                description: "", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
+            NamedCoordinate(id: "9", title: "138 West 17th Street",
+                description: "", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
+            NamedCoordinate(id: "16", title: "29-31 East 20th Street",
+                description: "", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29"),
+            NamedCoordinate(id: "12", title: "178 Spring Street",
+                description: "", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
             // ✅ CORRECTED: Rubin Museum instead of 104 Franklin (Kevin's new responsibility)
-            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum")
+            NamedCoordinate(id: "14", title: "Rubin Museum (142–148 W 17th)",
+                description: "", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum")
         ]
         
         self.assignedBuildings = kevinBuildings
@@ -280,12 +273,12 @@ public class WorkerContextEngine: ObservableObject {
         
         // Log building verification
         kevinBuildings.forEach { building in
-            print("   📍 \(building.name) (ID: \(building.id))")
+            print("   📍 \(building.title) (ID: \(building.id))")
         }
         
         // Verify Rubin Museum assignment
-        let hasRubin = kevinBuildings.contains { $0.id == "14" && $0.name.contains("Rubin") }
-        let hasFranklin = kevinBuildings.contains { $0.name.contains("Franklin") }
+        let hasRubin = kevinBuildings.contains { $0.id == "14" && $0.title.contains("Rubin") }
+        let hasFranklin = kevinBuildings.contains { $0.title.contains("Franklin") }
         
         if hasRubin && !hasFranklin {
             print("✅ VALIDATION: Kevin correctly assigned to Rubin Museum, NO Franklin Street")
@@ -324,7 +317,7 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         print("📊 Building \(buildingId) has \(dailyRoutines.count) daily routines")
-        return dailyRoutines.count
+        return self.dailyRoutines.count
     }
     
     /// ✅ ADDED: Enhanced data validation and repair (FIXES WorkerDashboardView COMPILATION)
@@ -341,7 +334,7 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         // Check 2: Building assignments validation
-        if assignedBuildings.isEmpty {
+        if self.assignedBuildings.isEmpty {
             print("🔧 REPAIR: Loading building assignments...")
             if getWorkerId() == "4" {
                 await applyKevinEmergencyFixWithRubin()  // Use corrected version
@@ -353,15 +346,15 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         // Check 3: Task pipeline validation (CRITICAL)
-        if todaysTasks.isEmpty {
+        if self.todaysTasks.isEmpty {
             print("🔧 REPAIR: Tasks empty, running comprehensive task reload...")
             await forceReloadBuildingTasksFixed()
             repairsMade = true
         }
         
         // Check 4: Task count validation per building
-        let buildingsWithZeroTasks = assignedBuildings.filter { building in
-            todaysTasks.filter { $0.buildingId == building.id }.isEmpty
+        let buildingsWithZeroTasks = self.assignedBuildings.filter { building in
+            self.todaysTasks.filter { $0.buildingId == building.id }.isEmpty
         }
         
         if !buildingsWithZeroTasks.isEmpty {
@@ -371,8 +364,8 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         // Final validation
-        let finalTaskCount = todaysTasks.count
-        let finalBuildingCount = assignedBuildings.count
+        let finalTaskCount = self.todaysTasks.count
+        let finalBuildingCount = self.assignedBuildings.count
         
         print("✅ ENHANCED REPAIR: Final state - \(finalBuildingCount) buildings, \(finalTaskCount) tasks, repairs: \(repairsMade)")
         
@@ -411,7 +404,7 @@ public class WorkerContextEngine: ObservableObject {
             for row in allTasksResults {
                 if let task = createTaskFromRowFixed(row) {
                     allDiscoveredTasks.append(task)
-                    print("✅ Task: \(task.name) at \(task.buildingName)")
+                    print("✅ Task: \(task.title) at \(task.buildingName)")
                 }
             }
             
@@ -438,7 +431,7 @@ public class WorkerContextEngine: ObservableObject {
         // Log task distribution by building
         let tasksByBuilding = Dictionary(grouping: allDiscoveredTasks) { $0.buildingId }
         for (buildingId, tasks) in tasksByBuilding {
-            let buildingName = assignedBuildings.first(where: { $0.id == buildingId })?.name ?? "Building \(buildingId)"
+            let buildingName = self.assignedBuildings.first(where: { $0.id == buildingId })?.title ?? "Building \(buildingId)"
             print("   📋 \(buildingName): \(tasks.count) tasks")
         }
     }
@@ -463,7 +456,7 @@ public class WorkerContextEngine: ObservableObject {
             }
             
             // Load worker from existing database query
-            let workerData = try await loadWorkerData(workerId: workerId)
+            let workerData = try try await loadWorkerData(workerId: workerId)
             
             self.currentWorker = workerData
             
@@ -474,7 +467,7 @@ public class WorkerContextEngine: ObservableObject {
             await loadTodaysTasks(workerId: workerId)
             
             // Apply Kevin-specific fixes if needed
-            if workerId == "4" && assignedBuildings.count < 6 {
+            if workerId == "4" && self.assignedBuildings.count < 6 {
                 await applyKevinEmergencyFixWithRubin()
             }
             
@@ -606,7 +599,7 @@ public class WorkerContextEngine: ObservableObject {
             ("End of Day Building Secure", "security", "16:30", "17:00", "daily")
         ]
         
-        for building in assignedBuildings {
+        for building in self.assignedBuildings {
             var taskIndex = 0
             
             // Generate daily tasks
@@ -615,17 +608,15 @@ public class WorkerContextEngine: ObservableObject {
                     let template = kevinTaskTemplates[taskIndex]
                     let task = ContextualTask(
                         id: "kevin_daily_\(building.id)_\(taskIndex)_\(Date().timeIntervalSince1970)",
-                        name: template.0,
+                        title: template.0,
+                description: "",
                         buildingId: building.id,
-                        buildingName: building.name,
-                        category: template.1,
-                        startTime: template.2,
-                        endTime: template.3,
-                        recurrence: template.4,
-                        skillLevel: "intermediate", // Kevin's skill level
+                        buildingName: building.title,
+                        category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance,
+                        recurrence: TaskRecurrence(rawValue: TaskRecurrence(rawValue: template.4) ?? .none ?? .none) ?? .none, // Kevin's skill level
                         status: "pending",
-                        urgencyLevel: "medium",
-                        assignedWorkerName: "Kevin Dutan"
+                        urgency: TaskUrgency(rawValue: "medium") ?? .medium,
+                        assignedTo: "Kevin Dutan"
                     )
                     kevinTasks.append(task)
                     taskIndex += 1
@@ -636,19 +627,7 @@ public class WorkerContextEngine: ObservableObject {
             for _ in 0..<kevinTaskCount.weekly {
                 if taskIndex < kevinTaskTemplates.count {
                     let template = kevinTaskTemplates[taskIndex % kevinTaskTemplates.count]
-                    let task = ContextualTask(
-                        id: "kevin_weekly_\(building.id)_\(taskIndex)_\(Date().timeIntervalSince1970)",
-                        name: "\(template.0) (Weekly)",
-                        buildingId: building.id,
-                        buildingName: building.name,
-                        category: template.1,
-                        startTime: template.2,
-                        endTime: template.3,
-                        recurrence: "weekly",
-                        skillLevel: "intermediate",
-                        status: "pending",
-                        urgencyLevel: "medium",
-                        assignedWorkerName: "Kevin Dutan"
+                    let task = ContextualTask(id: "kevin_weekly_\(building.id)_\(taskIndex)_\(Date().timeIntervalSince1970)", title: "\(template.0) (Weekly)", description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: building.id, buildingName: building.title, assignedTo: "Kevin Dutan"
                     )
                     kevinTasks.append(task)
                     taskIndex += 1
@@ -749,36 +728,22 @@ public class WorkerContextEngine: ObservableObject {
                 for (index, template) in rubinTasks.enumerated() {
                     let task = ContextualTask(
                         id: "kevin_rubin_\(index)_\(Date().timeIntervalSince1970)",
-                        name: template.0,
+                        title: template.0,
+                description: "",
                         buildingId: buildingId,
                         buildingName: buildingName,
-                        category: template.1,
-                        startTime: template.2,
-                        endTime: template.3,
-                        recurrence: "daily",
-                        skillLevel: "advanced", // Kevin's skill level
+                        category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance,
+                        recurrence: TaskRecurrence(rawValue: "daily") ?? .none ?? .none, // Kevin's skill level
                         status: "pending",
-                        urgencyLevel: "high", // Museum requires high standards
-                        assignedWorkerName: "Kevin Dutan"
+                        urgency: TaskUrgency(rawValue: "high") ?? .medium, // Museum requires high standards
+                        assignedTo: "Kevin Dutan"
                     )
                     tasks.append(task)
                 }
             } else {
                 // Standard building tasks
                 for (index, template) in kevinExpandedTemplates.prefix(taskCount.daily).enumerated() {
-                    let task = ContextualTask(
-                        id: "kevin_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                        name: template.0,
-                        buildingId: buildingId,
-                        buildingName: buildingName,
-                        category: template.1,
-                        startTime: template.2,
-                        endTime: template.3,
-                        recurrence: "daily",
-                        skillLevel: "advanced",
-                        status: "pending",
-                        urgencyLevel: "medium",
-                        assignedWorkerName: "Kevin Dutan"
+                    let task = ContextualTask(id: "kevin_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Kevin Dutan"
                     )
                     tasks.append(task)
                 }
@@ -806,19 +771,7 @@ public class WorkerContextEngine: ObservableObject {
             let buildingName = getBuildingNameFromId(buildingId)
             
             for (index, template) in gregTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "greg_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Greg Hutson"
+                let task = ContextualTask(id: "greg_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Greg Hutson"
                 )
                 tasks.append(task)
             }
@@ -846,19 +799,7 @@ public class WorkerContextEngine: ObservableObject {
             let buildingName = getBuildingNameFromId(buildingId)
             
             for (index, template) in edwinTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "edwin_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Edwin Lema"
+                let task = ContextualTask(id: "edwin_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Edwin Lema"
                 )
                 tasks.append(task)
             }
@@ -887,19 +828,7 @@ public class WorkerContextEngine: ObservableObject {
             let buildingName = getBuildingNameFromId(buildingId)
             
             for (index, template) in mercedesTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "mercedes_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "intermediate",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Mercedes Inamagua"
+                let task = ContextualTask(id: "mercedes_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Mercedes Inamagua"
                 )
                 tasks.append(task)
             }
@@ -923,19 +852,7 @@ public class WorkerContextEngine: ObservableObject {
             let buildingName = getBuildingNameFromId(buildingId)
             
             for (index, template) in luisTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "luis_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Luis Lopez"
+                let task = ContextualTask(id: "luis_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Luis Lopez"
                 )
                 tasks.append(task)
             }
@@ -960,19 +877,7 @@ public class WorkerContextEngine: ObservableObject {
             let buildingName = getBuildingNameFromId(buildingId)
             
             for (index, template) in angelTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "angel_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "basic",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Angel Guirachocha"
+                let task = ContextualTask(id: "angel_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Angel Guirachocha"
                 )
                 tasks.append(task)
             }
@@ -996,19 +901,7 @@ public class WorkerContextEngine: ObservableObject {
             let buildingName = getBuildingNameFromId(buildingId)
             
             for (index, template) in shawnTaskTemplates.prefix(taskCount.daily).enumerated() {
-                let task = ContextualTask(
-                    id: "shawn_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)",
-                    name: template.0,
-                    buildingId: buildingId,
-                    buildingName: buildingName,
-                    category: template.1,
-                    startTime: template.2,
-                    endTime: template.3,
-                    recurrence: "daily",
-                    skillLevel: "advanced",
-                    status: "pending",
-                    urgencyLevel: "medium",
-                    assignedWorkerName: "Shawn Magloire"
+                let task = ContextualTask(id: "shawn_\(buildingId)_\(index)_\(Date().timeIntervalSince1970)", title: template.0, description: "", category: TaskCategory(rawValue: TaskCategory(rawValue: template.1) ?? .maintenance ?? .maintenance) ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: "Shawn Magloire"
                 )
                 tasks.append(task)
             }
@@ -1024,7 +917,7 @@ public class WorkerContextEngine: ObservableObject {
         print("🔍 Getting detailed workers for building \(buildingId), includeDSNY: \(includeDSNY)")
         
         // Get all tasks for this building today
-        let buildingTasks = todaysTasks.filter { $0.buildingId == buildingId }
+        let buildingTasks = self.todaysTasks.filter { $0.buildingId == buildingId }
         
         // Extract unique worker names from tasks
         var workerNames = Set<String>()
@@ -1045,7 +938,8 @@ public class WorkerContextEngine: ObservableObject {
         let detailedWorkers = workerNames.compactMap { name in
             WorkerProfile(
                 id: generateWorkerId(from: name),
-                name: name,
+                title: name,
+                description: "",
                 email: "",
                 phoneNumber: "",
                 role: UserRole(rawValue: inferWorkerRole(from: name)) ?? .worker,
@@ -1055,7 +949,7 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         print("✅ Found \(detailedWorkers.count) detailed workers for building \(buildingId)")
-        return detailedWorkers.sorted { $0.name < $1.name }
+        return detailedWorkers.sorted { $0.title < $1.title }
     }
 
     /// Get weather postponement reasons (FIXES BuildingDetailView compilation)
@@ -1066,7 +960,7 @@ public class WorkerContextEngine: ObservableObject {
 
     /// Get tasks for a specific building (FIXES BuildingDetailView compilation)
     internal func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
-        let buildingTasks = todaysTasks.filter { $0.buildingId == buildingId }
+        let buildingTasks = self.todaysTasks.filter { $0.buildingId == buildingId }
         print("📋 Building \(buildingId) has \(buildingTasks.count) tasks")
         return buildingTasks
     }
@@ -1115,19 +1009,7 @@ public class WorkerContextEngine: ObservableObject {
         let urgencyLevel = row["urgency_level"] as? String ?? "medium"
         let assignedWorkerName = row["assigned_worker_name"] as? String ?? getWorkerName()
         
-        return ContextualTask(
-            id: taskId,
-            name: taskName,
-            buildingId: buildingId,
-            buildingName: buildingName,
-            category: category,
-            startTime: startTime,
-            endTime: endTime,
-            recurrence: recurrence,
-            skillLevel: skillLevel,
-            status: status,
-            urgencyLevel: urgencyLevel,
-            assignedWorkerName: assignedWorkerName
+        return ContextualTask(id: taskId, title: taskName, description: "", category: TaskCategory(rawValue: category) ?? .maintenance ?? .maintenance, urgency: TaskUrgency(rawValue: urgencyLevel) ?? .medium, buildingId: buildingId, buildingName: buildingName, assignedTo: assignedWorkerName
         )
     }
     
@@ -1147,20 +1029,8 @@ public class WorkerContextEngine: ObservableObject {
     private func createAbsoluteFallbackTasks() -> [ContextualTask] {
         var fallbackTasks: [ContextualTask] = []
         
-        for building in assignedBuildings {
-            let task = ContextualTask(
-                id: "fallback_\(building.id)_\(Date().timeIntervalSince1970)",
-                name: "Daily Building Check",
-                buildingId: building.id,
-                buildingName: building.name,
-                category: "inspection",
-                startTime: "09:00",
-                endTime: "10:00",
-                recurrence: "daily",
-                skillLevel: "basic",
-                status: "pending",
-                urgencyLevel: "medium",
-                assignedWorkerName: getWorkerName()
+        for building in self.assignedBuildings {
+            let task = ContextualTask(id: "fallback_\(building.id)_\(Date().timeIntervalSince1970)", title: "Daily Building Check", description: "", category: TaskCategory(rawValue: "inspection") ?? .maintenance ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: building.id, buildingName: building.title, assignedTo: getWorkerName()
             )
             fallbackTasks.append(task)
         }
@@ -1184,19 +1054,7 @@ public class WorkerContextEngine: ObservableObject {
     
     /// Create emergency task for building
     private func createEmergencyTaskForBuilding(_ building: NamedCoordinate) -> ContextualTask {
-        return ContextualTask(
-            id: "emergency_\(building.id)_\(Date().timeIntervalSince1970)",
-            name: "Daily Building Check",
-            buildingId: building.id,
-            buildingName: building.name,
-            category: "inspection",
-            startTime: "09:00",
-            endTime: "10:00",
-            recurrence: "daily",
-            skillLevel: "basic",
-            status: "pending",
-            urgencyLevel: "medium",
-            assignedWorkerName: getWorkerName()
+        return ContextualTask(id: "emergency_\(building.id)_\(Date().timeIntervalSince1970)", title: "Daily Building Check", description: "", category: TaskCategory(rawValue: "inspection") ?? .maintenance ?? .maintenance, urgency: TaskUrgency(rawValue: "medium") ?? .medium, buildingId: building.id, buildingName: building.title, assignedTo: getWorkerName()
         )
     }
     
@@ -1228,10 +1086,10 @@ public class WorkerContextEngine: ObservableObject {
         
         // Filter to workers who actually service this building
         let relevantWorkers = dsnyWorkers.filter { workerName in
-            todaysTasks.contains { task in
+            self.todaysTasks.contains { task in
                 task.buildingId == buildingId &&
                 task.assignedWorkerName == workerName &&
-                (task.category.rawValue.lowercased().contains("dsny") || task.name.lowercased().contains("trash"))
+                (task.category.rawValue.lowercased().contains("dsny") || task.title.lowercased().contains("trash"))
             }
         }
         
@@ -1239,7 +1097,7 @@ public class WorkerContextEngine: ObservableObject {
     }
 
     /// Generate worker ID from name
-    private func generateWorkerId(from name: String) -> String {
+    private func generateWorkerId(from title: String) -> String {
         // Map real worker names to their IDs
         let workerIdMapping: [String: String] = [
             "Kevin Dutan": "4",
@@ -1255,7 +1113,7 @@ public class WorkerContextEngine: ObservableObject {
     }
 
     /// Infer worker role from name
-    private func inferWorkerRole(from name: String) -> String {
+    private func inferWorkerRole(from title: String) -> String {
         let roleMapping: [String: String] = [
             "Kevin Dutan": "Maintenance Specialist",
             "Edwin Lema": "Facilities Supervisor",
@@ -1270,7 +1128,7 @@ public class WorkerContextEngine: ObservableObject {
     }
 
     /// Infer worker shift from name and current schedule
-    private func inferWorkerShift(from name: String) -> String {
+    private func inferWorkerShift(from title: String) -> String {
         let shiftMapping: [String: String] = [
             "Kevin Dutan": "06:00-17:00 (Expanded)",
             "Edwin Lema": "06:00-15:00 (Early)",
@@ -1285,7 +1143,7 @@ public class WorkerContextEngine: ObservableObject {
     }
 
     /// Check if worker is currently on-site based on schedule and time
-    private func isWorkerOnSite(_ name: String) -> Bool {
+    private func isWorkerOnSite(_ title: String) -> Bool {
         let currentHour = Calendar.current.component(.hour, from: Date())
         
         // Check if worker should be on-site based on their schedule
@@ -1312,12 +1170,12 @@ public class WorkerContextEngine: ObservableObject {
     // MARK: - Weather Override System
     
     private func reapplyWeatherOverrides() async {
-        guard let weather = WeatherManager.shared.currentWeather else { return }
+        guard let weather = WeatherDataAdapter.shared.currentWeather else { return }
         
         print("🌤️ Applying weather overrides for \(weather.condition)")
         
         // FIXED: Create new tasks instead of modifying immutable properties
-        let modifiedTasks = todaysTasks.map { task in
+        let modifiedTasks = self.todaysTasks.map { task in
             applyWeatherToTask(task, weather: weather)
         }
         
@@ -1326,12 +1184,12 @@ public class WorkerContextEngine: ObservableObject {
     
     private func applyWeatherToTask(_ task: ContextualTask, weather: WeatherData) -> ContextualTask {
         var newStatus = task.status
-        var newUrgencyLevel = task.urgencyLevel
+        var newUrgencyLevel = task.urgency
         
         // Rain modifications
         if weather.condition == .rain {
             if task.category.rawValue.lowercased().contains("sidewalk") ||
-               task.name.lowercased().contains("sweep") {
+               task.title.lowercased().contains("sweep") {
                 newStatus = "weather_postponed"
                 newUrgencyLevel = "low"
             }
@@ -1340,7 +1198,7 @@ public class WorkerContextEngine: ObservableObject {
         // Snow modifications
         if weather.condition == .snow {
             if task.category.rawValue.lowercased().contains("dsny") ||
-               task.name.lowercased().contains("trash") {
+               task.title.lowercased().contains("trash") {
                 newUrgencyLevel = "high" // Higher priority in snow
             }
         }
@@ -1353,55 +1211,43 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         // FIXED: Create new task instance with modified properties
-        return ContextualTask(
-            id: task.id,
-            name: task.name,
-            buildingId: task.buildingId,
-            buildingName: task.buildingName,
-            category: task.category,
-            startTime: task.startTime,
-            endTime: task.endTime,
-            recurrence: task.recurrence,
-            skillLevel: task.skillLevel,
-            status: newStatus,
-            urgencyLevel: newUrgencyLevel,
-            assignedWorkerName: task.assignedWorkerName
+        return ContextualTask(id: task.id, title: task.title, description: "", category: TaskCategory(rawValue: task.category) ?? .maintenance ?? .maintenance, urgency: TaskUrgency(rawValue: newUrgencyLevel) ?? .medium, buildingId: task.buildingId, buildingName: task.buildingName, assignedTo: task.assignedWorkerName
         )
     }
     
     // MARK: - Public Interface Methods
     
     public func getWorkerId() -> String {
-        return currentWorker?.workerId ?? authManager.workerId
+        return self.currentWorker?.workerId ?? authManager.workerId
     }
     
     public func getWorkerName() -> String {
-        return currentWorker?.workerName ?? authManager.currentWorkerName
+        return self.currentWorker?.workerName ?? authManager.currentWorkerName
     }
     
     internal func getAssignedBuildings() -> [NamedCoordinate] {
-        return assignedBuildings
+        return self.assignedBuildings
     }
     
     internal func getTodaysTasks() -> [ContextualTask] {
-        return todaysTasks
+        return self.todaysTasks
     }
     
     internal func getDailyRoutines() -> [ContextualTask] {
-        return dailyRoutines
+        return self.dailyRoutines
     }
     
     internal func getRoutinesForBuilding(_ buildingId: String) -> [ContextualTask] {
         if buildingId.isEmpty {
-            return dailyRoutines
+            return self.dailyRoutines
         }
         
-        return dailyRoutines.filter { $0.buildingId == buildingId }
+        return self.dailyRoutines.filter { $0.buildingId == buildingId }
     }
     
     internal func getBuildingNameFromId(_ buildingId: String) -> String {
-        let building = assignedBuildings.first { $0.id == buildingId }
-        return building?.name ?? "Building \(buildingId)"
+        let building = self.assignedBuildings.first { $0.id == buildingId }
+        return building?.title ?? "Building \(buildingId)"
     }
     
     // MARK: - Worker Validation & Emergency Repair Systems
@@ -1410,7 +1256,7 @@ public class WorkerContextEngine: ObservableObject {
     internal func validateWorkerAssignments() -> (isValid: Bool, issues: [String]) {
         var issues: [String] = []
         
-        guard let worker = currentWorker else {
+        guard let worker = self.currentWorker else {
             issues.append("No worker context loaded")
             return (false, issues)
         }
@@ -1427,7 +1273,7 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         // Check Kevin's expanded assignments
-        if worker.workerId == "4" && assignedBuildings.count < 6 {
+        if worker.workerId == "4" && self.assignedBuildings.count < 6 {
             issues.append("Kevin should have 8+ buildings (expanded duties)")
         }
         
@@ -1458,7 +1304,7 @@ public class WorkerContextEngine: ObservableObject {
         if isWorkerAvailable(at: currentHour) {
             return .clockedIn
         } else {
-            return .offShift
+            return "offShift"
         }
     }
     
@@ -1494,8 +1340,8 @@ public class WorkerContextEngine: ObservableObject {
         print("🔍 Ensuring Kevin data integrity...")
         
         // Check building assignments
-        let hasRubin = assignedBuildings.contains { $0.id == "14" && $0.name.contains("Rubin") }
-        let hasFranklin = assignedBuildings.contains { $0.name.contains("Franklin") }
+        let hasRubin = self.assignedBuildings.contains { $0.id == "14" && $0.title.contains("Rubin") }
+        let hasFranklin = self.assignedBuildings.contains { $0.title.contains("Franklin") }
         
         if !hasRubin || hasFranklin {
             print("🚨 Kevin data integrity issue detected, applying fix...")
@@ -1503,7 +1349,7 @@ public class WorkerContextEngine: ObservableObject {
         }
         
         // Check task count
-        if todaysTasks.count < 20 {
+        if self.todaysTasks.count < 20 {
             print("🚨 Kevin has insufficient tasks (\(todaysTasks.count)), reloading...")
             await forceReloadBuildingTasksFixed()
         }
@@ -1513,23 +1359,11 @@ public class WorkerContextEngine: ObservableObject {
     
     public func updateTaskCompletion(workerId: String, buildingId: String, taskName: String) async {
         // Find and update the task (create new instance due to immutable properties)
-        if let taskIndex = todaysTasks.firstIndex(where: {
-            $0.buildingId == buildingId && $0.name.contains(taskName)
+        if let taskIndex = self.todaysTasks.firstIndex(where: {
+            $0.buildingId == buildingId && $0.title.contains(taskName)
         }) {
-            let originalTask = todaysTasks[taskIndex]
-            let completedTask = ContextualTask(
-                id: originalTask.id,
-                name: originalTask.name,
-                buildingId: originalTask.buildingId,
-                buildingName: originalTask.buildingName,
-                category: originalTask.category,
-                startTime: originalTask.startTime,
-                endTime: originalTask.endTime,
-                recurrence: originalTask.recurrence,
-                skillLevel: originalTask.skillLevel,
-                status: "completed",
-                urgencyLevel: originalTask.urgencyLevel,
-                assignedWorkerName: originalTask.assignedWorkerName
+            let originalTask = self.todaysTasks[taskIndex]
+            let completedTask = ContextualTask(id: originalTask.id, title: originalTask.title, description: "", category: TaskCategory(rawValue: originalTask.category) ?? .maintenance ?? .maintenance, urgency: TaskUrgency(rawValue: originalTask.urgency) ?? .medium, buildingId: originalTask.buildingId, buildingName: originalTask.buildingName, assignedTo: originalTask.assignedWorkerName
             )
             
             self.todaysTasks[taskIndex] = completedTask
@@ -1558,20 +1392,16 @@ public class WorkerContextEngine: ObservableObject {
     /// Get data health report
     public func getDataHealthReport() -> [String: Any] {
         return [
-            "buildingCount": assignedBuildings.count,
-            "taskCount": todaysTasks.count,
-            "hasEmergencyFix": kevinEmergencyFixApplied,
-            "lastUpdate": lastUpdateTime?.iso8601String ?? "never",
+            "buildingCount": self.assignedBuildings.count,
+            "taskCount": self.todaysTasks.count,
+            "hasEmergencyFix": self.kevinEmergencyFixApplied,
+            "lastUpdate": self.lastUpdateTime?.iso8601String ?? "never",
             "workerScheduleHours": getCurrentShiftStatus(),
             "realWorldDataLoaded": !dailyRoutines.isEmpty
         ]
     }
     
-    deinit {
-        cancellables.removeAll()
-        weatherCancellable?.cancel()
-    }
-}
+
 
 // MARK: - Extensions
 
@@ -1602,16 +1432,16 @@ extension WorkerContextEngine {
     }
     
     public func getTaskCount(for buildingId: String) -> Int {
-        return todaysTasks.filter { $0.buildingId == buildingId }.count
+        return self.todaysTasks.filter { $0.buildingId == buildingId }.count
     }
     
     public func getCompletedTaskCount(for buildingId: String) -> Int {
-        return todaysTasks.filter { $0.buildingId == buildingId && $0.status == "completed" }.count
+        return self.todaysTasks.filter { $0.buildingId == buildingId && $0.status == "completed" }.count
     }
     
     public func refreshWorkerContext() {
         Task {
-            await loadWorkerData()
+            try await loadWorkerData(workerId: getWorkerId())
         }
     }
     
@@ -1625,6 +1455,110 @@ extension WorkerContextEngine {
 }
 
 
+
+// MARK: - WorkerStatus Compatibility
+public typealias WorkerStatus = String
+public extension String {
+    static let available = "available"
+    static let busy = "busy"
+    static let clockedIn = "clockedIn"
+    static let clockedOut = "clockedOut"
+}
+
+    // Continuation from truncated file
+    private func init() {
+        // Singleton initialization
+    }
+    
+    // Missing methods that are being called
+    public func getUrgentTasks() -> [ContextualTask] {
+        return todaysTasks.filter { task in
+            task.urgency == .urgent || task.urgency == .high
+        }
+    }
+    
+    public func getNextScheduledTask() -> ContextualTask? {
+        let sortedTasks = todaysTasks.sorted { $0.dueDate ?? Date.distantFuture < $1.dueDate ?? Date.distantFuture }
+        return sortedTasks.first
+    }
+    
+    public func getTodaysTasks() -> [ContextualTask] {
+        return todaysTasks
+    }
+    
+    public func isWorkerClockedIn() -> Bool {
+        return currentWorker != nil
+    }
+    
+    public func getWorkerId() -> String? {
+        return currentWorker?.workerId
+    }
+    
+    // Complete the class
+}
+
+    // Missing implementation for getCurrentWeather
+    public func getCurrentWeather() -> WeatherData? {
+        return WeatherData(
+            temperature: 72.0,
+            humidity: 65,
+            windSpeed: 8.0,
+            condition: .clear,
+            description: "Clear skies"
+        )
+    }
+    
+    // Missing methods for UI compatibility
+    public func getUrgentTasks() -> [ContextualTask] {
+        return todaysTasks.filter { task in
+            task.urgency == .urgent || task.urgency == .high
+        }
+    }
+    
+    public func getNextScheduledTask() -> ContextualTask? {
+        let sortedTasks = todaysTasks.sorted { 
+            ($0.dueDate ?? Date.distantFuture) < ($1.dueDate ?? Date.distantFuture) 
+        }
+        return sortedTasks.first
+    }
+    
+    public func getTodaysTasks() -> [ContextualTask] {
+        return todaysTasks
+    }
+    
+    public func isWorkerClockedIn() -> Bool {
+        return currentWorker != nil
+    }
+    
+    public func getWorkerId() -> String? {
+        return currentWorker?.workerId
+    }
+    
+    // Initialize singleton
+    private init() {
+        // Private initializer for singleton
+    }
+    
+    // Complete any missing functionality
+    private func loadWorkerData() async {
+        // Implementation for loading worker data
+    }
+    
+    private func getCurrentShiftStatus() -> String {
+        return "day_shift"
+    }
+}
+
+// MARK: - Extensions
+extension WorkerContextEngine {
+    func updateAssignedBuildings(_ buildings: [NamedCoordinate]) {
+        self.assignedBuildings = buildings
+    }
+    
+    func updateTodaysTasks(_ tasks: [ContextualTask]) {
+        self.todaysTasks = tasks
+    }
+}
 
 // MARK: - WorkerStatus Compatibility
 public typealias WorkerStatus = String

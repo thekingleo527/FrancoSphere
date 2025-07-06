@@ -1,0 +1,402 @@
+//
+//  FrancoSphereModels.swift
+//  FrancoSphere
+//
+//  ✅ COMPREHENSIVE REBUILD - All compilation errors fixed
+//
+
+import Foundation
+import CoreLocation
+import SwiftUI
+
+// MARK: - FrancoSphere Namespace
+public enum FrancoSphere {
+    
+    // MARK: - Geographic Models
+    public struct NamedCoordinate: Identifiable, Codable, Equatable {
+        public let id: String
+        public let name: String
+        public let latitude: Double
+        public let longitude: Double
+        public let address: String?
+        public let imageAssetName: String?
+        
+        public var coordinate: CLLocationCoordinate2D {
+            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        
+        public init(id: String, name: String, latitude: Double, longitude: Double, address: String? = nil, imageAssetName: String? = nil) {
+            self.id = id
+            self.name = name
+            self.latitude = latitude
+            self.longitude = longitude
+            self.address = address
+            self.imageAssetName = imageAssetName
+        }
+        
+        public init(id: String, name: String, coordinate: CLLocationCoordinate2D, address: String? = nil, imageAssetName: String? = nil) {
+            self.id = id
+            self.name = name
+            self.latitude = coordinate.latitude
+            self.longitude = coordinate.longitude
+            self.address = address
+            self.imageAssetName = imageAssetName
+        }
+    }
+    
+    // MARK: - Weather Models
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "clear"
+        case sunny = "sunny"
+        case partlyCloudy = "partly_cloudy"
+        case cloudy = "cloudy"
+        case rainy = "rainy"
+        case snowy = "snowy"
+        case stormy = "stormy"
+        case foggy = "foggy"
+        case windy = "windy"
+        case unknown = "unknown"
+    }
+    
+    public struct WeatherData: Identifiable, Codable {
+        public let id: String
+        public let temperature: Double
+        public let condition: WeatherCondition
+        public let humidity: Double
+        public let windSpeed: Double
+        public let timestamp: Date
+        public let description: String
+        public let iconName: String
+        
+        public init(id: String = UUID().uuidString, temperature: Double, condition: WeatherCondition, humidity: Double, windSpeed: Double, timestamp: Date, description: String = "", iconName: String = "") {
+            self.id = id
+            self.temperature = temperature
+            self.condition = condition
+            self.humidity = humidity
+            self.windSpeed = windSpeed
+            self.timestamp = timestamp
+            self.description = description
+            self.iconName = iconName
+        }
+    }
+    
+    public enum OutdoorWorkRisk: String, Codable {
+        case low = "low"
+        case moderate = "moderate"
+        case high = "high"
+        case extreme = "extreme"
+    }
+    
+    // MARK: - Task Models
+    public enum TaskCategory: String, Codable, CaseIterable {
+        case cleaning = "cleaning"
+        case maintenance = "maintenance"
+        case inspection = "inspection"
+        case repair = "repair"
+        case security = "security"
+        case landscaping = "landscaping"
+        case hvac = "hvac"
+        case plumbing = "plumbing"
+        case electrical = "electrical"
+        case administrative = "administrative"
+        case emergency = "emergency"
+        case other = "other"
+    }
+    
+    public enum TaskUrgency: String, Codable, CaseIterable {
+        case low = "low"
+        case medium = "medium"
+        case high = "high"
+        case critical = "critical"
+        case emergency = "emergency"
+    }
+    
+    public enum TaskRecurrence: String, Codable, CaseIterable {
+        case none = "none"
+        case daily = "daily"
+        case weekly = "weekly"
+        case monthly = "monthly"
+        case quarterly = "quarterly"
+        case annually = "annually"
+    }
+    
+    public enum VerificationStatus: String, Codable {
+        case pending = "pending"
+        case inProgress = "in_progress"
+        case completed = "completed"
+        case verified = "verified"
+        case rejected = "rejected"
+    }
+    
+    // MARK: - MaintenanceTask Model
+    public struct MaintenanceTask: Identifiable, Codable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let buildingId: String
+        public let category: TaskCategory
+        public let urgency: TaskUrgency
+        public let assignedWorkerName: String?
+        public let dueDate: Date?
+        public let estimatedDuration: TimeInterval
+        public let status: VerificationStatus
+        public let notes: String?
+        
+        public init(id: String = UUID().uuidString, title: String, description: String, buildingId: String, category: TaskCategory, urgency: TaskUrgency, assignedWorkerName: String? = nil, dueDate: Date? = nil, estimatedDuration: TimeInterval = 3600, status: VerificationStatus = .pending, notes: String? = nil) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.buildingId = buildingId
+            self.category = category
+            self.urgency = urgency
+            self.assignedWorkerName = assignedWorkerName
+            self.dueDate = dueDate
+            self.estimatedDuration = estimatedDuration
+            self.status = status
+            self.notes = notes
+        }
+    }
+    
+    // MARK: - Worker Models
+    public enum WorkerSkill: String, Codable, CaseIterable {
+        case generalMaintenance = "general_maintenance"
+        case plumbing = "plumbing"
+        case electrical = "electrical"
+        case hvac = "hvac"
+        case carpentry = "carpentry"
+        case painting = "painting"
+        case landscaping = "landscaping"
+        case security = "security"
+        case cleaning = "cleaning"
+        case administrativeSupport = "administrative_support"
+    }
+    
+    public enum UserRole: String, Codable {
+        case admin = "admin"
+        case supervisor = "supervisor"
+        case worker = "worker"
+        case maintenance = "maintenance"
+        case security = "security"
+        case janitor = "janitor"
+        case porter = "porter"
+    }
+    
+    public struct WorkerProfile: Identifiable, Codable {
+        public let id: String
+        public let name: String
+        public let email: String
+        public let role: UserRole
+        public let skills: [WorkerSkill]
+        public let isActive: Bool
+        public let profileImageName: String?
+        public let phone: String?
+        public let address: String?
+        public let emergencyContact: String?
+        public let hourlyRate: Double?
+        public let notes: String?
+        
+        public init(id: String, name: String, email: String, role: UserRole, skills: [WorkerSkill] = [], isActive: Bool = true, profileImageName: String? = nil, phone: String? = nil, address: String? = nil, emergencyContact: String? = nil, hourlyRate: Double? = nil, notes: String? = nil) {
+            self.id = id
+            self.name = name
+            self.email = email
+            self.role = role
+            self.skills = skills
+            self.isActive = isActive
+            self.profileImageName = profileImageName
+            self.phone = phone
+            self.address = address
+            self.emergencyContact = emergencyContact
+            self.hourlyRate = hourlyRate
+            self.notes = notes
+        }
+    }
+    
+    public struct WorkerAssignment: Identifiable, Codable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let assignmentType: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isActive: Bool
+        
+        public init(id: String = UUID().uuidString, workerId: String, buildingId: String, assignmentType: String, startDate: Date, endDate: Date? = nil, isActive: Bool = true) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.assignmentType = assignmentType
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isActive = isActive
+        }
+    }
+    
+    // MARK: - Inventory Models
+    public enum InventoryCategory: String, Codable, CaseIterable {
+        case cleaningSupplies = "cleaning_supplies"
+        case maintenanceTools = "maintenance_tools"
+        case safetyEquipment = "safety_equipment"
+        case buildingMaterials = "building_materials"
+        case office = "office"
+        case other = "other"
+    }
+    
+    public enum RestockStatus: String, Codable {
+        case inStock = "in_stock"
+        case lowStock = "low_stock"
+        case outOfStock = "out_of_stock"
+        case onOrder = "on_order"
+    }
+    
+    public struct InventoryItem: Identifiable, Codable {
+        public let id: String
+        public let name: String
+        public let description: String
+        public let category: InventoryCategory
+        public let currentStock: Int
+        public let minimumStock: Int
+        public let unit: String
+        public let supplier: String
+        public let costPerUnit: Double
+        public let location: String
+        public let lastRestocked: Date?
+        public let status: RestockStatus
+        
+        public init(id: String = UUID().uuidString, name: String, description: String, category: InventoryCategory, currentStock: Int, minimumStock: Int, unit: String, supplier: String, costPerUnit: Double, location: String = "", lastRestocked: Date? = nil, status: RestockStatus = .inStock) {
+            self.id = id
+            self.name = name
+            self.description = description
+            self.category = category
+            self.currentStock = currentStock
+            self.minimumStock = minimumStock
+            self.unit = unit
+            self.supplier = supplier
+            self.costPerUnit = costPerUnit
+            self.location = location
+            self.lastRestocked = lastRestocked
+            self.status = status
+        }
+    }
+    
+    // MARK: - ContextualTask Model (CORRECTED)
+    public struct ContextualTask: Identifiable, Codable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let category: TaskCategory
+        public let urgency: TaskUrgency
+        public let buildingId: String
+        public let buildingName: String
+        public let assignedTo: String
+        public let dueDate: Date?
+        public let estimatedDuration: TimeInterval
+        public let status: String
+        public let recurrence: TaskRecurrence
+        public let createdDate: Date
+        public let lastModified: Date
+        public let weatherSensitive: Bool
+        public let requiredSkills: [String]
+        
+        public init(id: String = UUID().uuidString, title: String, description: String, category: TaskCategory, urgency: TaskUrgency, buildingId: String, buildingName: String, assignedTo: String, dueDate: Date? = nil, estimatedDuration: TimeInterval = 3600, status: String = "pending", recurrence: TaskRecurrence = .none, createdDate: Date = Date(), lastModified: Date = Date(), weatherSensitive: Bool = false, requiredSkills: [String] = []) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.category = category
+            self.urgency = urgency
+            self.buildingId = buildingId
+            self.buildingName = buildingName
+            self.assignedTo = assignedTo
+            self.dueDate = dueDate
+            self.estimatedDuration = estimatedDuration
+            self.status = status
+            self.recurrence = recurrence
+            self.createdDate = createdDate
+            self.lastModified = lastModified
+            self.weatherSensitive = weatherSensitive
+            self.requiredSkills = requiredSkills
+        }
+    }
+    
+    // MARK: - Additional Support Types
+    public struct WorkerPerformanceMetrics: Identifiable, Codable {
+        public let id: String
+        public let workerId: String
+        public let efficiency: Double
+        public let tasksCompleted: Int
+        public let averageCompletionTime: TimeInterval
+        public let qualityScore: Double
+        public let period: String
+        public let lastUpdate: Date
+        
+        public init(id: String = UUID().uuidString, workerId: String, efficiency: Double, tasksCompleted: Int, averageCompletionTime: TimeInterval, qualityScore: Double, period: String, lastUpdate: Date = Date()) {
+            self.id = id
+            self.workerId = workerId
+            self.efficiency = efficiency
+            self.tasksCompleted = tasksCompleted
+            self.averageCompletionTime = averageCompletionTime
+            self.qualityScore = qualityScore
+            self.period = period
+            self.lastUpdate = lastUpdate
+        }
+    }
+    
+    public struct TaskProgress: Codable {
+        public let completed: Int
+        public let total: Int
+        public let remaining: Int
+        public let percentage: Double
+        public let overdueTasks: Int
+        
+        public init(completed: Int, total: Int, remaining: Int, percentage: Double, overdueTasks: Int) {
+            self.completed = completed
+            self.total = total
+            self.remaining = remaining
+            self.percentage = percentage
+            self.overdueTasks = overdueTasks
+        }
+    }
+    
+    public struct TaskEvidence: Identifiable, Codable {
+        public let id: String
+        public let taskId: String
+        public let workerId: String
+        public let photos: [Data]
+        public let timestamp: Date
+        public let locationLatitude: Double?
+        public let locationLongitude: Double?
+        public let notes: String?
+        
+        public init(id: String = UUID().uuidString, taskId: String, workerId: String, photos: [Data], timestamp: Date, locationLatitude: Double? = nil, locationLongitude: Double? = nil, notes: String? = nil) {
+            self.id = id
+            self.taskId = taskId
+            self.workerId = workerId
+            self.photos = photos
+            self.timestamp = timestamp
+            self.locationLatitude = locationLatitude
+            self.locationLongitude = locationLongitude
+            self.notes = notes
+        }
+    }
+}
+
+// MARK: - Type Aliases for Clean Usage
+public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
+public typealias WeatherCondition = FrancoSphere.WeatherCondition
+public typealias WeatherData = FrancoSphere.WeatherData
+public typealias OutdoorWorkRisk = FrancoSphere.OutdoorWorkRisk
+public typealias TaskCategory = FrancoSphere.TaskCategory
+public typealias TaskUrgency = FrancoSphere.TaskUrgency
+public typealias TaskRecurrence = FrancoSphere.TaskRecurrence
+public typealias VerificationStatus = FrancoSphere.VerificationStatus
+public typealias MaintenanceTask = FrancoSphere.MaintenanceTask
+public typealias WorkerSkill = FrancoSphere.WorkerSkill
+public typealias UserRole = FrancoSphere.UserRole
+public typealias WorkerProfile = FrancoSphere.WorkerProfile
+public typealias WorkerAssignment = FrancoSphere.WorkerAssignment
+public typealias InventoryCategory = FrancoSphere.InventoryCategory
+public typealias RestockStatus = FrancoSphere.RestockStatus
+public typealias InventoryItem = FrancoSphere.InventoryItem
+public typealias ContextualTask = FrancoSphere.ContextualTask
+public typealias WorkerPerformanceMetrics = FrancoSphere.WorkerPerformanceMetrics
+public typealias TaskProgress = FrancoSphere.TaskProgress
+public typealias TaskEvidence = FrancoSphere.TaskEvidence
