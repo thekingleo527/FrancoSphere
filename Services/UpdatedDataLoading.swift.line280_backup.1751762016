@@ -100,7 +100,7 @@ class UpdatedDataLoading: ObservableObject {
         let filteredTasks = tasks.filter { task in
             let assignedName = task.assignedWorkerName ?? "Unknown"
             return assignedName.lowercased().contains(workerName.lowercased()) ||
-            assignedName == workerName
+                   assignedName == workerName
         }
         
         contextualTasks = filteredTasks
@@ -234,7 +234,7 @@ class UpdatedDataLoading: ObservableObject {
     }
     
     func isTaskUrgent(_ task: ContextualTask) -> Bool {
-        // FIXED: Proper enum access using task.urgency.rawValue
+        // FIXED: Proper enum access using task.urgency.rawValue  
         let urgencyValue = task.urgency.rawValue.lowercased()
         return urgencyValue == "urgent" || urgencyValue == "high"
     }
@@ -258,11 +258,16 @@ class UpdatedDataLoading: ObservableObject {
         var filtered = contextualTasks.filter { task in
             let assignedName = task.assignedWorkerName ?? "Unknown"
             return assignedName.lowercased().contains(workerName.lowercased()) ||
-            assignedName == workerName
+                   assignedName == workerName
         }
         
         if let category = category {
-            filtered = filtered.filter { $0.category.lowercased() == category.lowercased() }
+            // FIXED: Explicit type handling to resolve ambiguity
+            let categoryLower = category.lowercased()
+            filtered = filtered.filter { task in
+                let taskCategoryValue = task.category.rawValue.lowercased()
+                return taskCategoryValue == categoryLower
+            }
         }
         
         return filtered
@@ -272,7 +277,7 @@ class UpdatedDataLoading: ObservableObject {
         let tasks = getFilteredTasks(for: workerId)
         guard !tasks.isEmpty else { return 0.0 }
         
-        let completedTasks = tasks.filter { $0.status.lowercased() as String == "completed" }
+        let completedTasks = tasks.filter { $0.status.lowercased() == "completed" }
         return Double(completedTasks.count) / Double(tasks.count) * 100.0
     }
     
@@ -299,29 +304,28 @@ class UpdatedDataLoading: ObservableObject {
             return nil
         }
     }
+}
+
+// MARK: - Error Types
+enum UpdatedDataLoadingError: LocalizedError {
+    case noWorkerId
+    case taskLoadFailed(Error)
+    case buildingLoadFailed(Error)
+    case weatherLoadFailed(Error)
+    case operationalDataFailed(Error)
     
-    // MARK: - Error Types
-    enum UpdatedDataLoadingError: LocalizedError {
-        case noWorkerId
-        case taskLoadFailed(Error)
-        case buildingLoadFailed(Error)
-        case weatherLoadFailed(Error)
-        case operationalDataFailed(Error)
-        
-        var errorDescription: String? {
-            switch self {
-            case .noWorkerId:
-                return "Worker ID not available"
-            case .taskLoadFailed(let error):
-                return "Failed to load tasks: \(error.localizedDescription)"
-            case .buildingLoadFailed(let error):
-                return "Failed to load buildings: \(error.localizedDescription)"
-            case .weatherLoadFailed(let error):
-                return "Failed to load weather: \(error.localizedDescription)"
-            case .operationalDataFailed(let error):
-                return "Failed to load operational data: \(error.localizedDescription)"
-            }
+    var errorDescription: String? {
+        switch self {
+        case .noWorkerId:
+            return "Worker ID not available"
+        case .taskLoadFailed(let error):
+            return "Failed to load tasks: \(error.localizedDescription)"
+        case .buildingLoadFailed(let error):
+            return "Failed to load buildings: \(error.localizedDescription)"
+        case .weatherLoadFailed(let error):
+            return "Failed to load weather: \(error.localizedDescription)"
+        case .operationalDataFailed(let error):
+            return "Failed to load operational data: \(error.localizedDescription)"
         }
     }
 }
-

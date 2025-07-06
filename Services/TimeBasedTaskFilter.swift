@@ -28,7 +28,7 @@ public struct TimeBasedTaskFilter {
         case .overdue:
             return tasks.filter { task in
                 guard let dueDate = task.scheduledDate else { return false }
-                return dueDate < now && task.status != "completed"
+                return dueDate < now && task.status.lowercased() != "completed"
             }
         }
     }
