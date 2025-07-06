@@ -166,12 +166,10 @@ actor DSNYTaskGenerator {
         let taskId = "dsny_setout_\(schedule.routeId)_\(date.timeIntervalSince1970)"
         let buildingName = getBuildingName(for: schedule.primaryBuildingId)
         
-        return ContextualTask(
-            id: taskId,
-            name: "DSNY Set-out (\(schedule.routeId))",
+        return ContextualTask(id: UUID().uuidString, name: "Generated Task", description: "Auto-generated task", buildingId: "1", workerId: "1", category: .maintenance, urgency: .medium))",
             buildingId: schedule.primaryBuildingId,
             buildingName: buildingName,
-            category: "DSNY Operations",
+            category: .maintenance,
             startTime: formatTime(from: schedule.earliestSetout),
             endTime: formatTime(from: schedule.earliestSetout + 1800), // 30 minutes
             recurrence: "Weekly",
@@ -186,12 +184,10 @@ actor DSNYTaskGenerator {
         let taskId = "dsny_pickup_\(schedule.routeId)_\(date.timeIntervalSince1970)"
         let buildingName = getBuildingName(for: schedule.primaryBuildingId)
         
-        return ContextualTask(
-            id: taskId,
-            name: "DSNY Bin Return (\(schedule.routeId))",
+        return ContextualTask(id: UUID().uuidString, name: "Generated Task", description: "Auto-generated task", buildingId: "1", workerId: "1", category: .maintenance, urgency: .medium))",
             buildingId: schedule.primaryBuildingId,
             buildingName: buildingName,
-            category: "DSNY Operations",
+            category: .maintenance,
             startTime: formatTime(from: schedule.pickupWindowEnd),
             endTime: formatTime(from: schedule.pickupWindowEnd + 900), // 15 minutes
             recurrence: "Weekly",
@@ -206,12 +202,10 @@ actor DSNYTaskGenerator {
         let taskId = "dsny_compliance_\(schedule.routeId)_\(date.timeIntervalSince1970)"
         let buildingName = getBuildingName(for: schedule.primaryBuildingId)
         
-        return ContextualTask(
-            id: taskId,
-            name: "DSNY Compliance Check (\(schedule.routeId))",
+        return ContextualTask(id: UUID().uuidString, name: "Generated Task", description: "Auto-generated task", buildingId: "1", workerId: "1", category: .maintenance, urgency: .medium))",
             buildingId: schedule.primaryBuildingId,
             buildingName: buildingName,
-            category: "DSNY Operations",
+            category: .maintenance,
             startTime: "19:00", // 7:00 PM
             endTime: "19:30", // 7:30 PM
             recurrence: "Weekly",

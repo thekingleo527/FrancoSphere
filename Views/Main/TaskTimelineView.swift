@@ -181,7 +181,7 @@ struct TaskTimelineView: View {
             
             // Circle indicator
             Circle()
-                .fill(task.isComplete ? Color.green : urgencyColor(task.urgency))
+                .fill(task.isCompleted ? Color.green : urgencyColor(task.urgency))
                 .frame(width: 12, height: 12)
                 .overlay(
                     Circle()
@@ -204,14 +204,16 @@ struct TaskTimelineView: View {
         case .medium: return .orange
         case .high: return .red
         case .urgent: return .purple
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     // Convert MaintenanceTask to ContextualTask for existing TaskDetailView
     private func convertToContextualTask(_ task: MaintenanceTask) -> ContextualTask {
         // Convert String IDs to Int64 safely
         let buildingIdInt64: Int64
-        if let buildingInt = Int64(task.buildingID) {
+        if let buildingInt = Int64(task.buildingId) {
             buildingIdInt64 = buildingInt
         } else {
             buildingIdInt64 = 0
@@ -227,12 +229,12 @@ struct TaskTimelineView: View {
         // Create ContextualTask using the typealias (which points to ContextualTask)
         return ContextualTask(
             id: Int64(abs(task.id.hashValue)),
-            name: task.name,
+            name: task.title,
             description: task.description,
             buildingId: buildingIdInt64,
             workerId: workerIdInt64,
-            isCompleted: task.isComplete,
-            scheduledDate: task.dueDate
+            isCompleted: task.isCompleted,
+            dueDate: task.dueDate
         )
     }
 }
@@ -254,7 +256,7 @@ struct TaskTimelineCard: View {
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
                         
-                        Text(task.name)
+                        Text(task.title)
                             .font(.headline)
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.leading)
@@ -273,7 +275,7 @@ struct TaskTimelineCard: View {
                             .background(statusColor)
                             .cornerRadius(8)
                         
-                        if task.isPastDue && !task.isComplete {
+                        if task.isPastDue && !task.isCompleted {
                             Label("Overdue", systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption2)
                                 .foregroundColor(.red)
@@ -295,7 +297,7 @@ struct TaskTimelineCard: View {
                     
                     Spacer()
                     
-                    if !task.buildingID.isEmpty {
+                    if !task.buildingId.isEmpty {
                         Label(buildingName, systemImage: "building.2")
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -324,7 +326,7 @@ struct TaskTimelineCard: View {
     }
     
     private var statusColor: Color {
-        if task.isComplete {
+        if task.isCompleted {
             return .green
         } else if task.isPastDue {
             return .red
@@ -334,7 +336,9 @@ struct TaskTimelineCard: View {
             case .medium: return .orange
             case .high: return .red
             case .urgent: return .purple
-            }
+            
+        @unknown default:
+            EmptyView()}
         }
     }
     
@@ -356,12 +360,14 @@ struct TaskTimelineCard: View {
         case .repair: return .red
         case .sanitation: return .green
         case .inspection: return .purple
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     private var buildingName: String {
         // Get building name from ID - simplified for now
-        return "Building \(task.buildingID)"
+        return "Building \(task.buildingId)"
     }
 }
 
@@ -426,7 +432,7 @@ class TaskTimelineViewModel: ObservableObject {
         // Apply filters
         return tasks.filter { task in
             // Filter by completion status
-            if !filterOptions.showCompleted && task.isComplete {
+            if !filterOptions.showCompleted && task.isCompleted {
                 return false
             }
             
@@ -489,17 +495,17 @@ class TaskTimelineViewModel: ObservableObject {
     // Convert MaintenanceTask to ContextualTask for existing TaskDetailView
     private func convertToContextualTask(_ task: MaintenanceTask) -> ContextualTask {
         // Convert String IDs to Int64
-        let buildingId = Int64(task.buildingID) ?? 0
+        let buildingId = Int64(task.buildingId) ?? 0
         let workerId = Int64(task.assignedWorkers.first ?? "0") ?? Int64(workerId)
         
         return ContextualTask(
             id: Int64(task.id.hashValue), // Use hash of string ID
-            name: task.name,
+            name: task.title,
             description: task.description,
             buildingId: buildingId,
             workerId: workerId,
-            isCompleted: task.isComplete,
-            scheduledDate: task.dueDate
+            isCompleted: task.isCompleted,
+            dueDate: task.dueDate
         )
     }
     
@@ -512,7 +518,9 @@ class TaskTimelineViewModel: ObservableObject {
         case "sanitation": return .sanitation
         case "inspection": return .inspection
         default: return .maintenance
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     // ✅ FIXED: Urgency mapping function
@@ -523,7 +531,9 @@ class TaskTimelineViewModel: ObservableObject {
         case "high": return .high
         case "urgent": return .urgent
         default: return .medium
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     // ✅ FIXED: Recurrence mapping function
@@ -537,7 +547,9 @@ class TaskTimelineViewModel: ObservableObject {
         case "semiannual": return .semiannual
         case "annual": return .annual
         default: return .none
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
 }
 
@@ -608,7 +620,7 @@ struct TaskFilterView: View {
 struct TaskTimelineView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            TaskTaskTimelineView(workerId: 4) // Kevin's ID
+            TaskTimelineView(workerId: 4) // Kevin's ID
         }
     }
 }

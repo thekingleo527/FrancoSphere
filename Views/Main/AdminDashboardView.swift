@@ -243,7 +243,7 @@ struct AdminDashboardView: View {
     // BROKEN DOWN TO FIX COMPLEX EXPRESSION
     private var buildingsMap: some View {
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
-            MapAnnotation(coordinate: building.coordinate) {
+            Annotation(coordinate: building.coordinate) {
                 AdminBuildingMarker(building: building)
             }
         }
@@ -372,7 +372,9 @@ struct AdminDashboardView: View {
             return .green
         @unknown default:
             return .gray
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     // MARK: - Ongoing Tasks Section
@@ -485,7 +487,7 @@ struct AdminDashboardView: View {
                     .font(.system(size: 18))
                     .foregroundColor(.white)
                     .frame(width: 36, height: 36)
-                    .background(item.quantity ?? 0 <= 0 ? Color.red : (item.quantity ?? 0 <= item.minimumQuantity ?? 0 ? Color.orange : Color.green))
+                    .background(item.currentStock ?? 0 <= 0 ? Color.red : (item.currentStock ?? 0 <= item.minimumStock ?? 0 ? Color.orange : Color.green))
                     .cornerRadius(8)
                 
                 // Item details
@@ -512,7 +514,7 @@ struct AdminDashboardView: View {
                         .foregroundColor(item.statusColor)
                         .cornerRadius(12)
                     
-                    Text("\(item.quantity ?? 0) \(item.unit)")
+                    Text("\(item.currentStock ?? 0) \(item.unit)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -712,7 +714,9 @@ struct AdminDashboardView: View {
             return "checkmark.circle"
         default:
             return "square.grid.2x2"
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     private func getStatusColor(_ status: String) -> Color {
@@ -727,7 +731,9 @@ struct AdminDashboardView: View {
             return .blue
         default:
             return .gray
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     private func weatherRiskItem(_ building: NamedCoordinate) -> some View {

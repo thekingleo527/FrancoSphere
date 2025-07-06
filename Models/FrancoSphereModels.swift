@@ -144,7 +144,10 @@ public enum FrancoSphere {
         case monthly = "Monthly"
         case quarterly = "Quarterly"
         case annually = "Annually"
-    }
+        case biweekly = "Biweekly"
+    case semiannual = "Semiannual"
+    case annual = "Annual"
+}
     
     public enum VerificationStatus: String, Codable, CaseIterable {
         case pending = "Pending"
@@ -753,5 +756,120 @@ extension WorkerContextEngine {
     // Alternative method name for compatibility
     func recordTaskCompletion(workerId: String, buildingId: String, taskName: String) async {
         await updateTaskCompletion(workerId: workerId, buildingId: buildingId, taskName: taskName)
+    }
+}
+
+// MARK: - TaskCategory Extensions
+extension TaskCategory {
+    public var icon: String {
+        switch self {
+        case .cleaning: return "sparkles"
+        case .maintenance: return "wrench.and.screwdriver"
+        case .inspection: return "magnifyingglass"
+        case .repair: return "hammer"
+        case .landscaping: return "leaf"
+        case .security: return "shield"
+        case .emergency: return "exclamationmark.triangle"
+        case .installation: return "plus.circle"
+        case .utilities: return "bolt"
+        case .renovation: return "paintbrush"
+        case .sanitation: return "drop"
+        }
+    }
+}
+// MARK: - InventoryCategory Extensions
+extension InventoryCategory {
+    public var icon: String {
+        switch self {
+        case .cleaningSupplies: return "sparkles"
+        case .tools: return "wrench.and.screwdriver"
+        case .safety: return "shield"
+        case .maintenance: return "gear"
+        case .office: return "doc"
+        case .supplies: return "box"
+        case .cleaning: return "sparkles"
+        case .plumbing: return "drop"
+        case .electrical: return "bolt"
+        case .paint: return "paintbrush"
+        case .other: return "questionmark.circle"
+        }
+    }
+    
+    public var systemImage: String {
+        return icon
+    }
+}
+// MARK: - InventoryItem Extensions
+extension InventoryItem {
+    public var quantity: Int {
+        return currentStock
+    }
+    
+    public var minimumQuantity: Int {
+        return minimumStock
+    }
+    
+    public var needsReorder: Bool {
+        return currentStock <= minimumStock
+    }
+    
+    public var statusColor: Color {
+        if currentStock <= 0 {
+            return .red
+        } else if needsReorder {
+            return .orange
+        } else {
+            return .green
+        }
+    }
+    
+    public var lastRestockDate: Date? {
+        return lastRestocked
+    }
+}
+// MARK: - MaintenanceTask Extensions
+extension MaintenanceTask {
+    public var isComplete: Bool {
+        return isCompleted
+    }
+    
+    public var assignedWorkers: [String] {
+        return assignedWorkerId != nil ? [assignedWorkerId!] : []
+    }
+    
+    public var buildingID: String {
+        return buildingId
+    }
+    
+    public var name: String {
+        return self.name  // Already exists, but some code expects this explicitly
+    }
+    
+    public var startTime: Date? {
+        return scheduledDate
+    }
+    
+    public var endTime: Date? {
+        guard let start = scheduledDate else { return nil }
+        return Calendar.current.date(byAdding: .second, value: Int(estimatedDuration), to: start)
+    }
+    
+    public var isPastDue: Bool {
+        guard let due = scheduledDate else { return false }
+        return due < Date() && !isCompleted
+    }
+    
+    public var dueDate: Date? {
+        return scheduledDate
+    }
+    
+    public var title: String {
+        return name
+    }
+}
+// MARK: - NamedCoordinate Extensions
+extension NamedCoordinate {
+    public func getBuilding() async -> NamedCoordinate? {
+        return self  // Return self as the building
     }
 }

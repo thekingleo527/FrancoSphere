@@ -15,7 +15,7 @@ extension InventoryItem {
     var statusColor: Color {
         if quantity <= 0 {
             return .red
-        } else if quantity <= item.minimumQuantity {
+        } else if quantity <= item.minimumStock {
             return .orange
         } else {
             return .green
@@ -56,8 +56,7 @@ struct InventoryView: View {
                         HStack(spacing: 8) {
                             categoryButton(nil, label: "All")
                             
-                            ForEach(InventoryCategory.allCases, id: \.self) { category in
-                                categoryButton(category, label: category.rawValue.capitalized)
+                            ForEach(InventoryCategory.allCases,  label: category.rawValue.capitalized)
                             }
                         }
                         .padding(.horizontal)
@@ -285,7 +284,7 @@ struct InventoryView: View {
     private func deleteItem(_ item: InventoryItem) {
         Task { @MainActor in
             do {
-                try await BuildingService.shared.deleteInventoryItem(id: UUID().uuidString, itemId: item.id)
+                try await BuildingService.shared.deleteInventoryItem( itemId: item.id)
                 if let index = inventoryItems.firstIndex(where: { $0.id == item.id }) {
                     inventoryItems.remove(at: index)
                 }
@@ -318,13 +317,13 @@ struct InventoryItemRow: View {
                     .font(.headline)
                 
                 HStack(spacing: 8) {
-                    Text("Quantity: \(item.quantity) \(item.unit)")
+                    Text("Quantity: \(item.currentStock) \(item.unit)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
                     // ✅ FIXED: Use item properties that exist in InventoryItem
                     if item.needsReorder {
-                        Text(item.quantity <= 0 ? "Out of Stock" : "Low Stock")
+                        Text(item.currentStock <= 0 ? "Out of Stock" : "Low Stock")
                             .font(.caption)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -340,7 +339,7 @@ struct InventoryItemRow: View {
             // Quantity indicator
             VStack(alignment: .center, spacing: 2) {
                 HStack(spacing: 2) {
-                    Text("\(item.quantity)")
+                    Text("\(item.currentStock)")
                         .font(.title3)
                         .fontWeight(.bold)
                     
@@ -349,7 +348,7 @@ struct InventoryItemRow: View {
                         .foregroundColor(.secondary)
                 }
                 
-                Text("Min: \(item.item.minimumQuantity)")
+                Text("Min: \(item.item.minimumStock)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -373,7 +372,7 @@ struct InventoryItemDetailView: View {
     init(item: InventoryItem, onUpdate: @escaping () -> Void = {}) {
         self.item = item
         self.onUpdate = onUpdate
-        _newQuantity = State(initialValue: item.quantity)
+        _newQuantity = State(initialValue: item.currentStock)
     }
     
     var body: some View {
@@ -384,10 +383,10 @@ struct InventoryItemDetailView: View {
                 if isEditing {
                     Stepper("Quantity: \(newQuantity) \(item.unit)", value: $newQuantity, in: 0...1000)
                 } else {
-                    LabeledContent("Quantity", value: "\(item.quantity) \(item.unit)")
+                    LabeledContent("Quantity", value: "\(item.currentStock) \(item.unit)") \(item.unit)")
                 }
                 
-                LabeledContent("Min Quantity", value: "\(item.item.minimumQuantity) \(item.unit)")
+                LabeledContent("Min Quantity", value: "\(item.item.minimumStock) \(item.unit)")
                 LabeledContent("Category", value: item.category.rawValue.capitalized)
                 
                 // Format the date appropriately
@@ -416,7 +415,7 @@ struct InventoryItemDetailView: View {
                     .disabled(isUpdating)
                     
                     Button("Cancel") {
-                        newQuantity = item.quantity
+                        newQuantity = item.currentStock
                         isEditing = false
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -527,12 +526,7 @@ public struct AddInventoryItemView: View {
                     Stepper("Quantity: \(quantity) \(unit)", value: $quantity, in: 1...1000)
                     
                     Picker("Unit", selection: $unit) {
-                        ForEach(unitOptions, id: \.self) { unitOption in
-                            Text(unitOption).tag(unitOption)
-                        }
-                    }
-                    
-                    Stepper("Minimum Quantity: \(item.minimumQuantity)", value: $item.minimumQuantity, in: 1...100)
+                        ForEach(unitOptions,  value: $item.minimumStock, in: 1...100)
                     
                     Picker("Category", selection: $selectedCategory) {
                         ForEach(InventoryCategory.allCases, id: \.self) { category in
@@ -599,14 +593,14 @@ public struct AddInventoryItemView: View {
         
         isSubmitting = true
         
-        let newItem = InventoryItem(id: UUID().uuidString, 
+        let newItem = InventoryItem( 
             name: trimmedName,
             buildingID: buildingID,
             category: selectedCategory,
             quantity: quantity,
             unit: unit,
-            item.minimumQuantity: item.minimumQuantity,
-            needsReorder: quantity <= item.minimumQuantity,
+            item.minimumStock: item.minimumStock,
+            needsReorder: quantity <= item.minimumStock,
             lastRestockDate: Date(),
             location: location.isEmpty ? "Unknown" : location,
             notes: notes.isEmpty ? nil : notes

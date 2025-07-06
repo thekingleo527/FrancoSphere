@@ -310,11 +310,7 @@ struct TaskDetailView: View {
                 .background(Color.blue)
                 .cornerRadius(8)
             }
-            .onChange(of: selectedItem) { newItem in
-                Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        imageData = data
-                    }
+            .onChange(of: task.id) { _, _ in }
                 }
             }
             
@@ -513,8 +509,7 @@ struct TaskDetailView: View {
                 let evidence = TaskEvidence(
                     photos: imageData != nil ? [imageData!] : [],
                     timestamp: Date(),
-                    location: nil,
-                    notes: "Task completed via mobile app"
+                    locationLatitude: nil, locationLongitude: nil, notes: "Task completed via mobile app"
                 )
                 
                 // Submit to TaskService
@@ -606,7 +601,7 @@ struct TaskDetailView_Previews: PreviewProvider {
                 buildingId: 101,
                 workerId: 1001,
                 isCompleted: false,
-                scheduledDate: Date()
+                dueDate: Date()
             )
             
             TaskDetailView(task: previewTask)

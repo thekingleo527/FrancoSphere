@@ -95,14 +95,11 @@ class WorkerDashboardIntegration: ObservableObject {
         do {
             // ✅ FIXED: Use correct TaskEvidence initializer with proper parameters
             let evidence = TaskEvidence(
-                id: UUID().uuidString,
-                taskId: taskId,
-                workerId: workerId,
                 photos: [Data](),
                 timestamp: Date(),
                 locationLatitude: nil,
                 locationLongitude: nil,
-                notes: nil
+                notes: "Task completed via WorkerDashboardIntegration"
             )
 
             try await taskService.completeTask(
@@ -112,7 +109,11 @@ class WorkerDashboardIntegration: ObservableObject {
                 evidence: evidence
             )
 
-            await contextEngine.recordTaskCompletion()
+            await contextEngine.recordTaskCompletion(
+                workerId: workerId,
+                buildingId: buildingId,
+                taskName: taskId  // Using taskId as taskName for now
+            )
 
             await refreshDashboard()
 

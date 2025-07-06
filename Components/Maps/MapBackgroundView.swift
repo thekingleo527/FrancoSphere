@@ -25,7 +25,7 @@ struct MapBackgroundView: View {
     
     var body: some View {
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
-            MapAnnotation(coordinate: building.coordinate) {
+            Annotation(coordinate: building.coordinate) {
                 // Create BuildingMapMarker inline since it's not found
                 BuildingMarker(
                     building: building,

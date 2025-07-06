@@ -33,7 +33,9 @@ struct MaintenanceTaskView: View {
         case .medium: return .yellow
         case .high:   return .red
         case .urgent: return .purple
-        }
+            @unknown default: Text("Unknown")
+        @unknown default:
+            EmptyView()}
     }
 
     var body: some View {
@@ -44,7 +46,7 @@ struct MaintenanceTaskView: View {
                 HStack {
                     Text(task.title).font(.title).bold()
                     Spacer()
-                    StatusBadge(isCompleted: task.isComplete, urgency: task.urgency)
+                    StatusBadge(isCompleted: task.isCompleted, urgency: task.urgency)
                 }
 
                 // Building
@@ -174,15 +176,15 @@ struct MaintenanceTaskView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     } else {
-                        Image(systemName: task.isComplete ? "arrow.uturn.left"
+                        Image(systemName: task.isCompleted ? "arrow.uturn.left"
                                                           : "checkmark.circle")
                     }
                     Text(isMarkingComplete ? "Processing..." :
-                         (task.isComplete ? "Mark as Pending" : "Mark as Complete"))
+                         (task.isCompleted ? "Mark as Pending" : "Mark as Complete"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(task.isComplete ? Color.orange : Color.green)
+                .background(task.isCompleted ? Color.orange : Color.green)
                 .foregroundColor(.white)
                 .cornerRadius(10)
             }
@@ -243,13 +245,12 @@ struct MaintenanceTaskView: View {
             let evidence = TaskEvidence(
                 photos: [],
                 timestamp: Date(),
-                location: nil,
-                notes: "Marked complete from maintenance view"
+                locationLatitude: nil, locationLongitude: nil, notes: "Marked complete from maintenance view"
             )
             
             try await taskService.completeTask(
                 task.id,
-                workerId: task.assignedWorkers.first ?? "unknown",
+                workerId: task.assignedWorkerId ?? "unknown",
                 buildingId: task.buildingId,
                 evidence: evidence
             )
@@ -298,7 +299,9 @@ struct StatusBadge: View {
         case .medium: return .yellow
         case .high:   return .red
         case .urgent: return .purple
-        }
+            @unknown default: Text("Unknown")
+        @unknown default:
+            EmptyView()}
     }
 
     var body: some View {

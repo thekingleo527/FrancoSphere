@@ -1,12 +1,22 @@
-///
+//
+//  BuildingHeaderGlassOverlay.swift
+//  FrancoSphere
+//
+//  Created by Shawn Magloire on 6/7/25.
+//
+
+
+//
 //  BuildingHeaderGlassOverlay.swift
 //  FrancoSphere
 //
 //  Glass overlay for building header with image background
-//  ✅ COMPLETELY REWRITTEN - Clean implementation without optional issues
 //
 
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 struct BuildingHeaderGlassOverlay: View {
     let building: NamedCoordinate
@@ -33,7 +43,7 @@ struct BuildingHeaderGlassOverlay: View {
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.leading)
                                 
-                                // Location information using coordinates
+                                // FIXED: Replace address with location information using coordinates
                                 HStack(spacing: 6) {
                                     Image(systemName: "location.fill")
                                         .font(.caption)
@@ -79,10 +89,8 @@ struct BuildingHeaderGlassOverlay: View {
     
     private var buildingImageBackground: some View {
         Group {
-            // ✅ FIXED: Proper optional handling for imageAssetName
-            if let imageAssetName = building.imageAssetName,
-               !imageAssetName.isEmpty,
-               let uiImage = UIImage(named: imageAssetName) {
+            if !building.imageAssetName?.isEmpty == true,
+               let uiImage = UIImage(named: building.imageAssetName) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
@@ -246,6 +254,7 @@ struct BuildingHeaderGlassOverlay: View {
     
     // MARK: - Helper Methods
     
+    // FIXED: New helper method to format location information
     private func getFormattedLocation() -> String {
         let district = getDistrict()
         let buildingType = getBuildingType()
