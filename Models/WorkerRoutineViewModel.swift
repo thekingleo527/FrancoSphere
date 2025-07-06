@@ -2,8 +2,8 @@
 //  WorkerRoutineViewModel.swift
 //  FrancoSphere
 //
-//  ✅ COMPLETELY FIXED to match FrancoSphereModels structure
-//  ✅ All initializers and properties corrected
+//  ✅ FIXED - All property names and constructor calls corrected
+//  ✅ Matches FrancoSphereModels structure exactly
 //
 
 import SwiftUI
@@ -92,7 +92,24 @@ class WorkerRoutineViewModel: ObservableObject {
             let tasks = try await taskService.getTasks(for: selectedWorker, date: selectedDate)
             await MainActor.run {
                 self.routineTasks = tasks.compactMap { task in
-                    MaintenanceTask(id: task.id, name: task.name, description: task.description, category: task.category, urgency: task.urgency, recurrence: .none, estimatedDuration: task.estimatedDuration, requiredSkills: [], buildingId: task.buildingId, assignedWorkerId: task.workerId, scheduledDate: task.dueDate, completedDate: nil, isCompleted: task.isCompleted, notes: nil, verificationStatus: VerificationStatus.pending)
+                    // FIXED: Use correct property names and constructor signature
+                    MaintenanceTask(
+                        id: task.id,
+                        title: task.name,                    // FIXED: title not name
+                        description: task.description,
+                        category: task.category,
+                        urgency: task.urgency,
+                        recurrence: .none,
+                        estimatedDuration: task.estimatedDuration,
+                        requiredSkills: [],
+                        buildingId: task.buildingId,
+                        assignedWorkerId: task.workerId,
+                        dueDate: task.dueDate,              // FIXED: dueDate not scheduledDate
+                        completedDate: nil,
+                        isCompleted: task.isCompleted,
+                        notes: nil,
+                        status: .pending                    // FIXED: status not verificationStatus
+                    )
                 }
                 
                 // Group by building
@@ -106,13 +123,11 @@ class WorkerRoutineViewModel: ObservableObject {
     private func generateDailyRoute() async {
         guard !routineTasks.isEmpty else { return }
         
-        // Generate route from buildings with tasks
-        _ = Array(buildingsWithTasks.keys).sorted()
+        // FIXED: Define route variable properly
+        let route = Array(buildingsWithTasks.keys).sorted()
         
         await MainActor.run {
-            self.dailyRoute = WorkerDailyRoute(
-                route: route
-            )
+            self.dailyRoute = WorkerDailyRoute(route: route)
         }
     }
     
@@ -193,7 +208,7 @@ class WorkerRoutineViewModel: ObservableObject {
     }
     
     private func analyzeTimeEfficiency() -> Double {
-        guard let route = dailyRoute else { return 0.0 }
+        guard let _ = dailyRoute else { return 0.0 }
         return 0.78 // Sample efficiency score
     }
     
@@ -224,9 +239,10 @@ class WorkerRoutineViewModel: ObservableObject {
         guard let taskIndex = routineTasks.firstIndex(where: { $0.id == taskId }) else { return }
         
         let task = routineTasks[taskIndex]
+        // FIXED: Use correct property names and constructor signature
         let updatedTask = MaintenanceTask(
             id: task.id,
-            name: task.name,
+            title: task.title,                      // FIXED: title not name
             description: task.description,
             category: task.category,
             urgency: task.urgency,
@@ -235,11 +251,11 @@ class WorkerRoutineViewModel: ObservableObject {
             requiredSkills: task.requiredSkills,
             buildingId: task.buildingId,
             assignedWorkerId: task.assignedWorkerId,
-            scheduledDate: task.scheduledDate,
+            dueDate: task.dueDate,                  // FIXED: dueDate not scheduledDate
             completedDate: Date(),
             isCompleted: true,
             notes: task.notes,
-            verificationStatus: VerificationStatus.approved
+            status: .approved                       // FIXED: status not verificationStatus
         )
         
         await MainActor.run {
@@ -305,10 +321,10 @@ extension WorkerRoutineViewModel {
     static func sampleViewModel() -> WorkerRoutineViewModel {
         let vm = WorkerRoutineViewModel()
         
-        // Add sample data for previews
+        // FIXED: Use correct property names in sample data
         let sampleTask = MaintenanceTask(
             id: UUID().uuidString,
-            name: "Rubin Museum Cleaning",
+            title: "Rubin Museum Cleaning",           // FIXED: title not name
             description: "Daily cleaning routine for Rubin Museum",
             category: .cleaning,
             urgency: .medium,
@@ -317,11 +333,11 @@ extension WorkerRoutineViewModel {
             requiredSkills: [.cleaning],
             buildingId: "14",
             assignedWorkerId: "4",
-            scheduledDate: Date(),
+            dueDate: Date(),                          // FIXED: dueDate not scheduledDate
             completedDate: nil,
             isCompleted: false,
             notes: nil,
-            verificationStatus: VerificationStatus.pending
+            status: .pending                          // FIXED: status not verificationStatus
         )
         
         vm.routineTasks = [sampleTask]

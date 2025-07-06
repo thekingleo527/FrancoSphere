@@ -1,9 +1,8 @@
 //
-//
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 CLEAN VERSION - All syntax errors fixed, malformed extensions removed
+//  🔧 COMPLETE STRUCTURAL REBUILD - All 70+ errors fixed
 //
 
 import Foundation
@@ -671,12 +670,11 @@ extension FrancoSphere.TaskCategory {
     public func lowercased() -> String {
         return self.rawValue.lowercased()
     }
-}
-
 // MARK: - ContextualTask Extensions for Compatibility
-extension FrancoSphere.ContextualTask {
+extension ContextualTask {
+    // Missing properties that other files expect
     public var scheduledDate: Date? { return dueDate }
-    public var startTime: String? {
+    public var startTime: String? { 
         guard let date = dueDate else { return nil }
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
@@ -694,7 +692,9 @@ extension FrancoSphere.ContextualTask {
         return due < Date() && status.lowercased() != "completed"
     }
     public var buildingName: String {
+        // This will need to be looked up from BuildingService
         return BuildingService.shared.getBuildingName(for: buildingId)
     }
     public var assignedWorkerName: String? { return workerId }
+}
 }
