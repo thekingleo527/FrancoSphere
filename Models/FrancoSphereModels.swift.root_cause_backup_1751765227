@@ -527,15 +527,13 @@ public enum FrancoSphere {
     public struct TaskEvidence: Codable {
         public let photos: [Data]
         public let timestamp: Date
-        public let locationLatitude: Double?
-        public let locationLongitude: Double?
+        public let location: CLLocation?
         public let notes: String?
         
         public init(photos: [Data], timestamp: Date, location: CLLocation?, notes: String?) {
             self.photos = photos
             self.timestamp = timestamp
-            self.locationLatitude = location?.coordinate.latitude
-            self.locationLongitude = location?.coordinate.longitude
+            self.location = location
             self.notes = notes
         }
     }
@@ -699,6 +697,25 @@ public typealias DetailedWorker = WorkerProfile
 extension FrancoSphere.WeatherData {
     public var formattedTemperature: String {
         return "\(Int(temperature))°"
+    }
+}
+
+// MARK: - Enum Extensions for String Conversion
+extension FrancoSphere.TaskUrgency {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+extension FrancoSphere.VerificationStatus {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
+    }
+}
+
+extension FrancoSphere.TaskCategory {
+    public func lowercased() -> String {
+        return self.rawValue.lowercased()
     }
 }
 

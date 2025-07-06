@@ -117,11 +117,11 @@ class UpdatedDataLoading: ObservableObject {
     private func loadWeatherData() async {
         // FIXED: Proper WeatherData constructor with correct argument order
         currentWeather = WeatherData(
-            condition: .clear,
             temperature: 72.0,
-            humidity: 65,
+            condition: .clear,
+            humidity: 65.0,
             windSpeed: 12.0,
-            description: "Clear skies"
+            timestamp: Date()
         )
         
         // Load weather for each building
