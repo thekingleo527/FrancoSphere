@@ -41,8 +41,8 @@ class TodayTasksViewModel: ObservableObject {
             
             await MainActor.run {
                 self.tasks = todaysTasks
-                self.completedTasks = todaysTasks.filter { $0.status.rawValue == "completed" }
-                self.pendingTasks = todaysTasks.filter { $0.status.rawValue == "pending" }
+                self.completedTasks = todaysTasks.filter { $0.status == "completed" }
+                self.pendingTasks = todaysTasks.filter { $0.status == "pending" }
             }
             
         } catch {

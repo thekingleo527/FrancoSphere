@@ -30,7 +30,6 @@
 		234581362DF78E3D00355F0A /* 12_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580EB2DF78E3D00355F0A /* 12_West_18th_Street.jpg */; };
 		234581372DF78E3D00355F0A /* 133_East_15th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F52DF78E3D00355F0A /* 133_East_15th_Street.jpg */; };
 		234581382DF78E3D00355F0A /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 234580FA2DF78E3D00355F0A /* AppIcon.png */; };
-		234581392DF78E3D00355F0A /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 2345808B2DF78E3D00355F0A /* CLAUDE.md */; };
 		2345813A2DF78E3D00355F0A /* 41_Elizabeth_Street.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 234580EE2DF78E3D00355F0A /* 41_Elizabeth_Street.jpeg */; };
 		2345813B2DF78E3D00355F0A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */; };
 		2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 234580F92DF78E3D00355F0A /* AIAssistant.png */; };
@@ -186,7 +185,6 @@
 		23423DB72D739D6800AACE3E /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		2345808B2DF78E3D00355F0A /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
 		2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHeaderGlassOverlay.swift; sourceTree = "<group>"; };
 		2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInGlassCard.swift; sourceTree = "<group>"; };
@@ -399,7 +397,6 @@
 			children = (
 				236106EB2E17AD0700463A59 /* Security */,
 				233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */,
-				2345808B2DF78E3D00355F0A /* CLAUDE.md */,
 				234580B72DF78E3D00355F0A /* Components */,
 				234580BC2DF78E3D00355F0A /* Data */,
 				234580BD2DF78E3D00355F0A /* FrancoSphere.xcodeproj */,
@@ -881,7 +878,6 @@
 				234581362DF78E3D00355F0A /* 12_West_18th_Street.jpg in Resources */,
 				234581372DF78E3D00355F0A /* 133_East_15th_Street.jpg in Resources */,
 				234581382DF78E3D00355F0A /* AppIcon.png in Resources */,
-				234581392DF78E3D00355F0A /* CLAUDE.md in Resources */,
 				2345813A2DF78E3D00355F0A /* 41_Elizabeth_Street.jpeg in Resources */,
 				2345813B2DF78E3D00355F0A /* Preview Assets.xcassets in Resources */,
 				2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */,

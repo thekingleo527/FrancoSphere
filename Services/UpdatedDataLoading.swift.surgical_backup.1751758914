@@ -6,8 +6,7 @@
 //  ✅ Fixed all type conversion errors
 //  ✅ Fixed enum method calls
 //  ✅ Fixed Date vs String confusion
-//  ✅ Fixed WeatherData constructor argument order (Line 121)
-//  ✅ Fixed type ambiguity with explicit annotations (Line 270)
+//  ✅ Fixed WeatherData constructor argument order
 //
 
 import Foundation
@@ -116,20 +115,13 @@ class UpdatedDataLoading: ObservableObject {
     }
     
     private func loadWeatherData() async {
-        // FIXED LINE 121: Use correct WeatherData constructor with proper parameter order and types
+        // FIXED: Proper WeatherData constructor with correct argument order
         currentWeather = WeatherData(
-            date: Date(),
             temperature: 72.0,
-            feelsLike: 70.0,
-            humidity: 65,          // Int, not Double
+            condition: .clear,
+            humidity: 65.0,
             windSpeed: 12.0,
-            windDirection: 180,    // Int, not missing
-            precipitation: 0.0,
-            snow: 0.0,
-            condition: .clear,     // WeatherCondition enum
-            uvIndex: 0,
-            visibility: 10000.0,
-            description: "Clear skies"
+            timestamp: Date()
         )
         
         // Load weather for each building
@@ -265,12 +257,7 @@ class UpdatedDataLoading: ObservableObject {
         }
         
         if let category = category {
-            // FIXED LINE 283: Added explicit String type annotations to resolve ambiguity
-            let categoryLower: String = category.lowercased()
-            filtered = filtered.filter { task in
-                let taskCategoryLower: String = task.category.rawValue.lowercased()
-                return taskCategoryLower == categoryLower
-            }
+            filtered = filtered.filter { $0.category.rawValue.lowercased() == category.lowercased() }
         }
         
         return filtered

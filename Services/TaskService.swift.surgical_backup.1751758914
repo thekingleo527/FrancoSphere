@@ -77,12 +77,7 @@ actor TaskService {
     
     func fetchTasks() async -> [ContextualTask] {
         // FIXED: Return ContextualTask and use proper method
-        do {
-            return try await getTasks(for: "1", date: Date())
-        } catch {
-            print("Error fetching tasks: \(error)")
-            return []
-        }
+        return try? await getTasks(for: "1", date: Date()) ?? []
     }
     
     func createTask(_ task: ContextualTask) async throws {
