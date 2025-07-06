@@ -32,7 +32,7 @@ import SQLite
 // ✅ Type alias for SQLite.Binding clarity
 typealias SQLiteBinding = SQLite.Binding
 
-class BuildingService {
+actor BuildingService {
     static let shared = BuildingService()
     
     // MARK: - Dependencies
@@ -42,7 +42,7 @@ class BuildingService {
     private var routineTasksCache: [String: [String]] = [:]
     private var taskStatusCache: [String: TaskStatus] = [:]
     private var inventoryCache: [String: [InventoryItem]] = [:]
-    private nonisolated let sqliteManager = SQLiteManager.shared
+    private let sqliteManager = SQLiteManager.shared
     private let operationalManager = OperationalDataManager.shared
     
     // ✅ CRITICAL: Kevin's Corrected Building Data (Rubin Museum Reality Fix)
@@ -51,25 +51,26 @@ class BuildingService {
     // MARK: - Initialization with Kevin Correction
     private init() {
         // ✅ CRITICAL: Building definitions with Kevin's corrected assignments
-                self.buildings = [
-            NamedCoordinate(id: "1", name: "12 West 18th Street", latitude: 40.7389, longitude: -73.9936),
-            NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.7386, longitude: -73.9883),
-            NamedCoordinate(id: "3", name: "36 Walker Street", latitude: 40.7171, longitude: -74.0026),
-            NamedCoordinate(id: "4", name: "41 Elizabeth Street", latitude: 40.7178, longitude: -73.9965),
-            NamedCoordinate(id: "5", name: "131 Perry Street", latitude: 40.735678, longitude: -74.003456),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971),
-            NamedCoordinate(id: "8", name: "138 West 17th Street", latitude: 40.739876, longitude: -73.996543),
-            NamedCoordinate(id: "9", name: "135-139 West 17th Street", latitude: 40.739654, longitude: -73.996789),
-            NamedCoordinate(id: "10", name: "117 West 17th Street", latitude: 40.739432, longitude: -73.995678),
-            NamedCoordinate(id: "11", name: "112 West 18th Street", latitude: 40.740123, longitude: -73.995432),
-            NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968),
-            NamedCoordinate(id: "13", name: "133 East 15th Street", latitude: 40.734567, longitude: -73.985432),
-            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980),
-            NamedCoordinate(id: "15", name: "Stuyvesant Cove Park", latitude: 40.731234, longitude: -73.971456),
-            NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892),
-            NamedCoordinate(id: "17", name: "178 Spring Street Alt", latitude: 40.7245, longitude: -73.9968),
-            NamedCoordinate(id: "18", name: "Additional Building", latitude: 40.7589, longitude: -73.9851)
+        self.buildings = [
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            // ✅ CRITICAL CORRECTION: Kevin works at Rubin Museum, NOT Franklin Street
+            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, address: nil, imageAssetName: nil),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng)
         ]
         
         // Initialize caches asynchronously
@@ -178,13 +179,7 @@ class BuildingService {
                 return nil
             }
             
-            guard let name = row["name"] as? String,
-                      let lat = row["latitude"] as? Double,
-                      let lng = row["longitude"] as? Double else {
-                return nil
-            }
-            
-            let building = NamedCoordinate(id: id, name: name, latitude: lat, longitude: lng)
+            let building = NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng)""
             )
             
             buildingsCache[id] = building
@@ -213,14 +208,15 @@ class BuildingService {
     // ✅ CRITICAL: Kevin's Corrected Building Assignments (Reality Fix)
     private func getKevinCorrectedAssignments() async -> [NamedCoordinate] {
         return [
-            NamedCoordinate(id: "5", name: "131 Perry Street", latitude: 40.735678, longitude: -74.003456),
-            NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055),
-            NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971),
-            NamedCoordinate(id: "8", name: "138 West 17th Street", latitude: 40.739876, longitude: -73.996543),
-            NamedCoordinate(id: "9", name: "135-139 West 17th Street", latitude: 40.739654, longitude: -73.996789),
-            NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968),
-            NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892),
-            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980)
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            NamedCoordinate(id: String(buildingId), name: name, latitude: lat, longitude: lng),
+            // ✅ CORRECTED: Rubin Museum instead of 104 Franklin Street
+            NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", coordinate: CLLocationCoordinate2D(latitude: 40.7402, longitude: -73.9980))
         ]
     }
     
@@ -404,7 +400,7 @@ class BuildingService {
         let parameters: [SQLiteBinding] = [
             item.id, item.name, item.id, item.category.rawValue,
             item.quantity, item.category.rawValue, item.minimumQuantity, needsReorderInt,
-            lastRestockString, item.name, item.location ?? "",
+            lastRestockString, item.name, item.name ?? "",
             ISO8601DateFormatter().string(from: Date())
         ]
         
@@ -876,15 +872,6 @@ class BuildingService {
     }
 }
 
-
-    func getWorkerAssignments(for buildingId: String) -> [FrancoWorkerAssignment] {
-        return assignments(for: buildingId)
-    }
-    
-    func getBuilding(by buildingId: String) -> NamedCoordinate? {
-        return buildings.first { $0.id == buildingId }
-    }
-
 // MARK: - Supporting Types
 
 struct FrancoWorkerAssignment: Identifiable {
@@ -1023,7 +1010,7 @@ enum BuildingServiceError: LocalizedError {
 // MARK: - Missing Methods for Compatibility
 extension BuildingService {
     public func getBuildingName(for buildingId: String) -> String {
-        return getBuilding( buildingId)?.name ?? "Unknown Building"
+        return getBuilding(by: buildingId)?.name ?? "Unknown Building"
     }
     
     public func getAssignedWorkersFormatted(for buildingId: String) -> String {
@@ -1033,7 +1020,7 @@ extension BuildingService {
 
     // MARK: - Compatibility Methods
     func fetchBuilding(id: String) async throws -> NamedCoordinate? {
-        return try await getBuilding(id)
+        return await getBuilding(id)
     }
 
 }

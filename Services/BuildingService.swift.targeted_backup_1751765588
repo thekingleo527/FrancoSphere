@@ -32,7 +32,7 @@ import SQLite
 // ✅ Type alias for SQLite.Binding clarity
 typealias SQLiteBinding = SQLite.Binding
 
-class BuildingService {
+actor BuildingService {
     static let shared = BuildingService()
     
     // MARK: - Dependencies
@@ -404,7 +404,7 @@ class BuildingService {
         let parameters: [SQLiteBinding] = [
             item.id, item.name, item.id, item.category.rawValue,
             item.quantity, item.category.rawValue, item.minimumQuantity, needsReorderInt,
-            lastRestockString, item.name, item.location ?? "",
+            lastRestockString, item.name, item.name ?? "",
             ISO8601DateFormatter().string(from: Date())
         ]
         
@@ -876,15 +876,6 @@ class BuildingService {
     }
 }
 
-
-    func getWorkerAssignments(for buildingId: String) -> [FrancoWorkerAssignment] {
-        return assignments(for: buildingId)
-    }
-    
-    func getBuilding(by buildingId: String) -> NamedCoordinate? {
-        return buildings.first { $0.id == buildingId }
-    }
-
 // MARK: - Supporting Types
 
 struct FrancoWorkerAssignment: Identifiable {
@@ -1023,7 +1014,7 @@ enum BuildingServiceError: LocalizedError {
 // MARK: - Missing Methods for Compatibility
 extension BuildingService {
     public func getBuildingName(for buildingId: String) -> String {
-        return getBuilding( buildingId)?.name ?? "Unknown Building"
+        return getBuilding(by: buildingId)?.name ?? "Unknown Building"
     }
     
     public func getAssignedWorkersFormatted(for buildingId: String) -> String {
@@ -1033,7 +1024,7 @@ extension BuildingService {
 
     // MARK: - Compatibility Methods
     func fetchBuilding(id: String) async throws -> NamedCoordinate? {
-        return try await getBuilding(id)
+        return await getBuilding(id)
     }
 
 }
