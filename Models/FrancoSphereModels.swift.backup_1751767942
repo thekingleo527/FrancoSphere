@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 NAMESPACE REBUILD - Minimal working structure
+//  🔧 COMPLETE RESTORATION - All types preserved
 //
 
 import Foundation
@@ -58,6 +58,12 @@ public enum FrancoSphere {
         case stormy = "Stormy"
         case foggy = "Foggy"
         case windy = "Windy"
+    
+        case rain = "Rain"
+        case snow = "Snow"
+        case storm = "Storm"
+        case fog = "Fog"
+        
     }
     
     public struct WeatherData: Identifiable, Codable {
@@ -89,6 +95,23 @@ public enum FrancoSphere {
             self.uvIndex = uvIndex
             self.visibility = visibility
             self.description = description.isEmpty ? condition.rawValue : description
+        }
+        
+        // MARK: - Convenience Constructor for HeroStatusCard compatibility
+        public init(condition: WeatherCondition, temperature: Double, humidity: Int, windSpeed: Double, description: String) {
+            self.id = UUID().uuidString
+            self.date = Date()
+            self.temperature = temperature
+            self.feelsLike = temperature
+            self.humidity = humidity
+            self.windSpeed = windSpeed
+            self.windDirection = 0
+            self.precipitation = 0
+            self.snow = 0
+            self.condition = condition
+            self.uvIndex = 0
+            self.visibility = 10
+            self.description = description
         }
     }
     
@@ -183,6 +206,10 @@ public enum FrancoSphere {
         case cleaning = "Cleaning"
         case security = "Security"
         case maintenance = "General Maintenance"
+    
+        case repair = "Repair"
+        case inspection = "Inspection"
+        
     }
     
     public enum UserRole: String, Codable, CaseIterable {

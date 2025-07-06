@@ -30,6 +30,7 @@ import Combine
 // (This comment helps identify our import)
 
 import CoreLocation
+import WeatherManager
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
@@ -87,6 +88,24 @@ public enum WorkerContextError: LocalizedError {
     }
 }
 
+
+// MARK: - WeatherManager Compatibility
+class WeatherManager: ObservableObject {
+    static let shared = WeatherManager()
+    @Published var currentWeather: WeatherData?
+    
+    private init() {
+        // Initialize with default weather
+        currentWeather = WeatherData(
+            condition: .clear,
+            temperature: 72.0,
+            humidity: 65,
+            windSpeed: 8.0,
+            description: "Clear skies"
+        )
+    }
+}
+
 // MARK: - Main Worker Context Engine Class
 
 @MainActor
@@ -98,8 +117,8 @@ public class WorkerContextEngine: ObservableObject {
     public func getCurrentWeather() -> WeatherData? {
         // Return current weather data - implementation depends on your weather service
         return WeatherData(
-            temperature: 72.0,
             condition: .clear,
+            temperature: 72.0,
             humidity: 65.0,
             windSpeed: 8.0,
             timestamp: Date()
@@ -301,7 +320,7 @@ public class WorkerContextEngine: ObservableObject {
     public func getDailyRoutineCount(for buildingId: String) -> Int {
         let buildingRoutines = getRoutinesForBuilding(buildingId)
         let dailyRoutines = buildingRoutines.filter {
-            $0.recurrence.lowercased().contains("daily")
+            $0.recurrence.rawValue.lowercased().contains("daily")
         }
         
         print("📊 Building \(buildingId) has \(dailyRoutines.count) daily routines")
@@ -1027,10 +1046,11 @@ public class WorkerContextEngine: ObservableObject {
             WorkerProfile(
                 id: generateWorkerId(from: name),
                 name: name,
-                role: inferWorkerRole(from: name),
-                shift: inferWorkerShift(from: name),
-                buildingId: buildingId,
-                isOnSite: isWorkerOnSite(name)
+                email: "",
+                phoneNumber: "",
+                role: UserRole(rawValue: inferWorkerRole(from: name)) ?? .worker,
+                skills: [],
+                hireDate: Date()
             )
         }
         
@@ -1211,7 +1231,7 @@ public class WorkerContextEngine: ObservableObject {
             todaysTasks.contains { task in
                 task.buildingId == buildingId &&
                 task.assignedWorkerName == workerName &&
-                (task.category.lowercased().contains("dsny") || task.name.lowercased().contains("trash"))
+                (task.category.rawValue.lowercased().contains("dsny") || task.name.lowercased().contains("trash"))
             }
         }
         
@@ -1310,7 +1330,7 @@ public class WorkerContextEngine: ObservableObject {
         
         // Rain modifications
         if weather.condition == .rain {
-            if task.category.lowercased().contains("sidewalk") ||
+            if task.category.rawValue.lowercased().contains("sidewalk") ||
                task.name.lowercased().contains("sweep") {
                 newStatus = "weather_postponed"
                 newUrgencyLevel = "low"
@@ -1319,7 +1339,7 @@ public class WorkerContextEngine: ObservableObject {
         
         // Snow modifications
         if weather.condition == .snow {
-            if task.category.lowercased().contains("dsny") ||
+            if task.category.rawValue.lowercased().contains("dsny") ||
                task.name.lowercased().contains("trash") {
                 newUrgencyLevel = "high" // Higher priority in snow
             }
@@ -1327,7 +1347,7 @@ public class WorkerContextEngine: ObservableObject {
         
         // Extreme temperature modifications
         if weather.temperature < 20 || weather.temperature > 85 {
-            if task.category.lowercased().contains("cleaning") {
+            if task.category.rawValue.lowercased().contains("cleaning") {
                 newUrgencyLevel = "high" // Complete quickly in extreme weather
             }
         }

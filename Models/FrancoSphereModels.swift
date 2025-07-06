@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 NAMESPACE REBUILD - Minimal working structure
+//  🔧 COMPLETE RESTORATION - All types preserved
 //
 
 import Foundation
@@ -64,7 +64,7 @@ public enum FrancoSphere {
         case storm = "Storm"
         case fog = "Fog"
         
-}
+    }
     
     public struct WeatherData: Identifiable, Codable {
         public let id: String
@@ -210,7 +210,7 @@ public enum FrancoSphere {
         case repair = "Repair"
         case inspection = "Inspection"
         
-}
+    }
     
     public enum UserRole: String, Codable, CaseIterable {
         case worker = "Worker"
@@ -333,6 +333,14 @@ public enum FrancoSphere {
         public let weatherSensitive: Bool
         public let requiredSkills: [String]
         
+        // ENHANCED: Additional properties for WorkerContextEngine compatibility
+        public var name: String { return title }
+        public var startTime: String? { return nil }
+        public var endTime: String? { return nil }
+        public var urgencyLevel: String { return urgency.rawValue }
+        public var skillLevel: String { return "basic" }
+        public var assignedWorkerName: String { return assignedTo }
+        
         public init(id: String = UUID().uuidString, title: String, description: String, category: TaskCategory, urgency: TaskUrgency, buildingId: String, buildingName: String, assignedTo: String, dueDate: Date? = nil, estimatedDuration: TimeInterval = 3600, status: String = "pending", recurrence: TaskRecurrence = .none, createdDate: Date = Date(), lastModified: Date = Date(), weatherSensitive: Bool = false, requiredSkills: [String] = []) {
             self.id = id
             self.title = title
@@ -350,6 +358,26 @@ public enum FrancoSphere {
             self.lastModified = lastModified
             self.weatherSensitive = weatherSensitive
             self.requiredSkills = requiredSkills
+        }
+        
+        // ENHANCED: Constructor with time properties
+        public init(id: String, name: String, buildingId: String, buildingName: String, category: String, startTime: String?, endTime: String?, recurrence: String, skillLevel: String, status: String, urgencyLevel: String, assignedWorkerName: String) {
+            self.id = id
+            self.title = name
+            self.description = ""
+            self.category = TaskCategory(rawValue: category) ?? .maintenance
+            self.urgency = TaskUrgency(rawValue: urgencyLevel) ?? .medium
+            self.buildingId = buildingId
+            self.buildingName = buildingName
+            self.assignedTo = assignedWorkerName
+            self.dueDate = nil
+            self.estimatedDuration = 3600
+            self.status = status
+            self.recurrence = TaskRecurrence(rawValue: recurrence) ?? .none
+            self.createdDate = Date()
+            self.lastModified = Date()
+            self.weatherSensitive = false
+            self.requiredSkills = []
         }
     }
     

@@ -1,3 +1,5 @@
+// Import AITypes for WorkerStatus
+
 // Import for WorkerStatus
 // Using AITypes module
 
@@ -1603,3 +1605,12 @@ extension WorkerContextEngine {
 }
 
 
+
+// MARK: - WorkerStatus Compatibility
+public typealias WorkerStatus = String
+public extension String {
+    static let available = "available"
+    static let busy = "busy"
+    static let clockedIn = "clockedIn"
+    static let clockedOut = "clockedOut"
+}
