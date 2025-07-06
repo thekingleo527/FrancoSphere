@@ -524,6 +524,7 @@ public struct AddInventoryItemView: View {
     
     private var unitOptions = ["pcs", "bottles", "rolls", "boxes", "gallons", "liters", "feet", "inches", "lbs", "kg", "units"]
     
+    public // Explicit public initializer
     public init(buildingID: String, onComplete: @escaping (Bool) -> Void) {
         self.buildingID = buildingID
         self.onComplete = onComplete

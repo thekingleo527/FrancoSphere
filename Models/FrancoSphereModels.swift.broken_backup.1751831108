@@ -295,7 +295,7 @@ public enum FrancoSphere {
         public let restockStatus: RestockStatus
         public let lastRestocked: Date?
         
-        public init(id: String = UUID().uuidString, name: String, description: String, category: InventoryCategory, currentStock: Int, minimumStock: Int, unit: String, supplier: String, costPerUnit: Double, restockStatus: RestockStatus, lastRestocked: Date? = nil) {
+        public init(id: String = UUID().uuidString, name: String, description: String, category: InventoryCategory, currentStock: Int, minimumStock: Int, unit: String, supplier: String = "", costPerUnit: Double = 0.0, restockStatus: RestockStatus = .inStock, lastRestocked: Date? = nil) {
             self.id = id
             self.name = name
             self.description = description
@@ -308,6 +308,7 @@ public enum FrancoSphere {
             self.restockStatus = restockStatus
             self.lastRestocked = lastRestocked
         }
+    }
     }
     
     // MARK: - Contextual Task Model
@@ -600,7 +601,6 @@ public enum FrancoSphere {
             self.averageCompletionTime = averageCompletionTime
         }
     }
-}
 
 // MARK: - Global Type Aliases (CORRECT NAMESPACE)
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
@@ -715,28 +715,6 @@ extension FrancoSphere.InventoryCategory {
 }
 
 extension FrancoSphere.InventoryItem {
-    public var quantity: Int {
-        return currentStock
-    }
-    
-    public var minimumQuantity: Int {
-        return minimumStock
-    }
-    
-    public var needsReorder: Bool {
-        return currentStock <= minimumStock
-    }
-    
-    public var statusColor: Color {
-        if currentStock <= 0 {
-            return .red
-        } else if needsReorder {
-            return .orange
-        } else {
-            return .green
-        }
-    }
-    
     public var lastRestockDate: Date? {
         return lastRestocked
     }
@@ -772,8 +750,6 @@ extension FrancoSphere.MaintenanceTask {
         guard let due = dueDate else { return false }
         return due < Date() && !isCompleted
     }
-    
-    // Note: dueDate already exists as a property, no need to redeclare
 }
 
 extension FrancoSphere.ContextualTask {
@@ -854,3 +830,4 @@ extension FrancoSphere.NamedCoordinate {
 // Legacy compatibility
 public typealias FSTaskItem = ContextualTask
 public typealias DetailedWorker = WorkerProfile
+

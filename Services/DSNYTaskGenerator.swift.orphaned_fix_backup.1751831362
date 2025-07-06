@@ -186,8 +186,10 @@ actor DSNYTaskGenerator {
             buildingId: schedule.primaryBuildingId,
             workerId: getAssignedWorker(for: schedule.primaryBuildingId) ?? "system",
             category: .sanitation,
-            urgency: .medium,
+            urgency: .medium
+        )
             urgencyLevel: "medium",
+            assignedWorkerName: getAssignedWorker(for: schedule.primaryBuildingId)
         )
     }
     
@@ -202,6 +204,7 @@ actor DSNYTaskGenerator {
             workerId: getAssignedWorker(for: schedule.primaryBuildingId) ?? "system",
             category: .sanitation,
             urgency: .medium
+        )
     }
     
     // MARK: - Database Query Methods

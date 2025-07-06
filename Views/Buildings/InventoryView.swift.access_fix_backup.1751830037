@@ -18,7 +18,7 @@ struct InventoryView: View {
     @State private var errorMessage: String? = nil
     @State private var showAddItemSheet = false
     
-    public let buildingID: String
+    let buildingID: String
     
     // Helper function to determine status color
     private func statusColor(for item: InventoryItem) -> Color {
@@ -39,7 +39,7 @@ struct InventoryView: View {
         return filtered.sorted { $0.name < $1.name }
     }
     
-    public var body: some View {
+    var body: some View {
         ZStack {
             // Main content
             VStack(spacing: 0) {
@@ -307,7 +307,7 @@ struct InventoryItemRow: View {
         }
     }
     
-    public var body: some View {
+    var body: some View {
         HStack(alignment: .center, spacing: 12) {
             // Category icon
             ZStack {
@@ -392,7 +392,7 @@ struct InventoryItemDetailView: View {
         }
     }
     
-    public var body: some View {
+    var body: some View {
         Form {
             Section("Item Details") {
                 LabeledContent("Name", value: item.name)
@@ -507,9 +507,9 @@ struct InventoryItemDetailView: View {
 
 // MARK: - Add Item View
 
-public struct AddInventoryItemView: View {
-    public let buildingID: String
-    public let onComplete: (Bool) -> Void
+struct AddInventoryItemView: View {
+    let buildingID: String
+    let onComplete: (Bool) -> Void
     
     @State private var itemName = ""
     @State private var quantity = 1
@@ -524,12 +524,7 @@ public struct AddInventoryItemView: View {
     
     private var unitOptions = ["pcs", "bottles", "rolls", "boxes", "gallons", "liters", "feet", "inches", "lbs", "kg", "units"]
     
-    public init(buildingID: String, onComplete: @escaping (Bool) -> Void) {
-        self.buildingID = buildingID
-        self.onComplete = onComplete
-    }
-    
-    public var body: some View {
+    var body: some View {
         NavigationView {
             Form {
                 Section("Item Details") {

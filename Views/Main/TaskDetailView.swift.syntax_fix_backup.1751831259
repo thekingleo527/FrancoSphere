@@ -181,6 +181,8 @@ struct TaskDetailView: View {
         }
     }
     
+    private func isPastDue() -> Bool {
+        guard !isCompleted else { return false }
         return Date() > task.scheduledDate ?? Date()
     }
     
@@ -313,7 +315,7 @@ struct TaskDetailView: View {
                 }
             }
             
-    @State private var displayImage: UIImage?
+            if let imageData, let uiImage = UIImage(data: imageData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFit()
@@ -591,21 +593,6 @@ struct TaskDetailView: View {
 // MARK: - Preview Provider
 
 struct TaskDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            TaskDetailView(
-                task: ContextualTask(
-                    name: "Sample Task",
-                    description: "Sample description",
-                    buildingId: "1",
-                    workerId: "1",
-                    category: .maintenance,
-                    urgency: .medium
-                )
-            )
-        }
-    }
-}
     static var previews: some View {
         NavigationView {
             let previewTask = ContextualTask(

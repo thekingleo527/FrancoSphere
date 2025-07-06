@@ -282,7 +282,7 @@ public enum FrancoSphere {
         case onOrder = "On Order"
     }
     
-    public struct InventoryItem: Identifiable, Codable {
+        public struct InventoryItem: Identifiable, Codable {
         public let id: String
         public let name: String
         public let description: String
@@ -715,28 +715,6 @@ extension FrancoSphere.InventoryCategory {
 }
 
 extension FrancoSphere.InventoryItem {
-    public var quantity: Int {
-        return currentStock
-    }
-    
-    public var minimumQuantity: Int {
-        return minimumStock
-    }
-    
-    public var needsReorder: Bool {
-        return currentStock <= minimumStock
-    }
-    
-    public var statusColor: Color {
-        if currentStock <= 0 {
-            return .red
-        } else if needsReorder {
-            return .orange
-        } else {
-            return .green
-        }
-    }
-    
     public var lastRestockDate: Date? {
         return lastRestocked
     }
@@ -772,8 +750,6 @@ extension FrancoSphere.MaintenanceTask {
         guard let due = dueDate else { return false }
         return due < Date() && !isCompleted
     }
-    
-    // Note: dueDate already exists as a property, no need to redeclare
 }
 
 extension FrancoSphere.ContextualTask {

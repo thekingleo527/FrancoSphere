@@ -166,13 +166,17 @@ actor DSNYTaskGenerator {
         let taskId = "dsny_setout_\(schedule.routeId)_\(date.timeIntervalSince1970)"
         let buildingName = getBuildingName(for: schedule.primaryBuildingId)
         
-        return ContextualTask(
-            name: "DSNY Set-out: \(getBuildingName(for: schedule.primaryBuildingId))",
-            description: "Set out trash and recycling containers for DSNY collection",
+        return ContextualTask(id: UUID().uuidString, name: "Generated Task", description: "Auto-generated task", buildingId: "1", workerId: "1", category: .maintenance, urgency: .medium))",
             buildingId: schedule.primaryBuildingId,
-            workerId: getAssignedWorker(for: schedule.primaryBuildingId) ?? "system",
-            category: .sanitation,
-            urgency: .high
+            buildingName: buildingName,
+            category: .maintenance,
+            startTime: formatTime(from: schedule.earliestSetout),
+            endTime: formatTime(from: schedule.earliestSetout + 1800), // 30 minutes
+            recurrence: "Weekly",
+            skillLevel: "Basic",
+            status: "pending",
+            urgencyLevel: "high",
+            assignedWorkerName: getAssignedWorker(for: schedule.primaryBuildingId)
         )
     }
     
@@ -180,14 +184,17 @@ actor DSNYTaskGenerator {
         let taskId = "dsny_pickup_\(schedule.routeId)_\(date.timeIntervalSince1970)"
         let buildingName = getBuildingName(for: schedule.primaryBuildingId)
         
-        return ContextualTask(
-            name: "DSNY Return: \(getBuildingName(for: schedule.primaryBuildingId))",
-            description: "Return empty trash and recycling containers after DSNY collection",
+        return ContextualTask(id: UUID().uuidString, name: "Generated Task", description: "Auto-generated task", buildingId: "1", workerId: "1", category: .maintenance, urgency: .medium))",
             buildingId: schedule.primaryBuildingId,
-            workerId: getAssignedWorker(for: schedule.primaryBuildingId) ?? "system",
-            category: .sanitation,
-            urgency: .medium,
+            buildingName: buildingName,
+            category: .maintenance,
+            startTime: formatTime(from: schedule.pickupWindowEnd),
+            endTime: formatTime(from: schedule.pickupWindowEnd + 900), // 15 minutes
+            recurrence: "Weekly",
+            skillLevel: "Basic",
+            status: "pending",
             urgencyLevel: "medium",
+            assignedWorkerName: getAssignedWorker(for: schedule.primaryBuildingId)
         )
     }
     
@@ -195,13 +202,18 @@ actor DSNYTaskGenerator {
         let taskId = "dsny_compliance_\(schedule.routeId)_\(date.timeIntervalSince1970)"
         let buildingName = getBuildingName(for: schedule.primaryBuildingId)
         
-        return ContextualTask(
-            name: "DSNY Compliance Check: \(getBuildingName(for: schedule.primaryBuildingId))",
-            description: "Ensure DSNY collection compliance and proper container placement",
+        return ContextualTask(id: UUID().uuidString, name: "Generated Task", description: "Auto-generated task", buildingId: "1", workerId: "1", category: .maintenance, urgency: .medium))",
             buildingId: schedule.primaryBuildingId,
-            workerId: getAssignedWorker(for: schedule.primaryBuildingId) ?? "system",
-            category: .sanitation,
-            urgency: .medium
+            buildingName: buildingName,
+            category: .maintenance,
+            startTime: "19:00", // 7:00 PM
+            endTime: "19:30", // 7:30 PM
+            recurrence: "Weekly",
+            skillLevel: "Intermediate",
+            status: "pending",
+            urgencyLevel: "medium",
+            assignedWorkerName: getAssignedWorker(for: schedule.primaryBuildingId)
+        )
     }
     
     // MARK: - Database Query Methods
@@ -296,7 +308,7 @@ actor DSNYTaskGenerator {
         return buildingMap[buildingId] ?? "Unknown Building"
     }
     
-    private func getAssignedWorker(for buildingId: String) -> String? {
+    private func getAssignedWorker(for buildingId: String) -> String {
         // Assign workers based on building coverage patterns
         switch buildingId {
         case "1", "7": return "Greg Hutson"              // 12 West 18th, 112 West 18th
