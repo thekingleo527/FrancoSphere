@@ -52,7 +52,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
 extension VerificationRecord {
     
     func createCompletionRecord() -> TaskCompletionRecord {
-        return TaskCompletionRecord(completionId: UUID().uuidString)
+        return TaskCompletionRecord(id: UUID().uuidString)
     }
     
     func updateVerificationStatus(_ newStatus: VerificationStatus) -> VerificationRecord {

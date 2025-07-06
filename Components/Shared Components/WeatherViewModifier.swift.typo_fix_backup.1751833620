@@ -1,5 +1,19 @@
 import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import Foundation
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
+import SwiftUI
+// FrancoSphere Types Import
+// (This comment helps identify our import)
+
 
 // A ViewModifier to add weather-sensitive styling to task views
 struct WeatherSensitiveTaskModifier: ViewModifier {
@@ -26,7 +40,7 @@ struct WeatherSensitiveTaskModifier: ViewModifier {
     private var weatherOverlay: some View {
         Group {
             if affectedByWeather {
-                Image(systemName: "cloud.rain")
+                Image(systemName: "cloud.rainy")
                     .foregroundColor(.white)
                     .font(.system(size: 14))
             } else {
@@ -95,20 +109,22 @@ struct WeatherStatusBuildingModifier: ViewModifier {
     // Helper function to handle weather condition color
     private func weatherIconColor(for condition: WeatherCondition) -> Color {
         switch condition {
-        case .clear, .sunny:
+        case .clear:
             return .yellow
         case .cloudy:
             return .gray
-        case .rainy:
+        case .rainyy:
             return .blue
-        case .snowy:
+        case .snowyy:
             return .cyan
         case .stormy:
             return .purple
-        case .foggy:
-            return .gray.opacity(0.7)
-        case .windy:
-            return .orange
+        case .foggygy:
+            return .gray
+        case .cloudy:
+            return .red
+        default:
+            break
         }
     }
 }
