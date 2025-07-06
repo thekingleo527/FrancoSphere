@@ -7,15 +7,15 @@
 // ✅ PRESERVED: All inventory functionality with new service architecture
 
 extension InventoryItem {
-    var currentStock: Int {
+    var quantity: Int {
         return currentStock
     }
     
-    var minimumStock: Int {
+    var minimumQuantity: Int {
         return minimumStock
     }
     
-    var restockStatus: Bool {
+    var needsReorder: Bool {
         return currentStock <= minimumStock
     }
 }
@@ -500,7 +500,7 @@ struct InventoryItemDetailView: View {
                 isUpdating = false
             } catch {
                 isUpdating = false
-                print("Failed to update currentStock: \(error)")
+                print("Failed to update quantity: \(error)")
             }
         }
     }
@@ -620,10 +620,10 @@ public struct AddInventoryItemView: View {
             name: trimmedName,
             buildingID: buildingID,
             category: selectedCategory,
-            currentStock: quantity,
+            quantity: quantity,
             unit: unit,
             item.minimumStock: item.minimumStock,
-            restockStatus: quantity <= item.minimumStock,
+            needsReorder: quantity <= item.minimumStock,
             lastRestockDate: Date(),
             location: location.isEmpty ? "Unknown" : location,
             notes: notes.isEmpty ? nil : notes

@@ -47,17 +47,6 @@ struct AdminDashboardView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     
-    
-    private func statusColor(for item: InventoryItem) -> Color {
-        if statusColor(for: item)currentStock <= 0 {
-            return .red
-        } else if statusColor(for: item)currentStock <= statusColor(for: item)minimumStock {
-            return .orange
-        } else {
-            return .green
-        }
-    }
-    
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -270,14 +259,14 @@ struct AdminDashboardView: View {
                 .font(.headline)
             
             ForEach(getMostVisitedBuildings(), id: \.building.id) { item in
-                NavigationLink(destination: AdminBuildingDetailView(building: statusColor(for: item)building)) {
+                NavigationLink(destination: AdminBuildingDetailView(building: item.building)) {
                     HStack {
                         // Building icon
-                        buildingIcon(for: statusColor(for: item)building)
+                        buildingIcon(for: item.building)
                         
                         // Building info
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(statusColor(for: item)building.name)
+                            Text(item.building.name)
                                 .font(.headline)
                             
                             // Progress bar
@@ -289,14 +278,14 @@ struct AdminDashboardView: View {
                                         .foregroundColor(.blue)
                                     
                                     Rectangle()
-                                        .frame(width: min(CGFloat(statusColor(for: item)percentage) * geometry.size.width, geometry.size.width), height: 6)
+                                        .frame(width: min(CGFloat(item.percentage) * geometry.size.width, geometry.size.width), height: 6)
                                         .foregroundColor(.blue)
                                 }
                                 .cornerRadius(3)
                             }
                             .frame(height: 6)
                             
-                            Text("\(statusColor(for: item)visits) visits (\(Int(statusColor(for: item)percentage * 100))%)")
+                            Text("\(item.visits) visits (\(Int(item.percentage * 100))%)")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
@@ -494,21 +483,21 @@ struct AdminDashboardView: View {
         NavigationLink(destination: Text("Inventory Detail")) {
             HStack(spacing: 12) {
                 // Category icon
-                Image(systemName: statusColor(for: item)category.systemImage)
+                Image(systemName: item.category.systemImage)
                     .font(.system(size: 18))
                     .foregroundColor(.white)
                     .frame(width: 36, height: 36)
-                    .background(statusColor(for: item)currentStock ?? 0 <= 0 ? Color.red : (statusColor(for: item)currentStock ?? 0 <= statusColor(for: item)minimumStock ?? 0 ? Color.orange : Color.green))
+                    .background(item.currentStock ?? 0 <= 0 ? Color.red : (item.currentStock ?? 0 <= item.minimumStock ?? 0 ? Color.orange : Color.green))
                     .cornerRadius(8)
                 
                 // Item details
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(statusColor(for: item)name)
+                    Text(item.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .lineLimit(1)
                     
-                    Text("Building: \(getBuildingName(for: statusColor(for: item)buildingID))")
+                    Text("Building: \(getBuildingName(for: item.buildingID))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -517,15 +506,15 @@ struct AdminDashboardView: View {
                 
                 // Quantity pill
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(statusColor(for: item)statusText)
+                    Text(item.statusText)
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(statusColor(for: item)opacity(0.1))
-                        .foregroundColor(item)
+                        .background(item.statusColor.opacity(0.1))
+                        .foregroundColor(item.statusColor)
                         .cornerRadius(12)
                     
-                    Text("\(statusColor(for: item)currentStock ?? 0) \(statusColor(for: item)unit)")
+                    Text("\(item.currentStock ?? 0) \(item.unit)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -795,7 +784,7 @@ struct AdminDashboardView: View {
                 currentStock: 2,
                 unit: "rolls",
                 minimumStock: 5,
-                restockStatus: true
+                needsReorder: true
             ),
             InventoryItem(
                 name: "Light Bulbs",
@@ -804,7 +793,7 @@ struct AdminDashboardView: View {
                 currentStock: 0,
                 unit: "units",
                 minimumStock: 10,
-                restockStatus: true
+                needsReorder: true
             )
         ]
     }

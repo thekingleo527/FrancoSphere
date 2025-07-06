@@ -57,17 +57,6 @@ struct BuildingTaskDetailView: View {
         _selectedWorkers = State(initialValue: task.assignedWorkers)
     }
     
-    
-    private func statusColor(for item: InventoryItem) -> Color {
-        if statusColor(for: item)currentStock <= 0 {
-            return .red
-        } else if statusColor(for: item)currentStock <= statusColor(for: item)minimumStock {
-            return .orange
-        } else {
-            return .green
-        }
-    }
-    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -160,15 +149,15 @@ struct BuildingTaskDetailView: View {
     private var statusBadge: some View {
         HStack {
             Circle()
-                .fill(task)
+                .fill(task.statusColor)
                 .frame(width: 8, height: 8)
             Text(task.statusText)
                 .font(.caption)
-                .foregroundColor(task)
+                .foregroundColor(task.statusColor)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(task.opacity(0.1))
+        .background(task.statusColor.opacity(0.1))
         .cornerRadius(20)
     }
     
@@ -393,17 +382,17 @@ struct BuildingTaskDetailView: View {
             if let item = availableInventory.first(where: { $0.id == itemId }),
                let quantity = selectedInventoryItems[itemId] {
                 HStack {
-                    Image(systemName: statusColor(for: item)category.icon)
+                    Image(systemName: item.category.icon)
                         .foregroundColor(.blue)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(statusColor(for: item)name)
+                        Text(item.name)
                             .font(.subheadline)
-                        Text("Location: \(statusColor(for: item)location)")
+                        Text("Location: \(item.location)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                     Spacer()
-                    Text("\(quantity) \(statusColor(for: item)unit)")
+                    Text("\(quantity) \(item.unit)")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -629,7 +618,7 @@ struct BuildingTaskDetailView: View {
     private func completeTask() {
         for (itemId, quantity) in selectedInventoryItems {
             if let item = availableInventory.first(where: { $0.id == itemId }) {
-                print("Used \(quantity) of \(statusColor(for: item)name)")
+                print("Used \(quantity) of \(item.name)")
             }
         }
         
@@ -840,9 +829,9 @@ struct BuildingTaskInventorySelectionView: View {
                 ForEach(availableItems) { item in
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(statusColor(for: item)name)
+                            Text(item.name)
                                 .font(.headline)
-                            Text("Available: \(statusColor(for: item)currentStock) \(statusColor(for: item)unit)")
+                            Text("Available: \(item.currentStock) \(item.unit)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -851,12 +840,12 @@ struct BuildingTaskInventorySelectionView: View {
                         
                         Stepper(
                             value: Binding(
-                                get: { quantities[statusColor(for: item)id] ?? 0 },
-                                set: { quantities[statusColor(for: item)id] = $0 }
+                                get: { quantities[item.id] ?? 0 },
+                                set: { quantities[item.id] = $0 }
                             ),
-                            in: 0...statusColor(for: item)currentStock
+                            in: 0...item.currentStock
                         ) {
-                            Text("\(quantities[statusColor(for: item)id] ?? 0)")
+                            Text("\(quantities[item.id] ?? 0)")
                                 .frame(minWidth: 40, alignment: .trailing)
                         }
                     }

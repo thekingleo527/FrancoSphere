@@ -714,12 +714,23 @@ extension FrancoSphere.InventoryCategory {
     }
 }
 
+extension FrancoSphere.InventoryItem {
+    public var quantity: Int {
+        return currentStock
+    }
     
+    public var minimumQuantity: Int {
+        return minimumStock
+    }
     
+    public var needsReorder: Bool {
+        return currentStock <= minimumStock
+    }
     
-    
-    
-     else if needsReorder {
+    public var statusColor: Color {
+        if currentStock <= 0 {
+            return .red
+        } else if needsReorder {
             return .orange
         } else {
             return .green

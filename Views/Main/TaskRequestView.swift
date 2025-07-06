@@ -733,7 +733,7 @@ struct InventorySelectionView: View {
                 Text(item.name)
                     .font(.headline)
                 
-                Text("Available: \(item.quantity) \(item.unit)")
+                Text("Available: \(item.currentStock) \(item.unit)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -758,7 +758,7 @@ struct InventorySelectionView: View {
                     Image(systemName: "plus.circle")
                         .foregroundColor(.blue)
                 }
-                .disabled(getQuantity(for: item.id) >= item.quantity)
+                .disabled(getQuantity(for: item.id) >= item.currentStock)
             }
         }
         .padding(.vertical, 4)
