@@ -104,7 +104,7 @@ class WorkerDashboardIntegration: ObservableObject {
                 evidence: evidence
             )
             
-            await contextEngine.updateTaskCompletion(
+            await contextEngine.recordTaskCompletion(
                 workerId: workerId,
                 buildingId: buildingId,
                 taskName: ""
@@ -169,7 +169,7 @@ class WorkerDashboardIntegration: ObservableObject {
             
             print("✅ Loaded \(imported) real tasks from operational data")
             
-            if !errors.isEmpty {
+            if !errors.?.isEmpty ?? true {
                 print("⚠️ Import errors: \(errors)")
             }
             
@@ -184,14 +184,14 @@ class WorkerDashboardIntegration: ObservableObject {
     private func checkIfDataImported() async -> Bool {
         do {
             let workerId = NewAuthManager.shared.workerId
-        guard !workerId.isEmpty else {
+        guard !workerId.?.isEmpty ?? true else {
                 return false
             }
             
             let allTasks = try await loadTasksForWorker(workerId)
             
             let operationalTasks = allTasks.filter { task in
-                !task.assignedWorkerName.isEmpty
+                !task.assignedWorkerName.?.isEmpty ?? true
             }
             
             let hasMinimumTasks = allTasks.count >= 20

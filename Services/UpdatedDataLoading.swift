@@ -2,12 +2,11 @@
 //  UpdatedDataLoading.swift
 //  FrancoSphere
 //
-//  🔧 CORRECTED VERSION: All compilation errors fixed
-//  ✅ Fixed WeatherCondition enum cases (.rainy not .rain, .snowy not .snow)
-//  ✅ Fixed WeatherData constructor parameters
-//  ✅ Fixed all type conversion errors
-//  ✅ Fixed enum method calls
-//  ✅ Fixed Date vs String confusion
+//  🔧 FIXED VERSION: All compilation errors resolved
+//  ✅ Fixed WeatherData constructor parameters (matches FrancoSphereModels)
+//  ✅ Fixed humidity: Int (was Double)
+//  ✅ Removed non-existent timestamp/iconName parameters
+//  ✅ Fixed all type conversions
 //
 
 import Foundation
@@ -96,10 +95,9 @@ class UpdatedDataLoading: ObservableObject {
     private func loadWorkerTasks(_ workerId: String) async throws {
         let tasks = try await taskService.getTasks(for: workerId, date: Date())
         
-        // FIXED: Proper worker name filtering
+        // Filter tasks for the specific worker
         let workerName = getRealWorkerName(for: workerId)
         let filteredTasks = tasks.filter { task in
-            // Fixed: Proper string comparison without type confusion
             let assignedName = task.workerId
             return assignedName.lowercased().contains(workerName.lowercased()) ||
                    assignedName == workerName
@@ -116,21 +114,22 @@ class UpdatedDataLoading: ObservableObject {
     }
     
     private func loadWeatherData() async {
-        // ✅ FIXED: Proper WeatherData constructor with correct parameters
+        // ✅ FIXED: Correct WeatherData constructor matching FrancoSphereModels.swift
         currentWeather = WeatherData(
             temperature: 72.0,
-            condition: .clear,
-            humidity: 65.0,
+            feelsLike: 75.0,
+            humidity: 65,        // ✅ FIXED: Int (was Double)
             windSpeed: 12.0,
-            timestamp: Date(),
-            description: "Clear skies",
-            iconName: "sun.max.fill"
+            condition: .clear,
+            description: "Clear skies"
         )
         
         // Load weather for each building
         for building in workerBuildings {
             buildingWeatherMap[building.id] = currentWeather
         }
+        
+        print("✅ Weather data loaded for \(workerBuildings.count) buildings")
     }
     
     // MARK: - Helper Methods
@@ -182,16 +181,14 @@ class UpdatedDataLoading: ObservableObject {
         }
     }
     
-    // MARK: - Task Helper Methods (FIXED)
+    // MARK: - Task Helper Methods
     
     func isTaskOverdue(_ task: ContextualTask) -> Bool {
-        // FIXED: Handle Date vs String confusion properly
         guard let endTime = task.dueDate else { return false }
         return Date() > endTime
     }
     
     func urgencyColor(for task: ContextualTask) -> Color {
-        // FIXED: Use .rawValue.lowercased() for enum comparison
         switch task.urgency.rawValue.lowercased() {
         case "high", "urgent":
             return .red
@@ -213,7 +210,6 @@ class UpdatedDataLoading: ObservableObject {
     }
     
     func getTimeUntilTask(_ task: ContextualTask) -> String? {
-        // FIXED: Proper Date handling instead of trying to split Date
         guard let startTime = task.dueDate else { return nil }
         
         let interval = startTime.timeIntervalSince(Date())
@@ -232,7 +228,6 @@ class UpdatedDataLoading: ObservableObject {
     }
     
     func isTaskUrgent(_ task: ContextualTask) -> Bool {
-        // FIXED: Use .rawValue.lowercased() for enum comparison
         let urgencyLevel = task.urgency.rawValue.lowercased()
         return urgencyLevel == "urgent" || urgencyLevel == "high"
     }
@@ -281,11 +276,10 @@ class UpdatedDataLoading: ObservableObject {
     func getWeatherImpactSummary() -> String? {
         guard let weather = currentWeather else { return nil }
         
-        // ✅ FIXED: Use correct WeatherCondition enum cases
         switch weather.condition {
-        case .rainy:  // ✅ Changed from .rain to .rainy
+        case .rainy:
             return "Rain may affect outdoor tasks"
-        case .snowy:  // ✅ Changed from .snow to .snowy
+        case .snowy:
             return "Snow conditions - extra time needed"
         case .stormy:
             return "Storm warning - reschedule outdoor work"
