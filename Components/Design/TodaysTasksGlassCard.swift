@@ -40,7 +40,7 @@ struct TodaysTasksGlassCard: View {
             if let time1 = task1.startTime, let time2 = task2.startTime {
                 return time1 < time2
             }
-            return task1.dueDate < task2.dueDate
+            return (task1.dueDate ?? Date.distantFuture) < (task2.dueDate ?? Date.distantFuture)
         }
     }
     
@@ -218,11 +218,13 @@ struct TaskGlassRow: View {
         case .medium: return .yellow
         case .high: return .red
         case .urgent: return .purple
+        case .critical: return .red
+        case .emergency: return .red
         }
     }
     
     private var buildingName: String {
-        BuildingService.shared.getBuildingName(forId: task.buildingID)
+        BuildingService.shared.getBuildingName(for: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -414,11 +416,13 @@ struct EnhancedTaskGlassRow: View {
         case .medium: return .yellow
         case .high: return .red
         case .urgent: return .purple
+        case .critical: return .red
+        case .emergency: return .red
         }
     }
     
     private var buildingName: String {
-        BuildingService.shared.getBuildingName(forId: task.buildingID)
+        BuildingService.shared.getBuildingName(for: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -447,34 +451,28 @@ struct TodaysTasksGlassCard_Previews: PreviewProvider {
                     // Sample tasks
                     let sampleTasks = [
                         MaintenanceTask(
-                            name: "HVAC Filter Replacement",
-                            buildingID: "1",
+                            title: "HVAC Filter Replacement",
                             description: "Replace air filters",
-                            dueDate: Date(),
-                            startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()),
                             category: .maintenance,
                             urgency: .high,
-                            isComplete: false
+                            buildingId: "1",
+                            dueDate: Date()
                         ),
                         MaintenanceTask(
-                            name: "Lobby Cleaning",
-                            buildingID: "2",
+                            title: "Lobby Cleaning",
                             description: "Clean lobby area",
-                            dueDate: Date(),
-                            startTime: Calendar.current.date(bySettingHour: 10, minute: 30, second: 0, of: Date()),
                             category: .cleaning,
                             urgency: .medium,
-                            isComplete: true
+                            buildingId: "2",
+                            dueDate: Date()
                         ),
                         MaintenanceTask(
-                            name: "Emergency Repair",
-                            buildingID: "3",
+                            title: "Emergency Repair",
                             description: "Fix urgent issue",
-                            dueDate: Date(),
-                            startTime: Calendar.current.date(bySettingHour: 14, minute: 0, second: 0, of: Date()),
                             category: .repair,
                             urgency: .urgent,
-                            isComplete: false
+                            buildingId: "3",
+                            dueDate: Date()
                         )
                     ]
                     

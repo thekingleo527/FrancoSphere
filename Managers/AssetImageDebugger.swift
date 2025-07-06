@@ -52,7 +52,7 @@ final class AssetImageDebugger {
         print("🏢 Building: \(building.name) (ID: \(building.id))")
 
         // 1️⃣ imageAssetName specified on the model
-        let assetName     = building.imageAssetName
+        let assetName     = building.imageAssetName ?? "placeholder"
         let assetExists   = UIImage(named: assetName) != nil
         print("   • imageAssetName: \"\(assetName)\"  →  \(assetExists ? "✅ found" : "❌ missing")")
 

@@ -189,11 +189,11 @@ struct BuildingSiteCard: View {
     @ObservedObject private var contextEngine = WorkerContextEngine.shared
     
     private var totalTasks: Int {
-        contextEngine.getTaskCount(forBuilding: building.id)
+        contextEngine.getTaskCount(for: building.id)
     }
     
     private var completedTasks: Int {
-        contextEngine.getCompletedTaskCount(forBuilding: building.id)
+        contextEngine.getCompletedTaskCount(for: building.id)
     }
     
     private var openTasks: Int {
@@ -231,7 +231,7 @@ struct BuildingSiteCard: View {
             .fill(Color.gray.opacity(0.3))
             .frame(height: 50)
             .overlay(
-                Image(building.imageAssetName)
+                Image(building.imageAssetName ?? "placeholder")
                     .resizable()
                     .scaledToFill()
                     .clipped()

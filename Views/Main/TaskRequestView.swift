@@ -578,7 +578,7 @@ struct TaskRequestView: View {
             skillLevel: selectedUrgency.rawValue,
             status: "pending",
             urgencyLevel: selectedUrgency.rawValue,
-            assignedWorkerName: authManager.currentUser?.name ?? "",
+            assignedWorkerName: authManager.currentWorkerName ?? "",
             scheduledDate: dueDate
         )
         

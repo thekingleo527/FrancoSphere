@@ -1,37 +1,30 @@
+//
+//  WeatherTasksSection.swift
+//  FrancoSphere
+//
+//  Weather-related tasks display component
+//
+
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-// WeatherTasksSection.swift
-// ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-
-import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct WeatherTasksSection: View {
     @StateObject private var weatherAdapter = WeatherDataAdapter.shared
-    @State private var weatherTasks: [MaintenanceTask] = []    // ← uses top‐level alias
-
-    // Use the model defined in FrancoSphereModels.swift directly
+    @State private var weatherTasks: [MaintenanceTask] = []
+    
     let building: NamedCoordinate
+    
     private func urgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
-        case .low:    return .green
-        case .medium: return .yellow
-        case .high:   return .orange
-        case .urgent: return .red
+        case .low:       return .green
+        case .medium:    return .yellow
+        case .high:      return .orange
+        case .urgent:    return .red
+        case .critical:  return .red
+        case .emergency: return .red
         }
     }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Weather-Related Tasks")
@@ -39,7 +32,7 @@ struct WeatherTasksSection: View {
                 .padding(.horizontal)
 
             if weatherTasks.isEmpty {
-                Text("No weather‐related tasks for this building.")
+                Text("No weather-related tasks for this building.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -51,7 +44,7 @@ struct WeatherTasksSection: View {
                             .foregroundColor(task.category == .inspection ? .purple : .blue)
 
                         VStack(alignment: .leading) {
-                            Text(task.name)
+                            Text(task.title)
                                 .font(.headline)
                             Text(task.recurrence.rawValue)
                                 .font(.caption)
@@ -76,7 +69,6 @@ struct WeatherTasksSection: View {
             }
         }
         .onAppear {
-            // generateWeatherTasks(for:) expects a NamedCoordinate
             weatherTasks = weatherAdapter.generateWeatherTasks(for: building)
         }
     }

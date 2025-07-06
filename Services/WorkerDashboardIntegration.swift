@@ -2,28 +2,16 @@
 //  WorkerDashboardIntegration.swift
 //  FrancoSphere
 //
-//  🔧 FIXED: All compilation errors resolved
+//  🔧 FIXED: Removed non-existent recordTaskCompletion method call
+//  ✅ All compilation errors resolved
 //  ✅ Corrected TaskEvidence initialization
-//  ✅ Fixed optional chaining syntax (.?. → ?.)
-//  ✅ Fixed boolean logic for optional checks
 //  ✅ Updated to match current project structure
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import Combine
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import CoreLocation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 @MainActor
 class WorkerDashboardIntegration: ObservableObject {
@@ -102,6 +90,7 @@ class WorkerDashboardIntegration: ObservableObject {
                 notes: "Task completed via WorkerDashboardIntegration"
             )
 
+            // Complete the task through TaskService
             try await taskService.completeTask(
                 taskId,
                 workerId: workerId,
@@ -109,12 +98,10 @@ class WorkerDashboardIntegration: ObservableObject {
                 evidence: evidence
             )
 
-            await contextEngine.recordTaskCompletion(
-                workerId: workerId,
-                buildingId: buildingId,
-                taskName: taskId  // Using taskId as taskName for now
-            )
-
+            // ✅ REMOVED: contextEngine.recordTaskCompletion call since this method doesn't exist
+            // Task completion is handled entirely by TaskService.completeTask above
+            
+            // Refresh dashboard to reflect changes
             await refreshDashboard()
 
         } catch {

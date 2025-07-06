@@ -51,14 +51,12 @@ struct TaskFormView: View {
                     Button("Save") {
                         // Create a new task with basic data. Customize as needed.
                         let newTask = MaintenanceTask(
-                            name: taskName,
-                            buildingID: buildingID,
+                            title: taskName,
                             description: taskDescription,
-                            dueDate: Date(),
                             category: .maintenance,
                             urgency: .medium,
-                            recurrence: .none,
-                            isComplete: false
+                            buildingId: buildingID,
+                            dueDate: Date()
                         )
                         onTaskCreated?(newTask)
                         presentationMode.wrappedValue.dismiss()

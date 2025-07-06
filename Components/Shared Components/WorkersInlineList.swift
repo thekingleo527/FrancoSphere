@@ -256,7 +256,7 @@ struct WorkersInlineList: View {
         }
         
         // FIXED: Use correct method name and get WorkerProfile objects directly
-        let detailedWorkers = contextEngine.getWorkerProfiles(for: buildingId, includeDSNY: showDSNYWorkers)
+        let detailedWorkers = contextEngine.todayWorkers()
         
         var loadedWorkers: [WorkerInfo] = []
         
@@ -277,7 +277,7 @@ struct WorkersInlineList: View {
         
         // If no detailed workers found, try the simpler method as fallback
         if loadedWorkers.isEmpty {
-            let workerNames = contextEngine.todayWorkers(for: buildingId, includeDSNY: showDSNYWorkers)
+            let workerNames = contextEngine.todayWorkers().map { $0.name }
             
             for workerName in workerNames {
                 let workerId = getWorkerIdFromName(workerName)

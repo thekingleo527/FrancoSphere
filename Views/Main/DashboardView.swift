@@ -456,7 +456,7 @@ struct DashboardView: View {
                 title: "Alerts",
                 value: "\(weatherAlerts.count)",
                 icon: "exclamationmark.triangle",
-                color: weatherAlerts.isEmpty ? .gray : .orange
+                color: weatherAlerts.isEmpty ? Color.gray : .orange
             )
         }
     }
@@ -502,7 +502,7 @@ struct DashboardView: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(Color.gray)
             }
             .padding(12)
             .background(Color(.systemGray6))
@@ -594,11 +594,11 @@ struct DashboardView: View {
         VStack(spacing: 15) {
             Image(systemName: icon)
                 .font(.system(size: 30))
-                .foregroundColor(.gray.opacity(0.6))
+                .foregroundColor(Color.gray.opacity(0.6))
             
             Text(message)
                 .font(.callout)
-                .foregroundColor(.gray)
+                .foregroundColor(Color.gray)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -691,17 +691,17 @@ struct DashboardView: View {
         Group {
             if !(building.imageAssetName?.isEmpty ?? true),
                UIImage(named: building.imageAssetName) != nil {
-                Image(building.imageAssetName)
+                Image(building.imageAssetName ?? "placeholder")
                     .resizable()
                     .scaledToFill()
             } else {
                 ZStack {
                     Rectangle()
-                        .fill(Color.gray.opacity(0.3))
+                        .fill(ColorColor.gray.opacity(0.3))
                     
                     Image(systemName: "building.2.fill")
                         .font(.title2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.gray)
                 }
             }
         }
@@ -761,10 +761,10 @@ struct DashboardView: View {
                     VStack {
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.largeTitle)
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.gray)
                         Text("Chart visualization here")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color.gray)
                     }
                 )
         }
@@ -790,7 +790,7 @@ struct DashboardView: View {
                             GeometryReader { geometry in
                                 ZStack(alignment: .leading) {
                                     Rectangle()
-                                        .fill(Color.gray.opacity(0.2))
+                                        .fill(ColorColor.gray.opacity(0.2))
                                         .frame(width: geometry.size.width, height: 6)
                                         .cornerRadius(3)
                                     
@@ -868,7 +868,7 @@ struct DashboardView: View {
             break
         
         default:
-            return .gray}
+            return Color.gray}
     }
     
     private func categoryIcon(for category: TaskCategory) -> String {
@@ -882,7 +882,7 @@ struct DashboardView: View {
             break
         
         default:
-            return .gray}
+            return Color.gray}
     }
     
     private func getMostVisitedBuildings() -> [(building: NamedCoordinate, visits: Int, percentage: Double)] {
@@ -913,7 +913,7 @@ struct TabBarItem: View {
                 Text(title)
                     .font(.caption2)
             }
-            .foregroundColor(selectedTab == tag ? .blue : .gray)
+            .foregroundColor(selectedTab == tag ? .blue : Color.gray)
         }
         .frame(maxWidth: .infinity)
     }
@@ -1000,7 +1000,7 @@ struct TaskRowView: View {
         case .urgent: return .red
         
         default:
-            return .gray}
+            return Color.gray}
     }
 }
 
@@ -1045,17 +1045,17 @@ struct InsightRow: View {
         case .neutral: return "arrow.right"
         
         default:
-            return .gray}
+            return Color.gray}
     }
     
     private var trendColor: Color {
         switch trend {
         case .up: return .green
         case .down: return .red
-        case .neutral: return .gray
+        case .neutral: return Color.gray
         
         default:
-            return .gray}
+            return Color.gray}
     }
 }
 

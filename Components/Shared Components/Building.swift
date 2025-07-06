@@ -71,12 +71,12 @@ extension NamedCoordinate {
     
     /// Check if building has required image asset
     var hasValidImageAsset: Bool {
-        return !imageAssetName.isEmpty && imageAssetName != "placeholder"
+        return !(imageAssetName?.isEmpty ?? true) && imageAssetName != "placeholder"
     }
     
     /// Get fallback image name if primary is missing
     var fallbackImageName: String {
-        return hasValidImageAsset ? imageAssetName : "building.2.fill"
+        return hasValidImageAsset ? (imageAssetName ?? "building.2.fill") : "building.2.fill"
     }
 }
 
