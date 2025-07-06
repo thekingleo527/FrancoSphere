@@ -319,9 +319,6 @@ struct TaskDetailView: View {
                     .scaledToFit()
                     .frame(maxHeight: 200)
                     .cornerRadius(8)
-            }
-        }
-    }
     
     // MARK: - Verification Status Section
     
@@ -606,17 +603,18 @@ struct TaskDetailView_Previews: PreviewProvider {
         }
     }
 }
-    static var previews: some View {
-        NavigationView {
-            let previewTask = ContextualTask(
-                id: 1,
-                name: "Inspect HVAC System",
-                description: "Regular maintenance inspection of HVAC units",
-                buildingId: 101,
-                workerId: 1001,
-                isCompleted: false,
-                dueDate: Date()
-            )
-            
-            TaskDetailView(task: previewTask)
-        }
+static var previews: some View {
+    NavigationView {
+        let previewTask = ContextualTask(
+            id: 1,
+            name: "Inspect HVAC System",
+            description: "Regular maintenance inspection of HVAC units",
+            buildingId: 101,
+            workerId: 1001,
+            isCompleted: false,
+            dueDate: Date()
+        )
+        
+        TaskDetailView(task: previewTask)
+    }
+}
