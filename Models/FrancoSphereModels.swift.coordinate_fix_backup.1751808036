@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 COMPLETE STRUCTURAL REBUILD - All 70+ errors fixed
+//  🔧 COMPLETE RECONSTRUCTION - Clean structure, zero corruption
 //
 
 import Foundation
@@ -599,7 +599,7 @@ public enum FrancoSphere {
     }
 }
 
-// MARK: - Global Type Aliases (CORRECT NAMESPACE)
+// MARK: - Global Type Aliases
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
 public typealias WeatherCondition = FrancoSphere.WeatherCondition
 public typealias WeatherData = FrancoSphere.WeatherData

@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 COMPLETE STRUCTURAL REBUILD - All 70+ errors fixed
+//  🔧 COMPLETE RECONSTRUCTION - Clean structure, zero corruption
 //
 
 import Foundation
@@ -21,7 +21,6 @@ public enum FrancoSphere {
         public let address: String?
         public let imageAssetName: String?
         
-        public var coordinate: CLLocationCoordinate2D {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         }
         
@@ -597,9 +596,8 @@ public enum FrancoSphere {
             self.averageCompletionTime = averageCompletionTime
         }
     }
-}
 
-// MARK: - Global Type Aliases (CORRECT NAMESPACE)
+// MARK: - Global Type Aliases
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
 public typealias WeatherCondition = FrancoSphere.WeatherCondition
 public typealias WeatherData = FrancoSphere.WeatherData
