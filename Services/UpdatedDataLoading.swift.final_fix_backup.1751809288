@@ -99,7 +99,7 @@ class UpdatedDataLoading: ObservableObject {
         let workerName = getRealWorkerName(for: workerId)
         let filteredTasks = tasks.filter { task in
             // Fixed: Proper string comparison without type confusion
-            let assignedName = task.workerId
+            let assignedName = task.workerId ?? "Unknown"
             return assignedName.lowercased().contains(workerName.lowercased()) ||
                    assignedName == workerName
         }
@@ -252,7 +252,7 @@ class UpdatedDataLoading: ObservableObject {
     func getFilteredTasks(for workerId: String, category: String? = nil) -> [ContextualTask] {
         let workerName = getRealWorkerName(for: workerId)
         var filtered = contextualTasks.filter { task in
-            let assignedName = task.workerId
+            let assignedName = task.workerId ?? "Unknown"
             return assignedName.lowercased().contains(workerName.lowercased()) ||
                    assignedName == workerName
         }

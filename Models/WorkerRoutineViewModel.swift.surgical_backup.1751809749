@@ -92,7 +92,23 @@ class WorkerRoutineViewModel: ObservableObject {
             let tasks = try await taskService.getTasks(for: selectedWorker, date: selectedDate)
             await MainActor.run {
                 self.routineTasks = tasks.compactMap { task in
-                    MaintenanceTask(id: task.id, name: task.name, description: task.description, category: task.category, urgency: task.urgency, recurrence: .none, estimatedDuration: task.estimatedDuration, requiredSkills: [], buildingId: task.buildingId, assignedWorkerId: task.workerId, scheduledDate: task.dueDate, completedDate: nil, isCompleted: task.isCompleted, notes: nil, verificationStatus: VerificationStatus.pending)
+                    MaintenanceTask(
+                        id: task.id,
+                        name: task.name,
+                        description: task.description,
+                        category: task.category,
+                        urgency: task.urgency,
+                        recurrence: .none,
+                        estimatedDuration: task.estimatedDuration,
+                        requiredSkills: [],
+                        buildingId: task.buildingId,
+                        assignedWorkerId: task.workerId,
+                        scheduledDate: task.dueDate,
+                        completedDate: nil,
+                        isCompleted: task.isCompleted,
+                        notes: nil,
+                        verificationStatus: .pending
+                    )
                 }
                 
                 // Group by building
@@ -107,7 +123,7 @@ class WorkerRoutineViewModel: ObservableObject {
         guard !routineTasks.isEmpty else { return }
         
         // Generate route from buildings with tasks
-        _ = Array(buildingsWithTasks.keys).sorted()
+        let route = Array(buildingsWithTasks.keys).sorted()
         
         await MainActor.run {
             self.dailyRoute = WorkerDailyRoute(
@@ -239,7 +255,7 @@ class WorkerRoutineViewModel: ObservableObject {
             completedDate: Date(),
             isCompleted: true,
             notes: task.notes,
-            verificationStatus: VerificationStatus.approved
+            verificationStatus: .approved
         )
         
         await MainActor.run {
@@ -321,7 +337,7 @@ extension WorkerRoutineViewModel {
             completedDate: nil,
             isCompleted: false,
             notes: nil,
-            verificationStatus: VerificationStatus.pending
+            verificationStatus: .pending
         )
         
         vm.routineTasks = [sampleTask]

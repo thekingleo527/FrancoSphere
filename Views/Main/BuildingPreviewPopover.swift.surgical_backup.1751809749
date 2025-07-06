@@ -91,7 +91,7 @@ struct BuildingPreviewPopover: View {
     
     @ViewBuilder
     private var buildingImageView: some View {
-        if !(building.imageAssetName?.isEmpty ?? true), let uiImage = UIImage(named: building.imageAssetName) {
+        if !building.imageAssetName.isEmpty, let uiImage = UIImage(named: building.imageAssetName) {
             Image(uiImage: uiImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)

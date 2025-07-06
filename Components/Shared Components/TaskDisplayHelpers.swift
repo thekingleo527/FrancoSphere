@@ -152,12 +152,6 @@ struct TaskDisplayHelpers {
     
     static func timeUntilTask(_ task: ContextualTask) -> String {
         guard let scheduledDate = task.scheduledDate else {
-            // Try to parse from startTime if no scheduledDate
-            let startTime = task.startTime
-            if let parsedTime = parseTimeString(startTime) {
-                let timeInterval = parsedTime.timeIntervalSinceNow
-                return formatTimeInterval(timeInterval)
-            }
             return "No time set"
         }
         
@@ -186,29 +180,29 @@ struct TaskDisplayHelpers {
     }
     
     static func filterTasksByCategory(_ tasks: [ContextualTask], category: String) -> [ContextualTask] {
-        return tasks.filter { $0.category.lowercased() == category.lowercased() }
+        return tasks.filter { $0.category.rawValue.lowercased() == category.lowercased() }
     }
     
     static func filterTasksByUrgency(_ tasks: [ContextualTask], urgency: String) -> [ContextualTask] {
-        return tasks.filter { $0.urgencyLevel.lowercased() == urgency.lowercased() }
+        return tasks.filter { $0.urgency.rawValue.lowercased() == urgency.lowercased() }
     }
     
     // MARK: - Task Sorting
     static func sortTasksByPriority(_ tasks: [ContextualTask]) -> [ContextualTask] {
         return tasks.sorted { task1, task2 in
-            let priority1 = getUrgencyPriority(for: task1.urgencyLevel)
-            let priority2 = getUrgencyPriority(for: task2.urgencyLevel)
+            let priority1 = getUrgencyPriority(for: task1.urgency.rawValue)
+            let priority2 = getUrgencyPriority(for: task2.urgency.rawValue)
             return priority1 > priority2
         }
     }
     
     static func sortTasksByTime(_ tasks: [ContextualTask]) -> [ContextualTask] {
         return tasks.sorted { task1, task2 in
-            guard let time1 = parseTimeString(task1.startTime),
-                  let time2 = parseTimeString(task2.startTime) else {
-                return task1.startTime < task2.startTime
+            guard let time1 = task1.startTime, let time2 = task2.startTime,
+                  let date1 = parseTimeString(time1), let date2 = parseTimeString(time2) else {
+                return false
             }
-            return time1 < time2
+            return date1 < date2
         }
     }
     

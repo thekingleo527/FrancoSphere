@@ -65,47 +65,47 @@ class AIAssistantManager: ObservableObject {
         switch scenarioType {
         case "routineIncomplete":
             return [
-                AISuggestion(suggestion: "review")),
-                AISuggestion(suggestion: "update"))
+                AISuggestion(actionType: "review"),
+                AISuggestion(actionType: "update")
             ]
         case "taskCompletion":
             return [
-                AISuggestion(suggestion: "complete")),
-                AISuggestion(suggestion: "notes"))
+                AISuggestion(actionType: "complete"),
+                AISuggestion(actionType: "notes")
             ]
         case "pendingTasks":
             return [
-                AISuggestion(suggestion: "prioritize")),
-                AISuggestion(suggestion: "reschedule"))
+                AISuggestion(actionType: "prioritize"),
+                AISuggestion(actionType: "reschedule")
             ]
         case "buildingArrival":
             return [
-                AISuggestion(suggestion: "checkin")),
-                AISuggestion(suggestion: "schedule"))
+                AISuggestion(actionType: "checkin"),
+                AISuggestion(actionType: "schedule")
             ]
         case "weatherAlert":
             return [
-                AISuggestion(suggestion: "weather")),
-                AISuggestion(suggestion: "adjust"))
+                AISuggestion(actionType: "weather"),
+                AISuggestion(actionType: "adjust")
             ]
         case "maintenanceRequired":
             return [
-                AISuggestion(suggestion: "schedule")),
-                AISuggestion(suggestion: "order"))
+                AISuggestion(actionType: "schedule"),
+                AISuggestion(actionType: "order")
             ]
         case "scheduleConflict":
             return [
-                AISuggestion(suggestion: "resolve")),
-                AISuggestion(suggestion: "notify"))
+                AISuggestion(actionType: "resolve"),
+                AISuggestion(actionType: "notify")
             ]
         case "emergencyResponse":
             return [
-                AISuggestion(suggestion: "emergency")),
-                AISuggestion(suggestion: "contact"))
+                AISuggestion(actionType: "emergency"),
+                AISuggestion(actionType: "contact")
             ]
         default:
             return [
-                AISuggestion(suggestion: "general"))
+                AISuggestion(actionType: "general")
             ]
         }
     }
@@ -136,22 +136,22 @@ class AIAssistantManager: ObservableObject {
         switch context.lowercased() {
         case let ctx where ctx.contains("weather"):
             return [
-                AISuggestion(suggestion: "weather")),
-                AISuggestion(suggestion: "reschedule"))
+                AISuggestion(actionType: "weather"),
+                AISuggestion(actionType: "reschedule")
             ]
         case let ctx where ctx.contains("maintenance"):
             return [
-                AISuggestion(suggestion: "review")),
-                AISuggestion(suggestion: "check"))
+                AISuggestion(actionType: "review"),
+                AISuggestion(actionType: "check")
             ]
         case let ctx where ctx.contains("task"):
             return [
-                AISuggestion(suggestion: "update")),
-                AISuggestion(suggestion: "complete"))
+                AISuggestion(actionType: "update"),
+                AISuggestion(actionType: "complete")
             ]
         default:
             return [
-                AISuggestion(suggestion: "review"))
+                AISuggestion(actionType: "review")
             ]
         }
     }

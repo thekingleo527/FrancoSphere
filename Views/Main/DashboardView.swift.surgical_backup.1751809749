@@ -866,9 +866,7 @@ struct DashboardView: View {
         case .inspection: return .purple
         default:
             break
-        
-        default:
-            return .gray}
+        }
     }
     
     private func categoryIcon(for category: TaskCategory) -> String {
@@ -880,9 +878,7 @@ struct DashboardView: View {
         case .inspection: return "magnifyingglass"
         default:
             break
-        
-        default:
-            return .gray}
+        }
     }
     
     private func getMostVisitedBuildings() -> [(building: NamedCoordinate, visits: Int, percentage: Double)] {
@@ -998,9 +994,7 @@ struct TaskRowView: View {
         case .medium: return .orange
         case .high: return .red
         case .urgent: return .red
-        
-        default:
-            return .gray}
+        }
     }
 }
 
@@ -1043,9 +1037,7 @@ struct InsightRow: View {
         case .up: return "arrow.up.right"
         case .down: return "arrow.down.right"
         case .neutral: return "arrow.right"
-        
-        default:
-            return .gray}
+        }
     }
     
     private var trendColor: Color {
@@ -1053,9 +1045,7 @@ struct InsightRow: View {
         case .up: return .green
         case .down: return .red
         case .neutral: return .gray
-        
-        default:
-            return .gray}
+        }
     }
 }
 

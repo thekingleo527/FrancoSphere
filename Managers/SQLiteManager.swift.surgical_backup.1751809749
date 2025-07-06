@@ -417,7 +417,7 @@ public class SQLiteManager {
             default: userRole = .worker
             }
             
-            return WorkerProfile(id: workerId, name: name, email: email, role: userRole, phoneNumber: "", skills: [], hireDate: Date())
+            return WorkerProfile(id: workerId, name: name, email: email, role: userRole)
         }
         
         return nil
@@ -463,7 +463,7 @@ public class SQLiteManager {
             default: userRole = .worker
             }
             
-            let worker = WorkerProfile(id: workerId, name: name, email: email, role: userRole, phoneNumber: "", skills: [], hireDate: Date())
+            let worker = WorkerProfile(id: workerId, name: name, email: email, role: userRole)
             workersList.append(worker)
         }
         

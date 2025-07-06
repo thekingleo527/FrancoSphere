@@ -55,11 +55,11 @@ struct DashboardView: View {
     // MARK: - Computed Properties
     
     private var todaysTasks: [MaintenanceTask] {
-        tasks.filter { Calendar.current.isDateInToday($0.dueDate ?? Date()) }
+        tasks.filter { Calendar.current.isDateInToday($0.dueDate) }
     }
     
     private var upcomingTasks: [MaintenanceTask] {
-        tasks.filter { !Calendar.current.isDateInToday($0.dueDate ?? Date()) && ($0.dueDate ?? Date()) > Date() }
+        tasks.filter { !Calendar.current.isDateInToday($0.dueDate) && $0.dueDate > Date() }
     }
     
     private var categorizedTasks: [TaskCategory: [MaintenanceTask]] {
@@ -112,7 +112,7 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showTimelineView) {
             NavigationView {
-                TaskTimelineView(workerId: Int64(authManager.workerId) ?? 1)
+                TaskTaskTimelineView(workerId: Int64(authManager.workerId) ?? 1)
             }
         }
         .sheet(isPresented: $showNotifications) {
@@ -209,7 +209,7 @@ struct DashboardView: View {
                 name: task.name,
                 buildingID: task.buildingId,
                 dueDate: Date(), // Today - can be enhanced with proper date parsing
-                category: TaskCategory(rawValue: task.category.rawValue) ?? .maintenance,
+                category: TaskCategory(rawValue: task.category) ?? .maintenance,
                 urgency: TaskUrgency(rawValue: task.urgencyLevel) ?? .medium
             )
         }
@@ -440,7 +440,7 @@ struct DashboardView: View {
             
             StatCard(
                 title: "Completed",
-                value: "\(todaysTasks.filter { $0.isCompleted }.count)",
+                value: "\(todaysTasks.filter { $0.isComplete }.count)",
                 icon: "checkmark.circle",
                 color: .green
             )
@@ -492,7 +492,7 @@ struct DashboardView: View {
                     Text(category.rawValue)
                         .font(.headline)
                     
-                    let pendingCount = tasks.filter { !$0.isCompleted }.count
+                    let pendingCount = tasks.filter { !$0.isComplete }.count
                     Text("\(pendingCount) pending of \(tasks.count) total")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -689,7 +689,7 @@ struct DashboardView: View {
     
     private func buildingImageView(_ building: NamedCoordinate) -> some View {
         Group {
-            if !(building.imageAssetName?.isEmpty ?? true),
+            if !building.imageAssetName.isEmpty,
                UIImage(named: building.imageAssetName) != nil {
                 Image(building.imageAssetName)
                     .resizable()
@@ -864,11 +864,7 @@ struct DashboardView: View {
         case .repair: return .red
         case .sanitation: return .green
         case .inspection: return .purple
-        default:
-            break
-        
-        default:
-            return .gray}
+        }
     }
     
     private func categoryIcon(for category: TaskCategory) -> String {
@@ -878,11 +874,7 @@ struct DashboardView: View {
         case .repair: return "hammer"
         case .sanitation: return "trash"
         case .inspection: return "magnifyingglass"
-        default:
-            break
-        
-        default:
-            return .gray}
+        }
     }
     
     private func getMostVisitedBuildings() -> [(building: NamedCoordinate, visits: Int, percentage: Double)] {
@@ -954,7 +946,7 @@ struct TaskRowView: View {
     var body: some View {
         HStack {
             Circle()
-                .fill(task.isCompleted ? Color.green : urgencyColor(for: task.urgency))
+                .fill(task.isComplete ? Color.green : urgencyColor(for: task.urgency))
                 .frame(width: 8, height: 8)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -998,9 +990,7 @@ struct TaskRowView: View {
         case .medium: return .orange
         case .high: return .red
         case .urgent: return .red
-        
-        default:
-            return .gray}
+        }
     }
 }
 
@@ -1043,9 +1033,7 @@ struct InsightRow: View {
         case .up: return "arrow.up.right"
         case .down: return "arrow.down.right"
         case .neutral: return "arrow.right"
-        
-        default:
-            return .gray}
+        }
     }
     
     private var trendColor: Color {
@@ -1053,9 +1041,7 @@ struct InsightRow: View {
         case .up: return .green
         case .down: return .red
         case .neutral: return .gray
-        
-        default:
-            return .gray}
+        }
     }
 }
 

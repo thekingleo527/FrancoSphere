@@ -1,0 +1,111 @@
+FrancoSphere Backup Files Inventory
+Generated: Sun Jul  6 09:50:00 EDT 2025
+
+REMAINING BACKUP FILES:
+======================
+
+Essential Backups (Latest 2 kept):
+./DefinitiveBackups/FrancoSphereModels.swift.definitive_backup
+./Models/FrancoSphereModels.swift.aggressive_backup.1751805076
+./Models/FrancoSphereModels.swift.compilation_fix_backup.1751806869
+./Models/FrancoSphereModels.swift.comprehensive_backup.1751768866
+./Models/FrancoSphereModels.swift.comprehensive_backup.1751769135
+./Models/FrancoSphereModels.swift.coordinate_backup.1751770857
+./Models/FrancoSphereModels.swift.coordinate_fix_backup.1751808036
+./Models/FrancoSphereModels.swift.coordinate_precise_backup.1751772527
+./Models/FrancoSphereModels.swift.corrupted_backup_1751773013
+./Models/FrancoSphereModels.swift.corrupted_backup.1751804552
+./Models/FrancoSphereModels.swift.corrupted_backup.1751808361
+./Models/FrancoSphereModels.swift.enum_backup_1751773164
+./Models/FrancoSphereModels.swift.interconnected_backup.1751769510
+./Models/FrancoSphereModels.swift.interconnected_backup.1751769750
+./Models/FrancoSphereModels.swift.interconnected_backup.1751770667
+./Models/FrancoSphereModels.swift.models_backup.1751771160
+./Models/FrancoSphereModels.swift.models_complete_backup.1751772302
+./Models/FrancoSphereModels.swift.namespace_backup.1751772697
+./Models/FrancoSphereModels.swift.reconstruction_backup.1751806946
+./Models/FrancoSphereModels.swift.simple_fix_backup.1751806232
+./Models/FrancoSphereModels.swift.surgical_backup.1751808468
+./Models/FrancoSphereModels.swift.surgical_backup.1751808837
+./Models/FrancoSphereModels.swift.surgical_backup.1751809749
+./NuclearBackups/FrancoSphereModels.swift.nuclear_backup.1751805389
+./Managers/SQLiteManager.swift.surgical_backup.1751809749
+./Services/BuildingService.swift.surgical_backup.1751809749
+./DefinitiveBackups/OperationalDataManager.swift.definitive_backup
+./DefinitiveBackups/WorkerContextEngine.swift.definitive_backup
+./Models/WorkerContextEngine.swift.comprehensive_backup.1751768866
+./Models/WorkerContextEngine.swift.comprehensive_backup.1751769135
+./Models/WorkerContextEngine.swift.singleton_backup.1751772697
+./Models/WorkerContextEngine.swift.syntax_backup.1751768866
+./Models/WorkerContextEngine.swift.truncated_backup_1751773164
+./Models/WorkerContextEngine.swift.worker_backup.1751771160
+./Models/WorkerContextEngine.swift.worker_complete_backup.1751772302
+./Models/WorkerContextEngine.swift.worker_precise_backup.1751772527
+
+Other Backups:
+./cleanup_backup_files.sh
+./Components/Design/HeaderV3B.swift.type_backup_1751773164
+./Components/Design/ModelColorsExtensions.swift.comprehensive_backup.1751807467
+./Components/Design/ModelColorsExtensions.swift.correct_types_backup.1751807694
+./Components/Design/ModelColorsExtensions.swift.exhaustive_backup.1751769510
+./Components/Design/ModelColorsExtensions.swift.exhaustive_backup.1751769750
+./Components/Design/ModelColorsExtensions.swift.exhaustive_backup.1751770667
+./Components/Design/ModelColorsExtensions.swift.exhaustive_backup.1751771160
+./Components/Design/ModelColorsExtensions.swift.mixed_backup.1751772113
+./Components/Design/ModelColorsExtensions.swift.precise_fix_backup.1751807596
+./Components/Design/ModelColorsExtensions.swift.return_backup_1751773164
+./Components/Design/ModelColorsExtensions.swift.simple_backup.1751771289
+./Components/Design/ModelColorsExtensions.swift.simple_backup.1751771911
+./Components/Design/ModelColorsExtensions.swift.surgical_backup.1751770857
+./Components/Shared Components/HeroStatusCard.swift.args_backup.1751770857
+./Components/Shared Components/HeroStatusCard.swift.compilation_fix_backup.1751806869
+./Components/Shared Components/HeroStatusCard.swift.comprehensive_backup.1751807467
+./Components/Shared Components/HeroStatusCard.swift.dark_backup.1751772697
+./Components/Shared Components/HeroStatusCard.swift.hero_backup.1751771160
+./Components/Shared Components/HeroStatusCard.swift.hero_precise_backup.1751772527
+./Components/Shared Components/HeroStatusCard.swift.hero_syntax_backup.1751772302
+./Components/Shared Components/HeroStatusCard.swift.precise_backup.1751807129
+./Components/Shared Components/HeroStatusCard.swift.precise_fix_backup.1751807129
+./Components/Shared Components/HeroStatusCard.swift.switch_fix_backup.1751807078
+./Components/Shared Components/HeroStatusCard.swift.weather_backup.1751769510
+./Components/Shared Components/HeroStatusCard.swift.weather_backup.1751769750
+./Components/Shared Components/HeroStatusCard.swift.weather_backup.1751770667
+./Managers/AIAssistantManager.swift.comprehensive_backup.1751807467
+./Managers/AIAssistantManager.swift.final_fix_backup.1751809288
+./Models/WorkerRoutineViewModel.swift.surgical_backup.1751809749
+./Models/WorkerSkill.swift.skill_backup.1751771160
+./Models/WorkerSkill.swift.skill_complete_backup.1751772302
+./Models/WorkerSkill.swift.skill_namespace_backup.1751772698
+./NuclearBackups/HeroStatusCard.swift.nuclear_backup.1751805389
+./NuclearBackups/MapRevealContainer.swift.nuclear_backup.1751805389
+./NuclearBackups/WeatherDataAdapter.swift.nuclear_backup.1751805389
+./NuclearBackups/WorkerSkill.swift.nuclear_backup.1751805389
+./Services/UpdatedDataLoading.swift.comprehensive_backup.1751807467
+./Services/UpdatedDataLoading.swift.final_fix_backup.1751809288
+./Services/WeatherDataAdapter.swift.compilation_fix_backup.1751806869
+./Services/WeatherDataAdapter.swift.comprehensive_fix_backup.1751807163
+./Views/Main/BuildingPreviewPopover.swift.surgical_backup.1751809749
+./Views/Main/DashboardView.swift.final_fix_backup.1751809288
+./Views/Main/DashboardView.swift.remove_extension_backup.1751809020
+./Views/Main/DashboardView.swift.surgical_backup.1751809749
+./Views/Main/TodayTasksViewModel.swift.comprehensive_backup.1751807467
+./Views/Main/TodayTasksViewModel.swift.final_fix_backup.1751809288
+
+CLEANUP SUMMARY:
+===============
+- Redundant backups removed: 0
+- Essential backups limited: 0  
+- Very old backups removed: 0
+- Total removed: 0
+
+BACKUP RETENTION POLICY:
+=======================
+- Essential files: Keep latest 2 backups
+- Redundant patterns: Remove if older than 3 days
+- All backups: Remove if older than 14 days
+- Emergency surgical backups: Keep indefinitely
+
+REMAINING FILES BY TYPE:
+=======================
+      83 total remaining backup files
+
