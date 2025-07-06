@@ -3,10 +3,11 @@
 //  FrancoSphere
 //
 //  🔧 CORRECTED VERSION: All compilation errors fixed
+//  ✅ Fixed WeatherCondition enum cases (.rainy not .rain, .snowy not .snow)
+//  ✅ Fixed WeatherData constructor parameters
 //  ✅ Fixed all type conversion errors
 //  ✅ Fixed enum method calls
 //  ✅ Fixed Date vs String confusion
-//  ✅ Fixed WeatherData constructor argument order
 //
 
 import Foundation
@@ -115,15 +116,16 @@ class UpdatedDataLoading: ObservableObject {
     }
     
     private func loadWeatherData() async {
-        // FIXED: Proper WeatherData constructor with correct argument order
+        // ✅ FIXED: Proper WeatherData constructor with correct parameters
         currentWeather = WeatherData(
-                temperature: 72.0,
-                humidity: 65,
-                windSpeed: 12.0,
-                condition: .clear,
-                description: "Clear skies"
-        
-            )
+            temperature: 72.0,
+            condition: .clear,
+            humidity: 65.0,
+            windSpeed: 12.0,
+            timestamp: Date(),
+            description: "Clear skies",
+            iconName: "sun.max.fill"
+        )
         
         // Load weather for each building
         for building in workerBuildings {
@@ -279,10 +281,11 @@ class UpdatedDataLoading: ObservableObject {
     func getWeatherImpactSummary() -> String? {
         guard let weather = currentWeather else { return nil }
         
+        // ✅ FIXED: Use correct WeatherCondition enum cases
         switch weather.condition {
-        case .rain:
+        case .rainy:  // ✅ Changed from .rain to .rainy
             return "Rain may affect outdoor tasks"
-        case .snow:
+        case .snowy:  // ✅ Changed from .snow to .snowy
             return "Snow conditions - extra time needed"
         case .stormy:
             return "Storm warning - reschedule outdoor work"

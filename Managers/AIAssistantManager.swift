@@ -2,7 +2,9 @@
 //  AIAssistantManager.swift
 //  FrancoSphere
 //
-//  Complete AI Assistant Manager with proper class structure
+//  ✅ FIXED: Updated to match actual simple model definitions
+//  ✅ All constructors corrected to use simple parameters
+//  ✅ Properties updated to match actual model structure
 //
 
 import Foundation
@@ -41,7 +43,7 @@ class AIAssistantManager: ObservableObject {
     
     // MARK: - Scenario Management
     func addScenario(_ scenarioType: String) {
-        let scenario = AIScenario(scenario: "Default scenario")
+        let scenario = AIScenario(scenario: scenarioType)
         activeScenarios.append(scenario)
         hasActiveScenarios = !activeScenarios.isEmpty
         print("📱 Added AI scenario: \(scenarioType)")
@@ -65,47 +67,47 @@ class AIAssistantManager: ObservableObject {
         switch scenarioType {
         case "routineIncomplete":
             return [
-                AISuggestion(suggestion: "review")),
-                AISuggestion(suggestion: "update"))
+                AISuggestion(suggestion: "review"),
+                AISuggestion(suggestion: "update")
             ]
         case "taskCompletion":
             return [
-                AISuggestion(suggestion: "complete")),
-                AISuggestion(suggestion: "notes"))
+                AISuggestion(suggestion: "complete"),
+                AISuggestion(suggestion: "notes")
             ]
         case "pendingTasks":
             return [
-                AISuggestion(suggestion: "prioritize")),
-                AISuggestion(suggestion: "reschedule"))
+                AISuggestion(suggestion: "prioritize"),
+                AISuggestion(suggestion: "reschedule")
             ]
         case "buildingArrival":
             return [
-                AISuggestion(suggestion: "checkin")),
-                AISuggestion(suggestion: "schedule"))
+                AISuggestion(suggestion: "checkin"),
+                AISuggestion(suggestion: "schedule")
             ]
         case "weatherAlert":
             return [
-                AISuggestion(suggestion: "weather")),
-                AISuggestion(suggestion: "adjust"))
+                AISuggestion(suggestion: "weather"),
+                AISuggestion(suggestion: "adjust")
             ]
         case "maintenanceRequired":
             return [
-                AISuggestion(suggestion: "schedule")),
-                AISuggestion(suggestion: "order"))
+                AISuggestion(suggestion: "schedule"),
+                AISuggestion(suggestion: "order")
             ]
         case "scheduleConflict":
             return [
-                AISuggestion(suggestion: "resolve")),
-                AISuggestion(suggestion: "notify"))
+                AISuggestion(suggestion: "resolve"),
+                AISuggestion(suggestion: "notify")
             ]
         case "emergencyResponse":
             return [
-                AISuggestion(suggestion: "emergency")),
-                AISuggestion(suggestion: "contact"))
+                AISuggestion(suggestion: "emergency"),
+                AISuggestion(suggestion: "contact")
             ]
         default:
             return [
-                AISuggestion(suggestion: "general"))
+                AISuggestion(suggestion: "general")
             ]
         }
     }
@@ -136,22 +138,22 @@ class AIAssistantManager: ObservableObject {
         switch context.lowercased() {
         case let ctx where ctx.contains("weather"):
             return [
-                AISuggestion(suggestion: "weather")),
-                AISuggestion(suggestion: "reschedule"))
+                AISuggestion(suggestion: "weather"),
+                AISuggestion(suggestion: "reschedule")
             ]
         case let ctx where ctx.contains("maintenance"):
             return [
-                AISuggestion(suggestion: "review")),
-                AISuggestion(suggestion: "check"))
+                AISuggestion(suggestion: "review"),
+                AISuggestion(suggestion: "check")
             ]
         case let ctx where ctx.contains("task"):
             return [
-                AISuggestion(suggestion: "update")),
-                AISuggestion(suggestion: "complete"))
+                AISuggestion(suggestion: "update"),
+                AISuggestion(suggestion: "complete")
             ]
         default:
             return [
-                AISuggestion(suggestion: "review"))
+                AISuggestion(suggestion: "review")
             ]
         }
     }
@@ -173,6 +175,26 @@ class AIAssistantManager: ObservableObject {
             print("🌤️ Checking weather conditions...")
         case "emergency":
             print("🚨 Following emergency protocol...")
+        case "checkin":
+            print("🏢 Checking in at building...")
+        case "notes":
+            print("📝 Adding notes...")
+        case "prioritize":
+            print("⚡ Prioritizing tasks...")
+        case "reschedule":
+            print("📅 Rescheduling tasks...")
+        case "adjust":
+            print("🔧 Adjusting tasks...")
+        case "order":
+            print("📦 Ordering supplies...")
+        case "resolve":
+            print("⚖️ Resolving conflicts...")
+        case "notify":
+            print("📢 Sending notifications...")
+        case "contact":
+            print("📞 Contacting support...")
+        case "check":
+            print("🔍 Performing check...")
         default:
             print("🔧 Performing general action...")
         }

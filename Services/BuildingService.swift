@@ -1,38 +1,26 @@
-// UPDATED: Using centralized TypeRegistry for all types
 //
 //  BuildingService.swift
 //  FrancoSphere
 //
-//  ✅ CRITICAL FIXES APPLIED:
+//  ✅ COMPILATION FIXES APPLIED:
 //  ✅ Kevin Assignment Reality Correction (Rubin Museum ID "14", NOT Franklin ID "13")
 //  ✅ Service Consolidation (BuildingStatusManager + BuildingRepository + InventoryManager)
 //  ✅ Database ID handling (String ↔ Int64 conversion fixes)
 //  ✅ Integration with WorkerService, TaskService, OperationalDataManager
 //  ✅ Enhanced caching and performance optimization
-//  ✅ FIXED: Removed duplicate method declarations only
+//  ✅ FIXED: Actor isolation, syntax errors, and type compatibility issues
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import CoreLocation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SQLite
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // ✅ Type alias for SQLite.Binding clarity
 typealias SQLiteBinding = SQLite.Binding
 
-class BuildingService {
+@MainActor
+class BuildingService: ObservableObject {
     static let shared = BuildingService()
     
     // MARK: - Dependencies
@@ -51,7 +39,7 @@ class BuildingService {
     // MARK: - Initialization with Kevin Correction
     private init() {
         // ✅ CRITICAL: Building definitions with Kevin's corrected assignments
-                self.buildings = [
+        self.buildings = [
             NamedCoordinate(id: "1", name: "12 West 18th Street", latitude: 40.7389, longitude: -73.9936),
             NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.7386, longitude: -73.9883),
             NamedCoordinate(id: "3", name: "36 Walker Street", latitude: 40.7171, longitude: -74.0026),
@@ -137,7 +125,7 @@ class BuildingService {
         
         var buildingStatus: BuildingStatus {
             switch self {
-            case .complete: return BuildingStatus.active
+            case .complete: return .operational
             case .partial: return .maintenance
             case .pending: return .maintenance
             case .overdue: return .offline
@@ -158,7 +146,7 @@ class BuildingService {
         }
         
         // Try hardcoded buildings first (source of truth)
-        if let hardcodedBuilding = buildings.first()(where: { $0.id == id }) {
+        if let hardcodedBuilding = buildings.first(where: { $0.id == id }) {
             buildingsCache[id] = hardcodedBuilding
             return hardcodedBuilding
         }
@@ -173,20 +161,19 @@ class BuildingService {
             let query = "SELECT * FROM buildings WHERE id = ?"
             let rows = try await sqliteManager.query(query, [buildingIdInt])
             
-            guard let row = rows.first() else {
+            guard let row = rows.first else {
                 print("⚠️ Building \(id) not found in database")
                 return nil
             }
             
             guard let name = row["name"] as? String,
-                      let lat = row["latitude"] as? Double,
-                      let lng = row["longitude"] as? Double else {
+                  let lat = row["latitude"] as? Double,
+                  let lng = row["longitude"] as? Double else {
                 return nil
             }
             
             let building = NamedCoordinate(id: id, name: name, latitude: lat, longitude: lng)
-            )
-        buildingsCache[id] = building
+            buildingsCache[id] = building
             return building
             
         } catch {
@@ -236,14 +223,14 @@ class BuildingService {
             return "14"
         }
         
-        return buildings.first() {
+        return buildings.first {
             $0.name.compare(cleanedName, options: .caseInsensitive) == .orderedSame ||
             $0.name.compare(name, options: .caseInsensitive) == .orderedSame
         }?.id
     }
     
     func name(forId id: String) async -> String {
-        buildings.first() { $0.id == id }?.name ?? "Unknown Building"
+        buildings.first { $0.id == id }?.name ?? "Unknown Building"
     }
     
     // MARK: - Enhanced Building Status Management
@@ -346,7 +333,7 @@ class BuildingService {
         return []
     }
     
-    // MARK: - Inventory Management (Consolidated from InventoryManager) - ✅ FIXED: Single declarations only
+    // MARK: - Inventory Management (Consolidated from InventoryManager)
     
     func getInventoryItems(for buildingId: String) async throws -> [InventoryItem] {
         if let cachedItems = inventoryCache[buildingId] {
@@ -366,12 +353,10 @@ class BuildingService {
         let items = rows.compactMap { row -> InventoryItem? in
             guard let id = row["id"] as? String,
                   let name = row["name"] as? String,
-                  let buildingID = row["building_id"] as? String,
                   let categoryString = row["category"] as? String,
                   let quantity = row["quantity"] as? Int64,
                   let unit = row["unit"] as? String,
                   let minimumQuantity = row["minimum_quantity"] as? Int64,
-                  let needsReorder = row["needs_reorder"] as? Int64,
                   let lastRestockTimestamp = row["last_restock_date"] as? String else {
                 return nil
             }
@@ -379,7 +364,19 @@ class BuildingService {
             let category = InventoryCategory(rawValue: categoryString) ?? .other
             let lastRestockDate = ISO8601DateFormatter().date(from: lastRestockTimestamp) ?? Date()
             
-            return InventoryItem(id: id, name: name, description: name, category: category, currentStock: Int(quantity), minimumStock: Int(minimumQuantity), unit: unit, supplier: "", costPerUnit: 0.0, restockStatus: .inStock, lastRestocked: lastRestockDate)
+            return InventoryItem(
+                id: id,
+                name: name,
+                description: name,
+                category: category,
+                currentStock: Int(quantity),
+                minimumStock: Int(minimumQuantity),
+                unit: unit,
+                supplier: "",
+                costPerUnit: 0.0,
+                restockStatus: quantity <= minimumQuantity ? .lowStock : .inStock,
+                lastRestocked: lastRestockDate
+            )
         }
         
         inventoryCache[buildingId] = items
@@ -398,12 +395,12 @@ class BuildingService {
         """
         
         let lastRestockString = ISO8601DateFormatter().string(from: Date())
-        let needsReorderInt = (item.restockStatus == RestockStatus.lowStock || item.restockStatus == RestockStatus.outOfStock) ? 1 : 0
+        let needsReorderInt = (item.restockStatus == .lowStock || item.restockStatus == .outOfStock) ? 1 : 0
         
         let parameters: [SQLiteBinding] = [
             item.id, item.name, item.id, item.category.rawValue,
-            item.currentStock, item.category.rawValue, item.minimumStock, needsReorderInt,
-            lastRestockString, item.name, "" ?? "",
+            item.currentStock, item.unit, item.minimumStock, needsReorderInt,
+            lastRestockString, item.name, item.description,
             ISO8601DateFormatter().string(from: Date())
         ]
         
@@ -455,7 +452,7 @@ class BuildingService {
     
     func getLowStockItems(for buildingId: String) async throws -> [InventoryItem] {
         let allItems = try await getInventoryItems(for: buildingId)
-        return allItems.filter { $0.status == RestockStatus.lowStock || $0.status == RestockStatus.outOfStock }
+        return allItems.filter { $0.restockStatus == .lowStock || $0.restockStatus == .outOfStock }
     }
     
     func getInventoryItems(for buildingId: String, category: InventoryCategory) async throws -> [InventoryItem] {
@@ -485,7 +482,7 @@ class BuildingService {
         do {
             let rows = try await sqliteManager.query(query, [buildingIdInt])
             
-            guard let row = rows.first() else {
+            guard let row = rows.first else {
                 return BuildingAnalytics.empty(buildingId: buildingId)
             }
             
@@ -681,7 +678,7 @@ class BuildingService {
             """
             
             let rows = try await sqliteManager.query(sql)
-            var assignments: [String: [FrancoWorkerAssignment]] = [:]
+            var assignmentsMap: [String: [FrancoWorkerAssignment]] = [:]
             
             for row in rows {
                 guard let buildingIdStr = row["buildingId"] as? String,
@@ -701,10 +698,10 @@ class BuildingService {
                     specialRole: specialRole
                 )
                 
-                assignments[buildingIdStr, default: []].append(assignment)
+                assignmentsMap[buildingIdStr, default: []].append(assignment)
             }
             
-            self.assignmentsCache = assignments
+            self.assignmentsCache = assignmentsMap
         } catch {
             print("❌ Failed to load assignments from database: \(error)")
         }
@@ -861,7 +858,7 @@ class BuildingService {
             let query = "SELECT building_id FROM AllTasks WHERE id = ?"
             let rows = try await sqliteManager.query(query, [taskID])
             
-            if let row = rows.first() {
+            if let row = rows.first {
                 if let buildingIdInt = row["building_id"] as? Int64 {
                     return String(buildingIdInt)
                 } else if let buildingIdString = row["building_id"] as? String {
@@ -873,16 +870,36 @@ class BuildingService {
         }
         return nil
     }
-}
-
-
-    func getWorkerAssignments(for buildingId: String) -> [FrancoWorkerAssignment] {
-        return assignments(for: buildingId)
+    
+    // MARK: - Compatibility Methods
+    func getWorkerAssignments(for buildingId: String) async -> [FrancoWorkerAssignment] {
+        return await assignments(for: buildingId)
     }
     
-    func getBuilding(by buildingId: String) -> NamedCoordinate? {
-        return buildings.first() { $0.id == buildingId }
+    func getBuilding(by buildingId: String) async -> NamedCoordinate? {
+        return buildings.first { $0.id == buildingId }
     }
+    
+    func getBuildingName(for buildingId: String) async -> String {
+        if let building = await getBuilding(by: buildingId) {
+            return building.name
+        }
+        return "Unknown Building"
+    }
+    
+    func getAssignedWorkersFormatted(for buildingId: String) async -> String {
+        let assignments = await getWorkerAssignments(for: buildingId)
+        return assignments.map { $0.workerName }.joined(separator: ", ")
+    }
+    
+    func fetchBuilding(id: String) async throws -> NamedCoordinate? {
+        return try await getBuilding(id)
+    }
+    
+    func fetchBuildings() async throws -> [NamedCoordinate] {
+        return try await getAllBuildings()
+    }
+}
 
 // MARK: - Supporting Types
 
@@ -1017,22 +1034,4 @@ enum BuildingServiceError: LocalizedError {
             return "No worker assignments found"
         }
     }
-}
-
-// MARK: - Missing Methods for Compatibility
-extension BuildingService {
-    public func getBuildingName(for buildingId: String) -> String {
-        return getBuilding( buildingId)?.name ?? "Unknown Building"
-    }
-    
-    public func getAssignedWorkersFormatted(for buildingId: String) -> String {
-        let assignments = getWorkerAssignments(for: buildingId)
-        return assignments.map { $0.workerName }.joined(separator: ", ")
-    }
-
-    // MARK: - Compatibility Methods
-    func fetchBuilding(id: String) async throws -> NamedCoordinate? {
-        return try await getBuilding(id)
-    }
-
 }

@@ -5,16 +5,11 @@
 //  ✅ NEW COMPONENT - Building preview hover card for MapOverlayView
 //  ✅ Shows building photo, address, open tasks, sanitation schedule
 //  ✅ Double-tap pushes BuildingDetailView
+//  ✅ FIXED: Optional String unwrapping for imageAssetName
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import MapKit
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct BuildingPreviewPopover: View {
     let building: NamedCoordinate
@@ -91,7 +86,9 @@ struct BuildingPreviewPopover: View {
     
     @ViewBuilder
     private var buildingImageView: some View {
-        if !(building.imageAssetName?.isEmpty ?? true), let uiImage = UIImage(named: building.imageAssetName) {
+        // ✅ FIXED: Proper optional handling for imageAssetName
+        if let imageAssetName = building.imageAssetName, !imageAssetName.isEmpty,
+           let uiImage = UIImage(named: imageAssetName) {
             Image(uiImage: uiImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
