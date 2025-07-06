@@ -41,7 +41,7 @@ class AIAssistantManager: ObservableObject {
     
     // MARK: - Scenario Management
     func addScenario(_ scenarioType: String) {
-        let scenario = AIScenario(scenario: "Default scenario")
+        let scenario = AIScenario(type: scenarioType)
         activeScenarios.append(scenario)
         hasActiveScenarios = !activeScenarios.isEmpty
         print("📱 Added AI scenario: \(scenarioType)")
@@ -65,47 +65,47 @@ class AIAssistantManager: ObservableObject {
         switch scenarioType {
         case "routineIncomplete":
             return [
-                AISuggestion(actionType: "review"),
-                AISuggestion(actionType: "update")
+                AISuggestion(text: "Review incomplete tasks", actionType: "review"),
+                AISuggestion(text: "Update task status", actionType: "update")
             ]
         case "taskCompletion":
             return [
-                AISuggestion(actionType: "complete"),
-                AISuggestion(actionType: "notes")
+                AISuggestion(text: "Mark task as complete", actionType: "complete"),
+                AISuggestion(text: "Add completion notes", actionType: "notes")
             ]
         case "pendingTasks":
             return [
-                AISuggestion(actionType: "prioritize"),
-                AISuggestion(actionType: "reschedule")
+                AISuggestion(text: "Prioritize pending tasks", actionType: "prioritize"),
+                AISuggestion(text: "Reschedule if needed", actionType: "reschedule")
             ]
         case "buildingArrival":
             return [
-                AISuggestion(actionType: "checkin"),
-                AISuggestion(actionType: "schedule")
+                AISuggestion(text: "Clock in at building", actionType: "checkin"),
+                AISuggestion(text: "Review today's schedule", actionType: "schedule")
             ]
         case "weatherAlert":
             return [
-                AISuggestion(actionType: "weather"),
-                AISuggestion(actionType: "adjust")
+                AISuggestion(text: "Check weather impact", actionType: "weather"),
+                AISuggestion(text: "Adjust outdoor tasks", actionType: "adjust")
             ]
         case "maintenanceRequired":
             return [
-                AISuggestion(actionType: "schedule"),
-                AISuggestion(actionType: "order")
+                AISuggestion(text: "Schedule maintenance", actionType: "schedule"),
+                AISuggestion(text: "Order required parts", actionType: "order")
             ]
         case "scheduleConflict":
             return [
-                AISuggestion(actionType: "resolve"),
-                AISuggestion(actionType: "notify")
+                AISuggestion(text: "Resolve conflict", actionType: "resolve"),
+                AISuggestion(text: "Notify supervisor", actionType: "notify")
             ]
         case "emergencyResponse":
             return [
-                AISuggestion(actionType: "emergency"),
-                AISuggestion(actionType: "contact")
+                AISuggestion(text: "Follow emergency protocol", actionType: "emergency"),
+                AISuggestion(text: "Contact emergency services", actionType: "contact")
             ]
         default:
             return [
-                AISuggestion(actionType: "general")
+                AISuggestion(text: "Take appropriate action", actionType: "general")
             ]
         }
     }
@@ -114,7 +114,7 @@ class AIAssistantManager: ObservableObject {
     func processScenario(_ scenario: AIScenario) {
         isProcessing = true
         currentScenario = scenario
-        suggestions = generateSuggestions(for: scenario.scenario)
+        suggestions = generateSuggestions(for: scenario.type)
         
         // Simulate processing delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -126,7 +126,7 @@ class AIAssistantManager: ObservableObject {
         currentScenarioData = data
         
         // Generate contextual suggestions based on scenario data
-        if let context = currentScenarioData?.data {
+        if let context = currentScenarioData?.context {
             suggestions = generateContextualSuggestions(for: context)
         }
     }
@@ -136,22 +136,22 @@ class AIAssistantManager: ObservableObject {
         switch context.lowercased() {
         case let ctx where ctx.contains("weather"):
             return [
-                AISuggestion(actionType: "weather"),
-                AISuggestion(actionType: "reschedule")
+                AISuggestion(text: "Check weather conditions", actionType: "weather"),
+                AISuggestion(text: "Reschedule outdoor tasks", actionType: "reschedule")
             ]
         case let ctx where ctx.contains("maintenance"):
             return [
-                AISuggestion(actionType: "review"),
-                AISuggestion(actionType: "check")
+                AISuggestion(text: "Review maintenance schedule", actionType: "review"),
+                AISuggestion(text: "Check equipment status", actionType: "check")
             ]
         case let ctx where ctx.contains("task"):
             return [
-                AISuggestion(actionType: "update"),
-                AISuggestion(actionType: "complete")
+                AISuggestion(text: "Update task progress", actionType: "update"),
+                AISuggestion(text: "Mark task complete", actionType: "complete")
             ]
         default:
             return [
-                AISuggestion(actionType: "review")
+                AISuggestion(text: "Review current status", actionType: "review")
             ]
         }
     }
@@ -186,18 +186,18 @@ class AIAssistantManager: ObservableObject {
     }
     
     func hasActiveScenario(ofType type: String) -> Bool {
-        return activeScenarios.contains { $0.scenario == type }
+        return activeScenarios.contains { $0.type == type }
     }
     
     func getActiveScenarios(ofType type: String) -> [AIScenario] {
-        return activeScenarios.filter { $0.scenario == type }
+        return activeScenarios.filter { $0.type == type }
     }
     
     // MARK: - Debug Methods
     func debugPrintStatus() {
         print("🤖 AI Assistant Status:")
         print("  Active scenarios: \(activeScenarios.count)")
-        print("  Current scenario: \(currentScenario?.scenario ?? "None")")
+        print("  Current scenario: \(currentScenario?.title ?? "None")")
         print("  Suggestions: \(suggestions.count)")
         print("  Processing: \(isProcessing)")
     }

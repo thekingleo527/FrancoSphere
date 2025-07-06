@@ -71,9 +71,6 @@ class WeatherDataAdapter: ObservableObject {
     private let cacheFileName = "weatherCache.json"
 
     private struct DiskCacheEntry: Codable {
-        enum CodingKeys: String, CodingKey {
-            case data, timestamp
-        }
         let data: [WeatherData]
         let timestamp: Date
     }
@@ -298,7 +295,7 @@ class WeatherDataAdapter: ObservableObject {
             windSpeed: windSpeed,
             windDirection: 180, // Default
             precipitation: precipitation,
-            snow: condition == WeatherCondition.snowy ? precipitation : 0,
+            snow: condition == .snow ? precipitation : 0,
             condition: condition,
             uvIndex: 0,
             visibility: 10000, // Default good visibility
@@ -340,7 +337,7 @@ class WeatherDataAdapter: ObservableObject {
                 windSpeed: windSpeed,
                 windDirection: windDirection,
                 precipitation: precipitation,
-                snow: condition == WeatherCondition.snowy ? precipitation : 0,
+                snow: condition == .snow ? precipitation : 0,
                 condition: condition,
                 uvIndex: 0,
                 visibility: 10000,
@@ -376,14 +373,17 @@ class WeatherDataAdapter: ObservableObject {
         case 45, 48: return .foggy
         case 51, 53, 55, 56, 57: return WeatherCondition.rainy
         case 61, 63, 65, 66, 67: return WeatherCondition.rainy
-        case 95, 96, 99: return WeatherCondition.stormy Use WeatherCondition.stormy instead of .thunderstorm
-        default: return WeatherCondition.clear  // FIXED: Use .clear instead of .other
+        case 71, 73, 75, 77: return WeatherCondition.snowy
+        case 80, 81, 82: return WeatherCondition.rainy
+        case 85, 86: return WeatherCondition.snowy
+        case 95, 96, 99: return WeatherCondition.stormy  // FIXED: Use WeatherCondition.stormy instead of .thunderstorm
+        default: return .clear  // FIXED: Use .clear instead of .other
         }
     }
     
     // MARK: - Task Integration Methods (Required by TaskSchedulerService)
     
-    /// Generate weather-related TaskCategory.maintenance tasks based on forecast
+    /// Generate weather-related maintenance tasks based on forecast
     func generateWeatherTasks(for building: NamedCoordinate) -> [MaintenanceTask] {
         var tasks: [MaintenanceTask] = []
         let calendar = Calendar.current
@@ -399,7 +399,7 @@ class WeatherDataAdapter: ObservableObject {
                 // FIXED: Correct MaintenanceTask constructor with all required parameters
                 tasks.append(MaintenanceTask(
                     title: "Snow Removal Preparation",
-                    description: "Prepare snow removal equipment, stock salt/sand, WeatherCondition.clear drainage areas",
+                    description: "Prepare snow removal equipment, stock salt/sand, clear drainage areas",
                     category: TaskCategory.maintenance,
                     urgency: .high,
                     buildingId: building.id,
@@ -477,7 +477,7 @@ class WeatherDataAdapter: ObservableObject {
         
         if weather.condition == WeatherCondition.rainy || weather.condition == WeatherCondition.stormy { // FIXED: Use WeatherCondition.stormy
             taskTitle = "Emergency Rain Inspection"
-            taskDescription = "Check for leaks, proper drainage, and WeatherCondition.clear any blockages from gutters due to heavy rain."
+            taskDescription = "Check for leaks, proper drainage, and clear any blockages from gutters due to heavy rain."
             taskCategory = TaskCategory.inspection
         } else if weather.condition == WeatherCondition.snowy {
             taskTitle = "Snow Removal"

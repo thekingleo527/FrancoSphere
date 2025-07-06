@@ -2,7 +2,7 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere
 //
-//  🔧 COMPLETE RECONSTRUCTION - Clean structure, zero corruption
+//  💥 NUCLEAR REBUILD - Zero corruption, clean slate
 //
 
 import Foundation
@@ -22,7 +22,7 @@ public enum FrancoSphere {
         public let imageAssetName: String?
         
         public var coordinate: CLLocationCoordinate2D {
-            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
         }
         
         public init(id: String, name: String, latitude: Double, longitude: Double, address: String? = nil, imageAssetName: String? = nil) {
@@ -59,7 +59,7 @@ public enum FrancoSphere {
         case foggy = "Foggy"
         case windy = "Windy"
         
-        public var icon: String {
+        public var iconName: String {
             switch self {
             case .clear, .sunny: return "sun.max.fill"
             case .cloudy: return "cloud.fill"
@@ -156,7 +156,7 @@ public enum FrancoSphere {
     
     public struct MaintenanceTask: Identifiable, Codable {
         public let id: String
-        public let title: String
+        public let name: String
         public let description: String
         public let category: TaskCategory
         public let urgency: TaskUrgency
@@ -165,15 +165,15 @@ public enum FrancoSphere {
         public let requiredSkills: [WorkerSkill]
         public let buildingId: String
         public let assignedWorkerId: String?
-        public let dueDate: Date?
+        public let scheduledDate: Date?
         public let completedDate: Date?
         public let isCompleted: Bool
         public let notes: String?
-        public let status: VerificationStatus
+        public let verificationStatus: VerificationStatus
         
-        public init(id: String = UUID().uuidString, title: String, description: String, category: TaskCategory, urgency: TaskUrgency, recurrence: TaskRecurrence = .none, estimatedDuration: TimeInterval = 3600, requiredSkills: [WorkerSkill] = [], buildingId: String, assignedWorkerId: String? = nil, dueDate: Date? = nil, completedDate: Date? = nil, isCompleted: Bool = false, notes: String? = nil, status: VerificationStatus = .pending) {
+        public init(id: String = UUID().uuidString, name: String, description: String, category: TaskCategory, urgency: TaskUrgency, recurrence: TaskRecurrence = .none, estimatedDuration: TimeInterval, requiredSkills: [WorkerSkill] = [], buildingId: String, assignedWorkerId: String? = nil, scheduledDate: Date? = nil, completedDate: Date? = nil, isCompleted: Bool = false, notes: String? = nil, verificationStatus: VerificationStatus = .pending) {
             self.id = id
-            self.title = title
+            self.name = name
             self.description = description
             self.category = category
             self.urgency = urgency
@@ -182,11 +182,11 @@ public enum FrancoSphere {
             self.requiredSkills = requiredSkills
             self.buildingId = buildingId
             self.assignedWorkerId = assignedWorkerId
-            self.dueDate = dueDate
+            self.scheduledDate = scheduledDate
             self.completedDate = completedDate
             self.isCompleted = isCompleted
             self.notes = notes
-            self.status = status
+            self.verificationStatus = verificationStatus
         }
     }
     
@@ -393,7 +393,7 @@ public enum FrancoSphere {
         }
     }
     
-    // MARK: - Additional Supporting Models
+    // MARK: - Additional Models
     public struct AIScenario: Identifiable, Codable {
         public let id: String
         public let scenario: String
@@ -597,9 +597,7 @@ public enum FrancoSphere {
             self.averageCompletionTime = averageCompletionTime
         }
     }
-}
-
-// MARK: - Global Type Aliases
+// MARK: - Global Type Aliases (Correct Namespace)
 public typealias NamedCoordinate = FrancoSphere.NamedCoordinate
 public typealias WeatherCondition = FrancoSphere.WeatherCondition
 public typealias WeatherData = FrancoSphere.WeatherData

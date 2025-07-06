@@ -154,9 +154,22 @@ struct HeroStatusCard: View {
     // MARK: - ✅ FIXED: Weather Icon Function
     private func weatherIcon(for condition: WeatherCondition) -> String {
         switch condition {
+        case Color.clear, .sunny:
+            return "sun.max.fill"
         case .clear, .sunny:
             return "sun.max.fill"
         case .cloudy:
+            return "cloud.fill"
+        case .rainy:
+            return "cloud.rain.fill"
+        case .snowy:
+            return "cloud.snow.fill"
+        case .stormy:
+            return "cloud.bolt.fill"
+        case .foggy:
+            return "cloud.fog.fill"
+        case .windy:
+            return "wind" WeatherCondition.cloudy:
             return "cloud.fill"
         case .rainy:
             return "cloud.rain.fill"
@@ -174,9 +187,22 @@ struct HeroStatusCard: View {
     // MARK: - ✅ FIXED: Weather Color Function
     private func weatherColor(for condition: WeatherCondition) -> Color {
         switch condition {
+        case Color.clear, .sunny:
+            return .yellow
         case .clear, .sunny:
             return .yellow
         case .cloudy:
+            return .gray
+        case .rainy:
+            return .blue
+        case .snowy:
+            return .cyan
+        case .stormy:
+            return .purple
+        case .foggy:
+            return .gray
+        case .windy:
+            return .green WeatherCondition.cloudy:
             return .gray
         case .rainy:
             return .blue
@@ -207,7 +233,7 @@ struct HeroStatusCard: View {
             windDirection: 0,
             precipitation: 0,
             snow: 0,
-            condition: WeatherCondition.clear,
+            condition: Color.clear,
             uvIndex: 0,
             visibility: 10,
             description: "Clear skies"

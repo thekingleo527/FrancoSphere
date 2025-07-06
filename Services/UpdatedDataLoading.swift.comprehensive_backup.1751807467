@@ -99,7 +99,7 @@ class UpdatedDataLoading: ObservableObject {
         let workerName = getRealWorkerName(for: workerId)
         let filteredTasks = tasks.filter { task in
             // Fixed: Proper string comparison without type confusion
-            let assignedName = task.workerId ?? "Unknown"
+            let assignedName = task.assignedWorkerName ?? "Unknown"
             return assignedName.lowercased().contains(workerName.lowercased()) ||
                    assignedName == workerName
         }
@@ -117,13 +117,12 @@ class UpdatedDataLoading: ObservableObject {
     private func loadWeatherData() async {
         // FIXED: Proper WeatherData constructor with correct argument order
         currentWeather = WeatherData(
-                temperature: 72.0,
-                humidity: 65,
-                windSpeed: 12.0,
-                condition: .clear,
-                description: "Clear skies"
-        
-            )
+            condition: .clear,
+            temperature: 72.0,
+            humidity: 65,
+            windSpeed: 12.0,
+            description: "Clear skies"
+        )
         
         // Load weather for each building
         for building in workerBuildings {
@@ -184,7 +183,7 @@ class UpdatedDataLoading: ObservableObject {
     
     func isTaskOverdue(_ task: ContextualTask) -> Bool {
         // FIXED: Handle Date vs String confusion properly
-        guard let endTime = task.dueDate else { return false }
+        guard let endTime = task.endTime else { return false }
         return Date() > endTime
     }
     
@@ -212,7 +211,7 @@ class UpdatedDataLoading: ObservableObject {
     
     func getTimeUntilTask(_ task: ContextualTask) -> String? {
         // FIXED: Proper Date handling instead of trying to split Date
-        guard let startTime = task.dueDate else { return nil }
+        guard let startTime = task.startTime else { return nil }
         
         let interval = startTime.timeIntervalSince(Date())
         if interval < 0 {
@@ -252,7 +251,7 @@ class UpdatedDataLoading: ObservableObject {
     func getFilteredTasks(for workerId: String, category: String? = nil) -> [ContextualTask] {
         let workerName = getRealWorkerName(for: workerId)
         var filtered = contextualTasks.filter { task in
-            let assignedName = task.workerId ?? "Unknown"
+            let assignedName = task.assignedWorkerName ?? "Unknown"
             return assignedName.lowercased().contains(workerName.lowercased()) ||
                    assignedName == workerName
         }
