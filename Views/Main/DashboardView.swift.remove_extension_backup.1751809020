@@ -1053,6 +1053,13 @@ struct NotificationsView: View {
     }
 }
 
+// MARK: - Extensions for coordinate conversion
+extension NamedCoordinate {
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
 // MARK: - Preview
 struct DashboardView_Previews: PreviewProvider {
     static var previews: some View {
