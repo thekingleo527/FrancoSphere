@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -172,6 +173,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2312FC662E1B66F300B64496 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -395,6 +397,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2312FC652E1B66C900B64496 /* Migration */ = {
+			isa = PBXGroup;
+			children = (
+				2312FC662E1B66F300B64496 /* TypeMigrationService.swift */,
+			);
+			path = Migration;
+			sourceTree = "<group>";
+		};
 		23423DAE2D739D6800AACE3E = {
 			isa = PBXGroup;
 			children = (
@@ -644,6 +654,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC652E1B66C900B64496 /* Migration */,
 				237DE3FE2E182F510002A14D /* TelemetryService.swift */,
 				236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */,
 				236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */,
@@ -1000,6 +1011,7 @@
 				23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */,
 				234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */,
 				234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */,
+				2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */,
 				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,

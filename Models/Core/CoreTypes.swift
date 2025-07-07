@@ -1,15 +1,7 @@
-//
-//  CoreTypes.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/6/25.
-//
-
-
 import Foundation
 import CoreLocation
 
-// Models/CoreTypes.swift
+// Models/Core/CoreTypes.swift
 
 /// The single source of truth for all primary identifier and core data types in FrancoSphere.
 /// This eliminates type confusion between String and Int64 for IDs.
@@ -29,6 +21,18 @@ public enum CoreTypes {
         public let id: BuildingID
         public let name: String
         public let coordinate: CLLocationCoordinate2D
-         // Add other core building properties here.
+        // Add other core building properties here.
+
+        // ✅ FIX: Manually implement Equatable conformance.
+        // We only need to compare the unique 'id' to determine if two buildings are the same.
+        public static func == (lhs: Building, rhs: Building) -> Bool {
+            return lhs.id == rhs.id
+        }
+
+        // ✅ FIX: Manually implement Hashable conformance.
+        // We only need to hash the unique 'id'.
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
     }
 }
