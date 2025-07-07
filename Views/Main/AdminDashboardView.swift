@@ -82,15 +82,6 @@ struct AdminDashboardView: View {
             }
         }
     }
-
-    private var statisticsSection: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
-            StatCard(title: "Buildings", value: "\(viewModel.buildings.count)", icon: "building.2.fill", color: .blue)
-            StatCard(title: "Active Workers", value: "\(viewModel.activeWorkers.count)", icon: "person.2.fill", color: .green)
-            StatCard(title: "Ongoing Tasks", value: "\(viewModel.ongoingTasks.count)", icon: "checklist.checked", color: .orange)
-            StatCard(title: "Inv. Alerts", value: "0", icon: "exclamationmark.triangle.fill", color: .red)
-        }
-    }
     
     private var intelligenceSection: some View {
         VStack(alignment: .leading, spacing: 12) {

@@ -34,3 +34,12 @@ struct StatCard: View {
         .cornerRadius(12)
     }
 }
+
+struct StatCard_Previews: PreviewProvider {
+    static var previews: some View {
+        StatCard(title: "Active Workers", value: "7", icon: "person.2.fill", color: .green)
+            .padding()
+            .background(Color.black)
+            .previewLayout(.sizeThatFits)
+    }
+}
