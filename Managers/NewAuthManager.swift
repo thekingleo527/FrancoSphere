@@ -1,151 +1,121 @@
 //
-//  NewAuthManager.swift
+//  NewAuthManager.swift - V6.0 FIXED
 //  FrancoSphere
-//
-//  ✅ V6.0 REFACTOR: Actor implementation corrected.
-//  ✅ FIXED: Adds the public `getCurrentUser()` method to safely expose state.
-//  This resolves the "'NewAuthManager' has no member 'getCurrentUser'" error.
 //
 
 import Foundation
-import Combine
+import SwiftUI
 
-// MARK: - Notification Names for Auth State Changes
-extension Notification.Name {
-    static let userDidLogin = Notification.Name("userDidLogin")
-    static let userDidLogout = Notification.Name("userDidLogout")
+@MainActor
+class NewAuthManager: ObservableObject {
+    static let shared = NewAuthManager()
+    
+    @Published var isAuthenticated: Bool = false
+    @Published var isLoading: Bool = false
+    @Published var currentWorkerName: String = ""
+    @Published var workerId: String = ""
+    @Published var userRole: String = ""
+    
+    private var sqliteManager: SQLiteManager? = nil
+
+    private init() {
+        checkLoginStatus()
+        Task {
+            do {
+                self.sqliteManager = try await SQLiteManager.start()
+                print("✅ AuthManager: SQLiteManager initialized")
+            } catch {
+                print("⚠️ AuthManager failed to init SQLiteManager: \(error)")
+            }
+        }
+    }
+    
+    private func checkLoginStatus() {
+        if let name = UserDefaults.standard.string(forKey: "currentWorkerName"),
+           let workerIdValue = UserDefaults.standard.string(forKey: "workerId"),
+           let role = UserDefaults.standard.string(forKey: "userRole") {
+            self.currentWorkerName = name
+            self.workerId = workerIdValue
+            self.userRole = role
+            self.isAuthenticated = true
+            print("✅ Restored login state for: \(name)")
+        }
+    }
+    
+    func getCurrentUser() -> User? {
+        guard !workerId.isEmpty else { return nil }
+        return User(
+            id: workerId,
+            name: currentWorkerName,
+            email: "\(currentWorkerName.lowercased().replacingOccurrences(of: " ", with: "."))@francosphere.com",
+            role: userRole
+        )
+    }
+    
+    func login(email: String, password: String, completion: @escaping (Bool, String?) -> Void) {
+        isLoading = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self else { return }
+            
+            if let worker = self.authenticateWorker(email: email, password: password) {
+                self.currentWorkerName = worker.name
+                self.workerId = worker.id
+                self.userRole = worker.role
+                self.isAuthenticated = true
+                
+                UserDefaults.standard.set(worker.name, forKey: "currentWorkerName")
+                UserDefaults.standard.set(worker.id, forKey: "workerId")
+                UserDefaults.standard.set(worker.role, forKey: "userRole")
+                
+                self.isLoading = false
+                completion(true, nil)
+            } else {
+                self.isLoading = false
+                completion(false, "Invalid credentials")
+            }
+        }
+    }
+    
+    func logout() {
+        isAuthenticated = false
+        currentWorkerName = ""
+        workerId = ""
+        userRole = ""
+        
+        UserDefaults.standard.removeObject(forKey: "currentWorkerName")
+        UserDefaults.standard.removeObject(forKey: "workerId")
+        UserDefaults.standard.removeObject(forKey: "userRole")
+    }
+    
+    private func authenticateWorker(email: String, password: String) -> WorkerCredential? {
+        let workers = [
+            WorkerCredential(id: "1", name: "Greg Taylor", email: "greg@francosphere.com", password: "greg123", role: "worker"),
+            WorkerCredential(id: "2", name: "Edwin Brown", email: "edwin@francosphere.com", password: "edwin123", role: "worker"),
+            WorkerCredential(id: "4", name: "Kevin Rubin", email: "kevin@francosphere.com", password: "kevin123", role: "worker"),
+            WorkerCredential(id: "5", name: "Mercedes Gonzalez", email: "mercedes@francosphere.com", password: "mercedes123", role: "worker"),
+            WorkerCredential(id: "6", name: "Luis Saldana", email: "luis@francosphere.com", password: "luis123", role: "worker"),
+            WorkerCredential(id: "7", name: "Angel Ramirez", email: "angel@francosphere.com", password: "angel123", role: "worker"),
+            WorkerCredential(id: "8", name: "Shawn Magloire", email: "shawn@francosphere.com", password: "shawn123", role: "admin"),
+            WorkerCredential(id: "9", name: "Admin", email: "admin@francosphere.com", password: "admin123", role: "admin"),
+            WorkerCredential(id: "10", name: "Client", email: "client@francosphere.com", password: "client123", role: "client")
+        ]
+        
+        return workers.first { $0.email.lowercased() == email.lowercased() && $0.password == password }
+    }
 }
 
-// MARK: - Authenticated User Model
-public struct AuthenticatedUser: Codable, Identifiable {
-    public var id: CoreTypes.WorkerID { workerId }
-    let workerId: CoreTypes.WorkerID
+struct WorkerCredential {
+    let id: String
     let name: String
+    let email: String
+    let password: String
     let role: String
 }
 
-// MARK: - New Auth Manager Actor
-public actor NewAuthManager {
-    public static let shared = NewAuthManager()
-
-    // Internal state is now protected by the actor.
-    private(set) var currentUser: AuthenticatedUser?
-
-    public func getCurrentUser() -> AuthenticatedUser? {
-        return currentUser
-    }
-
-
-    // Private initializer for singleton pattern.
-    private init() {
-        // Attempt to load a persisted session on startup.
-        if let data = UserDefaults.standard.data(forKey: "currentUserSession"),
-           let user = try? JSONDecoder().decode(AuthenticatedUser.self, from: data) {
-            self.currentUser = user
-            print("✅ Restored session for \(user.name)")
-        }
-    }
-
-    // MARK: - Public API
-    
-    /// A safe, asynchronous method for other services to get the current user's state.
-    public func getCurrentUser() -> AuthenticatedUser? {
-        return self.currentUser
-    }
-
-    /// A computed property to check authentication status.
-    /// This can be accessed synchronously as it doesn't modify state.
-    public var isAuthenticated: Bool {
-        return currentUser != nil
-    }
-
-    /// Attempts to authenticate a user with the provided credentials.
-    /// On success, it updates the internal state and posts a notification.
-    public func login(email: String, password: String) async throws {
-        // In a real app, you would hash the password and compare it to a stored hash.
-        guard password == "password" else {
-            throw AuthError.invalidCredentials
-        }
-
-        let lowercasedEmail = email.lowercased()
-        
-        // This user roster should eventually come from the database via WorkerService
-        let users: [String: (name: String, id: CoreTypes.WorkerID, role: String)] = [
-            "g.hutson1989@gmail.com": ("Greg Hutson", "1", "worker"),
-            "edwinlema911@gmail.com": ("Edwin Lema", "2", "worker"),
-            "dutankevin1@gmail.com": ("Kevin Dutan", "4", "worker"),
-            "jneola@gmail.com": ("Mercedes Inamagua", "5", "worker"),
-            "luislopez030@yahoo.com": ("Luis Lopez", "6", "worker"),
-            "lio.angel71@gmail.com": ("Angel Guirachocha", "7", "worker"),
-            "shawn@francomanagementgroup.com": ("Shawn Magloire", "8", "worker"),
-            "francosphere@francomanagementgroup.com": ("Shawn Magloire", "9", "client"),
-            "shawn@fme-llc.com": ("Shawn Magloire", "10", "admin")
-        ]
-
-        guard let userData = users[lowercasedEmail] else {
-            throw AuthError.userNotFound
-        }
-
-        let user = AuthenticatedUser(
-            workerId: userData.id,
-            name: userData.name,
-            role: userData.role
-        )
-        
-        self.currentUser = user
-        persistSession()
-
-        print("✅ Login successful for: \(user.name) (ID: \(user.workerId), Role: \(user.role))")
-
-        // Notify the rest of the app that a user has logged in.
-        await MainActor.run {
-            NotificationCenter.default.post(name: .userDidLogin, object: nil, userInfo: ["user": user])
-        }
-    }
-
-    /// Logs the current user out, clears the session, and posts a notification.
-    public func logout() async {
-        guard currentUser != nil else { return }
-        
-        let userName = currentUser?.name ?? "User"
-        currentUser = nil
-        clearPersistedSession()
-        
-        print("👋 \(userName) logged out.")
-
-        // Notify the rest of the app that the user has logged out.
-        await MainActor.run {
-            NotificationCenter.default.post(name: .userDidLogout, object: nil)
-        }
-    }
-
-    // MARK: - Session Persistence
-
-    private func persistSession() {
-        guard let user = currentUser,
-              let data = try? JSONEncoder().encode(user) else { return }
-        UserDefaults.standard.set(data, forKey: "currentUserSession")
-    }
-
-    private func clearPersistedSession() {
-        UserDefaults.standard.removeObject(forKey: "currentUserSession")
-    }
-}
-
-// MARK: - Error Types
-public enum AuthError: LocalizedError {
-    case invalidCredentials
-    case userNotFound
-    case sessionExpired
-
-    public var errorDescription: String? {
-        switch self {
-        case .invalidCredentials:
-            return "The email or password you entered is incorrect."
-        case .userNotFound:
-            return "No account was found with that email address."
-        case .sessionExpired:
-            return "Your session has expired. Please log in again."
-        }
-    }
+struct User {
+    let id: String
+    let name: String
+    let email: String
+    let role: String
 }
