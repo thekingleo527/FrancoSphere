@@ -48,7 +48,7 @@ struct DashboardTaskDetailView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(task.category.capitalized)
+                Text(task.category.rawValue.capitalized)
                     .font(.subheadline)
                     .foregroundColor(.white)
                     .padding(.horizontal, 12)
