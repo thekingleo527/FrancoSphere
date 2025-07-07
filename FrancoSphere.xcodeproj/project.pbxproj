@@ -20,6 +20,7 @@
 		2312FC882E1BF07700B64496 /* BuildingFeatureConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC872E1BF07700B64496 /* BuildingFeatureConfiguration.swift */; };
 		2312FC8B2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC8A2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift */; };
 		2312FC8F2E1BF2DC00B64496 /* WorkerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */; };
+		2312FC932E1BF5D700B64496 /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC922E1BF5C600B64496 /* InitializationView.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -197,6 +198,7 @@
 		2312FC872E1BF07700B64496 /* BuildingFeatureConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingFeatureConfiguration.swift; sourceTree = "<group>"; };
 		2312FC8A2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligencePreviewPanel.swift; sourceTree = "<group>"; };
 		2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
+		2312FC922E1BF5C600B64496 /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -778,6 +780,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC922E1BF5C600B64496 /* InitializationView.swift */,
 				239956092E1107E800B3F105 /* WorkerProfileView.swift */,
 				23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */,
 				23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */,
@@ -1105,6 +1108,7 @@
 				2345818B2DF78E3D00355F0A /* ProfileView.swift in Sources */,
 				233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */,
 				23B1179F2DFE23B00065F39E /* SchemaMigrationPatch.swift in Sources */,
+				2312FC932E1BF5D700B64496 /* InitializationView.swift in Sources */,
 				236106E62E17804400463A59 /* WorkerService.swift in Sources */,
 				2345818D2DF78E3D00355F0A /* ImagePicker.swift in Sources */,
 				2345818E2DF78E3D00355F0A /* WeatherTasksSection.swift in Sources */,
