@@ -39,7 +39,7 @@ actor DataConsolidationManager {
         try await createRequiredTables()
 
         // Get the legacy hardcoded data.
-        let legacyTasks = OperationalDataManager.shared.getLegacyTaskAssignments()
+        let legacyTasks = await OperationalDataManager.shared.getLegacyTaskAssignments()
         guard !legacyTasks.isEmpty else {
             print("⚠️ No legacy tasks found in OperationalDataManager. Nothing to consolidate.")
             UserDefaults.standard.set(true, forKey: migrationKey) // Mark as complete to avoid re-running.
