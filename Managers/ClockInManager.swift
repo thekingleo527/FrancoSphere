@@ -2,160 +2,107 @@
 //  ClockInManager.swift
 //  FrancoSphere
 //
-//  Manages worker clock-in/out state and location validation
+//  ✅ V6.0 REFACTOR: Converted to an actor to prevent race conditions.
+//  ✅ FIXED: Removed redundant @MainActor declaration.
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import CoreLocation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
+// ✅ FIXED: The @MainActor attribute is removed. Actors manage their own concurrency.
+public actor ClockInManager {
+    public static let shared = ClockInManager()
 
-@MainActor
-class ClockInManager: ObservableObject {
-    static let shared = ClockInManager()
-    
-    @Published var isClockedIn = false
-    @Published var currentBuilding: NamedCoordinate?
-    @Published var currentStatus: WorkerStatus = .offsite
-    @Published var clockInTime: Date?
-    @Published var clockOutTime: Date?
-    
-    private let authManager = NewAuthManager.shared
-    
-    enum WorkerStatus {
-        case active, offsite, onBreak
-        
-        var color: Color {
-            switch self {
-            case .active: return .green
-            case .offsite: return .red
-            case .onBreak: return .orange
-            }
-        }
-        
-        var text: String {
-            switch self {
-            case .active: return "On Site"
-            case .offsite: return "Off Site"
-            case .onBreak: return "On Break"
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .active: return "checkmark.circle.fill"
-            case .offsite: return "xmark.circle.fill"
-            case .onBreak: return "pause.circle.fill"
-            }
-        }
+    // Internal state, now protected by the actor.
+    private var activeSessions: [CoreTypes.WorkerID: ClockInSession] = [:]
+
+    private init() {
+        print("⏰ ClockInManager (Actor) initialized and ready.")
     }
-    
-    private init() {}
-    
-    func toggleClockIn() async {
-        if isClockedIn {
-            await clockOut()
-        } else {
-            await clockIn()
+
+    /// Represents an active clock-in session for a worker.
+    public struct ClockInSession {
+        let workerId: CoreTypes.WorkerID
+        let buildingId: CoreTypes.BuildingID
+        let buildingName: String
+        let startTime: Date
+        let location: CLLocationCoordinate2D?
+    }
+
+    // MARK: - Public API
+
+    /// Clocks a worker into a specific building. Throws an error if the worker is already clocked in.
+    public func clockIn(workerId: CoreTypes.WorkerID, building: NamedCoordinate, location: CLLocationCoordinate2D? = nil) async throws {
+        guard activeSessions[workerId] == nil else {
+            throw ClockInError.alreadyClockedIn
+        }
+
+        let session = ClockInSession(
+            workerId: workerId,
+            buildingId: building.id,
+            buildingName: building.name,
+            startTime: Date(),
+            location: location
+        )
+        
+        activeSessions[workerId] = session
+        
+        print("✅ Worker \(workerId) clocked IN at \(building.name).")
+        
+        // Post a notification for the UI to update
+        await MainActor.run {
+            NotificationCenter.default.post(name: .workerClockInChanged, object: nil, userInfo: [
+                "workerId": workerId,
+                "isClockedIn": true,
+                "buildingId": building.id,
+                "buildingName": building.name
+            ])
         }
     }
-    
-    private func clockIn() async {
-        // For now, we'll use a default building since location services aren't set up
-        // In production, this would use actual GPS location
-        let defaultBuilding = [
-        NamedCoordinate(id: "1", name: "12 West 18th Street", latitude: 40.739750, longitude: -73.994424, imageAssetName: "west18_12"),
-        NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.738957, longitude: -73.986362, imageAssetName: "east20_29"),
-        NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-        NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
-        NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
-        NamedCoordinate(id: "9", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-        NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
-        NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
-        NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum"),
-        NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29")
-    ].first { $0.id == "1" } ?? [
-        NamedCoordinate(id: "1", name: "12 West 18th Street", latitude: 40.739750, longitude: -73.994424, imageAssetName: "west18_12"),
-        NamedCoordinate(id: "2", name: "29-31 East 20th Street", latitude: 40.738957, longitude: -73.986362, imageAssetName: "east20_29"),
-        NamedCoordinate(id: "3", name: "135-139 West 17th Street", latitude: 40.7398, longitude: -73.9972, imageAssetName: "west17_135"),
-        NamedCoordinate(id: "6", name: "68 Perry Street", latitude: 40.7357, longitude: -74.0055, imageAssetName: "perry_68"),
-        NamedCoordinate(id: "7", name: "136 West 17th Street", latitude: 40.7399, longitude: -73.9971, imageAssetName: "west17_136"),
-        NamedCoordinate(id: "9", name: "138 West 17th Street", latitude: 40.7400, longitude: -73.9970, imageAssetName: "west17_138"),
-        NamedCoordinate(id: "10", name: "131 Perry Street", latitude: 40.7359, longitude: -74.0059, imageAssetName: "perry_131"),
-        NamedCoordinate(id: "12", name: "178 Spring Street", latitude: 40.7245, longitude: -73.9968, imageAssetName: "spring_178"),
-        NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum"),
-        NamedCoordinate(id: "16", name: "29-31 East 20th Street", latitude: 40.7388, longitude: -73.9892, imageAssetName: "east20_29")
-    ][0]
+
+    /// Clocks a worker out. Throws an error if the worker was not clocked in.
+    public func clockOut(workerId: CoreTypes.WorkerID) async throws {
+        guard let session = activeSessions[workerId] else {
+            throw ClockInError.notClockedIn
+        }
+
+        activeSessions.removeValue(forKey: workerId)
         
-        // Update state
-        isClockedIn = true
-        currentBuilding = defaultBuilding
-        currentStatus = .active
-        clockInTime = Date()
-        
-        // Log to database
-        await logClockIn()
-        
-        print("✅ Clocked in at \(defaultBuilding.name)")
+        print("✅ Worker \(workerId) clocked OUT from \(session.buildingName).")
+
+        // Post a notification for the UI to update
+        await MainActor.run {
+            NotificationCenter.default.post(name: .workerClockInChanged, object: nil, userInfo: [
+                "workerId": workerId,
+                "isClockedIn": false
+            ])
+        }
     }
-    
-    private func clockOut() async {
-        isClockedIn = false
-        currentStatus = .offsite
-        clockOutTime = Date()
-        
-        // Log to database
-        await logClockOut()
-        
-        print("✅ Clocked out")
-        
-        // Reset
-        currentBuilding = nil
-        clockInTime = nil
-    }
-    
-    private func logClockIn() async {
-        // Save to SQLite using existing managers
-        guard let workerId = authManager.currentWorkerId,
-              let buildingId = currentBuilding?.id else { return }
-        
-        // Log using existing database structure
-        print("📝 Logging clock-in: Worker \(workerId) at Building \(buildingId)")
-        
-        // You can add actual database logging here using SQLiteManager
-    }
-    
-    private func logClockOut() async {
-        // Save to SQLite
-        guard let workerId = authManager.currentWorkerId else { return }
-        
-        print("📝 Logging clock-out: Worker \(workerId)")
-        
-        // You can add actual database logging here using SQLiteManager
+
+    /// Retrieves the current clock-in status for a given worker.
+    public func getClockInStatus(for workerId: CoreTypes.WorkerID) -> (isClockedIn: Bool, session: ClockInSession?) {
+        if let session = activeSessions[workerId] {
+            return (true, session)
+        }
+        return (false, nil)
     }
 }
 
-// Extension to add currentWorkerId if it doesn't exist
-extension NewAuthManager {
-    var currentWorkerId: String? {
-        // FIXED: All IDs now match the database seeding
-        switch currentWorkerName {
-        case "Edwin Lema": return "2"     // FIXED: Was "3", now "2"
-        case "Greg Hutson": return "1"
-        case "Kevin Dutan": return "4"    // FIXED: Was "2", now "4"
-        case "Mercedes Inamagua": return "5"
-        case "Luis Lopez": return "6"
-        case "Angel Guirachocha": return "7"
-        case "Shawn Magloire": return "8" // FIXED: Was "7", now "8"
-        default: return nil
+// MARK: - Error Types
+public enum ClockInError: LocalizedError {
+    case alreadyClockedIn
+    case notClockedIn
+    case locationMismatch
+
+    public var errorDescription: String? {
+        switch self {
+        case .alreadyClockedIn:
+            return "This worker is already clocked in at another location."
+        case .notClockedIn:
+            return "This worker is not currently clocked in."
+        case .locationMismatch:
+            return "You must be at the building location to perform this action."
         }
     }
 }

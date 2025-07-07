@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
+		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -174,6 +175,7 @@
 
 /* Begin PBXFileReference section */
 		2312FC662E1B66F300B64496 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
+		2312FC682E1B709600B64496 /* DataConsolidationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConsolidationManager.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -400,6 +402,7 @@
 		2312FC652E1B66C900B64496 /* Migration */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC682E1B709600B64496 /* DataConsolidationManager.swift */,
 				2312FC662E1B66F300B64496 /* TypeMigrationService.swift */,
 			);
 			path = Migration;
@@ -956,6 +959,7 @@
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
 				23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */,
 				234581482DF78E3D00355F0A /* WorkerContextEngine.swift in Sources */,
+				2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */,
 				234581492DF78E3D00355F0A /* GlassCard.swift in Sources */,
 				23B117A62DFE3A490065F39E /* DashboardTaskDetailView.swift in Sources */,
 				2345814C2DF78E3D00355F0A /* PhotoUploaderView.swift in Sources */,
