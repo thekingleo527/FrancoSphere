@@ -136,9 +136,7 @@ struct TodaysTasksGlassCard: View {
 extension TaskUrgency {
     var sortOrder: Int {
         switch self {
-        case .urgent: return 6
-        case .critical: return 5
-        case .emergency: return 4
+        case .urgent: return 4
         case .high: return 3
         case .medium: return 2
         case .low: return 1
@@ -226,7 +224,7 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingNameSync(task.buildingID)
+        BuildingService.shared.getBuildingName(for: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -424,7 +422,7 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingNameSync(task.buildingID)
+        BuildingService.shared.getBuildingName(for: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {

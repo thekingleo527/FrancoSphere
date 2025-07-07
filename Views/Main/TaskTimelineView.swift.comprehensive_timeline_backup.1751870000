@@ -206,7 +206,7 @@ struct TaskTimelineView: View {
         case .urgent: return .purple
         
         @unknown default:
-            }
+            EmptyView()}
     }
     
     // Convert MaintenanceTask to ContextualTask for existing TaskDetailView
@@ -266,7 +266,7 @@ struct TaskTimelineCard: View {
                     
                     VStack(alignment: .trailing, spacing: 4) {
                         // ✅ FIXED: Proper statusText access
-                        Text(task.isCompleted ? "Completed" : "Pending")
+                        Text(task.statusText)
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
@@ -338,7 +338,7 @@ struct TaskTimelineCard: View {
             case .urgent: return .purple
             
         @unknown default:
-            }
+            EmptyView()}
         }
     }
     
@@ -360,18 +360,9 @@ struct TaskTimelineCard: View {
         case .repair: return .red
         case .sanitation: return .green
         case .inspection: return .purple
-        case .installation: return .green
-        case .security: return .orange
-        case .landscaping: return .green
-        case .hvac: return .blue
-        case .plumbing: return .blue
-        case .electrical: return .yellow
-        case .utilities: return .gray
-        case .emergency: return .red
-        case .renovation: return .purple
-        case .administrative: return .gray
-        case .other: return .gray
-        }
+        
+        @unknown default:
+            EmptyView()}
     }
     
     private var buildingName: String {
@@ -418,10 +409,10 @@ class TaskTimelineViewModel: ObservableObject {
                     endTime: parseTimeString(contextualTask.endTime, for: date),
                     category: mapCategory(contextualTask.category),
                     urgency: mapUrgency(contextualTask.urgencyLevel),
-                    recurrence: mapRecurrence(TaskRecurrence.none),
+                    recurrence: mapRecurrence(contextualTask.recurrence),
                     isComplete: contextualTask.status == "completed",
                     assignedWorkers: [workerIdString],
-                    requiredSkillLevel: "Standard"
+                    requiredSkillLevel: contextualTask.skillLevel
                 )
             }
             
@@ -529,7 +520,7 @@ class TaskTimelineViewModel: ObservableObject {
         default: return .maintenance
         
         @unknown default:
-            }
+            EmptyView()}
     }
     
     // ✅ FIXED: Urgency mapping function
@@ -542,7 +533,7 @@ class TaskTimelineViewModel: ObservableObject {
         default: return .medium
         
         @unknown default:
-            }
+            EmptyView()}
     }
     
     // ✅ FIXED: Recurrence mapping function
@@ -558,7 +549,7 @@ class TaskTimelineViewModel: ObservableObject {
         default: return .none
         
         @unknown default:
-            }
+            EmptyView()}
     }
 }
 

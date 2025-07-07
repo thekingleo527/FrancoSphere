@@ -265,10 +265,10 @@ struct WorkersInlineList: View {
                 id: detailedWorker.id,
                 name: detailedWorker.name,
                 displayName: formatWorkerDisplayName(detailedWorker.name),
-                role: detailedWorker.role.rawValue,
-                shift: getWorkerShiftForProfile(detailedWorker),
+                role: detailedWorker.role,
+                shift: detailedWorker.shift,
                 isActive: isWorkerActive(detailedWorker.id),
-                isClockedIn: isWorkerOnSiteForProfile(detailedWorker),
+                isClockedIn: detailedWorker.isOnSite,
                 taskCount: getWorkerTaskCount(detailedWorker.id),
                 isDSNYWorker: isDSNYWorker(detailedWorker.name)
             )

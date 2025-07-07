@@ -66,8 +66,8 @@ struct BuildingMarker: View {
                     )
                 
                 // Building thumbnail or icon
-                if !(building.imageAssetName?.isEmpty ?? true),
-                   let uiImage = UIImage(named: building.imageAssetName ?? "placeholder") {
+                if building.hasValidImageAsset,
+                   let uiImage = UIImage(named: building.imageAssetName) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)

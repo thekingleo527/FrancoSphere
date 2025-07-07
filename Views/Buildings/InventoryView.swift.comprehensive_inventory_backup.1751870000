@@ -282,7 +282,7 @@ struct InventoryView: View {
     private func deleteItem(_ item: InventoryItem) {
         Task { @MainActor in
             do {
-                try await BuildingService.shared.deleteInventoryItem(itemId: item.id, supplier: "Default Supplier", costPerUnit: 0.0)
+                try await BuildingService.shared.deleteInventoryItem(itemId: item.id)
                 if let index = inventoryItems.firstIndex(where: { $0.id == item.id }) {
                     inventoryItems.remove(at: index)
                 }
@@ -619,12 +619,12 @@ public struct AddInventoryItemView: View {
             minimumStock: minimumStock,
             unit: unit,
             restockStatus: quantity <= minimumStock ? .lowStock : .inStock,
-            lastRestocked: Date(, supplier: "Default Supplier", costPerUnit: 0.0)
+            lastRestocked: Date()
         )
         
         Task { @MainActor in
             do {
-                try await BuildingService.shared.saveInventoryItem(newItem, supplier: "Default Supplier", costPerUnit: 0.0)
+                try await BuildingService.shared.saveInventoryItem(newItem)
                 isSubmitting = false
                 onComplete(true)
             } catch {

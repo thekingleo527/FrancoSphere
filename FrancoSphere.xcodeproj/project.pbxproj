@@ -333,6 +333,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		2312FC622E1B637800B64496 /* Core */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Core;
+			sourceTree = "<group>";
+		};
 		23423DCA2D739D6900AACE3E /* FrancoSphereTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FrancoSphereTests;
@@ -581,6 +586,7 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC622E1B637800B64496 /* Core */,
 				23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */,
 				234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */,
 				234580E32DF78E3D00355F0A /* VerificationRecord.swift */,
@@ -747,6 +753,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				2312FC622E1B637800B64496 /* Core */,
 				236106EB2E17AD0700463A59 /* Security */,
 				238375EB2E18480200EC410D /* ViewModels */,
 			);
