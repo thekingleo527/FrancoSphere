@@ -3,7 +3,6 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: This is the single, authoritative definition for the InitializationViewModel.
-//  ✅ Manages the app's startup and data migration sequence.
 //
 
 import Foundation
@@ -19,30 +18,25 @@ class InitializationViewModel: ObservableObject {
 
     func startInitialization() async {
         guard !isInitializing else { return }
-        
         isInitializing = true
         initializationError = nil
         
         // This sequence will be updated to call our new migration services.
         let steps: [(String, () async throws -> Void)] = [
-            ("Connecting to Database...", { try await self.step_connectToDatabase() }),
-            ("Unifying Data Types...", { /* Placeholder */ }),
-            ("Consolidating Legacy Data...", { /* Placeholder */ }),
-            ("Finalizing Setup...", { try await self.step_finalize() })
+            ("Connecting to Database...", { try await Task.sleep(nanoseconds: 200_000_000) }),
+            ("Running Migrations...", { try await Task.sleep(nanoseconds: 300_000_000) }),
+            ("Finalizing Setup...", { try await Task.sleep(nanoseconds: 200_000_000) })
         ]
 
         for (index, (stepName, stepAction)) in steps.enumerated() {
             currentStep = stepName
             progress = Double(index + 1) / Double(steps.count)
-            
             do {
                 try await stepAction()
-                try await Task.sleep(nanoseconds: 200_000_000) // Small visual delay
             } catch {
                 initializationError = "Error during '\(stepName)': \(error.localizedDescription)"
-                print("🚨 \(initializationError!)")
                 isInitializing = false
-                return // Stop the process on critical failure
+                return
             }
         }
 
@@ -51,13 +45,5 @@ class InitializationViewModel: ObservableObject {
         try? await Task.sleep(nanoseconds: 500_000_000)
         isComplete = true
         isInitializing = false
-    }
-
-    private func step_connectToDatabase() async throws {
-        // let _ = SQLiteManager.shared // Placeholder
-    }
-
-    private func step_finalize() async throws {
-        print("✅ Final setup checks complete.")
     }
 }
