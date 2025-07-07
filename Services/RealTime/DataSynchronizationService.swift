@@ -2,12 +2,6 @@
 //  DataSynchronizationService.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-//
-//  DataSynchronizationService.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Phase 2.1 - Cross-Dashboard Broadcasting
 //  ✅ The central hub for real-time updates across the application.
 //  ✅ Uses a Combine pipeline to broadcast events.

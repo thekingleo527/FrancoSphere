@@ -2,14 +2,6 @@
 //  WorkerFeedbackManager.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  WorkerFeedbackManager.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Phase 2.3 - Worker Feedback Loop
 //  ✅ Provides immediate UI confirmation to workers for their actions.
 //  ✅ Manages the state of pending, synced, and failed actions.

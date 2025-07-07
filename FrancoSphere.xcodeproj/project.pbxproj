@@ -16,6 +16,8 @@
 		2312FC7E2E1BED3700B64496 /* DataSynchronizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC7D2E1BED2600B64496 /* DataSynchronizationService.swift */; };
 		2312FC812E1BEDB000B64496 /* WorkerEventOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC802E1BEDA300B64496 /* WorkerEventOutbox.swift */; };
 		2312FC832E1BEE2400B64496 /* WorkerFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC822E1BEE2400B64496 /* WorkerFeedbackManager.swift */; };
+		2312FC852E1BF00B00B64496 /* BuildingService+Intelligence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC842E1BEFF300B64496 /* BuildingService+Intelligence.swift */; };
+		2312FC882E1BF07700B64496 /* BuildingFeatureConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC872E1BF07700B64496 /* BuildingFeatureConfiguration.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -189,6 +191,8 @@
 		2312FC7D2E1BED2600B64496 /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
 		2312FC802E1BEDA300B64496 /* WorkerEventOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerEventOutbox.swift; sourceTree = "<group>"; };
 		2312FC822E1BEE2400B64496 /* WorkerFeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerFeedbackManager.swift; sourceTree = "<group>"; };
+		2312FC842E1BEFF300B64496 /* BuildingService+Intelligence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuildingService+Intelligence.swift"; sourceTree = "<group>"; };
+		2312FC872E1BF07700B64496 /* BuildingFeatureConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingFeatureConfiguration.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -444,6 +448,14 @@
 			path = OfflineQueue;
 			sourceTree = "<group>";
 		};
+		2312FC862E1BF06A00B64496 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				2312FC872E1BF07700B64496 /* BuildingFeatureConfiguration.swift */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		23423DAE2D739D6800AACE3E = {
 			isa = PBXGroup;
 			children = (
@@ -696,6 +708,8 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC862E1BF06A00B64496 /* Configuration */,
+				2312FC842E1BEFF300B64496 /* BuildingService+Intelligence.swift */,
 				2312FC7C2E1BED0E00B64496 /* RealTime */,
 				2312FC7A2E1BEC8200B64496 /* StubFactory.swift */,
 				2312FC652E1B66C900B64496 /* Migration */,
@@ -1059,6 +1073,7 @@
 				23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */,
 				234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */,
 				234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */,
+				2312FC852E1BF00B00B64496 /* BuildingService+Intelligence.swift in Sources */,
 				2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */,
 				2312FC812E1BEDB000B64496 /* WorkerEventOutbox.swift in Sources */,
 				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
@@ -1103,6 +1118,7 @@
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
 				234581A32DF78E3D00355F0A /* WorkerConstants.swift in Sources */,
+				2312FC882E1BF07700B64496 /* BuildingFeatureConfiguration.swift in Sources */,
 				234581A42DF78E3D00355F0A /* WeatherDashboardComponent.swift in Sources */,
 				234581A62DF78E3D00355F0A /* DailyOpsReset.swift in Sources */,
 				23BBD7622E00199B00013D90 /* AIAssistantImageLoader.swift in Sources */,
