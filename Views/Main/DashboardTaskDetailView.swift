@@ -4,24 +4,11 @@
 //
 //  ✅ V6.0 REFACTOR: All compilation errors resolved.
 //  ✅ PRESERVED: Original UI design and all functional elements.
-//  ✅ FIXED: Uses a new ViewModel for clean data management and state handling.
+//  ✅ FIXED: Uses the new ViewModel and correct data models.
 //
 
 import SwiftUI
 
-// MARK: - View Model
-@MainActor
-class TaskDetailViewModel: ObservableObject {
-    @Published var buildingName: String = "Loading..."
-    private let buildingService = BuildingService.shared
-
-    func loadBuildingName(for buildingId: CoreTypes.BuildingID) async {
-        // Use the new service to get the building name
-        self.buildingName = await buildingService.name(forId: buildingId)
-    }
-}
-
-// MARK: - Main View
 struct DashboardTaskDetailView: View {
     let task: ContextualTask
     
@@ -58,6 +45,7 @@ struct DashboardTaskDetailView: View {
             }
         }
         .sheet(isPresented: $showingImagePicker) {
+            // Assuming ImagePicker is defined in Shared Components
             ImagePicker(selectedImage: $selectedImage)
         }
         .sheet(isPresented: $showingCompletionSheet) {
@@ -87,11 +75,11 @@ struct DashboardTaskDetailView: View {
                     .background(task.urgency.color).cornerRadius(12)
             }
             Text(task.name).font(.title2).fontWeight(.bold)
-            if !task.description.isEmpty {
-                Text(task.description).foregroundColor(.secondary)
+            if let description = task.description, !description.isEmpty {
+                Text(description).foregroundColor(.secondary)
             }
         }
-        .padding().background(Color(.systemBackground)).cornerRadius(12)
+        .padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
     }
     
     private var taskDetailsSection: some View {
@@ -102,7 +90,7 @@ struct DashboardTaskDetailView: View {
                 detailRow(icon: "hourglass", label: "Est. Duration", value: "\(task.estimatedDuration / 60) mins")
             }
         }
-        .padding().background(Color(.systemBackground)).cornerRadius(12)
+        .padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
     }
     
     private var buildingInfoSection: some View {
@@ -113,7 +101,7 @@ struct DashboardTaskDetailView: View {
                 detailRow(icon: "map", label: "Building ID", value: task.buildingId)
             }
         }
-        .padding().background(Color(.systemBackground)).cornerRadius(12)
+        .padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
     }
     
     private var statusSection: some View {
@@ -127,7 +115,7 @@ struct DashboardTaskDetailView: View {
                     .font(.subheadline).fontWeight(.medium)
             }
         }
-        .padding().background(Color(.systemBackground)).cornerRadius(12)
+        .padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
     }
     
     private var actionButtonsSection: some View {
@@ -140,7 +128,7 @@ struct DashboardTaskDetailView: View {
                 .buttonStyle(.borderedProminent).tint(.green)
             }
             
-            Button(action: { /* Navigate to building detail */ }) {
+            Button(action: { /* TODO: Navigate to building detail */ }) {
                 Label("View Building Details", systemImage: "building.2")
                     .fontWeight(.medium).frame(maxWidth: .infinity)
             }
@@ -159,7 +147,7 @@ struct DashboardTaskDetailView: View {
             Image(uiImage: image).resizable().scaledToFit()
                 .frame(maxHeight: 200).cornerRadius(12).clipped()
         }
-        .padding().background(Color(.systemBackground)).cornerRadius(12)
+        .padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
     }
     
     private var completionSheet: some View {
@@ -186,7 +174,7 @@ struct DashboardTaskDetailView: View {
                 
                 Spacer()
                 
-                Button(action: markTaskComplete) {
+                Button(action: { Task { await markTaskComplete() } }) {
                     Label("Confirm Completion", systemImage: "checkmark.circle.fill")
                         .fontWeight(.medium).frame(maxWidth: .infinity)
                 }.buttonStyle(.borderedProminent).tint(.green).padding()
@@ -197,23 +185,18 @@ struct DashboardTaskDetailView: View {
     
     // MARK: - Helper Methods
     
-    private func markTaskComplete() {
-        print("✅ Task marked complete: \(task.name)")
-        // In a real app, this would call a TaskService method:
-        // Task {
-        //     let evidence = ActionEvidence(photos: [selectedImage?.pngData()], comments: completionNotes)
-        //     try? await TaskService.shared.completeTask(task.id, with: evidence)
-        //     presentationMode.wrappedValue.dismiss()
-        // }
+    private func markTaskComplete() async {
+        let evidence = ActionEvidence(
+            photos: selectedImage != nil ? [selectedImage!.pngData()] : nil,
+            comments: completionNotes
+        )
+        await viewModel.completeTask(taskId: task.id, evidence: evidence)
         presentationMode.wrappedValue.dismiss()
     }
     
     private func formatDate(_ date: Date?) -> String {
         guard let date = date else { return "Not set" }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        return date.formatted(date: .medium, time: .short)
     }
     
     private func detailRow(icon: String, label: String, value: String) -> some View {
