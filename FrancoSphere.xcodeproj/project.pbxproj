@@ -164,6 +164,7 @@
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 		23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82492E1C1B4F00C298C7 /* default.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
+		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -344,6 +345,7 @@
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 		23EE82492E1C1B4F00C298C7 /* default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = default.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
+		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -453,6 +455,7 @@
 		2312FC892E1BF0DA00B64496 /* Intelligence */ = {
 			isa = PBXGroup;
 			children = (
+				23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */,
 				2312FC8A2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift */,
 			);
 			path = Intelligence;
@@ -1071,6 +1074,7 @@
 				234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */,
 				234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */,
 				2312FC852E1BF00B00B64496 /* BuildingService+Intelligence.swift in Sources */,
+				23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */,
 				2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */,
 				2312FC812E1BEDB000B64496 /* WorkerEventOutbox.swift in Sources */,
 				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
