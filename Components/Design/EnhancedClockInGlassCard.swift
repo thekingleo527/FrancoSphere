@@ -139,35 +139,6 @@ struct EnhancedClockInGlassCard: View {
     }
 }
 
-// MARK: - Supporting Types (for Previews)
-enum QBConnectionStatus {
-    case connected, disconnected, error
-    
-    var icon: String {
-        switch self {
-        case .connected: return "checkmark.circle.fill"
-        case .disconnected: return "xmark.circle.fill"
-        case .error: return "exclamationmark.triangle.fill"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .connected: return .green
-        case .disconnected: return .gray
-        case .error: return .red
-        }
-    }
-    
-    var displayText: String {
-        switch self {
-        case .connected: return "Connected"
-        case .disconnected: return "Disconnected"
-        case .error: return "Error"
-        }
-    }
-}
-
 // MARK: - Preview
 struct EnhancedClockInGlassCard_Previews: PreviewProvider {
     static var previews: some View {

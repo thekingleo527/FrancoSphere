@@ -21,6 +21,7 @@
 		2312FC8B2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC8A2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift */; };
 		2312FC8F2E1BF2DC00B64496 /* WorkerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */; };
 		2312FC932E1BF5D700B64496 /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC922E1BF5C600B64496 /* InitializationView.swift */; };
+		2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -199,6 +200,7 @@
 		2312FC8A2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligencePreviewPanel.swift; sourceTree = "<group>"; };
 		2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
 		2312FC922E1BF5C600B64496 /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
+		2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -470,6 +472,14 @@
 			path = Intelligence;
 			sourceTree = "<group>";
 		};
+		2312FCC02E1C07E900B64496 /* Enums */ = {
+			isa = PBXGroup;
+			children = (
+				2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */,
+			);
+			path = Enums;
+			sourceTree = "<group>";
+		};
 		23423DAE2D739D6800AACE3E = {
 			isa = PBXGroup;
 			children = (
@@ -664,6 +674,7 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2312FCC02E1C07E900B64496 /* Enums */,
 				2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */,
 				2312FC702E1B816700B64496 /* DTOs */,
 				2312FC622E1B637800B64496 /* Core */,
@@ -1027,6 +1038,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */,
 				233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
 				23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */,
