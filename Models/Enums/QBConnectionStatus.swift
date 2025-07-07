@@ -2,23 +2,13 @@
 //  QBConnectionStatus.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  QBConnectionStatus.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: This is the single, authoritative definition for the QuickBooks connection status.
-//  ✅ Resolves all redeclaration and ambiguity errors.
 //
 
 import Foundation
 import SwiftUI
 
-/// Represents the connection status to the QuickBooks service.
-public enum QBConnectionStatus {
+public enum QBConnectionStatus: Equatable {
     case connected, disconnected, error
     
     public var icon: String {

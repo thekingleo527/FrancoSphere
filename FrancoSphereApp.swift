@@ -3,7 +3,6 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: Cleaned up app entry point.
-//  ✅ FIXED: All redeclaration errors resolved by moving views to their own files.
 //
 
 import SwiftUI
@@ -19,21 +18,16 @@ struct FrancoSphereApp: App {
                 if !initializationViewModel.isComplete {
                     InitializationView(viewModel: initializationViewModel)
                 } else if authManager.isAuthenticated {
-                    // Routing logic remains the same
                     switch authManager.userRole {
                     case "admin":
-                        AdminDashboardView()
-                            .environmentObject(authManager)
+                        AdminDashboardView().environmentObject(authManager)
                     case "client":
-                        Text("Client Dashboard Placeholder")
-                            .environmentObject(authManager)
+                        Text("Client Dashboard Placeholder").environmentObject(authManager)
                     default: // worker
-                        WorkerDashboardView()
-                            .environmentObject(authManager)
+                        WorkerDashboardView().environmentObject(authManager)
                     }
                 } else {
-                    LoginView()
-                        .environmentObject(authManager)
+                    LoginView().environmentObject(authManager)
                 }
             }
             .preferredColorScheme(.dark)
