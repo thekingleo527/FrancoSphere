@@ -4,8 +4,8 @@
 //
 //  ✅ V6.0 REFACTOR: Complete architectural overhaul.
 //  ✅ FIXED: All compilation errors resolved.
-//  ✅ INTEGRATED: Correctly uses actor-based managers via its ViewModel.
-//  ✅ PRESERVED: Original UI design and functionality from screenshots and prior versions.
+//  ✅ INTEGRATED: Correctly uses the ViewModel and actor-based services.
+//  ✅ PRESERVED: Original UI design and functionality.
 //
 
 import SwiftUI
@@ -34,8 +34,9 @@ struct WorkerDashboardView: View {
                 
                 // Custom header floats on top
                 VStack {
+                    // This uses the existing HeaderV3B, ensuring the look is preserved
                     HeaderV3B(
-                        workerName: authManager.currentUser?.name ?? "Worker",
+                        workerName: viewModel.workerProfile?.name ?? "Worker",
                         clockedInStatus: viewModel.isClockedIn,
                         onClockToggle: { Task { await viewModel.handleClockInToggle() } },
                         onProfilePress: { showProfileView = true },
@@ -43,8 +44,8 @@ struct WorkerDashboardView: View {
                         hasUrgentWork: viewModel.todaysTasks.contains { $0.urgency == .high || $0.urgency == .urgent },
                         onNovaPress: { /* TODO: Show Nova AI */ },
                         onNovaLongPress: { /* TODO: Show Nova AI Long Press */ },
-                        isNovaProcessing: false,
-                        hasPendingScenario: false,
+                        isNovaProcessing: false, // This would come from an AIManager
+                        hasPendingScenario: false, // This would come from an AIManager
                         showClockPill: true
                     )
                     .background(.ultraThinMaterial)
@@ -65,14 +66,14 @@ struct WorkerDashboardView: View {
                 )
             }
             .sheet(isPresented: $showProfileView) {
-                // Assuming you have a ProfileView
+                // Assuming you have a ProfileView that can be presented
                 ProfileView()
             }
             .fullScreenCover(isPresented: $showMapOverlay) {
                 EnhancedMapOverlay(
+                    isPresented: $showMapOverlay,
                     buildings: viewModel.assignedBuildings,
-                    currentBuildingId: viewModel.currentSession?.buildingId,
-                    isPresented: $showMapOverlay
+                    currentBuildingId: viewModel.currentSession?.buildingId
                 )
             }
             .navigationBarHidden(true)
@@ -177,6 +178,7 @@ struct WorkerDashboardView: View {
             }
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(viewModel.assignedBuildings.prefix(6)) { building in
+                    // This now uses the consolidated, reusable component from its own file
                     MySitesCard(building: building)
                 }
             }
@@ -184,17 +186,6 @@ struct WorkerDashboardView: View {
         .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
-
-// MARK: - Reusable Site Card
-                Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 80)
-                    .overlay(Image(systemName: "building.2").foregroundColor(.white))
-
-            VStack {
-                Text(building.name).font(.caption).fontWeight(.medium).foregroundColor(.white)
-                    .lineLimit(2).multilineTextAlignment(.center).frame(height: 35)
-            }.padding(8)
-
-        .background(Color.black.opacity(0.2)).cornerRadius(12).clipped()
 
 // MARK: - Building Selection Sheet
 struct BuildingSelectionSheet: View {
