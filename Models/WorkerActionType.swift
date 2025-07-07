@@ -2,14 +2,6 @@
 //  WorkerActionType.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  WorkerActionType.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Foundational Type Definition
 //  ✅ Creates a single source of truth for all worker actions.
 //  ✅ Resolves 'Cannot find type' errors in WorkerEventOutbox and WorkerFeedbackManager.

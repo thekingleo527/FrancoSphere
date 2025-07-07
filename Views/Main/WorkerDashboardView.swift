@@ -34,7 +34,6 @@ struct WorkerDashboardView: View {
                 
                 // Custom header floats on top
                 VStack {
-                    // This uses the existing HeaderV3B, ensuring the look is preserved
                     HeaderV3B(
                         workerName: authManager.currentUser?.name ?? "Worker",
                         clockedInStatus: viewModel.isClockedIn,
