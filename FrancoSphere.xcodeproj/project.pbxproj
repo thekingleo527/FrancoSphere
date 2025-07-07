@@ -136,7 +136,6 @@
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
 		2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560D2E11086300B3F105 /* WorkersInlineList.swift */; };
-		23B1178B2DFDAFE60065F39E /* MapOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */; };
 		23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178C2DFDB0310065F39E /* MySitesCard.swift */; };
 		23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178E2DFDB0570065F39E /* HeaderV3B.swift */; };
 		23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */; };
@@ -313,7 +312,6 @@
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
 		2399560D2E11086300B3F105 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
-		23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapOverlayView.swift; sourceTree = "<group>"; };
 		23B1178C2DFDB0310065F39E /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
 		23B1178E2DFDB0570065F39E /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
 		23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
@@ -346,6 +344,11 @@
 		2312FC622E1B637800B64496 /* Core */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Core;
+			sourceTree = "<group>";
+		};
+		2312FC702E1B816700B64496 /* DTOs */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DTOs;
 			sourceTree = "<group>";
 		};
 		23423DCA2D739D6900AACE3E /* FrancoSphereTests */ = {
@@ -608,6 +611,7 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC702E1B816700B64496 /* DTOs */,
 				2312FC622E1B637800B64496 /* Core */,
 				23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */,
 				234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */,
@@ -721,7 +725,6 @@
 				239956092E1107E800B3F105 /* WorkerProfileView.swift */,
 				23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */,
 				23BBD75B2DFFF55F00013D90 /* TaskTimelineView.swift */,
-				23B1178A2DFDAFE60065F39E /* MapOverlayView.swift */,
 				233F94E32DF7B96D00901707 /* WorkerDashboardView.swift */,
 				233F94DB2DF7B0EC00901707 /* TrackableScrollView.swift */,
 				2345811D2DF78E3D00355F0A /* AdminDashboardView.swift */,
@@ -777,6 +780,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				2312FC622E1B637800B64496 /* Core */,
+				2312FC702E1B816700B64496 /* DTOs */,
 				236106EB2E17AD0700463A59 /* Security */,
 				238375EB2E18480200EC410D /* ViewModels */,
 			);
@@ -1048,7 +1052,6 @@
 				2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */,
 				236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
-				23B1178B2DFDAFE60065F39E /* MapOverlayView.swift in Sources */,
 				234581932DF78E3D00355F0A /* GlassTabBar.swift in Sources */,
 				234581952DF78E3D00355F0A /* WeatherViewModifier.swift in Sources */,
 				234581962DF78E3D00355F0A /* NotificationManager.swift in Sources */,

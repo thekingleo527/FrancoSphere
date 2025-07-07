@@ -112,7 +112,6 @@ public class WorkerContextEngine: ObservableObject {
         cancellables.removeAll()
         weatherCancellable?.cancel()
     }
-}
 
 // MARK: - WorkerStatus Compatibility
 public typealias WorkerStatus = String
