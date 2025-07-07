@@ -34,6 +34,7 @@ struct WorkerDashboardView: View {
                 
                 // Custom header floats on top
                 VStack {
+                    // This uses the existing HeaderV3B, ensuring the look is preserved
                     HeaderV3B(
                         workerName: authManager.currentUser?.name ?? "Worker",
                         clockedInStatus: viewModel.isClockedIn,
@@ -80,7 +81,7 @@ struct WorkerDashboardView: View {
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Subviews (Preserving Original Design)
 
     private var mapBackground: some View {
         Map(interactionModes: [])
@@ -228,7 +229,9 @@ struct BuildingSelectionSheet: View {
 struct WorkerDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         let authManager = NewAuthManager.shared
+        // Use a task to call the async login method for the preview
         Task { try? await authManager.login(email: "dutankevin1@gmail.com", password: "password") }
+        
         return WorkerDashboardView().environmentObject(authManager)
     }
 }

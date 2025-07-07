@@ -106,18 +106,3 @@ public class WorkerContextEngine: ObservableObject {
     // ❌ DEPRECATED: Data validation is now part of the migration and service layers.
     // func validateAndRepairDataPipelineFixedFixed() -> Bool { ... }
 }
-
-    // MARK: - Cleanup
-    deinit {
-        cancellables.removeAll()
-        weatherCancellable?.cancel()
-    }
-
-// MARK: - WorkerStatus Compatibility
-public typealias WorkerStatus = String
-public extension String {
-    static let available = "available"
-    static let busy = "busy"
-    static let clockedIn = "clockedIn"
-    static let clockedOut = "clockedOut"
-}

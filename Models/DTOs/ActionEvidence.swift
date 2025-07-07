@@ -2,12 +2,6 @@
 //  ActionEvidence.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-//
-//  ActionEvidence.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
 //  ✅ Defines the evidence payload for a worker's actions (photos, location, etc.).
 //  ✅ Crucial for the offline queue and data synchronization.

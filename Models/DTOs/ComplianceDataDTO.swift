@@ -2,14 +2,6 @@
 //  ComplianceDataDTO.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  ComplianceDataDTO.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
 //  ✅ Defines the data structure for building compliance information.
 //

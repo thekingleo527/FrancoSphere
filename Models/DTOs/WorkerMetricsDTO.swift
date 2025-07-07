@@ -2,14 +2,6 @@
 //  WorkerMetricsDTO.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  WorkerMetricsDTO.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
 //  ✅ Defines the performance metrics for a worker at a specific building.
 //
