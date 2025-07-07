@@ -133,7 +133,6 @@
 		234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AC2DF78E3D00355F0A /* FrancoSphereColors.swift */; };
 		234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581102DF78E3D00355F0A /* SignUpView.swift */; };
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
-		234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
 		236106D92E16F2F100463A59 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106D82E16F2F100463A59 /* TaskService.swift */; };
 		236106E62E17804400463A59 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E52E17804400463A59 /* WorkerService.swift */; };
@@ -215,7 +214,6 @@
 		23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
 		2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHeaderGlassOverlay.swift; sourceTree = "<group>"; };
-		2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInGlassCard.swift; sourceTree = "<group>"; };
 		234580902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentBuildingStatusCard.swift; sourceTree = "<group>"; };
 		234580912DF78E3D00355F0A /* FrancoSphereDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereDesign.swift; sourceTree = "<group>"; };
 		234580922DF78E3D00355F0A /* ModelColorsExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelColorsExtensions.swift; sourceTree = "<group>"; };
@@ -521,7 +519,6 @@
 				23B1178E2DFDB0570065F39E /* HeaderV3B.swift */,
 				2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */,
 				2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */,
-				2345808F2DF78E3D00355F0A /* ClockInGlassCard.swift */,
 				234580902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift */,
 				234580912DF78E3D00355F0A /* FrancoSphereDesign.swift */,
 				234580922DF78E3D00355F0A /* ModelColorsExtensions.swift */,
@@ -1169,7 +1166,6 @@
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
-				234581B52DF78E3D00355F0A /* ClockInGlassCard.swift in Sources */,
 				2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */,
 				234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
 			);
