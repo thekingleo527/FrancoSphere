@@ -3,26 +3,78 @@
 //  FrancoSphere
 //
 //  ✅ V6.0 REFACTOR: All compilation errors resolved.
-//  ✅ FIXED: Uses the correct `InventoryItem` initializer and properties.
+//  ✅ FIXED: Uses a new ViewModel for clean data management.
 //  ✅ FIXED: Integrates with `BuildingService` for data fetching.
-//  ✅ PRESERVED: All UI and functionality.
+//  ✅ FIXED: Uses the correct `InventoryItem` initializer and properties.
 //
 
 import SwiftUI
 
-/// Displays and manages inventory for a selected building.
-struct InventoryView: View {
+// MARK: - Inventory View Model
+
+@MainActor
+class InventoryViewModel: ObservableObject {
+    @Published var inventoryItems: [InventoryItem] = []
+    @Published var selectedCategory: InventoryCategory? = nil
+    @Published var searchText: String = ""
+    @Published var isLoading = true
+    @Published var errorMessage: String? = nil
+    @Published var showAddItemSheet = false
+
     let buildingID: CoreTypes.BuildingID
-    
-    @StateObject private var viewModel: InventoryViewModel
-    
+    private let buildingService = BuildingService.shared
+
     init(buildingID: CoreTypes.BuildingID) {
         self.buildingID = buildingID
-        self._viewModel = StateObject(wrappedValue: InventoryViewModel(buildingID: buildingID))
     }
-    
+
+    var filteredItems: [InventoryItem] {
+        inventoryItems.filter { item in
+            (selectedCategory == nil || item.category == selectedCategory) &&
+            (searchText.isEmpty || item.name.localizedCaseInsensitiveContains(searchText))
+        }.sorted { $0.name < $1.name }
+    }
+
+    func loadInventory() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            // Using the new service to fetch data
+            inventoryItems = try await buildingService.getInventoryItems(for: buildingID)
+        } catch {
+            errorMessage = "Failed to load inventory: \(error.localizedDescription)"
+            print("❌ \(errorMessage!)")
+        }
+        isLoading = false
+    }
+
+    func deleteItem(_ item: InventoryItem) async {
+        do {
+            try await buildingService.deleteInventoryItem(itemId: item.id)
+            inventoryItems.removeAll { $0.id == item.id }
+        } catch {
+            errorMessage = "Failed to delete item: \(error.localizedDescription)"
+            print("❌ \(errorMessage!)")
+        }
+    }
+
+    func clearFilters() {
+        searchText = ""
+        selectedCategory = nil
+    }
+}
+
+// MARK: - Inventory View
+
+struct InventoryView: View {
+    @StateObject private var viewModel: InventoryViewModel
+
+    init(buildingID: CoreTypes.BuildingID) {
+        _viewModel = StateObject(wrappedValue: InventoryViewModel(buildingID: buildingID))
+    }
+
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
                 searchFilterBar
                 
@@ -34,16 +86,13 @@ struct InventoryView: View {
                     inventoryListView
                 }
             }
-            
             floatingActionButton
         }
         .navigationTitle("Building Inventory")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    Task { await viewModel.loadInventory() }
-                }) {
+                Button(action: { Task { await viewModel.loadInventory() } }) {
                     Image(systemName: "arrow.clockwise")
                 }
             }
@@ -52,56 +101,43 @@ struct InventoryView: View {
             await viewModel.loadInventory()
         }
         .sheet(isPresented: $viewModel.showAddItemSheet) {
-            AddInventoryItemView(buildingID: buildingID) { success in
+            AddInventoryItemView(buildingID: viewModel.buildingID) { success in
                 viewModel.showAddItemSheet = false
-                if success {
-                    Task { await viewModel.loadInventory() }
-                }
+                if success { Task { await viewModel.loadInventory() } }
             }
         }
     }
-    
+
     // MARK: - Subviews
-    
     private var searchFilterBar: some View {
         VStack(spacing: 8) {
             HStack {
                 Image(systemName: "magnifyingglass").foregroundColor(.gray)
                 TextField("Search Inventory", text: $viewModel.searchText)
             }
-            .padding(10)
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
-            .padding(.horizontal)
-            .padding(.top, 12)
-            
+            .padding(10).background(Color(.systemGray6)).cornerRadius(10)
+            .padding(.horizontal).padding(.top, 12)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     categoryButton(nil, label: "All")
                     ForEach(InventoryCategory.allCases, id: \.self) { category in
                         categoryButton(category, label: category.rawValue.capitalized)
                     }
-                }
-                .padding(.horizontal)
-            }
-            .padding(.bottom, 8)
-        }
-        .background(Color(.systemBackground))
+                }.padding(.horizontal)
+            }.padding(.bottom, 8)
+        }.background(Color(.systemBackground))
     }
-    
+
     private var loadingView: some View {
-        VStack {
-            Spacer()
-            ProgressView("Loading inventory...")
-            Spacer()
-        }
+        VStack { Spacer(); ProgressView("Loading inventory..."); Spacer() }
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 16) {
             Spacer()
             Image(systemName: "archivebox").font(.system(size: 50)).foregroundColor(.gray)
-            Text(viewModel.searchText.isEmpty && viewModel.selectedCategory == nil ? "No Inventory Items" : "No matching items")
+            Text(viewModel.searchText.isEmpty && viewModel.selectedCategory == nil ? "No Inventory Items" : "No Matching Items")
                 .font(.headline)
             Text(viewModel.searchText.isEmpty && viewModel.selectedCategory == nil ? "This building has no inventory items yet." : "Try adjusting your search or filters.")
                 .multilineTextAlignment(.center).foregroundColor(.secondary)
@@ -111,13 +147,11 @@ struct InventoryView: View {
                 } else {
                     viewModel.clearFilters()
                 }
-            }
-            .buttonStyle(.borderedProminent).padding(.top, 8)
+            }.buttonStyle(.borderedProminent).padding(.top, 8)
             Spacer()
-        }
-        .padding()
+        }.padding()
     }
-    
+
     private var inventoryListView: some View {
         List {
             ForEach(viewModel.filteredItems) { item in
@@ -129,43 +163,26 @@ struct InventoryView: View {
                 .swipeActions {
                     Button(role: .destructive) {
                         Task { await viewModel.deleteItem(item) }
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
+                    } label: { Label("Delete", systemImage: "trash") }
                 }
             }
-        }
-        .listStyle(.plain)
+        }.listStyle(.plain)
     }
-    
+
     private var floatingActionButton: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Button(action: { viewModel.showAddItemSheet = true }) {
-                    Image(systemName: "plus")
-                        .font(.title2.bold())
-                        .foregroundColor(.white)
-                        .frame(width: 56, height: 56)
-                        .background(Circle().fill(Color.blue))
-                        .shadow(radius: 3)
-                }
-                .padding([.trailing, .bottom], 20)
-            }
-        }
+        Button(action: { viewModel.showAddItemSheet = true }) {
+            Image(systemName: "plus")
+                .font(.title2.bold()).foregroundColor(.white)
+                .frame(width: 56, height: 56)
+                .background(Circle().fill(Color.blue))
+                .shadow(radius: 3)
+        }.padding(20)
     }
-    
+
     private func categoryButton(_ category: InventoryCategory?, label: String) -> some View {
-        Button(action: {
-            withAnimation { viewModel.selectedCategory = category }
-        }) {
+        Button(action: { withAnimation { viewModel.selectedCategory = category } }) {
             HStack(spacing: 4) {
-                if let category = category {
-                    Image(systemName: category.icon).font(.caption)
-                } else {
-                    Image(systemName: "tag").font(.caption)
-                }
+                Image(systemName: category?.icon ?? "tag").font(.caption)
                 Text(label).font(.subheadline)
             }
             .padding(.horizontal, 12).padding(.vertical, 6)
@@ -176,84 +193,22 @@ struct InventoryView: View {
     }
 }
 
-// MARK: - ViewModel for InventoryView
-
-@MainActor
-class InventoryViewModel: ObservableObject {
-    @Published var inventoryItems: [InventoryItem] = []
-    @Published var selectedCategory: InventoryCategory? = nil
-    @Published var searchText: String = ""
-    @Published var isLoading = true
-    @Published var errorMessage: String? = nil
-    @Published var showAddItemSheet = false
-    
-    let buildingID: CoreTypes.BuildingID
-    private let buildingService = BuildingService.shared
-    
-    init(buildingID: CoreTypes.BuildingID) {
-        self.buildingID = buildingID
-    }
-    
-    var filteredItems: [InventoryItem] {
-        inventoryItems.filter { item in
-            (selectedCategory == nil || item.category == selectedCategory) &&
-            (searchText.isEmpty || item.name.localizedCaseInsensitiveContains(searchText))
-        }.sorted { $0.name < $1.name }
-    }
-    
-    func loadInventory() async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            inventoryItems = try await buildingService.getInventoryItems(for: buildingID)
-        } catch {
-            errorMessage = "Failed to load inventory: \(error.localizedDescription)"
-        }
-        isLoading = false
-    }
-    
-    func deleteItem(_ item: InventoryItem) async {
-        do {
-            try await buildingService.deleteInventoryItem(itemId: item.id)
-            inventoryItems.removeAll { $0.id == item.id }
-        } catch {
-            errorMessage = "Failed to delete item: \(error.localizedDescription)"
-        }
-    }
-    
-    func clearFilters() {
-        searchText = ""
-        selectedCategory = nil
-    }
-}
-
-
 // MARK: - Inventory Item Row
-
 struct InventoryItemRow: View {
     let item: InventoryItem
-    
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
-                Circle()
-                    .fill(item.statusColor.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                Image(systemName: item.category.icon)
-                    .foregroundColor(item.statusColor)
+                Circle().fill(item.statusColor.opacity(0.2)).frame(width: 40, height: 40)
+                Image(systemName: item.category.icon).foregroundColor(item.statusColor)
             }
-            
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name).font(.headline)
                 HStack(spacing: 8) {
-                    Text("Qty: \(item.currentStock) \(item.unit)")
-                        .font(.subheadline).foregroundColor(.secondary)
+                    Text("Qty: \(item.currentStock) \(item.unit)").font(.subheadline).foregroundColor(.secondary)
                     if item.needsReorder {
-                        Text(item.currentStock <= 0 ? "Out of Stock" : "Low Stock")
-                            .font(.caption).padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(item.statusColor.opacity(0.2))
-                            .foregroundColor(item.statusColor)
-                            .cornerRadius(4)
+                        Text(item.statusText).font(.caption).padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(item.statusColor.opacity(0.2)).foregroundColor(item.statusColor).cornerRadius(4)
                     }
                 }
             }
@@ -265,30 +220,26 @@ struct InventoryItemRow: View {
                 }
                 Text("Min: \(item.minimumStock)").font(.caption2).foregroundColor(.secondary)
             }.frame(width: 70, alignment: .center)
-        }
-        .padding(.vertical, 4)
+        }.padding(.vertical, 4)
     }
 }
 
 // MARK: - Inventory Item Detail View
-
 struct InventoryItemDetailView: View {
-    @State var item: InventoryItem // Use @State to allow modification
+    @State var item: InventoryItem
     let onUpdate: () -> Void
-    
     @State private var newQuantity: Int
     @State private var isEditing = false
     @State private var isUpdating = false
-    @State private var showUpdateSuccess = false
     
     private let buildingService = BuildingService.shared
-    
+
     init(item: InventoryItem, onUpdate: @escaping () -> Void = {}) {
         self._item = State(initialValue: item)
         self.onUpdate = onUpdate
         self._newQuantity = State(initialValue: item.currentStock)
     }
-    
+
     var body: some View {
         Form {
             Section("Item Details") {
@@ -303,73 +254,36 @@ struct InventoryItemDetailView: View {
                 if let lastRestocked = item.lastRestocked {
                     LabeledContent("Last Updated", value: lastRestocked.formatted(date: .medium, time: .short))
                 }
-                if item.needsReorder {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle").foregroundColor(item.statusColor)
-                        Text("Restock Needed").foregroundColor(item.statusColor)
-                    }
-                }
             }
-            
             if isEditing {
                 Section {
-                    Button("Save Changes") { saveQuantityChange() }
-                        .frame(maxWidth: .infinity, alignment: .center).foregroundColor(.blue).disabled(isUpdating)
-                    Button("Cancel") { newQuantity = item.currentStock; isEditing = false }
-                        .frame(maxWidth: .infinity, alignment: .center).foregroundColor(.red).disabled(isUpdating)
+                    Button("Save Changes", action: saveQuantityChange).disabled(isUpdating)
+                    Button("Cancel", role: .destructive) { isEditing = false; newQuantity = item.currentStock }.disabled(isUpdating)
                 }
             }
-        }
-        .navigationTitle(item.name)
-        .toolbar {
-            if !isEditing {
-                ToolbarItem(placement: .primaryAction) { Button("Edit") { isEditing = true } }
-            }
-        }
-        .overlay(successOverlay)
+        }.navigationTitle(item.name)
+        .toolbar { if !isEditing { ToolbarItem { Button("Edit") { isEditing = true } } } }
     }
-    
-    @ViewBuilder
-    private var successOverlay: some View {
-        if showUpdateSuccess {
-            VStack {
-                Spacer()
-                Text("Quantity updated successfully")
-                    .padding().background(Color.green.opacity(0.9)).foregroundColor(.white).cornerRadius(10)
-                    .padding().transition(.move(edge: .bottom).combined(with: .opacity))
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation { showUpdateSuccess = false }
-                        }
-                    }
-            }
-            .animation(.easeInOut, value: showUpdateSuccess)
-        }
-    }
-    
+
     private func saveQuantityChange() {
         isUpdating = true
         Task {
             do {
-                try await buildingService.updateInventoryItemQuantity(itemId: item.id, newQuantity: newQuantity, workerId: "system")
-                item.currentStock = newQuantity // Update local item
+                try await buildingService.updateInventoryItemQuantity(itemId: item.id, newQuantity: newQuantity, workerId: "admin")
+                item.currentStock = newQuantity
                 isEditing = false
                 onUpdate()
-                withAnimation { showUpdateSuccess = true }
-            } catch {
-                print("Failed to update quantity: \(error)")
-            }
+            } catch { print("❌ Failed to update quantity: \(error)") }
             isUpdating = false
         }
     }
 }
 
-// MARK: - Add Item View
 
+// MARK: - Add Inventory Item View
 public struct AddInventoryItemView: View {
     public let buildingID: String
     public let onComplete: (Bool) -> Void
-    
     @State private var itemName = ""
     @State private var quantity = 1
     @State private var minimumStock = 5
@@ -384,39 +298,32 @@ public struct AddInventoryItemView: View {
             Form {
                 Section("Item Details") {
                     TextField("Item Name", text: $itemName)
-                    Stepper("Quantity: \(quantity) \(unit)", value: $quantity, in: 1...1000)
-                    Stepper("Min Stock: \(minimumStock) \(unit)", value: $minimumStock, in: 1...100)
-                    Picker("Unit", selection: $unit) {
-                        ForEach(["pcs", "bottles", "rolls", "boxes"], id: \.self) { Text($0) }
-                    }
-                    Picker("Category", selection: $selectedCategory) {
-                        ForEach(InventoryCategory.allCases, id: \.self) { Text($0.rawValue.capitalized) }
-                    }
+                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...1000)
+                    Stepper("Minimum Stock: \(minimumStock)", value: $minimumStock, in: 1...100)
+                    Picker("Unit", selection: $unit) { ForEach(["pcs", "bottles", "rolls", "boxes"], id: \.self) { Text($0) } }
+                    Picker("Category", selection: $selectedCategory) { ForEach(InventoryCategory.allCases, id: \.self) { Text($0.rawValue.capitalized) } }
                 }
                 Section {
-                    Button("Add Item") { addItem() }
-                        .frame(maxWidth: .infinity, alignment: .center).disabled(itemName.isEmpty || isSubmitting)
+                    Button("Add Item", action: addItem).disabled(itemName.isEmpty || isSubmitting)
                 }
             }
-            .navigationTitle("Add Inventory Item")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onComplete(false) } }
-            }
+            .navigationTitle("Add Inventory")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onComplete(false) } } }
         }
     }
     
     private func addItem() {
         isSubmitting = true
-        // ✅ FIXED: Use correct initializer for InventoryItem
+        // ✅ FIXED: Correct initializer for InventoryItem
         let newItem = InventoryItem(
             name: itemName,
-            description: "", // Default value
+            description: "", // Default empty description
             category: selectedCategory,
             currentStock: quantity,
             minimumStock: minimumStock,
             unit: unit,
-            supplier: "", // Default value
-            costPerUnit: 0.0, // Default value
+            supplier: "", // Default empty supplier
+            costPerUnit: 0.0, // Default zero cost
             restockStatus: quantity <= minimumStock ? .lowStock : .inStock,
             lastRestocked: Date()
         )
@@ -425,7 +332,7 @@ public struct AddInventoryItemView: View {
                 try await buildingService.saveInventoryItem(newItem)
                 onComplete(true)
             } catch {
-                print("Failed to add item: \(error)")
+                print("❌ Failed to add item: \(error)")
                 onComplete(false)
             }
         }

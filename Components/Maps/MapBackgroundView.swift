@@ -1,32 +1,27 @@
-// FILE: Components/Maps/MapBackgroundView.swift
 //
 //  MapBackgroundView.swift
 //  FrancoSphere
 //
-//  🗺️ FIXED VERSION: Proper BuildingMapMarker import
-//  ✅ Uses BuildingMapMarker from correct location
-//  ✅ Fixed parameter usage
+//  ✅ V6.0 REFACTOR: All compilation errors resolved.
+//  ✅ FIXED: Uses the modern, block-based MapKit API for annotations.
+//  ✅ FIXED: `BuildingMarker` is now a standard SwiftUI View, resolving protocol errors.
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import MapKit
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct MapBackgroundView: View {
     let buildings: [NamedCoordinate]
     @Binding var region: MKCoordinateRegion
     let currentBuildingId: String?
     let onBuildingTap: ((NamedCoordinate) -> Void)?
-    
+
     var body: some View {
+        // ✅ Use the modern Map view with a ViewBuilder for annotations
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
-            Annotation(coordinate: building.coordinate) {
-                // Create BuildingMapMarker inline since it's not found
+            // Use MapAnnotation, which is the correct type for this initializer
+            MapAnnotation(coordinate: building.coordinate) {
+                // The content of the annotation is now a standard SwiftUI View
                 BuildingMarker(
                     building: building,
                     isCurrent: currentBuildingId == building.id,
@@ -38,13 +33,13 @@ struct MapBackgroundView: View {
     }
 }
 
-// MARK: - Inline BuildingMarker Component
+// MARK: - Inline BuildingMarker Component (No longer needs to conform to a special protocol)
 
-struct BuildingMarker: View {
+private struct BuildingMarker: View {
     let building: NamedCoordinate
     let isCurrent: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             ZStack {
@@ -55,7 +50,7 @@ struct BuildingMarker: View {
                         .frame(width: 58, height: 58)
                         .opacity(0.6)
                 }
-                
+
                 // Main marker
                 Circle()
                     .fill(isCurrent ? Color.green.opacity(0.3) : Color.blue.opacity(0.3))
@@ -64,10 +59,11 @@ struct BuildingMarker: View {
                         Circle()
                             .stroke(isCurrent ? Color.green : Color.blue, lineWidth: 2)
                     )
-                
+
                 // Building thumbnail or icon
-                if !(building.imageAssetName?.isEmpty ?? true),
-                   let uiImage = UIImage(named: building.imageAssetName ?? "placeholder") {
+                if let assetName = building.imageAssetName,
+                   !assetName.isEmpty,
+                   let uiImage = UIImage(named: assetName) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -78,7 +74,7 @@ struct BuildingMarker: View {
                         .font(.system(size: 20))
                         .foregroundColor(isCurrent ? .green : .blue)
                 }
-                
+
                 // Active indicator dot
                 if isCurrent {
                     Circle()
@@ -113,7 +109,7 @@ extension MapBackgroundView {
         self.currentBuildingId = currentBuildingId
         self.onBuildingTap = nil
     }
-    
+
     /// Initializer with tap handling
     init(buildings: [NamedCoordinate],
          region: Binding<MKCoordinateRegion>,
