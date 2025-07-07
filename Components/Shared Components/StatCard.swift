@@ -2,16 +2,8 @@
 //  StatCard.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/6/25.
-//
-
-
-//
-//  StatCard.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Consolidated, reusable component for displaying dashboard statistics.
-//  ✅ Replaces all previous redeclarations.
+//  ✅ Replaces all previous redeclarations to fix build errors.
 //
 
 import SwiftUI
