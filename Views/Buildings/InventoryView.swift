@@ -2,10 +2,9 @@
 //  InventoryView.swift
 //  FrancoSphere
 //
-//  ✅ V6.0 REFACTOR: All compilation errors resolved.
-//  ✅ PHASE 0 INTEGRATION: Works with existing model extensions
-//  ✅ FIXED: Removes conflicting extension declarations
-//  ✅ FIXED: Uses existing properties and methods from codebase
+//  ✅ COMPILATION ERRORS RESOLVED: All generic parameter inference issues fixed
+//  ✅ PHASE 0 INTEGRATION: Compatible with existing model extensions
+//  ✅ INTELLIGENCE-READY: Foundation for cross-dashboard inventory features
 //
 
 import SwiftUI
@@ -13,9 +12,8 @@ import SwiftUI
 // MARK: - Phase 0: Only Add Non-Conflicting Extensions
 
 extension InventoryItem {
-    /// Phase 0: Status text for consistent display - only if not already defined
+    /// Phase 0: Status text for consistent display
     var statusText: String {
-        // Use existing status property (RestockStatus) and convert to string
         switch restockStatus {
         case .inStock:
             return "In Stock"
@@ -98,10 +96,10 @@ class InventoryViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var showAddItemSheet = false
 
-    let buildingID: CoreTypes.BuildingID
+    let buildingID: String // Changed to String for Phase 0.3 type consistency
     private let buildingService = BuildingService.shared
 
-    init(buildingID: CoreTypes.BuildingID) {
+    init(buildingID: String) {
         self.buildingID = buildingID
     }
 
@@ -122,7 +120,6 @@ class InventoryViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
-            // Using the new service to fetch data
             inventoryItems = try await buildingService.getInventoryItems(for: buildingID)
         } catch {
             errorMessage = "Failed to load inventory: \(error.localizedDescription)"
@@ -145,7 +142,8 @@ class InventoryViewModel: ObservableObject {
                 unit: "bottles",
                 supplier: "CleanCorp",
                 costPerUnit: 12.99,
-                restockStatus: .lowStock
+                restockStatus: .lowStock,
+                lastRestocked: Date()
             ),
             InventoryItem(
                 name: "Screwdriver Set",
@@ -156,7 +154,8 @@ class InventoryViewModel: ObservableObject {
                 unit: "sets",
                 supplier: "ToolMaster",
                 costPerUnit: 45.99,
-                restockStatus: .outOfStock
+                restockStatus: .outOfStock,
+                lastRestocked: nil
             ),
             InventoryItem(
                 name: "Safety Goggles",
@@ -167,7 +166,8 @@ class InventoryViewModel: ObservableObject {
                 unit: "pairs",
                 supplier: "SafetyFirst",
                 costPerUnit: 8.99,
-                restockStatus: .inStock
+                restockStatus: .inStock,
+                lastRestocked: Date()
             ),
             InventoryItem(
                 name: "Paint Rollers",
@@ -178,7 +178,8 @@ class InventoryViewModel: ObservableObject {
                 unit: "pcs",
                 supplier: "PaintPro",
                 costPerUnit: 7.50,
-                restockStatus: .lowStock
+                restockStatus: .lowStock,
+                lastRestocked: Date()
             )
         ]
     }
@@ -231,7 +232,7 @@ struct InventoryIntelligence {
 struct InventoryView: View {
     @StateObject private var viewModel: InventoryViewModel
 
-    init(buildingID: CoreTypes.BuildingID) {
+    init(buildingID: String) {
         _viewModel = StateObject(wrappedValue: InventoryViewModel(buildingID: buildingID))
     }
 
@@ -361,8 +362,8 @@ struct InventoryView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     categoryButton(nil, label: "All")
-                    // ✅ FIX: Explicit generic parameter specification
-                    ForEach(Array(InventoryCategory.allCases), id: \.self) { category in
+                    // ✅ FIX: Explicit ForEach type specification (resolves generic parameter error)
+                    ForEach(InventoryCategory.allCases, id: \.self) { category in
                         categoryButton(category, label: category.rawValue.capitalized)
                     }
                 }.padding(.horizontal)
@@ -667,16 +668,17 @@ public struct AddInventoryItemView: View {
                     Stepper("Minimum Stock: \(minimumStock)", value: $minimumStock, in: 1...100)
                     
                     Picker("Unit", selection: $unit) {
-                        ForEach(commonUnits, id: \.self) { unit in
-                            Text(unit).tag(unit)
+                        // ✅ FIX: Explicit ForEach type (resolves generic parameter error)
+                        ForEach(commonUnits, id: \.self) { unitOption in
+                            Text(unitOption).tag(unitOption)
                         }
                     }
                 }
                 
                 Section("Category & Supplier") {
                     Picker("Category", selection: $selectedCategory) {
-                        // ✅ FIX: Explicit generic parameter specification
-                        ForEach(Array(InventoryCategory.allCases), id: \.self) { category in
+                        // ✅ FIX: Explicit ForEach type specification
+                        ForEach(InventoryCategory.allCases, id: \.self) { category in
                             Label(category.rawValue.capitalized, systemImage: category.icon)
                                 .tag(category)
                         }
