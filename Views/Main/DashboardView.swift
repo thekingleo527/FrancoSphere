@@ -14,13 +14,9 @@ struct DashboardView: View {
             Color.black.ignoresSafeArea()
             VStack {
                 Text("Dashboard")
-                    .font(.largeTitle)
-                    .foregroundColor(.white)
+                    .font(.largeTitle).foregroundColor(.white)
                 Text("This view has been temporarily disabled and needs to be refactored.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
+                    .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center).padding()
             }
         }
     }

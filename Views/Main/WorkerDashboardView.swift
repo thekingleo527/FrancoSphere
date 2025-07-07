@@ -186,24 +186,15 @@ struct WorkerDashboardView: View {
 }
 
 // MARK: - Reusable Site Card
-private struct MySitesCard: View {
-    let building: NamedCoordinate
-    var body: some View {
-        VStack(spacing: 0) {
-            if let assetName = building.imageAssetName, !assetName.isEmpty, let uiImage = UIImage(named: assetName) {
-                Image(uiImage: uiImage).resizable().aspectRatio(contentMode: .fill).frame(height: 80)
-            } else {
                 Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 80)
                     .overlay(Image(systemName: "building.2").foregroundColor(.white))
-            }
+
             VStack {
                 Text(building.name).font(.caption).fontWeight(.medium).foregroundColor(.white)
                     .lineLimit(2).multilineTextAlignment(.center).frame(height: 35)
             }.padding(8)
-        }
+
         .background(Color.black.opacity(0.2)).cornerRadius(12).clipped()
-    }
-}
 
 // MARK: - Building Selection Sheet
 struct BuildingSelectionSheet: View {
