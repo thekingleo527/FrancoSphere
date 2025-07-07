@@ -34,7 +34,7 @@ struct IntelligencePreviewPanel: View {
                     
                     metricCard(
                         title: "Routine Adherence",
-                        value: "\(intelligence.operationalMetrics.routineAdherence, specifier: "%.0f")%",
+                        value: "\(String(format: "%.0f", intelligence.operationalMetrics.routineAdherence))%",
                         icon: "checklist.checked",
                         color: .blue
                     )
@@ -48,7 +48,7 @@ struct IntelligencePreviewPanel: View {
                     
                     metricCard(
                         title: "Data Quality",
-                        value: "\(intelligence.dataQuality.score * 100, specifier: "%.0f")%",
+                        value: "\(String(format: "%.0f", intelligence.operationalMetrics.routineAdherence))%",
                         icon: "chart.bar.xaxis",
                         color: .purple
                     )
