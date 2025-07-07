@@ -164,6 +164,10 @@
 		23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82492E1C1B4F00C298C7 /* default.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
+		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
+		23EE82702E1C795E00C298C7 /* BuildingIntelligenceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826F2E1C795E00C298C7 /* BuildingIntelligenceListView.swift */; };
+		23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */; };
+		23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -344,6 +348,10 @@
 		23EE82492E1C1B4F00C298C7 /* default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = default.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
+		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
+		23EE826F2E1C795E00C298C7 /* BuildingIntelligenceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceListView.swift; sourceTree = "<group>"; };
+		23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
+		23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceInsightsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -756,6 +764,10 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */,
+				23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */,
+				23EE826F2E1C795E00C298C7 /* BuildingIntelligenceListView.swift */,
+				23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */,
 				2312FC922E1BF5C600B64496 /* InitializationView.swift */,
 				239956092E1107E800B3F105 /* WorkerProfileView.swift */,
 				23BBD75D2E0016E400013D90 /* BuildingPreviewPopover.swift */,
@@ -1054,6 +1066,7 @@
 				234581712DF78E3D00355F0A /* BuildingStatsGlassCard.swift in Sources */,
 				233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */,
 				234581732DF78E3D00355F0A /* ForgotPasswordView.swift in Sources */,
+				23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */,
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
 				233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */,
 				234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */,
@@ -1062,6 +1075,7 @@
 				2345817A2DF78E3D00355F0A /* MaintenanceTaskView.swift in Sources */,
 				2345817B2DF78E3D00355F0A /* AdminDashboardView.swift in Sources */,
 				2345817C2DF78E3D00355F0A /* TimelineProgressBar.swift in Sources */,
+				23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */,
 				2312FC7E2E1BED3700B64496 /* DataSynchronizationService.swift in Sources */,
 				2345817D2DF78E3D00355F0A /* TimeBasedTaskFilter.swift in Sources */,
 				233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */,
@@ -1078,6 +1092,7 @@
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */,
 				23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */,
+				23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,
@@ -1135,6 +1150,7 @@
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
+				23EE82702E1C795E00C298C7 /* BuildingIntelligenceListView.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
