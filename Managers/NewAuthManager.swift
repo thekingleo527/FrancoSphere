@@ -31,6 +31,11 @@ public actor NewAuthManager {
     // Internal state is now protected by the actor.
     private(set) var currentUser: AuthenticatedUser?
 
+    public func getCurrentUser() -> AuthenticatedUser? {
+        return currentUser
+    }
+
+
     // Private initializer for singleton pattern.
     private init() {
         // Attempt to load a persisted session on startup.
