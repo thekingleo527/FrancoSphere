@@ -37,7 +37,7 @@ public class WorkerContextEngine: ObservableObject {
             async let progress = taskService.getTaskProgress(for: workerId)
 
             self.workerProfile = try await profile
-            self.updateAssignedBuildings(try await buildings)
+            self.assignedBuildings = try await buildings
             self.todaysTasks = try await tasks
             self.taskProgress = try await progress
         } catch {
@@ -53,37 +53,5 @@ public class WorkerContextEngine: ObservableObject {
         } else {
             print("⚠️ Cannot refresh context, no user is logged in.")
         }
-    }
-}
-
-// MARK: - V6.0 Compilation Fixes
-extension WorkerContextEngine {
-    var assignedBuildings: [NamedCoordinate] {
-        return getAssignedBuildings()
-    }
-    
-    func getAssignedBuildings(workerId: String? = nil) -> [NamedCoordinate] {
-        if let workerId = workerId {
-            return getAssignedBuildings().filter { building in
-                return todaysTasks.contains { task in
-                    task.buildingId == building.id && 
-                    task.assignedWorkerName == currentWorker?.workerName
-                }
-            }
-        }
-        return getAssignedBuildings()
-    }
-    
-    func getUrgentTaskCount() -> Int {
-        return todaysTasks.filter { task in
-            task.urgencyLevel == "high" || task.urgencyLevel == "critical"
-        }.count
-    }
-}
-
-// V6.0 Phase 4 Fixes
-extension WorkerContextEngine {
-    func getAssignedBuildings(_ workerId: String? = nil) -> [NamedCoordinate] {
-        return assignedBuildings
     }
 }
