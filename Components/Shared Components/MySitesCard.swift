@@ -47,7 +47,7 @@ struct MySitesCard: View {
     @ViewBuilder
     private func buildingImageLoader(for building: NamedCoordinate) -> some View {
         // 1. Try the primary image asset name from the model
-        if let primaryImage = UIImage(named: building.imageAssetName) {
+        if let primaryImage = UIImage(named: building.imageAssetName ?? "") {
             Image(uiImage: primaryImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
