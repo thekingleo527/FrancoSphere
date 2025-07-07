@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: This is the single, authoritative definition for the InitializationView.
-//  ✅ It now consumes the InitializationViewModel from its own separate file, fixing all redeclaration errors.
+//  ✅ It now consumes the InitializationViewModel from its own separate file.
 //
 
 import SwiftUI

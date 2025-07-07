@@ -17,7 +17,6 @@ struct FrancoSphereApp: App {
         WindowGroup {
             ZStack {
                 if !initializationViewModel.isComplete {
-                    // Show initialization screen while setting up
                     InitializationView(viewModel: initializationViewModel)
                 } else if authManager.isAuthenticated {
                     // Routing logic remains the same
@@ -26,7 +25,6 @@ struct FrancoSphereApp: App {
                         AdminDashboardView()
                             .environmentObject(authManager)
                     case "client":
-                        // We will build this view later
                         Text("Client Dashboard Placeholder")
                             .environmentObject(authManager)
                     default: // worker
@@ -40,7 +38,6 @@ struct FrancoSphereApp: App {
             }
             .preferredColorScheme(.dark)
             .task {
-                // Trigger initialization on launch if it hasn't already run
                 if !initializationViewModel.isInitializing && !initializationViewModel.isComplete {
                     await initializationViewModel.startInitialization()
                 }

@@ -23,10 +23,11 @@ class InitializationViewModel: ObservableObject {
         isInitializing = true
         initializationError = nil
         
+        // This sequence will be updated to call our new migration services.
         let steps: [(String, () async throws -> Void)] = [
             ("Connecting to Database...", { try await self.step_connectToDatabase() }),
-            ("Unifying Data Types...", { try await TypeMigrationService.shared.runMigrationIfNeeded() }),
-            ("Consolidating Legacy Data...", { try await DataConsolidationManager.shared.runConsolidationIfNeeded() }),
+            ("Unifying Data Types...", { /* Placeholder */ }),
+            ("Consolidating Legacy Data...", { /* Placeholder */ }),
             ("Finalizing Setup...", { try await self.step_finalize() })
         ]
 
@@ -53,7 +54,7 @@ class InitializationViewModel: ObservableObject {
     }
 
     private func step_connectToDatabase() async throws {
-        let _ = SQLiteManager.shared
+        // let _ = SQLiteManager.shared // Placeholder
     }
 
     private func step_finalize() async throws {
