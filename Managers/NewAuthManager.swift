@@ -48,7 +48,8 @@ public actor NewAuthManager {
         return self.currentUser
     }
 
-    /// Returns the current authentication status.
+    /// A computed property to check authentication status.
+    /// This can be accessed synchronously as it doesn't modify state.
     public var isAuthenticated: Bool {
         return currentUser != nil
     }
