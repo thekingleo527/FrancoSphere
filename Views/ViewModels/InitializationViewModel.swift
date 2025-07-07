@@ -23,7 +23,6 @@ class InitializationViewModel: ObservableObject {
         isInitializing = true
         initializationError = nil
         
-        // This sequence calls our new migration services in the correct order.
         let steps: [(String, () async throws -> Void)] = [
             ("Connecting to Database...", { try await self.step_connectToDatabase() }),
             ("Unifying Data Types...", { try await TypeMigrationService.shared.runMigrationIfNeeded() }),
@@ -48,22 +47,16 @@ class InitializationViewModel: ObservableObject {
 
         progress = 1.0
         currentStep = "Initialization Complete"
-        
-        // A final delay to let the user see the "complete" message
         try? await Task.sleep(nanoseconds: 500_000_000)
-        
         isComplete = true
         isInitializing = false
     }
 
-    // MARK: - Initialization Steps
     private func step_connectToDatabase() async throws {
-        // This just ensures the singleton is created.
         let _ = SQLiteManager.shared
     }
 
     private func step_finalize() async throws {
-        // Any final checks can go here.
         print("✅ Final setup checks complete.")
     }
 }
