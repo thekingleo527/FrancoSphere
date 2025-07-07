@@ -37,7 +37,7 @@ public class WorkerContextEngine: ObservableObject {
             async let progress = taskService.getTaskProgress(for: workerId)
 
             self.workerProfile = try await profile
-            self.assignedBuildings = try await buildings
+            self.updateAssignedBuildings(try await buildings)
             self.todaysTasks = try await tasks
             self.taskProgress = try await progress
         } catch {
@@ -78,5 +78,12 @@ extension WorkerContextEngine {
         return todaysTasks.filter { task in
             task.urgencyLevel == "high" || task.urgencyLevel == "critical"
         }.count
+    }
+}
+
+// V6.0 Phase 4 Fixes
+extension WorkerContextEngine {
+    func getAssignedBuildings(_ workerId: String? = nil) -> [NamedCoordinate] {
+        return assignedBuildings
     }
 }
