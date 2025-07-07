@@ -226,8 +226,9 @@ struct InventoryItemRow: View {
 
 // MARK: - Inventory Item Detail View
 struct InventoryItemDetailView: View {
-    @State var item: InventoryItem
+    @State var item: InventoryItem // Use @State to allow modification
     let onUpdate: () -> Void
+    
     @State private var newQuantity: Int
     @State private var isEditing = false
     @State private var isUpdating = false
@@ -314,7 +315,7 @@ public struct AddInventoryItemView: View {
     
     private func addItem() {
         isSubmitting = true
-        // ✅ FIXED: Correct initializer for InventoryItem
+        // ✅ FIXED: Use correct initializer for InventoryItem
         let newItem = InventoryItem(
             name: itemName,
             description: "", // Default empty description

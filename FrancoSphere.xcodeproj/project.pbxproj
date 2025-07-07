@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
 		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
+		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
+		2312FC6D2E1B7BD500B64496 /* WorkerAssignmentEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -176,6 +178,8 @@
 /* Begin PBXFileReference section */
 		2312FC662E1B66F300B64496 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
 		2312FC682E1B709600B64496 /* DataConsolidationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConsolidationManager.swift; sourceTree = "<group>"; };
+		2312FC6A2E1B77B400B64496 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
+		2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentEngine.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -402,6 +406,7 @@
 		2312FC652E1B66C900B64496 /* Migration */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */,
 				2312FC682E1B709600B64496 /* DataConsolidationManager.swift */,
 				2312FC662E1B66F300B64496 /* TypeMigrationService.swift */,
 			);
@@ -495,6 +500,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC6A2E1B77B400B64496 /* StatCard.swift */,
 				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
 				239956072E11079F00B3F105 /* AIScenarioSheetView.swift */,
 				23BBD76B2E030EA500013D90 /* RoutinePriority.swift */,
@@ -985,6 +991,7 @@
 				234581632DF78E3D00355F0A /* GlassModal.swift in Sources */,
 				234581642DF78E3D00355F0A /* GlassDeckContainer.swift in Sources */,
 				234581652DF78E3D00355F0A /* GlassLoadingView.swift in Sources */,
+				2312FC6D2E1B7BD500B64496 /* WorkerAssignmentEngine.swift in Sources */,
 				234581662DF78E3D00355F0A /* TaskFormView.swift in Sources */,
 				23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */,
 				234581672DF78E3D00355F0A /* WeatherTaskTimelineCard.swift in Sources */,
@@ -1018,6 +1025,7 @@
 				2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */,
 				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
+				2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,

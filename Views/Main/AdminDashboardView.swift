@@ -21,6 +21,7 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var inventoryAlerts: [InventoryItem] = []
     @Published var isLoading = false
 
+    // Using actors for thread-safe data access
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
@@ -28,16 +29,18 @@ class AdminDashboardViewModel: ObservableObject {
     func loadDashboardData() async {
         isLoading = true
         
+        // Fetch data concurrently
         async let buildings = buildingService.getAllBuildings()
         async let workers = workerService.getAllActiveWorkers()
         async let tasks = taskService.getAllTasks()
-        // In a real app, inventory alerts would come from a dedicated service.
         
         do {
             self.buildings = try await buildings
             self.activeWorkers = try await workers
-            self.ongoingTasks = (try await tasks).filter { !$0.isCompleted }
-            self.inventoryAlerts = [] // Placeholder for inventory alerts
+            // Filter for tasks that are not yet completed
+            self.ongoingTasks = (try await tasks).filter { $0.status != "completed" }
+            // Placeholder for inventory alerts; would be fetched from a service
+            self.inventoryAlerts = []
         } catch {
             print("❌ Failed to load admin dashboard data: \(error)")
         }
@@ -51,19 +54,15 @@ class AdminDashboardViewModel: ObservableObject {
 
 struct AdminDashboardView: View {
     @StateObject private var viewModel = AdminDashboardViewModel()
-    @StateObject private var authManager = NewAuthManager.shared
+    @EnvironmentObject private var authManager: NewAuthManager
     
-    @State private var selectedTab = 0
     @State private var showNewTaskSheet = false
     
-    @State private var region: MKCoordinateRegion
-    
-    init() {
-        // Default region centered on NYC
-        let center = CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973)
-        let span = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        _region = State(initialValue: MKCoordinateRegion(center: center, span: span))
-    }
+    // Default region centered on NYC
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973),
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    )
 
     var body: some View {
         NavigationView {
@@ -94,9 +93,11 @@ struct AdminDashboardView: View {
                 await viewModel.loadDashboardData()
             }
             .sheet(isPresented: $showNewTaskSheet) {
+                // Assuming TaskRequestView is updated or compatible
                 TaskRequestView()
             }
         }
+        .preferredColorScheme(.dark)
     }
 
     // MARK: - Subviews
@@ -116,7 +117,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "plus.circle.fill").font(.system(size: 24)).foregroundColor(.blue)
                     }
                     Menu {
-                        Button(action: { authManager.logout() }) {
+                        Button(role: .destructive, action: { authManager.logout() }) {
                             Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
                         }
                     } label: {
@@ -197,8 +198,7 @@ private struct WorkerCard: View {
         VStack {
             ProfileBadge(workerName: worker.name, isCompact: true)
             Text(worker.name.components(separatedBy: " ").first ?? "")
-                .font(.caption)
-                .lineLimit(1)
+                .font(.caption).lineLimit(1)
         }.frame(width: 80)
     }
 }
@@ -215,9 +215,7 @@ private struct TaskListItem: View {
             Spacer()
             Text(task.urgency.rawValue).font(.caption).foregroundColor(task.urgency.displayColor)
         }
-        .padding(12)
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(10)
+        .padding(12).background(Color(.secondarySystemGroupedBackground)).cornerRadius(10)
     }
 }
 
@@ -226,5 +224,6 @@ struct AdminDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         AdminDashboardView()
             .preferredColorScheme(.dark)
+            .environmentObject(NewAuthManager.shared)
     }
 }
