@@ -163,6 +163,7 @@
 		23DF5C922E18546C000F9982 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23DF5C912E18546C000F9982 /* OpenMeteoSdk */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 		23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82492E1C1B4F00C298C7 /* default.swift */; };
+		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -342,6 +343,7 @@
 		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 		23EE82492E1C1B4F00C298C7 /* default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = default.swift; sourceTree = "<group>"; };
+		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -775,6 +777,7 @@
 		234581292DF78E3D00355F0A /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				23EE824B2E1C333A00C298C7 /* Templates */,
 				238375EB2E18480200EC410D /* ViewModels */,
 				234581112DF78E3D00355F0A /* Auth */,
 				2345811C2DF78E3D00355F0A /* Buildings */,
@@ -793,6 +796,14 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		23EE824B2E1C333A00C298C7 /* Templates */ = {
+			isa = PBXGroup;
+			children = (
+				23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */,
+			);
+			path = Templates;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1065,6 +1076,7 @@
 				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */,
+				23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,
