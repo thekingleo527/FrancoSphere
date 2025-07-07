@@ -18,7 +18,6 @@ public enum HapticManager {
         generator.notificationOccurred(type)
     }
     
-    // ✅ FIXED: Added missing 'success' case for convenience.
     public static func success() {
         notification(.success)
     }

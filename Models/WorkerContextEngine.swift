@@ -15,7 +15,6 @@ public class WorkerContextEngine: ObservableObject {
     @Published public var isLoading = false
     @Published public var error: Error?
     @Published public var workerProfile: WorkerProfile?
-    @Published public var assignedBuildings: [NamedCoordinate] = []
     @Published public var todaysTasks: [ContextualTask] = []
     @Published public var taskProgress: TaskProgress?
 
@@ -48,8 +47,8 @@ public class WorkerContextEngine: ObservableObject {
     }
 
     public func refreshContext() async {
-        // ✅ FIXED: Correctly awaits the result from the actor's property.
-        if let workerId = await authManager.currentUser?.workerId {
+        // ✅ FIXED: Correctly awaits the result from the actor's method.
+        if let workerId = await authManager.getCurrentUser()?.workerId {
             await loadContext(for: workerId)
         } else {
             print("⚠️ Cannot refresh context, no user is logged in.")

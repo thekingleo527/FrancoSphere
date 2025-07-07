@@ -26,6 +26,7 @@ extension TaskUrgency {
         case .low: return .green
         case .medium: return .orange
         case .high, .urgent, .critical, .emergency: return .red
+        default: return .gray
         }
     }
 }
