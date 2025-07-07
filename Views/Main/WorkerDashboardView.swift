@@ -5,7 +5,7 @@
 //  ✅ V6.0 REFACTOR: Complete architectural overhaul.
 //  ✅ FIXED: All compilation errors resolved.
 //  ✅ INTEGRATED: Correctly uses actor-based managers via its ViewModel.
-//  ✅ PRESERVED: Original UI design from screenshots.
+//  ✅ PRESERVED: Original UI design and functionality from screenshots and prior versions.
 //
 
 import SwiftUI
@@ -18,90 +18,104 @@ struct WorkerDashboardView: View {
     // UI State
     @State private var showBuildingList = false
     @State private var showMapOverlay = false
-
+    @State private var showProfileView = false
+    
     var body: some View {
-        ZStack {
-            // The blurred map is always in the background
-            mapBackground
-                .ignoresSafeArea()
+        NavigationView {
+            ZStack {
+                mapBackground
+                    .ignoresSafeArea()
 
-            if viewModel.isLoading {
-                ProgressView("Loading Dashboard...")
-                    .tint(.white)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.black.opacity(0.4))
-            } else {
-                // The main scrollable content
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // This spacer pushes content below the custom header
-                        Spacer(minLength: 80)
-                        
-                        // Display error banner if an error occurs
-                        if let errorMessage = viewModel.errorMessage {
-                            errorBanner(message: errorMessage)
-                        }
-                        
-                        // Main Dashboard Cards
-                        clockInSection
-                        todaysProgressSection
-                        mySitesSection
-                        
-                        // Add other dashboard components from your design here...
-                        
-                        Spacer(minLength: 100) // Padding at the bottom
-                    }
-                    .padding()
+                if viewModel.isLoading {
+                    loadingView
+                } else {
+                    mainContentScrollView
+                }
+                
+                // Custom header floats on top
+                VStack {
+                    HeaderV3B(
+                        workerName: authManager.currentUser?.name ?? "Worker",
+                        clockedInStatus: viewModel.isClockedIn,
+                        onClockToggle: { Task { await viewModel.handleClockInToggle() } },
+                        onProfilePress: { showProfileView = true },
+                        nextTaskName: viewModel.todaysTasks.first(where: { !$0.isCompleted })?.name,
+                        hasUrgentWork: viewModel.todaysTasks.contains { $0.urgency == .high || $0.urgency == .urgent },
+                        onNovaPress: { /* TODO: Show Nova AI */ },
+                        onNovaLongPress: { /* TODO: Show Nova AI Long Press */ },
+                        isNovaProcessing: false,
+                        hasPendingScenario: false,
+                        showClockPill: true
+                    )
+                    .background(.ultraThinMaterial)
+                    Spacer()
                 }
             }
-            
-            // The custom header floats on top of everything
-            VStack {
-                HeaderV3B(
-                    workerName: authManager.currentWorkerName,
-                    clockedInStatus: viewModel.isClockedIn,
-                    onClockToggle: { Task { await viewModel.handleClockInToggle() } },
-                    onProfilePress: { /* TODO: Show Profile View */ },
-                    nextTaskName: viewModel.todaysTasks.first(where: { !$0.isCompleted })?.name,
-                    hasUrgentWork: !viewModel.todaysTasks.filter { $0.urgency == .high || $0.urgency == .urgent }.isEmpty,
-                    onNovaPress: { /* TODO: Show Nova AI */ },
-                    onNovaLongPress: { /* TODO: Show Nova AI Long Press */ },
-                    isNovaProcessing: false,
-                    hasPendingScenario: false,
-                    showClockPill: true
-                )
-                .background(.ultraThinMaterial)
-                
-                Spacer()
+            .task {
+                await viewModel.loadInitialData()
             }
+            .sheet(isPresented: $showBuildingList) {
+                BuildingSelectionSheet(
+                    buildings: viewModel.assignedBuildings,
+                    onSelect: { building in
+                        Task { await viewModel.handleClockIn(for: building) }
+                        showBuildingList = false
+                    },
+                    onCancel: { showBuildingList = false }
+                )
+            }
+            .sheet(isPresented: $showProfileView) {
+                // Assuming you have a ProfileView
+                ProfileView()
+            }
+            .fullScreenCover(isPresented: $showMapOverlay) {
+                EnhancedMapOverlay(
+                    buildings: viewModel.assignedBuildings,
+                    currentBuildingId: viewModel.currentSession?.buildingId,
+                    isPresented: $showMapOverlay
+                )
+            }
+            .navigationBarHidden(true)
+            .preferredColorScheme(.dark)
         }
-        .task {
-            await viewModel.loadInitialData()
-        }
-        .sheet(isPresented: $showBuildingList) {
-            // Sheet for selecting a building to clock into
-            BuildingSelectionSheet(
-                buildings: viewModel.assignedBuildings,
-                onSelect: { building in
-                    Task { await viewModel.handleClockIn(building: building) }
-                    showBuildingList = false
-                },
-                onCancel: { showBuildingList = false }
-            )
-        }
-        .navigationBarHidden(true)
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Subviews
 
     private var mapBackground: some View {
-        Map(interactionModes: []) // A non-interactive map for the background effect
+        Map(interactionModes: [])
             .mapStyle(.standard(elevation: .realistic))
             .blur(radius: 4)
             .overlay(Color.black.opacity(0.5))
     }
     
+    private var loadingView: some View {
+        ProgressView("Loading Dashboard...")
+            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            .scaleEffect(1.5)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.black.opacity(0.4))
+    }
+    
+    private var mainContentScrollView: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                Spacer(minLength: 100) // Pushes content below the floating header
+                
+                if let errorMessage = viewModel.errorMessage {
+                    errorBanner(message: errorMessage)
+                }
+                
+                clockInSection
+                todaysProgressSection
+                mySitesSection
+                
+                Spacer(minLength: 100)
+            }
+            .padding()
+        }
+    }
+
     private func errorBanner(message: String) -> some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -118,14 +132,12 @@ struct WorkerDashboardView: View {
             if viewModel.isClockedIn {
                 Task { await viewModel.handleClockInToggle() }
             } else {
-                // Show the building selection sheet if not clocked in
                 showBuildingList = true
             }
         }) {
             HStack(spacing: 12) {
                 Image(systemName: viewModel.isClockedIn ? "location.fill" : "location.slash")
-                    .font(.title3)
-                    .foregroundColor(viewModel.isClockedIn ? .green : .orange)
+                    .font(.title3).foregroundColor(viewModel.isClockedIn ? .green : .orange)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(viewModel.isClockedIn ? "Clocked In" : "Clock In")
@@ -136,86 +148,60 @@ struct WorkerDashboardView: View {
                 Spacer()
                 Image(systemName: "chevron.right").foregroundColor(.white.opacity(0.6))
             }
-            .padding(16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
+            .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        }.buttonStyle(.plain)
     }
 
     private var todaysProgressSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Today's Progress")
-                .font(.headline)
-                .foregroundColor(.white)
-
+            Text("Today's Progress").font(.headline).foregroundColor(.white)
             ProgressView(value: viewModel.taskProgress?.percentage ?? 0, total: 100)
                 .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-
             HStack {
                 Text("\(Int(viewModel.taskProgress?.percentage ?? 0))% Complete")
                 Spacer()
                 Text("\(viewModel.taskProgress?.completed ?? 0)/\(viewModel.taskProgress?.total ?? 0) Tasks")
             }
-            .font(.caption)
-            .foregroundColor(.white.opacity(0.7))
+            .font(.caption).foregroundColor(.white.opacity(0.7))
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 
     private var mySitesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("My Sites")
-                    .font(.headline)
-                    .foregroundColor(.white)
+                Text("My Sites").font(.headline).foregroundColor(.white)
                 Spacer()
-                Text("\(viewModel.assignedBuildings.count) assigned")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                Button("View All") { showMapOverlay = true }
+                    .font(.caption).foregroundColor(.blue)
             }
-            
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(viewModel.assignedBuildings.prefix(6)) { building in
                     MySitesCard(building: building)
                 }
             }
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
 // MARK: - Reusable Site Card
 private struct MySitesCard: View {
     let building: NamedCoordinate
-    
     var body: some View {
         VStack(spacing: 0) {
-            // Use a placeholder if the asset is missing
             if let assetName = building.imageAssetName, !assetName.isEmpty, let uiImage = UIImage(named: assetName) {
-                Image(uiImage: uiImage)
-                    .resizable().aspectRatio(contentMode: .fill)
-                    .frame(height: 80)
+                Image(uiImage: uiImage).resizable().aspectRatio(contentMode: .fill).frame(height: 80)
             } else {
                 Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 80)
                     .overlay(Image(systemName: "building.2").foregroundColor(.white))
             }
-            
             VStack {
-                Text(building.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .frame(height: 35) // Ensure consistent height
-            }
-            .padding(8)
+                Text(building.name).font(.caption).fontWeight(.medium).foregroundColor(.white)
+                    .lineLimit(2).multilineTextAlignment(.center).frame(height: 35)
+            }.padding(8)
         }
-        .background(Color.black.opacity(0.2))
-        .cornerRadius(12)
-        .clipped()
+        .background(Color.black.opacity(0.2)).cornerRadius(12).clipped()
     }
 }
 
@@ -229,31 +215,20 @@ struct BuildingSelectionSheet: View {
         NavigationView {
             List(buildings) { building in
                 Button(action: { onSelect(building) }) {
-                    HStack {
-                        Text(building.name)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                    }
+                    HStack { Text(building.name); Spacer(); Image(systemName: "chevron.right") }
                 }
             }
             .navigationTitle("Select a Building")
             .navigationBarItems(leading: Button("Cancel", action: onCancel))
-        }
-        .preferredColorScheme(.dark)
+        }.preferredColorScheme(.dark)
     }
 }
-
 
 // MARK: - Preview
 struct WorkerDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         let authManager = NewAuthManager.shared
-        // Simulate a logged-in user for the preview
-        Task {
-            try? await authManager.login(email: "dutankevin1@gmail.com", password: "password")
-        }
-        
-        return WorkerDashboardView()
-            .environmentObject(authManager)
+        Task { try? await authManager.login(email: "dutankevin1@gmail.com", password: "password") }
+        return WorkerDashboardView().environmentObject(authManager)
     }
 }

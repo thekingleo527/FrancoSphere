@@ -2,14 +2,6 @@
 //  EnhancedMapOverlay.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  EnhancedMapOverlay.swift
-//  FrancoSphere
-//
 //  ✅ V6.0: Gesture Conflict Resolution
 //  ✅ Replaces the old MapOverlayView with a more robust, interactive map screen.
 //  ✅ Uses a clear "Done" button for dismissal, avoiding gesture conflicts.
