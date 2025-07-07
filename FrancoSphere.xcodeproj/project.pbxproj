@@ -162,6 +162,7 @@
 		23DF5C8F2E1853B8000F9982 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23DF5C8E2E1853B8000F9982 /* SQLite */; };
 		23DF5C922E18546C000F9982 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23DF5C912E18546C000F9982 /* OpenMeteoSdk */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
+		23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82492E1C1B4F00C298C7 /* default.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -340,6 +341,7 @@
 		23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
 		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
+		23EE82492E1C1B4F00C298C7 /* default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = default.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -361,16 +363,6 @@
 		2312FC702E1B816700B64496 /* DTOs */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DTOs;
-			sourceTree = "<group>";
-		};
-		23423DCA2D739D6900AACE3E /* FrancoSphereTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FrancoSphereTests;
-			sourceTree = "<group>";
-		};
-		23423DD42D739D6A00AACE3E /* FrancoSphereUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FrancoSphereUITests;
 			sourceTree = "<group>";
 		};
 		236106EB2E17AD0700463A59 /* Security */ = {
@@ -485,8 +477,6 @@
 				234581012DF78E3D00355F0A /* Resources */,
 				2345810D2DF78E3D00355F0A /* Services */,
 				234581292DF78E3D00355F0A /* Views */,
-				23423DCA2D739D6900AACE3E /* FrancoSphereTests */,
-				23423DD42D739D6A00AACE3E /* FrancoSphereUITests */,
 				23AD7FB22DF5A95D00BDF90A /* SeedDatabase */,
 				23E1E56D2E0F37CA0036127D /* Frameworks */,
 				23423DB82D739D6800AACE3E /* Products */,
@@ -646,6 +636,7 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				23EE82492E1C1B4F00C298C7 /* default.swift */,
 				2312FCC02E1C07E900B64496 /* Enums */,
 				2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */,
 				2312FC702E1B816700B64496 /* DTOs */,
@@ -848,9 +839,6 @@
 			dependencies = (
 				23423DC92D739D6900AACE3E /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				23423DCA2D739D6900AACE3E /* FrancoSphereTests */,
-			);
 			name = FrancoSphereTests;
 			packageProductDependencies = (
 			);
@@ -870,9 +858,6 @@
 			);
 			dependencies = (
 				23423DD32D739D6A00AACE3E /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				23423DD42D739D6A00AACE3E /* FrancoSphereUITests */,
 			);
 			name = FrancoSphereUITests;
 			packageProductDependencies = (
@@ -1088,6 +1073,7 @@
 				233F94E02DF7B67100901707 /* WorkerDashboardIntegration.swift in Sources */,
 				2345818A2DF78E3D00355F0A /* GlassStatusBadge.swift in Sources */,
 				2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */,
+				23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */,
 				23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */,
 				2345818B2DF78E3D00355F0A /* ProfileView.swift in Sources */,
 				233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */,
