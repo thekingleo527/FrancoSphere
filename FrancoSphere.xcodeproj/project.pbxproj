@@ -11,6 +11,7 @@
 		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
 		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
 		2312FC6D2E1B7BD500B64496 /* WorkerAssignmentEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */; };
+		2312FC6F2E1B809F00B64496 /* EnhancedMapOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6E2E1B809F00B64496 /* EnhancedMapOverlay.swift */; };
 		233F94D02DF7A3C700901707 /* FrancoSphereUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C02DF78E3D00355F0A /* FrancoSphereUITests.swift */; };
 		233F94D12DF7A4BA00901707 /* FrancoSphereTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580BE2DF78E3D00355F0A /* FrancoSphereTests.swift */; };
 		233F94D22DF7A4DB00901707 /* FrancoSphereUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C12DF78E3D00355F0A /* FrancoSphereUITestsLaunchTests.swift */; };
@@ -180,6 +181,7 @@
 		2312FC682E1B709600B64496 /* DataConsolidationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConsolidationManager.swift; sourceTree = "<group>"; };
 		2312FC6A2E1B77B400B64496 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
 		2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentEngine.swift; sourceTree = "<group>"; };
+		2312FC6E2E1B809F00B64496 /* EnhancedMapOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMapOverlay.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -491,6 +493,7 @@
 		234580AA2DF78E3D00355F0A /* Maps */ = {
 			isa = PBXGroup;
 			children = (
+				2312FC6E2E1B809F00B64496 /* EnhancedMapOverlay.swift */,
 				234580A82DF78E3D00355F0A /* MapBackgroundView.swift */,
 				234580A92DF78E3D00355F0A /* MapRevealContainer.swift */,
 			);
@@ -1073,6 +1076,7 @@
 				23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */,
 				234581A92DF78E3D00355F0A /* MaintenanceHistoryView.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,
+				2312FC6F2E1B809F00B64496 /* EnhancedMapOverlay.swift in Sources */,
 				23B117932DFE008D0065F39E /* HeroStatusCard.swift in Sources */,
 				234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */,
 				234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */,
