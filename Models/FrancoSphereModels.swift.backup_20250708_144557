@@ -552,7 +552,6 @@ public enum FrancoSphere {
         case down = "Down"
         case stable = "Stable"
     case neutral = "Neutral"
-    case neutral = "Neutral"
         
         public var symbol: String {
             switch self {
@@ -904,20 +903,6 @@ extension FrancoSphere.NamedCoordinate {
 // MARK: - Legacy Compatibility Type Aliases
 public typealias FSTaskItem = ContextualTask
 public typealias DetailedWorker = WorkerProfile
-
-extension FrancoSphere.TrendDirection {
-    public var icon: String {
-        switch self {
-        case .up: return "arrow.up.right"
-        case .down: return "arrow.down.right"
-        case .stable, .neutral: return "arrow.right"
-        }
-    }
-    
-    public static var up: FrancoSphere.TrendDirection { return .up }
-    public static var down: FrancoSphere.TrendDirection { return .down }
-    public static var neutral: FrancoSphere.TrendDirection { return .neutral }
-}
 
 extension FrancoSphere.TrendDirection {
     public var icon: String {

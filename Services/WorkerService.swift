@@ -209,3 +209,14 @@ extension WorkerService {
         // Implementation for getting all active workers
         return []
     }
+    
+    // MARK: - Building-specific Methods
+    func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [WorkerProfile] {
+        // Implementation for getting active workers for building
+        return []
+    }
+    
+    func getAllActiveWorkers() async throws -> [WorkerProfile] {
+        // Implementation for getting all active workers
+        return []
+    }
