@@ -46,7 +46,6 @@
 		2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 234580F92DF78E3D00355F0A /* AIAssistant.png */; };
 		2345813D2DF78E3D00355F0A /* 123_1st_Avenue.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F32DF78E3D00355F0A /* 123_1st_Avenue.jpg */; };
 		2345813F2DF78E3D00355F0A /* 131_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F42DF78E3D00355F0A /* 131_Perry_Street.jpg */; };
-		234581402DF78E3D00355F0A /* FrancoSphereSeed.sql in Resources */ = {isa = PBXBuildFile; fileRef = 234581002DF78E3D00355F0A /* FrancoSphereSeed.sql */; };
 		234581422DF78E3D00355F0A /* 36_Walker_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580ED2DF78E3D00355F0A /* 36_Walker_Street.jpg */; };
 		234581432DF78E3D00355F0A /* 138West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F82DF78E3D00355F0A /* 138West17thStreet.jpg */; };
 		234581442DF78E3D00355F0A /* 104_Franklin_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 234580F02DF78E3D00355F0A /* 104_Franklin_Street.jpg */; };
@@ -291,7 +290,6 @@
 		234580FB2DF78E3D00355F0A /* Rubin_Museum_142_148_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Rubin_Museum_142_148_West_17th_Street.jpg; sourceTree = "<group>"; };
 		234580FC2DF78E3D00355F0A /* Stuyvesant_Cove_Park.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Stuyvesant_Cove_Park.jpg; sourceTree = "<group>"; };
 		234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		234581002DF78E3D00355F0A /* FrancoSphereSeed.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = FrancoSphereSeed.sql; sourceTree = "<group>"; };
 		234581032DF78E3D00355F0A /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
 		234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializationCoordinator.swift; sourceTree = "<group>"; };
 		234581052DF78E3D00355F0A /* DatabaseSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSeeder.swift; sourceTree = "<group>"; };
@@ -701,7 +699,6 @@
 			children = (
 				234580FD2DF78E3D00355F0A /* Assets.xassets */,
 				234580FF2DF78E3D00355F0A /* Preview Content */,
-				234581002DF78E3D00355F0A /* FrancoSphereSeed.sql */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -971,7 +968,6 @@
 				2345813C2DF78E3D00355F0A /* AIAssistant.png in Resources */,
 				2345813D2DF78E3D00355F0A /* 123_1st_Avenue.jpg in Resources */,
 				2345813F2DF78E3D00355F0A /* 131_Perry_Street.jpg in Resources */,
-				234581402DF78E3D00355F0A /* FrancoSphereSeed.sql in Resources */,
 				234581422DF78E3D00355F0A /* 36_Walker_Street.jpg in Resources */,
 				234581432DF78E3D00355F0A /* 138West17thStreet.jpg in Resources */,
 				234581442DF78E3D00355F0A /* 104_Franklin_Street.jpg in Resources */,
@@ -1003,20 +999,13 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"${PROJECT_DIR}/Data/AllTasks.csv",
-				"${PROJECT_DIR}/Data/workers.csv",
-				"${PROJECT_DIR}/Data/buildings.csv",
-				"${PROJECT_DIR}/build_scripts/csv2sql.sh",
-				"${PROJECT_DIR}/Data/inventory.csv",
 			);
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"${PROJECT_DIR}/Resources/FrancoSphereSeed.sql",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PROJECT_DIR}/build_scripts/csv2sql.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

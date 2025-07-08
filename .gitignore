@@ -92,3 +92,16 @@ error_analysis.txt
 NuclearBackups/
 DefinitiveBackups/
 *Backup*/
+
+# Legacy CSV prevention (added by cleanup script)
+*.csv
+Data/*.csv
+build_scripts/csv2sql.sh
+**/csv2sql.*
+**/*seed.sql
+
+# Prevent CSV import dependencies
+**/CSVDataImporter.*
+**/csv_import.*
+**/legacy_data.*
+
