@@ -136,6 +136,7 @@
 		236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */; };
 		236106F12E17AE0200463A59 /* EnhancedClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */; };
 		236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */; };
+		237493582E1C9F8800D9C70D /* CoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237493572E1C9F8800D9C70D /* CoreTypes.swift */; };
 		237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237DE3FE2E182F510002A14D /* TelemetryService.swift */; };
 		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
@@ -165,7 +166,6 @@
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
-		23EE82702E1C795E00C298C7 /* BuildingIntelligenceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826F2E1C795E00C298C7 /* BuildingIntelligenceListView.swift */; };
 		23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */; };
 		23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */; };
 /* End PBXBuildFile section */
@@ -324,6 +324,7 @@
 		236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksOAuthManager.swift; sourceTree = "<group>"; };
 		236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
 		236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
+		237493572E1C9F8800D9C70D /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
 		237DE3FE2E182F510002A14D /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
 		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
@@ -349,7 +350,6 @@
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
-		23EE826F2E1C795E00C298C7 /* BuildingIntelligenceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceListView.swift; sourceTree = "<group>"; };
 		23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
 		23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceInsightsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -365,11 +365,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2312FC622E1B637800B64496 /* Core */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Core;
-			sourceTree = "<group>";
-		};
 		2312FC702E1B816700B64496 /* DTOs */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DTOs;
@@ -647,11 +642,11 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2374933D2E1C950700D9C70D /* Core */,
 				23EE82492E1C1B4F00C298C7 /* default.swift */,
 				2312FCC02E1C07E900B64496 /* Enums */,
 				2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */,
 				2312FC702E1B816700B64496 /* DTOs */,
-				2312FC622E1B637800B64496 /* Core */,
 				23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */,
 				234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */,
 				234580E32DF78E3D00355F0A /* VerificationRecord.swift */,
@@ -766,7 +761,6 @@
 			children = (
 				23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */,
 				23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */,
-				23EE826F2E1C795E00C298C7 /* BuildingIntelligenceListView.swift */,
 				23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */,
 				2312FC922E1BF5C600B64496 /* InitializationView.swift */,
 				239956092E1107E800B3F105 /* WorkerProfileView.swift */,
@@ -803,6 +797,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		2374933D2E1C950700D9C70D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				237493572E1C9F8800D9C70D /* CoreTypes.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
 		23E1E56D2E0F37CA0036127D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -835,7 +837,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				2312FC622E1B637800B64496 /* Core */,
 				2312FC702E1B816700B64496 /* DTOs */,
 				236106EB2E17AD0700463A59 /* Security */,
 				238375EB2E18480200EC410D /* ViewModels */,
@@ -1128,6 +1129,7 @@
 				2345819D2DF78E3D00355F0A /* DataInitializationView.swift in Sources */,
 				2345819E2DF78E3D00355F0A /* GlassNavigationBar.swift in Sources */,
 				2345819F2DF78E3D00355F0A /* AssetImageDebugger.swift in Sources */,
+				237493582E1C9F8800D9C70D /* CoreTypes.swift in Sources */,
 				234581A02DF78E3D00355F0A /* TaskScheduleView.swift in Sources */,
 				237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
@@ -1150,7 +1152,6 @@
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
-				23EE82702E1C795E00C298C7 /* BuildingIntelligenceListView.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
