@@ -236,11 +236,110 @@ class OperationalDataManager: ObservableObject {
     
     private init() {}
     
+    // MARK: - Utility Methods (Fixed and Moved to Class Level)
+    
+    /// Generate unique external ID for task idempotency
+    private func generateExternalId(for task: OperationalTaskAssignment, index: Int) -> String {
+        let components = [
+            task.building,
+            task.taskName,
+            task.assignedWorker,
+            task.recurrence,
+            task.daysOfWeek ?? "all",
+            String(index)
+        ]
+        let combined = components.joined(separator: "|")
+        return "OPERATIONAL-PRESERVED-\(combined.hashValue)-\(index)"
+    }
+    
+    /// Calculate appropriate due date based on recurrence and day pattern
+    private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
+        let calendar = Calendar.current
+        
+        switch recurrence {
+        case "Daily":
+            return date
+        case "Weekly":
+            let daysToAdd = Int.random(in: 1...7)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        case "Bi-Weekly":
+            let daysToAdd = Int.random(in: 7...14)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        case "Monthly", "Bi-Monthly":
+            let daysToAdd = Int.random(in: 7...30)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        case "Quarterly":
+            let daysToAdd = Int.random(in: 30...90)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        case "Semiannual":
+            let daysToAdd = Int.random(in: 90...180)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        case "Annual":
+            let daysToAdd = Int.random(in: 180...365)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        case "On-Demand":
+            let daysToAdd = Int.random(in: 1...30)
+            return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+        default:
+            return date
+        }
+    }
+    
+    /// Enhanced building mapping using BuildingService
+    private func mapBuildingNameToId(_ buildingName: String) async throws -> Int {
+        if let idStr = await BuildingService.shared.id(forName: buildingName),
+           let id = Int(idStr) {
+            return id
+        }
+        throw OperationalError.buildingNotFound(buildingName)
+    }
+    
+    /// Map worker names to IDs (current active workers only)
+    private func mapWorkerNameToId(_ workerName: String) async throws -> Int {
+        guard let manager = sqliteManager else {
+            throw OperationalError.noSQLiteManager
+        }
+        
+        // Block Jose Santos explicitly
+        if workerName.contains("Jose") || workerName.contains("Santos") {
+            throw OperationalError.workerNotFound("Jose Santos is no longer with the company")
+        }
+        
+        let workerResults = try await manager.query("""
+            SELECT id FROM workers WHERE name = ?
+        """, [workerName])
+        
+        if let worker = workerResults.first {
+            if let workerId = worker["id"] as? Int64 {
+                return Int(workerId)
+            } else if let workerId = worker["id"] as? Int {
+                return workerId
+            }
+        }
+        
+        throw OperationalError.workerNotFound(workerName)
+    }
+    
+    /// Log import results with corrected building IDs and Rubin Museum integration
+    private func logImportResults(imported: Int, errors: [String]) async {
+        await MainActor.run {
+            currentStatus = "Import complete: \(imported) tasks imported"
+            if !errors.isEmpty {
+                print("⚠️ Import completed with \(errors.count) errors:")
+                for error in errors.prefix(3) {
+                    print("   • \(error)")
+                }
+            } else {
+                print("✅ All tasks imported successfully")
+            }
+        }
+    }
+    
     // MARK: - ✅ PRESERVED: Ensure Active Workers Exist in Database
     
     /// Seed the workers table with current active roster
     private func seedActiveWorkers() async throws {
-        guard let sqliteManager = sqliteManager else {
+        guard let manager = sqliteManager else {
             throw OperationalError.noSQLiteManager
         }
         
@@ -259,14 +358,14 @@ class OperationalDataManager: ObservableObject {
         
         for (id, name, email, role) in activeWorkers {
             // Check if worker already exists
-            let existingWorker = try await sqliteManager.query(
+            let existingWorker = try await manager.query(
                 "SELECT id FROM workers WHERE id = ? LIMIT 1",
                 [id]
             )
             
             if existingWorker.isEmpty {
                 // Insert missing worker
-                try await sqliteManager.execute("""
+                try await manager.execute("""
                     INSERT INTO workers (id, name, email, role, isActive, shift, hireDate) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     """, [
@@ -286,7 +385,7 @@ class OperationalDataManager: ObservableObject {
         }
         
         // Verify Kevin specifically
-        let kevinCheck = try await sqliteManager.query(
+        let kevinCheck = try await manager.query(
             "SELECT id, name FROM workers WHERE id = '4' LIMIT 1",
             []
         )
@@ -316,7 +415,7 @@ class OperationalDataManager: ObservableObject {
     
     /// Main import function - uses ONLY programmatic data (no file parsing)
     func importRealWorldTasks() async throws -> (imported: Int, errors: [String]) {
-        guard let sqliteManager = sqliteManager else {
+        guard let manager = sqliteManager else {
             throw OperationalError.noSQLiteManager
         }
         
@@ -353,7 +452,7 @@ class OperationalDataManager: ObservableObject {
             // Pre-import Kevin diagnostic
             print("🔍 Pre-import Kevin diagnostic")
             do {
-                let existingKevin = try await sqliteManager.query("""
+                let existingKevin = try await manager.query("""
                     SELECT COUNT(*) as count FROM worker_building_assignments 
                     WHERE worker_id = '4' AND is_active = 1
                 """)
@@ -377,7 +476,7 @@ class OperationalDataManager: ObservableObject {
                     let externalId = generateExternalId(for: operationalTask, index: index)
                     
                     // Check if task already exists
-                    let existingTasks = try await sqliteManager.query("""
+                    let existingTasks = try await manager.query("""
                         SELECT id FROM tasks WHERE external_id = ?
                         """, [externalId])
                     
@@ -422,7 +521,7 @@ class OperationalDataManager: ObservableObject {
                     operationalTask.skillLevel == "Intermediate" ? "medium" : "low"
                     
                     // Insert task - Convert to strings and handle optionals
-                    try await sqliteManager.execute("""
+                    try await manager.execute("""
                         INSERT INTO tasks (
                             name, description, buildingId, workerId, isCompleted,
                             scheduledDate, recurrence, urgencyLevel, category,
@@ -513,15 +612,20 @@ class OperationalDataManager: ObservableObject {
             // ✅ FIXED: Use correct ContextualTask initializer
             let task = ContextualTask(
                 id: generateExternalId(for: operationalTask, index: 0),
-                name: operationalTask.taskName,
+                title: operationalTask.taskName,
                 description: "Imported from current active worker schedule",
-                buildingId: getBuildingIdFromName(operationalTask.building),
-                workerId: workerId,
                 category: TaskCategory(rawValue: operationalTask.category.lowercased()) ?? .maintenance,
                 urgency: TaskUrgency(rawValue: operationalTask.skillLevel == "Advanced" ? "high" : "medium") ?? .medium,
+                buildingId: getBuildingIdFromName(operationalTask.building),
+                buildingName: operationalTask.building,
+                assignedWorkerId: workerId,
+                assignedWorkerName: operationalTask.assignedWorker,
                 isCompleted: false,
+                completedDate: nil,
                 dueDate: nil,
-                estimatedDuration: 3600
+                estimatedDuration: 3600,
+                recurrence: TaskRecurrence(rawValue: operationalTask.recurrence.lowercased()) ?? .daily,
+                notes: nil
             )
             contextualTasks.append(task)
         }
@@ -604,7 +708,7 @@ class OperationalDataManager: ObservableObject {
     
     /// Enhanced import method for operational schedules with deterministic IDs (no file parsing)
     func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
-        guard let sqliteManager = sqliteManager else {
+        guard let manager = sqliteManager else {
             throw OperationalError.noSQLiteManager
         }
         
@@ -614,7 +718,7 @@ class OperationalDataManager: ObservableObject {
         print("✅ PRESERVED: Including Kevin's Rubin Museum routing with building ID 14")
         
         // Create routine_schedules table (operational schedule tracking)
-        try await sqliteManager.execute("""
+        try await manager.execute("""
             CREATE TABLE IF NOT EXISTS routine_schedules (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -633,7 +737,7 @@ class OperationalDataManager: ObservableObject {
         """)
         
         // Add UNIQUE constraints to prevent duplicates
-        try await sqliteManager.execute("""
+        try await manager.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_routine_unique 
             ON routine_schedules(building_id, worker_id, name)
         """)
@@ -644,7 +748,7 @@ class OperationalDataManager: ObservableObject {
             let id = "routine_\(routine.buildingId)_\(routine.workerId)_\(routine.name.hashValue.magnitude)"
             let weatherDependent = routine.category == "Cleaning" ? 1 : 0
             
-            try await sqliteManager.execute("""
+            try await manager.execute("""
                 INSERT OR REPLACE INTO routine_schedules 
                 (id, name, building_id, rrule, worker_id, category, weather_dependent)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -658,7 +762,7 @@ class OperationalDataManager: ObservableObject {
         }
         
         // Create dsny_schedules table (NYC DSNY compliance tracking)
-        try await sqliteManager.execute("""
+        try await manager.execute("""
             CREATE TABLE IF NOT EXISTS dsny_schedules (
                 id TEXT PRIMARY KEY,
                 route_id TEXT NOT NULL,
@@ -675,7 +779,7 @@ class OperationalDataManager: ObservableObject {
         """)
         
         // Add UNIQUE constraint for DSNY routes
-        try await sqliteManager.execute("""
+        try await manager.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_dsny_unique 
             ON dsny_schedules(route_id)
         """)
@@ -686,7 +790,7 @@ class OperationalDataManager: ObservableObject {
             let id = "dsny_\(dsny.routeId.hashValue.magnitude)"
             let buildingIdsJson = dsny.buildingIds.joined(separator: ",")
             
-            try await sqliteManager.execute("""
+            try await manager.execute("""
                 INSERT OR REPLACE INTO dsny_schedules 
                 (id, route_id, building_ids, collection_days, earliest_setout, latest_pickup, pickup_window_start, pickup_window_end)
                 VALUES (?, ?, ?, ?, 72000, 32400, 21600, 43200)
@@ -711,7 +815,7 @@ class OperationalDataManager: ObservableObject {
     
     /// Populate worker_building_assignments with CURRENT ACTIVE WORKERS ONLY (no file parsing)
     private func populateWorkerBuildingAssignments(_ assignments: [OperationalTaskAssignment]) async throws {
-        guard let sqliteManager = sqliteManager else {
+        guard let manager = sqliteManager else {
             throw NSError(domain: "OperationalImportError", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "SQLiteManager not available"])
         }
@@ -816,487 +920,133 @@ class OperationalDataManager: ObservableObject {
             // Check if Kevin's name appears with different spelling
             let kevinVariants = assignments.filter { $0.assignedWorker.lowercased().contains("kevin") }
             print("   Kevin name variants found: \(Set(kevinVariants.map { $0.assignedWorker }))")
+        }
+        
+        // Insert assignments into database
+        var insertedCount = 0
+        for pair in workerBuildingPairs {
+            let components = pair.split(separator: "-")
+            guard components.count == 2 else { continue }
             
-            // Insert assignments into database
-            var insertedCount = 0
-            for pair in workerBuildingPairs {
-                let components = pair.split(separator: "-")
-                guard components.count == 2 else { continue }
-                
-                let workerId = String(components[0])
-                let buildingId = String(components[1])
-                
-                // Get worker name from active roster
-                let workerName = activeWorkers.first(where: { $0.value == workerId })?.key ?? "Unknown Worker"
-                
-                do {
-                    try await sqliteManager.execute("""
+            let workerId = String(components[0])
+            let buildingId = String(components[1])
+            
+            // Get worker name from active roster
+            let workerName = activeWorkers.first(where: { $0.value == workerId })?.key ?? "Unknown Worker"
+            
+            do {
+                try await manager.execute("""
                     INSERT OR IGNORE INTO worker_building_assignments 
                     (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
                     VALUES (?, ?, ?, 'regular', datetime('now'), 1)
                 """, [workerId, buildingId, workerName])
-                    insertedCount += 1
-                    
-                    // Special logging for Kevin's Rubin Museum assignment
-                    if workerId == "4" && buildingId == "14" {
-                        print("✅ PRESERVED: Kevin assigned to Rubin Museum (building ID 14)")
-                    }
-                } catch {
-                    print("⚠️ Failed to insert assignment \(workerId)->\(buildingId): \(error)")
+                insertedCount += 1
+                
+                // Special logging for Kevin's Rubin Museum assignment
+                if workerId == "4" && buildingId == "14" {
+                    print("✅ PRESERVED: Kevin assigned to Rubin Museum (building ID 14)")
                 }
+            } catch {
+                print("⚠️ Failed to insert assignment \(workerId)->\(buildingId): \(error)")
             }
-            
-            // Enhanced results logging with Kevin focus
-            print("✅ Real-world assignments populated: \(insertedCount) active assignments")
-            
-            // Immediate Kevin verification
-            do {
-                let kevinVerification = try await sqliteManager.query("""
+        }
+        
+        // Enhanced results logging with Kevin focus
+        print("✅ Real-world assignments populated: \(insertedCount) active assignments")
+        
+        // Immediate Kevin verification
+        do {
+            let kevinVerification = try await manager.query("""
                 SELECT building_id FROM worker_building_assignments 
                 WHERE worker_id = '4' AND is_active = 1
             """)
-                print("🎯 Kevin verification: \(kevinVerification.count) buildings in database")
-                
-                // Check specifically for Rubin Museum assignment
-                let kevinRubinVerification = try await sqliteManager.query("""
+            print("🎯 Kevin verification: \(kevinVerification.count) buildings in database")
+            
+            // Check specifically for Rubin Museum assignment
+            let kevinRubinVerification = try await manager.query("""
                 SELECT building_id FROM worker_building_assignments 
                 WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
             """)
-                
-                if kevinRubinVerification.count > 0 {
-                    print("✅ PRESERVED: Kevin's Rubin Museum assignment verified in database")
-                } else {
-                    print("⚠️ PRESERVED: Kevin's Rubin Museum assignment NOT found in database")
-                }
-                
-                if kevinVerification.count == 0 {
-                    print("🚨 EMERGENCY: Kevin still has 0 buildings after import!")
-                }
-            } catch {
-                print("❌ Could not verify Kevin assignments: \(error)")
+            
+            if kevinRubinVerification.count > 0 {
+                print("✅ PRESERVED: Kevin's Rubin Museum assignment verified in database")
+            } else {
+                print("⚠️ PRESERVED: Kevin's Rubin Museum assignment NOT found in database")
             }
             
-            // Log final worker assignment summary
-            await logWorkerAssignmentSummary()
-            
-            // Validate all worker assignments dynamically
-            try await validateWorkerAssignments()
+            if kevinVerification.count == 0 {
+                print("🚨 EMERGENCY: Kevin still has 0 buildings after import!")
+                // Call the emergency fix method
+                try await validateWorkerAssignments()
+            }
+        } catch {
+            print("❌ Could not verify Kevin assignments: \(error)")
         }
         
-        /// Emergency fallback: Create Kevin's assignments manually if import fails
+        // Log final worker assignment summary
+        await logWorkerAssignmentSummary()
+    }
+    
+    /// Log summary of worker assignments for validation
+    private func logWorkerAssignmentSummary() async {
+        guard let manager = sqliteManager else { return }
         
-        /// Log summary of worker assignments for validation
-        private func logWorkerAssignmentSummary(_ activeWorkers: [String: String]) async {
-            guard let sqliteManager = sqliteManager else { return }
-            
-            do {
-                let results = try await sqliteManager.query("""
+        do {
+            let results = try await manager.query("""
                 SELECT wa.worker_name, COUNT(wa.building_id) as building_count 
                 FROM worker_building_assignments wa 
                 WHERE wa.is_active = 1 
                 GROUP BY wa.worker_id 
                 ORDER BY building_count DESC
             """)
-                
-                print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PRESERVED):")
-                for row in results {
-                    let name = row["worker_name"] as? String ?? "Unknown"
-                    let count = row["building_count"] as? Int64 ?? 0
-                    let emoji = getWorkerEmoji(name)
-                    let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum (building ID 14)" : ""
-                    print("   \(emoji) \(name): \(count) buildings \(status)")
-                }
-                
-                // Verify Kevin's expansion with Rubin Museum
-                let kevinCount = results.first(where: {
-                    ($0["worker_name"] as? String)?.contains("Kevin") == true
-                })?["building_count"] as? Int64 ?? 0
-                
-                if kevinCount >= 8 {
-                    print("✅ Kevin's expanded duties verified: \(kevinCount) buildings (including Rubin Museum)")
-                } else {
-                    print("⚠️ WARNING: Kevin should have 8+ buildings, found \(kevinCount)")
-                }
-                
-                // Specific Rubin Museum verification
-                let rubinCheck = try await sqliteManager.query("""
+            
+            print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PRESERVED):")
+            for row in results {
+                let name = row["worker_name"] as? String ?? "Unknown"
+                let count = row["building_count"] as? Int64 ?? 0
+                let emoji = getWorkerEmoji(name)
+                let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum (building ID 14)" : ""
+                print("   \(emoji) \(name): \(count) buildings \(status)")
+            }
+            
+            // Verify Kevin's expansion with Rubin Museum
+            let kevinCount = results.first(where: {
+                ($0["worker_name"] as? String)?.contains("Kevin") == true
+            })?["building_count"] as? Int64 ?? 0
+            
+            if kevinCount >= 8 {
+                print("✅ Kevin's expanded duties verified: \(kevinCount) buildings (including Rubin Museum)")
+            } else {
+                print("⚠️ WARNING: Kevin should have 8+ buildings, found \(kevinCount)")
+            }
+            
+            // Specific Rubin Museum verification
+            let rubinCheck = try await manager.query("""
                 SELECT COUNT(*) as count FROM worker_building_assignments 
                 WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
             """)
-                let rubinCount = rubinCheck.first?["count"] as? Int64 ?? 0
-                if rubinCount > 0 {
-                    print("✅ PRESERVED: Kevin's Rubin Museum assignment verified (building ID 14)")
-                } else {
-                    print("❌ PRESERVED: Kevin's Rubin Museum assignment MISSING")
-                }
-                
-            } catch {
-                print("⚠️ Could not generate assignment summary: \(error)")
-            }
-        }
-        
-        private func getWorkerEmoji(_ workerName: String) -> String {
-            switch workerName {
-            case "Greg Hutson": return "🔧"
-            case "Edwin Lema": return "🧹"
-            case "Kevin Dutan": return "⚡"  // Expanded duties + Rubin Museum
-            case "Mercedes Inamagua": return "✨"
-            case "Luis Lopez": return "🔨"
-            case "Angel Guirachocha": return "🗑️"
-            case "Shawn Magloire": return "🎨"
-            default: return "👷"
-            }
-        }
-        
-        // MARK: - Helper Methods (Enhanced, NO FILE PARSING)
-        
-        /// Map worker names to IDs (current active workers only)
-        private func mapWorkerNameToId(_ workerName: String) async throws -> Int {
-            guard let sqliteManager = sqliteManager else {
-                throw OperationalError.noSQLiteManager
+            let rubinCount = rubinCheck.first?["count"] as? Int64 ?? 0
+            if rubinCount > 0 {
+                print("✅ PRESERVED: Kevin's Rubin Museum assignment verified (building ID 14)")
+            } else {
+                print("❌ PRESERVED: Kevin's Rubin Museum assignment MISSING")
             }
             
-            // Block Jose Santos explicitly
-            if workerName.contains("Jose") || workerName.contains("Santos") {
-                throw OperationalError.workerNotFound("Jose Santos is no longer with the company")
-            }
-            
-            let workerResults = try await sqliteManager.query("""
-            SELECT id FROM workers WHERE name = ?
-            """, [workerName])
-            
-            if let worker = workerResults.first {
-                if let workerId = worker["id"] as? Int64 {
-                    return Int(workerId)
-                } else if let workerId = worker["id"] as? Int {
-                    return workerId
-                }
-            }
-            
-            throw OperationalError.workerNotFound(workerName)
-        }
-        
-        
-        /// Enhanced building mapping using BuildingService
-        private func mapBuildingNameToId(_ buildingName: String) async throws -> Int {
-            // ✅ FIXED: Use BuildingService.shared.id(forName:) method
-            if let idStr = await BuildingService.shared.id(forName: buildingName),
-               let id = Int(idStr) {
-                return id
-            }
-            throw OperationalError.buildingNotFound(buildingName)
-        }
-        
-        /// Generate unique external ID for idempotency
-        private func generateExternalId(for task: OperationalTaskAssignment, index: Int) -> String {
-            let components = [
-                task.building,
-                task.taskName,
-                task.assignedWorker,
-                task.recurrence,
-                task.daysOfWeek ?? "all",
-                String(index)
-            ]
-            let combined = components.joined(separator: "|")
-            return "OPERATIONAL-PRESERVED-\(combined.hashValue)-\(index)"
-        }
-        
-        /// Calculate appropriate due date based on recurrence and day pattern
-        private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
-            let calendar = Calendar.current
-            
-            switch recurrence {
-            case "Daily":
-                return date
-            case "Weekly":
-                let daysToAdd = Int.random(in: 1...7)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            case "Bi-Weekly":
-                let daysToAdd = Int.random(in: 7...14)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            case "Monthly", "Bi-Monthly":
-                let daysToAdd = Int.random(in: 7...30)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            case "Quarterly":
-                let daysToAdd = Int.random(in: 30...90)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            case "Semiannual":
-                let daysToAdd = Int.random(in: 90...180)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            case "Annual":
-                let daysToAdd = Int.random(in: 180...365)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            case "On-Demand":
-                let daysToAdd = Int.random(in: 1...30)
-                return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-            default:
-                return date
-            }
-        }
-        
-        // MARK: - ⭐ PRESERVED: Enhanced Logging (NO FILE PARSING)
-        
-        /// Log import results with corrected building IDs and Rubin Museum integration
-        private func logImportResults(imported: Int, errors: [String]) async {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            
-            // Count Kevin's tasks specifically
-            let kevinTasks = realWorldTasks.filter { $0.assignedWorker == "Kevin Dutan" }
-            let kevinRubinTasks = kevinTasks.filter { $0.building.contains("Rubin") }
-            
-            var logContent = """
-        OPERATIONAL DATA MANAGER - NO FILE PARSING - \(dateFormatter.string(from: Date()))
-        ================================================================
-        Total Records: \(realWorldTasks.count)
-        Successfully Imported: \(imported)
-        Errors: \(errors.count)
-        
-        🔧 PRESERVED CHANGES:
-        • Jose Santos: REMOVED from all assignments
-        • Kevin Dutan: EXPANDED to 8+ buildings (took Jose's duties)
-        • Current Active Workers: 7 total (Greg, Edwin, Kevin, Mercedes, Luis, Angel, Shawn)
-        • NO FILE PARSING: All data programmatic
-        
-        ✅ PRESERVED BUILDING IDs:
-        • Kevin Rubin Museum tasks: \(kevinRubinTasks.count) tasks (building ID 14)
-        • Rubin Museum building ID: 14 (PRESERVED from correct mapping)
-        • Kevin's preserved reality: Works at Rubin Museum (NOT 104 Franklin)
-        • All building ID conflicts resolved
-        
-        CURRENT ACTIVE WORKER TASK SUMMARY:
-        - Kevin Dutan: \(kevinTasks.count) tasks 🔧 EXPANDED + Rubin Museum (\(kevinRubinTasks.count) Rubin tasks)
-        - Mercedes Inamagua: \(realWorldTasks.filter { $0.assignedWorker == "Mercedes Inamagua" }.count) tasks (06:30-11:00)
-        - Edwin Lema: \(realWorldTasks.filter { $0.assignedWorker == "Edwin Lema" }.count) tasks (06:00-15:00)
-        - Luis Lopez: \(realWorldTasks.filter { $0.assignedWorker == "Luis Lopez" }.count) tasks (07:00-16:00)
-        - Angel Guirachocha: \(realWorldTasks.filter { $0.assignedWorker == "Angel Guirachocha" }.count) tasks (18:00-22:00)
-        - Greg Hutson: \(realWorldTasks.filter { $0.assignedWorker == "Greg Hutson" }.count) tasks (09:00-15:00)
-        - Shawn Magloire: \(realWorldTasks.filter { $0.assignedWorker == "Shawn Magloire" }.count) tasks (floating specialist)
-        
-        Category Breakdown:
-        - Cleaning: \(realWorldTasks.filter { $0.category == "Cleaning" }.count) tasks
-        - Sanitation: \(realWorldTasks.filter { $0.category == "Sanitation" }.count) tasks
-        - Maintenance: \(realWorldTasks.filter { $0.category == "Maintenance" }.count) tasks
-        - Operations: \(realWorldTasks.filter { $0.category == "Operations" }.count) tasks
-        - Inspection: \(realWorldTasks.filter { $0.category == "Inspection" }.count) tasks
-        - Repair: \(realWorldTasks.filter { $0.category == "Repair" }.count) tasks
-        
-        Kevin's Building Coverage (PRESERVED):
-        """
-            
-            let kevinBuildings = Set(kevinTasks.map { $0.building })
-            for building in kevinBuildings.sorted() {
-                let buildingTasks = kevinTasks.filter { $0.building == building }
-                let rubinIndicator = building.contains("Rubin") ? " ✅ RUBIN MUSEUM (ID: 14)" : ""
-                let buildingId = getBuildingIdFromName(building)
-                logContent += "- \(building): \(buildingTasks.count) tasks (ID: \(buildingId))\(rubinIndicator)\n"
-            }
-            
-            if !errors.isEmpty {
-                logContent += "\nErrors:\n"
-                for error in errors {
-                    logContent += "- \(error)\n"
-                }
-            }
-            
-            // Save to documents directory (no file parsing, but can still write logs)
-            if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                let logPath = documentsPath.appendingPathComponent("operational_data_manager_no_csv_log.txt")
-                
-                do {
-                    try logContent.write(to: logPath, atomically: true, encoding: .utf8)
-                    print("📝 Operational DataManager (no CSV parsing) import log saved to: \(logPath)")
-                } catch {
-                    print("❌ Failed to save import log: \(error)")
-                }
-            }
-            
-            // Also save errors for review if any
-            if !errors.isEmpty {
-                await saveErrorsForReview(errors)
-            }
-        }
-        
-        /// Save errors for review
-        private func saveErrorsForReview(_ errors: [String]) async {
-            let errorContent = "Timestamp,Error\n" + errors.map { "\"\(Date())\",\"\($0)\"" }.joined(separator: "\n")
-            
-            if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                let errorPath = documentsPath.appendingPathComponent("operational_data_manager_errors.txt")
-                
-                do {
-                    try errorContent.write(to: errorPath, atomically: true, encoding: .utf8)
-                    print("📊 OperationalDataManager error file saved to: \(errorPath)")
-                } catch {
-                    print("❌ Failed to save error file: \(error)")
-                }
-            }
-        }
-        
-        // MARK: - Validation and Summary Methods (NO FILE PARSING)
-        
-        func validateOperationalData() -> [String] {
-            var validationErrors: [String] = []
-            
-            for (index, task) in realWorldTasks.enumerated() {
-                // Validate categories
-                let validCategories = ["Cleaning", "Sanitation", "Maintenance", "Inspection", "Operations", "Repair"]
-                if !validCategories.contains(task.category) {
-                    validationErrors.append("Row \(index + 1): Invalid category '\(task.category)'")
-                }
-                
-                // Validate skill levels
-                let validSkillLevels = ["Basic", "Intermediate", "Advanced"]
-                if !validSkillLevels.contains(task.skillLevel) {
-                    validationErrors.append("Row \(index + 1): Invalid skill level '\(task.skillLevel)'")
-                }
-                
-                // Validate recurrence patterns
-                let validRecurrences = ["Daily", "Weekly", "Bi-Weekly", "Bi-Monthly", "Monthly", "Quarterly", "Semiannual", "Annual", "On-Demand"]
-                if !validRecurrences.contains(task.recurrence) {
-                    validationErrors.append("Row \(index + 1): Invalid recurrence '\(task.recurrence)'")
-                }
-                
-                // Validate time ranges
-                if let startHour = task.startHour, let endHour = task.endHour {
-                    if startHour < 0 || startHour > 23 {
-                        validationErrors.append("Row \(index + 1): Invalid start hour \(startHour)")
-                    }
-                    if endHour < 0 || endHour > 23 {
-                        validationErrors.append("Row \(index + 1): Invalid end hour \(endHour)")
-                    }
-                    if startHour >= endHour && endHour != startHour {
-                        validationErrors.append("Row \(index + 1): Invalid time range \(startHour):00-\(endHour):00")
-                    }
-                }
-                
-                // Validate no Jose Santos
-                if task.assignedWorker.contains("Jose") || task.assignedWorker.contains("Santos") {
-                    validationErrors.append("Row \(index + 1): Jose Santos is no longer active")
-                }
-            }
-            
-            return validationErrors
-        }
-        
-        func getWorkerTaskSummary() -> [String: Int] {
-            var summary: [String: Int] = [:]
-            
-            for task in realWorldTasks {
-                summary[task.assignedWorker, default: 0] += 1
-            }
-            
-            return summary
-        }
-        
-        func getBuildingTaskSummary() -> [String: Int] {
-            var summary: [String: Int] = [:]
-            
-            for task in realWorldTasks {
-                summary[task.building, default: 0] += 1
-            }
-            
-            return summary
-        }
-        
-        func getTimeOfDayDistribution() -> [String: Int] {
-            var distribution: [String: Int] = [:]
-            
-            for task in realWorldTasks {
-                guard let startHour = task.startHour else { continue }
-                
-                let timeSlot: String
-                switch startHour {
-                case 0..<6:
-                    timeSlot = "Night (12AM-6AM)"
-                case 6..<12:
-                    timeSlot = "Morning (6AM-12PM)"
-                case 12..<18:
-                    timeSlot = "Afternoon (12PM-6PM)"
-                case 18..<24:
-                    timeSlot = "Evening (6PM-12AM)"
-                default:
-                    timeSlot = "Unknown"
-                }
-                
-                distribution[timeSlot, default: 0] += 1
-            }
-            
-            return distribution
-        }
-        
-        func getCategoryDistribution() -> [String: Int] {
-            var distribution: [String: Int] = [:]
-            
-            for task in realWorldTasks {
-                distribution[task.category, default: 0] += 1
-            }
-            
-            return distribution
-        }
-        
-        func getRecurrenceDistribution() -> [String: Int] {
-            var distribution: [String: Int] = [:]
-            
-            for task in realWorldTasks {
-                distribution[task.recurrence, default: 0] += 1
-            }
-            
-            return distribution
-        }
-        
-        func getSkillLevelDistribution() -> [String: Int] {
-            var distribution: [String: Int] = [:]
-            
-            for task in realWorldTasks {
-                distribution[task.skillLevel, default: 0] += 1
-            }
-            
-            return distribution
-        }
-        
-        func getBuildingCoverage() -> [String: [String]] {
-            var coverage: [String: [String]] = [:]
-            
-            for task in realWorldTasks {
-                if coverage[task.building] == nil {
-                    coverage[task.building] = []
-                }
-                if !coverage[task.building]!.contains(task.assignedWorker) {
-                    coverage[task.building]!.append(task.assignedWorker)
-                }
-            }
-            
-            return coverage
+        } catch {
+            print("⚠️ Could not generate assignment summary: \(error)")
         }
     }
     
-    // MARK: - Error Types (Enhanced for OperationalDataManager)
-    
-    enum OperationalError: LocalizedError {
-        case noSQLiteManager
-        case buildingNotFound(String)
-        case workerNotFound(String)
-        case inactiveWorker(String)
-        
-        var errorDescription: String? {
-            switch self {
-            case .noSQLiteManager:
-                return "SQLiteManager not set on OperationalDataManager"
-            case .buildingNotFound(let name):
-                return "Building not found: '\(name)'"
-            case .workerNotFound(let name):
-                return "Worker not found: '\(name)'"
-            case .inactiveWorker(let name):
-                return "Worker '\(name)' is no longer active"
-            }
-        }
-    }
-    
-    // MARK: - Date Extension
-    extension Date {
-        var iso8601String: String {
-            ISO8601DateFormatter().string(from: self)
+    private func getWorkerEmoji(_ workerName: String) -> String {
+        switch workerName {
+        case "Greg Hutson": return "🔧"
+        case "Edwin Lema": return "🧹"
+        case "Kevin Dutan": return "⚡"  // Expanded duties + Rubin Museum
+        case "Mercedes Inamagua": return "✨"
+        case "Luis Lopez": return "🔨"
+        case "Angel Guirachocha": return "🗑️"
+        case "Shawn Magloire": return "🎨"
+        default: return "👷"
         }
     }
     
@@ -1304,13 +1054,13 @@ class OperationalDataManager: ObservableObject {
     
     /// Validates all worker assignments dynamically (no hardcoding)
     private func validateWorkerAssignments() async throws {
-        guard let sqliteManager = sqliteManager else {
+        guard let manager = sqliteManager else {
             print("⚠️ SQLiteManager not available for assignment validation")
             return
         }
         
         do {
-            let allWorkers = try await sqliteManager.query("""
+            let allWorkers = try await manager.query("""
                 SELECT id, name FROM workers WHERE is_active = 1
             """)
             
@@ -1320,7 +1070,7 @@ class OperationalDataManager: ObservableObject {
                 guard let workerId = worker["id"] as? String,
                       let workerName = worker["name"] as? String else { continue }
                 
-                let assignments = try await sqliteManager.query("""
+                let assignments = try await manager.query("""
                     SELECT COUNT(*) as count FROM worker_building_assignments 
                     WHERE worker_id = ? AND is_active = 1
                 """, [workerId])
@@ -1342,7 +1092,7 @@ class OperationalDataManager: ObservableObject {
     
     /// Creates assignments based on operational data (no hardcoding)
     private func createDynamicAssignments(for workerId: String, name: String) async throws {
-        guard let sqliteManager = sqliteManager else { return }
+        guard let manager = sqliteManager else { return }
         
         // Find assignments from real operational data
         let workerTasks = realWorldTasks.filter { $0.assignedWorker == name }
@@ -1352,12 +1102,12 @@ class OperationalDataManager: ObservableObject {
         
         for building in buildings {
             // Find building ID from name in database
-            let buildingResults = try await sqliteManager.query("""
+            let buildingResults = try await manager.query("""
                 SELECT id FROM buildings WHERE name LIKE ? OR name LIKE ?
             """, ["%\(building)%", "%\(building.components(separatedBy: " ").first ?? building)%"])
             
             if let buildingId = buildingResults.first?["id"] as? String {
-                try await sqliteManager.execute("""
+                try await manager.execute("""
                     INSERT OR REPLACE INTO worker_building_assignments 
                     (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
                     VALUES (?, ?, ?, 'dynamic_operational', datetime('now'), 1)
@@ -1370,28 +1120,169 @@ class OperationalDataManager: ObservableObject {
         }
     }
     
-    /// Log summary of all worker assignments (replaces Kevin-specific logging)
-    private func logWorkerAssignmentSummary() async {
-        guard let sqliteManager = sqliteManager else { return }
+    // MARK: - Validation and Summary Methods (NO FILE PARSING)
+    
+    func validateOperationalData() -> [String] {
+        var validationErrors: [String] = []
         
-        do {
-            let results = try await sqliteManager.query("""
-                SELECT wa.worker_name, COUNT(wa.building_id) as building_count 
-                FROM worker_building_assignments wa 
-                WHERE wa.is_active = 1 
-                GROUP BY wa.worker_id 
-                ORDER BY building_count DESC
-            """)
-            
-            print("📊 WORKER ASSIGNMENT SUMMARY (DYNAMIC):")
-            for row in results {
-                let name = row["worker_name"] as? String ?? "Unknown"
-                let count = row["building_count"] as? Int64 ?? 0
-                print("   • \(name): \(count) buildings")
+        for (index, task) in realWorldTasks.enumerated() {
+            // Validate categories
+            let validCategories = ["Cleaning", "Sanitation", "Maintenance", "Inspection", "Operations", "Repair"]
+            if !validCategories.contains(task.category) {
+                validationErrors.append("Row \(index + 1): Invalid category '\(task.category)'")
             }
             
-        } catch {
-            print("❌ Could not generate assignment summary: \(error)")
+            // Validate skill levels
+            let validSkillLevels = ["Basic", "Intermediate", "Advanced"]
+            if !validSkillLevels.contains(task.skillLevel) {
+                validationErrors.append("Row \(index + 1): Invalid skill level '\(task.skillLevel)'")
+            }
+            
+            // Validate recurrence patterns
+            let validRecurrences = ["Daily", "Weekly", "Bi-Weekly", "Bi-Monthly", "Monthly", "Quarterly", "Semiannual", "Annual", "On-Demand"]
+            if !validRecurrences.contains(task.recurrence) {
+                validationErrors.append("Row \(index + 1): Invalid recurrence '\(task.recurrence)'")
+            }
+            
+            // Validate time ranges
+            if let startHour = task.startHour, let endHour = task.endHour {
+                if startHour < 0 || startHour > 23 {
+                    validationErrors.append("Row \(index + 1): Invalid start hour \(startHour)")
+                }
+                if endHour < 0 || endHour > 23 {
+                    validationErrors.append("Row \(index + 1): Invalid end hour \(endHour)")
+                }
+                if startHour >= endHour && endHour != startHour {
+                    validationErrors.append("Row \(index + 1): Invalid time range \(startHour):00-\(endHour):00")
+                }
+            }
+            
+            // Validate no Jose Santos
+            if task.assignedWorker.contains("Jose") || task.assignedWorker.contains("Santos") {
+                validationErrors.append("Row \(index + 1): Jose Santos is no longer active")
+            }
         }
+        
+        return validationErrors
+    }
+    
+    func getWorkerTaskSummary() -> [String: Int] {
+        var summary: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            summary[task.assignedWorker, default: 0] += 1
+        }
+        
+        return summary
+    }
+    
+    func getBuildingTaskSummary() -> [String: Int] {
+        var summary: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            summary[task.building, default: 0] += 1
+        }
+        
+        return summary
+    }
+    
+    func getTimeOfDayDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            guard let startHour = task.startHour else { continue }
+            
+            let timeSlot: String
+            switch startHour {
+            case 0..<6:
+                timeSlot = "Night (12AM-6AM)"
+            case 6..<12:
+                timeSlot = "Morning (6AM-12PM)"
+            case 12..<18:
+                timeSlot = "Afternoon (12PM-6PM)"
+            case 18..<24:
+                timeSlot = "Evening (6PM-12AM)"
+            default:
+                timeSlot = "Unknown"
+            }
+            
+            distribution[timeSlot, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getCategoryDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            distribution[task.category, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getRecurrenceDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            distribution[task.recurrence, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getSkillLevelDistribution() -> [String: Int] {
+        var distribution: [String: Int] = [:]
+        
+        for task in realWorldTasks {
+            distribution[task.skillLevel, default: 0] += 1
+        }
+        
+        return distribution
+    }
+    
+    func getBuildingCoverage() -> [String: [String]] {
+        var coverage: [String: [String]] = [:]
+        
+        for task in realWorldTasks {
+            if coverage[task.building] == nil {
+                coverage[task.building] = []
+            }
+            if !coverage[task.building]!.contains(task.assignedWorker) {
+                coverage[task.building]!.append(task.assignedWorker)
+            }
+        }
+        
+        return coverage
+    }
+}
+
+// MARK: - Error Types (Enhanced for OperationalDataManager)
+
+enum OperationalError: LocalizedError {
+    case noSQLiteManager
+    case buildingNotFound(String)
+    case workerNotFound(String)
+    case inactiveWorker(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .noSQLiteManager:
+            return "SQLiteManager not set on OperationalDataManager"
+        case .buildingNotFound(let name):
+            return "Building not found: '\(name)'"
+        case .workerNotFound(let name):
+            return "Worker not found: '\(name)'"
+        case .inactiveWorker(let name):
+            return "Worker '\(name)' is no longer active"
+        }
+    }
+}
+
+// MARK: - Date Extension
+extension Date {
+    var iso8601String: String {
+        ISO8601DateFormatter().string(from: self)
     }
 }
