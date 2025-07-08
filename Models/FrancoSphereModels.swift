@@ -70,6 +70,7 @@ public enum FrancoSphere {
             case .stormy: return "cloud.bolt.fill"
             case .foggy: return "cloud.fog.fill"
             case .windy: return "wind"
+        default: return "cloud.fill"
             }
         }
     }
@@ -314,6 +315,7 @@ public enum FrancoSphere {
             case .cleaning, .inspection, .security: return "Basic"
             case .landscaping, .sanitation: return "Basic"
             case .emergency: return "Advanced"
+        default: return "Basic"
             }
         }
         
@@ -555,6 +557,7 @@ public enum FrancoSphere {
             case .up: return "↗"
             case .down: return "↘"
             case .stable: return "→"
+        default: return "cloud.fill"
             }
         }
         
@@ -563,6 +566,7 @@ public enum FrancoSphere {
             case .up: return "green"
             case .down: return "red"
             case .stable: return "gray"
+        default: return "cloud.fill"
             }
         }
     }
@@ -649,6 +653,7 @@ public enum FrancoSphere {
                 return "SQLiteManager not initialized"
             case .invalidData(let message):
                 return "Invalid data: \(message)"
+        default: return "cloud.fill"
             }
         }
     }
@@ -789,6 +794,7 @@ extension FrancoSphere.TaskCategory {
         case .utilities: return "bolt"
         case .renovation: return "paintbrush"
         case .sanitation: return "drop"
+        default: return "cloud.fill"
         }
     }
     
@@ -811,6 +817,7 @@ extension FrancoSphere.InventoryCategory {
         case .electrical: return "bolt"
         case .paint: return "paintbrush"
         case .other: return "questionmark.circle"
+        default: return "cloud.fill"
         }
     }
     

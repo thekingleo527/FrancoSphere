@@ -106,3 +106,8 @@ public enum ClockInError: LocalizedError {
         }
     }
 }
+
+// MARK: - Notification Names
+extension Notification.Name {
+    static let workerClockInChanged = Notification.Name("workerClockInChanged")
+}

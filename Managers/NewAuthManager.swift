@@ -3,6 +3,7 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: ObservableObject for SwiftUI compatibility
+//  ✅ Fixes @StateObject/@EnvironmentObject issues
 //
 
 import Foundation
@@ -65,6 +66,7 @@ public class NewAuthManager: ObservableObject {
         }
 
         let user = CoreTypes.User(
+            id: userData.id,
             workerId: userData.id,
             name: userData.name,
             email: lowercasedEmail,

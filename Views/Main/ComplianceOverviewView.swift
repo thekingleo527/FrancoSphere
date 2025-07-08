@@ -20,7 +20,7 @@
 import SwiftUI
 
 struct ComplianceOverviewView: View {
-    let compliance: ComplianceOverview
+    let intelligence: PortfolioIntelligence?
     let onIssuesTap: ((ComplianceIssue) -> Void)?
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
@@ -30,7 +30,7 @@ struct ComplianceOverviewView: View {
     @State private var showingAuditScheduler = false
     @State private var showingExportOptions = false
     
-    init(compliance: ComplianceOverview,
+    init(intelligence: PortfolioIntelligence?,
          onIssuesTap: ((ComplianceIssue) -> Void)? = nil,
          onScheduleAudit: (() -> Void)? = nil,
          onExportReport: (() -> Void)? = nil) {
@@ -1090,7 +1090,7 @@ extension ComplianceIssueType {
 struct ComplianceOverviewView_Previews: PreviewProvider {
     static var previews: some View {
         ComplianceOverviewView(
-            compliance: ComplianceOverview(
+            intelligence: PortfolioIntelligence?(
                 overallScore: 85.0,
                 compliantBuildings: 10,
                 totalBuildings: 12,

@@ -226,7 +226,7 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingNameSync(task.buildingID)
+        getBuildingNameSync(buildingId: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -424,7 +424,7 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingNameSync(task.buildingID)
+        getBuildingNameSync(buildingId: task.buildingID)
     }
     
     private func timeString(_ date: Date) -> String {

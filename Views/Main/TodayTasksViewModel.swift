@@ -39,13 +39,13 @@ class TodayTasksViewModel: ObservableObject {
         isLoading = true
         
         let workerId = NewAuthManager.shared.workerId
-        guard !workerId.isEmpty else {
+        guard !workerId?.isEmpty == false else {
             isLoading = false
             return
         }
         
         do {
-            let todaysTasks = try await taskService.getTasks(for: workerId, date: Date())
+            let todaysTasks = try await taskService.getTasks(for: workerId ?? "unknown", date: Date())
             
             await MainActor.run {
                 self.tasks = todaysTasks

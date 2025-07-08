@@ -2,10 +2,10 @@
 //  WeatherAlert.swift
 //  FrancoSphere
 //
-//  🔧 FIXED: Updated to use correct ContextualTask initializer
-//  ✅ Fixed all compilation errors
-//  ✅ Updated to match current FrancoSphereModels structure
-//  ✅ Maintained weather alert functionality
+//  ✅ V6.0 REFACTOR: Updated for new ContextualTask structure and actor architecture
+//  ✅ Uses correct ContextualTask initializer with title, buildingName, etc.
+//  ✅ Integrates with CoreTypes and established WeatherCondition from FrancoSphereModels
+//  ✅ Follows actor-based architecture patterns
 //
 
 import Foundation
@@ -14,9 +14,10 @@ import CoreLocation
 
 // MARK: - Weather Alert System
 
+/// Weather data structure for task generation and alerts
 public struct FSWeatherData {
     public let temperature: Double
-    public let condition: WeatherCondition
+    public let condition: WeatherCondition  // Use existing WeatherCondition from FrancoSphereModels
     public let precipitation: Double
     public let windSpeed: Double
     public let humidity: Double
@@ -35,31 +36,8 @@ public struct FSWeatherData {
         self.temperatureLow = temperatureLow
     }
     
-    // MARK: - Weather Condition Enum
-    public enum WeatherCondition: String, CaseIterable {
-        case clear = "clear"
-        case cloudy = "cloudy"
-        case rain = "rain"
-        case snow = "snow"
-        case fog = "fog"
-        case storm = "storm"
-        case extreme = "extreme"
-        
-        public var color: Color {
-            switch self {
-            case .clear: return .yellow
-            case .cloudy: return .gray
-            case .rain: return .blue
-            case .snow: return .cyan
-            case .fog: return .gray
-            case .storm: return .purple
-            case .extreme: return .red
-            }
-        }
-    }
-    
-    // MARK: - Outdoor Work Risk
-    public enum OutdoorWorkRisk: String {
+    // MARK: - Outdoor Work Risk Assessment
+    public enum OutdoorWorkRisk: String, CaseIterable {
         case low = "Low Risk"
         case moderate = "Moderate Risk"
         case high = "High Risk"
@@ -75,7 +53,7 @@ public struct FSWeatherData {
     
     // MARK: - Weather Computed Properties
     public var hasPrecipitation: Bool {
-        return precipitation > 0.1 || condition == .rain || condition == .snow || condition == .storm
+        return precipitation > 0.1 || condition == .rainy || condition == .snowy || condition == .stormy
     }
     
     public var hasHighWinds: Bool {
@@ -83,7 +61,7 @@ public struct FSWeatherData {
     }
     
     public var isHazardous: Bool {
-        return hasPrecipitation || hasHighWinds || condition == .extreme
+        return hasPrecipitation || hasHighWinds || condition == .stormy
     }
     
     public var formattedDate: String {
@@ -111,25 +89,26 @@ public struct FSWeatherData {
     }
 }
 
-// MARK: - Weather Alert Manager
+// MARK: - Weather Alert Manager (Actor for Thread Safety)
 
-public class WeatherAlertManager {
+public actor WeatherAlertManager {
     public static let shared = WeatherAlertManager()
     
     private init() {}
     
     // MARK: - Weather-Based Task Generation
     
-    public func generateWeatherTasks(for building: NamedCoordinate, weather: FSWeatherData) -> [ContextualTask] {
+    /// Generate weather-related tasks for a building based on current conditions
+    public func generateWeatherTasks(for building: NamedCoordinate, weather: FSWeatherData) async -> [ContextualTask] {
         var tasks: [ContextualTask] = []
         
         // Rain-related tasks
-        if weather.condition == .rain || weather.precipitation > 0.1 {
+        if weather.condition == .rainy || weather.precipitation > 0.1 {
             tasks.append(createRainTask(for: building))
         }
         
         // Snow-related tasks
-        if weather.condition == .snow {
+        if weather.condition == .snowy {
             tasks.append(createSnowTask(for: building))
         }
         
@@ -146,77 +125,101 @@ public class WeatherAlertManager {
         return tasks
     }
     
-    // MARK: - Task Creation Methods (Fixed to use correct ContextualTask initializer)
+    // MARK: - Task Creation Methods (Using Correct ContextualTask V6.0 Structure)
     
     private func createRainTask(for building: NamedCoordinate) -> ContextualTask {
         return ContextualTask(
-            name: "Rain Preparation - \(building.name)",
+            title: "Rain Preparation",
             description: "Check drainage and secure outdoor items due to rain. Ensure all water management systems are functional.",
-            buildingId: building.id,
-            workerId: "weather_system", // Default weather system worker ID
             category: .maintenance,
             urgency: .high,
+            buildingId: building.id,
+            buildingName: building.name,
+            assignedWorkerId: nil, // Will be assigned by TaskService
+            assignedWorkerName: nil,
             isCompleted: false,
+            completedDate: nil,
             dueDate: Date().addingTimeInterval(3600), // Due in 1 hour
-            estimatedDuration: 3600 // 1 hour
+            estimatedDuration: 3600, // 1 hour
+            recurrence: .none,
+            notes: "Weather-generated task due to rain conditions"
         )
     }
     
     private func createSnowTask(for building: NamedCoordinate) -> ContextualTask {
         return ContextualTask(
-            name: "Snow Management - \(building.name)",
+            title: "Snow Management",
             description: "Clear walkways and apply salt for safety. Remove snow accumulation from critical areas.",
-            buildingId: building.id,
-            workerId: "weather_system", // Default weather system worker ID
             category: .maintenance,
-            urgency: .high,
+            urgency: .urgent,
+            buildingId: building.id,
+            buildingName: building.name,
+            assignedWorkerId: nil,
+            assignedWorkerName: nil,
             isCompleted: false,
+            completedDate: nil,
             dueDate: Date().addingTimeInterval(1800), // Due in 30 minutes
-            estimatedDuration: 7200 // 2 hours
+            estimatedDuration: 7200, // 2 hours
+            recurrence: .none,
+            notes: "Weather-generated task due to snow conditions"
         )
     }
     
     private func createWindTask(for building: NamedCoordinate) -> ContextualTask {
         return ContextualTask(
-            name: "Wind Damage Check - \(building.name)",
+            title: "Wind Damage Check",
             description: "Inspect for wind damage and secure loose items. Check building exterior for any weather-related issues.",
-            buildingId: building.id,
-            workerId: "weather_system", // Default weather system worker ID
             category: .inspection,
             urgency: .medium,
+            buildingId: building.id,
+            buildingName: building.name,
+            assignedWorkerId: nil,
+            assignedWorkerName: nil,
             isCompleted: false,
+            completedDate: nil,
             dueDate: Date().addingTimeInterval(5400), // Due in 1.5 hours
-            estimatedDuration: 3600 // 1 hour
+            estimatedDuration: 3600, // 1 hour
+            recurrence: .none,
+            notes: "Weather-generated task due to high wind conditions"
         )
     }
     
     private func createTemperatureTask(for building: NamedCoordinate, temperature: Double) -> ContextualTask {
-        let taskName: String
+        let taskTitle: String
         let description: String
+        let notes: String
         
         if temperature < 32 {
-            taskName = "Freeze Protection - \(building.name)"
+            taskTitle = "Freeze Protection"
             description = "Check for frozen pipes and heating system operation. Ensure all weather protection measures are in place."
+            notes = "Weather-generated task due to freezing temperatures (\(Int(temperature))°F)"
         } else {
-            taskName = "Heat Management - \(building.name)"
+            taskTitle = "Heat Management"
             description = "Monitor cooling systems and check for heat-related issues. Ensure proper ventilation and temperature control."
+            notes = "Weather-generated task due to extreme heat (\(Int(temperature))°F)"
         }
         
         return ContextualTask(
-            name: taskName,
+            title: taskTitle,
             description: description,
-            buildingId: building.id,
-            workerId: "weather_system", // Default weather system worker ID
             category: .maintenance,
             urgency: .medium,
+            buildingId: building.id,
+            buildingName: building.name,
+            assignedWorkerId: nil,
+            assignedWorkerName: nil,
             isCompleted: false,
+            completedDate: nil,
             dueDate: Date().addingTimeInterval(7200), // Due in 2 hours
-            estimatedDuration: 3600 // 1 hour
+            estimatedDuration: 3600, // 1 hour
+            recurrence: .none,
+            notes: notes
         )
     }
     
     // MARK: - Weather Impact Assessment
     
+    /// Assess the overall impact of weather conditions on operations
     public func assessWeatherImpact(weather: FSWeatherData) -> String {
         if weather.isHazardous {
             return "High weather impact - exercise caution with outdoor tasks"
@@ -230,29 +233,27 @@ public class WeatherAlertManager {
     // MARK: - Helper Methods
     
     /// Get appropriate task category for weather conditions
-    private func getCategoryForWeather(_ condition: FSWeatherData.WeatherCondition) -> TaskCategory {
+    private func getCategoryForWeather(_ condition: WeatherCondition) -> TaskCategory {
         switch condition {
-        case .rain, .snow, .storm:
+        case .rainy, .snowy, .stormy:
             return .emergency
-        case .extreme:
-            return .emergency
-        case .fog, .cloudy:
+        case .foggy:
             return .inspection
-        case .clear:
+        case .clear, .sunny, .cloudy, .windy:
             return .maintenance
         }
     }
     
     /// Get appropriate urgency for weather conditions
-    private func getUrgencyForWeather(_ condition: FSWeatherData.WeatherCondition, temperature: Double) -> TaskUrgency {
+    private func getUrgencyForWeather(_ condition: WeatherCondition, temperature: Double) -> TaskUrgency {
         switch condition {
-        case .storm, .extreme:
+        case .stormy:
             return .urgent
-        case .rain, .snow:
+        case .rainy, .snowy:
             return .high
-        case .fog:
+        case .foggy:
             return .medium
-        case .cloudy, .clear:
+        case .cloudy, .clear, .sunny, .windy:
             if temperature < 20 || temperature > 95 {
                 return .high
             } else {
@@ -262,45 +263,85 @@ public class WeatherAlertManager {
     }
     
     /// Create weather-specific tasks with worker assignment
-    public func createWeatherTasksForWorker(workerId: String, building: NamedCoordinate, weather: FSWeatherData) -> [ContextualTask] {
+    public func createWeatherTasksForWorker(
+        workerId: CoreTypes.WorkerID,
+        workerName: String,
+        building: NamedCoordinate,
+        weather: FSWeatherData
+    ) async -> [ContextualTask] {
         var tasks: [ContextualTask] = []
         
         // Create tasks based on weather conditions
         if weather.hasPrecipitation {
             let precipitationTask = ContextualTask(
-                name: "Weather Response - \(building.name)",
+                title: "Weather Response",
                 description: "Address precipitation-related building maintenance and safety concerns.",
-                buildingId: building.id,
-                workerId: workerId,
                 category: getCategoryForWeather(weather.condition),
                 urgency: getUrgencyForWeather(weather.condition, temperature: weather.temperature),
+                buildingId: building.id,
+                buildingName: building.name,
+                assignedWorkerId: workerId,
+                assignedWorkerName: workerName,
                 isCompleted: false,
+                completedDate: nil,
                 dueDate: Date().addingTimeInterval(3600),
-                estimatedDuration: 3600
+                estimatedDuration: 3600,
+                recurrence: .none,
+                notes: "Assigned weather response task due to \(weather.condition.rawValue) conditions"
             )
             tasks.append(precipitationTask)
         }
         
         if weather.hasHighWinds {
             let windTask = ContextualTask(
-                name: "Wind Safety Check - \(building.name)",
+                title: "Wind Safety Check",
                 description: "Perform safety inspection due to high wind conditions.",
-                buildingId: building.id,
-                workerId: workerId,
                 category: .inspection,
                 urgency: .medium,
+                buildingId: building.id,
+                buildingName: building.name,
+                assignedWorkerId: workerId,
+                assignedWorkerName: workerName,
                 isCompleted: false,
+                completedDate: nil,
                 dueDate: Date().addingTimeInterval(5400),
-                estimatedDuration: 1800
+                estimatedDuration: 1800,
+                recurrence: .none,
+                notes: "Wind safety inspection - wind speed: \(weather.windSpeed) mph"
             )
             tasks.append(windTask)
         }
         
         return tasks
     }
+    
+    /// Integration with TaskService for automatic task creation
+    public func processWeatherAlert(
+        for buildings: [NamedCoordinate],
+        weather: FSWeatherData,
+        taskService: TaskService
+    ) async throws {
+        guard weather.isHazardous else { return }
+        
+        print("🌦️ Processing weather alert for \(buildings.count) buildings")
+        
+        for building in buildings {
+            let weatherTasks = await generateWeatherTasks(for: building, weather: weather)
+            
+            for task in weatherTasks {
+                do {
+                    // Create task through TaskService for proper integration
+                    try await taskService.createTask(task)
+                    print("✅ Created weather task: \(task.title) for \(building.name)")
+                } catch {
+                    print("❌ Failed to create weather task for \(building.name): \(error)")
+                }
+            }
+        }
+    }
 }
 
-// MARK: - Sample Data
+// MARK: - Sample Data for Testing
 
 extension FSWeatherData {
     public static var sampleData: [FSWeatherData] {
@@ -317,7 +358,7 @@ extension FSWeatherData {
             ),
             FSWeatherData(
                 temperature: 45,
-                condition: .rain,
+                condition: .rainy,
                 precipitation: 0.8,
                 windSpeed: 12.0,
                 humidity: 85,
@@ -327,7 +368,7 @@ extension FSWeatherData {
             ),
             FSWeatherData(
                 temperature: 28,
-                condition: .snow,
+                condition: .snowy,
                 precipitation: 1.2,
                 windSpeed: 18.0,
                 humidity: 90,
@@ -336,5 +377,21 @@ extension FSWeatherData {
                 temperatureLow: 22
             )
         ]
+    }
+}
+
+// MARK: - Integration with Real-Time System
+
+extension WeatherAlertManager {
+    /// Schedule weather monitoring for all buildings
+    public func startWeatherMonitoring() async {
+        print("🌦️ Starting weather monitoring system")
+        // Integration point for real weather API
+        // This would connect to actual weather services in production
+    }
+    
+    /// Stop weather monitoring
+    public func stopWeatherMonitoring() async {
+        print("🌦️ Stopping weather monitoring system")
     }
 }

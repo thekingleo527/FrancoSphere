@@ -131,3 +131,29 @@ public class WorkerContextEngine: ObservableObject {
         self.taskProgress = try await taskService.getTaskProgress(for: workerId)
     }
 }
+
+    // MARK: - Helper Methods for UI Components
+    
+    /// Get building name synchronously from cached data
+    public func getBuildingNameSync(buildingId: String) -> String {
+        return assignedBuildings.first { $0.id == buildingId }?.name ?? "Building \(buildingId)"
+    }
+    
+    /// Get worker shift for profile
+    public func getWorkerShiftForProfile(_ worker: WorkerProfile) -> String {
+        // Map based on worker ID - from WorkerConstants
+        switch worker.id {
+        case "1": return "9:00-15:00"   // Greg
+        case "2": return "6:00-15:00"   // Edwin  
+        case "4": return "7:00-15:00"   // Kevin
+        case "5": return "6:30-11:00"   // Mercedes
+        case "6": return "7:00-16:00"   // Luis
+        case "7": return "18:00-22:00"  // Angel
+        default: return "Flexible"
+        }
+    }
+    
+    /// Check if worker is currently on site
+    public func isWorkerOnSiteForProfile(_ worker: WorkerProfile) -> Bool {
+        return clockInStatus.isClockedIn && currentWorker?.id == worker.id
+    }
