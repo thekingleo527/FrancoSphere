@@ -127,6 +127,9 @@ public enum FrancoSphere {
         case utilities = "Utilities"
         case renovation = "Renovation"
         case sanitation = "Sanitation"
+        case electrical = "Electrical"
+        case plumbing = "Plumbing"
+        case hvac = "HVAC"
     }
     
     public enum TaskUrgency: String, Codable, CaseIterable {
@@ -546,6 +549,22 @@ public enum FrancoSphere {
         case up = "Up"
         case down = "Down"
         case stable = "Stable"
+        
+        public var symbol: String {
+            switch self {
+            case .up: return "↗"
+            case .down: return "↘"
+            case .stable: return "→"
+            }
+        }
+        
+        public var color: String {
+            switch self {
+            case .up: return "green"
+            case .down: return "red"
+            case .stable: return "gray"
+            }
+        }
     }
     
     public struct MaintenanceRecord: Identifiable, Codable {

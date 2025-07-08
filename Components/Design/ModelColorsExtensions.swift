@@ -124,8 +124,8 @@ extension OutdoorWorkRisk {
     }
 }
 
-// MARK: - TrendDirection Color Extensions
-extension TrendDirection {
+// MARK: - FrancoSphere.TrendDirection Color Extensions
+extension FrancoSphere.TrendDirection {
     public var displayColor: Color {
         switch self {
         case .up: return .green

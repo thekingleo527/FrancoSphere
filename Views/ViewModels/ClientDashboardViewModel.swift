@@ -447,24 +447,3 @@ struct PerformanceSummary {
     let trend: TrendDirection
 }
 
-enum TrendDirection: String, CaseIterable {
-    case up = "Up"
-    case down = "Down"
-    case neutral = "Neutral"
-    
-    var icon: String {
-        switch self {
-        case .up: return "arrow.up.right"
-        case .down: return "arrow.down.right"
-        case .neutral: return "arrow.right"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .up: return .green
-        case .down: return .red
-        case .neutral: return .gray
-        }
-    }
-}
