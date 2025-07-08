@@ -30,9 +30,6 @@ struct TaskTrends {
     let trend: TrendDirection
 }
 
-enum TrendDirection {
-    case up, down, stable
-}
 
 // MARK: - PerformanceMetrics
 struct PerformanceMetrics {
