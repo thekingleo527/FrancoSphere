@@ -38,7 +38,7 @@ class TodayTasksViewModel: ObservableObject {
     func loadTodaysTasks() async {
         isLoading = true
         
-        let workerId = NewAuthManager.shared.workerId
+        let workerId = await NewAuthManager.shared.getCurrentUser()?.workerId ?? ""
         guard !workerId?.isEmpty == false else {
             isLoading = false
             return

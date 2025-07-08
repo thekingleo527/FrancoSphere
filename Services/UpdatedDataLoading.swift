@@ -25,7 +25,7 @@ class UpdatedDataLoading: ObservableObject {
             // Load workers using correct method name
             progress = 0.3
             statusMessage = "Loading workers..."
-            let workers = await workerService.getActiveWorkers() // Correct method name
+            let workers = await workerService.getAllActiveWorkers() // Correct method name
             
             // Load tasks using correct method name
             progress = 0.6
