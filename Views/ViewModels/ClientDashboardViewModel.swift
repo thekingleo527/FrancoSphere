@@ -1,449 +1,272 @@
-//
-//  ClientDashboardViewModel.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  ClientDashboardViewModel.swift
-//  FrancoSphere
-//
-//  🎯 PHASE 4: CLIENT DASHBOARD VIEWMODEL
-//  ✅ Portfolio intelligence aggregation from BuildingService
-//  ✅ Real-time data synchronization integration
-//  ✅ Compliance monitoring and reporting
-//  ✅ Intelligence insights generation
-//  ✅ Performance analytics consolidation
-//
-
 import Foundation
 import SwiftUI
 import Combine
 
-// MARK: - Client Dashboard ViewModel
+// MARK: - ClientDashboardViewModel
+// Uses EXISTING methods from BuildingService, TaskService, and WorkerService
+// Based on actual architecture research
 
 @MainActor
 class ClientDashboardViewModel: ObservableObject {
     
     // MARK: - Published Properties
-    
     @Published var portfolioIntelligence: PortfolioIntelligence?
-    @Published var buildingIntelligenceList: [BuildingIntelligenceItem] = []
-    @Published var complianceOverview: ComplianceOverview?
-    @Published var intelligenceInsights: [IntelligenceInsight] = []
+    @Published var buildingsList: [NamedCoordinate] = []
+    @Published var buildingAnalytics: [String: BuildingAnalytics] = [:]
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var lastUpdateTime: Date?
-    @Published var refreshProgress: Double = 0.0
     
-    // MARK: - Service Dependencies
-    
+    // MARK: - Service Dependencies (using existing services)
     private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    
     init() {
-        setupDataSynchronization()
+        setupAutoRefresh()
     }
     
     // MARK: - Public Methods
     
-    /// Load complete portfolio intelligence
-    func loadPortfolioIntelligence() async {
+    /// Load complete portfolio data using existing service methods
+    func loadPortfolioData() async {
         isLoading = true
         errorMessage = nil
-        refreshProgress = 0.0
         
         do {
-            // Load all buildings
-            refreshProgress = 0.2
-            let buildings = try await buildingService.getAllBuildings()
+            // Use existing BuildingService.getAllBuildings()
+            buildingsList = try await buildingService.getAllBuildings()
             
-            // Load intelligence for each building
-            refreshProgress = 0.4
-            var buildingIntelligenceItems: [BuildingIntelligenceItem] = []
-            let totalBuildings = buildings.count
+            // Load analytics for each building using existing method
+            var analytics: [String: BuildingAnalytics] = [:]
+            var totalTasks = 0
+            var totalCompleted = 0
+            var totalWorkers = 0
             
-            for (index, building) in buildings.enumerated() {
-                let analytics = try await buildingService.getBuildingAnalytics(building.id)
-                let operationalInsights = try await buildingService.getBuildingOperationalInsights(building.id)
+            for building in buildingsList {
+                // Use existing BuildingService.getBuildingAnalytics()
+                let buildingAnalytic = try await buildingService.getBuildingAnalytics(building.id)
+                analytics[building.id] = buildingAnalytic
                 
-                let intelligenceItem = BuildingIntelligenceItem(
-                    building: building,
-                    analytics: analytics,
-                    operationalInsights: operationalInsights,
-                    lastUpdated: Date()
-                )
-                
-                buildingIntelligenceItems.append(intelligenceItem)
-                
-                // Update progress
-                refreshProgress = 0.4 + (Double(index + 1) / Double(totalBuildings)) * 0.4
+                // Aggregate totals for portfolio overview
+                totalTasks += buildingAnalytic.totalTasks
+                totalCompleted += buildingAnalytic.completedTasks
+                totalWorkers += buildingAnalytic.uniqueWorkers
             }
             
-            // Generate portfolio overview
-            refreshProgress = 0.8
-            let portfolioOverview = generatePortfolioOverview(from: buildingIntelligenceItems)
-            
-            // Generate compliance overview
-            let complianceData = await generateComplianceOverview(from: buildingIntelligenceItems)
-            
-            // Generate intelligence insights
-            let insights = generateIntelligenceInsights(from: buildingIntelligenceItems)
+            // Create portfolio intelligence using existing data
+            let portfolio = PortfolioIntelligence(
+                totalBuildings: buildingsList.count,
+                totalCompletedTasks: totalCompleted,
+                averageComplianceScore: calculateOverallCompliance(analytics),
+                totalActiveWorkers: totalWorkers,
+                overallEfficiency: totalTasks > 0 ? Double(totalCompleted) / Double(totalTasks) : 0.0,
+                trendDirection: calculatePortfolioTrend(analytics)
+            )
             
             // Update UI
-            refreshProgress = 1.0
-            self.portfolioIntelligence = portfolioOverview
-            self.buildingIntelligenceList = buildingIntelligenceItems.sorted { $0.analytics.completionRate > $1.analytics.completionRate }
-            self.complianceOverview = complianceData
-            self.intelligenceInsights = insights
+            self.buildingAnalytics = analytics
+            self.portfolioIntelligence = portfolio
             self.lastUpdateTime = Date()
             
         } catch {
-            errorMessage = "Failed to load portfolio intelligence: \(error.localizedDescription)"
+            errorMessage = "Failed to load portfolio data: \(error.localizedDescription)"
             print("❌ ClientDashboardViewModel error: \(error)")
         }
         
         isLoading = false
     }
     
-    /// Refresh specific building intelligence
-    func refreshBuildingIntelligence(for buildingId: String) async {
-        guard let index = buildingIntelligenceList.firstIndex(where: { $0.building.id == buildingId }) else { return }
+    /// Get top performing buildings for dashboard highlights
+    func getTopPerformingBuildings() -> [NamedCoordinate] {
+        return buildingsList
+            .compactMap { building -> (NamedCoordinate, Double)? in
+                guard let analytics = buildingAnalytics[building.id] else { return nil }
+                return (building, analytics.completionRate)
+            }
+            .sorted { $0.1 > $1.1 }
+            .prefix(3)
+            .map { $0.0 }
+    }
+    
+    /// Get buildings needing attention for alerts
+    func getBuildingsNeedingAttention() -> [NamedCoordinate] {
+        return buildingsList.compactMap { building in
+            guard let analytics = buildingAnalytics[building.id] else { return nil }
+            return analytics.overdueTasks > 0 || analytics.completionRate < 0.8 ? building : nil
+        }
+    }
+    
+    /// Get portfolio summary for header display
+    func getPortfolioSummary() -> String {
+        guard let portfolio = portfolioIntelligence else { return "Loading..." }
         
+        let efficiency = Int(portfolio.overallEfficiency * 100)
+        let compliance = Int(portfolio.averageComplianceScore * 100)
+        
+        return "\(portfolio.totalBuildings) Buildings • \(efficiency)% Efficiency • \(compliance)% Compliance"
+    }
+    
+    /// Refresh specific building data using existing methods
+    func refreshBuilding(_ buildingId: String) async {
         do {
-            let building = buildingIntelligenceList[index].building
-            let analytics = try await buildingService.getBuildingAnalytics(buildingId)
-            let operationalInsights = try await buildingService.getBuildingOperationalInsights(buildingId)
+            // Use existing BuildingService.getBuildingAnalytics()
+            let updatedAnalytics = try await buildingService.getBuildingAnalytics(buildingId)
+            buildingAnalytics[buildingId] = updatedAnalytics
             
-            let updatedItem = BuildingIntelligenceItem(
-                building: building,
-                analytics: analytics,
-                operationalInsights: operationalInsights,
-                lastUpdated: Date()
-            )
-            
-            buildingIntelligenceList[index] = updatedItem
-            
-            // Regenerate portfolio overview
-            portfolioIntelligence = generatePortfolioOverview(from: buildingIntelligenceList)
+            // Recalculate portfolio overview
+            if let currentPortfolio = portfolioIntelligence {
+                let newPortfolio = PortfolioIntelligence(
+                    totalBuildings: currentPortfolio.totalBuildings,
+                    totalCompletedTasks: buildingAnalytics.values.reduce(0) { $0 + $1.completedTasks },
+                    averageComplianceScore: calculateOverallCompliance(buildingAnalytics),
+                    totalActiveWorkers: buildingAnalytics.values.reduce(0) { $0 + $1.uniqueWorkers },
+                    overallEfficiency: calculateOverallEfficiency(buildingAnalytics),
+                    trendDirection: calculatePortfolioTrend(buildingAnalytics)
+                )
+                portfolioIntelligence = newPortfolio
+            }
             
         } catch {
             errorMessage = "Failed to refresh building data: \(error.localizedDescription)"
         }
     }
     
-    /// Get performance summary for dashboard header
-    func getPerformanceSummary() -> PerformanceSummary? {
-        guard let portfolio = portfolioIntelligence else { return nil }
-        
-        return PerformanceSummary(
-            totalBuildings: portfolio.totalBuildings,
-            averageEfficiency: portfolio.averageEfficiency,
-            totalCompletedTasks: portfolio.totalCompletedTasks,
-            complianceScore: complianceOverview?.overallScore ?? 0.0,
-            trend: calculateTrend()
-        )
+    /// Get building analytics for a specific building
+    func getBuildingAnalytics(for buildingId: String) -> BuildingAnalytics? {
+        return buildingAnalytics[buildingId]
     }
     
-    // MARK: - Private Methods
-    
-    private func generatePortfolioOverview(from buildings: [BuildingIntelligenceItem]) -> PortfolioIntelligence {
-        let totalBuildings = buildings.count
-        let totalTasks = buildings.reduce(0) { $0 + $1.analytics.totalTasks }
-        let completedTasks = buildings.reduce(0) { $0 + $1.analytics.completedTasks }
-        let overdueTasks = buildings.reduce(0) { $0 + $1.analytics.overdueTasks }
-        
-        let averageEfficiency = buildings.isEmpty ? 0.0 : 
-            buildings.reduce(0.0) { $0 + $1.analytics.completionRate } / Double(totalBuildings)
-        
-        let topPerformingBuildings = buildings
-            .sorted { $0.analytics.completionRate > $1.analytics.completionRate }
-            .prefix(3)
-            .map { $0.building }
-        
-        let alertBuildings = buildings
-            .filter { $0.analytics.overdueTasks > 0 || $0.operationalInsights.maintenancePriority == .high }
-            .map { $0.building }
-        
-        return PortfolioIntelligence(
-            totalBuildings: totalBuildings,
-            totalTasks: totalTasks,
-            completedTasks: completedTasks,
-            overdueTasks: overdueTasks,
-            averageEfficiency: averageEfficiency,
-            topPerformingBuildings: Array(topPerformingBuildings),
-            alertBuildings: alertBuildings,
-            lastUpdated: Date()
-        )
+    /// Check if building needs attention
+    func buildingNeedsAttention(_ buildingId: String) -> Bool {
+        guard let analytics = buildingAnalytics[buildingId] else { return false }
+        return analytics.overdueTasks > 0 || analytics.completionRate < 0.8
     }
     
-    private func generateComplianceOverview(from buildings: [BuildingIntelligenceItem]) async -> ComplianceOverview {
-        // Calculate compliance metrics based on building analytics
-        let totalCompliantBuildings = buildings.filter { $0.analytics.completionRate >= 0.85 }.count
-        let compliancePercentage = buildings.isEmpty ? 0.0 : Double(totalCompliantBuildings) / Double(buildings.count)
+    // MARK: - Private Helper Methods
+    
+    private func calculateOverallCompliance(_ analytics: [String: BuildingAnalytics]) -> Double {
+        guard !analytics.isEmpty else { return 0.0 }
         
-        let pendingActions = buildings.reduce(0) { $0 + $1.analytics.overdueTasks }
-        
-        let criticalIssues = buildings.compactMap { building -> ComplianceIssue? in
-            if building.analytics.overdueTasks > 5 || building.analytics.completionRate < 0.5 {
-                return ComplianceIssue(
-                    building: building.building,
-                    issueType: .maintenanceOverdue,
-                    severity: .high,
-                    description: "Building has \(building.analytics.overdueTasks) overdue tasks",
-                    dueDate: Calendar.current.date(byAdding: .day, value: -1, to: Date())
-                )
-            }
-            return nil
+        let totalCompliance = analytics.values.reduce(0.0) { result, buildingAnalytics in
+            // Compliance is based on completion rate and overdue tasks
+            let baseCompliance = buildingAnalytics.completionRate
+            let overdueReduction = Double(buildingAnalytics.overdueTasks) * 0.1 // Each overdue task reduces compliance by 10%
+            return result + max(0.0, baseCompliance - overdueReduction)
         }
         
-        return ComplianceOverview(
-            overallScore: compliancePercentage * 100,
-            compliantBuildings: totalCompliantBuildings,
-            totalBuildings: buildings.count,
-            pendingActions: pendingActions,
-            criticalIssues: criticalIssues,
-            lastAuditDate: Calendar.current.date(byAdding: .day, value: -7, to: Date()),
-            nextAuditDate: Calendar.current.date(byAdding: .day, value: 23, to: Date())
-        )
+        return totalCompliance / Double(analytics.count)
     }
     
-    private func generateIntelligenceInsights(from buildings: [BuildingIntelligenceItem]) -> [IntelligenceInsight] {
-        var insights: [IntelligenceInsight] = []
+    private func calculateOverallEfficiency(_ analytics: [String: BuildingAnalytics]) -> Double {
+        guard !analytics.isEmpty else { return 0.0 }
         
-        // Efficiency trend insight
-        let highEfficiencyCount = buildings.filter { $0.analytics.completionRate > 0.9 }.count
-        if highEfficiencyCount > buildings.count / 2 {
-            insights.append(IntelligenceInsight(
-                title: "High Portfolio Efficiency",
-                description: "\(highEfficiencyCount) out of \(buildings.count) buildings are performing at >90% efficiency",
-                type: .performance,
-                priority: .medium,
-                actionable: false
-            ))
-        }
+        let totalTasks = analytics.values.reduce(0) { $0 + $1.totalTasks }
+        let totalCompleted = analytics.values.reduce(0) { $0 + $1.completedTasks }
         
-        // Maintenance priority insight
-        let highPriorityBuildings = buildings.filter { $0.operationalInsights.maintenancePriority == .high }
-        if !highPriorityBuildings.isEmpty {
-            insights.append(IntelligenceInsight(
-                title: "Maintenance Priority Alert",
-                description: "\(highPriorityBuildings.count) buildings require immediate maintenance attention",
-                type: .maintenance,
-                priority: .high,
-                actionable: true
-            ))
-        }
-        
-        // Cost optimization insight
-        let totalWorkers = buildings.reduce(0) { $0 + $1.analytics.uniqueWorkers }
-        let averageWorkersPerBuilding = Double(totalWorkers) / Double(buildings.count)
-        if averageWorkersPerBuilding > 3.0 {
-            insights.append(IntelligenceInsight(
-                title: "Worker Optimization Opportunity",
-                description: "Average of \(String(format: "%.1f", averageWorkersPerBuilding)) workers per building suggests potential for optimization",
-                type: .cost,
-                priority: .medium,
-                actionable: true
-            ))
-        }
-        
-        // Compliance insight
-        if let compliance = complianceOverview, compliance.overallScore < 80 {
-            insights.append(IntelligenceInsight(
-                title: "Compliance Improvement Needed",
-                description: "Portfolio compliance score of \(String(format: "%.1f", compliance.overallScore))% is below target",
-                type: .compliance,
-                priority: .high,
-                actionable: true
-            ))
-        }
-        
-        return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        return totalTasks > 0 ? Double(totalCompleted) / Double(totalTasks) : 0.0
     }
     
-    private func calculateTrend() -> TrendDirection {
-        // Placeholder trend calculation
-        // In real implementation, this would compare current vs historical data
-        guard let portfolio = portfolioIntelligence else { return .neutral }
+    private func calculatePortfolioTrend(_ analytics: [String: BuildingAnalytics]) -> TrendDirection {
+        guard !analytics.isEmpty else { return .unknown }
         
-        if portfolio.averageEfficiency > 0.85 {
-            return .up
-        } else if portfolio.averageEfficiency < 0.7 {
-            return .down
+        let highPerformingCount = analytics.values.filter { $0.completionRate > 0.8 }.count
+        let lowPerformingCount = analytics.values.filter { $0.completionRate < 0.6 }.count
+        
+        if highPerformingCount > lowPerformingCount {
+            return .improving
+        } else if lowPerformingCount > highPerformingCount {
+            return .declining
         } else {
-            return .neutral
+            return .stable
         }
     }
     
-    private func setupDataSynchronization() {
-        // Set up automatic refresh every 5 minutes
-        Timer.publish(every: 300, on: .main, in: .common)
+    private func setupAutoRefresh() {
+        Timer.publish(every: 300, on: .main, in: .common) // Every 5 minutes
             .autoconnect()
             .sink { [weak self] _ in
                 Task {
-                    await self?.loadPortfolioIntelligence()
+                    await self?.loadPortfolioData()
                 }
             }
             .store(in: &cancellables)
     }
 }
 
-// MARK: - Supporting Data Models
+// MARK: - PortfolioIntelligence Model
+// Defined here to match the existing CoreTypes.swift pattern
 
-struct PortfolioIntelligence {
+struct PortfolioIntelligence: Codable, Hashable {
     let totalBuildings: Int
-    let totalTasks: Int
-    let completedTasks: Int
-    let overdueTasks: Int
-    let averageEfficiency: Double
-    let topPerformingBuildings: [NamedCoordinate]
-    let alertBuildings: [NamedCoordinate]
-    let lastUpdated: Date
+    let totalCompletedTasks: Int
+    let averageComplianceScore: Double
+    let totalActiveWorkers: Int
+    let overallEfficiency: Double
+    let trendDirection: TrendDirection
     
-    var completionRate: Double {
-        totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
+    init(totalBuildings: Int, totalCompletedTasks: Int, averageComplianceScore: Double, totalActiveWorkers: Int, overallEfficiency: Double, trendDirection: TrendDirection) {
+        self.totalBuildings = totalBuildings
+        self.totalCompletedTasks = totalCompletedTasks
+        self.averageComplianceScore = averageComplianceScore
+        self.totalActiveWorkers = totalActiveWorkers
+        self.overallEfficiency = overallEfficiency
+        self.trendDirection = trendDirection
+    }
+    
+    // Computed properties for UI display
+    var efficiencyPercentage: Int {
+        return Int(overallEfficiency * 100)
+    }
+    
+    var compliancePercentage: Int {
+        return Int(averageComplianceScore * 100)
+    }
+    
+    var status: String {
+        if overallEfficiency > 0.9 && averageComplianceScore > 0.9 {
+            return "Excellent"
+        } else if overallEfficiency > 0.8 && averageComplianceScore > 0.8 {
+            return "Good"
+        } else if overallEfficiency > 0.7 && averageComplianceScore > 0.7 {
+            return "Fair"
+        } else {
+            return "Needs Improvement"
+        }
     }
 }
 
-struct BuildingIntelligenceItem: Identifiable {
-    let id = UUID()
+// MARK: - Simple Helper Models for UI
+
+/// Building item for client dashboard list display
+struct ClientBuildingItem: Identifiable {
+    let id: String
     let building: NamedCoordinate
     let analytics: BuildingAnalytics
-    let operationalInsights: BuildingOperationalInsights
-    let lastUpdated: Date
     
-    var efficiencyStatus: EfficiencyStatus {
-        if analytics.completionRate >= 0.9 { return .excellent }
-        if analytics.completionRate >= 0.8 { return .good }
-        if analytics.completionRate >= 0.7 { return .fair }
-        return .poor
-    }
-}
-
-enum EfficiencyStatus: String, CaseIterable {
-    case excellent = "Excellent"
-    case good = "Good" 
-    case fair = "Fair"
-    case poor = "Poor"
-    
-    var color: Color {
-        switch self {
-        case .excellent: return .green
-        case .good: return .blue
-        case .fair: return .orange
-        case .poor: return .red
-        }
-    }
-}
-
-struct ComplianceOverview {
-    let overallScore: Double
-    let compliantBuildings: Int
-    let totalBuildings: Int
-    let pendingActions: Int
-    let criticalIssues: [ComplianceIssue]
-    let lastAuditDate: Date?
-    let nextAuditDate: Date?
-    
-    var compliancePercentage: Double {
-        totalBuildings > 0 ? Double(compliantBuildings) / Double(totalBuildings) * 100 : 0.0
-    }
-}
-
-struct ComplianceIssue: Identifiable {
-    let id = UUID()
-    let building: NamedCoordinate
-    let issueType: ComplianceIssueType
-    let severity: ComplianceSeverity
-    let description: String
-    let dueDate: Date?
-}
-
-enum ComplianceIssueType: String, CaseIterable {
-    case maintenanceOverdue = "Maintenance Overdue"
-    case safetyViolation = "Safety Violation"
-    case documentationMissing = "Documentation Missing"
-    case inspectionRequired = "Inspection Required"
-}
-
-enum ComplianceSeverity: String, CaseIterable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case critical = "Critical"
-    
-    var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        }
-    }
-}
-
-struct IntelligenceInsight: Identifiable {
-    let id = UUID()
-    let title: String
-    let description: String
-    let type: InsightType
-    let priority: InsightPriority
-    let actionable: Bool
-    let createdAt = Date()
-}
-
-enum InsightType: String, CaseIterable {
-    case performance = "Performance"
-    case maintenance = "Maintenance"
-    case cost = "Cost"
-    case compliance = "Compliance"
-    case efficiency = "Efficiency"
-    
-    var icon: String {
-        switch self {
-        case .performance: return "chart.line.uptrend.xyaxis"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .cost: return "dollarsign.circle"
-        case .compliance: return "checkmark.shield"
-        case .efficiency: return "speedometer"
-        }
+    init(building: NamedCoordinate, analytics: BuildingAnalytics) {
+        self.id = building.id
+        self.building = building
+        self.analytics = analytics
     }
     
-    var color: Color {
-        switch self {
-        case .performance: return .blue
-        case .maintenance: return .orange
-        case .cost: return .green
-        case .compliance: return .purple
-        case .efficiency: return .teal
-        }
+    var statusColor: Color {
+        if analytics.completionRate >= 0.9 { return .green }
+        if analytics.completionRate >= 0.8 { return .blue }
+        if analytics.completionRate >= 0.7 { return .orange }
+        return .red
     }
-}
-
-enum InsightPriority: String, CaseIterable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
     
-    var rawValue: Int {
-        switch self {
-        case .low: return 1
-        case .medium: return 2
-        case .high: return 3
-        }
+    var statusText: String {
+        if analytics.overdueTasks > 0 { return "Needs Attention" }
+        if analytics.completionRate >= 0.9 { return "Excellent" }
+        if analytics.completionRate >= 0.8 { return "Good" }
+        return "Fair"
+    }
+    
+    var efficiencyPercentage: Int {
+        return Int(analytics.completionRate * 100)
     }
 }
-
-struct PerformanceSummary {
-    let totalBuildings: Int
-    let averageEfficiency: Double
-    let totalCompletedTasks: Int
-    let complianceScore: Double
-    let trend: TrendDirection
-}
-

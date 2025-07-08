@@ -243,7 +243,7 @@ class BuildingService: ObservableObject {
         }
         
         guard let buildingIdInt = Int64(buildingId) else {
-            return EnhancedBuildingStatus.BuildingStatus.empty(buildingId: buildingId)
+            return EnhancedFrancoSphere.BuildingStatus.empty(buildingId: buildingId)
         }
         
         let query = """
@@ -292,7 +292,7 @@ class BuildingService: ObservableObject {
             
         } catch {
             print("❌ Error fetching building status for \(buildingId): \(error)")
-            return EnhancedBuildingStatus.BuildingStatus.empty(buildingId: buildingId)
+            return EnhancedFrancoSphere.BuildingStatus.empty(buildingId: buildingId)
         }
     }
     

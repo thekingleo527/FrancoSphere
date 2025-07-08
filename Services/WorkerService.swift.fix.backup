@@ -100,30 +100,6 @@ actor WorkerService {
             NamedCoordinate(id: "14", name: "Rubin Museum (142–148 W 17th)", latitude: 40.7402, longitude: -73.9980, imageAssetName: "rubin_museum")
         ]
     }
-
-    /// Get all active workers for AdminDashboardViewModel
-    func getAllActiveWorkers() async throws -> [WorkerProfile] {
-        do {
-            let rows = try await sqliteManager.query("
-                SELECT id, name, email, role FROM workers WHERE is_active = 1
-            "")
-            
-            return rows.compactMap { row in
-                guard let id = row["id"] as? String,
-                      let name = row["name"] as? String,
-                      let email = row["email"] as? String,
-                      let roleString = row["role"] as? String
-                else { return nil }
-                
-                let role = WorkerRole(rawValue: roleString) ?? .worker
-                return WorkerProfile(id: id, name: name, email: email, role: role)
-            }
-        } catch {
-            print("❌ Error fetching active workers: \(error)")
-            return []
-        }
-    }
-
 }
 
 // MARK: - Public Extensions (Non-Actor Methods)
@@ -198,14 +174,3 @@ extension WorkerService {
         }
     }
 }
-    
-    // MARK: - Building-specific Methods
-    func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [WorkerProfile] {
-        // Implementation for getting active workers for building
-        return []
-    }
-    
-    func getAllActiveWorkers() async throws -> [WorkerProfile] {
-        // Implementation for getting all active workers
-        return []
-    }

@@ -95,24 +95,3 @@ actor TaskService {
         return Array(tasks.prefix(limit))
     }
 }
-    
-    // MARK: - Building-specific Methods
-    func getTasksForBuilding(_ buildingId: String, date: Date = Date()) async throws -> [ContextualTask] {
-        // Implementation for getting tasks for a specific building
-        return []
-    }
-    
-    func completeTask(_ taskId: String, evidence: ActionEvidence? = nil) async throws {
-        // Implementation for completing task with evidence
-        print("✅ Task completed: \(taskId)")
-    }
-    
-    private func toggleTaskCompletionAsync(taskId: String) async throws {
-        // Implementation for async task completion toggle
-        print("🔄 Toggling task completion: \(taskId)")
-    }
-    
-    private func addTaskAsync(_ task: ContextualTask) async throws {
-        // Implementation for async task addition
-        print("➕ Adding task: \(task.title)")
-    }

@@ -41,6 +41,7 @@ class SchemaMigrationPatch {
             try await seedActiveWorkers(manager)
             
             // Patch 4: Create Kevin's corrected building assignments
+            try await createKevinCorrectedAssignments(manager)
             
             // Patch 5: Add essential constraints
             try await addEssentialConstraints(manager)
@@ -417,6 +418,18 @@ class SchemaMigrationPatch {
     // MARK: - Emergency Recovery
     
     /// Apply emergency schema fix for Kevin specifically
+    func applyEmergencyKevinFix() async throws {
+        let manager = SQLiteManager.shared
+        
+        print("🚨 Applying emergency Kevin fix...")
+        
+        // Ensure Kevin exists and has correct assignments
+        try await fixMissingWorkerColumns(manager)
+        try await seedActiveWorkers(manager)
+        try await createKevinCorrectedAssignments(manager)
+        
+        print("✅ Emergency Kevin fix completed")
+    }
 }
 
 // MARK: - Migration Error Types

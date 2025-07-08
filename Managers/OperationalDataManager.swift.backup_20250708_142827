@@ -816,6 +816,11 @@ class OperationalDataManager: ObservableObject {
             // Check if Kevin's name appears with different spelling
             let kevinVariants = assignments.filter { $0.assignedWorker.lowercased().contains("kevin") }
             print("   Kevin name variants found: \(Set(kevinVariants.map { $0.assignedWorker }))")
+        } else if kevinRubinAssignments == 0 {
+            print("⚠️ WARNING: Kevin has building assignments but NO Rubin Museum tasks!")
+        } else {
+            print("✅ PRESERVED: Kevin's Rubin Museum assignments confirmed")
+        }
         
         // Insert assignments into database
         var insertedCount = 0
@@ -871,19 +876,51 @@ class OperationalDataManager: ObservableObject {
             
             if kevinVerification.count == 0 {
                 print("🚨 EMERGENCY: Kevin still has 0 buildings after import!")
+                await createEmergencyKevinAssignments(sqliteManager)
             }
         } catch {
             print("❌ Could not verify Kevin assignments: \(error)")
         }
         
         // Log final worker assignment summary
-        await logWorkerAssignmentSummary()
-        
-        // Validate all worker assignments dynamically
-        try await validateWorkerAssignments()
+        await logWorkerAssignmentSummary(activeWorkers)
     }
     
     /// Emergency fallback: Create Kevin's assignments manually if import fails
+    private func createEmergencyKevinAssignments(_ manager: SQLiteManager) async {
+        print("🆘 Creating emergency Kevin assignments...")
+        print("✅ PRESERVED: Including Rubin Museum (building ID 14) in emergency assignments")
+        
+        // Kevin's known buildings based on real-world assignments (with corrected IDs)
+        let kevinBuildings = ["10", "6", "3", "13", "5", "2", "17", "14"] // 14 = Rubin Museum
+        
+        do {
+            for buildingId in kevinBuildings {
+                let assignmentType = buildingId == "14" ? "emergency_rubin_museum" : "emergency_fallback"
+                try await manager.execute("""
+                    INSERT OR REPLACE INTO worker_building_assignments 
+                    (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
+                    VALUES ('4', ?, 'Kevin Dutan', ?, datetime('now'), 1)
+                """, [buildingId, assignmentType])
+                
+                if buildingId == "14" {
+                    print("✅ PRESERVED: Emergency Rubin Museum assignment created for Kevin (building ID 14)")
+                }
+            }
+            
+            print("✅ Emergency Kevin assignments created: \(kevinBuildings)")
+            
+            // Verify the emergency assignments
+            let verification = try await manager.query("""
+                SELECT building_id FROM worker_building_assignments 
+                WHERE worker_id = '4' AND is_active = 1
+            """)
+            print("🎯 Emergency verification: Kevin now has \(verification.count) buildings")
+            
+        } catch {
+            print("🚨 CRITICAL: Emergency assignment creation failed: \(error)")
+        }
+    }
     
     /// Log summary of worker assignments for validation
     private func logWorkerAssignmentSummary(_ activeWorkers: [String: String]) async {
@@ -1299,98 +1336,3 @@ extension Date {
         ISO8601DateFormatter().string(from: self)
     }
 }
-
-    // MARK: - Dynamic Worker Assignment Validation (Replaces Kevin Hardcoding)
-    
-    /// Validates all worker assignments dynamically (no hardcoding)
-    private func validateWorkerAssignments() async throws {
-        guard let sqliteManager = sqliteManager else { 
-            print("⚠️ SQLiteManager not available for assignment validation")
-            return 
-        }
-        
-        do {
-            let allWorkers = try await sqliteManager.query("""
-                SELECT id, name FROM workers WHERE is_active = 1
-            """)
-            
-            print("🔍 Validating assignments for \(allWorkers.count) active workers...")
-            
-            for worker in allWorkers {
-                guard let workerId = worker["id"] as? String,
-                      let workerName = worker["name"] as? String else { continue }
-                
-                let assignments = try await sqliteManager.query("""
-                    SELECT COUNT(*) as count FROM worker_building_assignments 
-                    WHERE worker_id = ? AND is_active = 1
-                """, [workerId])
-                
-                let count = assignments.first?["count"] as? Int64 ?? 0
-                
-                if count == 0 {
-                    print("⚠️ Worker \(workerName) has no building assignments")
-                    try await createDynamicAssignments(for: workerId, name: workerName)
-                } else {
-                    print("✅ Worker \(workerName) has \(count) building assignments")
-                }
-            }
-            
-        } catch {
-            print("❌ Assignment validation failed: \(error)")
-        }
-    }
-    
-    /// Creates assignments based on operational data (no hardcoding)
-    private func createDynamicAssignments(for workerId: String, name: String) async throws {
-        guard let sqliteManager = sqliteManager else { return }
-        
-        // Find assignments from real operational data
-        let workerTasks = realWorldTasks.filter { $0.assignedWorker == name }
-        let buildings = Set(workerTasks.map { $0.building })
-        
-        print("🔧 Creating \(buildings.count) dynamic assignments for \(name)")
-        
-        for building in buildings {
-            // Find building ID from name in database
-            let buildingResults = try await sqliteManager.query("""
-                SELECT id FROM buildings WHERE name LIKE ? OR name LIKE ?
-            """, ["%\(building)%", "%\(building.components(separatedBy: " ").first ?? building)%"])
-            
-            if let buildingId = buildingResults.first?["id"] as? String {
-                try await sqliteManager.execute("""
-                    INSERT OR REPLACE INTO worker_building_assignments 
-                    (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
-                    VALUES (?, ?, ?, 'dynamic_operational', datetime('now'), 1)
-                """, [workerId, buildingId, name])
-                
-                print("  ✅ Assigned \(name) to building \(building) (ID: \(buildingId))")
-            } else {
-                print("  ⚠️ Could not find building ID for: \(building)")
-            }
-        }
-    }
-    
-    /// Log summary of all worker assignments (replaces Kevin-specific logging)
-    private func logWorkerAssignmentSummary() async {
-        guard let sqliteManager = sqliteManager else { return }
-        
-        do {
-            let results = try await sqliteManager.query("""
-                SELECT wa.worker_name, COUNT(wa.building_id) as building_count 
-                FROM worker_building_assignments wa 
-                WHERE wa.is_active = 1 
-                GROUP BY wa.worker_id 
-                ORDER BY building_count DESC
-            """)
-            
-            print("📊 WORKER ASSIGNMENT SUMMARY (DYNAMIC):")
-            for row in results {
-                let name = row["worker_name"] as? String ?? "Unknown"
-                let count = row["building_count"] as? Int64 ?? 0
-                print("   • \(name): \(count) buildings")
-            }
-            
-        } catch {
-            print("❌ Could not generate assignment summary: \(error)")
-        }
-    }
