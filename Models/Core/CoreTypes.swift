@@ -72,6 +72,32 @@ public struct CoreTypes {
     }
 }
 
+// MARK: - Trend Analysis (FIXED: Proper protocol conformance)
+public enum TrendDirection: String, Codable, CaseIterable, Hashable {
+    case improving = "improving"
+    case stable = "stable"
+    case declining = "declining"
+    case unknown = "unknown"
+    
+    public var systemImage: String {
+        switch self {
+        case .improving: return "arrow.up.circle.fill"
+        case .stable: return "minus.circle.fill"
+        case .declining: return "arrow.down.circle.fill"
+        case .unknown: return "questionmark.circle.fill"
+        }
+    }
+    
+    public var color: String {
+        switch self {
+        case .improving: return "green"
+        case .stable: return "blue"
+        case .declining: return "red"
+        case .unknown: return "gray"
+        }
+    }
+}
+
 // MARK: - Task Progress Tracking
 public struct TaskProgress: Codable, Hashable {
     public let workerId: CoreTypes.WorkerID
@@ -109,7 +135,7 @@ public struct TaskProgress: Codable, Hashable {
     }
 }
 
-// MARK: - Performance Metrics
+// MARK: - Performance Metrics (FIXED: Protocol conformance)
 public struct PerformanceMetrics: Codable, Hashable {
     public let workerId: CoreTypes.WorkerID
     public let period: TimePeriod
@@ -118,12 +144,12 @@ public struct PerformanceMetrics: Codable, Hashable {
     public let punctuality: Double        // 0.0 - 1.0
     public let consistency: Double        // 0.0 - 1.0
     public let overallScore: Double       // 0.0 - 1.0
-    public let tasksCompleted: Int
     public let averageCompletionTime: TimeInterval
     public let recentTrend: TrendDirection
     
-    public enum TimePeriod: String, Codable {
+    public enum TimePeriod: String, Codable, CaseIterable, Hashable {
         case daily = "daily"
+    case none = "none"
         case weekly = "weekly"
         case monthly = "monthly"
         case quarterly = "quarterly"
@@ -143,33 +169,7 @@ public struct PerformanceMetrics: Codable, Hashable {
     }
 }
 
-// MARK: - Trend Analysis
-public enum TrendDirection: String, Codable, CaseIterable {
-    case improving = "improving"
-    case stable = "stable"
-    case declining = "declining"
-    case unknown = "unknown"
-    
-    public var systemImage: String {
-        switch self {
-        case .improving: return "arrow.up.circle.fill"
-        case .stable: return "minus.circle.fill"
-        case .declining: return "arrow.down.circle.fill"
-        case .unknown: return "questionmark.circle.fill"
-        }
-    }
-    
-    public var color: String {
-        switch self {
-        case .improving: return "green"
-        case .stable: return "blue"
-        case .declining: return "red"
-        case .unknown: return "gray"
-        }
-    }
-}
-
-// MARK: - Building Analytics
+// MARK: - Building Analytics (FIXED: Protocol conformance)
 public struct BuildingStatistics: Codable, Hashable {
     public let buildingId: CoreTypes.BuildingID
     public let period: PerformanceMetrics.TimePeriod
@@ -212,14 +212,14 @@ public struct ScheduleConflict: Codable, Hashable {
     public let suggestedResolution: String
     public let detectedAt: Date
     
-    public enum ConflictType: String, Codable {
+    public enum ConflictType: String, Codable, CaseIterable, Hashable {
         case timeOverlap = "time_overlap"
         case locationConflict = "location_conflict"
         case skillMismatch = "skill_mismatch"
         case resourceUnavailable = "resource_unavailable"
     }
     
-    public enum Severity: String, Codable {
+    public enum Severity: String, Codable, CaseIterable, Hashable {
         case low = "low"
         case medium = "medium"
         case high = "high"
@@ -249,7 +249,7 @@ public struct BuildingInsight: Codable, Hashable {
     public let suggestedAction: String?
     public let generatedAt: Date
     
-    public enum InsightType: String, Codable {
+    public enum InsightType: String, Codable, CaseIterable, Hashable {
         case efficiency = "efficiency"
         case maintenance = "maintenance"
         case compliance = "compliance"
@@ -257,7 +257,7 @@ public struct BuildingInsight: Codable, Hashable {
         case safety = "safety"
     }
     
-    public enum Impact: String, Codable {
+    public enum Impact: String, Codable, CaseIterable, Hashable {
         case positive = "positive"
         case neutral = "neutral"
         case negative = "negative"
@@ -276,7 +276,7 @@ public struct BuildingInsight: Codable, Hashable {
 }
 
 // MARK: - UI Support Types
-public enum BuildingTab: String, Codable, CaseIterable {
+public enum BuildingTab: String, Codable, CaseIterable, Hashable {
     case overview = "overview"
     case tasks = "tasks"
     case workers = "workers"
@@ -298,7 +298,7 @@ public enum BuildingTab: String, Codable, CaseIterable {
     }
 }
 
-// MARK: - Task Analytics
+// MARK: - Task Analytics (FIXED: Protocol conformance)
 public struct TaskTrends: Codable, Hashable {
     public let period: PerformanceMetrics.TimePeriod
     public let completionTrend: TrendDirection
@@ -331,7 +331,7 @@ public struct StreakData: Codable, Hashable {
     public let nextMilestone: Int
     public let streakStartDate: Date
     
-    public enum StreakType: String, Codable {
+    public enum StreakType: String, Codable, CaseIterable, Hashable {
         case taskCompletion = "task_completion"
         case punctuality = "punctuality"
         case qualityRating = "quality_rating"
@@ -379,7 +379,7 @@ public struct AISuggestion: Codable, Hashable {
     public let priority: CoreTypes.TaskUrgency
     public let category: SuggestionCategory
     
-    public enum SuggestionCategory: String, Codable {
+    public enum SuggestionCategory: String, Codable, CaseIterable, Hashable {
         case efficiency = "efficiency"
         case safety = "safety"
         case maintenance = "maintenance"

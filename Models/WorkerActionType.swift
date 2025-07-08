@@ -13,6 +13,7 @@ import Foundation
 /// This provides a single, authoritative source for action types across the app.
 public enum WorkerActionType: String, Codable, CaseIterable {
     case taskCompletion = "task_completion"
+    case taskComplete = "task_complete"
     case clockIn = "clock_in"
     case clockOut = "clock_out"
     case photoUpload = "photo_upload"

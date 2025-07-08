@@ -205,9 +205,9 @@ struct PortfolioIntelligence: Codable, Hashable {
     let averageComplianceScore: Double
     let totalActiveWorkers: Int
     let overallEfficiency: Double
-    let trendDirection: TrendDirection
+    let trendDirection: FrancoSphere.TrendDirection
     
-    init(totalBuildings: Int, totalCompletedTasks: Int, averageComplianceScore: Double, totalActiveWorkers: Int, overallEfficiency: Double, trendDirection: TrendDirection) {
+    init(totalBuildings: Int, totalCompletedTasks: Int, averageComplianceScore: Double, totalActiveWorkers: Int, overallEfficiency: Double, trendDirection: FrancoSphere.TrendDirection) {
         self.totalBuildings = totalBuildings
         self.totalCompletedTasks = totalCompletedTasks
         self.averageComplianceScore = averageComplianceScore

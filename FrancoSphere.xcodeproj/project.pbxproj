@@ -129,14 +129,12 @@
 		234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581102DF78E3D00355F0A /* SignUpView.swift */; };
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
-		236106D92E16F2F100463A59 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106D82E16F2F100463A59 /* TaskService.swift */; };
 		236106E62E17804400463A59 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E52E17804400463A59 /* WorkerService.swift */; };
 		236106E82E1788EC00463A59 /* BuildingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E72E1788EC00463A59 /* BuildingService.swift */; };
 		236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */; };
 		236106F12E17AE0200463A59 /* EnhancedClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */; };
 		236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */; };
 		237493582E1C9F8800D9C70D /* CoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237493572E1C9F8800D9C70D /* CoreTypes.swift */; };
-		237493752E1D7DC400D9C70D /* PropertyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237493742E1D7DC400D9C70D /* PropertyCard.swift */; };
 		237493902E1D7E9C00D9C70D /* BuildingMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2374938F2E1D7E9C00D9C70D /* BuildingMetricsService.swift */; };
 		237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237DE3FE2E182F510002A14D /* TelemetryService.swift */; };
 		239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956072E11079F00B3F105 /* AIScenarioSheetView.swift */; };
@@ -318,14 +316,12 @@
 		234581222DF78E3D00355F0A /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		234581232DF78E3D00355F0A /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		234581252DF78E3D00355F0A /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
-		236106D82E16F2F100463A59 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
 		236106E52E17804400463A59 /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
 		236106E72E1788EC00463A59 /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
 		236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksOAuthManager.swift; sourceTree = "<group>"; };
 		236106F02E17AE0200463A59 /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
 		236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
 		237493572E1C9F8800D9C70D /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
-		237493742E1D7DC400D9C70D /* PropertyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCard.swift; sourceTree = "<group>"; };
 		2374938F2E1D7E9C00D9C70D /* BuildingMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMetricsService.swift; sourceTree = "<group>"; };
 		237DE3FE2E182F510002A14D /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
 		239956072E11079F00B3F105 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
@@ -555,7 +551,6 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
-				237493742E1D7DC400D9C70D /* PropertyCard.swift */,
 				2312FC6A2E1B77B400B64496 /* StatCard.swift */,
 				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
 				239956072E11079F00B3F105 /* AIScenarioSheetView.swift */,
@@ -717,7 +712,6 @@
 				236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */,
 				236106E72E1788EC00463A59 /* BuildingService.swift */,
 				236106E52E17804400463A59 /* WorkerService.swift */,
-				236106D82E16F2F100463A59 /* TaskService.swift */,
 				2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */,
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				234581032DF78E3D00355F0A /* DailyOpsReset.swift */,
@@ -1060,7 +1054,6 @@
 				2345816D2DF78E3D00355F0A /* InitializationStatus.swift in Sources */,
 				2345816E2DF78E3D00355F0A /* ClockInManager.swift in Sources */,
 				233F94DC2DF7B0EC00901707 /* TrackableScrollView.swift in Sources */,
-				236106D92E16F2F100463A59 /* TaskService.swift in Sources */,
 				234581712DF78E3D00355F0A /* BuildingStatsGlassCard.swift in Sources */,
 				233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */,
 				234581732DF78E3D00355F0A /* ForgotPasswordView.swift in Sources */,
@@ -1076,7 +1069,6 @@
 				23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */,
 				2312FC7E2E1BED3700B64496 /* DataSynchronizationService.swift in Sources */,
 				2345817D2DF78E3D00355F0A /* TimeBasedTaskFilter.swift in Sources */,
-				237493752E1D7DC400D9C70D /* PropertyCard.swift in Sources */,
 				233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */,
 				2345817F2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift in Sources */,
 				234581802DF78E3D00355F0A /* InventoryView.swift in Sources */,
