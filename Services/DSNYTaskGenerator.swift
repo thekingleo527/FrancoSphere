@@ -423,7 +423,7 @@ extension DSNYTaskGenerator {
     }
     
     /// Integration with TaskService for automatic DSNY task creation
-    public func createDSNYTasksInSystem(taskService: TaskService) async throws {
+    internal func createDSNYTasksInSystem(taskService: TaskService) async throws {
         let dsnyTasks = try await generateTodaysDSNYTasks()
         
         for task in dsnyTasks {

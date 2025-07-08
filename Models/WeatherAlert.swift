@@ -316,7 +316,7 @@ public actor WeatherAlertManager {
     }
     
     /// Integration with TaskService for automatic task creation
-    public func processWeatherAlert(
+    internal func processWeatherAlert(
         for buildings: [NamedCoordinate],
         weather: FSWeatherData,
         taskService: TaskService
