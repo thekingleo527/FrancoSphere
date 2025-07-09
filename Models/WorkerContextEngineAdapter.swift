@@ -21,42 +21,44 @@ public class WorkerContextEngineAdapter: ObservableObject {
     }
     
     public func loadContext(for workerId: CoreTypes.WorkerID) async {
-        isLoading=true
-        do
+        isLoading = true
+        do {
             try await contextEngine.loadContext(for: workerId)
             await refreshPublishedState()
-        catch {
-            print("❌ Failed to load context:", error)
+        } catch {
+            print("❌ Failed to load context: \(error)")
         }
-        isLoading=false
+        isLoading = false
     }
     
     public func todayWorkers() -> [WorkerProfile] {
-        if let w = currentWorker { return [w] }
+        if let worker = currentWorker { return [worker] }
         return []
     }
     
-    public func getTasksForBuilding(_ b: String) -> [ContextualTask] {
-        todaysTasks.filter{ $0.buildingId == b }
+    public func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
+        return todaysTasks.filter { $0.buildingId == buildingId }
     }
     
     public func getUrgentTaskCount() -> Int {
-        todaysTasks.filter{ [.high,.critical].contains($0.urgency) }.count
+        return todaysTasks.filter { $0.urgency == .high || $0.urgency == .critical }.count
     }
     
     private func refreshPublishedState() async {
-        currentWorker      = await contextEngine.getCurrentWorker()
-        assignedBuildings  = await contextEngine.getAssignedBuildings()
-        todaysTasks        = await contextEngine.getTodaysTasks()
-        taskProgress       = await contextEngine.getTaskProgress()
-        isLoading          = await contextEngine.getIsLoading()
-        hasPendingScenario = getUrgentTaskCount()>0
+        self.currentWorker       = await contextEngine.getCurrentWorker()
+        self.assignedBuildings   = await contextEngine.getAssignedBuildings()
+        self.todaysTasks         = await contextEngine.getTodaysTasks()
+        self.taskProgress        = await contextEngine.getTaskProgress()
+        self.isLoading           = await contextEngine.getIsLoading()
+        self.hasPendingScenario  = getUrgentTaskCount() > 0
     }
     
     private func setupPeriodicUpdates() {
-        Timer.publish(every:30,on:.main,in:.common)
+        Timer.publish(every: 30, on: .main, in: .common)
             .autoconnect()
-            .sink{ [weak self]_ in Task{ await self?.refreshPublishedState() } }
-            .store(in:&cancellables)
+            .sink { [weak self] _ in
+                Task { await self?.refreshPublishedState() }
+            }
+            .store(in: &cancellables)
     }
 }

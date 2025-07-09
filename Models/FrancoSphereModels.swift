@@ -850,3 +850,25 @@ public typealias TrendDirection = CoreTypes.TrendDirection
 
 // DTO Types (avoid circular references)
 // These will be defined in DTOs folder
+
+extension FrancoSphere.TaskUrgency {
+    public var fontWeight: Font.Weight {
+        switch self {
+        case .low: return .light
+        case .medium: return .regular
+        case .high: return .semibold
+        case .urgent: return .bold
+        case .critical: return .bold
+        case .emergency: return .black
+        }
+    }
+    
+    public var feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle {
+        switch self {
+        case .low: return .light
+        case .medium: return .medium
+        case .high, .urgent: return .heavy
+        case .critical, .emergency: return .heavy
+        }
+    }
+}
