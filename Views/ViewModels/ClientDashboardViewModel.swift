@@ -1,26 +1,36 @@
+//
+//  ClientDashboardViewModel.swift
+//  FrancoSphere
+//
+//  ✅ V6.0: FIXED - Explicit BuildingAnalytics namespacing
+//  ✅ Uses BuildingService.BuildingAnalytics (returned by getBuildingAnalytics)
+//  ✅ Integrates with IntelligenceService for portfolio insights
+//
+
 import Foundation
 import SwiftUI
 import Combine
 
-// MARK: - ClientDashboardViewModel
-// Uses EXISTING methods from BuildingService, TaskService, and WorkerService
-// Based on actual architecture research
-
 @MainActor
 class ClientDashboardViewModel: ObservableObject {
     
+    // MARK: - Type Aliases for Internal Use
+    private typealias LocalBuildingAnalytics = BuildingService.BuildingAnalytics
+    
     // MARK: - Published Properties
-    @Published var portfolioIntelligence: PortfolioIntelligence?
+    @Published var portfolioIntelligence: CoreTypes.PortfolioIntelligence?
     @Published var buildingsList: [NamedCoordinate] = []
-    @Published var buildingAnalytics: [String: BuildingAnalytics] = [:]
+    @Published var buildingAnalytics: [String: LocalBuildingAnalytics] = []  // FIXED: Use type alias
+    @Published var portfolioInsights: [CoreTypes.IntelligenceInsight] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var lastUpdateTime: Date?
     
-    // MARK: - Service Dependencies (using existing services)
+    // MARK: - Service Dependencies
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
+    private let intelligenceService = IntelligenceService.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
@@ -40,13 +50,13 @@ class ClientDashboardViewModel: ObservableObject {
             buildingsList = try await buildingService.getAllBuildings()
             
             // Load analytics for each building using existing method
-            var analytics: [String: BuildingAnalytics] = [:]
+            var analytics: [String: LocalBuildingAnalytics] = [:]  // FIXED: Use type alias
             var totalTasks = 0
             var totalCompleted = 0
             var totalWorkers = 0
             
             for building in buildingsList {
-                // Use existing BuildingService.getBuildingAnalytics()
+                // This returns BuildingService.BuildingAnalytics
                 let buildingAnalytic = try await buildingService.getBuildingAnalytics(building.id)
                 analytics[building.id] = buildingAnalytic
                 
@@ -56,8 +66,8 @@ class ClientDashboardViewModel: ObservableObject {
                 totalWorkers += buildingAnalytic.uniqueWorkers
             }
             
-            // Create portfolio intelligence using existing data
-            let portfolio = PortfolioIntelligence(
+            // FIXED: Create portfolio intelligence using CoreTypes
+            let portfolio = CoreTypes.PortfolioIntelligence(
                 totalBuildings: buildingsList.count,
                 totalCompletedTasks: totalCompleted,
                 averageComplianceScore: calculateOverallCompliance(analytics),
@@ -66,9 +76,13 @@ class ClientDashboardViewModel: ObservableObject {
                 trendDirection: calculatePortfolioTrend(analytics)
             )
             
+            // Load portfolio insights from IntelligenceService
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            
             // Update UI
             self.buildingAnalytics = analytics
             self.portfolioIntelligence = portfolio
+            self.portfolioInsights = insights
             self.lastUpdateTime = Date()
             
         } catch {
@@ -118,7 +132,7 @@ class ClientDashboardViewModel: ObservableObject {
             
             // Recalculate portfolio overview
             if let currentPortfolio = portfolioIntelligence {
-                let newPortfolio = PortfolioIntelligence(
+                let newPortfolio = CoreTypes.PortfolioIntelligence(
                     totalBuildings: currentPortfolio.totalBuildings,
                     totalCompletedTasks: buildingAnalytics.values.reduce(0) { $0 + $1.completedTasks },
                     averageComplianceScore: calculateOverallCompliance(buildingAnalytics),
@@ -135,7 +149,7 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     /// Get building analytics for a specific building
-    func getBuildingAnalytics(for buildingId: String) -> BuildingAnalytics? {
+    func getBuildingAnalytics(for buildingId: String) -> LocalBuildingAnalytics? {  // FIXED: Use type alias
         return buildingAnalytics[buildingId]
     }
     
@@ -145,9 +159,21 @@ class ClientDashboardViewModel: ObservableObject {
         return analytics.overdueTasks > 0 || analytics.completionRate < 0.8
     }
     
+    /// Get high-priority insights for executive dashboard
+    func getHighPriorityInsights() -> [CoreTypes.IntelligenceInsight] {
+        return portfolioInsights.filter {
+            $0.priority == .high || $0.priority == .critical
+        }.prefix(5).map { $0 }
+    }
+    
+    /// Get actionable insights for immediate attention
+    func getActionableInsights() -> [CoreTypes.IntelligenceInsight] {
+        return portfolioInsights.filter { $0.actionable }.prefix(3).map { $0 }
+    }
+    
     // MARK: - Private Helper Methods
     
-    private func calculateOverallCompliance(_ analytics: [String: BuildingAnalytics]) -> Double {
+    private func calculateOverallCompliance(_ analytics: [String: LocalBuildingAnalytics]) -> Double {  // FIXED: Use type alias
         guard !analytics.isEmpty else { return 0.0 }
         
         let totalCompliance = analytics.values.reduce(0.0) { result, buildingAnalytics in
@@ -160,7 +186,7 @@ class ClientDashboardViewModel: ObservableObject {
         return totalCompliance / Double(analytics.count)
     }
     
-    private func calculateOverallEfficiency(_ analytics: [String: BuildingAnalytics]) -> Double {
+    private func calculateOverallEfficiency(_ analytics: [String: LocalBuildingAnalytics]) -> Double {  // FIXED: Use type alias
         guard !analytics.isEmpty else { return 0.0 }
         
         let totalTasks = analytics.values.reduce(0) { $0 + $1.totalTasks }
@@ -169,16 +195,16 @@ class ClientDashboardViewModel: ObservableObject {
         return totalTasks > 0 ? Double(totalCompleted) / Double(totalTasks) : 0.0
     }
     
-    private func calculatePortfolioTrend(_ analytics: [String: BuildingAnalytics]) -> TrendDirection {
-        guard !analytics.isEmpty else { return .unknown }
+    private func calculatePortfolioTrend(_ analytics: [String: LocalBuildingAnalytics]) -> CoreTypes.TrendDirection {  // FIXED: Use type alias
+        guard !analytics.isEmpty else { return .stable }  // FIXED: Use .stable instead of .unknown
         
         let highPerformingCount = analytics.values.filter { $0.completionRate > 0.8 }.count
         let lowPerformingCount = analytics.values.filter { $0.completionRate < 0.6 }.count
         
         if highPerformingCount > lowPerformingCount {
-            return .improving
+            return .up  // FIXED: Use .up instead of .improving
         } else if lowPerformingCount > highPerformingCount {
-            return .declining
+            return .down  // FIXED: Use .down instead of .declining
         } else {
             return .stable
         }
@@ -196,57 +222,15 @@ class ClientDashboardViewModel: ObservableObject {
     }
 }
 
-// MARK: - PortfolioIntelligence Model
-// Defined here to match the existing CoreTypes.swift pattern
-
-struct PortfolioIntelligence: Codable, Hashable {
-    let totalBuildings: Int
-    let totalCompletedTasks: Int
-    let averageComplianceScore: Double
-    let totalActiveWorkers: Int
-    let overallEfficiency: Double
-    let trendDirection: FrancoSphere.TrendDirection
-    
-    init(totalBuildings: Int, totalCompletedTasks: Int, averageComplianceScore: Double, totalActiveWorkers: Int, overallEfficiency: Double, trendDirection: FrancoSphere.TrendDirection) {
-        self.totalBuildings = totalBuildings
-        self.totalCompletedTasks = totalCompletedTasks
-        self.averageComplianceScore = averageComplianceScore
-        self.totalActiveWorkers = totalActiveWorkers
-        self.overallEfficiency = overallEfficiency
-        self.trendDirection = trendDirection
-    }
-    
-    // Computed properties for UI display
-    var efficiencyPercentage: Int {
-        return Int(overallEfficiency * 100)
-    }
-    
-    var compliancePercentage: Int {
-        return Int(averageComplianceScore * 100)
-    }
-    
-    var status: String {
-        if overallEfficiency > 0.9 && averageComplianceScore > 0.9 {
-            return "Excellent"
-        } else if overallEfficiency > 0.8 && averageComplianceScore > 0.8 {
-            return "Good"
-        } else if overallEfficiency > 0.7 && averageComplianceScore > 0.7 {
-            return "Fair"
-        } else {
-            return "Needs Improvement"
-        }
-    }
-}
-
-// MARK: - Simple Helper Models for UI
+// MARK: - Helper Models for UI Display
 
 /// Building item for client dashboard list display
 struct ClientBuildingItem: Identifiable {
     let id: String
     let building: NamedCoordinate
-    let analytics: BuildingAnalytics
+    let analytics: BuildingService.BuildingAnalytics  // FIXED: Back to explicit namespace for clarity
     
-    init(building: NamedCoordinate, analytics: BuildingAnalytics) {
+    init(building: NamedCoordinate, analytics: BuildingService.BuildingAnalytics) {  // FIXED: Explicit namespace
         self.id = building.id
         self.building = building
         self.analytics = analytics
@@ -268,5 +252,79 @@ struct ClientBuildingItem: Identifiable {
     
     var efficiencyPercentage: Int {
         return Int(analytics.completionRate * 100)
+    }
+}
+
+/// Portfolio health summary for client view
+struct PortfolioHealthSummary {
+    let portfolio: CoreTypes.PortfolioIntelligence
+    let insights: [CoreTypes.IntelligenceInsight]
+    let alertBuildings: [NamedCoordinate]
+    
+    var overallStatus: String {
+        let efficiency = portfolio.overallEfficiency
+        let compliance = portfolio.averageComplianceScore
+        let average = (efficiency + compliance) / 2
+        
+        if average >= 0.9 { return "Excellent" }
+        if average >= 0.8 { return "Good" }
+        if average >= 0.7 { return "Fair" }
+        return "Needs Improvement"
+    }
+    
+    var statusColor: Color {
+        let efficiency = portfolio.overallEfficiency
+        let compliance = portfolio.averageComplianceScore
+        let average = (efficiency + compliance) / 2
+        
+        if average >= 0.9 { return .green }
+        if average >= 0.8 { return .blue }
+        if average >= 0.7 { return .orange }
+        return .red
+    }
+    
+    var criticalIssuesCount: Int {
+        insights.filter { $0.priority == .critical }.count
+    }
+    
+    var actionRequiredCount: Int {
+        insights.filter { $0.actionable }.count
+    }
+}
+
+// MARK: - Extensions for CoreTypes Compatibility
+
+extension CoreTypes.PortfolioIntelligence {
+    /// Computed properties for UI display
+    var efficiencyPercentage: Int {
+        return Int(overallEfficiency * 100)
+    }
+    
+    var compliancePercentage: Int {
+        return Int(averageComplianceScore * 100)
+    }
+    
+    var status: String {
+        if overallEfficiency > 0.9 && averageComplianceScore > 0.9 {
+            return "Excellent"
+        } else if overallEfficiency > 0.8 && averageComplianceScore > 0.8 {
+            return "Good"
+        } else if overallEfficiency > 0.7 && averageComplianceScore > 0.7 {
+            return "Fair"
+        } else {
+            return "Needs Improvement"
+        }
+    }
+    
+    var statusColor: Color {
+        if overallEfficiency > 0.9 && averageComplianceScore > 0.9 {
+            return .green
+        } else if overallEfficiency > 0.8 && averageComplianceScore > 0.8 {
+            return .blue
+        } else if overallEfficiency > 0.7 && averageComplianceScore > 0.7 {
+            return .orange
+        } else {
+            return .red
+        }
     }
 }
