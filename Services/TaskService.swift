@@ -10,11 +10,9 @@ import Foundation
 actor TaskService {
     static let shared = TaskService()
     private init() {}
-    
-    // MARK: - Core Methods
-    func getTasks(for workerId: String, date: Date) async throws -> [ContextualTask] {
-        return []
-    }
+
+    func getTasks(for workerId: String, date: Date) async throws -> [ContextualTask] { [] }
+
     func getTaskProgress(for workerId: String) async throws -> TaskProgress {
         return TaskProgress(
             workerId: workerId,
@@ -23,52 +21,31 @@ actor TaskService {
             overdueTasks: 0,
             todayCompletedTasks: 0,
             weeklyTarget: 10,
-            currentStreak: 0
+            currentStreak: 0,
+            lastCompletionDate: nil
         )
     }
+
     func completeTask(_ taskId: String, evidence: ActionEvidence?) async throws {
         print("✅ Task completed: \(taskId)")
     }
 
-    // MARK: - Building-specific Methods
-    func getTasksForBuilding(_ buildingId: String, date: Date = Date()) async throws -> [ContextualTask] {
-        return []
-    }
-    func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [WorkerProfile] {
-        return []
-    }
+    func getTasksForBuilding(_ buildingId: String, date: Date = Date()) async throws -> [ContextualTask] { [] }
+    func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [WorkerProfile] { [] }
 
-    // MARK: - Legacy Compatibility Methods
-    func getAllTasks() -> [ContextualTask] { return [] }
-    func addTask(_ task: ContextualTask) {
-        Task { try? await createTask(task) }
-    }
-    func createTask(_ task: ContextualTask) async throws {
-        print("➕ Creating task: \(task.title)")
-    }
-    func toggleTaskCompletion(taskId: String) {
-        Task { try? await completeTask(taskId, evidence: nil) }
-    }
+    // Legacy support
+    func getAllTasks() -> [ContextualTask] { [] }
+    func addTask(_ task: ContextualTask) { Task { try? await createTask(task) } }
+    func createTask(_ task: ContextualTask) async throws { print("➕ Creating task: \(task.title)") }
+    func toggleTaskCompletion(taskId: String) { Task { try? await completeTask(taskId, evidence: nil) } }
 
-    // Additional async helpers
-    func fetchTasks() async -> [ContextualTask] {
-        do { return try await getTasks(for: "1", date: Date()) }
-        catch { return [] }
-    }
-    func fetchTasksAsync() async throws -> [ContextualTask] {
-        return try await getTasks(for: "1", date: Date())
-    }
-    func createWeatherBasedTasksAsync() async throws {
-        print("🌤️ Creating weather-based tasks...")
-    }
-    func toggleTaskCompletionAsync(_ task: ContextualTask) async throws {
-        try await completeTask(task.id, evidence: nil)
-    }
-    func fetchMaintenanceHistory(for buildingId: String) async -> [MaintenanceRecord] {
-        return []
-    }
+    // Helpers
+    func fetchTasks() async -> [ContextualTask] { (try? await getTasks(for: "1", date: Date())) ?? [] }
+    func fetchTasksAsync() async throws -> [ContextualTask] { try await getTasks(for: "1", date: Date()) }
+    func createWeatherBasedTasksAsync() async throws { print("🌤️ Creating weather-based tasks…") }
+    func toggleTaskCompletionAsync(_ task: ContextualTask) async throws { try await completeTask(task.id, evidence: nil) }
+    func fetchMaintenanceHistory(for buildingId: String) async -> [MaintenanceRecord] { [] }
     func fetchRecentTasks(for workerId: String, limit: Int = 10) async throws -> [ContextualTask] {
-        let tasks = try await getTasks(for: workerId, date: Date())
-        return Array(tasks.prefix(limit))
+        let t = try await getTasks(for: workerId, date: Date()); return Array(t.prefix(limit))
     }
 }

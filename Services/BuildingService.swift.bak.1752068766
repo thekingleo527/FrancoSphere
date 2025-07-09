@@ -585,7 +585,7 @@ class BuildingService: ObservableObject {
         }
     }
     
-    internal func inferBuildingType(_ building: NamedCoordinate) -> BuildingType {
+    internal func inferBuildingType(_ building: NamedCoordinate) -> LocalBuildingType {
         let name = building.name.lowercased()
         
         if name.contains("museum") || name.contains("rubin") { return .cultural }
@@ -597,7 +597,7 @@ class BuildingService: ObservableObject {
         return .commercial
     }
     
-    private func getSpecialRequirements(_ building: NamedCoordinate, _ type: BuildingType) -> [String] {
+    private func getSpecialRequirements(_ building: NamedCoordinate, _ type: LocalBuildingType) -> [String] {
         var requirements: [String] = []
         
         // ✅ Special requirements for Kevin's Rubin Museum assignment
@@ -624,7 +624,7 @@ class BuildingService: ObservableObject {
         return requirements
     }
     
-    private func getPeakOperatingHours(_ building: NamedCoordinate, _ type: BuildingType) -> String {
+    private func getPeakOperatingHours(_ building: NamedCoordinate, _ type: LocalBuildingType) -> String {
         // ✅ Kevin's Rubin Museum has specific hours
         if building.id == "14" {
             return "10:00 AM - 6:00 PM (Museum Hours)"
@@ -639,7 +639,7 @@ class BuildingService: ObservableObject {
         }
     }
     
-    private func getRecommendedWorkerCount(_ building: NamedCoordinate, _ type: BuildingType) -> Int {
+    private func getRecommendedWorkerCount(_ building: NamedCoordinate, _ type: LocalBuildingType) -> Int {
         // ✅ Kevin's buildings need appropriate staffing
         if building.id == "14" { return 2 } // Rubin Museum
         if building.name.contains("Perry") || building.name.contains("West 17th") { return 2 }
@@ -661,7 +661,11 @@ class BuildingService: ObservableObject {
     
     // MARK: - Phase 2.1 Support Methods
     
-    
+    private func getComplianceData(_ buildingId: CoreTypes.BuildingID) async throws -> ComplianceDataDTO {
+        let analytics = try await getBuildingAnalytics(buildingId)
+        
+        let status: FrancoSphereModels.ComplianceStatus = {
+            if analytics.overdueTasks > 0 { return .nonCompliant }
             else if analytics.completionRate >= 0.95 { return .compliant }
             else { return .warning }
         }()
@@ -677,7 +681,19 @@ class BuildingService: ObservableObject {
         )
     }
     
-    .count
+    private func getWorkerMetrics(_ buildingId: CoreTypes.BuildingID) async throws -> [WorkerMetricsDTO] {
+        let assignments = await getBuildingWorkerAssignments(for: buildingId)
+        
+        var metrics: [WorkerMetricsDTO] = []
+        
+        for assignment in assignments {
+            let workerTasks = try await TaskService.shared.getTasksForWorkerAndBuilding(
+                workerId: String(assignment.workerId),
+                buildingId: buildingId,
+                days: 30
+            )
+            
+            let completedTasks = workerTasks.filter { $0.isCompleted }.count
             let totalTasks = workerTasks.count
             let efficiency = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
             
@@ -697,7 +713,16 @@ class BuildingService: ObservableObject {
         return metrics
     }
     
-    
+    private func getOperationalMetrics(_ buildingId: CoreTypes.BuildingID) async throws -> OperationalMetricsDTO {
+        let analytics = try await getBuildingAnalytics(buildingId)
+        
+        return OperationalMetricsDTO(
+            score: Int(analytics.completionRate * 100),
+            routineAdherence: analytics.completionRate,
+            maintenanceEfficiency: analytics.completionRate > 0.9 ? 0.95 : 0.85,
+            averageTaskDuration: analytics.averageTasksPerDay * 3600 // Convert to seconds
+        )
+    }
     
     private func getBuildingSpecificData(_ building: NamedCoordinate) -> BuildingSpecificDataDTO {
         let buildingType = inferBuildingType(building)
@@ -1093,7 +1118,7 @@ struct WorkerOnSite {
 
 struct BuildingOperationalInsights {
     let building: NamedCoordinate
-    let buildingType: BuildingType
+    let buildingType: LocalBuildingType
     let specialRequirements: [String]
     let peakOperatingHours: String
     let currentStatus: EnhancedBuildingStatus
@@ -1102,7 +1127,7 @@ struct BuildingOperationalInsights {
     let maintenancePriority: MaintenancePriority
 }
 
-enum BuildingType: String, CaseIterable {
+enum LocalBuildingType: String, CaseIterable {
     case residential = "Residential"
     case commercial = "Commercial"
     case cultural = "Cultural"
