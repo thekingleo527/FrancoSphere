@@ -141,6 +141,9 @@
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
 		2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560D2E11086300B3F105 /* WorkersInlineList.swift */; };
+		23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169A2E1E368500469FA3 /* TaskService.swift */; };
+		23A3169D2E1E377500469FA3 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */; };
+		23A3169F2E1E37B500469FA3 /* AITypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169E2E1E37B500469FA3 /* AITypes.swift */; };
 		23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178C2DFDB0310065F39E /* MySitesCard.swift */; };
 		23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178E2DFDB0570065F39E /* HeaderV3B.swift */; };
 		23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */; };
@@ -159,7 +162,6 @@
 		23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */; };
 		23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76B2E030EA500013D90 /* RoutinePriority.swift */; };
 		23DED85B2E1E24F100E5F9F5 /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */; };
-		23DED85D2E1E2A0800E5F9F5 /* TaskService 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DED85C2E1E2A0800E5F9F5 /* TaskService 2.swift */; };
 		23DF5C8F2E1853B8000F9982 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 23DF5C8E2E1853B8000F9982 /* SQLite */; };
 		23DF5C922E18546C000F9982 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23DF5C912E18546C000F9982 /* OpenMeteoSdk */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
@@ -330,6 +332,9 @@
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
 		2399560D2E11086300B3F105 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
+		23A3169A2E1E368500469FA3 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TaskService.swift; path = Services/TaskService.swift; sourceTree = "<group>"; };
+		23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngineAdapter.swift; sourceTree = "<group>"; };
+		23A3169E2E1E37B500469FA3 /* AITypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITypes.swift; sourceTree = "<group>"; };
 		23B1178C2DFDB0310065F39E /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
 		23B1178E2DFDB0570065F39E /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
 		23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
@@ -346,7 +351,6 @@
 		23BBD7672E0265AB00013D90 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
 		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
 		23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceService.swift; sourceTree = "<group>"; };
-		23DED85C2E1E2A0800E5F9F5 /* TaskService 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskService 2.swift"; sourceTree = "<group>"; };
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 		23EE82492E1C1B4F00C298C7 /* default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = default.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
@@ -475,6 +479,7 @@
 		23423DAE2D739D6800AACE3E = {
 			isa = PBXGroup;
 			children = (
+				23A3169A2E1E368500469FA3 /* TaskService.swift */,
 				236106EB2E17AD0700463A59 /* Security */,
 				233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */,
 				234580B72DF78E3D00355F0A /* Components */,
@@ -555,6 +560,7 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */,
 				2312FC6A2E1B77B400B64496 /* StatCard.swift */,
 				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
 				239956072E11079F00B3F105 /* AIScenarioSheetView.swift */,
@@ -705,7 +711,6 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				23DED85C2E1E2A0800E5F9F5 /* TaskService 2.swift */,
 				23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */,
 				2374938F2E1D7E9C00D9C70D /* BuildingMetricsService.swift */,
 				2312FC862E1BF06A00B64496 /* Configuration */,
@@ -803,6 +808,7 @@
 		2374933D2E1C950700D9C70D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				23A3169E2E1E37B500469FA3 /* AITypes.swift */,
 				237493572E1C9F8800D9C70D /* CoreTypes.swift */,
 			);
 			path = Core;
@@ -1015,6 +1021,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */,
 				2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */,
 				233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
@@ -1099,7 +1106,6 @@
 				2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */,
 				23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */,
 				23BBD7662E00A12800013D90 /* BuildingMapDetailView.swift in Sources */,
-				23DED85D2E1E2A0800E5F9F5 /* TaskService 2.swift in Sources */,
 				2345818B2DF78E3D00355F0A /* ProfileView.swift in Sources */,
 				233F94EA2DF7E69B00901707 /* TaskTimelineRow.swift in Sources */,
 				23B1179F2DFE23B00065F39E /* SchemaMigrationPatch.swift in Sources */,
@@ -1129,6 +1135,7 @@
 				237493582E1C9F8800D9C70D /* CoreTypes.swift in Sources */,
 				234581A02DF78E3D00355F0A /* TaskScheduleView.swift in Sources */,
 				237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */,
+				23A3169F2E1E37B500469FA3 /* AITypes.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
@@ -1151,6 +1158,7 @@
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
+				23A3169D2E1E377500469FA3 /* WorkerContextEngineAdapter.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
