@@ -2,9 +2,9 @@
 //  WorkerDashboardViewModel.swift
 //  FrancoSphere
 //
-//  ✅ V6.0: View model for the main worker dashboard.
-//  ✅ Handles all logic for fetching data and interacting with services/actors.
-//  ✅ Decouples the view from the business logic.
+//  ✅ ACTOR-COMPATIBLE: Updated for WorkerContextEngine Actor
+//  ✅ Async/await patterns for all actor interactions
+//  ✅ Real-time metrics integration
 //
 
 import Foundation
@@ -19,108 +19,126 @@ class WorkerDashboardViewModel: ObservableObject {
     @Published var taskProgress: TaskProgress?
     @Published var isLoading = true
     @Published var errorMessage: String?
-    
-    // Clock-In State
     @Published var isClockedIn = false
-    @Published var currentSession: ClockInManager.ClockInSession?
+    @Published var currentBuilding: NamedCoordinate?
     
-    // Services (Actors)
+    // MARK: - Actor Dependencies
     private let authManager = NewAuthManager.shared
-    private let clockInManager = ClockInManager.shared
     private let contextEngine = WorkerContextEngine.shared
+    private let metricsService = BuildingMetricsService.shared
     
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        // Listen for notifications from our actors
-        setupNotificationListeners()
+        setupAutoRefresh()
     }
 
     func loadInitialData() async {
-        guard let workerId = await authManager.currentUser?.workerId else {
-            errorMessage = "Critical error: Could not identify current worker."
+        guard let user = await authManager.getCurrentUser() else {
+            errorMessage = "Not authenticated"
             isLoading = false
             return
         }
         
         isLoading = true
+        errorMessage = nil
         
-        // Fetch initial clock-in status
-        let status = await clockInManager.getClockInStatus(for: workerId)
-        self.isClockedIn = status.isClockedIn
-        self.currentSession = status.session
-        
-        // Load the rest of the context
-        await contextEngine.loadContext(for: workerId)
-        
-        // Update published properties from the context engine
-        self.assignedBuildings = contextEngine.assignedBuildings
-        self.todaysTasks = contextEngine.todaysTasks
-        self.taskProgress = contextEngine.taskProgress
-        
-        if let error = contextEngine.error {
-            self.errorMessage = error.localizedDescription
+        do {
+            // Load context using Actor pattern (await calls)
+            try await contextEngine.loadContext(for: user.workerId)
+            
+            // Update UI state from Actor
+            self.assignedBuildings = await contextEngine.getAssignedBuildings()
+            self.todaysTasks = await contextEngine.getTodaysTasks()
+            self.taskProgress = await contextEngine.getTaskProgress()
+            self.isClockedIn = await contextEngine.isWorkerClockedIn()
+            self.currentBuilding = await contextEngine.getCurrentBuilding()
+            
+            print("✅ Worker dashboard data loaded: \(assignedBuildings.count) buildings")
+            
+        } catch {
+            errorMessage = error.localizedDescription
+            print("❌ Failed to load worker dashboard: \(error)")
         }
         
         isLoading = false
     }
     
-    func handleClockInToggle() async {
-        guard let workerId = await authManager.currentUser?.workerId else { return }
-
-        if isClockedIn {
-            await handleClockOut(workerId: workerId)
-        } else {
-            // In a real app, this would trigger a sheet to select a building.
-            // We will add this logic back into the view.
-            print("Clock-in action initiated, view should present building selection.")
-        }
-    }
-    
-    func handleClockIn(for building: NamedCoordinate) async {
-        guard let workerId = await authManager.currentUser?.workerId else { return }
+    func refreshData() async {
         do {
-            try await clockInManager.clockIn(workerId: workerId, building: building)
+            try await contextEngine.refreshData()
+            
+            // Update UI state
+            self.assignedBuildings = await contextEngine.getAssignedBuildings()
+            self.todaysTasks = await contextEngine.getTodaysTasks()
+            self.taskProgress = await contextEngine.getTaskProgress()
+            self.isClockedIn = await contextEngine.isWorkerClockedIn()
+            self.currentBuilding = await contextEngine.getCurrentBuilding()
+            
         } catch {
             errorMessage = error.localizedDescription
         }
     }
     
-    private func handleClockOut(workerId: CoreTypes.WorkerID) async {
+    func completeTask(_ task: ContextualTask) async {
+        guard let user = await authManager.getCurrentUser() else { return }
+        
         do {
-            try await clockInManager.clockOut(workerId: workerId)
+            let evidence = ActionEvidence(
+                taskId: task.id,
+                timestamp: Date(),
+                location: CLLocation(latitude: 0, longitude: 0),
+                photos: [],
+                notes: "Task completed via dashboard"
+            )
+            
+            try await contextEngine.recordTaskCompletion(
+                workerId: user.workerId,
+                buildingId: task.buildingId,
+                taskId: task.id,
+                evidence: evidence
+            )
+            
+            // Invalidate metrics cache for this building
+            await metricsService.invalidateCache(for: task.buildingId)
+            
+            // Refresh local data
+            await refreshData()
+            
         } catch {
             errorMessage = error.localizedDescription
         }
     }
-
-    private func setupNotificationListeners() {
-        NotificationCenter.default.publisher(for: .workerClockInChanged)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] notification in
-                Task { [weak self] in
-                    await self?.updateClockInState(from: notification)
+    
+    func clockIn(at building: NamedCoordinate) async {
+        do {
+            try await contextEngine.clockIn(at: building)
+            self.isClockedIn = true
+            self.currentBuilding = building
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+    
+    func clockOut() async {
+        do {
+            try await contextEngine.clockOut()
+            self.isClockedIn = false
+            self.currentBuilding = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+    
+    private func setupAutoRefresh() {
+        // Refresh every 30 seconds
+        Timer.publish(every: 30, on: .main, in: .common)
+            .autoconnect()
+            .sink { _ in
+                Task {
+                    await self.refreshData()
                 }
             }
             .store(in: &cancellables)
-    }
-    
-    private func updateClockInState(from notification: Notification) async {
-        guard let userInfo = notification.userInfo,
-              let workerId = userInfo["workerId"] as? CoreTypes.WorkerID,
-              let authWorkerId = await authManager.currentUser?.workerId,
-              authWorkerId == workerId else { return }
-
-        self.isClockedIn = userInfo["isClockedIn"] as? Bool ?? false
-        if self.isClockedIn {
-             self.currentSession = .init(
-                workerId: workerId,
-                buildingId: userInfo["buildingId"] as? String ?? "",
-                buildingName: userInfo["buildingName"] as? String ?? "Unknown",
-                startTime: Date(),
-                location: nil)
-        } else {
-            self.currentSession = nil
-        }
     }
 }

@@ -3,9 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ CONVERTED TO ACTOR: Thread-safe worker context management
-//  ✅ Removed ALL @Published properties (incompatible with actors)  
-//  ✅ All methods async for actor isolation
-//  ✅ ViewModels must use await calls
+//  ✅ Removed @Published properties (incompatible with actors)
+//  ✅ All methods are async for actor isolation
 //
 
 import Foundation
@@ -21,15 +20,12 @@ public actor WorkerContextEngine {
     private var todaysTasks: [ContextualTask] = []
     private var taskProgress: TaskProgress?
     private var clockInStatus: (isClockedIn: Bool, building: NamedCoordinate?) = (false, nil)
-    private var isLoading = false
-    private var lastError: Error?
     
     // MARK: - Dependencies
     private let authManager = NewAuthManager.shared
     private let workerService = WorkerService.shared
     private let taskService = TaskService.shared
     private let buildingService = BuildingService.shared
-    private let clockInManager = ClockInManager.shared
     
     private init() {}
     
@@ -38,53 +34,38 @@ public actor WorkerContextEngine {
     public func loadContext(for workerId: CoreTypes.WorkerID) async throws {
         print("🔄 Loading context for worker: \(workerId)")
         
-        isLoading = true
-        lastError = nil
+        // Load REAL worker data from database
+        async let profile = workerService.getWorkerProfile(for: workerId)
+        async let buildings = buildingService.getBuildingsForWorker(workerId)
+        async let tasks = taskService.getTasks(for: workerId, date: Date())
+        async let progress = taskService.getTaskProgress(for: workerId)
         
-        do {
-            // Load REAL worker data from database
-            async let profile = workerService.getWorkerProfile(for: workerId)
-            async let buildings = buildingService.getBuildingsForWorker(workerId)
-            async let tasks = taskService.getTasks(for: workerId, date: Date())
-            async let progress = taskService.getTaskProgress(for: workerId)
-            
-            // Update state atomically
-            self.currentWorker = try await profile
-            self.assignedBuildings = try await buildings
-            self.todaysTasks = try await tasks
-            self.taskProgress = try await progress
-            
-            // Update clock-in status
-            let status = await clockInManager.getClockInStatus(for: workerId)
-            self.clockInStatus = (status.isClockedIn, status.currentBuilding)
-            
-            print("✅ Context loaded: \(self.assignedBuildings.count) buildings, \(self.todaysTasks.count) tasks")
-            
-        } catch {
-            print("❌ Failed to load context: \(error)")
-            self.lastError = error
-            throw error
-        }
+        // Update state atomically
+        self.currentWorker = try await profile
+        self.assignedBuildings = try await buildings
+        self.todaysTasks = try await tasks
+        self.taskProgress = try await progress
         
-        isLoading = false
+        print("✅ Context loaded: \(self.assignedBuildings.count) buildings, \(self.todaysTasks.count) tasks")
     }
     
-    // MARK: - Async Getter Methods (Replace @Published)
+    // MARK: - Getter Methods (Replace @Published)
     
-    public func getCurrentWorker() async -> WorkerProfile? { currentWorker }
-    public func getAssignedBuildings() async -> [NamedCoordinate] { assignedBuildings }
-    public func getTodaysTasks() async -> [ContextualTask] { todaysTasks }
-    public func getTaskProgress() async -> TaskProgress? { taskProgress }
-    public func isWorkerClockedIn() async -> Bool { clockInStatus.isClockedIn }
-    public func getCurrentBuilding() async -> NamedCoordinate? { clockInStatus.building }
-    public func getIsLoading() async -> Bool { isLoading }
-    public func getLastError() async -> Error? { lastError }
+    public func getCurrentWorker() -> WorkerProfile? { currentWorker }
+    public func getAssignedBuildings() -> [NamedCoordinate] { assignedBuildings }
+    public func getTodaysTasks() -> [ContextualTask] { todaysTasks }
+    public func getTaskProgress() -> TaskProgress? { taskProgress }
+    public func isWorkerClockedIn() -> Bool { clockInStatus.isClockedIn }
+    public func getCurrentBuilding() -> NamedCoordinate? { clockInStatus.building }
     
     // MARK: - Worker Information
     
-    public func getWorkerId() async -> String? { currentWorker?.id }
-    public func getWorkerName() async -> String { currentWorker?.name ?? "Unknown" }
-    public func getWorkerRole() async -> String { currentWorker?.role.rawValue ?? "worker" }
+    public func getWorkerId() -> String? { currentWorker?.id }
+    public func getWorkerName() -> String { currentWorker?.name ?? "Unknown" }
+    public func getWorkerRole() -> String { currentWorker?.role.rawValue ?? "worker" }
+    public func getWorkerStatus() -> WorkerStatus {
+        clockInStatus.isClockedIn ? .clockedIn : .available
+    }
     
     // MARK: - Task Management
     
@@ -135,7 +116,10 @@ public actor WorkerContextEngine {
         
         print("🕐 Clocking in at: \(building.name)")
         
-        try await clockInManager.clockIn(workerId: workerId, buildingId: building.id)
+        // Update database
+        try await ClockInManager.shared.clockIn(workerId: workerId, buildingId: building.id)
+        
+        // Update local state
         clockInStatus = (true, building)
         
         print("✅ Clocked in successfully")
@@ -148,7 +132,10 @@ public actor WorkerContextEngine {
         
         print("🕐 Clocking out...")
         
-        try await clockInManager.clockOut(workerId: workerId)
+        // Update database
+        try await ClockInManager.shared.clockOut(workerId: workerId)
+        
+        // Update local state
         clockInStatus = (false, nil)
         
         print("✅ Clocked out successfully")
@@ -164,9 +151,10 @@ public actor WorkerContextEngine {
         try await loadContext(for: workerId)
     }
     
-    // MARK: - Legacy Compatibility (Synchronous methods for migration)
+    // MARK: - Legacy Compatibility Methods
     
     public func todayWorkers() -> [WorkerProfile] {
+        // Return current worker as array for compatibility
         if let worker = currentWorker {
             return [worker]
         }
@@ -183,6 +171,10 @@ public actor WorkerContextEngine {
 }
 
 // MARK: - Supporting Types
+
+public enum WorkerStatus {
+    case available, clockedIn, onBreak, offDuty
+}
 
 public enum WorkerContextError: Error {
     case noCurrentWorker
