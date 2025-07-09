@@ -469,3 +469,50 @@ public typealias TaskTrends = AdditionalTypes.TaskTrends
 public typealias InsightFilter = AdditionalTypes.InsightFilter
 public typealias StreakData = AdditionalTypes.StreakData
 public typealias ActionEvidence = DTOs.ActionEvidence
+
+// MARK: - TaskUrgency Extensions for UI Compatibility
+extension TaskUrgency {
+    public var fontWeight: Font.Weight {
+        switch self {
+        case .low: return .light
+        case .medium: return .regular
+        case .high: return .semibold
+        case .critical: return .bold
+        }
+    }
+    public var feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle {
+        switch self {
+        case .low: return .light
+        case .medium: return .medium
+        case .high: return .heavy
+        case .critical: return .heavy
+        }
+    }
+    public var textColor: Color {
+        switch self {
+        case .low: return .secondary
+        case .medium: return .primary
+        case .high: return .orange
+        case .critical: return .red
+        }
+    }
+}
+
+// MARK: - TaskUrgency UI Compatibility
+extension FrancoSphere.TaskUrgency {
+    public var fontWeight: Font.Weight {
+        switch self {
+        case .low: return .light
+        case .medium: return .regular
+        case .high, .urgent: return .semibold
+        case .critical, .emergency: return .bold
+        }
+    }
+    public var feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle {
+        switch self {
+        case .low: return .light
+        case .medium: return .medium
+        case .high, .urgent, .critical, .emergency: return .heavy
+        }
+    }
+}

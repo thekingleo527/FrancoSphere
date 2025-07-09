@@ -20,7 +20,7 @@ struct HeaderV3B: View {
     let showClockPill: Bool
     
     // 🎯 ENHANCED: Real data integration
-    @ObservedObject private var contextEngine = WorkerContextEngine.shared
+    @ObservedObject private var contextEngine = WorkerContextEngineAdapter.shared
     
     // Default initializer maintains backward compatibility
     init(
@@ -101,7 +101,7 @@ struct HeaderV3B: View {
                     Button(action: onClockToggle) {
                         HStack(spacing: 4) {
                             Image(systemName: clockedInStatus ? "clock.fill" : "clock")
-                                .font(.system(size: 12, weight: TaskUrgency.medium))
+                                .font(.system(size: 12, weight: TaskUrgency.medium.fontWeight))
                             Text(clockedInStatus ? "OUT" : "IN")
                                 .font(.system(size: 12, weight: .semibold))
                         }
@@ -143,7 +143,7 @@ struct HeaderV3B: View {
                 .frame(width: 6, height: 6)
             
             Text(clockedInStatus ? "Clocked In" : "Clocked Out")
-                .font(.system(size: 10, weight: TaskUrgency.medium))
+                .font(.system(size: 10, weight: TaskUrgency.medium.fontWeight))
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, 6)
@@ -170,7 +170,7 @@ struct HeaderV3B: View {
     private var urgentWorkIndicator: some View {
         HStack(spacing: 4) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 12, weight: TaskUrgency.medium))
+                .font(.system(size: 12, weight: TaskUrgency.medium.fontWeight))
                 .foregroundColor(.orange)
             
             Text("Urgent")
@@ -188,11 +188,11 @@ struct HeaderV3B: View {
     private func nextTaskBanner(_ taskName: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "arrow.right.circle.fill")
-                .font(.system(size: 12, weight: TaskUrgency.medium))
+                .font(.system(size: 12, weight: TaskUrgency.medium.fontWeight))
                 .foregroundColor(.blue)
             
             Text("Next: \(taskName)")
-                .font(.system(size: 11, weight: TaskUrgency.medium))
+                .font(.system(size: 11, weight: TaskUrgency.medium.fontWeight))
                 .foregroundColor(.primary)
                 .lineLimit(1)
             
@@ -210,7 +210,7 @@ struct HeaderV3B: View {
     // MARK: - Enhanced Actions
     
     private func handleEnhancedNovaPress() {
-        HapticManager.impact(TaskUrgency.medium)
+        HapticManager.impact(TaskUrgency.medium.feedbackStyle)
         onNovaPress()
         generateSmartScenarioWithRealData()
     }

@@ -16,7 +16,7 @@ struct BuildingPreviewPopover: View {
     let onDetails: () -> Void
     let onDismiss: () -> Void
     
-    @StateObject private var contextEngine = WorkerContextEngine.shared
+    @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
     @State private var openTasksCount: Int = 0
     @State private var nextSanitationDate: String?
     @State private var isLoading = true

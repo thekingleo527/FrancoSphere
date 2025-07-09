@@ -22,7 +22,7 @@ import SwiftUI
 
 struct AIScenarioSheetView: View {
     @ObservedObject var aiManager: AIAssistantManager
-    @ObservedObject private var contextEngine = WorkerContextEngine.shared
+    @ObservedObject private var contextEngine = WorkerContextEngineAdapter.shared
     @Environment(\.dismiss) private var dismiss
     
     let scenarioData: AIScenarioData

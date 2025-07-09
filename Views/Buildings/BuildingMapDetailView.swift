@@ -17,7 +17,7 @@ import SwiftUI
 struct BuildingMapDetailView: View {
     let building: NamedCoordinate
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var contextEngine = WorkerContextEngine.shared
+    @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
     
     @State private var tasks: [ContextualTask] = []
     @State private var isLoading = true

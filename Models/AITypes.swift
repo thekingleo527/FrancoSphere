@@ -1,49 +1,92 @@
-//
-//  AITypes.swift
-//  FrancoSphere
-//
-//  AI-related types and enums
-//
-
 import Foundation
+import SwiftUI
 
-// MARK: - AI Scenario Types
-public enum AIScenarioType: String, CaseIterable {
-    case routineIncomplete = "routine_incomplete"
-    case taskCompletion = "task_completion" 
-    case pendingTasks = "pending_tasks"
-    case buildingArrival = "building_arrival"
-    case weatherAlert = "weather_alert"
-    case maintenanceRequired = "maintenance_required"
-    case scheduleConflict = "schedule_conflict"
-    case emergencyResponse = "emergency_response"
+public struct AIScenario: Identifiable, Codable, Hashable {
+    public let id = UUID()
+    public let title, description: String
+    public let type, priority: String
+    public let suggestions: [AISuggestion]
+    public let createdAt: Date
+
+    public init(title: String, description: String, type: String, priority: String,
+                suggestions: [AISuggestion]=[], createdAt: Date=Date())
+    {
+        self.title=title; self.description=description
+        self.type=type; self.priority=priority
+        self.suggestions=suggestions; self.createdAt=createdAt
+    }
 }
 
-// MARK: - AI Priority
-public enum AIPriority: String, CaseIterable, Codable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case urgent = "Urgent"
-    case critical = "Critical"
-    
-    public var color: String {
+public struct AISuggestion: Identifiable, Codable, Hashable {
+    public let id=UUID(), text, actionType: String
+    public let confidence: Double
+    public init(text: String, actionType: String, confidence: Double){
+        self.text=text; self.actionType=actionType; self.confidence=confidence
+    }
+}
+
+public struct AIScenarioData: Codable, Hashable {
+    public let scenarios: [AIScenario]
+    public let hasPendingScenarios: Bool
+    public let lastUpdated: Date
+
+    public init(scenarios: [AIScenario]=[], lastUpdated: Date=Date()) {
+        self.scenarios=scenarios
+        self.hasPendingScenarios=!scenarios.isEmpty
+        self.lastUpdated=lastUpdated
+    }
+    public static let empty=AIScenarioData()
+}
+
+public struct IntelligenceInsight: Identifiable, Codable, Hashable {
+    public let id=UUID(), title, description: String
+    public let type: InsightType, priority: InsightPriority
+    public let actionable: Bool, timestamp: Date
+
+    public init(title:String, description:String, type:InsightType,
+                priority:InsightPriority, actionable:Bool, timestamp:Date=Date())
+    {
+        self.title=title; self.description=description
+        self.type=type; self.priority=priority
+        self.actionable=actionable; self.timestamp=timestamp
+    }
+}
+
+public enum InsightType: String, Codable, CaseIterable {
+    case performance, maintenance, compliance, efficiency, cost, safety
+}
+
+public enum InsightPriority: String, Codable, CaseIterable {
+    case low, medium, high, critical
+    public var priorityValue: Int {
         switch self {
-        case .low: return "gray"
-        case .medium: return "blue"
-        case .high: return "orange"
-        case .urgent: return "red"
-        case .critical: return "purple"
+        case .low: return 1
+        case .medium: return 2
+        case .high: return 3
+        case .critical: return 4
         }
     }
 }
 
-// MARK: - Worker Status (Consolidated)
-public enum WorkerStatus: String, CaseIterable, Codable {
-    case available = "Available"
-    case busy = "Busy"
-    case clockedIn = "Clocked In"
-    case clockedOut = "Clocked Out"
-    case onBreak = "On Break"
-    case offline = "Offline"
+public struct BuildingInsight: Identifiable, Codable, Hashable {
+    public let id=UUID(), buildingId, title, description: String
+    public let type: InsightType, actionRequired: Bool, generatedAt: Date
+
+    public init(buildingId:String, type:InsightType, title:String,
+                description:String, actionRequired:Bool, generatedAt:Date=Date())
+    {
+        self.buildingId=buildingId
+        self.type=type; self.title=title; self.description=description
+        self.actionRequired=actionRequired; self.generatedAt=generatedAt
+    }
 }
+
+public enum BuildingStatus: String, Codable, CaseIterable {
+    case operational, maintenance, emergency, offline
+}
+
+public enum BuildingTab: String, CaseIterable {
+    case overview, tasks, maintenance, compliance, workers
+}
+
+public typealias ScheduleConflict=BuildingInsight

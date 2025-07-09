@@ -146,6 +146,13 @@ public struct TaskProgress: Codable, Hashable {
 
 // MARK: - Performance Metrics (FIXED)
 public struct PerformanceMetrics: Codable, Hashable {
+    public init(efficiency: Double, tasksCompleted: Int, averageTime: Double, qualityScore: Double, lastUpdate: Date) {
+        self.efficiency = efficiency
+        self.tasksCompleted = tasksCompleted
+        self.averageTime = averageTime
+        self.qualityScore = qualityScore
+        self.lastUpdate = lastUpdate
+    }
     public let workerId: CoreTypes.WorkerID
     public let period: TimePeriod
     public let efficiency: Double

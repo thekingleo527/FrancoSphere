@@ -14,7 +14,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var authManager = NewAuthManager.shared
-    @StateObject private var contextEngine = WorkerContextEngine.shared
+    @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
     
     @State private var showImagePicker = false
     @State private var showLogoutConfirmation = false
