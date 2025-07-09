@@ -15,54 +15,7 @@ import SwiftUI
 
 // MARK: - Supporting Data Models (ADDED - Were Missing)
 
-public struct PortfolioIntelligence: Codable, Hashable {
-    public let overallScore: Double
-    public let compliantBuildings: Int
-    public let totalBuildings: Int
-    public let pendingActions: Int
-    public let criticalIssues: [ComplianceIssue]
-    public let lastAuditDate: Date?
-    public let nextAuditDate: Date?
-    
-    public var compliancePercentage: Double {
-        guard totalBuildings > 0 else { return 0.0 }
-        return Double(compliantBuildings) / Double(totalBuildings) * 100.0
-    }
-    
-    public init(overallScore: Double, compliantBuildings: Int, totalBuildings: Int, pendingActions: Int, criticalIssues: [ComplianceIssue], lastAuditDate: Date?, nextAuditDate: Date?) {
-        self.overallScore = overallScore
-        self.compliantBuildings = compliantBuildings
-        self.totalBuildings = totalBuildings
-        self.pendingActions = pendingActions
-        self.criticalIssues = criticalIssues
-        self.lastAuditDate = lastAuditDate
-        self.nextAuditDate = nextAuditDate
-    }
-}
 
-public struct ComplianceIssue: Codable, Hashable, Identifiable {
-    public let id: String
-    public let issueType: ComplianceIssueType
-    public let severity: ComplianceSeverity
-    public let building: NamedCoordinate
-    public let description: String
-    public let dueDate: Date?
-    public let createdDate: Date
-    public let assignedTo: String?
-    public let status: ComplianceStatus
-    
-    public init(id: String, issueType: ComplianceIssueType, severity: ComplianceSeverity, building: NamedCoordinate, description: String, dueDate: Date?, createdDate: Date, assignedTo: String?, status: ComplianceStatus) {
-        self.id = id
-        self.issueType = issueType
-        self.severity = severity
-        self.building = building
-        self.description = description
-        self.dueDate = dueDate
-        self.createdDate = createdDate
-        self.assignedTo = assignedTo
-        self.status = status
-    }
-}
 
 public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
     case maintenanceOverdue = "Maintenance Overdue"
@@ -100,12 +53,7 @@ public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
     }
 }
 
-public enum ComplianceStatus: String, Codable, CaseIterable, Hashable {
-    case open = "Open"
-    case inProgress = "In Progress"
-    case resolved = "Resolved"
-    case closed = "Closed"
-}
+
 
 // MARK: - ComplianceOverviewView
 

@@ -495,40 +495,8 @@ public enum OutdoorWorkRisk: String, Codable, CaseIterable, Hashable {
 
 // MARK: - Supporting Models
 
-public struct TaskProgress: Codable, Hashable {
-    public let workerId: String
-    public let totalTasks: Int
-    public let completedTasks: Int
-    public let overdueTasks: Int
-    public let todayCompletedTasks: Int
-    public let weeklyTarget: Int
-    public let currentStreak: Int
-    public let lastUpdated: Date
-    
-    public init(
-        workerId: String,
-        totalTasks: Int,
-        completedTasks: Int,
-        overdueTasks: Int,
-        todayCompletedTasks: Int,
-        weeklyTarget: Int,
-        currentStreak: Int,
-        lastUpdated: Date = Date()
-    ) {
-        self.workerId = workerId
-        self.totalTasks = totalTasks
-        self.completedTasks = completedTasks
-        self.overdueTasks = overdueTasks
-        self.todayCompletedTasks = todayCompletedTasks
-        self.weeklyTarget = weeklyTarget
-        self.currentStreak = currentStreak
-        self.lastUpdated = lastUpdated
-    }
-    
-    public var completionRate: Double {
-        guard totalTasks > 0 else { return 0.0 }
-        return Double(completedTasks) / Double(totalTasks)
-    }
+
+
 }
 
 public struct MaintenanceRecord: Identifiable, Codable, Hashable {
@@ -799,35 +767,8 @@ public struct WorkerRoutineSummary: Codable, Hashable {
 
 // MARK: - Building and Analytics Models
 
-public struct BuildingAnalytics: Codable, Hashable {
-    public let buildingId: String
-    public let totalTasks: Int
-    public let completedTasks: Int
-    public let overdueTasks: Int
-    public let completionRate: Double
-    public let averageTaskDuration: TimeInterval
-    public let uniqueWorkers: Int
-    public let lastUpdated: Date
-    
-    public init(
-        buildingId: String,
-        totalTasks: Int,
-        completedTasks: Int,
-        overdueTasks: Int,
-        completionRate: Double,
-        averageTaskDuration: TimeInterval,
-        uniqueWorkers: Int,
-        lastUpdated: Date = Date()
-    ) {
-        self.buildingId = buildingId
-        self.totalTasks = totalTasks
-        self.completedTasks = completedTasks
-        self.overdueTasks = overdueTasks
-        self.completionRate = completionRate
-        self.averageTaskDuration = averageTaskDuration
-        self.uniqueWorkers = uniqueWorkers
-        self.lastUpdated = lastUpdated
-    }
+
+
 }
 
 // MARK: - Type Aliases for Backward Compatibility

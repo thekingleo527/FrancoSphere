@@ -26,8 +26,4 @@ public struct ComplianceDataDTO: Codable, Hashable {
     }
 }
 
-public enum ComplianceStatus: String, Codable {
-    case compliant = "Compliant"
-    case needsReview = "Needs Review"
-    case atRisk = "At Risk"
-}
+

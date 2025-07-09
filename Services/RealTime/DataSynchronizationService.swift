@@ -70,7 +70,7 @@ class DataSynchronizationService: ObservableObject {
             // We need to know which workers are assigned to this building.
             // This would typically come from a service.
             let assignedWorkerIds = ["1", "4"] // Placeholder
-            let freshIntelligence = StubFactory.makeBuildingIntelligence(for: buildingId, workerIds: assignedWorkerIds)
+            let freshIntelligence = await BuildingService.shared.getBuildingIntelligence(for: buildingId, workerIds: assignedWorkerIds)
             
             // Update our published dictionary, which will notify any subscribed views.
             buildingIntelligenceUpdates[buildingId] = freshIntelligence

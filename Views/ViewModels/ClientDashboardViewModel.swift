@@ -2,8 +2,8 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere
 //
-//  ✅ V6.0: FIXED - Explicit BuildingAnalytics namespacing
-//  ✅ Uses BuildingService.BuildingAnalytics (returned by getBuildingAnalytics)
+//  ✅ V6.0: FIXED - Explicit CoreTypes.BuildingAnalytics namespacing
+//  ✅ Uses BuildingService.CoreTypes.BuildingAnalytics (returned by getCoreTypes.BuildingAnalytics)
 //  ✅ Integrates with IntelligenceService for portfolio insights
 //
 
@@ -15,12 +15,12 @@ import Combine
 class ClientDashboardViewModel: ObservableObject {
     
     // MARK: - Type Aliases for Internal Use
-    private typealias LocalBuildingAnalytics = BuildingService.BuildingAnalytics
+    private typealias LocalCoreTypes.BuildingAnalytics = BuildingService.CoreTypes.BuildingAnalytics
     
     // MARK: - Published Properties
-    @Published var portfolioIntelligence: CoreTypes.PortfolioIntelligence?
+    @Published var portfolioIntelligence: CoreTypes.CoreTypes.PortfolioIntelligence?
     @Published var buildingsList: [NamedCoordinate] = []
-    @Published var buildingAnalytics: [String: LocalBuildingAnalytics] = []  // FIXED: Use type alias
+    @Published var buildingAnalytics: [String: LocalCoreTypes.BuildingAnalytics] = []  // FIXED: Use type alias
     @Published var portfolioInsights: [CoreTypes.IntelligenceInsight] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -50,14 +50,14 @@ class ClientDashboardViewModel: ObservableObject {
             buildingsList = try await buildingService.getAllBuildings()
             
             // Load analytics for each building using existing method
-            var analytics: [String: LocalBuildingAnalytics] = [:]  // FIXED: Use type alias
+            var analytics: [String: LocalCoreTypes.BuildingAnalytics] = [:]  // FIXED: Use type alias
             var totalTasks = 0
             var totalCompleted = 0
             var totalWorkers = 0
             
             for building in buildingsList {
-                // This returns BuildingService.BuildingAnalytics
-                let buildingAnalytic = try await buildingService.getBuildingAnalytics(building.id)
+                // This returns BuildingService.CoreTypes.BuildingAnalytics
+                let buildingAnalytic = try await buildingService.getCoreTypes.BuildingAnalytics(building.id)
                 analytics[building.id] = buildingAnalytic
                 
                 // Aggregate totals for portfolio overview
@@ -67,7 +67,7 @@ class ClientDashboardViewModel: ObservableObject {
             }
             
             // FIXED: Create portfolio intelligence using CoreTypes
-            let portfolio = CoreTypes.PortfolioIntelligence(
+            let portfolio = CoreTypes.CoreTypes.PortfolioIntelligence(
                 totalBuildings: buildingsList.count,
                 totalCompletedTasks: totalCompleted,
                 averageComplianceScore: calculateOverallCompliance(analytics),
@@ -126,13 +126,13 @@ class ClientDashboardViewModel: ObservableObject {
     /// Refresh specific building data using existing methods
     func refreshBuilding(_ buildingId: String) async {
         do {
-            // Use existing BuildingService.getBuildingAnalytics()
-            let updatedAnalytics = try await buildingService.getBuildingAnalytics(buildingId)
+            // Use existing BuildingService.getCoreTypes.BuildingAnalytics()
+            let updatedAnalytics = try await buildingService.getCoreTypes.BuildingAnalytics(buildingId)
             buildingAnalytics[buildingId] = updatedAnalytics
             
             // Recalculate portfolio overview
             if let currentPortfolio = portfolioIntelligence {
-                let newPortfolio = CoreTypes.PortfolioIntelligence(
+                let newPortfolio = CoreTypes.CoreTypes.PortfolioIntelligence(
                     totalBuildings: currentPortfolio.totalBuildings,
                     totalCompletedTasks: buildingAnalytics.values.reduce(0) { $0 + $1.completedTasks },
                     averageComplianceScore: calculateOverallCompliance(buildingAnalytics),
@@ -149,7 +149,7 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     /// Get building analytics for a specific building
-    func getBuildingAnalytics(for buildingId: String) -> LocalBuildingAnalytics? {  // FIXED: Use type alias
+    func getCoreTypes.BuildingAnalytics(for buildingId: String) -> LocalCoreTypes.BuildingAnalytics? {  // FIXED: Use type alias
         return buildingAnalytics[buildingId]
     }
     
@@ -173,7 +173,7 @@ class ClientDashboardViewModel: ObservableObject {
     
     // MARK: - Private Helper Methods
     
-    private func calculateOverallCompliance(_ analytics: [String: LocalBuildingAnalytics]) -> Double {  // FIXED: Use type alias
+    private func calculateOverallCompliance(_ analytics: [String: LocalCoreTypes.BuildingAnalytics]) -> Double {  // FIXED: Use type alias
         guard !analytics.isEmpty else { return 0.0 }
         
         let totalCompliance = analytics.values.reduce(0.0) { result, buildingAnalytics in
@@ -186,7 +186,7 @@ class ClientDashboardViewModel: ObservableObject {
         return totalCompliance / Double(analytics.count)
     }
     
-    private func calculateOverallEfficiency(_ analytics: [String: LocalBuildingAnalytics]) -> Double {  // FIXED: Use type alias
+    private func calculateOverallEfficiency(_ analytics: [String: LocalCoreTypes.BuildingAnalytics]) -> Double {  // FIXED: Use type alias
         guard !analytics.isEmpty else { return 0.0 }
         
         let totalTasks = analytics.values.reduce(0) { $0 + $1.totalTasks }
@@ -195,7 +195,7 @@ class ClientDashboardViewModel: ObservableObject {
         return totalTasks > 0 ? Double(totalCompleted) / Double(totalTasks) : 0.0
     }
     
-    private func calculatePortfolioTrend(_ analytics: [String: LocalBuildingAnalytics]) -> CoreTypes.TrendDirection {  // FIXED: Use type alias
+    private func calculatePortfolioTrend(_ analytics: [String: LocalCoreTypes.BuildingAnalytics]) -> CoreTypes.TrendDirection {  // FIXED: Use type alias
         guard !analytics.isEmpty else { return .stable }  // FIXED: Use .stable instead of .unknown
         
         let highPerformingCount = analytics.values.filter { $0.completionRate > 0.8 }.count
@@ -228,9 +228,9 @@ class ClientDashboardViewModel: ObservableObject {
 struct ClientBuildingItem: Identifiable {
     let id: String
     let building: NamedCoordinate
-    let analytics: BuildingService.BuildingAnalytics  // FIXED: Back to explicit namespace for clarity
+    let analytics: BuildingService.CoreTypes.BuildingAnalytics  // FIXED: Back to explicit namespace for clarity
     
-    init(building: NamedCoordinate, analytics: BuildingService.BuildingAnalytics) {  // FIXED: Explicit namespace
+    init(building: NamedCoordinate, analytics: BuildingService.CoreTypes.BuildingAnalytics) {  // FIXED: Explicit namespace
         self.id = building.id
         self.building = building
         self.analytics = analytics
@@ -257,7 +257,7 @@ struct ClientBuildingItem: Identifiable {
 
 /// Portfolio health summary for client view
 struct PortfolioHealthSummary {
-    let portfolio: CoreTypes.PortfolioIntelligence
+    let portfolio: CoreTypes.CoreTypes.PortfolioIntelligence
     let insights: [CoreTypes.IntelligenceInsight]
     let alertBuildings: [NamedCoordinate]
     
@@ -294,7 +294,7 @@ struct PortfolioHealthSummary {
 
 // MARK: - Extensions for CoreTypes Compatibility
 
-extension CoreTypes.PortfolioIntelligence {
+extension CoreTypes.CoreTypes.PortfolioIntelligence {
     /// Computed properties for UI display
     var efficiencyPercentage: Int {
         return Int(overallEfficiency * 100)

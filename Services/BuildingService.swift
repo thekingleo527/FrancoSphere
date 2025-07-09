@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  ✅ COMPILATION FIXES APPLIED:
-//  ✅ Fixed type ambiguities (use FrancoSphereModels.BuildingAnalytics, etc.)
+//  ✅ Fixed type ambiguities (use CoreTypes.BuildingAnalytics, etc.)
 //  ✅ Fixed actor isolation with proper @MainActor usage
 //  ✅ Preserved ALL original functionality including inventory, Kevin corrections, etc.
 //  ✅ Integration with three-dashboard system
@@ -461,9 +461,9 @@ class BuildingService: ObservableObject {
     
     // MARK: - Building Analytics and Intelligence
     
-    func getBuildingAnalytics(_ buildingId: String, days: Int = 30) async throws -> FrancoSphereModels.BuildingAnalytics {
+    func getBuildingAnalytics(_ buildingId: String, days: Int = 30) async throws -> CoreTypes.BuildingAnalytics {
         guard let buildingIdInt = Int64(buildingId) else {
-            return FrancoSphereModels.BuildingAnalytics.empty(buildingId: buildingId)
+            return CoreTypes.BuildingAnalytics.empty(buildingId: buildingId)
         }
         
         let query = """
@@ -482,10 +482,10 @@ class BuildingService: ObservableObject {
             let rows = try await sqliteManager.query(query, [buildingIdInt])
             
             guard let row = rows.first else {
-                return FrancoSphereModels.BuildingAnalytics.empty(buildingId: buildingId)
+                return CoreTypes.BuildingAnalytics.empty(buildingId: buildingId)
             }
             
-            return FrancoSphereModels.BuildingAnalytics(
+            return CoreTypes.BuildingAnalytics(
                 buildingId: buildingId,
                 totalTasks: Int(row["total_tasks"] as? Int64 ?? 0),
                 completedTasks: Int(row["completed_tasks"] as? Int64 ?? 0),
@@ -498,7 +498,7 @@ class BuildingService: ObservableObject {
             
         } catch {
             print("❌ Error fetching building analytics for \(buildingId): \(error)")
-            return FrancoSphereModels.BuildingAnalytics.empty(buildingId: buildingId)
+            return CoreTypes.BuildingAnalytics.empty(buildingId: buildingId)
         }
     }
     
@@ -525,37 +525,6 @@ class BuildingService: ObservableObject {
             recommendedWorkerCount: getRecommendedWorkerCount(building, buildingType),
             maintenancePriority: getMaintenancePriority(analytics)
         )
-    }
-    
-    // MARK: - Building Intelligence for Admin Dashboard (Phase 2.1)
-    
-    func getBuildingIntelligence(for buildingId: CoreTypes.BuildingID) async throws -> BuildingIntelligenceDTO {
-        guard let building = try await getBuilding(buildingId) else {
-            throw BuildingServiceError.buildingNotFound(buildingId)
-        }
-        
-        // Gather real data from multiple sources
-        async let analytics = getBuildingAnalytics(buildingId)
-        async let complianceData = getComplianceData(buildingId)
-        async let workerMetrics = getWorkerMetrics(buildingId)
-        async let operationalMetrics = getOperationalMetrics(buildingId)
-        
-        do {
-            let intelligence = BuildingIntelligenceDTO(
-                buildingId: buildingId,
-                operationalMetrics: try await operationalMetrics,
-                complianceData: try await complianceData,
-                workerMetrics: try await workerMetrics,
-                buildingSpecificData: getBuildingSpecificData(building),
-                dataQuality: assessDataQuality(buildingId),
-                timestamp: Date()
-            )
-            
-            return intelligence
-        } catch {
-            print("❌ Error gathering building intelligence for \(buildingId): \(error)")
-            throw error
-        }
     }
     
     // MARK: - Cache Management & Performance
@@ -616,7 +585,7 @@ class BuildingService: ObservableObject {
         }
     }
     
-    private func inferBuildingType(_ building: NamedCoordinate) -> LocalBuildingType {
+    internal func inferBuildingType(_ building: NamedCoordinate) -> LocalBuildingType {
         let name = building.name.lowercased()
         
         if name.contains("museum") || name.contains("rubin") { return .cultural }
@@ -684,7 +653,7 @@ class BuildingService: ObservableObject {
         }
     }
     
-    private func getMaintenancePriority(_ analytics: FrancoSphereModels.BuildingAnalytics) -> MaintenancePriority {
+    private func getMaintenancePriority(_ analytics: CoreTypes.BuildingAnalytics) -> MaintenancePriority {
         if analytics.completionRate < 0.5 { return .high }
         else if analytics.completionRate < 0.8 { return .medium }
         else { return .low }
@@ -789,7 +758,7 @@ class BuildingService: ObservableObject {
         }
     }
     
-    private func getSquareFootage(_ building: NamedCoordinate) -> Int {
+    internal func getSquareFootage(_ building: NamedCoordinate) -> Int {
         switch building.id {
         case "14": return 28000 // Rubin Museum
         case "7", "8", "9": return 12000 // West 17th Street buildings
@@ -806,7 +775,7 @@ class BuildingService: ObservableObject {
         }
     }
     
-    private func getYearBuilt(_ building: NamedCoordinate) -> Int {
+    internal func getYearBuilt(_ building: NamedCoordinate) -> Int {
         switch building.id {
         case "14": return 1920 // Rubin Museum
         case "7", "8", "9": return 1915 // West 17th Street
@@ -1153,7 +1122,7 @@ struct BuildingOperationalInsights {
     let specialRequirements: [String]
     let peakOperatingHours: String
     let currentStatus: EnhancedBuildingStatus
-    let analytics: FrancoSphereModels.BuildingAnalytics
+    let analytics: CoreTypes.BuildingAnalytics
     let recommendedWorkerCount: Int
     let maintenancePriority: MaintenancePriority
 }
