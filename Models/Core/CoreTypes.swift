@@ -73,30 +73,6 @@ public struct CoreTypes {
 }
 
 // MARK: - Trend Analysis (FIXED: Proper protocol conformance)
-public enum TrendDirection: String, Codable, CaseIterable, Hashable {
-    case improving = "improving"
-    case stable = "stable"
-    case declining = "declining"
-    case unknown = "unknown"
-    
-    public var systemImage: String {
-        switch self {
-        case .improving: return "arrow.up.circle.fill"
-        case .stable: return "minus.circle.fill"
-        case .declining: return "arrow.down.circle.fill"
-        case .unknown: return "questionmark.circle.fill"
-        }
-    }
-    
-    public var color: String {
-        switch self {
-        case .improving: return "green"
-        case .stable: return "blue"
-        case .declining: return "red"
-        case .unknown: return "gray"
-        }
-    }
-}
 
 // MARK: - Task Progress Tracking
 public struct TaskProgress: Codable, Hashable {
@@ -145,7 +121,7 @@ public struct PerformanceMetrics: Codable, Hashable {
     public let consistency: Double        // 0.0 - 1.0
     public let overallScore: Double       // 0.0 - 1.0
     public let averageCompletionTime: TimeInterval
-    public let recentTrend: TrendDirection
+    public let recentTrend: FrancoSphere.TrendDirection
     
     public enum TimePeriod: String, Codable, CaseIterable, Hashable {
         case daily = "daily"
@@ -155,7 +131,7 @@ public struct PerformanceMetrics: Codable, Hashable {
         case quarterly = "quarterly"
     }
     
-    public init(workerId: CoreTypes.WorkerID, period: TimePeriod, efficiency: Double, quality: Double, punctuality: Double, consistency: Double, overallScore: Double, tasksCompleted: Int, averageCompletionTime: TimeInterval, recentTrend: TrendDirection) {
+    public init(workerId: CoreTypes.WorkerID, period: TimePeriod, efficiency: Double, quality: Double, punctuality: Double, consistency: Double, overallScore: Double, tasksCompleted: Int, averageCompletionTime: TimeInterval, recentTrend: FrancoSphere.TrendDirection) {
         self.workerId = workerId
         self.period = period
         self.efficiency = efficiency
@@ -180,14 +156,14 @@ public struct BuildingStatistics: Codable, Hashable {
     public let maintenanceScore: Double
     public let complianceScore: Double
     public let issueCount: Int
-    public let trend: TrendDirection
+    public let trend: FrancoSphere.TrendDirection
     
     public var completionRate: Double {
         guard totalTasks > 0 else { return 0.0 }
         return Double(completedTasks) / Double(totalTasks)
     }
     
-    public init(buildingId: CoreTypes.BuildingID, period: PerformanceMetrics.TimePeriod, totalTasks: Int, completedTasks: Int, averageCompletionTime: TimeInterval, workerEfficiency: Double, maintenanceScore: Double, complianceScore: Double, issueCount: Int, trend: TrendDirection) {
+    public init(buildingId: CoreTypes.BuildingID, period: PerformanceMetrics.TimePeriod, totalTasks: Int, completedTasks: Int, averageCompletionTime: TimeInterval, workerEfficiency: Double, maintenanceScore: Double, complianceScore: Double, issueCount: Int, trend: FrancoSphere.TrendDirection) {
         self.buildingId = buildingId
         self.period = period
         self.totalTasks = totalTasks
@@ -301,15 +277,15 @@ public enum BuildingTab: String, Codable, CaseIterable, Hashable {
 // MARK: - Task Analytics (FIXED: Protocol conformance)
 public struct TaskTrends: Codable, Hashable {
     public let period: PerformanceMetrics.TimePeriod
-    public let completionTrend: TrendDirection
-    public let efficiencyTrend: TrendDirection
-    public let qualityTrend: TrendDirection
+    public let completionTrend: FrancoSphere.TrendDirection
+    public let efficiencyTrend: FrancoSphere.TrendDirection
+    public let qualityTrend: FrancoSphere.TrendDirection
     public let weeklyAverage: Double
     public let monthlyProjection: Int
     public let peakPerformanceDay: String
     public let improvementAreas: [String]
     
-    public init(period: PerformanceMetrics.TimePeriod, completionTrend: TrendDirection, efficiencyTrend: TrendDirection, qualityTrend: TrendDirection, weeklyAverage: Double, monthlyProjection: Int, peakPerformanceDay: String, improvementAreas: [String]) {
+    public init(period: PerformanceMetrics.TimePeriod, completionTrend: FrancoSphere.TrendDirection, efficiencyTrend: FrancoSphere.TrendDirection, qualityTrend: FrancoSphere.TrendDirection, weeklyAverage: Double, monthlyProjection: Int, peakPerformanceDay: String, improvementAreas: [String]) {
         self.period = period
         self.completionTrend = completionTrend
         self.efficiencyTrend = efficiencyTrend
@@ -410,5 +386,53 @@ public struct AIScenario: Codable, Hashable {
         self.description = description
         self.data = data
         self.suggestions = suggestions
+    }
+}
+
+//
+// MARK: - Task Progress Tracking (AUTHORITATIVE DEFINITION)
+public struct TaskProgress: Codable, Hashable {
+    public let workerId: CoreTypes.WorkerID
+    public let totalTasks: Int
+    public let completedTasks: Int
+    public let overdueTasks: Int
+    public let todayCompletedTasks: Int
+    public let weeklyTarget: Int
+    public let currentStreak: Int
+    public let lastCompletionDate: Date?
+
+    public var completed: Int { completedTasks }
+    public var total: Int { totalTasks }
+    public var remaining: Int { totalTasks - completedTasks }
+    public var percentage: Double {
+        guard totalTasks>0 else { return 0.0 }
+        return Double(completedTasks)/Double(totalTasks)*100.0
+    }
+    public var completionRate: Double {
+        guard totalTasks>0 else { return 0.0 }
+        return Double(completedTasks)/Double(totalTasks)
+    }
+    public var isOnTrack: Bool {
+        overdueTasks==0 && completionRate>=0.8
+    }
+    public var progressPercentage: Int {
+        Int(completionRate*100)
+    }
+    public init(workerId: CoreTypes.WorkerID,
+                totalTasks: Int,
+                completedTasks: Int,
+                overdueTasks: Int,
+                todayCompletedTasks: Int,
+                weeklyTarget: Int,
+                currentStreak: Int,
+                lastCompletionDate: Date? = nil) {
+        self.workerId = workerId
+        self.totalTasks = totalTasks
+        self.completedTasks = completedTasks
+        self.overdueTasks = overdueTasks
+        self.todayCompletedTasks = todayCompletedTasks
+        self.weeklyTarget = weeklyTarget
+        self.currentStreak = currentStreak
+        self.lastCompletionDate = lastCompletionDate
     }
 }

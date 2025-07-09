@@ -459,3 +459,13 @@ public typealias ExportProgress         = FrancoSphere.ExportProgress
 public typealias ImportError            = FrancoSphere.ImportError
 public typealias WorkerPerformanceMetrics = FrancoSphere.WorkerPerformanceMetrics
 public typealias TrendDirection         = FrancoSphere.TrendDirection
+
+//
+// MARK: - Additional Type Aliases for Remaining Errors
+public typealias TaskProgress = CoreTypes.TaskProgress
+public typealias PerformanceMetrics = AdditionalTypes.PerformanceMetrics
+public typealias BuildingStatistics = AdditionalTypes.BuildingStatistics
+public typealias TaskTrends = AdditionalTypes.TaskTrends
+public typealias InsightFilter = AdditionalTypes.InsightFilter
+public typealias StreakData = AdditionalTypes.StreakData
+public typealias ActionEvidence = DTOs.ActionEvidence

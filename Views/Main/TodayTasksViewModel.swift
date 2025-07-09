@@ -168,7 +168,7 @@ class TodayTasksViewModel: ObservableObject {
     func getTasksRequiringAttention() -> [ContextualTask] {
         return tasks.filter { task in
             task.status != "completed" && (
-                task.urgency == .urgent ||
+                task.urgency == .critical ||
                 task.urgency == .critical ||
                 (task.dueDate != nil && task.dueDate! < Date())
             )
@@ -189,6 +189,6 @@ class TodayTasksViewModel: ObservableObject {
     }
     
     func getUrgentTasksCount() -> Int {
-        return tasks.filter { $0.urgency == .urgent || $0.urgency == .critical }.count
+        return tasks.filter { $0.urgency == .critical || $0.urgency == .critical }.count
     }
 }
