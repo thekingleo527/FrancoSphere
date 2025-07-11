@@ -1,17 +1,10 @@
-
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/9/25.
-//
-
-
 //
 //  AITypes.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPLETE: AI Framework Types
-//  ✅ PHASE 1: Component Integration Support
-//  ✅ INTEGRATED: With WorkerContextEngine and Dashboard system
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ No type redeclarations
+//  ✅ Proper protocol conformance
 //
 
 import Foundation
@@ -90,20 +83,22 @@ public struct AISuggestion: Codable, Hashable, Identifiable {
     }
 }
 
-public struct AIScenarioData: Codable, Hashable {
+// MARK: - AIScenarioData with Generic Type Parameters
+// This allows it to work with any task, building, and worker types
+public struct AIScenarioData<TaskType: Codable & Hashable, BuildingType: Codable & Hashable, WorkerType: Codable & Hashable>: Codable, Hashable {
     public let scenario: AIScenario
-    public let contextualTasks: [ContextualTask]
-    public let affectedBuildings: [NamedCoordinate]
-    public let availableWorkers: [WorkerProfile]
+    public let contextualTasks: [TaskType]
+    public let affectedBuildings: [BuildingType]
+    public let availableWorkers: [WorkerType]
     public let currentMetrics: AIMetrics
     public let recommendedActions: [AIRecommendedAction]
     public let riskAssessment: AIRiskAssessment
     
     public init(
         scenario: AIScenario,
-        contextualTasks: [ContextualTask],
-        affectedBuildings: [NamedCoordinate],
-        availableWorkers: [WorkerProfile],
+        contextualTasks: [TaskType],
+        affectedBuildings: [BuildingType],
+        availableWorkers: [WorkerType],
         currentMetrics: AIMetrics,
         recommendedActions: [AIRecommendedAction] = [],
         riskAssessment: AIRiskAssessment

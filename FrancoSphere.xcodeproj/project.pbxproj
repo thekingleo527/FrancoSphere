@@ -129,8 +129,6 @@
 		234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581102DF78E3D00355F0A /* SignUpView.swift */; };
 		234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581132DF78E3D00355F0A /* BuildingDetailView.swift */; };
 		234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809A2DF78E3D00355F0A /* GlassButtonModifier.swift */; };
-		2354785E2E207A81006E1EB6 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 2354785D2E207A81006E1EB6 /* OpenMeteoSdk */; };
-		235478612E207AA7006E1EB6 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 235478602E207AA7006E1EB6 /* SQLite */; };
 		236106E62E17804400463A59 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E52E17804400463A59 /* WorkerService.swift */; };
 		236106E82E1788EC00463A59 /* BuildingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106E72E1788EC00463A59 /* BuildingService.swift */; };
 		236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236106EE2E17AD4300463A59 /* QuickBooksOAuthManager.swift */; };
@@ -401,8 +399,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				235478612E207AA7006E1EB6 /* SQLite in Frameworks */,
-				2354785E2E207A81006E1EB6 /* OpenMeteoSdk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -852,8 +848,6 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				2354785D2E207A81006E1EB6 /* OpenMeteoSdk */,
-				235478602E207AA7006E1EB6 /* SQLite */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -932,8 +926,6 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2354785C2E207A81006E1EB6 /* XCRemoteSwiftPackageReference "sdk" */,
-				2354785F2E207AA7006E1EB6 /* XCRemoteSwiftPackageReference "SQLite" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1486,38 +1478,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		2354785C2E207A81006E1EB6 /* XCRemoteSwiftPackageReference "sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/open-meteo/sdk";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-		2354785F2E207AA7006E1EB6 /* XCRemoteSwiftPackageReference "SQLite" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.15.4;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		2354785D2E207A81006E1EB6 /* OpenMeteoSdk */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2354785C2E207A81006E1EB6 /* XCRemoteSwiftPackageReference "sdk" */;
-			productName = OpenMeteoSdk;
-		};
-		235478602E207AA7006E1EB6 /* SQLite */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2354785F2E207AA7006E1EB6 /* XCRemoteSwiftPackageReference "SQLite" */;
-			productName = SQLite;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 23423DAF2D739D6800AACE3E /* Project object */;
 }
