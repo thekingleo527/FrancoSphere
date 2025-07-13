@@ -81,7 +81,7 @@ struct PressableGlassCard<Content: View>: View {
             y: isPressed ? 8 : 5
         )
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
                 isPressed = pressing
             }
         }, perform: {})

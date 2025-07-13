@@ -136,7 +136,7 @@ struct NovaAvatar: View {
             .scaleEffect(busyPulse ? 1.2 : 1.0)
             .opacity(busyPulse ? 0.0 : 0.8)
             .animation(
-                .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                AnimationAnimation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                 value: busyPulse
             )
     }
@@ -170,7 +170,7 @@ struct NovaAvatar: View {
                     .scaleEffect(pulseScale)
                     .opacity(2.0 - pulseScale)
                     .animation(
-                        .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                        AnimationAnimation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                         value: pulseScale
                     )
                     .onAppear {
@@ -225,14 +225,14 @@ struct NovaAvatar: View {
     
     private func startBreathingAnimation() {
         withAnimation(
-            .easeInOut(duration: 2.0)
+            AnimationAnimation.easeInOut(duration: 2.0)
             .repeatForever(autoreverses: true)
         ) {
             breathe = true
         }
         
         withAnimation(
-            .easeInOut(duration: 3.0)
+            AnimationAnimation.easeInOut(duration: 3.0)
             .repeatForever(autoreverses: true)
         ) {
             glowOpacity = 0.8
@@ -241,14 +241,14 @@ struct NovaAvatar: View {
     
     private func startBusyAnimation() {
         withAnimation(
-            .easeInOut(duration: 1.0)
+            AnimationAnimation.easeInOut(duration: 1.0)
             .repeatForever(autoreverses: false)
         ) {
             busyPulse = true
         }
         
         withAnimation(
-            .linear(duration: 4.0)
+            Animation.linear(duration: 4.0)
             .repeatForever(autoreverses: false)
         ) {
             rotationAngle = 360
@@ -297,7 +297,7 @@ struct PulseRing: View {
             .opacity(isAnimating ? 0 : opacity)
             .onAppear {
                 withAnimation(
-                    .easeOut(duration: animationDuration)
+                    Animation.easeOut(duration: animationDuration)
                     .repeatForever(autoreverses: false)
                 ) {
                     isAnimating = true

@@ -213,7 +213,7 @@ struct TaskCategoryGlassCard: View {
     // MARK: - Helper Methods
     
     private func toggleTaskExpanded(_ task: MaintenanceTask) {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             if expandedTasks.contains(task.id) {
                 expandedTasks.remove(task.id)
             } else {
@@ -316,7 +316,7 @@ struct TaskRowGlassView: View {
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
+            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: isPressed)
             
             // Expanded content
             if isExpanded {

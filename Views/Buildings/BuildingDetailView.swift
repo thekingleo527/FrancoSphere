@@ -57,7 +57,7 @@ struct BuildingDetailView: View {
                             workersTab
                         }
                     }
-                    .animation(.easeInOut(duration: 0.3), value: viewModel.selectedTab)
+                    .animation(AnimationAnimation.easeInOut(duration: 0.3), value: viewModel.selectedTab)
                     
                     Spacer(minLength: 40)
                 }
@@ -238,7 +238,7 @@ struct BuildingDetailView: View {
         HStack(spacing: 0) {
             ForEach(BuildingTaballCases, id: \.self) { tab in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                         viewModel.setSelectedTab(tab)
                     }
                 } label: {

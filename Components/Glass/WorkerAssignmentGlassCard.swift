@@ -312,7 +312,7 @@ struct WorkerRowGlassView: View {
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
+            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: isPressed)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())

@@ -92,7 +92,7 @@ struct AIAvatarOverlayView: View {
                         .scaleEffect(pulseAnimation ? 1.2 : 1.0)
                         .opacity(pulseAnimation ? 0.0 : 1.0)
                         .animation(
-                            .easeInOut(duration: 2.0).repeatForever(autoreverses: false),
+                            AnimationAnimation.easeInOut(duration: 2.0).repeatForever(autoreverses: false),
                             value: pulseAnimation
                         )
                 }

@@ -31,7 +31,7 @@ struct GlassLoadingView: View {
                             .offset(y: -25)
                             .rotationEffect(.degrees(isAnimating ? 360 : 0))
                             .animation(
-                                Animation.linear(duration: 1.5)
+                                AnimationAnimation.linear(duration: 1.5)
                                     .repeatForever(autoreverses: false)
                                     .delay(Double(index) * 0.2),
                                 value: isAnimating
@@ -45,7 +45,7 @@ struct GlassLoadingView: View {
                         .foregroundColor(.white.opacity(0.8))
                         .scaleEffect(isAnimating ? 1.1 : 0.9)
                         .animation(
-                            Animation.easeInOut(duration: 1.0)
+                            AnimationAnimationAnimation.easeInOut(duration: 1.0)
                                 .repeatForever(autoreverses: true),
                             value: isAnimating
                         )

@@ -151,7 +151,7 @@ struct WorkersInlineList: View {
     
     private var showMoreButton: some View {
         Button(action: {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.3)) {
                 showAllWorkers.toggle()
             }
         }) {

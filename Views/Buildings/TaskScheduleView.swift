@@ -578,7 +578,7 @@ struct TaskScheduleView: View {
         @State private var taskDescription: String = ""
         @State private var category: FrancoSphere.TaskCategory = .maintenance
         @State private var urgency: FrancoSphere.TaskUrgency = .medium
-        @State private var recurrence: FrancoSphere.TaskRecurrence = .none
+        @State private var recurrence: FrancoSphere.TaskRecurrence = .oneTime
         
         @Environment(\.presentationMode) var presentationMode
         

@@ -2,79 +2,112 @@
 //  MapInteractionHint.swift
 //  FrancoSphere
 //
-//  ✅ SINGLE MapInteractionHint implementation
-//  ✅ No duplicates or conflicts
-//  ✅ Phase-2 compliant with swipe-up gesture hint
+//  ✅ V6.0 UPDATED: Aligned with GRDB implementation and actor architecture
+//  ✅ FIXED: Animation syntax errors and SwiftUI binding issues
+//  ✅ ENHANCED: Better state management and user preference integration
+//  ✅ COMPATIBLE: Works with three-dashboard system
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
+import Foundation
 
 struct MapInteractionHint: View {
-    @State var showHint: Bool
+    @Binding var showHint: Bool
     let hasSeenHint: Bool
     
-    // MARK: - State
+    // MARK: - State Management
     @State private var opacity: Double = 0.0
     @State private var pulseScale: CGFloat = 1.0
     @State private var autoHideTimer: Timer?
+    @State private var isVisible: Bool = false
     
     // MARK: - Animation Constants
-    private let animationDuration: Double = 0.5
-    private let autoHideDuration: Double = 5.0
-    private let pulseDuration: Double = 2.0
+    private let animationDuration: Double = 0.6
+    private let autoHideDuration: Double = 4.0
+    private let pulseDuration: Double = 1.8
+    private let maxPulseScale: CGFloat = 1.08
+    
+    // MARK: - User Preference Keys
+    private static let hasSeenMapHintKey = "franco_has_seen_map_hint"
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
             Spacer()
             
-            // Hint content
-            VStack(spacing: 12) {
-                // Drag handle with pulse animation
-                dragHandle
-                
-                // Hint text with icon
-                hintContent
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .padding(.bottom, 40) // Safe area padding
+            hintContainer
+                .opacity(opacity)
+                .scaleEffect(pulseScale)
+                .animation(.easeOut(duration: animationDuration), value: opacity)
+                .animation(
+                    shouldPulse ?
+                    .easeInOut(duration: pulseDuration).repeatForever(autoreverses: true) :
+                    .easeOut(duration: 0.3),
+                    value: pulseScale
+                )
         }
-        .opacity(opacity)
-        .scaleEffect(pulseScale)
-        .animation(.easeOut(duration: animationDuration), value: opacity)
-        .animation(
-            hasSeenHint ? .none : .easeInOut(duration: pulseDuration).repeatForever(autoreverses: true),
-            value: pulseScale
-        )
         .onAppear {
             startHintSequence()
         }
         .onDisappear {
-            stopAutoHideTimer()
+            cleanup()
+        }
+        .onChange(of: showHint) { newValue in
+            if !newValue {
+                hideHint()
+            }
         }
     }
     
-    // MARK: - Drag Handle
+    // MARK: - Computed Properties
     
-    private var dragHandle: some View {
-        VStack(spacing: 8) {
-            // Swipe up chevron
+    private var shouldPulse: Bool {
+        !hasSeenHint && isVisible
+    }
+    
+    // MARK: - Hint Container
+    
+    private var hintContainer: some View {
+        VStack(spacing: 16) {
+            swipeIndicator
+            hintContent
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
+        .background(hintBackground)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 44) // Safe area + extra padding
+    }
+    
+    // MARK: - Background with Glass Effect
+    
+    private var hintBackground: some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(.ultraThinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(.white.opacity(0.1), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+    }
+    
+    // MARK: - Swipe Indicator
+    
+    private var swipeIndicator: some View {
+        VStack(spacing: 10) {
+            // Animated chevron
             Image(systemName: "chevron.up")
-                .font(.title2)
-                .foregroundColor(.white.opacity(0.6))
-                .scaleEffect(hasSeenHint ? 1.0 : pulseScale)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white.opacity(0.8))
+                .scaleEffect(shouldPulse ? pulseScale : 1.0)
             
             // Handle bar
             Capsule()
-                .fill(Color.white.opacity(0.3))
-                .frame(width: 36, height: 4)
+                .fill(.white.opacity(0.4))
+                .frame(width: 40, height: 5)
                 .overlay(
                     Capsule()
-                        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                        .fill(.white.opacity(0.6))
+                        .frame(width: 32, height: 3)
                 )
         }
     }
@@ -83,43 +116,49 @@ struct MapInteractionHint: View {
     
     private var hintContent: some View {
         VStack(spacing: 8) {
-            Text("Swipe up to view map")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.white.opacity(0.8))
+            Text("Swipe up to view full map")
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
             
-            Text("See all buildings and navigate")
-                .font(.caption2)
-                .foregroundColor(.white.opacity(0.5))
+            Text("Explore all your buildings and routes")
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
+                .lineLimit(2)
         }
     }
     
-    // MARK: - Animation Methods
+    // MARK: - Animation Lifecycle
     
     private func startHintSequence() {
-        // Fade in
-        withAnimation(.easeOut(duration: animationDuration)) {
-            opacity = 1.0
-        }
+        guard showHint else { return }
         
-        // Start pulse animation for first-time users
-        if !hasSeenHint {
-            withAnimation(.easeInOut(duration: pulseDuration).repeatForever(autoreverses: true)) {
-                pulseScale = 1.05
+        isVisible = true
+        
+        // Delay appearance to ensure smooth transition
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: animationDuration)) {
+                opacity = 1.0
             }
+            
+            // Start pulse for first-time users
+            if !hasSeenHint {
+                withAnimation(.easeInOut(duration: pulseDuration).repeatForever(autoreverses: true)) {
+                    pulseScale = maxPulseScale
+                }
+            }
+            
+            // Auto-hide timer
+            startAutoHideTimer()
         }
-        
-        // Auto-hide after delay
-        startAutoHideTimer()
     }
     
     private func startAutoHideTimer() {
-        stopAutoHideTimer() // Clear any existing timer
+        stopAutoHideTimer()
         
         autoHideTimer = Timer.scheduledTimer(withTimeInterval: autoHideDuration, repeats: false) { _ in
-            hideHint()
+            dismissHint()
         }
     }
     
@@ -128,21 +167,51 @@ struct MapInteractionHint: View {
         autoHideTimer = nil
     }
     
-    private func hideHint() {
-        stopAutoHideTimer()
-        
+    private func dismissHint() {
         withAnimation(.easeOut(duration: animationDuration)) {
             opacity = 0.0
             pulseScale = 1.0
         }
         
-        // Delay hiding the binding to allow animation to complete
+        // Mark as seen and hide after animation
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+            markAsSeen()
             showHint = false
-            
-            // Mark as seen in UserDefaults
-            UserDefaults.standard.set(true, forKey: "hasSeenMapHint")
+            isVisible = false
         }
+    }
+    
+    private func hideHint() {
+        stopAutoHideTimer()
+        
+        withAnimation(.easeOut(duration: animationDuration * 0.7)) {
+            opacity = 0.0
+            pulseScale = 1.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + (animationDuration * 0.7)) {
+            isVisible = false
+        }
+    }
+    
+    private func cleanup() {
+        stopAutoHideTimer()
+    }
+    
+    // MARK: - User Preferences
+    
+    private func markAsSeen() {
+        UserDefaults.standard.set(true, forKey: Self.hasSeenMapHintKey)
+        print("🗺️ Map interaction hint marked as seen")
+    }
+    
+    static func hasUserSeenHint() -> Bool {
+        UserDefaults.standard.bool(forKey: hasSeenMapHintKey)
+    }
+    
+    static func resetHintStatus() {
+        UserDefaults.standard.removeObject(forKey: hasSeenMapHintKey)
+        print("🔄 Map interaction hint status reset")
     }
 }
 
@@ -150,154 +219,217 @@ struct MapInteractionHint: View {
 
 extension MapInteractionHint {
     /// Create a MapInteractionHint with automatic UserDefaults handling
-    static func withUserDefaults(showHint: Binding<Bool>) -> some View {
-        let hasSeenHint = UserDefaults.standard.bool(forKey: "hasSeenMapHint")
-        return MapInteractionHint(showHint: showHint, hasSeenHint: hasSeenHint)
+    static func automatic(showHint: Binding<Bool>) -> some View {
+        let hasSeenHint = Self.hasUserSeenHint()
+        return MapInteractionHint(
+            showHint: showHint,
+            hasSeenHint: hasSeenHint
+        )
     }
     
-    /// Force show hint (useful for testing or tutorials)
+    /// Force show hint (useful for tutorials or onboarding)
     static func forceShow(showHint: Binding<Bool>) -> some View {
-        return MapInteractionHint(showHint: showHint, hasSeenHint: false)
+        return MapInteractionHint(
+            showHint: showHint,
+            hasSeenHint: false
+        )
+    }
+    
+    /// Show hint for returning users (no pulse animation)
+    static func forReturningUser(showHint: Binding<Bool>) -> some View {
+        return MapInteractionHint(
+            showHint: showHint,
+            hasSeenHint: true
+        )
     }
 }
 
-// MARK: - User Defaults Helper
+// MARK: - UserDefaults FrancoSphere Extension
 
 extension UserDefaults {
+    /// FrancoSphere app preference keys
+    enum FrancoSphereKeys {
+        static let hasSeenMapHint = "franco_has_seen_map_hint"
+        static let hasSeenDashboardTour = "franco_has_seen_dashboard_tour"
+        static let lastSelectedDashboard = "franco_last_selected_dashboard"
+        static let preferredMapStyle = "franco_preferred_map_style"
+    }
+    
     /// Check if the user has seen the map interaction hint
-    var hasSeenMapHint: Bool {
-        get { bool(forKey: "hasSeenMapHint") }
-        set { set(newValue, forKey: "hasSeenMapHint") }
+    var francoHasSeenMapHint: Bool {
+        get { bool(forKey: FrancoSphereKeys.hasSeenMapHint) }
+        set { set(newValue, forKey: FrancoSphereKeys.hasSeenMapHint) }
     }
     
-    /// Reset the map hint for testing purposes
-    func resetMapHint() {
-        removeObject(forKey: "hasSeenMapHint")
+    /// Reset all FrancoSphere onboarding hints
+    func resetFrancoOnboardingHints() {
+        removeObject(forKey: FrancoSphereKeys.hasSeenMapHint)
+        removeObject(forKey: FrancoSphereKeys.hasSeenDashboardTour)
+        print("🔄 All FrancoSphere onboarding hints reset")
     }
     
-    /// Reset all map-related hints
-    func resetAllMapHints() {
-        removeObject(forKey: "hasSeenMapHint")
-        // Add other map-related hint keys here as needed
+    /// Get/set last selected dashboard for continuity
+    var francoLastSelectedDashboard: String? {
+        get { string(forKey: FrancoSphereKeys.lastSelectedDashboard) }
+        set { set(newValue, forKey: FrancoSphereKeys.lastSelectedDashboard) }
+    }
+}
+
+// MARK: - View Integration Helpers
+
+extension View {
+    /// Add map interaction hint overlay
+    func withMapInteractionHint(
+        showHint: Binding<Bool>,
+        hasSeenHint: Bool? = nil
+    ) -> some View {
+        self.overlay(
+            MapInteractionHint(
+                showHint: showHint,
+                hasSeenHint: hasSeenHint ?? MapInteractionHint.hasUserSeenHint()
+            ),
+            alignment: .bottom
+        )
+    }
+    
+    /// Add automatic map interaction hint
+    func withAutomaticMapHint(showHint: Binding<Bool>) -> some View {
+        self.overlay(
+            MapInteractionHint.automatic(showHint: showHint),
+            alignment: .bottom
+        )
     }
 }
 
 // MARK: - Preview Provider
 
 struct MapInteractionHint_Previews: PreviewProvider {
-    @State static var showFirstTimeHint = true
-    @State static var showReturningUserHint = true
-    
     static var previews: some View {
-        // First-time user preview (with pulse animation)
-        ZStack {
-            // Mock map background
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .ignoresSafeArea()
+        Group {
+            // First-time user preview (with pulse animation)
+            PreviewContainer(
+                title: "First-Time User",
+                hasSeenHint: false,
+                colors: [.blue, .purple]
+            )
             
-            // Mock map content
-            VStack {
-                HStack {
-                    Spacer()
-                    Text("Map View")
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.7))
+            // Returning user preview (no pulse)
+            PreviewContainer(
+                title: "Returning User",
+                hasSeenHint: true,
+                colors: [.green, .blue]
+            )
+            
+            // Interactive demo
+            InteractiveDemoView()
+                .previewDisplayName("Interactive Demo")
+        }
+    }
+}
+
+// MARK: - Preview Support Views
+
+private struct PreviewContainer: View {
+    let title: String
+    let hasSeenHint: Bool
+    let colors: [Color]
+    
+    @State private var showHint = true
+    
+    var body: some View {
+        ZStack {
+            mockMapBackground(colors: colors)
+            
+            if showHint {
+                MapInteractionHint(
+                    showHint: $showHint,
+                    hasSeenHint: hasSeenHint
+                )
+            }
+        }
+        .preferredColorScheme(.dark)
+        .previewDisplayName(title)
+    }
+    
+    private func mockMapBackground(colors: [Color]) -> some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: colors.map { $0.opacity(0.8) },
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .ignoresSafeArea()
+            .overlay(
+                VStack {
+                    HStack {
+                        Spacer()
+                        Text("FrancoSphere Map")
+                            .font(.title3.weight(.medium))
+                            .foregroundColor(.white.opacity(0.7))
+                        Spacer()
+                    }
                     Spacer()
                 }
-                Spacer()
-            }
-            .padding()
-            
-            // First-time user hint (with pulse)
-            if showFirstTimeHint {
-                MapInteractionHint(
-                    showHint: $showFirstTimeHint,
-                    hasSeenHint: false
-                )
-            }
-        }
-        .preferredColorScheme(.dark)
-        .previewDisplayName("First Time User")
-        
-        // Returning user preview (no pulse)
+                .padding(.top, 60)
+            )
+    }
+}
+
+private struct InteractiveDemoView: View {
+    @State private var showDemoHint = false
+    
+    var body: some View {
         ZStack {
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.green.opacity(0.8), Color.blue.opacity(0.8)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .ignoresSafeArea()
+            Color.black.ignoresSafeArea()
             
-            if showReturningUserHint {
-                MapInteractionHint(
-                    showHint: $showReturningUserHint,
-                    hasSeenHint: true
-                )
-            }
-        }
-        .preferredColorScheme(.dark)
-        .previewDisplayName("Returning User")
-        
-        // Interactive demo
-        ZStack {
-            Rectangle()
-                .fill(Color.black)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 20) {
-                Text("Map Interaction Hint Demo")
-                    .font(.title2)
+            VStack(spacing: 24) {
+                Text("Map Interaction Hint")
+                    .font(.title2.weight(.semibold))
                     .foregroundColor(.white)
                 
-                Button("Show First-Time Hint") {
-                    UserDefaults.standard.resetMapHint()
-                    showFirstTimeHint = true
+                VStack(spacing: 16) {
+                    demoButton("Show First-Time Hint", color: .blue) {
+                        MapInteractionHint.resetHintStatus()
+                        showDemoHint = true
+                    }
+                    
+                    demoButton("Show Returning User Hint", color: .green) {
+                        UserDefaults.standard.francoHasSeenMapHint = true
+                        showDemoHint = true
+                    }
+                    
+                    demoButton("Reset All Hints", color: .orange) {
+                        UserDefaults.standard.resetFrancoOnboardingHints()
+                    }
                 }
-                .foregroundColor(.blue)
                 
-                Button("Show Returning User Hint") {
-                    UserDefaults.standard.hasSeenMapHint = true
-                    showReturningUserHint = true
-                }
-                .foregroundColor(.green)
-                
-                Button("Reset UserDefaults") {
-                    UserDefaults.standard.resetMapHint()
-                }
-                .foregroundColor(.orange)
-                
-                Text("Hint will auto-hide after 5 seconds")
+                Text("Hint auto-hides after 4 seconds")
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
             }
             
-            // Demo hints
-            if showFirstTimeHint {
-                MapInteractionHint(
-                    showHint: $showFirstTimeHint,
-                    hasSeenHint: false
-                )
-            }
-            
-            if showReturningUserHint {
-                MapInteractionHint(
-                    showHint: $showReturningUserHint,
-                    hasSeenHint: true
-                )
+            if showDemoHint {
+                MapInteractionHint.automatic(showHint: $showDemoHint)
             }
         }
         .preferredColorScheme(.dark)
-        .previewDisplayName("Interactive Demo")
+    }
+    
+    private func demoButton(
+        _ title: String,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(color.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
     }
 }

@@ -355,7 +355,7 @@ struct ForgotPasswordView: View {
     // MARK: - Helper Methods
     
     private func sendResetLink() {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             message = nil
         }
         
@@ -374,13 +374,13 @@ struct ForgotPasswordView: View {
             return
         }
         
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             isLoading = true
         }
         
         // Simulate API call
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                 isLoading = false
             }
             

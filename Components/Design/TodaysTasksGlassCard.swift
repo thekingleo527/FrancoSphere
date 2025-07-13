@@ -99,7 +99,7 @@ struct TodaysTasksGlassCard: View {
                         // Completed section
                         if completedTasks.count > 0 {
                             Button(action: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
+                                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                     showCompleted.toggle()
                                 }
                             }) {
@@ -406,7 +406,7 @@ struct EnhancedTaskGlassRow: View {
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .opacity(isCompleted ? 0.7 : 1.0)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .animation(AnimationAnimation.easeInOut(duration: 0.1), value: isPressed)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})

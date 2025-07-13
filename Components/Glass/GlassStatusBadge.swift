@@ -126,7 +126,7 @@ struct GlassStatusBadge: View {
         .scaleEffect(isPulsing && pulseAnimation ? 1.05 : 1.0)
         .animation(
             isPulsing ?
-            Animation.easeInOut(duration: 1.5)
+            AnimationAnimationAnimation.easeInOut(duration: 1.5)
                 .repeatForever(autoreverses: true) :
             .default,
             value: pulseAnimation
@@ -363,7 +363,7 @@ struct GlassLoadingBadge: View {
                 )
         )
         .onAppear {
-            withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+            withAnimation(Animation.linear(duration: 1.5).repeatForever(autoreverses: false)) {
                 isAnimating = true
             }
         }

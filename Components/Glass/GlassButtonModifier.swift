@@ -45,7 +45,7 @@ struct GlassButtonModifier: ViewModifier {
                 }
             )
             .scaleEffect(1.0)
-            .animation(.easeInOut(duration: 0.15), value: UUID())
+            .animation(AnimationAnimation.easeInOut(duration: 0.15), value: UUID())
     }
 }
 

@@ -241,7 +241,7 @@ public enum GlassTransition {
     public var animation: Animation {
         switch self {
         case .fade, .blur:
-            return .easeInOut(duration: 0.3)
+            return AnimationAnimation.easeInOut(duration: 0.3)
         case .scale:
             return .spring(response: 0.4, dampingFraction: 0.8)
         case .slide:

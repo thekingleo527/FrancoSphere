@@ -228,7 +228,7 @@ struct ComplianceOverviewView: View {
             HStack(spacing: 0) {
                 ForEach(ComplianceTab.allCases, id: \.self) { tab in
                     Button(action: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
+                        withAnimation(AnimationAnimation.easeInOut(duration: 0.3)) {
                             selectedTab = tab
                         }
                     }) {

@@ -239,8 +239,8 @@ private struct BuildingMapMarker: View {
             }
             .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 2)
             .scaleEffect(isSelected ? 1.1 : 1.0)
-            .animation(.easeInOut(duration: 0.2), value: isSelected)
-            .animation(.easeInOut(duration: 0.3), value: isFocused)
+            .animation(AnimationAnimation.easeInOut(duration: 0.2), value: isSelected)
+            .animation(AnimationAnimation.easeInOut(duration: 0.3), value: isFocused)
         }
         .buttonStyle(PlainButtonStyle())
     }

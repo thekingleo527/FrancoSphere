@@ -114,7 +114,7 @@ struct GlassDeckContainer<Content: View, MapContent: View>: View {
                     }
                 }
                 .transition(.opacity)
-                .animation(.easeInOut, value: isLongPressing)
+                .animation(AnimationAnimation.easeInOut, value: isLongPressing)
             }
             
             // Return chevron (P0-1c)
@@ -128,7 +128,7 @@ struct GlassDeckContainer<Content: View, MapContent: View>: View {
             if showFirstUseHint && !hasRevealedOnce && deckState == .stacked {
                 firstUseHintOverlay
                     .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.5), value: showFirstUseHint)
+                    .animation(AnimationAnimation.easeInOut(duration: 0.5), value: showFirstUseHint)
             }
         }
         .onChange(of: deckState) { _, newState in

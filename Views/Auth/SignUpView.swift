@@ -172,7 +172,7 @@ struct SignUpView: View {
                         .padding(.horizontal, 40)
                         .opacity(progressOpacity)
                         .onAppear {
-                            withAnimation(.easeInOut(duration: 0.4).delay(0.4)) {
+                            withAnimation(AnimationAnimation.easeInOut(duration: 0.4).delay(0.4)) {
                                 progressOpacity = 1.0
                             }
                         }
@@ -447,7 +447,7 @@ struct SignUpView: View {
                         icon: "wrench.and.screwdriver",
                         isSelected: selectedRole == .worker
                     ) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                             selectedRole = .worker
                         }
                     }
@@ -459,7 +459,7 @@ struct SignUpView: View {
                         icon: "person.2.badge.gearshape",
                         isSelected: selectedRole == .manager
                     ) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                             selectedRole = .manager
                         }
                     }
@@ -522,7 +522,7 @@ struct SignUpView: View {
     }
     
     private func toggleBuilding(_ building: String) {
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             if selectedBuildings.contains(building) {
                 selectedBuildings.remove(building)
             } else {
@@ -588,7 +588,7 @@ struct GlassTextField: View {
             
             if isSecure {
                 Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                         showSecureText.toggle()
                     }
                 }) {
@@ -642,7 +642,7 @@ struct StepProgressIndicator: View {
                                 .scaleEffect(1.2)
                                 .opacity(0.5)
                                 .animation(
-                                    Animation.easeInOut(duration: 1.5)
+                                    AnimationAnimationAnimation.easeInOut(duration: 1.5)
                                         .repeatForever(autoreverses: true),
                                     value: currentStep
                                 )

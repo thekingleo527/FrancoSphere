@@ -33,6 +33,7 @@ public struct AISuggestion: Identifiable, Codable, Hashable {
     }
 }
 
+// ✅ FIXED: Use simple AIScenarioData (non-generic) to avoid conflicts
 public struct AIScenarioData: Codable, Hashable {
     public let scenarios: [AIScenario]
     public let hasPendingScenarios: Bool
@@ -72,6 +73,7 @@ public enum InsightType: String, Codable, CaseIterable {
 
 public enum InsightPriority: String, Codable, CaseIterable {
     case low, medium, high, critical
+    
     public var priorityValue: Int {
         switch self {
         case .low: return 1

@@ -246,7 +246,7 @@ struct BuildingPreviewPopover: View {
             let nextSanitation = sanitationTasks.first { $0.status != "completed" }
             
             await MainActor.run {
-                withAnimation(.easeInOut) {
+                withAnimation(AnimationAnimation.easeInOut) {
                     openTasksCount = openTasks.count
                     
                     if let next = nextSanitation {
@@ -268,7 +268,7 @@ struct BuildingPreviewPopover: View {
     
     private func startDismissTimer() {
         dismissTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
-            withAnimation(.easeOut) {
+            withAnimation(Animation.easeOut) {
                 onDismiss()
             }
         }
@@ -290,7 +290,7 @@ struct PrimaryPreviewButtonStyle: ButtonStyle {
                     .fill(Color.blue)
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -311,7 +311,7 @@ struct SecondaryPreviewButtonStyle: ButtonStyle {
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

@@ -67,7 +67,7 @@ struct GlassButton: View {
                         .tint(style.textColor)
                         .rotationEffect(.degrees(loadingRotation))
                         .onAppear {
-                            withAnimation(.linear(duration: 1.0).repeatForever(autoreverses: false)) {
+                            withAnimation(AnimationAnimation.easeInOut(duration: 1.0).repeatForever(autoreverses: false)) {
                                 loadingRotation = 360.0
                             }
                         }
@@ -110,7 +110,7 @@ struct GlassButton: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled || isLoading)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
                 isPressed = pressing && !isDisabled && !isLoading
             }
         }, perform: {})
@@ -244,7 +244,7 @@ struct GlassIconButton: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
                 isPressed = pressing && !isDisabled
             }
         }, perform: {})
@@ -289,7 +289,7 @@ struct GlassToggleButton: View {
             size: size,
             icon: isOn ? "checkmark" : nil
         ) {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                 isOn.toggle()
             }
             action?()
@@ -388,10 +388,10 @@ struct GlassButton_Previews: PreviewProvider {
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        GlassToggleButton("Toggle Option", isOn: .linear(false)) {
+                        GlassToggleButton("Toggle Option", isOn: AnimationAnimation.easeInOut(false)) {
                             print("Toggle 1 changed")
                         }
-                        GlassToggleButton("Active Toggle", isOn: .linear(true)) {
+                        GlassToggleButton("Active Toggle", isOn: AnimationAnimation.easeInOut(true)) {
                             print("Toggle 2 changed")
                         }
                     }

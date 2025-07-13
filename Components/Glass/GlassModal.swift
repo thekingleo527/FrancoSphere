@@ -2,18 +2,16 @@
 //  GlassModal.swift
 //  FrancoSphere
 //
-//  FIXED: Resolved AnyShape Sendable conformance error
-//  Created by Shawn Magloire on 6/6/25.
+//  ✅ CLEAN VERSION: Based on working ClockInGlassModal.swift patterns
+//  ✅ NO GRDB: Only SwiftUI imports like other working components
+//  ✅ USES EXISTING: GlassModalSize and GlassModalStyle from GlassTypes.swift
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // MARK: - Glass Modal
 struct GlassModal<Content: View>: View {
-    @State var isPresented: Bool
+    @Binding var isPresented: Bool
     let content: Content
     
     // Customization
@@ -52,8 +50,7 @@ struct GlassModal<Content: View>: View {
         ZStack {
             if isPresented {
                 // Background overlay
-                Color.black
-                    .opacity(showContent ? 0.5 : 0)
+                Color.black.opacity(0.4)
                     .ignoresSafeArea()
                     .onTapGesture {
                         if dismissOnBackgroundTap {
@@ -64,21 +61,14 @@ struct GlassModal<Content: View>: View {
                 // Modal content
                 modalContent
                     .offset(y: style == .bottom ? max(0, dragOffset.height) : dragOffset.height)
-                    .gesture(
-                        style == .bottom ? dragGesture : nil
-                    )
+                    .gesture(style == .bottom ? dragGesture : nil)
                     .transition(modalTransition)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showContent)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: isPresented)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isPresented)
         .onChange(of: isPresented) { newValue in
-            if newValue {
-                withAnimation {
-                    showContent = true
-                }
-            } else {
-                showContent = false
+            withAnimation {
+                showContent = newValue
             }
         }
     }
@@ -98,11 +88,12 @@ struct GlassModal<Content: View>: View {
         .frame(width: size.width, height: size.height)
         .frame(maxWidth: style == .fullScreen ? .infinity : size.width)
         .frame(maxHeight: style == .fullScreen ? .infinity : size.height)
-        .background(modalBackground)
-        .clipShape(RoundedRectangle(cornerRadius: modalCornerRadius)) // FIX: Use single shape type
-        .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+        .background(GlassBackground())
+        .clipShape(RoundedRectangle(cornerRadius: modalCornerRadius))
+        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
         .scaleEffect(showContent ? 1 : 0.9)
         .opacity(showContent ? 1 : 0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showContent)
     }
     
     // MARK: - Modal Header
@@ -157,42 +148,13 @@ struct GlassModal<Content: View>: View {
         )
     }
     
-    // MARK: - Modal Background
-    private var modalBackground: some View {
-        ZStack {
-            // Base glass
-            Rectangle()
-                .fill(.ultraThinMaterial)
-            
-            // Gradient overlay
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.1),
-                    Color.white.opacity(0.05)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
-            // Border
-            RoundedRectangle(cornerRadius: modalCornerRadius)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.3),
-                            Color.white.opacity(0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        }
-    }
-    
-    // MARK: - Modal Corner Radius (FIX: Single computed property)
+    // MARK: - Modal Corner Radius
     private var modalCornerRadius: CGFloat {
-        style == .bottom ? 24 : 24
+        switch style {
+        case .bottom: return 24
+        case .centered: return 24
+        case .fullScreen: return 0
+        }
     }
     
     // MARK: - Modal Transition
@@ -237,22 +199,68 @@ struct GlassModal<Content: View>: View {
     }
 }
 
+// MARK: - Glass Background (Following ClockInGlassModal pattern)
+struct GlassBackground: View {
+    var body: some View {
+        ZStack {
+            // Base glass
+            Rectangle()
+                .fill(.ultraThinMaterial)
+            
+            // Gradient overlay
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.1),
+                    Color.white.opacity(0.05)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            // Border
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.3),
+                            Color.white.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        }
+    }
+}
+
 // MARK: - Glass Action Sheet
 struct GlassActionSheet: View {
-    @State var isPresented: Bool
+    @Binding var isPresented: Bool
     let title: String
     let message: String?
     let actions: [GlassActionButton]
     
     @State private var showContent = false
-    @Environment(\.actionSheetDismiss) var dismiss
+    @Environment(\.actionSheetDismiss) private var dismiss
+    
+    init(
+        isPresented: Binding<Bool>,
+        title: String,
+        message: String? = nil,
+        actions: [GlassActionButton]
+    ) {
+        self._isPresented = isPresented
+        self.title = title
+        self.message = message
+        self.actions = actions
+    }
     
     var body: some View {
         ZStack {
             if isPresented {
                 // Background
-                Color.black
-                    .opacity(showContent ? 0.5 : 0)
+                Color.black.opacity(0.4)
                     .ignoresSafeArea()
                     .onTapGesture {
                         dismissSheet()
@@ -291,12 +299,8 @@ struct GlassActionSheet: View {
                         }
                     }
                 }
-                .background(.ultraThinMaterial)
+                .background(GlassBackground())
                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
                 .padding()
                 .frame(maxHeight: .infinity, alignment: .bottom)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -329,7 +333,7 @@ struct GlassActionButton: View, Identifiable {
     let role: ButtonRole?
     let action: () -> Void
     
-    @Environment(\.actionSheetDismiss) var dismiss
+    @Environment(\.actionSheetDismiss) private var dismiss
     
     init(_ title: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
         self.title = title
@@ -362,6 +366,61 @@ struct GlassActionButton: View, Identifiable {
     }
 }
 
+// MARK: - Enhanced Modal Configurations (v6.0 Features)
+extension GlassModal {
+    // PropertyCard Modal Configuration
+    static func propertyCardModal<Content: View>(
+        isPresented: Binding<Bool>,
+        buildingName: String,
+        @ViewBuilder content: () -> Content
+    ) -> GlassModal<Content> {
+        GlassModal(
+            isPresented: isPresented,
+            title: buildingName,
+            subtitle: "Property Details",
+            size: .large,
+            style: .centered,
+            showCloseButton: true,
+            dismissOnBackgroundTap: true,
+            content: content
+        )
+    }
+    
+    // Dashboard Modal Configuration
+    static func dashboardModal<Content: View>(
+        isPresented: Binding<Bool>,
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> GlassModal<Content> {
+        GlassModal(
+            isPresented: isPresented,
+            title: title,
+            size: .medium,
+            style: .bottom,
+            showCloseButton: true,
+            dismissOnBackgroundTap: true,
+            content: content
+        )
+    }
+    
+    // Full Screen Modal Configuration
+    static func fullScreenModal<Content: View>(
+        isPresented: Binding<Bool>,
+        title: String? = nil,
+        @ViewBuilder content: () -> Content
+    ) -> GlassModal<Content> {
+        GlassModal(
+            isPresented: isPresented,
+            title: title,
+            size: .fullScreen,
+            style: .fullScreen,
+            showCloseButton: title != nil,
+            dismissOnBackgroundTap: false,
+            content: content
+        )
+    }
+}
+
 // MARK: - Environment Key
 private struct ActionSheetDismissKey: EnvironmentKey {
     static let defaultValue: (() -> Void)? = nil
@@ -374,7 +433,7 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - View Extension
+// MARK: - View Extensions
 extension View {
     func glassModal<Content: View>(
         isPresented: Binding<Bool>,
@@ -392,5 +451,126 @@ extension View {
                 content: content
             )
         )
+    }
+    
+    // MARK: - v6.0 Dashboard Modal Extensions
+    func propertyCardModal<Content: View>(
+        isPresented: Binding<Bool>,
+        buildingName: String,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        self.overlay(
+            GlassModal.propertyCardModal(
+                isPresented: isPresented,
+                buildingName: buildingName,
+                content: content
+            )
+        )
+    }
+    
+    func dashboardModal<Content: View>(
+        isPresented: Binding<Bool>,
+        title: String,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        self.overlay(
+            GlassModal.dashboardModal(
+                isPresented: isPresented,
+                title: title,
+                content: content
+            )
+        )
+    }
+    
+    func fullScreenModal<Content: View>(
+        isPresented: Binding<Bool>,
+        title: String? = nil,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        self.overlay(
+            GlassModal.fullScreenModal(
+                isPresented: isPresented,
+                title: title,
+                content: content
+            )
+        )
+    }
+    
+    func glassActionSheet(
+        isPresented: Binding<Bool>,
+        title: String,
+        message: String? = nil,
+        actions: [GlassActionButton]
+    ) -> some View {
+        self.overlay(
+            GlassActionSheet(
+                isPresented: isPresented,
+                title: title,
+                message: message,
+                actions: actions
+            )
+        )
+    }
+}
+
+// MARK: - Convenience Initializers
+extension GlassActionButton {
+    static func normal(_ title: String, action: @escaping () -> Void) -> GlassActionButton {
+        GlassActionButton(title, role: nil, action: action)
+    }
+    
+    static func destructive(_ title: String, action: @escaping () -> Void) -> GlassActionButton {
+        GlassActionButton(title, role: .destructive, action: action)
+    }
+    
+    static func cancel(_ action: @escaping () -> Void = {}) -> GlassActionButton {
+        GlassActionButton("Cancel", role: .cancel, action: action)
+    }
+}
+
+// MARK: - Preview
+struct GlassModal_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            LinearGradient(
+                colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack {
+                Text("FrancoSphere v6.0")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+                
+                Text("Glass Modal System")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+        }
+        .glassModal(
+            isPresented: .constant(true),
+            title: "Property Details",
+            size: .medium,
+            style: .centered
+        ) {
+            VStack(spacing: 20) {
+                Text("Modal Content")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Text("This is an example of the enhanced glass modal system for FrancoSphere v6.0")
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                
+                Button("Action") {
+                    // Action
+                }
+                .foregroundColor(.blue)
+            }
+            .padding()
+        }
     }
 }

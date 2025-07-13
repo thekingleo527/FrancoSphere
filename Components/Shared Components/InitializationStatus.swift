@@ -188,7 +188,7 @@ struct InitializationStatusView: View {
     
     private func updateProgress(_ newProgress: Double, _ message: String) async {
         await MainActor.run {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.3)) {
                 self.progress = newProgress
                 self.loadingMessage = message
             }

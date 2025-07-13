@@ -2,13 +2,12 @@
 //  BuildingMetricsService.swift
 //  FrancoSphere
 //
-//  🚀 COMPLETE GRDB.swift Implementation - Real-Time Building Metrics
-//  ✅ GRDB database integration for PropertyCard data
+//  🚀 CORRECTED: Fixed all GRDB access patterns and async/await issues
+//  ✅ Uses existing GRDBManager methods (no direct dbPool access)
+//  ✅ Fixed ValueObservation patterns
+//  ✅ Fixed Combine publisher patterns
 //  ✅ Actor-based thread-safe calculations
-//  ✅ Real-time sync with WorkerEventOutbox
-//  ✅ Caching for performance optimization
-//  ✅ Real-time observations using GRDB ValueObservation
-//  ✅ Enhanced metrics for admin dashboards
+//  ✅ FIXED: convertTasksToMetrics made nonisolated and ContextualTask.assignedWorkerId property
 //
 
 import Foundation
@@ -29,10 +28,10 @@ public actor BuildingMetricsService {
     
     // MARK: - Real-time Observations
     private var cancellables = Set<AnyCancellable>()
-    private var observationSubscriptions: [String: AnyPublisher<BuildingMetrics, Error>] = [:]
+    private var observationSubscriptions: [String: AnyPublisher<CoreTypes.BuildingMetrics, Error>] = [:]
     
     private struct CachedMetrics {
-        let metrics: BuildingMetrics
+        let metrics: CoreTypes.BuildingMetrics
         let timestamp: Date
         
         var isExpired: Bool {
@@ -47,7 +46,7 @@ public actor BuildingMetricsService {
     // MARK: - Public Interface
     
     /// Calculate comprehensive building metrics for PropertyCard
-    public func calculateMetrics(for buildingId: String) async throws -> BuildingMetrics {
+    public func calculateMetrics(for buildingId: String) async throws -> CoreTypes.BuildingMetrics {
         // Check cache first
         if let cached = metricsCache[buildingId], !cached.isExpired {
             print("📊 Using cached metrics for building: \(buildingId)")
@@ -64,13 +63,13 @@ public actor BuildingMetricsService {
     }
     
     /// Batch calculate metrics for multiple buildings (concurrent with GRDB)
-    public func calculateMetrics(for buildingIds: [String]) async throws -> [String: BuildingMetrics] {
-        var results: [String: BuildingMetrics] = [:]
+    public func calculateMetrics(for buildingIds: [String]) async throws -> [String: CoreTypes.BuildingMetrics] {
+        var results: [String: CoreTypes.BuildingMetrics] = [:]
         
         print("📊 Calculating metrics for \(buildingIds.count) buildings concurrently")
         
         // Use TaskGroup for concurrent GRDB queries
-        await withTaskGroup(of: (String, BuildingMetrics?).self) { group in
+        await withTaskGroup(of: (String, CoreTypes.BuildingMetrics?).self) { group in
             for buildingId in buildingIds {
                 group.addTask {
                     do {
@@ -94,8 +93,8 @@ public actor BuildingMetricsService {
         return results
     }
     
-    /// Get real-time metrics observation for a building (GRDB ValueObservation)
-    public func observeMetrics(for buildingId: String) -> AnyPublisher<BuildingMetrics, Error> {
+    /// Get real-time metrics observation for a building (using existing GRDBManager methods)
+    public func observeMetrics(for buildingId: String) -> AnyPublisher<CoreTypes.BuildingMetrics, Error> {
         // Return cached observation if available
         if let existing = observationSubscriptions[buildingId] {
             return existing
@@ -103,25 +102,12 @@ public actor BuildingMetricsService {
         
         print("🔄 Setting up real-time observation for building: \(buildingId)")
         
-        // Create new GRDB observation
-        let observation = ValueObservation
-            .tracking { db in
-                // Query building tasks and worker status
-                try Row.fetchAll(db, sql: """
-                    SELECT 
-                        t.id, t.name, t.isCompleted, t.dueDate, t.scheduledDate,
-                        t.category, t.urgencyLevel, t.estimatedDuration,
-                        w.id as worker_id, w.name as worker_name
-                    FROM tasks t
-                    LEFT JOIN workers w ON t.workerId = w.id
-                    WHERE t.buildingId = ? AND date(t.scheduledDate) = date('now')
-                    ORDER BY t.scheduledDate
-                """, arguments: [buildingId])
+        // Use existing GRDBManager.observeTasks method and convert to metrics
+        let observation = grdbManager.observeTasks(for: buildingId)
+            .asyncMap { [weak self] tasks in
+                // FIXED: Make convertTasksToMetrics async and call it properly
+                await self?.convertTasksToMetrics(tasks, buildingId: buildingId) ?? CoreTypes.BuildingMetrics.empty
             }
-            .map { [weak self] rows in
-                await self?.calculateMetricsFromRows(rows, buildingId: buildingId) ?? BuildingMetrics.empty
-            }
-            .publisher(in: grdbManager.dbPool)
             .eraseToAnyPublisher()
         
         // Cache the observation
@@ -146,7 +132,7 @@ public actor BuildingMetricsService {
     
     // MARK: - Real Data Calculation (GRDB)
     
-    private func performRealMetricsCalculation(buildingId: String) async throws -> BuildingMetrics {
+    private func performRealMetricsCalculation(buildingId: String) async throws -> CoreTypes.BuildingMetrics {
         print("📊 Calculating REAL metrics for building: \(buildingId) with GRDB")
         
         // 1. Get today's tasks for the building using GRDB
@@ -226,26 +212,25 @@ public actor BuildingMetricsService {
         let overallScore = Int(completionScore + complianceScore + workerScore)
         
         // 7. Calculate additional enhanced metrics
-        let avgTaskDuration = try await calculateAverageTaskDuration(buildingId: buildingId)
         let maintenanceEfficiency = try await calculateMaintenanceEfficiency(buildingId: buildingId)
         let lastActivityTime = try await getLastActivityTime(buildingId: buildingId)
         let urgentTasksCount = try await getUrgentTasksCount(buildingId: buildingId)
         let weeklyCompletionTrend = try await getWeeklyCompletionTrend(buildingId: buildingId)
         
-        let metrics = BuildingMetrics(
+        // Create metrics using CoreTypes.BuildingMetrics structure
+        let metrics = CoreTypes.BuildingMetrics(
+            buildingId: buildingId,
             completionRate: completionRate,
             pendingTasks: pendingTasks,
             overdueTasks: overdueTasks,
             activeWorkers: activeWorkerCount,
-            isCompliant: isCompliant,
-            overallScore: overallScore,
-            hasWorkerOnSite: hasWorkerOnSite,
-            averageTaskDuration: avgTaskDuration,
-            maintenanceEfficiency: maintenanceEfficiency,
-            lastActivityTime: lastActivityTime,
             urgentTasksCount: urgentTasksCount,
+            overallScore: overallScore,
+            isCompliant: isCompliant,
+            hasWorkerOnSite: hasWorkerOnSite,
+            maintenanceEfficiency: maintenanceEfficiency,
             weeklyCompletionTrend: weeklyCompletionTrend,
-            buildingId: buildingId
+            lastActivityDate: lastActivityTime
         )
         
         print("✅ GRDB Metrics calculated - Building: \(buildingId), Score: \(overallScore), Completion: \(Int(completionRate * 100))%")
@@ -254,23 +239,6 @@ public actor BuildingMetricsService {
     }
     
     // MARK: - Enhanced Metrics Calculations (GRDB)
-    
-    private func calculateAverageTaskDuration(buildingId: String) async throws -> TimeInterval {
-        let durationRows = try await grdbManager.query("""
-            SELECT AVG(
-                CASE 
-                    WHEN endTime IS NOT NULL AND startTime IS NOT NULL 
-                    THEN (julianday(endTime) - julianday(startTime)) * 24 * 60 * 60
-                    ELSE estimatedDuration
-                END
-            ) as avg_duration
-            FROM tasks
-            WHERE buildingId = ? AND isCompleted = 1
-              AND date(scheduledDate) >= date('now', '-7 days')
-        """, [buildingId])
-        
-        return durationRows.first?["avg_duration"] as? TimeInterval ?? 1800 // Default 30 minutes
-    }
     
     private func calculateMaintenanceEfficiency(buildingId: String) async throws -> Double {
         let efficiencyRows = try await grdbManager.query("""
@@ -341,170 +309,66 @@ public actor BuildingMetricsService {
     private func setupRealTimeObservations() {
         print("🔄 Setting up GRDB real-time observations for building metrics")
         
-        // Observe task completions across all buildings
-        let taskObservation = ValueObservation
-            .tracking { db in
-                try Row.fetchAll(db, sql: """
-                    SELECT buildingId, COUNT(*) as task_count, 
-                           SUM(isCompleted) as completed_count,
-                           MAX(datetime(scheduledDate)) as last_update
-                    FROM tasks 
-                    WHERE date(scheduledDate) >= date('now', '-1 days')
-                    GROUP BY buildingId
-                """)
-            }
-            .publisher(in: grdbManager.dbPool)
-        
-        taskObservation
-            .sink(
-                receiveCompletion: { completion in
-                    if case .failure(let error) = completion {
-                        print("❌ Task observation error: \(error)")
-                    }
-                },
-                receiveValue: { [weak self] rows in
-                    Task {
-                        // Invalidate caches for affected buildings
-                        for row in rows {
-                            if let buildingId = row["buildingId"] as? String {
-                                await self?.invalidateCache(for: buildingId)
+        // Use existing GRDBManager observation capabilities
+        Task {
+            do {
+                // Observe building changes to invalidate caches
+                grdbManager.observeBuildings()
+                    .sink(
+                        receiveCompletion: { completion in
+                            if case .failure(let error) = completion {
+                                print("❌ Building observation error: \(error)")
+                            }
+                        },
+                        receiveValue: { [weak self] _ in
+                            Task {
+                                await self?.invalidateAllCaches()
+                                print("🔄 Invalidated all caches due to building updates")
                             }
                         }
-                        print("🔄 Invalidated caches for \(rows.count) buildings due to task updates")
-                    }
-                }
-            )
-            .store(in: &cancellables)
+                    )
+                    .store(in: &cancellables)
+                
+            } catch {
+                print("❌ Failed to setup real-time observations: \(error)")
+            }
+        }
     }
     
     // MARK: - Helper Methods
     
-    private func calculateMetricsFromRows(_ rows: [Row], buildingId: String) async -> BuildingMetrics {
-        // Convert GRDB rows to metrics (for real-time observation)
-        let totalTasks = rows.count
-        let completedTasks = rows.filter { ($0["isCompleted"] as? Int64 ?? 0) > 0 }.count
+    // FIXED: Made this method async and nonisolated to work with Combine publishers
+    nonisolated private func convertTasksToMetrics(_ tasks: [ContextualTask], buildingId: String) async -> CoreTypes.BuildingMetrics {
+        // Convert ContextualTask array to metrics (for real-time observation)
+        let totalTasks = tasks.count
+        let completedTasks = tasks.filter { $0.isCompleted }.count
         let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 1.0
         
         // Count urgent tasks
-        let urgentTasks = rows.filter { ($0["urgencyLevel"] as? String) == "high" }.count
+        let urgentTasks = tasks.filter { $0.urgency == .high || $0.urgency == .critical }.count
         
-        // Get unique workers
-        let uniqueWorkers = Set(rows.compactMap { $0["worker_id"] as? String }).count
+        // Count overdue tasks
+        let overdueTasks = tasks.filter { task in
+            !task.isCompleted && (task.dueDate ?? Date.distantFuture) < Date()
+        }.count
+        
+        // Get unique workers - FIXED: Use assignedWorkerId instead of workerId
+        let uniqueWorkers = Set(tasks.compactMap { $0.assignedWorkerId }).count
         
         // Simplified metrics for real-time updates (performance optimized)
-        return BuildingMetrics(
+        return CoreTypes.BuildingMetrics(
+            buildingId: buildingId,
             completionRate: completionRate,
             pendingTasks: totalTasks - completedTasks,
-            overdueTasks: 0, // Calculated separately for performance
+            overdueTasks: overdueTasks,
             activeWorkers: uniqueWorkers,
-            isCompliant: completionRate >= 0.8, // Simplified compliance check
-            overallScore: Int(completionRate * 100),
-            hasWorkerOnSite: uniqueWorkers > 0,
-            averageTaskDuration: 1800,
-            maintenanceEfficiency: 0.85,
-            lastActivityTime: Date(),
             urgentTasksCount: urgentTasks,
-            weeklyCompletionTrend: completionRate,
-            buildingId: buildingId
+            overallScore: Int(completionRate * 100),
+            isCompliant: overdueTasks == 0,
+            hasWorkerOnSite: uniqueWorkers > 0,
+            maintenanceEfficiency: 0.85,
+            weeklyCompletionTrend: completionRate
         )
-    }
-}
-
-// MARK: - Enhanced BuildingMetrics Structure
-
-public struct BuildingMetrics {
-    // Core metrics
-    public let completionRate: Double      // 0.0 to 1.0
-    public let pendingTasks: Int          // Tasks remaining today
-    public let overdueTasks: Int          // Tasks past due date
-    public let activeWorkers: Int         // Workers assigned to building
-    public let isCompliant: Bool          // Overall compliance status
-    public let overallScore: Int          // 0 to 100 score
-    public let hasWorkerOnSite: Bool      // Current worker presence
-    
-    // Enhanced metrics
-    public let averageTaskDuration: TimeInterval  // Average task completion time
-    public let maintenanceEfficiency: Double      // On-time maintenance completion rate
-    public let lastActivityTime: Date?            // Most recent activity
-    public let urgentTasksCount: Int              // High priority tasks pending
-    public let weeklyCompletionTrend: Double      // 7-day completion rate trend
-    public let buildingId: String                 // Building identifier
-    
-    public init(
-        completionRate: Double,
-        pendingTasks: Int,
-        overdueTasks: Int,
-        activeWorkers: Int,
-        isCompliant: Bool,
-        overallScore: Int,
-        hasWorkerOnSite: Bool,
-        averageTaskDuration: TimeInterval = 1800,
-        maintenanceEfficiency: Double = 0.85,
-        lastActivityTime: Date? = nil,
-        urgentTasksCount: Int = 0,
-        weeklyCompletionTrend: Double = 0.0,
-        buildingId: String = ""
-    ) {
-        self.completionRate = completionRate
-        self.pendingTasks = pendingTasks
-        self.overdueTasks = overdueTasks
-        self.activeWorkers = activeWorkers
-        self.isCompliant = isCompliant
-        self.overallScore = overallScore
-        self.hasWorkerOnSite = hasWorkerOnSite
-        self.averageTaskDuration = averageTaskDuration
-        self.maintenanceEfficiency = maintenanceEfficiency
-        self.lastActivityTime = lastActivityTime
-        self.urgentTasksCount = urgentTasksCount
-        self.weeklyCompletionTrend = weeklyCompletionTrend
-        self.buildingId = buildingId
-    }
-    
-    /// Empty metrics for fallback cases
-    public static let empty = BuildingMetrics(
-        completionRate: 0.0,
-        pendingTasks: 0,
-        overdueTasks: 0,
-        activeWorkers: 0,
-        isCompliant: true,
-        overallScore: 0,
-        hasWorkerOnSite: false
-    )
-    
-    /// Summary string for debugging
-    public var summary: String {
-        let activityText = lastActivityTime?.formatted(.dateTime.hour().minute()) ?? "No recent activity"
-        let trendText = weeklyCompletionTrend > 0.8 ? "📈 Improving" : weeklyCompletionTrend > 0.6 ? "➡️ Stable" : "📉 Declining"
-        
-        return """
-        Building \(buildingId) Metrics:
-        • Completion: \(Int(completionRate * 100))% (\(pendingTasks) pending)
-        • Overdue: \(overdueTasks) tasks
-        • Workers: \(activeWorkers) assigned, \(hasWorkerOnSite ? "✅ on-site" : "❌ none on-site")
-        • Score: \(overallScore)/100
-        • Compliance: \(isCompliant ? "✅ Compliant" : "⚠️ Issues")
-        • Urgent: \(urgentTasksCount) high-priority tasks
-        • Efficiency: \(Int(maintenanceEfficiency * 100))%
-        • Trend: \(trendText)
-        • Last Activity: \(activityText)
-        """
-    }
-    
-    /// Dashboard display status
-    public var displayStatus: String {
-        if overdueTasks > 0 { return "⚠️ Overdue" }
-        if urgentTasksCount > 0 { return "🔥 Urgent" }
-        if completionRate >= 0.9 { return "✅ Excellent" }
-        if completionRate >= 0.7 { return "👍 Good" }
-        return "📋 In Progress"
-    }
-    
-    /// Color coding for UI
-    public var statusColor: String {
-        if overdueTasks > 0 { return "red" }
-        if urgentTasksCount > 0 { return "orange" }
-        if completionRate >= 0.8 { return "green" }
-        return "blue"
     }
 }
 
@@ -512,35 +376,37 @@ public struct BuildingMetrics {
 
 extension BuildingMetricsService {
     /// Convenience method for PropertyCard integration
-    public func getPropertyCardMetrics(for buildingId: String) async throws -> BuildingMetrics {
+    public func getPropertyCardMetrics(for buildingId: String) async throws -> CoreTypes.BuildingMetrics {
         return try await calculateMetrics(for: buildingId)
     }
     
     /// Batch metrics for dashboard views
-    public func getDashboardMetrics(for buildingIds: [String]) async throws -> [String: BuildingMetrics] {
+    public func getDashboardMetrics(for buildingIds: [String]) async throws -> [String: CoreTypes.BuildingMetrics] {
         return try await calculateMetrics(for: buildingIds)
     }
     
     /// Subscribe to real-time metrics for SwiftUI views
-    public func subscribeToMetrics(for buildingId: String) -> AnyPublisher<BuildingMetrics, Never> {
+    public func subscribeToMetrics(for buildingId: String) -> AnyPublisher<CoreTypes.BuildingMetrics, Never> {
         return observeMetrics(for: buildingId)
             .catch { error in
                 print("⚠️ Metrics observation error for building \(buildingId): \(error)")
-                return Just(BuildingMetrics.empty)
+                return Just(CoreTypes.BuildingMetrics.empty)
             }
             .eraseToAnyPublisher()
     }
     
     /// Get metrics for multiple buildings with real-time updates
-    public func subscribeToMultipleMetrics(for buildingIds: [String]) -> AnyPublisher<[String: BuildingMetrics], Never> {
+    public func subscribeToMultipleMetrics(for buildingIds: [String]) -> AnyPublisher<[String: CoreTypes.BuildingMetrics], Never> {
         let publishers = buildingIds.map { buildingId in
             subscribeToMetrics(for: buildingId)
                 .map { metrics in (buildingId, metrics) }
         }
         
         return Publishers.MergeMany(publishers)
-            .scan(into: [String: BuildingMetrics]()) { result, update in
-                result[update.0] = update.1
+            .reduce([String: CoreTypes.BuildingMetrics]()) { result, update in
+                var newResult = result
+                newResult[update.0] = update.1
+                return newResult
             }
             .eraseToAnyPublisher()
     }
@@ -550,51 +416,35 @@ extension BuildingMetricsService {
 
 extension BuildingMetricsService {
     /// Get Kevin's Rubin Museum specific metrics
-    public func getRubinMuseumMetrics() async throws -> BuildingMetrics {
+    public func getRubinMuseumMetrics() async throws -> CoreTypes.BuildingMetrics {
         return try await calculateMetrics(for: "14") // Rubin Museum building ID
     }
     
     /// Get Edwin's Stuyvesant Park metrics
-    public func getStuyvesantParkMetrics() async throws -> BuildingMetrics {
+    public func getStuyvesantParkMetrics() async throws -> CoreTypes.BuildingMetrics {
         return try await calculateMetrics(for: "17") // Stuyvesant Park building ID
     }
     
     /// Get all FrancoSphere portfolio metrics
-    public func getPortfolioMetrics() async throws -> [String: BuildingMetrics] {
+    public func getPortfolioMetrics() async throws -> [String: CoreTypes.BuildingMetrics] {
         let buildingIds = ["1", "4", "7", "8", "10", "12", "13", "14", "15", "16", "17"]
         return try await calculateMetrics(for: buildingIds)
     }
 }
 
-// MARK: - 📝 GRDB IMPLEMENTATION NOTES
-/*
- ✅ COMPLETE GRDB.swift IMPLEMENTATION:
- 
- 🔧 CORE FEATURES:
- - ✅ Real-time GRDB ValueObservation for live metrics
- - ✅ Actor-based thread-safe calculations
- - ✅ Comprehensive caching with intelligent invalidation
- - ✅ Concurrent metric calculation for multiple buildings
- - ✅ Enhanced metrics (efficiency, trends, urgent tasks)
- 
- 🔧 REAL-TIME CAPABILITIES:
- - ✅ Live task completion monitoring
- - ✅ Worker presence tracking
- - ✅ Automatic cache invalidation on data changes
- - ✅ SwiftUI-friendly Publisher interfaces
- - ✅ Multiple building observation support
- 
- 🔧 BUILDING-SPECIFIC FEATURES:
- - ✅ Kevin's Rubin Museum specialized tracking
- - ✅ Edwin's Stuyvesant Park operations
- - ✅ Portfolio-wide metrics aggregation
- - ✅ Compliance and efficiency monitoring
- 
- 🔧 PERFORMANCE OPTIMIZATIONS:
- - ✅ Intelligent caching with 5-minute expiration
- - ✅ Concurrent GRDB queries with TaskGroup
- - ✅ Simplified metrics for real-time observations
- - ✅ Batch processing for dashboard views
- 
- 🎯 STATUS: Complete GRDB BuildingMetricsService ready for production
- */
+// MARK: - Combine Helper Extension for asyncMap
+
+extension Publisher {
+    func asyncMap<T>(
+        _ transform: @escaping (Output) async -> T
+    ) -> Publishers.FlatMap<Future<T, Never>, Self> {
+        flatMap { value in
+            Future { promise in
+                Task {
+                    let output = await transform(value)
+                    promise(.success(output))
+                }
+            }
+        }
+    }
+}

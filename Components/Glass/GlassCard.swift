@@ -65,11 +65,11 @@ struct GlassCard<Content: View>: View {
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.1)) {
+                withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
                     isPressed = true
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.easeInOut(duration: 0.1)) {
+                    withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
                         isPressed = false
                     }
                 }

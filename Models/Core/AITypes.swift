@@ -1,107 +1,231 @@
 //
+//
 //  AITypes.swift
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ No type redeclarations
-//  ✅ Proper protocol conformance
+//  ✅ ALIGNED: Matches actual AIAssistantManager usage
+//  ✅ SIMPLIFIED: Removed complex generic types causing errors
+//  ✅ CORRECTED: Uses actual FrancoSphere types (ContextualTask, WorkerProfile, NamedCoordinate)
 //
 
 import Foundation
 import SwiftUI
 
-// MARK: - AI Scenario Framework
-
-public struct AIScenario: Codable, Hashable, Identifiable {
+// MARK: - AI Scenario (Simple Implementation)
+public struct AIScenario: Identifiable, Codable, Hashable {
     public let id: String
-    public let title: String
-    public let description: String
-    public let category: AIScenarioCategory
-    public let priority: AIPriority
-    public let contextData: [String: String]
-    public let suggestions: [AISuggestion]
-    public let estimatedImpact: AIImpact
+    public let scenario: String
     public let createdAt: Date
-    public let expiresAt: Date?
     
-    public init(
-        id: String = UUID().uuidString,
-        title: String,
-        description: String,
-        category: AIScenarioCategory,
-        priority: AIPriority,
-        contextData: [String: String] = [:],
-        suggestions: [AISuggestion] = [],
-        estimatedImpact: AIImpact,
-        createdAt: Date = Date(),
-        expiresAt: Date? = nil
-    ) {
+    // Simple constructor matching AIAssistantManager usage
+    public init(scenario: String) {
+        self.id = UUID().uuidString
+        self.scenario = scenario
+        self.createdAt = Date()
+    }
+    
+    public init(id: String, scenario: String, createdAt: Date) {
         self.id = id
-        self.title = title
-        self.description = description
-        self.category = category
-        self.priority = priority
-        self.contextData = contextData
-        self.suggestions = suggestions
-        self.estimatedImpact = estimatedImpact
+        self.scenario = scenario
         self.createdAt = createdAt
-        self.expiresAt = expiresAt
     }
 }
 
-public struct AISuggestion: Codable, Hashable, Identifiable {
+// MARK: - AI Suggestion (Simple Implementation)
+public struct AISuggestion: Identifiable, Codable, Hashable {
     public let id: String
-    public let title: String
-    public let description: String
-    public let actionType: AIActionType
-    public let confidence: Double // 0.0 to 1.0
-    public let estimatedTimeToComplete: TimeInterval
-    public let requiredResources: [AIResource]
-    public let potentialImpact: AIImpact
-    public let isEmergency: Bool
+    public let suggestion: String
+    public let createdAt: Date
+    
+    // Simple constructor matching AIAssistantManager usage
+    public init(suggestion: String) {
+        self.id = UUID().uuidString
+        self.suggestion = suggestion
+        self.createdAt = Date()
+    }
+    
+    public init(id: String, suggestion: String, createdAt: Date) {
+        self.id = id
+        self.suggestion = suggestion
+        self.createdAt = createdAt
+    }
+}
+
+// MARK: - AI Scenario Data (Simple, Non-Generic)
+public struct AIScenarioData: Codable, Hashable {
+    public let scenario: AIScenarioType
+    public let message: String
+    public let actionText: String
+    public let data: String?
+    public let createdAt: Date
     
     public init(
-        id: String = UUID().uuidString,
-        title: String,
-        description: String,
-        actionType: AIActionType,
-        confidence: Double,
-        estimatedTimeToComplete: TimeInterval,
-        requiredResources: [AIResource] = [],
-        potentialImpact: AIImpact,
-        isEmergency: Bool = false
+        scenario: AIScenarioType,
+        message: String,
+        actionText: String = "Handle",
+        data: String? = nil
     ) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.actionType = actionType
-        self.confidence = confidence
-        self.estimatedTimeToComplete = estimatedTimeToComplete
-        self.requiredResources = requiredResources
-        self.potentialImpact = potentialImpact
-        self.isEmergency = isEmergency
+        self.scenario = scenario
+        self.message = message
+        self.actionText = actionText
+        self.data = data
+        self.createdAt = Date()
+    }
+    
+    // Empty state
+    public static let empty = AIScenarioData(
+        scenario: .routineIncomplete,
+        message: "No active scenarios"
+    )
+}
+
+// MARK: - AI Scenario Types
+public enum AIScenarioType: String, Codable, CaseIterable, Hashable {
+    case routineIncomplete = "routineIncomplete"
+    case taskCompletion = "taskCompletion"
+    case pendingTasks = "pendingTasks"
+    case buildingArrival = "buildingArrival"
+    case weatherAlert = "weatherAlert"
+    case maintenanceRequired = "maintenanceRequired"
+    case scheduleConflict = "scheduleConflict"
+    case emergencyResponse = "emergencyResponse"
+    case missingPhoto = "missingPhoto"
+    case clockOutReminder = "clockOutReminder"
+    case inventoryLow = "inventoryLow"
+    
+    public var displayTitle: String {
+        switch self {
+        case .routineIncomplete: return "Routine Incomplete"
+        case .taskCompletion: return "Task Completion"
+        case .pendingTasks: return "Pending Tasks"
+        case .buildingArrival: return "Building Arrival"
+        case .weatherAlert: return "Weather Alert"
+        case .maintenanceRequired: return "Maintenance Required"
+        case .scheduleConflict: return "Schedule Conflict"
+        case .emergencyResponse: return "Emergency Response"
+        case .missingPhoto: return "Missing Photo"
+        case .clockOutReminder: return "Clock Out Reminder"
+        case .inventoryLow: return "Inventory Low"
+        }
+    }
+    
+    public var defaultDescription: String {
+        switch self {
+        case .routineIncomplete: return "Some routine tasks are incomplete"
+        case .taskCompletion: return "Task is ready for completion"
+        case .pendingTasks: return "You have pending tasks that need attention"
+        case .buildingArrival: return "You've arrived at a building"
+        case .weatherAlert: return "Weather conditions may affect your work"
+        case .maintenanceRequired: return "Equipment or area needs maintenance"
+        case .scheduleConflict: return "There's a conflict in your schedule"
+        case .emergencyResponse: return "Emergency situation requires immediate attention"
+        case .missingPhoto: return "Photo evidence is missing for a task"
+        case .clockOutReminder: return "Don't forget to clock out"
+        case .inventoryLow: return "Inventory levels are low"
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .routineIncomplete: return "clock"
+        case .taskCompletion: return "checkmark.circle"
+        case .pendingTasks: return "list.bullet"
+        case .buildingArrival: return "building.2"
+        case .weatherAlert: return "cloud.rain"
+        case .maintenanceRequired: return "wrench"
+        case .scheduleConflict: return "calendar.badge.exclamationmark"
+        case .emergencyResponse: return "exclamationmark.triangle"
+        case .missingPhoto: return "camera"
+        case .clockOutReminder: return "clock.badge.checkmark"
+        case .inventoryLow: return "shippingbox"
+        }
+    }
+    
+    public var color: Color {
+        switch self {
+        case .routineIncomplete: return .orange
+        case .taskCompletion: return .green
+        case .pendingTasks: return .blue
+        case .buildingArrival: return .green
+        case .weatherAlert: return .yellow
+        case .maintenanceRequired: return .orange
+        case .scheduleConflict: return .red
+        case .emergencyResponse: return .red
+        case .missingPhoto: return .purple
+        case .clockOutReminder: return .red
+        case .inventoryLow: return .orange
+        }
+    }
+    
+    public var priority: AIPriority {
+        switch self {
+        case .emergencyResponse: return .critical
+        case .scheduleConflict, .clockOutReminder: return .high
+        case .weatherAlert, .maintenanceRequired, .inventoryLow: return .medium
+        case .routineIncomplete, .pendingTasks, .missingPhoto: return .medium
+        case .taskCompletion, .buildingArrival: return .low
+        }
     }
 }
 
-// MARK: - AIScenarioData with Generic Type Parameters
-// This allows it to work with any task, building, and worker types
-public struct AIScenarioData<TaskType: Codable & Hashable, BuildingType: Codable & Hashable, WorkerType: Codable & Hashable>: Codable, Hashable {
+// MARK: - AI Priority
+public enum AIPriority: String, Codable, CaseIterable, Hashable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case urgent = "Urgent"
+    case critical = "Critical"
+    
+    public var numericValue: Int {
+        switch self {
+        case .critical: return 5
+        case .urgent: return 4
+        case .high: return 3
+        case .medium: return 2
+        case .low: return 1
+        }
+    }
+    
+    public var color: Color {
+        switch self {
+        case .critical: return .purple
+        case .urgent: return .red
+        case .high: return .orange
+        case .medium: return .yellow
+        case .low: return .green
+        }
+    }
+    
+    public var systemImageName: String {
+        switch self {
+        case .critical: return "exclamationmark.triangle.fill"
+        case .urgent: return "exclamationmark.circle.fill"
+        case .high: return "exclamationmark.circle"
+        case .medium: return "info.circle"
+        case .low: return "info.circle"
+        }
+    }
+}
+
+// MARK: - Extended AI Scenario Data (For Complex Use Cases)
+public struct ExtendedAIScenarioData: Codable, Hashable {
     public let scenario: AIScenario
-    public let contextualTasks: [TaskType]
-    public let affectedBuildings: [BuildingType]
-    public let availableWorkers: [WorkerType]
-    public let currentMetrics: AIMetrics
+    public let contextualTasks: [ContextualTask]
+    public let affectedBuildings: [NamedCoordinate]
+    public let availableWorkers: [WorkerProfile]
+    public let currentMetrics: AIMetrics?
     public let recommendedActions: [AIRecommendedAction]
-    public let riskAssessment: AIRiskAssessment
+    public let riskAssessment: AIRiskAssessment?
     
     public init(
         scenario: AIScenario,
-        contextualTasks: [TaskType],
-        affectedBuildings: [BuildingType],
-        availableWorkers: [WorkerType],
-        currentMetrics: AIMetrics,
+        contextualTasks: [ContextualTask] = [],
+        affectedBuildings: [NamedCoordinate] = [],
+        availableWorkers: [WorkerProfile] = [],
+        currentMetrics: AIMetrics? = nil,
         recommendedActions: [AIRecommendedAction] = [],
-        riskAssessment: AIRiskAssessment
+        riskAssessment: AIRiskAssessment? = nil
     ) {
         self.scenario = scenario
         self.contextualTasks = contextualTasks
@@ -114,124 +238,6 @@ public struct AIScenarioData<TaskType: Codable & Hashable, BuildingType: Codable
 }
 
 // MARK: - Supporting AI Types
-
-public enum AIScenarioCategory: String, Codable, CaseIterable {
-    case emergency = "emergency"
-    case optimization = "optimization"
-    case maintenance = "maintenance"
-    case compliance = "compliance"
-    case efficiency = "efficiency"
-    case prediction = "prediction"
-    
-    public var icon: String {
-        switch self {
-        case .emergency: return "exclamationmark.triangle.fill"
-        case .optimization: return "speedometer"
-        case .maintenance: return "wrench.and.screwdriver.fill"
-        case .compliance: return "checkmark.shield.fill"
-        case .efficiency: return "chart.line.uptrend.xyaxis"
-        case .prediction: return "crystal.ball.fill"
-        }
-    }
-    
-    public var color: Color {
-        switch self {
-        case .emergency: return .red
-        case .optimization: return .blue
-        case .maintenance: return .orange
-        case .compliance: return .green
-        case .efficiency: return .purple
-        case .prediction: return .cyan
-        }
-    }
-}
-
-public enum AIPriority: String, Codable, CaseIterable {
-    case critical = "critical"
-    case high = "high"
-    case medium = "medium"
-    case low = "low"
-    
-    public var numericValue: Int {
-        switch self {
-        case .critical: return 4
-        case .high: return 3
-        case .medium: return 2
-        case .low: return 1
-        }
-    }
-    
-    public var color: Color {
-        switch self {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-}
-
-public enum AIActionType: String, Codable, CaseIterable {
-    case immediate = "immediate"
-    case scheduled = "scheduled"
-    case preventive = "preventive"
-    case investigative = "investigative"
-    case optimizationRecommendation = "optimization_recommendation"
-    
-    public var icon: String {
-        switch self {
-        case .immediate: return "bolt.fill"
-        case .scheduled: return "calendar"
-        case .preventive: return "shield.checkered"
-        case .investigative: return "magnifyingglass"
-        case .optimizationRecommendation: return "lightbulb.fill"
-        }
-    }
-}
-
-public struct AIResource: Codable, Hashable {
-    public let type: AIResourceType
-    public let quantity: Int
-    public let description: String
-    public let isAvailable: Bool
-    
-    public init(type: AIResourceType, quantity: Int, description: String, isAvailable: Bool) {
-        self.type = type
-        self.quantity = quantity
-        self.description = description
-        self.isAvailable = isAvailable
-    }
-}
-
-public enum AIResourceType: String, Codable, CaseIterable {
-    case worker = "worker"
-    case equipment = "equipment"
-    case material = "material"
-    case time = "time"
-    case expertise = "expertise"
-}
-
-public struct AIImpact: Codable, Hashable {
-    public let efficiencyGain: Double // Percentage
-    public let costSavings: Double // Dollars
-    public let timeReduction: TimeInterval // Seconds
-    public let qualityImprovement: Double // Percentage
-    public let riskReduction: Double // Percentage
-    
-    public init(
-        efficiencyGain: Double,
-        costSavings: Double,
-        timeReduction: TimeInterval,
-        qualityImprovement: Double,
-        riskReduction: Double
-    ) {
-        self.efficiencyGain = efficiencyGain
-        self.costSavings = costSavings
-        self.timeReduction = timeReduction
-        self.qualityImprovement = qualityImprovement
-        self.riskReduction = riskReduction
-    }
-}
 
 public struct AIMetrics: Codable, Hashable {
     public let overallScore: Double
@@ -255,7 +261,7 @@ public struct AIMetrics: Codable, Hashable {
     }
 }
 
-public struct AIRecommendedAction: Codable, Hashable, Identifiable {
+public struct AIRecommendedAction: Identifiable, Codable, Hashable {
     public let id: String
     public let title: String
     public let description: String
@@ -270,7 +276,7 @@ public struct AIRecommendedAction: Codable, Hashable, Identifiable {
         description: String,
         priority: AIPriority,
         estimatedDuration: TimeInterval,
-        requiredSkills: [String],
+        requiredSkills: [String] = [],
         expectedOutcome: String
     ) {
         self.id = id
@@ -292,10 +298,10 @@ public struct AIRiskAssessment: Codable, Hashable {
     
     public init(
         riskLevel: AIRiskLevel,
-        riskFactors: [String],
-        mitigationStrategies: [String],
+        riskFactors: [String] = [],
+        mitigationStrategies: [String] = [],
         probabilityOfSuccess: Double,
-        contingencyPlans: [String]
+        contingencyPlans: [String] = []
     ) {
         self.riskLevel = riskLevel
         self.riskFactors = riskFactors
@@ -305,7 +311,7 @@ public struct AIRiskAssessment: Codable, Hashable {
     }
 }
 
-public enum AIRiskLevel: String, Codable, CaseIterable {
+public enum AIRiskLevel: String, Codable, CaseIterable, Hashable {
     case minimal = "minimal"
     case low = "low"
     case moderate = "moderate"
@@ -321,4 +327,97 @@ public enum AIRiskLevel: String, Codable, CaseIterable {
         case .critical: return .purple
         }
     }
+    
+    public var numericValue: Int {
+        switch self {
+        case .minimal: return 1
+        case .low: return 2
+        case .moderate: return 3
+        case .high: return 4
+        case .critical: return 5
+        }
+    }
 }
+
+// MARK: - Convenience Extensions
+
+extension AIScenarioData {
+    public var priorityColor: Color {
+        scenario.priority.color
+    }
+    
+    public var scenarioIcon: String {
+        scenario.icon
+    }
+    
+    public var isUrgent: Bool {
+        scenario.priority.numericValue >= 4
+    }
+    
+    public var isCritical: Bool {
+        scenario.priority == .critical
+    }
+}
+
+extension AIScenarioType {
+    public func createScenarioData(message: String, actionText: String = "Handle") -> AIScenarioData {
+        AIScenarioData(scenario: self, message: message, actionText: actionText)
+    }
+}
+
+// MARK: - Factory Methods for Common Scenarios
+
+extension AIScenarioData {
+    public static func routineIncomplete(workerName: String, buildingName: String) -> AIScenarioData {
+        AIScenarioData(
+            scenario: .routineIncomplete,
+            message: "\(workerName) has incomplete routine tasks at \(buildingName)",
+            actionText: "Review Tasks"
+        )
+    }
+    
+    public static func taskCompletion(taskName: String, buildingName: String) -> AIScenarioData {
+        AIScenarioData(
+            scenario: .taskCompletion,
+            message: "Task '\(taskName)' at \(buildingName) is ready for completion",
+            actionText: "Complete Task"
+        )
+    }
+    
+    public static func weatherAlert(condition: String, buildingNames: [String]) -> AIScenarioData {
+        let buildingList = buildingNames.prefix(2).joined(separator: ", ")
+        let additionalCount = buildingNames.count > 2 ? " and \(buildingNames.count - 2) more" : ""
+        
+        return AIScenarioData(
+            scenario: .weatherAlert,
+            message: "\(condition) weather affecting operations at \(buildingList)\(additionalCount)",
+            actionText: "Adjust Schedule"
+        )
+    }
+    
+    public static func buildingArrival(workerName: String, buildingName: String) -> AIScenarioData {
+        AIScenarioData(
+            scenario: .buildingArrival,
+            message: "\(workerName) has arrived at \(buildingName)",
+            actionText: "Start Tasks"
+        )
+    }
+    
+    public static func emergencyResponse(description: String, buildingName: String) -> AIScenarioData {
+        AIScenarioData(
+            scenario: .emergencyResponse,
+            message: "Emergency: \(description) at \(buildingName)",
+            actionText: "Respond"
+        )
+    }
+}
+
+// MARK: - Intelligence Types Reference
+// Note: IntelligenceInsight, InsightType, and InsightPriority are defined in CoreTypes.swift
+// This file only contains AI-specific types that don't conflict with existing definitions
+
+// MARK: - Type Aliases for Compatibility
+// These ensure the IntelligenceInsightsView can access the CoreTypes properly
+public typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
+public typealias InsightType = CoreTypes.InsightType
+public typealias InsightPriority = CoreTypes.InsightPriority

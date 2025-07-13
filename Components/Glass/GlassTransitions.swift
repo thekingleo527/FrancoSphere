@@ -1,25 +1,15 @@
 //
 //  GlassTransitions.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Created by Shawn Magloire on 6/8/25.
-//
-
-
-//
-//  GlassTransitions.swift
-//  FrancoSphere
-//
-//  Animation system for glassmorphism components
-//  Provides smooth transitions and micro-interactions
+//  ✅ FIXED: All animation syntax errors resolved
+//  ✅ ALIGNED: Updated for v6.0 architecture with modern SwiftUI patterns
+//  ✅ OPTIMIZED: Clean glass animation system for three-dashboard experience
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
-
-// MARK: - Glass Transitions
+// MARK: - Glass Transitions System
 struct GlassTransitions {
     
     // MARK: - Standard Animations
@@ -44,6 +34,11 @@ struct GlassTransitions {
     static let toggle = Animation.spring(response: 0.4, dampingFraction: 0.7)
     static let pulse = Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)
     static let heartbeat = Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true)
+    
+    // MARK: - Dashboard Transitions (v6.0 Three-Dashboard Support)
+    static let dashboardSwitch = Animation.spring(response: 0.5, dampingFraction: 0.8)
+    static let propertyCardUpdate = Animation.spring(response: 0.4, dampingFraction: 0.7)
+    static let metricsRefresh = Animation.easeInOut(duration: 0.6)
 }
 
 // MARK: - Custom Transition Effects
@@ -87,6 +82,21 @@ extension AnyTransition {
         .asymmetric(
             insertion: .move(edge: .trailing).combined(with: .opacity),
             removal: .move(edge: .leading).combined(with: .opacity)
+        )
+    }
+    
+    // MARK: - Dashboard-Specific Transitions
+    static var dashboardTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        )
+    }
+    
+    static var propertyCardTransition: AnyTransition {
+        .asymmetric(
+            insertion: .scale(scale: 0.9).combined(with: .opacity),
+            removal: .scale(scale: 1.1).combined(with: .opacity)
         )
     }
 }
@@ -194,7 +204,7 @@ struct FloatingModifier: ViewModifier {
         content
             .offset(y: isFloating ? amplitude : 0)
             .animation(
-                .easeInOut(duration: duration).repeatForever(autoreverses: true),
+                Animation.easeInOut(duration: duration).repeatForever(autoreverses: true),
                 value: isFloating
             )
             .onAppear {
@@ -224,7 +234,7 @@ struct ShimmerModifier: ViewModifier {
                     )
                     .offset(x: isShimmering ? 300 : -300)
                     .animation(
-                        .linear(duration: 1.5).repeatForever(autoreverses: false),
+                        Animation.linear(duration: 1.5).repeatForever(autoreverses: false),
                         value: isShimmering
                     )
                     .mask(content)
@@ -258,6 +268,45 @@ struct PulsingGlowModifier: ViewModifier {
     }
 }
 
+// MARK: - PropertyCard Live Update Animation (v6.0 Feature)
+struct PropertyCardUpdateModifier: ViewModifier {
+    @State private var isUpdating = false
+    let updateTrigger: Bool
+    
+    init(updateTrigger: Bool) {
+        self.updateTrigger = updateTrigger
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isUpdating ? 1.02 : 1.0)
+            .animation(GlassTransitions.propertyCardUpdate, value: isUpdating)
+            .onChange(of: updateTrigger) { _ in
+                withAnimation(GlassTransitions.propertyCardUpdate) {
+                    isUpdating = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(GlassTransitions.propertyCardUpdate) {
+                        isUpdating = false
+                    }
+                }
+            }
+    }
+}
+
+// MARK: - Dashboard Switch Animation (v6.0 Feature)
+struct DashboardSwitchModifier: ViewModifier {
+    let isActive: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isActive ? 1.0 : 0.95)
+            .opacity(isActive ? 1.0 : 0.7)
+            .animation(GlassTransitions.dashboardSwitch, value: isActive)
+    }
+}
+
 // MARK: - View Extensions
 extension View {
     func animatedGlassAppear(delay: Double = 0) -> some View {
@@ -278,6 +327,15 @@ extension View {
     
     func glassHover() -> some View {
         self.modifier(GlassHoverModifier())
+    }
+    
+    // MARK: - v6.0 Dashboard Extensions
+    func propertyCardUpdate(trigger: Bool) -> some View {
+        self.modifier(PropertyCardUpdateModifier(updateTrigger: trigger))
+    }
+    
+    func dashboardActive(_ isActive: Bool) -> some View {
+        self.modifier(DashboardSwitchModifier(isActive: isActive))
     }
 }
 
@@ -312,8 +370,17 @@ struct GlassHoverModifier: ViewModifier {
             .scaleEffect(isHovered ? 1.05 : 1.0)
             .shadow(color: .black.opacity(isHovered ? 0.3 : 0.2), radius: isHovered ? 15 : 8)
             .animation(GlassTransitions.cardHover, value: isHovered)
-            .onHover { hovering in
-                isHovered = hovering
+            .onTapGesture {
+                // iOS doesn't have onHover, use tap for interaction
+                withAnimation(GlassTransitions.buttonPress) {
+                    isHovered.toggle()
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(GlassTransitions.buttonPress) {
+                        isHovered = false
+                    }
+                }
             }
     }
 }
@@ -330,9 +397,9 @@ struct GlassLoadingState: View {
                     .frame(width: 8, height: 8)
                     .scaleEffect(isAnimating ? 1.0 : 0.5)
                     .animation(
-                        .easeInOut(duration: 0.6)
-                        .repeatForever()
-                        .delay(Double(index) * 0.2),
+                        Animation.easeInOut(duration: 0.6)
+                            .repeatForever()
+                            .delay(Double(index) * 0.2),
                         value: isAnimating
                     )
             }
@@ -346,7 +413,6 @@ struct GlassLoadingState: View {
 // MARK: - Success Checkmark Animation
 struct GlassSuccessCheckmark: View {
     @State private var isVisible = false
-    @State private var checkmarkProgress: CGFloat = 0
     
     var body: some View {
         ZStack {
@@ -369,6 +435,42 @@ struct GlassSuccessCheckmark: View {
     }
 }
 
+// MARK: - Live Metrics Update Animation (v6.0 Feature)
+struct LiveMetricsUpdateView: View {
+    @State private var isUpdating = false
+    let metricsChanged: Bool
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "arrow.clockwise")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+                .rotationEffect(.degrees(isUpdating ? 360 : 0))
+                .animation(
+                    isUpdating ?
+                    Animation.linear(duration: 1.0).repeatForever(autoreverses: false) :
+                    .default,
+                    value: isUpdating
+                )
+            
+            Text("Live")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+        }
+        .onChange(of: metricsChanged) { _ in
+            withAnimation {
+                isUpdating = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                withAnimation {
+                    isUpdating = false
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Preview
 struct GlassTransitions_Previews: PreviewProvider {
     static var previews: some View {
@@ -384,30 +486,32 @@ struct GlassTransitions_Previews: PreviewProvider {
                 VStack(spacing: 30) {
                     AnimatedGlassCard {
                         VStack {
-                            Text("Animated Glass Card")
+                            Text("v6.0 Glass System")
                                 .font(.headline)
                                 .foregroundColor(.white)
                             
                             GlassLoadingState()
+                            
+                            LiveMetricsUpdateView(metricsChanged: true)
                         }
                         .padding()
                     }
                     
                     GlassCard {
-                        Text("Floating Card")
+                        Text("PropertyCard Update")
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding()
                     }
-                    .floating(amplitude: 5, duration: 4.0)
+                    .propertyCardUpdate(trigger: true)
                     
                     GlassCard {
-                        Text("Shimmer Effect")
+                        Text("Dashboard Active")
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding()
                     }
-                    .shimmer()
+                    .dashboardActive(true)
                     
                     GlassSuccessCheckmark()
                 }

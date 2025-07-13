@@ -72,7 +72,7 @@ struct LoginView: View {
                 .ignoresSafeArea()
                 .opacity(backgroundOpacity)
                 .onAppear {
-                    withAnimation(.easeIn(duration: 1.5)) {
+                    withAnimation(Animation.easeIn(duration: 1.5)) {
                         backgroundOpacity = 1.0
                     }
                 }
@@ -199,7 +199,7 @@ struct LoginView: View {
                                     Section("Workers") {
                                         ForEach(workerEmails, id: \.self) { workerEmail in
                                             Button(action: {
-                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                                     email = workerEmail
                                                     password = "password"
                                                 }
@@ -212,7 +212,7 @@ struct LoginView: View {
                                     Section("Admin/Client") {
                                         ForEach(specialEmails, id: \.self) { specialEmail in
                                             Button(action: {
-                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                                     email = specialEmail
                                                     password = "password"
                                                 }
@@ -267,7 +267,7 @@ struct LoginView: View {
                                     }
                                     
                                     Button(action: {
-                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                             showPassword.toggle()
                                         }
                                     }) {
@@ -388,7 +388,7 @@ struct LoginView: View {
     
     private func quickAccessButton(email: String, label: String, icon: String, color: Color) -> some View {
         Button(action: {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                 self.email = email
                 self.password = "password"
             }
@@ -434,14 +434,14 @@ struct LoginView: View {
     private func performLogin() {
         guard !isLoading else { return }
         
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             isLoading = true
             errorMessage = nil
         }
         
         authManager.login(email: email, password: password) { success, error in
             DispatchQueue.main.async {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                     self.isLoading = false
                     
                     if !success {

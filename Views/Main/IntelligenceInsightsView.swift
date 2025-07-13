@@ -1,12 +1,11 @@
 //
 //  IntelligenceInsightsView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  🎯 PHASE 4: INTELLIGENCE INSIGHTS COMPONENT
-//  ✅ AI-powered insights and recommendations
-//  ✅ Actionable intelligence for decision-making
-//  ✅ Performance optimization suggestions
-//  ✅ Predictive maintenance alerts
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With current CoreTypes structure and Phase 2.1 implementation
+//  ✅ ENHANCED: Compatible with three-dashboard system
+//  ✅ GRDB: Real-time data integration ready
 //
 
 import SwiftUI
@@ -64,8 +63,7 @@ struct IntelligenceInsightsView: View {
                 if let insight = selectedInsight {
                     InsightDetailSheet(
                         insight: insight,
-                        onAction: onInsightAction,
-                        isPresented: $showingDetailSheet
+                        onAction: onInsightAction
                     )
                 }
             }
@@ -96,7 +94,7 @@ struct IntelligenceInsightsView: View {
             Spacer()
             
             SummaryInsightCard(
-                title: "Actionable",
+                title: "Action Required",
                 value: "\(actionableCount)",
                 icon: "hand.tap",
                 color: .green
@@ -417,7 +415,7 @@ struct PriorityBadge: View {
         case .low: return .green
         case .medium: return .orange
         case .high: return .red
-        case .critical: return .red
+        case .critical: return .purple
         }
     }
 }
@@ -428,8 +426,8 @@ struct InsightDetailSheet: View {
     let insight: CoreTypes.IntelligenceInsight
     let onAction: ((CoreTypes.IntelligenceInsight) -> Void)?
     
-    @Environment(\.dismiss) private var dismiss
     @State private var showingActionConfirmation = false
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
@@ -445,8 +443,9 @@ struct InsightDetailSheet: View {
                     insightDetails
                     
                     // Affected Buildings
-                    if !insight.affectedBuildings.isEmpty {
-                        affectedBuildingsSection
+                    let affectedBuildings = insight.affectedBuildings
+                    if !affectedBuildings.isEmpty {
+                        affectedBuildingsSection(buildings: affectedBuildings)
                     }
                     
                     // Action Button (if actionable)
@@ -463,7 +462,7 @@ struct InsightDetailSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        isPresented = false
+                        dismiss()
                     }
                 }
             }
@@ -475,7 +474,7 @@ struct InsightDetailSheet: View {
         ) {
             Button("Proceed") {
                 onAction?(insight)
-                isPresented = false
+                dismiss()
             }
             
             Button("Cancel", role: .cancel) {}
@@ -563,7 +562,7 @@ struct InsightDetailSheet: View {
                 
                 DetailRow(
                     title: "Buildings Affected",
-                    value: "\(insight.affectedBuildings.count)",
+                    value: insight.affectedBuildings.count == 0 ? "Portfolio-wide" : "\(insight.affectedBuildings.count)",
                     icon: "building.2"
                 )
             }
@@ -572,14 +571,14 @@ struct InsightDetailSheet: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    private var affectedBuildingsSection: some View {
+    private func affectedBuildingsSection(buildings: [String]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Affected Buildings")
                 .font(.headline)
                 .foregroundColor(.primary)
             
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(insight.affectedBuildings, id: \.self) { buildingId in
+                ForEach(buildings, id: \.self) { buildingId in
                     HStack {
                         Image(systemName: "building.2")
                             .font(.caption)
@@ -632,30 +631,6 @@ struct DetailRow: View {
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .foregroundColor(.primary)
-        }
-    }
-}
-
-// MARK: - Extensions for Missing Properties
-
-extension CoreTypes.InsightType {
-    var icon: String {
-        switch self {
-        case .performance: return "chart.line.uptrend.xyaxis"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .compliance: return "checkmark.shield"
-        case .efficiency: return "speedometer"
-        case .cost: return "dollarsign.circle"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .performance: return .blue
-        case .maintenance: return .orange
-        case .compliance: return .green
-        case .efficiency: return .purple
-        case .cost: return .yellow
         }
     }
 }
@@ -729,30 +704,52 @@ enum LocalInsightFilter: Hashable, CaseIterable {
     }
 }
 
+// MARK: - Extensions for CoreTypes
+
+extension CoreTypes.InsightType {
+    var icon: String {
+        switch self {
+        case .performance: return "chart.line.uptrend.xyaxis"
+        case .maintenance: return "wrench.and.screwdriver"
+        case .efficiency: return "speedometer"
+        case .compliance: return "checkmark.shield"
+        case .cost: return "dollarsign.circle"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .performance: return .blue
+        case .maintenance: return .orange
+        case .efficiency: return .green
+        case .compliance: return .purple
+        case .cost: return .red
+        }
+    }
+}
+
 // MARK: - Preview
 
-struct IntelligenceInsightsView_Previews: PreviewProvider {
-    static var previews: some View {
-        IntelligenceInsightsView(
-            insights: [
-                CoreTypes.IntelligenceInsight(
-                    title: "High Portfolio Efficiency",
-                    description: "8 out of 12 buildings are performing at >90% efficiency across all key metrics including task completion rates, worker productivity, and maintenance schedules. This represents a significant improvement over the previous quarter.",
-                    type: .performance,
-                    priority: .medium,
-                    actionRequired: false,
-                    affectedBuildings: ["14", "15", "16"]
-                ),
-                CoreTypes.IntelligenceInsight(
-                    title: "Maintenance Priority Alert",
-                    description: "3 buildings require immediate maintenance attention based on predictive analytics and current task backlogs.",
-                    type: .maintenance,
-                    priority: .high,
-                    actionRequired: true,
-                    affectedBuildings: ["12", "18", "20"]
-                )
-            ]
-        )
-        .preferredColorScheme(.dark)
-    }
+#Preview {
+    IntelligenceInsightsView(
+        insights: [
+            CoreTypes.IntelligenceInsight(
+                title: "High Portfolio Efficiency",
+                description: "8 out of 12 buildings are performing at >90% efficiency across all key metrics including task completion rates, worker productivity, and maintenance schedules. This represents a significant improvement over the previous quarter.",
+                type: .performance,
+                priority: .medium,
+                actionRequired: false,
+                affectedBuildings: []
+            ),
+            CoreTypes.IntelligenceInsight(
+                title: "Maintenance Priority Alert",
+                description: "3 buildings require immediate maintenance attention based on predictive analytics and current task backlogs.",
+                type: .maintenance,
+                priority: .high,
+                actionRequired: true,
+                affectedBuildings: ["14", "7", "12"]
+            )
+        ]
+    )
+    .preferredColorScheme(.dark)
 }
