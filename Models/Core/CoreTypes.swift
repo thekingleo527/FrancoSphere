@@ -1,368 +1,277 @@
 //
 //  CoreTypes.swift
-//  FrancoSphere v6.0
+//  FrancoSphere
 //
-//  ✅ COMPLETE: All type definitions and protocol conformance
-//  ✅ FIXED: All syntax errors and missing types
-//  ✅ ADDED: PortfolioIntelligence and all missing definitions
+//  ✅ CRITICAL: Foundation type system that everything depends on
+//  ✅ All type aliases, User model, and core enums
+//  ✅ Building types, trend directions, and analytics structures
+//  ✅ Must be created first - everything else imports from here
 //
 
 import Foundation
 import CoreLocation
-import SwiftUI
 
+// MARK: - Core Types Namespace
 public struct CoreTypes {
-    // CRITICAL: All IDs are String to match database
+    
+    // MARK: - Core ID Types
     public typealias WorkerID = String
     public typealias BuildingID = String
     public typealias TaskID = String
     public typealias AssignmentID = String
     public typealias RoleID = String
     
-    // User model to replace scattered auth properties
-    public struct User: Codable, Hashable {
+    // MARK: - User Authentication Model
+    public struct User: Codable, Hashable, Identifiable {
+        public let id: String
         public let workerId: WorkerID
         public let name: String
         public let email: String
         public let role: String
         
-        // Computed properties for compatibility
-        public var isAdmin: Bool { role == "admin" }
-        public var isWorker: Bool { role == "worker" }
-        public var displayName: String { name }
-        
-        public init(workerId: WorkerID, name: String, email: String, role: String) {
+        public init(id: String = UUID().uuidString, workerId: WorkerID, name: String, email: String, role: String) {
+            self.id = id
             self.workerId = workerId
             self.name = name
             self.email = email
             self.role = role
         }
+        
+        // Computed properties for compatibility
+        public var isAdmin: Bool { role == "admin" }
+        public var isWorker: Bool { role == "worker" }
+        public var displayName: String { name }
     }
     
-    // Building type enum for real-world categorization
-    public enum BuildingType: String, Codable, CaseIterable {
+    // MARK: - Building Type Classification
+    public enum BuildingType: String, Codable, CaseIterable, Hashable {
         case residential = "Residential"
         case commercial = "Commercial"
-        case museum = "Museum"
+        case museum = "Museum"      // For Rubin Museum
+        case cultural = "Cultural"
         case mixedUse = "Mixed Use"
+        case retail = "Retail"
+        
+        public var displayName: String { rawValue }
+        
+        public var iconName: String {
+            switch self {
+            case .residential: return "house.fill"
+            case .commercial: return "building.2.fill"
+            case .museum, .cultural: return "building.columns.fill"
+            case .mixedUse: return "building.fill"
+            case .retail: return "storefront.fill"
+            }
+        }
     }
     
-    // ✅ FIXED: TrendDirection enum with icon property
+    // MARK: - Trend Direction for Analytics
     public enum TrendDirection: String, Codable, CaseIterable, Hashable {
-        case up = "up"
-        case down = "down"
+        case improving = "improving"
+        case declining = "declining"
         case stable = "stable"
+        case unknown = "unknown"
         
-        public var color: Color {
+        public var displayName: String {
             switch self {
-            case .up: return .green
-            case .down: return .red
-            case .stable: return .blue
+            case .improving: return "Improving"
+            case .declining: return "Declining"
+            case .stable: return "Stable"
+            case .unknown: return "Unknown"
             }
         }
         
-        public var icon: String {  // FIXED: Changed from systemImage to icon
+        public var systemImage: String {
             switch self {
-            case .up: return "arrow.up.right"
-            case .down: return "arrow.down.right"
-            case .stable: return "arrow.right"
+            case .improving: return "arrow.up.circle.fill"
+            case .declining: return "arrow.down.circle.fill"
+            case .stable: return "minus.circle.fill"
+            case .unknown: return "questionmark.circle.fill"
             }
         }
         
-        public var systemImage: String {  // Keep both for compatibility
-            return icon
+        public var color: String {
+            switch self {
+            case .improving: return "green"
+            case .declining: return "red"
+            case .stable: return "blue"
+            case .unknown: return "gray"
+            }
         }
     }
     
-    // ✅ ADDED: Missing PortfolioIntelligence definition
-    public struct PortfolioIntelligence: Codable, Hashable {
-        public let totalBuildings: Int
-        public let totalCompletedTasks: Int
-        public let averageComplianceScore: Double
-        public let totalActiveWorkers: Int
-        public let overallEfficiency: Double
-        public let trendDirection: TrendDirection
-        
-        public init(
-            totalBuildings: Int,
-            totalCompletedTasks: Int,
-            averageComplianceScore: Double,
-            totalActiveWorkers: Int,
-            overallEfficiency: Double,
-            trendDirection: TrendDirection
-        ) {
-            self.totalBuildings = totalBuildings
-            self.totalCompletedTasks = totalCompletedTasks
-            self.averageComplianceScore = averageComplianceScore
-            self.totalActiveWorkers = totalActiveWorkers
-            self.overallEfficiency = overallEfficiency
-            self.trendDirection = trendDirection
-        }
-    }
-    
-    // ✅ FIXED: TaskProgress with required properties
-    public struct TaskProgress: Codable, Hashable {
-        public let completed: Int      // Required by HeroStatusCard
-        public let total: Int
-        public let remaining: Int
-        public let percentage: Double
-        public let overdueTasks: Int
-        
-        public init(completed: Int, total: Int, remaining: Int, percentage: Double, overdueTasks: Int) {
-            self.completed = completed
-            self.total = total
-            self.remaining = remaining
-            self.percentage = percentage
-            self.overdueTasks = overdueTasks
-        }
-    }
-    
-    // ✅ FIXED: BuildingAnalytics definition
+    // MARK: - Building Analytics Structure
     public struct BuildingAnalytics: Codable, Hashable {
-        public let buildingId: String
-        public let completionRate: Double
+        public let buildingId: BuildingID
         public let totalTasks: Int
         public let completedTasks: Int
         public let overdueTasks: Int
-        public let activeWorkers: Int
         public let uniqueWorkers: Int
-        public let lastUpdate: Date
+        public let completionRate: Double
+        public let averageTasksPerDay: Double
+        public let periodDays: Int
         
         public init(
-            buildingId: String,
-            completionRate: Double,
+            buildingId: BuildingID,
             totalTasks: Int,
             completedTasks: Int,
             overdueTasks: Int,
-            activeWorkers: Int,
             uniqueWorkers: Int,
-            lastUpdate: Date = Date()
+            completionRate: Double,
+            averageTasksPerDay: Double,
+            periodDays: Int
         ) {
             self.buildingId = buildingId
-            self.completionRate = completionRate
             self.totalTasks = totalTasks
             self.completedTasks = completedTasks
             self.overdueTasks = overdueTasks
-            self.activeWorkers = activeWorkers
             self.uniqueWorkers = uniqueWorkers
-            self.lastUpdate = lastUpdate
-        }
-    }
-    
-    // ✅ FIXED: Intelligence Types
-    public enum InsightType: String, Codable, CaseIterable {
-        case performance, maintenance, compliance, efficiency, cost, safety
-        
-        public var icon: String {
-            switch self {
-            case .performance: return "chart.line.uptrend.xyaxis"
-            case .maintenance: return "wrench.and.screwdriver"
-            case .compliance: return "checkmark.shield"
-            case .efficiency: return "speedometer"
-            case .safety: return "shield.lefthalf.filled"
-            case .cost: return "dollarsign.circle"
-            }
-        }
-        
-        public var color: Color {
-            switch self {
-            case .performance: return .blue
-            case .maintenance: return .orange
-            case .compliance: return .green
-            case .efficiency: return .purple
-            case .safety: return .red
-            case .cost: return .yellow
-            }
-        }
-    }
-    
-    public enum InsightPriority: String, Codable, CaseIterable {
-        case low, medium, high, critical
-        
-        public var priorityValue: Int {
-            switch self {
-            case .low: return 1
-            case .medium: return 2
-            case .high: return 3
-            case .critical: return 4
-            }
-        }
-        
-        public var color: Color {
-            switch self {
-            case .low: return .gray
-            case .medium: return .blue
-            case .high: return .orange
-            case .critical: return .red
-            }
-        }
-    }
-    
-    // ✅ ADDED: IntelligenceInsight definition
-    public struct IntelligenceInsight: Identifiable, Codable, Hashable {
-        public let id = UUID()
-        public let title: String
-        public let description: String
-        public let type: InsightType
-        public let priority: InsightPriority
-        public let actionable: Bool
-        public let timestamp: Date
-        
-        public init(
-            title: String,
-            description: String,
-            type: InsightType,
-            priority: InsightPriority,
-            actionable: Bool,
-            timestamp: Date = Date()
-        ) {
-            self.title = title
-            self.description = description
-            self.type = type
-            self.priority = priority
-            self.actionable = actionable
-            self.timestamp = timestamp
-        }
-    }
-    
-    // ✅ ADDED: Building Status & Types
-    public enum BuildingStatus: String, Codable, CaseIterable {
-        case operational, maintenance, emergency, offline
-    }
-    
-    public enum BuildingTab: String, CaseIterable {
-        case overview, tasks, maintenance, compliance, workers
-    }
-    
-    public struct BuildingInsight: Identifiable, Codable, Hashable {
-        public let id = UUID()
-        public let buildingId: String
-        public let title: String
-        public let description: String
-        public let type: InsightType
-        public let actionRequired: Bool
-        public let generatedAt: Date
-        
-        public init(
-            buildingId: String,
-            type: InsightType,
-            title: String,
-            description: String,
-            actionRequired: Bool,
-            generatedAt: Date = Date()
-        ) {
-            self.buildingId = buildingId
-            self.type = type
-            self.title = title
-            self.description = description
-            self.actionRequired = actionRequired
-            self.generatedAt = generatedAt
-        }
-    }
-    
-    // ✅ ADDED: InsightFilter definition
-    public struct InsightFilter: Hashable, Equatable {
-        public let type: InsightType?
-        public let priority: InsightPriority?
-        public let buildingId: String?
-        
-        public init(type: InsightType? = nil, priority: InsightPriority? = nil, buildingId: String? = nil) {
-            self.type = type
-            self.priority = priority
-            self.buildingId = buildingId
-        }
-    }
-    
-    // ✅ FIXED: PerformanceMetrics
-    public struct PerformanceMetrics: Codable, Hashable {
-        public let workerId: String
-        public let efficiency: Double
-        public let tasksCompleted: Int
-        public let averageTime: Double
-        public let qualityScore: Double
-        public let lastUpdate: Date
-        
-        public init(
-            workerId: String,
-            efficiency: Double,
-            tasksCompleted: Int,
-            averageTime: Double,
-            qualityScore: Double,
-            lastUpdate: Date = Date()
-        ) {
-            self.workerId = workerId
-            self.efficiency = efficiency
-            self.tasksCompleted = tasksCompleted
-            self.averageTime = averageTime
-            self.qualityScore = qualityScore
-            self.lastUpdate = lastUpdate
-        }
-    }
-    
-    // ✅ FIXED: BuildingStatistics
-    public struct BuildingStatistics: Codable, Hashable {
-        public let buildingId: String
-        public let completionRate: Double
-        public let taskCount: Int
-        public let workerCount: Int
-        public let efficiencyTrend: TrendDirection
-        public let lastUpdate: Date
-        
-        public init(
-            buildingId: String,
-            completionRate: Double,
-            taskCount: Int,
-            workerCount: Int,
-            efficiencyTrend: TrendDirection,
-            lastUpdate: Date = Date()
-        ) {
-            self.buildingId = buildingId
             self.completionRate = completionRate
-            self.taskCount = taskCount
-            self.workerCount = workerCount
-            self.efficiencyTrend = efficiencyTrend
-            self.lastUpdate = lastUpdate
+            self.averageTasksPerDay = averageTasksPerDay
+            self.periodDays = periodDays
         }
+        
+        // Factory method for empty analytics
+        public static func empty(buildingId: BuildingID) -> BuildingAnalytics {
+            return BuildingAnalytics(
+                buildingId: buildingId,
+                totalTasks: 0,
+                completedTasks: 0,
+                overdueTasks: 0,
+                uniqueWorkers: 0,
+                completionRate: 0.0,
+                averageTasksPerDay: 0.0,
+                periodDays: 30
+            )
+        }
+        
+        // Computed properties
+        public var pendingTasks: Int { totalTasks - completedTasks }
+        public var completionPercentage: Int { Int(completionRate * 100) }
+        public var isPerformingWell: Bool { completionRate >= 0.8 && overdueTasks == 0 }
     }
     
-    // ✅ FIXED: TaskTrends
-    public struct TaskTrends: Codable, Hashable {
-        public let weeklyCompletion: [Double]
-        public let categoryBreakdown: [String: Int]
-        public let changePercentage: Double
-        public let comparisonPeriod: String
+    // MARK: - Building Statistics for Dashboard
+    public struct BuildingStatistics: Codable, Hashable {
+        public let buildingId: BuildingID
+        public let completionRate: Double
+        public let tasksCompleted: Int
+        public let totalTasks: Int
+        public let averageCompletionTime: TimeInterval
         public let trend: TrendDirection
         
         public init(
-            weeklyCompletion: [Double],
-            categoryBreakdown: [String: Int],
-            changePercentage: Double,
-            comparisonPeriod: String,
+            buildingId: BuildingID,
+            completionRate: Double,
+            tasksCompleted: Int,
+            totalTasks: Int,
+            averageCompletionTime: TimeInterval,
             trend: TrendDirection
         ) {
-            self.weeklyCompletion = weeklyCompletion
-            self.categoryBreakdown = categoryBreakdown
-            self.changePercentage = changePercentage
-            self.comparisonPeriod = comparisonPeriod
+            self.buildingId = buildingId
+            self.completionRate = completionRate
+            self.tasksCompleted = tasksCompleted
+            self.totalTasks = totalTasks
+            self.averageCompletionTime = averageCompletionTime
             self.trend = trend
+        }
+        
+        // Computed properties
+        public var completionPercentage: Int { Int(completionRate * 100) }
+        public var pendingTasks: Int { totalTasks - tasksCompleted }
+        public var isHealthy: Bool { completionRate >= 0.8 }
+    }
+    
+    // MARK: - Task Trends for Analytics
+    public struct TaskTrends: Codable, Hashable {
+        public let dailyCompletions: [Int]
+        public let weeklyCompletions: [Int]
+        public let monthlyCompletions: [Int]
+        public let overallTrend: TrendDirection
+        
+        public init(
+            dailyCompletions: [Int],
+            weeklyCompletions: [Int],
+            monthlyCompletions: [Int],
+            overallTrend: TrendDirection
+        ) {
+            self.dailyCompletions = dailyCompletions
+            self.weeklyCompletions = weeklyCompletions
+            self.monthlyCompletions = monthlyCompletions
+            self.overallTrend = overallTrend
+        }
+        
+        // Empty factory method
+        public static var empty: TaskTrends {
+            return TaskTrends(
+                dailyCompletions: [],
+                weeklyCompletions: [],
+                monthlyCompletions: [],
+                overallTrend: .unknown
+            )
+        }
+    }
+    
+    // MARK: - Worker Status
+    public enum WorkerStatus: String, Codable, CaseIterable {
+        case available = "available"
+        case clockedIn = "clocked_in"
+        case onBreak = "on_break"
+        case offDuty = "off_duty"
+        
+        public var displayName: String {
+            switch self {
+            case .available: return "Available"
+            case .clockedIn: return "Clocked In"
+            case .onBreak: return "On Break"
+            case .offDuty: return "Off Duty"
+            }
+        }
+        
+        public var color: String {
+            switch self {
+            case .available: return "green"
+            case .clockedIn: return "blue"
+            case .onBreak: return "orange"
+            case .offDuty: return "gray"
+            }
+        }
+    }
+    
+    // MARK: - Maintenance Priority
+    public enum MaintenancePriority: String, Codable, CaseIterable {
+        case low = "low"
+        case medium = "medium"
+        case high = "high"
+        case critical = "critical"
+        
+        public var displayName: String {
+            switch self {
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            case .critical: return "Critical"
+            }
+        }
+        
+        public var color: String {
+            switch self {
+            case .low: return "green"
+            case .medium: return "yellow"
+            case .high: return "orange"
+            case .critical: return "red"
+            }
         }
     }
 }
 
-// ✅ FIXED: ComplianceStatus (single definition)
-public enum ComplianceStatus: String, Codable {
-    case compliant = "Compliant"
-    case needsReview = "Needs Review"
-    case atRisk = "At Risk"
-}
+// MARK: - Legacy Compatibility Extensions
 
-// ✅ Global type aliases for compatibility
-public typealias TaskProgress = CoreTypes.TaskProgress
-public typealias PortfolioIntelligence = CoreTypes.PortfolioIntelligence
+// Ensure backward compatibility with existing code
+public typealias WorkerID = CoreTypes.WorkerID
+public typealias BuildingID = CoreTypes.BuildingID
+public typealias TaskID = CoreTypes.TaskID
 public typealias BuildingAnalytics = CoreTypes.BuildingAnalytics
-public typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
+public typealias BuildingStatistics = CoreTypes.BuildingStatistics
+public typealias TaskTrends = CoreTypes.TaskTrends
 public typealias TrendDirection = CoreTypes.TrendDirection
-public typealias BuildingStatus = CoreTypes.BuildingStatus
-public typealias BuildingTab = CoreTypes.BuildingTab
-public typealias InsightType = CoreTypes.InsightType
-public typealias InsightPriority = CoreTypes.InsightPriority
