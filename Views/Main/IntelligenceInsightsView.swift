@@ -2,14 +2,6 @@
 //  IntelligenceInsightsView.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-
-//
-//  IntelligenceInsightsView.swift
-//  FrancoSphere
-//
 //  🎯 PHASE 4: INTELLIGENCE INSIGHTS COMPONENT
 //  ✅ AI-powered insights and recommendations
 //  ✅ Actionable intelligence for decision-making
@@ -20,17 +12,18 @@
 import SwiftUI
 
 struct IntelligenceInsightsView: View {
-    let insights: [IntelligenceInsight]
-    let onInsightAction: ((IntelligenceInsight) -> Void)?
+    let insights: [CoreTypes.IntelligenceInsight]
+    let onInsightAction: ((CoreTypes.IntelligenceInsight) -> Void)?
     let onRefreshInsights: (() async -> Void)?
     
-    @State private var selectedFilter: CoreTypes.InsightFilter = .all
-    @State private var selectedInsight: IntelligenceInsight?
+    @State private var selectedFilter: LocalInsightFilter = .all
+    @State private var selectedInsight: CoreTypes.IntelligenceInsight?
+    @State private var showingDetailSheet = false
     @State private var showingActionSheet = false
     @State private var isRefreshing = false
     
-    init(insights: [IntelligenceInsight],
-         onInsightAction: ((IntelligenceInsight) -> Void)? = nil,
+    init(insights: [CoreTypes.IntelligenceInsight],
+         onInsightAction: ((CoreTypes.IntelligenceInsight) -> Void)? = nil,
          onRefreshInsights: (() async -> Void)? = nil) {
         self.insights = insights
         self.onInsightAction = onInsightAction
@@ -38,69 +31,49 @@ struct IntelligenceInsightsView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header Section
-            headerSection
-            
-            // Filter Section
-            filterSection
-            
-            // Insights List
-            insightsList
-        }
-        .refreshable {
-            if let onRefreshInsights = onRefreshInsights {
-                isRefreshing = true
-                await onRefreshInsights()
-                isRefreshing = false
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Summary Cards
+                    insightsSummaryCards
+                    
+                    // Filter Section
+                    filterSection
+                    
+                    // Insights List
+                    insightsList
+                }
+                .padding()
             }
-        }
-        .sheet(item: $selectedInsight) { insight in
-            InsightDetailSheet(
-                insight: insight,
-                onAction: onInsightAction
-            )
-        }
-    }
-    
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("Intelligence Insights")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                if isRefreshing {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                } else {
-                    Button(action: {
-                        Task {
-                            if let onRefreshInsights = onRefreshInsights {
-                                isRefreshing = true
-                                await onRefreshInsights()
-                                isRefreshing = false
-                            }
+            .navigationTitle("Intelligence Insights")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: refreshInsights) {
+                        if isRefreshing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
                         }
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.title3)
-                            .foregroundColor(.blue)
                     }
+                    .disabled(isRefreshing)
                 }
             }
-            
-            // Insights Summary
-            insightsSummaryCards
+            .sheet(isPresented: $showingDetailSheet) {
+                if let insight = selectedInsight {
+                    InsightDetailSheet(
+                        insight: insight,
+                        onAction: onInsightAction,
+                        isPresented: $showingDetailSheet
+                    )
+                }
+            }
         }
-        .padding()
         .background(.ultraThinMaterial)
     }
+    
+    // MARK: - Summary Cards
     
     private var insightsSummaryCards: some View {
         HStack {
@@ -136,7 +109,7 @@ struct IntelligenceInsightsView: View {
     private var filterSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(InsightFilter.allCases, id: \.self) { filter in
+                ForEach(LocalInsightFilter.allCases, id: \.self) { filter in
                     FilterButton(
                         filter: filter,
                         isSelected: selectedFilter == filter,
@@ -161,24 +134,23 @@ struct IntelligenceInsightsView: View {
             if filteredInsights.isEmpty {
                 emptyStateView
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(filteredInsights, id: \.id) { insight in
-                            InsightCard(
-                                insight: insight,
-                                onTap: {
-                                    selectedInsight = insight
-                                },
-                                onAction: {
-                                    if let onInsightAction = onInsightAction {
-                                        onInsightAction(insight)
-                                    }
+                LazyVStack(spacing: 12) {
+                    ForEach(filteredInsights, id: \.id) { insight in
+                        InsightCard(
+                            insight: insight,
+                            onTap: {
+                                selectedInsight = insight
+                                showingDetailSheet = true
+                            },
+                            onAction: {
+                                if let onInsightAction = onInsightAction {
+                                    onInsightAction(insight)
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
-                    .padding()
                 }
+                .padding()
             }
         }
     }
@@ -203,7 +175,9 @@ struct IntelligenceInsightsView: View {
             
             if selectedFilter != .all {
                 Button("Show All Insights") {
-                    selectedFilter = .all
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        selectedFilter = .all
+                    }
                 }
                 .buttonStyle(.bordered)
             }
@@ -215,28 +189,31 @@ struct IntelligenceInsightsView: View {
     
     // MARK: - Computed Properties
     
-    private var filteredInsights: [IntelligenceInsight] {
+    private var filteredInsights: [CoreTypes.IntelligenceInsight] {
         switch selectedFilter {
         case .all:
-            return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
+            return insights.sorted(by: { $0.priority.priorityValue > $1.priority.priorityValue })
         case .priority:
-            return insights.filter { $0.priority == .high }.sorted { $0.createdAt > $1.createdAt }
+            return insights.filter { $0.priority == .high || $0.priority == .critical }
+                          .sorted(by: { $0.priority.priorityValue > $1.priority.priorityValue })
         case .actionable:
-            return insights.filter { $0.actionable }.sorted { $0.priority.rawValue > $1.priority.rawValue }
+            return insights.filter { $0.actionRequired }
+                          .sorted(by: { $0.priority.priorityValue > $1.priority.priorityValue })
         case .type(let type):
-            return insights.filter { $0.type == type }.sorted { $0.priority.rawValue > $1.priority.rawValue }
+            return insights.filter { $0.type == type }
+                          .sorted(by: { $0.priority.priorityValue > $1.priority.priorityValue })
         }
     }
     
     private var highPriorityCount: Int {
-        insights.filter { $0.priority == .high }.count
+        insights.filter { $0.priority == .high || $0.priority == .critical }.count
     }
     
     private var actionableCount: Int {
-        insights.filter { $0.actionable }.count
+        insights.filter { $0.actionRequired }.count
     }
     
-    private func getFilterCount(_ filter: CoreTypes.InsightFilter) -> Int {
+    private func getFilterCount(_ filter: LocalInsightFilter) -> Int {
         switch filter {
         case .all:
             return insights.count
@@ -246,6 +223,18 @@ struct IntelligenceInsightsView: View {
             return actionableCount
         case .type(let type):
             return insights.filter { $0.type == type }.count
+        }
+    }
+    
+    // MARK: - Actions
+    
+    private func refreshInsights() {
+        guard let onRefreshInsights = onRefreshInsights else { return }
+        
+        Task {
+            isRefreshing = true
+            await onRefreshInsights()
+            isRefreshing = false
         }
     }
 }
@@ -280,7 +269,7 @@ struct SummaryInsightCard: View {
 }
 
 struct FilterButton: View {
-    let filter: CoreTypes.InsightFilter
+    let filter: LocalInsightFilter
     let isSelected: Bool
     let count: Int
     let onTap: () -> Void
@@ -321,7 +310,7 @@ struct FilterButton: View {
 }
 
 struct InsightCard: View {
-    let insight: IntelligenceInsight
+    let insight: CoreTypes.IntelligenceInsight
     let onTap: () -> Void
     let onAction: () -> Void
     
@@ -379,14 +368,14 @@ struct InsightCard: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     
-                    Text(formattedCreatedTime)
+                    Text("Recent")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 
                 Spacer()
                 
-                if insight.actionable {
+                if insight.actionRequired {
                     Button("Take Action") {
                         onAction()
                     }
@@ -405,19 +394,13 @@ struct InsightCard: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(insight.priority == .high ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1)
+                .stroke(insight.priority == .high || insight.priority == .critical ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1)
         )
-    }
-    
-    private var formattedCreatedTime: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: insight.createdAt, relativeTo: Date())
     }
 }
 
 struct PriorityBadge: View {
-    let priority: InsightPriority
+    let priority: CoreTypes.InsightPriority
     
     var body: some View {
         Text(priority.rawValue)
@@ -434,6 +417,7 @@ struct PriorityBadge: View {
         case .low: return .green
         case .medium: return .orange
         case .high: return .red
+        case .critical: return .red
         }
     }
 }
@@ -441,16 +425,16 @@ struct PriorityBadge: View {
 // MARK: - Insight Detail Sheet
 
 struct InsightDetailSheet: View {
-    let insight: IntelligenceInsight
-    let onAction: ((IntelligenceInsight) -> Void)?
+    let insight: CoreTypes.IntelligenceInsight
+    let onAction: ((CoreTypes.IntelligenceInsight) -> Void)?
     
     @Environment(\.dismiss) private var dismiss
     @State private var showingActionConfirmation = false
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 24) {
                     // Header
                     insightHeader
                     
@@ -460,31 +444,26 @@ struct InsightDetailSheet: View {
                     // Details
                     insightDetails
                     
-                    // Recommended Actions
-                    if insight.actionable {
-                        recommendedActions
+                    // Affected Buildings
+                    if !insight.affectedBuildings.isEmpty {
+                        affectedBuildingsSection
                     }
                     
-                    // Related Insights
-                    relatedInsights
+                    // Action Button (if actionable)
+                    if insight.actionRequired {
+                        actionButton
+                    }
+                    
+                    Spacer()
                 }
                 .padding()
             }
             .navigationTitle("Insight Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        dismiss()
-                    }
-                }
-                
-                if insight.actionable {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Take Action") {
-                            showingActionConfirmation = true
-                        }
-                        .fontWeight(.medium)
+                        isPresented = false
                     }
                 }
             }
@@ -496,7 +475,7 @@ struct InsightDetailSheet: View {
         ) {
             Button("Proceed") {
                 onAction?(insight)
-                dismiss()
+                isPresented = false
             }
             
             Button("Cancel", role: .cancel) {}
@@ -531,13 +510,13 @@ struct InsightDetailSheet: View {
                 }
             }
             
-            if insight.actionable {
-                Label("Actionable Insight", systemImage: "hand.tap")
+            if insight.actionRequired {
+                Label("Action Required", systemImage: "hand.tap")
                     .font(.caption)
-                    .foregroundColor(.green)
+                    .foregroundColor(.orange)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(.green.opacity(0.1), in: Capsule())
+                    .background(.orange.opacity(0.1), in: Capsule())
             }
         }
     }
@@ -577,15 +556,15 @@ struct InsightDetailSheet: View {
                 )
                 
                 DetailRow(
-                    title: "Created",
-                    value: formattedFullDate(insight.createdAt),
-                    icon: "clock"
+                    title: "Action Required",
+                    value: insight.actionRequired ? "Yes" : "No",
+                    icon: "hand.tap"
                 )
                 
                 DetailRow(
-                    title: "Actionable",
-                    value: insight.actionable ? "Yes" : "No",
-                    icon: insight.actionable ? "checkmark.circle" : "xmark.circle"
+                    title: "Buildings Affected",
+                    value: "\(insight.affectedBuildings.count)",
+                    icon: "building.2"
                 )
             }
         }
@@ -593,92 +572,41 @@ struct InsightDetailSheet: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    private var recommendedActions: some View {
+    private var affectedBuildingsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recommended Actions")
+            Text("Affected Buildings")
                 .font(.headline)
                 .foregroundColor(.primary)
             
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(getRecommendedActions(), id: \.self) { action in
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "checkmark.circle")
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(insight.affectedBuildings, id: \.self) { buildingId in
+                    HStack {
+                        Image(systemName: "building.2")
                             .font(.caption)
-                            .foregroundColor(.blue)
-                            .frame(width: 16)
-                            .padding(.top, 2)
+                            .foregroundColor(.secondary)
                         
-                        Text(action)
+                        Text("Building \(buildingId)")
                             .font(.subheadline)
                             .foregroundColor(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        Spacer()
                     }
                 }
             }
         }
         .padding()
-        .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(.blue.opacity(0.3), lineWidth: 1)
-        )
-    }
-    
-    private var relatedInsights: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Related Insights")
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            Text("Similar insights and recommendations will appear here when available.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .italic()
-        }
-        .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    private func formattedFullDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
-    }
-    
-    private func getRecommendedActions() -> [String] {
-        switch insight.type {
-        case .performance:
-            return [
-                "Review worker assignments and redistribute workload",
-                "Implement performance monitoring tools",
-                "Schedule team training sessions"
-            ]
-        case .maintenance:
-            return [
-                "Schedule immediate maintenance review",
-                "Prioritize high-risk equipment inspection",
-                "Update maintenance schedules"
-            ]
-        case .cost:
-            return [
-                "Analyze current resource allocation",
-                "Consider worker optimization strategies",
-                "Review vendor contracts and pricing"
-            ]
-        case .compliance:
-            return [
-                "Schedule compliance audit",
-                "Update documentation and procedures",
-                "Implement corrective measures"
-            ]
-        case .efficiency:
-            return [
-                "Optimize workflow processes",
-                "Review and update task assignments",
-                "Implement efficiency monitoring"
-            ]
+    private var actionButton: some View {
+        Button("Take Action") {
+            showingActionConfirmation = true
         }
+        .font(.headline)
+        .foregroundColor(.white)
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(.blue, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -690,41 +618,67 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .font(.subheadline)
-                .foregroundColor(.blue)
-                .frame(width: 20)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 16)
             
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(.primary)
+                .foregroundColor(.secondary)
             
             Spacer()
             
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundColor(.primary)
         }
     }
 }
 
-// MARK: - Supporting Enums
+// MARK: - Extensions for Missing Properties
 
-enum InsightFilter: Hashable, CaseIterable {
+extension CoreTypes.InsightType {
+    var icon: String {
+        switch self {
+        case .performance: return "chart.line.uptrend.xyaxis"
+        case .maintenance: return "wrench.and.screwdriver"
+        case .compliance: return "checkmark.shield"
+        case .efficiency: return "speedometer"
+        case .cost: return "dollarsign.circle"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .performance: return .blue
+        case .maintenance: return .orange
+        case .compliance: return .green
+        case .efficiency: return .purple
+        case .cost: return .yellow
+        }
+    }
+}
+
+// MARK: - Local Filter Types (to avoid conflicts with CoreTypes)
+
+enum LocalInsightFilter: Hashable, CaseIterable {
     case all
     case priority
     case actionable
-    case type(InsightType)
+    case type(CoreTypes.InsightType)
     
-    static var allCases: [InsightFilter] {
-        return [.all, .priority, .actionable] + InsightType.allCases.map { .type($0) }
+    static var allCases: [LocalInsightFilter] {
+        var cases: [LocalInsightFilter] = [.all, .priority, .actionable]
+        cases.append(contentsOf: CoreTypes.InsightType.allCases.map { .type($0) })
+        return cases
     }
     
     var title: String {
         switch self {
         case .all: return "All"
         case .priority: return "High Priority"
-        case .actionable: return "Actionable"
+        case .actionable: return "Action Required"
         case .type(let type): return type.rawValue
         }
     }
@@ -742,7 +696,7 @@ enum InsightFilter: Hashable, CaseIterable {
         switch self {
         case .all: return .blue
         case .priority: return .red
-        case .actionable: return .green
+        case .actionable: return .orange
         case .type(let type): return type.color
         }
     }
@@ -760,7 +714,7 @@ enum InsightFilter: Hashable, CaseIterable {
         switch self {
         case .all: return "No Insights Available"
         case .priority: return "No High Priority Insights"
-        case .actionable: return "No Actionable Insights"
+        case .actionable: return "No Action Required"
         case .type(let type): return "No \(type.rawValue) Insights"
         }
     }
@@ -781,19 +735,21 @@ struct IntelligenceInsightsView_Previews: PreviewProvider {
     static var previews: some View {
         IntelligenceInsightsView(
             insights: [
-                IntelligenceInsight(
+                CoreTypes.IntelligenceInsight(
                     title: "High Portfolio Efficiency",
-                    description: "8 out of 12 buildings are performing at >90% efficiency",
+                    description: "8 out of 12 buildings are performing at >90% efficiency across all key metrics including task completion rates, worker productivity, and maintenance schedules. This represents a significant improvement over the previous quarter.",
                     type: .performance,
                     priority: .medium,
-                    actionable: false
+                    actionRequired: false,
+                    affectedBuildings: ["14", "15", "16"]
                 ),
-                IntelligenceInsight(
+                CoreTypes.IntelligenceInsight(
                     title: "Maintenance Priority Alert",
-                    description: "3 buildings require immediate maintenance attention",
+                    description: "3 buildings require immediate maintenance attention based on predictive analytics and current task backlogs.",
                     type: .maintenance,
                     priority: .high,
-                    actionable: true
+                    actionRequired: true,
+                    affectedBuildings: ["12", "18", "20"]
                 )
             ]
         )
