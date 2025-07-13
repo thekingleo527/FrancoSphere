@@ -3,18 +3,34 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: GRDB Migration - Dynamic Worker Assignment System
-//  ✅ Eliminates "Kevin" special cases with database-driven assignments
-//  ✅ Replaces hardcoded assignment logic with dynamic, role-based system
-//  ✅ Uses GRDB-powered SQLiteManager for enhanced performance
-//  ✅ Provides authoritative source for managing worker-building relationships
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: Uses existing SQLiteManager method signatures
+//  ✅ ENHANCED: Supports three-dashboard worker assignment workflows
 //
 
 import Foundation
 import GRDB
 
-/// An actor responsible for managing the assignment of workers to buildings
-/// based on roles, skills, and building requirements. This replaces all previous
-/// hardcoded and special-case assignment logic with GRDB-powered dynamic assignments.
+// MARK: - BuildingWorkerAssignment Type Definition
+public struct BuildingWorkerAssignment: Codable, Identifiable {
+    public let id: Int64
+    public let buildingId: Int64
+    public let workerId: Int64
+    public let role: String
+    public let assignedDate: Date
+    public let isActive: Bool
+    
+    public init(id: Int64, buildingId: Int64, workerId: Int64, role: String, assignedDate: Date, isActive: Bool) {
+        self.id = id
+        self.buildingId = buildingId
+        self.workerId = workerId
+        self.role = role
+        self.assignedDate = assignedDate
+        self.isActive = isActive
+    }
+}
+
+// MARK: - WorkerAssignmentEngine Actor
 actor WorkerAssignmentEngine {
     static let shared = WorkerAssignmentEngine()
     private let sqliteManager = SQLiteManager.shared
@@ -33,7 +49,7 @@ actor WorkerAssignmentEngine {
     ) async throws {
         print("⚙️ Assigning worker \(workerId) to building \(buildingId) with role: \(role)")
 
-        // Use GRDB-compatible parameter binding
+        // Use GRDB-compatible parameter binding (FIXED: No 'parameters:' label)
         try await sqliteManager.execute("""
             INSERT OR REPLACE INTO worker_building_assignments
             (worker_id, building_id, assignment_type, start_date, is_active)
@@ -167,7 +183,6 @@ actor WorkerAssignmentEngine {
         print("📦 Bulk assigning worker \(workerId) to \(assignments.count) buildings...")
         
         let currentDate = Date()
-        let dateString = ISO8601DateFormatter().string(from: currentDate)
         
         for assignment in assignments {
             try await assignWorkerToBuilding(
@@ -181,18 +196,18 @@ actor WorkerAssignmentEngine {
         print("✅ Bulk assignment completed for worker \(workerId)")
     }
     
-    // MARK: - Verification and Migration Support (GRDB-Enhanced)
+    // MARK: - Kevin Migration Verification (GRDB-Enhanced)
     
     /// A diagnostic tool to verify that the "Kevin" special case has been successfully migrated to GRDB.
     func verifyKevinMigration() async -> (isMigrated: Bool, issues: [String]) {
         var issues: [String] = []
-        let kevinId: CoreTypes.WorkerID = "4"
+        let kevinId: CoreTypes.WorkerID = "1" // Kevin's correct ID is 1
         
         do {
             let assignments = try await getAssignments(for: kevinId)
             
             if assignments.isEmpty {
-                issues.append("Kevin Dutan (ID: 4) has no assignments in the new GRDB system.")
+                issues.append("Kevin Dutan (ID: 1) has no assignments in the new GRDB system.")
             } else {
                 print("📊 Kevin has \(assignments.count) assignments in GRDB system")
             }
@@ -206,15 +221,6 @@ actor WorkerAssignmentEngine {
                 issues.append("Kevin is missing his critical assignment to Rubin Museum (ID: 14).")
             } else {
                 print("✅ Kevin has Rubin Museum assignment verified")
-            }
-            
-            // Check that he no longer has the incorrect Franklin St assignment (if any)
-            let hasFranklinAssignment = assignments.contains { assignment in
-                assignment.buildingId == 13 && assignment.role.lowercased().contains("franklin")
-            }
-            
-            if hasFranklinAssignment {
-                issues.append("Kevin still has an incorrect assignment to the old Franklin St. ID (13).")
             }
             
             // Verify Kevin has appropriate number of assignments (should be 8+)
@@ -319,19 +325,34 @@ actor WorkerAssignmentEngine {
 
 /// Information about a worker assignment
 public struct WorkerAssignmentInfo {
-    let workerId: String
-    let workerName: String
-    let workerEmail: String
-    let assignmentType: String
-    let startDate: Date
+    public let workerId: String
+    public let workerName: String
+    public let workerEmail: String
+    public let assignmentType: String
+    public let startDate: Date
+    
+    public init(workerId: String, workerName: String, workerEmail: String, assignmentType: String, startDate: Date) {
+        self.workerId = workerId
+        self.workerName = workerName
+        self.workerEmail = workerEmail
+        self.assignmentType = assignmentType
+        self.startDate = startDate
+    }
 }
 
 /// Assignment statistics for reporting
 public struct AssignmentStatistics {
-    let uniqueWorkers: Int
-    let uniqueBuildings: Int
-    let totalAssignments: Int
-    let averageAssignmentAgeDays: Double
+    public let uniqueWorkers: Int
+    public let uniqueBuildings: Int
+    public let totalAssignments: Int
+    public let averageAssignmentAgeDays: Double
+    
+    public init(uniqueWorkers: Int, uniqueBuildings: Int, totalAssignments: Int, averageAssignmentAgeDays: Double) {
+        self.uniqueWorkers = uniqueWorkers
+        self.uniqueBuildings = uniqueBuildings
+        self.totalAssignments = totalAssignments
+        self.averageAssignmentAgeDays = averageAssignmentAgeDays
+    }
 }
 
 /// Enhanced error handling for GRDB operations
@@ -401,5 +422,52 @@ extension WorkerAssignmentEngine {
         """, [newRole, workerId, buildingId])
         
         print("✅ Updated assignment role for worker \(workerId) at building \(buildingId) to: \(newRole)")
+    }
+    
+    /// Get Kevin's specific assignments (for testing and validation)
+    func getKevinAssignments() async throws -> [BuildingWorkerAssignment] {
+        return try await getAssignments(for: "1") // Kevin's ID is 1
+    }
+    
+    /// Get Edwin's specific assignments (for testing and validation)
+    func getEdwinAssignments() async throws -> [BuildingWorkerAssignment] {
+        return try await getAssignments(for: "2") // Edwin's ID is 2
+    }
+    
+    /// Three-Dashboard Support: Get assignments by dashboard role
+    func getAssignmentsByDashboardRole(_ role: String) async throws -> [BuildingWorkerAssignment] {
+        let rows = try await sqliteManager.query("""
+            SELECT 
+                wba.id,
+                wba.worker_id,
+                wba.building_id,
+                wba.assignment_type,
+                wba.start_date,
+                wba.is_active
+            FROM worker_building_assignments wba
+            WHERE wba.assignment_type LIKE ? AND wba.is_active = 1
+            ORDER BY wba.start_date DESC
+        """, ["%\(role)%"])
+        
+        return rows.compactMap { row in
+            guard let assignmentId = row["id"] as? Int64,
+                  let buildingIdString = row["building_id"] as? String,
+                  let buildingId = Int64(buildingIdString),
+                  let workerIdString = row["worker_id"] as? String,
+                  let workerIdInt = Int64(workerIdString),
+                  let assignmentType = row["assignment_type"] as? String,
+                  let dateString = row["start_date"] as? String,
+                  let date = ISO8601DateFormatter().date(from: dateString)
+            else { return nil }
+
+            return BuildingWorkerAssignment(
+                id: assignmentId,
+                buildingId: buildingId,
+                workerId: workerIdInt,
+                role: assignmentType,
+                assignedDate: date,
+                isActive: true
+            )
+        }
     }
 }

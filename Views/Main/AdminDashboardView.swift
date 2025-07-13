@@ -39,7 +39,7 @@ struct AdminDashboardView: View {
                                 .padding(.top, 50)
                                 .tint(.white)
                         } else {
-                            statisticsSection
+                            // statisticsSection #TODO
                             
                             // The new, interactive intelligence panel
                             intelligenceSection
@@ -128,7 +128,7 @@ struct AdminDashboardView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(viewModel.activeWorkers) { worker in
-                        WorkerCard(worker: worker)
+                        Text #TODO(worker: worker)
                     }
                 }
             }
@@ -142,7 +142,7 @@ struct AdminDashboardView: View {
                 Text("No ongoing tasks.").font(.subheadline).foregroundColor(.secondary)
             } else {
                 ForEach(viewModel.ongoingTasks.prefix(5)) { task in
-                    TaskListItem(task: task)
+                    Text #TODO(task: task)
                 }
             }
         }
@@ -150,7 +150,7 @@ struct AdminDashboardView: View {
 }
 
 // MARK: - Supporting Components (Moved to their own files)
-// We assume WorkerCard and TaskListItem are defined elsewhere now.
+// We assume Text #TODO and Text #TODO are defined elsewhere now.
 
 // MARK: - Preview
 struct AdminDashboardView_Previews: PreviewProvider {

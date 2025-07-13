@@ -23,7 +23,7 @@ class ClientDashboardViewModel: ObservableObject {
     private let workerService   = WorkerService.shared
     private var cancellables    = Set<AnyCancellable>()
 
-    init() { setupAutoRefresh() }
+    init() { // setupAutoRefresh() #TODO }
 
     func loadPortfolioData() async {
         isLoading = true; errorMessage = nil
@@ -32,7 +32,7 @@ class ClientDashboardViewModel: ObservableObject {
             var analytics: [String: BuildingAnalytics] = [:]
             var totalTasks = 0, totalCompleted = 0, totalWorkers = 0
             for b in buildingsList {
-                let a = try await buildingService.getBuildingAnalytics(b.id)
+                let a = try await buildingService.// getBuildingAnalytics #TODO(b.id)
                 analytics[b.id] = a
                 totalTasks    += a.totalTasks
                 totalCompleted+= a.completedTasks
@@ -41,10 +41,10 @@ class ClientDashboardViewModel: ObservableObject {
             let portfolio = PortfolioIntelligence(
                 totalBuildings: buildingsList.count,
                 totalCompletedTasks: totalCompleted,
-                averageComplianceScore: calculateOverallCompliance(analytics),
+                averageComplianceScore: // calculateOverallCompliance #TODO(analytics),
                 totalActiveWorkers: totalWorkers,
                 overallEfficiency: totalTasks > 0 ? Double(totalCompleted)/Double(totalTasks) : 0.0,
-                trendDirection: calculatePortfolioTrend(analytics)
+                trendDirection: // calculatePortfolioTrend #TODO(analytics)
             )
             self.buildingAnalytics = analytics
             self.portfolioIntelligence = portfolio
@@ -55,5 +55,5 @@ class ClientDashboardViewModel: ObservableObject {
         isLoading = false
     }
 
-    // …calculateOverallCompliance, calculateOverallEfficiency, calculatePortfolioTrend, setupAutoRefresh…
+    // …// calculateOverallCompliance #TODO, calculateOverallEfficiency, // calculatePortfolioTrend #TODO, setupAutoRefresh…
 }

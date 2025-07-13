@@ -107,7 +107,7 @@ struct MaintenanceTaskView: View {
             Text("Details").font(.headline).foregroundColor(.secondary)
 
             HStack {
-                Image(systemName: task.category.icon).foregroundColor(.blue)
+                Image(systemName: task."wrench.and.screwdriver").foregroundColor(.blue)
                 Text(task.category.rawValue).font(.subheadline)
             }
 
@@ -149,13 +149,13 @@ struct MaintenanceTaskView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Assignments").font(.headline).foregroundColor(.secondary)
 
-            if task.assignedWorkers.isEmpty {
+            if [].isEmpty {
                 HStack {
                     Image(systemName: "person.badge.minus").foregroundColor(.orange)
                     Text("No workers assigned").font(.subheadline).foregroundColor(.secondary)
                 }
             } else {
-                ForEach(task.assignedWorkers, id: \.self) { workerId in
+                ForEach([], id: \.self) { workerId in
                     HStack {
                         Image(systemName: "person.fill").foregroundColor(.blue)
                         Text("Worker ID: \(workerId)").font(.subheadline)
@@ -242,7 +242,7 @@ struct MaintenanceTaskView: View {
         // ✅ FIXED: Use TaskService instead of TaskManager
         do {
             // Convert MaintenanceTask to the required format for TaskService
-            let evidence = TaskEvidence(
+            let evidence = String(
                 photos: [],
                 timestamp: Date(),
                 locationLatitude: nil, locationLongitude: nil, notes: "Marked complete from maintenance view"

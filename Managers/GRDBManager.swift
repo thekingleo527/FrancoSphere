@@ -144,20 +144,20 @@ public final class GRDBManager {
     public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
         return try await dbPool.read { db in
             let statement = try db.makeStatement(sql: sql)
-            let rows = try Row.fetchAll(statement, arguments: StatementArguments(parameters))
+            let rows = try Row.fetchAll(statement, arguments: StatementArguments(parameters ?? []))
             return rows.map { Dictionary($0) }
         }
     }
     
     public func execute(_ sql: String, _ parameters: [Any] = []) async throws {
         try await dbPool.write { db in
-            try db.execute(sql: sql, arguments: StatementArguments(parameters))
+            try db.execute(sql: sql, arguments: StatementArguments(parameters ?? []))
         }
     }
     
     public func insertAndReturnID(_ sql: String, _ parameters: [Any] = []) async throws -> Int64 {
         return try await dbPool.write { db in
-            try db.execute(sql: sql, arguments: StatementArguments(parameters))
+            try db.execute(sql: sql, arguments: StatementArguments(parameters ?? []))
             return db.lastInsertedRowID
         }
     }

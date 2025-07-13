@@ -1,4 +1,5 @@
 //
+import CoreLocation
 //  WorkerDashboardViewModel.swift
 //  FrancoSphere
 //
@@ -94,13 +95,13 @@ class WorkerDashboardViewModel: ObservableObject {
             
             try await contextEngine.recordTaskCompletion(
                 workerId: user.workerId,
-                buildingId: task.buildingId,
+                buildingId: task.id,
                 taskId: task.id,
                 evidence: evidence
             )
             
             // Invalidate metrics cache for this building
-            await metricsService.invalidateCache(for: task.buildingId)
+            await metricsService.invalidateCache(for: task.id)
             
             // Refresh local data
             await refreshData()

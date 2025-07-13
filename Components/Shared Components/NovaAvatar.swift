@@ -136,7 +136,7 @@ struct NovaAvatar: View {
             .scaleEffect(busyPulse ? 1.2 : 1.0)
             .opacity(busyPulse ? 0.0 : 0.8)
             .animation(
-                AnimationAnimation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                 value: busyPulse
             )
     }
@@ -170,7 +170,7 @@ struct NovaAvatar: View {
                     .scaleEffect(pulseScale)
                     .opacity(2.0 - pulseScale)
                     .animation(
-                        AnimationAnimation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                        Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                         value: pulseScale
                     )
                     .onAppear {
@@ -225,14 +225,14 @@ struct NovaAvatar: View {
     
     private func startBreathingAnimation() {
         withAnimation(
-            AnimationAnimation.easeInOut(duration: 2.0)
+            Animation.easeInOut(duration: 2.0)
             .repeatForever(autoreverses: true)
         ) {
             breathe = true
         }
         
         withAnimation(
-            AnimationAnimation.easeInOut(duration: 3.0)
+            Animation.easeInOut(duration: 3.0)
             .repeatForever(autoreverses: true)
         ) {
             glowOpacity = 0.8
@@ -241,7 +241,7 @@ struct NovaAvatar: View {
     
     private func startBusyAnimation() {
         withAnimation(
-            AnimationAnimation.easeInOut(duration: 1.0)
+            Animation.easeInOut(duration: 1.0)
             .repeatForever(autoreverses: false)
         ) {
             busyPulse = true

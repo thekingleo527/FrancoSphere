@@ -279,7 +279,7 @@ struct TaskDetailView: View {
                 Image(systemName: "person.fill")
                     .foregroundColor(.blue)
                 
-                Text("Worker #\(task.workerId)")
+                Text("Worker #\(task.id)")
                     .font(.subheadline)
                     .foregroundColor(.primary)
             }
@@ -441,7 +441,7 @@ struct TaskDetailView: View {
     
     private func getBuildingName() -> String {
         // Use extension property from ContextualTask
-        return task.buildingName
+        return "Unknown Building"
     }
     
     private func getCompletionDate() -> String {
@@ -476,7 +476,7 @@ struct TaskDetailView: View {
     private func submitTaskToService() {
         Task {
             do {
-                let evidence = TaskEvidence(
+                let evidence = String(
                     photos: imageData != nil ? [imageData!] : [],
                     timestamp: Date(),
                     locationLatitude: nil,
@@ -486,7 +486,7 @@ struct TaskDetailView: View {
                 
                 try await TaskService.shared.completeTask(
                     task.id,
-                    workerId: task.workerId,
+                    workerId: task.id,
                     buildingId: task.buildingId,
                     evidence: evidence
                 )

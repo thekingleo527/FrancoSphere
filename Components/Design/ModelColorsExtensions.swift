@@ -1,15 +1,16 @@
 //
 //  ModelColorsExtensions.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ SURGICAL FIX - All enum cases corrected, no invalid references
+//  ✅ EXHAUSTIVE: All enum cases covered from CoreTypes.swift
+//  ✅ PURPOSE: Domain-specific enum → UI color/icon mappings
+//  ✅ COMPLEMENTS: FrancoSphereColors (general palette) + Design files
 //
 
 import SwiftUI
 import Foundation
 
-
-// MARK: - TaskUrgency Color Extensions
+// MARK: - TaskUrgency Color Extensions (EXHAUSTIVE)
 extension TaskUrgency {
     public var displayColor: Color {
         switch self {
@@ -19,190 +20,311 @@ extension TaskUrgency {
         case .critical: return .red
         case .emergency: return .red
         case .urgent: return .red
-        
-        default: return Color.gray}
+        }
     }
     
     public var icon: String {
         switch self {
-        case .low: return "circle.fill" // TODO: Fix color for "checkmark.circle"
+        case .low: return "checkmark.circle"
         case .medium: return "exclamationmark.circle"
         case .high: return "exclamationmark.triangle"
         case .critical: return "exclamationmark.triangle.fill"
         case .emergency: return "exclamationmark.octagon.fill"
         case .urgent: return "flame.fill"
-        
-        default: return "circle.fill"}
+        }
     }
 }
 
-
-// MARK: - VerificationStatus Color Extensions
+// MARK: - VerificationStatus Color Extensions (EXHAUSTIVE)
 extension VerificationStatus {
     public var displayColor: Color {
         switch self {
         case .pending: return .yellow
-        case .approved: return .green
-        case .rejected: return .red
+        case .verified: return .green
         case .failed: return .red
-        case .requiresReview: return .orange
-        
-        default: return Color.gray}
+        case .rejected: return .red
+        case .inProgress: return .blue
+        case .needsReview: return .orange
+        }
     }
     
     public var icon: String {
         switch self {
-        case .pending: return "circle.fill" // TODO: Fix color for "clock"
-        case .approved: return "checkmark.circle.fill"
+        case .pending: return "clock"
+        case .verified: return "checkmark.circle.fill"
+        case .failed: return "xmark.circle.fill"
         case .rejected: return "xmark.circle.fill"
-        case .failed: return "exclamationmark.triangle.fill"
-        case .requiresReview: return "questionmark.circle.fill"
-        
-        default: return "circle.fill"}
+        case .inProgress: return "gear"
+        case .needsReview: return "questionmark.circle.fill"
+        }
     }
 }
 
-
-// MARK: - TaskCategory Color Extensions
+// MARK: - TaskCategory Color Extensions (EXHAUSTIVE)
 extension TaskCategory {
     public var displayColor: Color {
         switch self {
-        case .cleaning: return .blue
         case .maintenance: return .orange
-        case .inspection: return .purple
+        case .cleaning: return .blue
         case .repair: return .red
+        case .inspection: return .purple
         case .installation: return .green
-        case .landscaping: return .green
-        case .security: return .red
         case .utilities: return .yellow
         case .emergency: return .red
         case .renovation: return .brown
-        case .sanitation: return .blue
-        
-        default: return Color.gray}
+        case .landscaping: return .green
+        case .security: return .red
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .maintenance: return "wrench.and.screwdriver"
+        case .cleaning: return "sparkles"
+        case .repair: return "hammer"
+        case .inspection: return "magnifyingglass"
+        case .installation: return "plus.square"
+        case .utilities: return "bolt"
+        case .emergency: return "exclamationmark.triangle.fill"
+        case .renovation: return "building.2"
+        case .landscaping: return "leaf"
+        case .security: return "shield"
+        }
     }
 }
 
-// MARK: - InventoryCategory Color Extensions
+// MARK: - InventoryCategory Color Extensions (EXHAUSTIVE)
 extension InventoryCategory {
     public var displayColor: Color {
         switch self {
-        case .tools: return Color.gray
+        case .tools: return .gray
         case .supplies: return .blue
-        case .cleaning: return .cyan
-        case .maintenance: return .orange
+        case .equipment: return .purple
+        case .materials: return .brown
         case .safety: return .red
-        case .office: return .green
-        case .plumbing: return .blue
-        case .electrical: return .yellow
-        case .paint: return .purple
-        
-        default: return Color.gray}
+        case .other: return .gray
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .tools: return "wrench"
+        case .supplies: return "shippingbox"
+        case .equipment: return "gear"
+        case .materials: return "cube"
+        case .safety: return "shield"
+        case .other: return "square.stack"
+        }
     }
 }
 
-// MARK: - OutdoorWorkRisk Color Extensions
+// MARK: - OutdoorWorkRisk Color Extensions (EXHAUSTIVE)
 extension OutdoorWorkRisk {
     public var displayColor: Color {
         switch self {
         case .low: return .green
-        case .medium: return .yellow
+        case .moderate: return .yellow
+        case .medium: return .orange
         case .high: return .orange
         case .extreme: return .red
-        
-        default: return Color.gray}
+        }
     }
     
     public var icon: String {
         switch self {
-        case .low: return "circle.fill" // TODO: Fix color for "checkmark.shield"
-        case .medium: return "exclamationmark.shield"
-        case .high: return "exclamationmark.triangle"
+        case .low: return "checkmark.shield"
+        case .moderate: return "exclamationmark.shield"
+        case .medium: return "exclamationmark.triangle"
+        case .high: return "exclamationmark.triangle.fill"
         case .extreme: return "xmark.shield"
-        
-        default: return "circle.fill"}
+        }
     }
 }
 
-// MARK: - FrancoSphere.TrendDirection Color Extensions
-extension FrancoSphere.TrendDirection {
+// MARK: - TrendDirection Color Extensions (EXHAUSTIVE)
+extension TrendDirection {
     public var displayColor: Color {
         switch self {
         case .up: return .green
         case .down: return .red
-        case .stable: return Color.gray
-        
-        default: return Color.gray}
+        case .stable: return .gray
+        case .improving: return .green
+        case .declining: return .red
+        case .unknown: return .gray
+        }
+    }
+    
+    // Note: TrendDirection already has icon property in CoreTypes.swift
+    // This provides a secondary icon mapping if needed
+    public var alternateIcon: String {
+        switch self {
+        case .up: return "arrow.up.circle.fill"
+        case .down: return "arrow.down.circle.fill"
+        case .stable: return "minus.circle.fill"
+        case .improving: return "chart.line.uptrend.xyaxis"
+        case .declining: return "chart.line.downtrend.xyaxis"
+        case .unknown: return "questionmark.circle"
+        }
     }
 }
 
-// MARK: - WorkerSkill Color Extensions
+// MARK: - WorkerSkill Color Extensions (EXHAUSTIVE - Fixed missing cases)
 extension WorkerSkill {
     public var displayColor: Color {
         switch self {
-        case .cleaning: return .blue
-        case .maintenance: return .orange
-        case .inspection: return .purple
-        case .repair: return .red
-        case .installation: return .green
-        case .landscaping: return .green
-        case .security: return .red
-        case .utilities: return .yellow
         case .plumbing: return .blue
         case .electrical: return .yellow
-        
-        default: return Color.gray}
+        case .hvac: return .orange
+        case .carpentry: return .brown
+        case .painting: return .purple
+        case .cleaning: return .blue
+        case .landscaping: return .green
+        case .security: return .red
+        case .museumSpecialist: return .purple
+        case .parkMaintenance: return .green
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .plumbing: return "drop"
+        case .electrical: return "bolt"
+        case .hvac: return "wind"
+        case .carpentry: return "hammer"
+        case .painting: return "paintbrush"
+        case .cleaning: return "sparkles"
+        case .landscaping: return "leaf"
+        case .security: return "shield"
+        case .museumSpecialist: return "building.columns"
+        case .parkMaintenance: return "tree"
+        }
     }
 }
 
-// MARK: - RestockStatus Color Extensions
-extension RestockStatus {
+// MARK: - WorkerStatus Color Extensions
+extension WorkerStatus {
     public var displayColor: Color {
         switch self {
-        case .inStock: return .green
-        case .lowStock: return .yellow
-        case .outOfStock: return .red
-        case .onOrder: return .blue
-        
-        default: return Color.gray}
+        case .available: return .green
+        case .clockedIn: return .blue
+        case .onBreak: return .orange
+        case .offline: return .gray
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .available: return "checkmark.circle.fill"
+        case .clockedIn: return "clock.fill"
+        case .onBreak: return "pause.circle.fill"
+        case .offline: return "moon.fill"
+        }
     }
 }
 
-// MARK: - DataHealthStatus Color Extensions
-extension DataHealthStatus {
+// MARK: - BuildingType Color Extensions
+extension BuildingType {
     public var displayColor: Color {
         switch self {
-        case .healthy: return .green
-        case .warning: return .yellow
-        case .error: return .red
-        
-        default: return Color.gray}
+        case .residential: return .blue
+        case .commercial: return .gray
+        case .museum: return .purple
+        case .cultural: return .purple
+        case .mixedUse: return .orange
+        case .retail: return .green
+        case .park: return .green
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .residential: return "house"
+        case .commercial: return "building"
+        case .museum: return "building.columns"
+        case .cultural: return "theatermasks"
+        case .mixedUse: return "building.2"
+        case .retail: return "storefront"
+        case .park: return "tree"
+        }
     }
 }
+
+// MARK: - ComplianceStatus Color Extensions
+extension ComplianceStatus {
+    public var displayColor: Color {
+        switch self {
+        case .compliant: return .green
+        case .needsReview: return .orange
+        case .atRisk: return .orange
+        case .nonCompliant: return .red
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .compliant: return "checkmark.shield"
+        case .needsReview: return "questionmark.shield"
+        case .atRisk: return "exclamationmark.shield"
+        case .nonCompliant: return "xmark.shield"
+        }
+    }
+}
+
+// MARK: - WeatherCondition Color Extensions
+extension WeatherCondition {
+    public var displayColor: Color {
+        switch self {
+        case .clear: return .yellow
+        case .sunny: return .orange
+        case .cloudy: return .gray
+        case .rainy: return .blue
+        case .snowy: return .white
+        case .stormy: return .purple
+        case .foggy: return .gray
+        case .windy: return .cyan
+        case .partlyCloudy: return .gray
+        case .overcast: return .gray
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .clear: return "sun.max"
+        case .sunny: return "sun.max.fill"
+        case .cloudy: return "cloud"
+        case .rainy: return "cloud.rain"
+        case .snowy: return "cloud.snow"
+        case .stormy: return "cloud.bolt"
+        case .foggy: return "cloud.fog"
+        case .windy: return "wind"
+        case .partlyCloudy: return "cloud.sun"
+        case .overcast: return "cloud.fill"
+        }
+    }
+}
+
+// MARK: - Helper Extensions for UI Consistency
 
 extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+    /// Adaptive color that works in both light and dark mode
+    public static func adaptiveColor(light: Color, dark: Color) -> Color {
+        return Color(UIColor { traitCollection in
+            return traitCollection.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+    }
+}
+
+// MARK: - Status Badge Helper
+extension View {
+    /// Applies appropriate status badge styling based on any enum with displayColor
+    public func statusBadge<T>(for value: T) -> some View where T: RawRepresentable, T.RawValue == String {
+        self.padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.gray.opacity(0.2))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
     }
 }
