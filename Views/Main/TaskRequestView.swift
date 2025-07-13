@@ -630,7 +630,7 @@ struct TaskRequestView: View {
 
 struct InventorySelectionView: View {
     let buildingId: String
-    @Binding var selectedItems: [String: Int]
+    @State var selectedItems: [String: Int]
     var onDismiss: (() -> Void)? = nil
     
     @State private var inventoryItems: [InventoryItem] = []
@@ -814,7 +814,7 @@ struct InventorySelectionView: View {
 }
 
 struct PhotoPickerView: View {
-    @Binding var selectedImage: UIImage?
+    @State var selectedImage: UIImage?
     @Environment(\.presentationMode) var presentationMode
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var showSourceSelector = false

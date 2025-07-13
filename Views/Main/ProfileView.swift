@@ -494,8 +494,8 @@ struct SettingsRow: View {
 // MARK: - Local ImagePicker Component
 
 struct FrancoSphereImagePicker: UIViewControllerRepresentable {
-    @Binding var isPresented: Bool
-    @Binding var selectedImage: UIImage?
+    @State var isPresented: Bool
+    @State var selectedImage: UIImage?
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()

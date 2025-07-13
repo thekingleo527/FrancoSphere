@@ -262,7 +262,7 @@ struct GlassIconButton: View {
 // MARK: - Glass Toggle Button
 struct GlassToggleButton: View {
     let text: String
-    @Binding var isOn: Bool
+    @State var isOn: Bool
     let action: (() -> Void)?
     
     var style: GlassButtonStyle
@@ -388,10 +388,10 @@ struct GlassButton_Previews: PreviewProvider {
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        GlassToggleButton("Toggle Option", isOn: .constant(false)) {
+                        GlassToggleButton("Toggle Option", isOn: .linear(false)) {
                             print("Toggle 1 changed")
                         }
-                        GlassToggleButton("Active Toggle", isOn: .constant(true)) {
+                        GlassToggleButton("Active Toggle", isOn: .linear(true)) {
                             print("Toggle 2 changed")
                         }
                     }

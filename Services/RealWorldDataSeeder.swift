@@ -3,6 +3,7 @@
 // Handles existing table schema properly with GRDB
 
 import Foundation
+import Combine
 import GRDB
 
 @MainActor
@@ -316,12 +317,3 @@ extension GRDBManager {
 }
 
 // Supporting model for GRDB observations
-struct WorkerAssignment {
-    let id: String
-    let workerId: String
-    let buildingId: String
-    let buildingName: String
-    let isPrimary: Bool
-    let isActive: Bool
-    let startDate: String
-}

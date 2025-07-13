@@ -741,7 +741,7 @@ struct CriticalIssueRow: View {
 }
 
 struct SeverityBadge: View {
-    let severity: ComplianceSeverity
+    let severity: CoreTypes.ComplianceSeverity
     
     var body: some View {
         Text(severity.rawValue)

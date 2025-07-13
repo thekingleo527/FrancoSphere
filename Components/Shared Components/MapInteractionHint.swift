@@ -13,7 +13,7 @@ import SwiftUI
 
 
 struct MapInteractionHint: View {
-    @Binding var showHint: Bool
+    @State var showHint: Bool
     let hasSeenHint: Bool
     
     // MARK: - State

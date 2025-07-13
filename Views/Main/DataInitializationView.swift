@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DataInitializationView: View {
-    @Binding var isInitialized: Bool
+    @State var isInitialized: Bool
     
     var body: some View {
         VStack {

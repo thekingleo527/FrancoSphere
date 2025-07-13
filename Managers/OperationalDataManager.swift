@@ -3,7 +3,6 @@ import GRDB
 import Combine
 
 // MARK: - Operational Task Assignment Structure (Enhanced)
-struct OperationalTaskAssignment {
     let building: String             // Plain-English building name as spoken internally
     let taskName: String             // Human friendly task title
     let assignedWorker: String       // Canonical full name, must exist in WorkerConstants
@@ -13,7 +12,6 @@ struct OperationalTaskAssignment {
     let startHour: Int?              // 0-23, local time
     let endHour: Int?                // 0-23, local time
     let daysOfWeek: String?          // Comma list of day abbreviations (Mon,Tue …) or nil for "any"
-}
 
 // MARK: - OperationalDataManager (GRDB Implementation)
 // 🚀 MIGRATED TO GRDB.swift - Preserves ALL original real-world data
@@ -350,7 +348,7 @@ public class OperationalDataManager: ObservableObject {
     // MARK: - Utility Methods (GRDB Compatible)
     
     /// Generate unique external ID for task idempotency
-    private func generateExternalId(for task: OperationalTaskAssignment, index: Int) -> String {
+    private func generateExternalId(for task: CoreTypes.OperationalTaskAssignment, index: Int) -> String {
         let components = [
             task.building,
             task.taskName,

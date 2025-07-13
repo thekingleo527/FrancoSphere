@@ -264,9 +264,6 @@ public actor WorkerContextEngine {
 
 // MARK: - Supporting Types
 
-public enum WorkerStatus {
-    case available, clockedIn, onBreak, offDuty
-}
 
 public enum WorkerContextError: Error {
     case noCurrentWorker

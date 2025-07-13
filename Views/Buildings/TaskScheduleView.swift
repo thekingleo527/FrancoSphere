@@ -375,7 +375,7 @@ struct TaskScheduleView: View {
     // MARK: - Filter View
     
     struct FilterView: View {
-        @Binding var options: FilterOptions
+        @State var options: FilterOptions
         @Environment(\.presentationMode) var presentationMode
         
         var body: some View {

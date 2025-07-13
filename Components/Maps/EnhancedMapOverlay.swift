@@ -9,7 +9,7 @@ import SwiftUI
 import MapKit
 
 struct EnhancedMapOverlay: View {
-    @Binding var isPresented: Bool
+    @State var isPresented: Bool
     let buildings: [NamedCoordinate]
     let currentBuildingId: String?
 

@@ -555,7 +555,7 @@ struct SignUpView: View {
 struct GlassTextField: View {
     let icon: String
     let placeholder: String
-    @Binding var text: String
+    @State var text: String
     var isSecure: Bool = false
     var keyboardType: UIKeyboardType = .default
     

@@ -594,7 +594,7 @@ public class DatabaseManager {
             print("\n👥 ALL USERS:")
             for user in users {
                 let status = user.id > 0 ? "ACTIVE" : "INACTIVE"
-                print("   \(user.name) (\(user.email,}) - \(user.role.uppercased()) - Worker: \(user.workerId ?? "N/A") [\(status)]")
+                print("   \(user.name) (\(user.email)) - \(user.role.uppercased()) - Worker: \(user.workerId ?? "N/A") [\(status)]")
             }
             
             // Recent login history

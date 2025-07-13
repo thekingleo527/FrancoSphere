@@ -42,7 +42,7 @@ enum QuickActionType: String, CaseIterable {
 
 // MARK: - Quick Action Menu View
 struct QuickActionMenu: View {
-    @Binding var isPresented: Bool
+    @State var isPresented: Bool
     let onActionSelected: (QuickActionType) -> Void
     
     @State private var animateIn = false

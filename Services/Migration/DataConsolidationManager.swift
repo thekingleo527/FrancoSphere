@@ -121,7 +121,7 @@ actor DataConsolidationManager {
     }
 
     /// Converts a legacy hardcoded task into a reusable task template in the database using GRDB
-    private func createTaskTemplate(from legacyTask: OperationalTaskAssignment) async throws {
+    private func createTaskTemplate(from legacyTask: CoreTypes.OperationalTaskAssignment) async throws {
         let description = "Migrated from OperationalDataManager: \(legacyTask.taskName)"
         let urgency = determineUrgency(from: legacyTask)
         let duration = calculateDuration(from: legacyTask)
@@ -159,7 +159,7 @@ actor DataConsolidationManager {
     // MARK: - Helper Methods
     
     /// Determines task urgency based on legacy task properties
-    private func determineUrgency(from task: OperationalTaskAssignment) -> String {
+    private func determineUrgency(from task: CoreTypes.OperationalTaskAssignment) -> String {
         switch task.skillLevel {
         case "Advanced", "Expert":
             return "high"
@@ -171,7 +171,7 @@ actor DataConsolidationManager {
     }
     
     /// Calculates task duration in minutes
-    private func calculateDuration(from task: OperationalTaskAssignment) -> Int {
+    private func calculateDuration(from task: CoreTypes.OperationalTaskAssignment) -> Int {
         let startHour = task.startHour ?? 9
         let endHour = task.endHour ?? startHour + 1
         return max((endHour - startHour) * 60, 30) // Minimum 30 minutes
@@ -337,25 +337,6 @@ extension OperationalDataManager {
 // MARK: - Sample OperationalTaskAssignment Structure
 
 /// Structure representing a legacy operational task assignment
-struct OperationalTaskAssignment {
-    let workerId: String?
-    let buildingId: String?
-    let taskName: String
-    let category: String
-    let skillLevel: String
-    let startHour: Int?
-    let endHour: Int?
-    
-    init(workerId: String? = nil, buildingId: String? = nil, taskName: String, category: String, skillLevel: String = "Basic", startHour: Int? = nil, endHour: Int? = nil) {
-        self.workerId = workerId
-        self.buildingId = buildingId
-        self.taskName = taskName
-        self.category = category
-        self.skillLevel = skillLevel
-        self.startHour = startHour
-        self.endHour = endHour
-    }
-}
 
 // MARK: - 📝 GRDB MIGRATION NOTES
 /*

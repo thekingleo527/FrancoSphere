@@ -13,7 +13,7 @@ import SwiftUI
 
 // MARK: - Glass Modal
 struct GlassModal<Content: View>: View {
-    @Binding var isPresented: Bool
+    @State var isPresented: Bool
     let content: Content
     
     // Customization
@@ -239,7 +239,7 @@ struct GlassModal<Content: View>: View {
 
 // MARK: - Glass Action Sheet
 struct GlassActionSheet: View {
-    @Binding var isPresented: Bool
+    @State var isPresented: Bool
     let title: String
     let message: String?
     let actions: [GlassActionButton]

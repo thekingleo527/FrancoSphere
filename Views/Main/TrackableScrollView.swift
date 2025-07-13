@@ -14,7 +14,7 @@ import SwiftUI
 
 
 struct TrackableScrollView<Content: View>: View {
-    @Binding var contentOffset: CGFloat
+    @State var contentOffset: CGFloat
     let contentInset: UIEdgeInsets
     let content: () -> Content
     

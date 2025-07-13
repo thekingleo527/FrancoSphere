@@ -2,8 +2,9 @@
 //  HeroStatusCard.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: TaskProgress constructor in preview
-//  ✅ CORRECTED: Proper CoreTypes.TaskProgress usage
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ CORRECT: Uses proper CoreTypes.TaskProgress properties
+//  ✅ WORKING: Matches actual WeatherData structure
 //
 
 import SwiftUI
@@ -60,16 +61,16 @@ struct HeroStatusCard: View {
             
             Spacer()
             
-            // Status indicator
+            // Status indicator - green if good progress, orange if low
             Circle()
-                .fill(progress.overdueTasks > 0 ? Color.orange : Color.green)
+                .fill(progress.progressPercentage >= 50 ? Color.green : Color.orange)
                 .frame(width: 12, height: 12)
         }
     }
     
     private func weatherView(_ weather: WeatherData) -> some View {
         HStack {
-            Image(systemName: weatherIcon(for: weather.condition))
+            Image(systemName: weatherIcon(for: weather.conditions))
                 .font(.title2)
                 .foregroundColor(.blue)
             
@@ -77,15 +78,15 @@ struct HeroStatusCard: View {
                 Text("\(Int(weather.temperature))°F")
                     .font(.headline)
                 
-                Text(weather.description)
+                Text(weather.conditions)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
             Spacer()
             
-            if weather.precipitation > 0 {
-                Label("\(Int(weather.precipitation * 100))%", systemImage: "drop.fill")
+            if weather.humidity > 0.7 {
+                Label("\(Int(weather.humidity * 100))%", systemImage: "drop.fill")
                     .font(.caption)
                     .foregroundColor(.blue)
             }
@@ -124,7 +125,7 @@ struct HeroStatusCard: View {
                 
                 Spacer()
                 
-                Text("\(progress.completed)/\(progress.total)")
+                Text("\(progress.completedTasks)/\(progress.totalTasks)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -137,8 +138,8 @@ struct HeroStatusCard: View {
                         .frame(height: 6)
                     
                     Rectangle()
-                        .fill(progress.overdueTasks > 0 ? Color.orange : Color.green)
-                        .frame(width: geometry.size.width * (progress.percentage / 100), height: 6)
+                        .fill(progress.progressPercentage >= 50 ? Color.green : Color.orange)
+                        .frame(width: geometry.size.width * (progress.progressPercentage / 100), height: 6)
                 }
                 .cornerRadius(3)
             }
@@ -146,15 +147,16 @@ struct HeroStatusCard: View {
             
             // Status details
             HStack {
-                if progress.overdueTasks > 0 {
-                    Label("\(progress.overdueTasks) overdue", systemImage: "exclamationmark.triangle.fill")
+                if progress.progressPercentage < 50 {
+                    Label("Behind schedule", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundColor(.orange)
                 }
                 
                 Spacer()
                 
-                Text("\(progress.remaining) remaining")
+                let remaining = progress.totalTasks - progress.completedTasks
+                Text("\(remaining) remaining")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -181,56 +183,49 @@ struct HeroStatusCard: View {
     
     // MARK: - Helper Methods
     
-    private func weatherIcon(for condition: WeatherCondition) -> String {
-        switch condition {
-        case .clear:
+    private func weatherIcon(for conditions: String) -> String {
+        let condition = conditions.lowercased()
+        
+        if condition.contains("sun") || condition.contains("clear") {
             return "sun.max.fill"
-        case .partlyCloudy:
+        } else if condition.contains("cloud") && condition.contains("sun") {
             return "cloud.sun.fill"
-        case .cloudy:
+        } else if condition.contains("cloud") {
             return "cloud.fill"
-        case .rain:
+        } else if condition.contains("rain") {
             return "cloud.rain.fill"
-        case .snow:
+        } else if condition.contains("snow") {
             return "cloud.snow.fill"
-        case .thunderstorm:
+        } else if condition.contains("storm") || condition.contains("thunder") {
             return "cloud.bolt.fill"
-        case .fog:
+        } else if condition.contains("fog") {
             return "cloud.fog.fill"
-        default:
+        } else {
             return "sun.max.fill"
         }
     }
 }
 
-// MARK: - ✅ FIXED: Preview with correct TaskProgress constructor
+// MARK: - ✅ FIXED: Preview with correct constructors
 #Preview {
     HeroStatusCard(
         workerId: "kevin",
         currentBuilding: "Rubin Museum",
         weather: WeatherData(
-            id: UUID().uuidString,
-            date: Date(),
             temperature: 72.0,
-            feelsLike: 72.0,
-            humidity: 65,
+            humidity: 0.65,
             windSpeed: 5.0,
-            windDirection: 0,
-            precipitation: 0,
-            snow: 0,
-            condition: .clear,
-            uvIndex: 0,
-            visibility: 10,
-            description: "Clear skies"
+            conditions: "sunny",
+            timestamp: Date()
         ),
         progress: TaskProgress(
-            completed: 8,
-            total: 12,
-            remaining: 4,
-            percentage: 66.7,
-            overdueTasks: 1
+            completedTasks: 8,
+            totalTasks: 12,
+            progressPercentage: 66.7
         ),
-        onClockInTap: { print("Clock in tapped") }
+        onClockInTap: {
+            print("Clock in tapped")
+        }
     )
     .padding()
     .background(Color.black)

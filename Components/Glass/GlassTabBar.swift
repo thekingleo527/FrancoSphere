@@ -20,7 +20,7 @@ import SwiftUI
 
 // MARK: - Glass Tab Bar (Uses GlassTabItem from GlassTypes.swift)
 struct GlassTabBar: View {
-    @Binding var selectedTab: Int
+    @State var selectedTab: Int
     let tabs: [GlassTabItem]
     
     var body: some View {

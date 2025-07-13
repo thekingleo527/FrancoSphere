@@ -12,7 +12,7 @@ import MapKit
 
 struct MapBackgroundView: View {
     let buildings: [NamedCoordinate]
-    @Binding var region: MKCoordinateRegion
+    @State var region: MKCoordinateRegion
     let currentBuildingId: String?
     let onBuildingTap: ((NamedCoordinate) -> Void)?
 

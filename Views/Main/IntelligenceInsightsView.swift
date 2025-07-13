@@ -24,7 +24,7 @@ struct IntelligenceInsightsView: View {
     let onInsightAction: ((IntelligenceInsight) -> Void)?
     let onRefreshInsights: (() async -> Void)?
     
-    @State private var selectedFilter: InsightFilter = .all
+    @State private var selectedFilter: CoreTypes.InsightFilter = .all
     @State private var selectedInsight: IntelligenceInsight?
     @State private var showingActionSheet = false
     @State private var isRefreshing = false
@@ -236,7 +236,7 @@ struct IntelligenceInsightsView: View {
         insights.filter { $0.actionable }.count
     }
     
-    private func getFilterCount(_ filter: InsightFilter) -> Int {
+    private func getFilterCount(_ filter: CoreTypes.InsightFilter) -> Int {
         switch filter {
         case .all:
             return insights.count
@@ -280,7 +280,7 @@ struct SummaryInsightCard: View {
 }
 
 struct FilterButton: View {
-    let filter: InsightFilter
+    let filter: CoreTypes.InsightFilter
     let isSelected: Bool
     let count: Int
     let onTap: () -> Void

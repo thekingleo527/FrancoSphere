@@ -420,7 +420,7 @@ struct TaskFilterOptions {
 }
 
 struct TaskFilterView: View {
-    @Binding var filterOptions: TaskFilterOptions
+    @State var filterOptions: TaskFilterOptions
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {

@@ -533,7 +533,7 @@ struct BuildingTaskDetailView: View {
         return true // Allow all users to manage workers for now
     }
     
-    private func workerRoleDisplay(for assignment: WorkerAssignment) -> String {
+    private func workerRoleDisplay(for assignment: CoreTypes.WorkerAssignment) -> String {
         return "Maintenance Worker"
     }
     
@@ -647,7 +647,7 @@ struct BuildingTaskDetailView: View {
 
 struct WorkerAssignmentView: View {
     let buildingId: String
-    @Binding var selectedWorkers: [String]
+    @State var selectedWorkers: [String]
     @Environment(\.presentationMode) var presentationMode
     @State private var availableWorkers: [WorkerAssignment] = []
     
@@ -829,7 +829,7 @@ struct EditTaskView: View {
 // FIXED: Renamed to avoid conflict with TaskRequestView's InventorySelectionView
 struct BuildingTaskInventorySelectionView: View {
     let buildingId: String
-    @Binding var selectedItems: [String: Int]
+    @State var selectedItems: [String: Int]
     @Environment(\.presentationMode) var presentationMode
     @State private var availableItems: [InventoryItem] = []
     @State private var quantities: [String: Int] = [:]
