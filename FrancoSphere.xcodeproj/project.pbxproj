@@ -163,6 +163,9 @@
 		23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD76B2E030EA500013D90 /* RoutinePriority.swift */; };
 		23DED85B2E1E24F100E5F9F5 /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
+		23EA1D1B2E234F79009FFF54 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */; };
+		23EA1D1E2E235176009FFF54 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1D1D2E235176009FFF54 /* OpenMeteoSdk */; };
+		23EA1D262E236641009FFF54 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1D252E236641009FFF54 /* GRDB */; };
 		23EE824A2E1C1B4F00C298C7 /* default.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82492E1C1B4F00C298C7 /* default.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
@@ -350,6 +353,7 @@
 		23BBD76B2E030EA500013D90 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
 		23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceService.swift; sourceTree = "<group>"; };
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
+		23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
 		23EE82492E1C1B4F00C298C7 /* default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = default.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
@@ -399,6 +403,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23EA1D1E2E235176009FFF54 /* OpenMeteoSdk in Frameworks */,
+				23EA1D262E236641009FFF54 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -626,6 +632,7 @@
 		234580DD2DF78E3D00355F0A /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */,
 				234580C52DF78E3D00355F0A /* Extensions */,
 				234580C72DF78E3D00355F0A /* Migrations */,
 				234580C82DF78E3D00355F0A /* AIAssistantManager.swift */,
@@ -848,6 +855,8 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
+				23EA1D1D2E235176009FFF54 /* OpenMeteoSdk */,
+				23EA1D252E236641009FFF54 /* GRDB */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -926,6 +935,8 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				23EA1D1C2E235176009FFF54 /* XCRemoteSwiftPackageReference "sdk" */,
+				23EA1D242E236641009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1070,6 +1081,7 @@
 				234581782DF78E3D00355F0A /* TaskDetailView.swift in Sources */,
 				2345817A2DF78E3D00355F0A /* MaintenanceTaskView.swift in Sources */,
 				2345817B2DF78E3D00355F0A /* AdminDashboardView.swift in Sources */,
+				23EA1D1B2E234F79009FFF54 /* GRDBManager.swift in Sources */,
 				2345817C2DF78E3D00355F0A /* TimelineProgressBar.swift in Sources */,
 				23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */,
 				2312FC7E2E1BED3700B64496 /* DataSynchronizationService.swift in Sources */,
@@ -1478,6 +1490,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		23EA1D1C2E235176009FFF54 /* XCRemoteSwiftPackageReference "sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/open-meteo/sdk";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		23EA1D242E236641009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		23EA1D1D2E235176009FFF54 /* OpenMeteoSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23EA1D1C2E235176009FFF54 /* XCRemoteSwiftPackageReference "sdk" */;
+			productName = OpenMeteoSdk;
+		};
+		23EA1D252E236641009FFF54 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 23EA1D242E236641009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 23423DAF2D739D6800AACE3E /* Project object */;
 }
