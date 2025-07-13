@@ -1,163 +1,418 @@
 //
 //  FrancoSphereModels.swift
-//  FrancoSphere v6.0 - CLEANED
+//  FrancoSphere
+//
+//  ✅ CLEAN VERSION: All core model definitions
+//  ✅ No duplicate types, no shell commands, no corruption
+//  ✅ Compatible with CoreTypes and GRDB
 //
 
 import Foundation
 import SwiftUI
 import CoreLocation
 
-public struct FrancoSphere {
-    public struct NamedCoordinate: Identifiable, Codable, Hashable {
-        public let id: String; public let name: String
-        public let coordinate: CLLocationCoordinate2D
-        public let address: String?; public let imageAssetName: String?
-        public init(id:String,name:String,coordinate:CLLocationCoordinate2D,address:String?=nil,imageAssetName:String?=nil){
-            self.id=id;self.name=name;self.coordinate=coordinate
-            self.address=address;self.imageAssetName=imageAssetName
-        }
+// MARK: - Core Data Models
+
+public struct NamedCoordinate: Identifiable, Codable, Hashable {
+    public let id: String
+    public let name: String
+    public let address: String?
+    public let latitude: Double
+    public let longitude: Double
+    public let imageAssetName: String?
+    
+    public var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
-    public enum WeatherCondition: String, Codable, CaseIterable { case clear,sunny,cloudy,rainy,snowy,stormy,foggy,windy }
-    public struct WeatherData: Identifiable, Codable {
-        public let id:String; public let date:Date
-        public let temperature:Double; public let feelsLike:Double
-        public let humidity:Int; public let windSpeed:Double
-        public let windDirection:Int; public let precipitation:Double
-        public let snow:Double; public let condition:WeatherCondition
-        public let uvIndex:Int; public let visibility:Double
-        public let description:String
-        public init(id:String,date:Date,temperature:Double,feelsLike:Double,humidity:Int,windSpeed:Double,windDirection:Int,precipitation:Double,snow:Double,condition:WeatherCondition,uvIndex:Int,visibility:Double,description:String){
-            self.id=id;self.date=date;self.temperature=temperature;self.feelsLike=feelsLike
-            self.humidity=humidity;self.windSpeed=windSpeed;self.windDirection=windDirection
-            self.precipitation=precipitation;self.snow=snow;self.condition=condition
-            self.uvIndex=uvIndex;self.visibility=visibility;self.description=description
-        }
+    
+    public init(id: String, name: String, address: String? = nil, latitude: Double, longitude: Double, imageAssetName: String? = nil) {
+        self.id = id
+        self.name = name
+        self.address = address
+        self.latitude = latitude
+        self.longitude = longitude
+        self.imageAssetName = imageAssetName
     }
-    public enum OutdoorWorkRisk: String, Codable, CaseIterable { case low,medium,high,extreme }
-    public enum TaskCategory: String, Codable, CaseIterable { case maintenance,cleaning,inspection,repair,security,landscaping }
-    public enum TaskUrgency: String, Codable, CaseIterable {
-        case low,medium,high,critical,emergency,urgent
-        public var color: Color {
-            switch self { case .low: return .green; case .medium: return .yellow
-                case .high: return .orange; case .critical: return .red
-                case .emergency: return .red; case .urgent: return .red }
-        }
-    }
-    public enum TaskRecurrence: String, Codable, CaseIterable { case none,daily,weekly,monthly,yearly }
-    public enum VerificationStatus: String, Codable, CaseIterable { case pending,verified,rejected,needsReview }
-    public struct MaintenanceTask: Identifiable, Codable, Hashable {
-        public let id:String, title:String, description:String
-        public let category:TaskCategory, urgency:TaskUrgency, buildingId:String
-        public let assignedWorkerId:String?; public var isCompleted:Bool
-        public let dueDate:Date?, estimatedDuration:TimeInterval
-        public let recurrence:TaskRecurrence; public let notes:String?
-        public init(id:String=UUID().uuidString,title:String,description:String,category:TaskCategory,urgency:TaskUrgency,buildingId:String,assignedWorkerId:String?=nil,isCompleted:Bool=false,dueDate:Date?=nil,estimatedDuration:TimeInterval=3600,recurrence:TaskRecurrence=.none,notes:String?=nil){
-            self.id=id;self.title=title;self.description=description
-            self.category=category;self.urgency=urgency;self.buildingId=buildingId
-            self.assignedWorkerId=assignedWorkerId;self.isCompleted=isCompleted
-            self.dueDate=dueDate;self.estimatedDuration=estimatedDuration
-            self.recurrence=recurrence;self.notes=notes
-        }
-    }
-    public struct Worker: Identifiable, Codable, Hashable {
-        public let id:String,name:String,email:String,role:String,buildings:[String]
-        public init(id:String,name:String,email:String,role:String,buildings:[String]){
-            self.id=id;self.name=name;self.email=email
-            self.role=role;self.buildings=buildings
-        }
-    }
-    public struct ActionEvidence: Codable {
-        public let timestamp:Date,location:CLLocationCoordinate2D?,photoPath:String?,notes:String?
-        public init(timestamp:Date=Date(),location:CLLocationCoordinate2D?=nil,photoPath:String?=nil,notes:String?=nil){
-            self.timestamp=timestamp;self.location=location
-            self.photoPath=photoPath;self.notes=notes
-        }
-    }
-    public struct WorkerPerformanceMetrics: Codable {
-        public let efficiency:Double,tasksCompleted:Int,averageCompletionTime:TimeInterval
-        public init(efficiency:Double,tasksCompleted:Int,averageCompletionTime:TimeInterval){
-            self.efficiency=efficiency;self.tasksCompleted=tasksCompleted;self.averageCompletionTime=averageCompletionTime
-        }
-    }
-    public enum TrendDirection: String, Codable, CaseIterable {
-        case up,down,stable
-        public var color: Color {
-            switch self { case .up: return .green; case .down: return .red; case .stable: return .blue }
-        }
-        public var icon: String {
-            switch self { case .up: return "arrow.up.right"; case .down: return "arrow.down.right"; case .stable: return "arrow.right" }
-        }
-    }
-    public enum ServiceError: Error { case noSQLiteManager, invalidData(String) }
 }
 
-# Global aliases
-cat >> Models/FrancoSphereModels.swift << 'ALIASES'
-// Aliases for backward compatibility
-public typealias NamedCoordinate          = FrancoSphere.NamedCoordinate
-public typealias WeatherCondition         = FrancoSphere.WeatherCondition
-public typealias WeatherData              = FrancoSphere.WeatherData
-public typealias OutdoorWorkRisk          = FrancoSphere.OutdoorWorkRisk
-public typealias TaskCategory             = FrancoSphere.TaskCategory
-public typealias TaskUrgency              = FrancoSphere.TaskUrgency
-public typealias TaskRecurrence           = FrancoSphere.TaskRecurrence
-public typealias VerificationStatus       = FrancoSphere.VerificationStatus
-public typealias MaintenanceTask          = FrancoSphere.MaintenanceTask
-public typealias Worker                    = FrancoSphere.Worker
-public typealias ActionEvidence           = FrancoSphere.ActionEvidence
-public typealias WorkerPerformanceMetrics = FrancoSphere.WorkerPerformanceMetrics
-public typealias TrendDirection           = FrancoSphere.TrendDirection
-ALIASES
+public struct WorkerProfile: Identifiable, Codable, Hashable {
+    public let id: String
+    public let name: String
+    public let email: String
+    public let role: String
+    public let phone: String?
+    public let hourlyRate: Double?
+    public let skills: [String]?
+    public let isActive: Bool
+    
+    public init(id: String, name: String, email: String, role: String, phone: String? = nil, hourlyRate: Double? = nil, skills: [String]? = nil, isActive: Bool = true) {
+        self.id = id
+        self.name = name
+        self.email = email
+        self.role = role
+        self.phone = phone
+        self.hourlyRate = hourlyRate
+        self.skills = skills
+        self.isActive = isActive
+    }
+}
 
-# 7️⃣ BuildingAnalytics.swift
-echo "7️⃣ Writing BuildingAnalytics.swift…"
-cat > Models/BuildingAnalytics.swift << 'BA'
-//
-//  BuildingAnalytics.swift
-//  FrancoSphere
-//
-
-import Foundation
-
-public struct BuildingAnalytics: Codable {
+public struct ContextualTask: Identifiable, Codable, Hashable {
+    public let id: String
+    public let title: String
+    public let description: String
+    public let category: TaskCategory
+    public let urgency: TaskUrgency
     public let buildingId: String
+    public let buildingName: String?
+    public let assignedWorkerId: String?
+    public let assignedWorkerName: String?
+    public var isCompleted: Bool
+    public var completedDate: Date?
+    public let dueDate: Date?
+    public let estimatedDuration: TimeInterval
+    public let recurrence: TaskRecurrence
+    public let notes: String?
+    
+    public init(
+        id: String = UUID().uuidString,
+        title: String,
+        description: String,
+        category: TaskCategory,
+        urgency: TaskUrgency,
+        buildingId: String,
+        buildingName: String? = nil,
+        assignedWorkerId: String? = nil,
+        assignedWorkerName: String? = nil,
+        isCompleted: Bool = false,
+        completedDate: Date? = nil,
+        dueDate: Date? = nil,
+        estimatedDuration: TimeInterval = 3600,
+        recurrence: TaskRecurrence = .none,
+        notes: String? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.category = category
+        self.urgency = urgency
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.assignedWorkerId = assignedWorkerId
+        self.assignedWorkerName = assignedWorkerName
+        self.isCompleted = isCompleted
+        self.completedDate = completedDate
+        self.dueDate = dueDate
+        self.estimatedDuration = estimatedDuration
+        self.recurrence = recurrence
+        self.notes = notes
+    }
+}
+
+// MARK: - Enums
+
+public enum TaskCategory: String, Codable, CaseIterable {
+    case cleaning = "Cleaning"
+    case maintenance = "Maintenance"
+    case repair = "Repair"
+    case sanitation = "Sanitation"
+    case inspection = "Inspection"
+    case security = "Security"
+    case landscaping = "Landscaping"
+    case hvac = "HVAC"
+    case electrical = "Electrical"
+    case plumbing = "Plumbing"
+    case other = "Other"
+}
+
+public enum TaskUrgency: String, Codable, CaseIterable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case urgent = "Urgent"
+    case critical = "Critical"
+    case emergency = "Emergency"
+}
+
+public enum TaskRecurrence: String, Codable, CaseIterable {
+    case none = "None"
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+    case quarterly = "Quarterly"
+    case yearly = "Yearly"
+}
+
+public enum WorkerStatus: String, Codable, CaseIterable {
+    case available = "Available"
+    case busy = "Busy"
+    case onBreak = "On Break"
+    case offline = "Offline"
+    case clockedOut = "Clocked Out"
+}
+
+public enum WeatherCondition: String, Codable, CaseIterable {
+    case clear = "Clear"
+    case partlyCloudy = "Partly Cloudy"
+    case cloudy = "Cloudy"
+    case rain = "Rain"
+    case snow = "Snow"
+    case thunderstorm = "Thunderstorm"
+    case fog = "Fog"
+    case windy = "Windy"
+}
+
+public enum TrendDirection: String, Codable, CaseIterable {
+    case up = "up"
+    case down = "down"
+    case stable = "stable"
+    
+    public var icon: String {
+        switch self {
+        case .up: return "arrow.up.circle.fill"
+        case .down: return "arrow.down.circle.fill"
+        case .stable: return "minus.circle.fill"
+        }
+    }
+    
+    public var color: Color {
+        switch self {
+        case .up: return .green
+        case .down: return .red
+        case .stable: return .blue
+        }
+    }
+}
+
+// MARK: - Weather Data
+
+public struct WeatherData: Identifiable, Codable, Hashable {
+    public let id: String
+    public let date: Date
+    public let temperature: Double
+    public let feelsLike: Double
+    public let humidity: Int
+    public let windSpeed: Double
+    public let windDirection: Int
+    public let precipitation: Double
+    public let snow: Double
+    public let condition: WeatherCondition
+    public let uvIndex: Int
+    public let visibility: Double
+    public let description: String
+    
+    public init(
+        id: String = UUID().uuidString,
+        date: Date,
+        temperature: Double,
+        feelsLike: Double,
+        humidity: Int,
+        windSpeed: Double,
+        windDirection: Int,
+        precipitation: Double,
+        snow: Double,
+        condition: WeatherCondition,
+        uvIndex: Int,
+        visibility: Double,
+        description: String
+    ) {
+        self.id = id
+        self.date = date
+        self.temperature = temperature
+        self.feelsLike = feelsLike
+        self.humidity = humidity
+        self.windSpeed = windSpeed
+        self.windDirection = windDirection
+        self.precipitation = precipitation
+        self.snow = snow
+        self.condition = condition
+        self.uvIndex = uvIndex
+        self.visibility = visibility
+        self.description = description
+    }
+}
+
+// MARK: - Task Progress
+
+public struct TaskProgress: Codable, Hashable {
+    public let completed: Int
+    public let total: Int
+    public let remaining: Int
+    public let percentage: Double
+    public let overdueTasks: Int
+    
+    public init(completed: Int, total: Int, remaining: Int, percentage: Double, overdueTasks: Int) {
+        self.completed = completed
+        self.total = total
+        self.remaining = remaining
+        self.percentage = percentage
+        self.overdueTasks = overdueTasks
+    }
+}
+
+// MARK: - Building Analytics
+
+public struct BuildingAnalytics: Codable, Hashable {
+    public let buildingId: String
+    public let completionRate: Double
     public let totalTasks: Int
     public let completedTasks: Int
     public let overdueTasks: Int
-    public let completionRate: Double
+    public let activeWorkers: Int
     public let uniqueWorkers: Int
-    public let averageCompletionTime: TimeInterval
-    public let efficiency: Double
+    public let averageTaskDuration: TimeInterval
     public let lastUpdated: Date
-
-    public init(buildingId:String,totalTasks:Int,completedTasks:Int,overdueTasks:Int,completionRate:Double,uniqueWorkers:Int,averageCompletionTime:TimeInterval,efficiency:Double,lastUpdated:Date=Date()){
-        self.buildingId=buildingId;self.totalTasks=totalTasks;self.completedTasks=completedTasks
-        self.overdueTasks=overdueTasks;self.completionRate=completionRate;self.uniqueWorkers=uniqueWorkers
-        self.averageCompletionTime=averageCompletionTime;self.efficiency=efficiency;self.lastUpdated=lastUpdated
+    
+    public init(
+        buildingId: String,
+        completionRate: Double,
+        totalTasks: Int,
+        completedTasks: Int,
+        overdueTasks: Int,
+        activeWorkers: Int,
+        uniqueWorkers: Int,
+        averageTaskDuration: TimeInterval,
+        lastUpdated: Date = Date()
+    ) {
+        self.buildingId = buildingId
+        self.completionRate = completionRate
+        self.totalTasks = totalTasks
+        self.completedTasks = completedTasks
+        self.overdueTasks = overdueTasks
+        self.activeWorkers = activeWorkers
+        self.uniqueWorkers = uniqueWorkers
+        self.averageTaskDuration = averageTaskDuration
+        self.lastUpdated = lastUpdated
     }
 }
 
-extension BuildingService {
-    func getBuildingAnalytics(_ buildingId: String) async throws -> BuildingAnalytics {
-        let tasks      = try await TaskService.shared.getTasksForBuilding(buildingId)
-        let completed  = tasks.filter { $0.isCompleted }
-        let overdue    = tasks.filter { !$0.isCompleted && ($0.dueDate ?? Date.distantFuture) < Date() }
-        let workers    = try await WorkerService.shared.getActiveWorkersForBuilding(buildingId)
-        let rate       = tasks.isEmpty ? 0.0 : Double(completed.count)/Double(tasks.count)
-        let avgTime    = completed.isEmpty ? 0.0 : completed.reduce(0.0){$0+$1.estimatedDuration}/Double(completed.count)
-        return BuildingAnalytics(
-            buildingId: buildingId,
-            totalTasks: tasks.count,
-            completedTasks: completed.count,
-            overdueTasks: overdue.count,
-            completionRate: rate,
-            uniqueWorkers: workers.count,
-            averageCompletionTime: avgTime,
-            efficiency: rate
-        )
+// MARK: - Extensions for UI
+
+extension TaskCategory {
+    public var color: Color {
+        switch self {
+        case .cleaning: return .blue
+        case .maintenance: return .orange
+        case .repair: return .red
+        case .sanitation: return .green
+        case .inspection: return .purple
+        case .security: return .yellow
+        case .landscaping: return .mint
+        case .hvac: return .cyan
+        case .electrical: return .indigo
+        case .plumbing: return .teal
+        case .other: return .gray
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .cleaning: return "sparkles"
+        case .maintenance: return "wrench"
+        case .repair: return "hammer"
+        case .sanitation: return "trash"
+        case .inspection: return "magnifyingglass"
+        case .security: return "shield"
+        case .landscaping: return "leaf"
+        case .hvac: return "wind"
+        case .electrical: return "bolt"
+        case .plumbing: return "drop"
+        case .other: return "ellipsis"
+        }
     }
 }
-BA
 
-echo "✅ All surgical compilation fixes applied!"
-echo "🔨 Now run: xcodebuild clean build"
+extension TaskUrgency {
+    public var color: Color {
+        switch self {
+        case .low: return .green
+        case .medium: return .yellow
+        case .high: return .orange
+        case .urgent: return .red
+        case .critical: return .red
+        case .emergency: return .red
+        }
+    }
+    
+    public var priority: Int {
+        switch self {
+        case .emergency: return 6
+        case .critical: return 5
+        case .urgent: return 4
+        case .high: return 3
+        case .medium: return 2
+        case .low: return 1
+        }
+    }
+}
+
+// MARK: - Compliance Types
+
+public struct ComplianceIssue: Identifiable, Codable, Hashable {
+    public let id: String
+    public let type: ComplianceIssueType
+    public let severity: ComplianceSeverity
+    public let buildingId: String
+    public let description: String
+    public let detectedDate: Date
+    public let resolvedDate: Date?
+    public let isResolved: Bool
+    
+    public init(
+        id: String = UUID().uuidString,
+        type: ComplianceIssueType,
+        severity: ComplianceSeverity,
+        buildingId: String,
+        description: String,
+        detectedDate: Date = Date(),
+        resolvedDate: Date? = nil,
+        isResolved: Bool = false
+    ) {
+        self.id = id
+        self.type = type
+        self.severity = severity
+        self.buildingId = buildingId
+        self.description = description
+        self.detectedDate = detectedDate
+        self.resolvedDate = resolvedDate
+        self.isResolved = isResolved
+    }
+}
+
+public enum ComplianceIssueType: String, Codable, CaseIterable {
+    case safety = "Safety"
+    case environmental = "Environmental"
+    case documentation = "Documentation"
+    case maintenance = "Maintenance"
+    case regulatory = "Regulatory"
+    case other = "Other"
+}
+
+public enum ComplianceSeverity: String, Codable, CaseIterable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case critical = "Critical"
+    
+    public var color: Color {
+        switch self {
+        case .low: return .green
+        case .medium: return .yellow
+        case .high: return .orange
+        case .critical: return .red
+        }
+    }
+}
+
+extension ComplianceIssueType {
+    public var icon: String {
+        switch self {
+        case .safety: return "shield.checkered"
+        case .environmental: return "leaf"
+        case .documentation: return "doc.text"
+        case .maintenance: return "wrench"
+        case .regulatory: return "checkmark.seal"
+        case .other: return "ellipsis.circle"
+        }
+    }
+}

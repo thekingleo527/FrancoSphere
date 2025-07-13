@@ -2,23 +2,14 @@
 //  DatabaseMigrations.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/27/25.
-//
-//  ✅ SINGLE AUTHORITATIVE DatabaseMigration PROTOCOL
-//  ✅ Used by SQLiteManager, V012, and any other migration files
-//  ✅ Targets: FrancoSphere + SeedDatabase
+//  ✅ GRDB VERSION - Updated for GRDB.swift compatibility
+//  ✅ Used by GRDBManager and migration files
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
+import GRDB
 
-import SQLite
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-
-/// Database migration protocol for versioned schema changes
+/// Database migration protocol for versioned schema changes using GRDB
 public protocol DatabaseMigration {
     /// Migration version number (must be unique)
     var version: Int { get }
@@ -29,11 +20,11 @@ public protocol DatabaseMigration {
     /// Optional checksum for validation
     var checksum: String { get }
     
-    /// Apply the migration (up direction)
-    func up(_ db: Connection) throws
+    /// Apply the migration (up direction) using GRDB Database
+    func up(_ db: Database) throws
     
-    /// Rollback the migration (down direction)
-    func down(_ db: Connection) throws
+    /// Rollback the migration (down direction) using GRDB Database
+    func down(_ db: Database) throws
 }
 
 /// Default implementations for convenience

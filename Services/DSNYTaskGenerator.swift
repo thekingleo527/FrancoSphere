@@ -2,14 +2,16 @@
 //  DSNYTaskGenerator.swift
 //  FrancoSphere
 //
+//  ✅ GRDB VERSION: Fixed imports while preserving all business logic
 //  ✅ V6.0 REFACTOR: Updated for new ContextualTask structure and actor architecture
 //  ✅ Uses correct ContextualTask initializer with title, buildingName, etc.
 //  ✅ Integrates with CoreTypes and follows established patterns
 //  ✅ Maintains DSNY compliance and real NYC sanitation schedules
+//  ✅ PRESERVED: All real building mappings, worker assignments, and scheduling logic
 //
 
 import Foundation
-import SQLite
+import GRDB
 
 /// Actor for generating DSNY-compliant sanitation tasks with thread safety
 public actor DSNYTaskGenerator {
@@ -18,7 +20,7 @@ public actor DSNYTaskGenerator {
     public static let shared = DSNYTaskGenerator()
     
     // MARK: - Private Properties
-    private var sqliteManager: SQLiteManager?
+    private let grdbManager = GRDBManager.shared
     private let calendar = Calendar.current
     
     // MARK: - NYC DSNY Schedule Constants
@@ -29,9 +31,7 @@ public actor DSNYTaskGenerator {
         static let pickupTimeEnd = 43200   // 12:00 PM in seconds since midnight
     }
     
-    private init() {
-        self.sqliteManager = SQLiteManager.shared
-    }
+    private init() {}
     
     // MARK: - Public Task Generation Methods
     
@@ -40,10 +40,6 @@ public actor DSNYTaskGenerator {
         let today = Date()
         let weekday = calendar.component(.weekday, from: today)
         let todayStr = getDayAbbreviation(for: weekday)
-        
-        guard sqliteManager != nil else {
-            throw DSNYError.databaseUnavailable
-        }
         
         let schedules = try await fetchDSNYSchedules(for: todayStr)
         var tasks: [ContextualTask] = []
@@ -70,10 +66,6 @@ public actor DSNYTaskGenerator {
         let weekday = calendar.component(.weekday, from: today)
         let todayStr = getDayAbbreviation(for: weekday)
         
-        guard sqliteManager != nil else {
-            throw DSNYError.databaseUnavailable
-        }
-        
         let schedules = try await fetchDSNYSchedules(for: todayStr, buildingId: buildingId)
         var tasks: [ContextualTask] = []
         
@@ -99,10 +91,6 @@ public actor DSNYTaskGenerator {
     
     /// Get DSNY collection schedule for a building
     public func getDSNYSchedule(for buildingId: CoreTypes.BuildingID) async throws -> [DSNYCollectionInfo] {
-        guard let sqliteManager = sqliteManager else {
-            throw DSNYError.databaseUnavailable
-        }
-        
         let query = """
             SELECT route_id, collection_days, earliest_setout, latest_pickup, 
                    pickup_window_start, pickup_window_end
@@ -110,8 +98,10 @@ public actor DSNYTaskGenerator {
             WHERE building_ids LIKE ? AND route_status = 'active'
         """
         
-        let parameters: [Binding] = ["%\(buildingId)%"]
-        let results = try await sqliteManager.query(query, parameters)
+        let parameters = ["%\(buildingId)%"]
+        let results = try await grdbManager.dbPool.read { db in
+            try Row.fetchAll(db, sql: query, arguments: StatementArguments(parameters))
+        }
         
         var collectionInfos: [DSNYCollectionInfo] = []
         
@@ -214,13 +204,9 @@ public actor DSNYTaskGenerator {
         )
     }
     
-    // MARK: - Database Query Methods
+    // MARK: - Database Query Methods (GRDB)
     
     private func fetchDSNYSchedules(for dayAbbreviation: String, buildingId: String? = nil) async throws -> [DSNYScheduleResult] {
-        guard let sqliteManager = sqliteManager else {
-            throw DSNYError.databaseUnavailable
-        }
-        
         var query = """
             SELECT route_id, building_ids, collection_days, earliest_setout, 
                    latest_pickup, pickup_window_start, pickup_window_end
@@ -228,14 +214,17 @@ public actor DSNYTaskGenerator {
             WHERE collection_days LIKE ? AND route_status = 'active'
         """
         
-        var parameters: [Binding] = ["%\(dayAbbreviation)%"]
+        var parameters = ["%\(dayAbbreviation)%"]
         
         if let buildingId = buildingId {
             query += " AND building_ids LIKE ?"
             parameters.append("%\(buildingId)%")
         }
         
-        let results = try await sqliteManager.query(query, parameters)
+        let results = try await grdbManager.dbPool.read { db in
+            try Row.fetchAll(db, sql: query, arguments: StatementArguments(parameters))
+        }
+        
         var scheduleResults: [DSNYScheduleResult] = []
         
         for row in results {
@@ -267,7 +256,7 @@ public actor DSNYTaskGenerator {
         return scheduleResults
     }
     
-    // MARK: - Helper Methods
+    // MARK: - Helper Methods (PRESERVED - All Real FrancoSphere Data)
     
     private func getDayAbbreviation(for weekday: Int) -> String {
         let dayAbbreviations = ["", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
@@ -281,7 +270,7 @@ public actor DSNYTaskGenerator {
     }
     
     private func getBuildingName(for buildingId: String) -> String {
-        // Real building mappings from our V6.0 system
+        // ✅ PRESERVED: Real building mappings from our V6.0 system
         let buildingMap: [String: String] = [
             "1": "12 West 18th Street",
             "2": "29-31 East 20th Street",
@@ -308,7 +297,7 @@ public actor DSNYTaskGenerator {
     }
     
     private func getAssignedWorker(for buildingId: String) -> (id: CoreTypes.WorkerID, name: String)? {
-        // Real worker assignments from our V6.0 system
+        // ✅ PRESERVED: Real worker assignments from our V6.0 system
         switch buildingId {
         case "1", "7": // Greg Hutson's buildings
             return (id: "1", name: "Greg Hutson")
@@ -326,7 +315,7 @@ public actor DSNYTaskGenerator {
     }
     
     private func isComplianceCheckNeeded(_ schedule: DSNYScheduleResult) -> Bool {
-        // High-traffic routes require additional compliance monitoring
+        // ✅ PRESERVED: High-traffic routes require additional compliance monitoring
         let highTrafficRoutes = ["R1-MON-WED-FRI", "R2-TUE-THU", "R3-MON-WED-FRI"]
         return highTrafficRoutes.contains(schedule.routeId)
     }
@@ -344,7 +333,7 @@ public actor DSNYTaskGenerator {
     }
 }
 
-// MARK: - Supporting Models
+// MARK: - Supporting Models (PRESERVED)
 
 public struct DSNYScheduleResult {
     let routeId: String
@@ -364,7 +353,7 @@ public struct DSNYCollectionInfo {
     let buildingId: String
 }
 
-// MARK: - Error Types
+// MARK: - Error Types (PRESERVED)
 
 public enum DSNYError: Error, LocalizedError {
     case databaseUnavailable
@@ -383,10 +372,10 @@ public enum DSNYError: Error, LocalizedError {
     }
 }
 
-// MARK: - Extensions for Integration
+// MARK: - Extensions for Integration (PRESERVED)
 
 extension DSNYTaskGenerator {
-    /// Get comprehensive DSNY status summary for dashboard display
+    /// ✅ PRESERVED: Get comprehensive DSNY status summary for dashboard display
     public func getDSNYStatusSummary() async throws -> DSNYStatusSummary {
         let todaysTasks = try await generateTodaysDSNYTasks()
         
@@ -422,14 +411,14 @@ extension DSNYTaskGenerator {
         return "Time TBD"
     }
     
-    /// Integration with TaskService for automatic DSNY task creation
+    /// ✅ PRESERVED: Integration with TaskService for automatic DSNY task creation
     internal func createDSNYTasksInSystem(taskService: TaskService) async throws {
         let dsnyTasks = try await generateTodaysDSNYTasks()
         
         for task in dsnyTasks {
             do {
                 try await taskService.createTask(task)
-                print("✅ Created DSNY task: \(task.title) for \(task.buildingName)")
+                print("✅ Created DSNY task: \(task.title) for \(task.buildingName ?? "Unknown Building")")
             } catch {
                 print("❌ Failed to create DSNY task: \(error)")
             }
@@ -437,6 +426,7 @@ extension DSNYTaskGenerator {
     }
 }
 
+// ✅ PRESERVED: Status summary for dashboard integration
 public struct DSNYStatusSummary {
     public let totalCollections: Int
     public let completedCollections: Int
