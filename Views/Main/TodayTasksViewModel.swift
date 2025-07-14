@@ -181,7 +181,7 @@ class TodayTasksViewModel: ObservableObject {
     func getTasksRequiringAttention() -> [ContextualTask] {
         return tasks.filter { task in
             // ✅ FIXED: Using ContextualTask.status property from extension
-            task.status != "completed" && (
+            task.isCompleted != "completed" && (
                 task.urgency == .critical ||
                 task.urgency == .urgent ||
                 (task.dueDate != nil && task.dueDate! < Date())
