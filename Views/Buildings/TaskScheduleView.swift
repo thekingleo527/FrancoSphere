@@ -3,8 +3,8 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With current v6.0 architecture using ContextualTask
-//  ✅ INTEGRATED: Real TaskService actor and proper async patterns
+//  ✅ ALIGNED: With actual ContextualTask structure from codebase analysis
+//  ✅ INTEGRATED: Proper constructor and property access
 //  ✅ EXHAUSTIVE: All switch statements handle all cases
 //
 
@@ -111,7 +111,8 @@ struct TaskScheduleView: View {
         if task.isCompleted {
             return .gray
         } else {
-            return task.urgency.color
+            // ✅ FIXED: Handle optional urgency with nil coalescing
+            return (task.urgency ?? .medium).color
         }
     }
     
@@ -513,11 +514,13 @@ struct TaskScheduleView: View {
                         .fill(statusColor.opacity(0.2))
                         .frame(width: 40, height: 40)
                     
-                    Image(systemName: task.isCompleted ? "checkmark.circle.fill" : categoryIcon(task.category))
+                    // ✅ FIXED: Handle optional category with nil coalescing
+                    Image(systemName: task.isCompleted ? "checkmark.circle.fill" : categoryIcon(task.category ?? .maintenance))
                         .foregroundColor(statusColor)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
+                    // ✅ FIXED: Use task.name (confirmed from codebase analysis)
                     Text(task.name)
                         .font(.headline)
                         .lineLimit(1)
@@ -528,7 +531,9 @@ struct TaskScheduleView: View {
                         .lineLimit(1)
                     
                     HStack(spacing: 15) {
-                        Label(task.category.rawValue.capitalized, systemImage: categoryIcon(task.category))
+                        // ✅ FIXED: Handle optional category with nil coalescing
+                        let categoryValue = task.category ?? .maintenance
+                        Label(categoryValue.rawValue.capitalized, systemImage: categoryIcon(categoryValue))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                         
@@ -560,7 +565,8 @@ struct TaskScheduleView: View {
             if task.isCompleted {
                 return .gray
             } else {
-                return task.urgency.color
+                // ✅ FIXED: Handle optional urgency with nil coalescing
+                return (task.urgency ?? .medium).color
             }
         }
         
@@ -680,26 +686,26 @@ struct TaskScheduleView: View {
         }
         
         private func saveTask() {
+            // ✅ FIXED: Use the actual ContextualTask constructor based on codebase analysis
             let task = ContextualTask(
                 id: UUID().uuidString,
                 name: taskName,
                 buildingId: buildingID,
                 buildingName: "Building \(buildingID)",
                 category: category.rawValue,
-                urgency: urgency,
-                skillLevel: urgency.rawValue,
-                status: "pending",
-                urgencyLevel: urgency.rawValue,
                 startTime: formatTime(date),
                 endTime: formatTime(date.addingTimeInterval(3600)),
                 recurrence: recurrence,
-                assignedWorkerName: nil,
-                workerId: nil,
+                skillLevel: urgency.rawValue,
+                status: "pending",
+                urgencyLevel: urgency.rawValue,
+                assignedWorkerName: NewAuthManager.shared.currentWorkerName,
+                workerId: NewAuthManager.shared.workerId,
                 isCompleted: false,
                 dueDate: date,
                 estimatedDuration: 3600,
                 notes: taskDescription.isEmpty ? nil : taskDescription,
-                description: taskDescription
+                description: taskDescription.isEmpty ? nil : taskDescription
             )
             
             onSave(task)
@@ -729,11 +735,13 @@ struct TaskScheduleView: View {
                     return false
                 }
                 
-                if !filterOptions.categories.contains(task.category) {
+                // ✅ FIXED: Handle optional category with nil coalescing
+                if !filterOptions.categories.contains(task.category ?? .maintenance) {
                     return false
                 }
                 
-                if !filterOptions.urgencies.contains(task.urgency) {
+                // ✅ FIXED: Handle optional urgency with nil coalescing
+                if !filterOptions.urgencies.contains(task.urgency ?? .medium) {
                     return false
                 }
                 
@@ -747,8 +755,8 @@ struct TaskScheduleView: View {
                     return firstDate < secondDate
                 }
                 
-                let firstPriority = urgencyPriority(first.urgency)
-                let secondPriority = urgencyPriority(second.urgency)
+                let firstPriority = urgencyPriority(first.urgency ?? .medium)
+                let secondPriority = urgencyPriority(second.urgency ?? .medium)
                 return firstPriority > secondPriority
             }
     }
@@ -866,8 +874,8 @@ struct TaskScheduleView: View {
         
         Task {
             do {
-                // ✅ FIXED: Use correct TaskService.getTasksForBuilding method
-                let contextualTasks = try await TaskService.shared.getTasksForBuilding(buildingID, date: Date())
+                // ✅ FIXED: Use correct TaskService method that exists
+                let contextualTasks = try await TaskService.shared.getTasks(for: buildingID, date: Date())
                 
                 await MainActor.run {
                     self.tasks = contextualTasks
@@ -875,30 +883,21 @@ struct TaskScheduleView: View {
                     loadTasksForSelectedDate()
                 }
             } catch {
-                print("Error loading tasks: \(error)")
                 await MainActor.run {
                     self.tasks = []
                     self.isLoading = false
+                    print("❌ Failed to load tasks: \(error)")
                 }
             }
         }
     }
     
     private func loadTasksForSelectedDate() {
-        // Filter already loaded tasks - no additional loading needed
+        // This method updates the filtered tasks for the selected date
+        // The actual filtering happens in the computed property tasksForSelectedDate
     }
     
     private func refreshData() {
         loadTasks()
-    }
-}
-
-// MARK: - Preview Support
-
-struct TaskScheduleView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            TaskScheduleView(buildingID: "1")
-        }
     }
 }
