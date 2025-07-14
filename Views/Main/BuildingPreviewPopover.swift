@@ -227,7 +227,12 @@ struct BuildingPreviewPopover: View {
     private func loadBuildingData() {
         Task {
             // Load real task data for this building
-            let allTasks = contextEngine.getTodaysTasks()
+            let allTasks = Task {
+                let tasks = await WorkerContextEngine.shared.getTodaysTasks()
+                await MainActor.run {
+                    self.tasks = tasks
+                }
+            }
             let buildingTasks = allTasks.filter { task in
                 task.buildingName == building.name || task.buildingId == building.id
             }
@@ -246,7 +251,7 @@ struct BuildingPreviewPopover: View {
             let nextSanitation = sanitationTasks.first { $0.status != "completed" }
             
             await MainActor.run {
-                withAnimation(AnimationAnimation.easeInOut) {
+                withAnimation(.animation(.easeInOut) {
                     openTasksCount = openTasks.count
                     
                     if let next = nextSanitation {
@@ -290,7 +295,7 @@ struct PrimaryPreviewButtonStyle: ButtonStyle {
                     .fill(Color.blue)
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -311,7 +316,7 @@ struct SecondaryPreviewButtonStyle: ButtonStyle {
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

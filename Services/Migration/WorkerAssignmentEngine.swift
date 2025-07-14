@@ -54,7 +54,7 @@ actor WorkerAssignmentEngine {
             INSERT OR REPLACE INTO worker_building_assignments
             (worker_id, building_id, assignment_type, start_date, is_active)
             VALUES (?, ?, ?, ?, 1)
-        """, [
+        """, parameters: [
             workerId,
             buildingId,
             role,
@@ -66,7 +66,7 @@ actor WorkerAssignmentEngine {
             INSERT OR REPLACE INTO worker_assignments
             (worker_id, building_id, worker_name, is_active)
             VALUES (?, ?, (SELECT name FROM workers WHERE id = ?), 1)
-        """, [
+        """, parameters: [
             workerId,
             buildingId,
             workerId
@@ -92,7 +92,7 @@ actor WorkerAssignmentEngine {
             LEFT JOIN buildings b ON CAST(wba.building_id AS TEXT) = CAST(b.id AS TEXT)
             WHERE wba.worker_id = ? AND wba.is_active = 1
             ORDER BY wba.start_date DESC
-        """, [workerId])
+        """, parameters: [workerId])
 
         return rows.compactMap { row in
             guard let assignmentId = row["id"] as? Int64,
@@ -105,7 +105,7 @@ actor WorkerAssignmentEngine {
                   let date = ISO8601DateFormatter().date(from: dateString)
             else {
                 print("⚠️ Skipping malformed assignment row")
-                return nil
+                return nil as BuildingWorkerAssignment?
             }
 
             return BuildingWorkerAssignment(
@@ -133,13 +133,13 @@ actor WorkerAssignmentEngine {
             LEFT JOIN workers w ON CAST(wba.worker_id AS TEXT) = CAST(w.id AS TEXT)
             WHERE wba.building_id = ? AND wba.is_active = 1
             ORDER BY wba.start_date ASC
-        """, [buildingId])
+        """, parameters: [buildingId])
         
         return rows.compactMap { row in
             guard let workerIdString = row["worker_id"] as? String,
                   let assignmentType = row["assignment_type"] as? String,
                   let workerName = row["worker_name"] as? String
-            else { return nil }
+            else { return nil as WorkerAssignmentInfo? }
             
             return WorkerAssignmentInfo(
                 workerId: workerIdString,
@@ -163,14 +163,14 @@ actor WorkerAssignmentEngine {
             UPDATE worker_building_assignments 
             SET is_active = 0 
             WHERE worker_id = ? AND building_id = ?
-        """, [workerId, buildingId])
+        """, parameters: [workerId, buildingId])
         
         // Deactivate in worker_assignments for compatibility
         try await sqliteManager.execute("""
             UPDATE worker_assignments 
             SET is_active = 0 
             WHERE worker_id = ? AND building_id = ?
-        """, [workerId, buildingId])
+        """, parameters: [workerId, buildingId])
         
         print("✅ Assignment removed from both tables")
     }
@@ -395,9 +395,9 @@ extension WorkerAssignmentEngine {
             SELECT COUNT(*) as count 
             FROM worker_building_assignments 
             WHERE worker_id = ? AND building_id = ? AND is_active = 1
-        """, [workerId, buildingId])
+        """, parameters: [workerId, buildingId])
         
-        return (result.first?["count"] as? Int64 ?? 0) > 0
+        return ((result.first?["count"] as? Int64) ?? 0) > 0
     }
     
     /// Get the primary assignment for a worker (if any)
@@ -405,8 +405,7 @@ extension WorkerAssignmentEngine {
         let assignments = try await getAssignments(for: workerId)
         
         // Return the most recent assignment as primary, or first one with "Lead" in role
-        return assignments.first { $0.role.contains("Lead") || $0.role.contains("Primary") }
-            ?? assignments.first
+        return (assignments.first { $0.role.contains("Lead") || $0.role.contains("Primary") }) ?? assignments.first
     }
     
     /// Update an assignment role
@@ -419,7 +418,7 @@ extension WorkerAssignmentEngine {
             UPDATE worker_building_assignments 
             SET assignment_type = ? 
             WHERE worker_id = ? AND building_id = ? AND is_active = 1
-        """, [newRole, workerId, buildingId])
+        """, parameters: [newRole, workerId, buildingId])
         
         print("✅ Updated assignment role for worker \(workerId) at building \(buildingId) to: \(newRole)")
     }
@@ -447,7 +446,7 @@ extension WorkerAssignmentEngine {
             FROM worker_building_assignments wba
             WHERE wba.assignment_type LIKE ? AND wba.is_active = 1
             ORDER BY wba.start_date DESC
-        """, ["%\(role)%"])
+        """, parameters: ["%\(role)%"])
         
         return rows.compactMap { row in
             guard let assignmentId = row["id"] as? Int64,
@@ -458,7 +457,7 @@ extension WorkerAssignmentEngine {
                   let assignmentType = row["assignment_type"] as? String,
                   let dateString = row["start_date"] as? String,
                   let date = ISO8601DateFormatter().date(from: dateString)
-            else { return nil }
+            else { return nil as WorkerAssignmentInfo? }
 
             return BuildingWorkerAssignment(
                 id: assignmentId,

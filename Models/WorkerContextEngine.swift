@@ -1,8 +1,11 @@
-////
+//
 //  WorkerContextEngine.swift
 //  FrancoSphere v6.0 — COMPLETE ACTOR IMPLEMENTATION
 //
-//  ✅ COMPLETE: All methods from backup restored
+//  🔧 SURGICAL FIXES: All compilation errors resolved
+//  ✅ Fixed ClockInSession.building property access (doesn't exist)
+//  ✅ Fixed optional TaskUrgency unwrapping before rawValue access
+//  ✅ Uses correct ContextualTask property names
 //  ✅ ENHANCED: Proper actor isolation patterns
 //  ✅ COMPATIBLE: Works with WorkerContextEngineAdapter
 //
@@ -53,9 +56,21 @@ public actor WorkerContextEngine {
             self.todaysTasks = try await tasks
             self.taskProgress = try await progress
             
-            // Update clock-in status
+            // ✅ FIXED: ClockInSession doesn't have a building property
+            // Instead, reconstruct NamedCoordinate from session data
             let status = await ClockInManager.shared.getClockInStatus(for: workerId)
-            self.clockInStatus = (status.isClockedIn, status.session?.building)
+            if let session = status.session {
+                // Create NamedCoordinate from session data
+                let building = NamedCoordinate(
+                    id: session.buildingId,
+                    name: session.buildingName,
+                    latitude: session.location?.latitude ?? 0,
+                    longitude: session.location?.longitude ?? 0
+                )
+                self.clockInStatus = (status.isClockedIn, building)
+            } else {
+                self.clockInStatus = (status.isClockedIn, nil)
+            }
             
             print("✅ Context loaded: \(self.assignedBuildings.count) buildings, \(self.todaysTasks.count) tasks")
             
@@ -114,7 +129,7 @@ public actor WorkerContextEngine {
     }
     
     public func addTask(_ task: ContextualTask) async throws {
-        print("➕ Adding new task: \(task.title)")
+        print("➕ Adding new task: \(task.title ?? task.description ?? "Unknown")")
         
         // Add to database
         try await taskService.createTask(task)
@@ -190,7 +205,9 @@ public actor WorkerContextEngine {
     
     public func getUrgentTasks() -> [ContextualTask] {
         return todaysTasks.filter { task in
-            task.urgency == .high || task.urgency == .critical
+            // ✅ FIXED: Handle optional TaskUrgency properly
+            guard let urgency = task.urgency else { return false }
+            return urgency == .high || urgency == .critical
         }
     }
     
@@ -198,9 +215,12 @@ public actor WorkerContextEngine {
         return todaysTasks
             .filter { !$0.isCompleted }
             .sorted { first, second in
-                // Sort by urgency first, then by due date
-                if first.urgency != second.urgency {
-                    return first.urgency.rawValue > second.urgency.rawValue
+                // ✅ FIXED: Handle optional TaskUrgency properly with safe unwrapping
+                let firstUrgency = first.urgency ?? .medium
+                let secondUrgency = second.urgency ?? .medium
+                
+                if firstUrgency != secondUrgency {
+                    return firstUrgency.rawValue > secondUrgency.rawValue
                 }
                 
                 guard let firstDue = first.dueDate, let secondDue = second.dueDate else {
@@ -237,7 +257,10 @@ public actor WorkerContextEngine {
     }
     
     public func getUrgentTaskCount() -> Int {
-        return todaysTasks.filter { $0.urgency == .high || $0.urgency == .critical }.count
+        return todaysTasks.filter { task in
+            guard let urgency = task.urgency else { return false }
+            return urgency == .high || urgency == .critical
+        }.count
     }
     
     // MARK: - Real-time Updates
@@ -263,7 +286,6 @@ public actor WorkerContextEngine {
 }
 
 // MARK: - Supporting Types
-
 
 public enum WorkerContextError: Error {
     case noCurrentWorker

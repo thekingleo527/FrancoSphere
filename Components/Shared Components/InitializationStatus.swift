@@ -6,6 +6,7 @@
 //  ✅ REAL DATA: Uses actual database workers via WorkerService
 //  ✅ NO HARDCODED: No mock data, all real workers from OperationalDataManager
 //  ✅ PROPER TYPES: Correct property names and constructors
+//  ✅ ANIMATION: Fixed SwiftUI animation syntax
 //
 
 import Foundation
@@ -188,7 +189,8 @@ struct InitializationStatusView: View {
     
     private func updateProgress(_ newProgress: Double, _ message: String) async {
         await MainActor.run {
-            withAnimation(AnimationAnimation.easeInOut(duration: 0.3)) {
+            // ✅ FIXED: Correct SwiftUI animation syntax
+            withAnimation(.easeInOut(duration: 0.3)) {
                 self.progress = newProgress
                 self.loadingMessage = message
             }

@@ -1,23 +1,14 @@
-// UPDATED: Using centralized TypeRegistry for all types
 //
 //  WorkerAssignmentGlassCard.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Created by Shawn Magloire on 6/7/25.
-//
-
-
-//
-//  WorkerAssignmentGlassCard.swift
-//  FrancoSphere
-//
-//  Glass card for displaying worker assignments and status
+//  🔧 SURGICAL FIXES: All compilation errors resolved
+//  ✅ Fixed complex expression that exceeded type-check time limit
+//  ✅ Fixed AnimationAnimation typo → .easeInOut animation
+//  ✅ Simplified complex boolean logic for better compilation
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct WorkerAssignmentGlassCard: View {
     let workers: [FrancoWorkerAssignment]
@@ -141,24 +132,29 @@ struct WorkerAssignmentGlassCard: View {
                 
                 // Shift distribution
                 if hasShiftData() {
-                    HStack(spacing: 8) {
-                        Text("Shifts:")
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        ForEach(getShiftDistribution(), id: \.0) { shift, count in
-                            HStack(spacing: 4) {
-                                Text(shift)
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.white)
-                                
-                                Text("(\(count))")
-                                    .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                        }
-                    }
+                    shiftDistributionView
+                }
+            }
+        }
+    }
+    
+    // ✅ FIXED: Extracted complex expression to separate computed property
+    private var shiftDistributionView: some View {
+        HStack(spacing: 8) {
+            Text("Shifts:")
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.7))
+            
+            ForEach(getShiftDistribution(), id: \.0) { shift, count in
+                HStack(spacing: 4) {
+                    Text(shift)
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                    
+                    Text("(\(count))")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.7))
                 }
             }
         }
@@ -184,9 +180,12 @@ struct WorkerAssignmentGlassCard: View {
     // MARK: - Helper Methods
     
     private func isWorkerOnSite(_ worker: FrancoWorkerAssignment) -> Bool {
-        return clockedInStatus.isClockedIn && 
-               worker.workerId == currentWorkerId &&
-               clockedInStatus.buildingId == Int64(worker.buildingId)
+        // ✅ SIMPLIFIED: Break down complex boolean logic
+        guard clockedInStatus.isClockedIn else { return false }
+        guard worker.workerId == currentWorkerId else { return false }
+        guard let buildingId = clockedInStatus.buildingId else { return false }
+        
+        return buildingId == Int64(worker.buildingId)
     }
     
     private func getOverallStatusColor() -> Color {
@@ -312,7 +311,8 @@ struct WorkerRowGlassView: View {
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(AnimationAnimation.easeInOut(duration: 0.1), value: isPressed)
+            // ✅ FIXED: AnimationAnimation typo → proper .easeInOut animation
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())

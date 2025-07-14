@@ -94,22 +94,21 @@ class WorkerRoutineViewModel: ObservableObject {
                 self.routineTasks = tasks.compactMap { task in
                     // FIXED: Use correct property names and constructor signature
                     MaintenanceTask(
-                        id: task.id,
-                        title: task.name,                    // FIXED: title not name
-                        description: task.description,
-                        category: task.category,
-                        urgency: task.urgency,
-                        recurrence: .none,
-                        estimatedDuration: task.estimatedDuration,
-                        requiredSkills: [],
-                        buildingId: task.buildingId,
-                        assignedWorkerId: task.workerId,
-                        dueDate: task.dueDate,              // FIXED: dueDate not scheduledDate
-                        completedDate: nil,
-                        isCompleted: task.isCompleted,
-                        notes: nil,
-                        status: .pending                    // FIXED: status not verificationStatus
-                    )
+                    id: contextualTask.id,
+                    title: contextualTask.name,
+                    description: contextualTask.description ?? "No description",
+                    category: contextualTask.category ?? .maintenance,
+                    urgency: contextualTask.urgency ?? .medium,
+                    buildingId: contextualTask.buildingId,
+                    assignedWorkerId: contextualTask.workerId,
+                    isCompleted: contextualTask.isCompleted,
+                    dueDate: contextualTask.dueDate,
+                    estimatedDuration: 3600,
+                    recurrence: .none,
+                    notes: contextualTask.notes,
+                    tasksCompleted: 0,
+                    qualityScore: 0.0
+                )
                 }
                 
                 // Group by building
@@ -159,7 +158,7 @@ class WorkerRoutineViewModel: ObservableObject {
         } else if scheduleConflicts.isEmpty {
             dataHealthStatus = .healthy
         } else {
-            dataHealthStatus = .critical
+            dataHealthStatus = .error
         }
     }
     
@@ -203,7 +202,7 @@ class WorkerRoutineViewModel: ObservableObject {
     }
     
     private func analyzeGeographicEfficiency() -> Double {
-        guard let route = dailyRoute, !route.route.isEmpty else { return 0.0 }
+        guard let route = dailyRoute, !route.buildings.isEmpty else { return 0.0 }
         return 0.85 // Sample efficiency score
     }
     
@@ -241,18 +240,21 @@ class WorkerRoutineViewModel: ObservableObject {
         let task = routineTasks[taskIndex]
         // FIXED: Use correct property names and constructor signature
         let updatedTask = MaintenanceTask(
-            id: task.id,
-            title: task.title,                      // FIXED: title not name
-            description: task.description,
-            category: task.category,
-            urgency: task.urgency,
-            recurrence: task.recurrence,
-            estimatedDuration: task.estimatedDuration,
-            requiredSkills: task.requiredSkills,
-            buildingId: task.buildingId,
-            assignedWorkerId: task.assignedWorkerId,
-            dueDate: task.dueDate,                  // FIXED: dueDate not scheduledDate
-            completedDate: Date(),
+                    id: contextualTask.id,
+                    title: contextualTask.name,
+                    description: contextualTask.description ?? "No description",
+                    category: contextualTask.category ?? .maintenance,
+                    urgency: contextualTask.urgency ?? .medium,
+                    buildingId: contextualTask.buildingId,
+                    assignedWorkerId: contextualTask.workerId,
+                    isCompleted: contextualTask.isCompleted,
+                    dueDate: contextualTask.dueDate,
+                    estimatedDuration: 3600,
+                    recurrence: .none,
+                    notes: contextualTask.notes,
+                    tasksCompleted: 0,
+                    qualityScore: 0.0
+                ),
             isCompleted: true,
             notes: task.notes,
             status: .approved                       // FIXED: status not verificationStatus
@@ -306,7 +308,7 @@ extension DataHealthStatus {
             return "Healthy"
         case .warning:
             return "Warning"
-        case .critical:
+        case .error:
             return "Critical"
         case .unknown:
             return "Unknown"
@@ -323,17 +325,21 @@ extension WorkerRoutineViewModel {
         
         // FIXED: Use correct property names in sample data
         let sampleTask = MaintenanceTask(
-            id: UUID().uuidString,
-            title: "Rubin Museum Cleaning",           // FIXED: title not name
-            description: "Daily cleaning routine for Rubin Museum",
-            category: .cleaning,
-            urgency: .medium,
-            recurrence: .daily,
-            estimatedDuration: 3600,
-            requiredSkills: [.cleaning],
-            buildingId: "14",
-            assignedWorkerId: "4",
-            dueDate: Date(),                          // FIXED: dueDate not scheduledDate
+                    id: contextualTask.id,
+                    title: contextualTask.name,
+                    description: contextualTask.description ?? "No description",
+                    category: contextualTask.category ?? .maintenance,
+                    urgency: contextualTask.urgency ?? .medium,
+                    buildingId: contextualTask.buildingId,
+                    assignedWorkerId: contextualTask.workerId,
+                    isCompleted: contextualTask.isCompleted,
+                    dueDate: contextualTask.dueDate,
+                    estimatedDuration: 3600,
+                    recurrence: .none,
+                    notes: contextualTask.notes,
+                    tasksCompleted: 0,
+                    qualityScore: 0.0
+                ),                          // FIXED: dueDate not scheduledDate
             completedDate: nil,
             isCompleted: false,
             notes: nil,

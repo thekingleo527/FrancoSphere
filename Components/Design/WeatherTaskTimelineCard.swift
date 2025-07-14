@@ -1,28 +1,15 @@
-import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 //
 //  WeatherTaskTimelineCard.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/7/25.
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: Uses correct MaintenanceTask properties (title, dueDate, isCompleted)
+//  ✅ COMPATIBLE: Uses proper GlassCard and TimelineProgressBar components
+//  ✅ REAL DATA: Works with actual CoreTypes.MaintenanceTask structure
 //
 
-
-// Components/Weather/WeatherTaskTimelineCard.swift
+import Foundation
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct WeatherTaskTimelineCard: View {
     let temperature: Int
@@ -68,7 +55,7 @@ struct WeatherTaskTimelineCard: View {
                                 .foregroundColor(.blue)
                             
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(nextTask.name)
+                                Text(nextTask.title) // ✅ FIXED: Use 'title' instead of 'name'
                                     .font(.subheadline.bold())
                                     .foregroundColor(.white)
                                 
@@ -79,8 +66,9 @@ struct WeatherTaskTimelineCard: View {
                             
                             Spacer()
                             
-                            if let startTime = nextTask.startTime {
-                                Text(formatTime(startTime))
+                            // ✅ FIXED: Use 'dueDate' instead of 'startTime'
+                            if let dueDate = nextTask.dueDate {
+                                Text(formatTime(dueDate))
                                     .font(.caption.bold())
                                     .foregroundColor(.blue)
                             }
@@ -104,5 +92,45 @@ struct WeatherTaskTimelineCard: View {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Preview
+struct WeatherTaskTimelineCard_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            LinearGradient(
+                colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            WeatherTaskTimelineCard(
+                temperature: 72,
+                condition: "Partly Cloudy",
+                upcomingTasks: [
+                    MaintenanceTask(
+                        title: "HVAC System Check",
+                        description: "Routine maintenance check for air conditioning system",
+                        category: .maintenance, // ✅ FIXED: Use .maintenance instead of .hvac
+                        urgency: .medium,
+                        buildingId: "1",
+                        dueDate: Date().addingTimeInterval(3600),
+                        notes: "Weather-dependent task"
+                    ),
+                    MaintenanceTask(
+                        title: "Window Cleaning",
+                        description: "Clean exterior windows before rain",
+                        category: .cleaning, // ✅ CORRECT: .cleaning exists
+                        urgency: .low,
+                        buildingId: "1",
+                        dueDate: Date().addingTimeInterval(7200),
+                        notes: "Complete before weather changes"
+                    )
+                ]
+            )
+            .padding()
+        }
     }
 }

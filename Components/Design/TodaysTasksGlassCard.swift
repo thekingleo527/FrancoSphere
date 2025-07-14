@@ -1,29 +1,13 @@
-import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 //
 //  TodaysTasksGlassCard.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/7/25.
+//  ✅ FIXED: All property access and method issues resolved
+//  ✅ ALIGNED: With current CoreTypes.MaintenanceTask structure
+//  ✅ CORRECTED: Animation typos and building name lookup
 //
 
-// TodaysTasksGlassCard.swift
-// Today's tasks in glass card format
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct TodaysTasksGlassCard: View {
     let tasks: [MaintenanceTask]
@@ -32,20 +16,19 @@ struct TodaysTasksGlassCard: View {
     @State private var showCompleted = false
     
     private var pendingTasks: [MaintenanceTask] {
-        tasks.filter { !$0.isComplete }.sorted { task1, task2 in
+        // ✅ FIXED: Use .isCompleted instead of .isComplete
+        tasks.filter { !$0.isCompleted }.sorted { task1, task2 in
             // Sort by urgency then time
             if task1.urgency != task2.urgency {
                 return task1.urgency.sortOrder > task2.urgency.sortOrder
-            }
-            if let time1 = task1.startTime, let time2 = task2.startTime {
-                return time1 < time2
             }
             return (task1.dueDate ?? Date.distantFuture) < (task2.dueDate ?? Date.distantFuture)
         }
     }
     
     private var completedTasks: [MaintenanceTask] {
-        tasks.filter { $0.isComplete }
+        // ✅ FIXED: Use .isCompleted instead of .isComplete
+        tasks.filter { $0.isCompleted }
     }
     
     var body: some View {
@@ -99,7 +82,8 @@ struct TodaysTasksGlassCard: View {
                         // Completed section
                         if completedTasks.count > 0 {
                             Button(action: {
-                                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
+                                // ✅ FIXED: Animation instead of AnimationAnimation
+                                withAnimation(.easeInOut(duration: 0.2)) {
                                     showCompleted.toggle()
                                 }
                             }) {
@@ -169,7 +153,8 @@ struct TaskGlassRow: View {
                 
                 // Task info
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(task.name)
+                    // ✅ FIXED: Use .title instead of .name
+                    Text(task.title)
                         .font(.subheadline)
                         .foregroundColor(.white)
                         .strikethrough(isCompleted)
@@ -181,8 +166,8 @@ struct TaskGlassRow: View {
                             .foregroundColor(.white.opacity(0.7))
                         
                         // Time
-                        if let startTime = task.startTime {
-                            Label(timeString(startTime), systemImage: "clock")
+                        if let dueDate = task.dueDate {
+                            Label(timeString(dueDate), systemImage: "clock")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.7))
                         }
@@ -213,7 +198,6 @@ struct TaskGlassRow: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    // FIXED: Created computed property for urgency color
     private var taskUrgencyColor: Color {
         switch task.urgency {
         case .low: return .green
@@ -226,13 +210,31 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingNameSync(buildingId: task.buildingID)
+        // ✅ FIXED: Use simple building name lookup with fallback
+        getBuildingName(for: task.buildingId)
     }
     
     private func timeString(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
+    }
+    
+    // ✅ FIXED: Simple building name lookup function
+    private func getBuildingName(for buildingId: String) -> String {
+        // Try to find building in allBuildings static data
+        if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingId }) {
+            return building.displayName
+        }
+        
+        // Fallback for common building IDs
+        switch buildingId {
+        case "1": return "12 West 18th"
+        case "14": return "Rubin Museum"
+        case "16": return "Stuyvesant Park"
+        case "17": return "178 Spring St"
+        default: return "Building \(buildingId)"
+        }
     }
 }
 
@@ -252,7 +254,7 @@ struct TaskCountBadge: View {
                 .foregroundColor(.white.opacity(0.6))
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 4)  // FIXED: Removed extra comma
+        .padding(.vertical, 4)
         .background(color.opacity(0.2))
         .cornerRadius(8)
     }
@@ -315,7 +317,8 @@ struct EnhancedTaskGlassRow: View {
                     // Task info
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text(task.name)
+                            // ✅ FIXED: Use .title instead of .name
+                            Text(task.title)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
@@ -353,11 +356,11 @@ struct EnhancedTaskGlassRow: View {
                             .foregroundColor(.white.opacity(0.7))
                             
                             // Time
-                            if let startTime = task.startTime {
+                            if let dueDate = task.dueDate {
                                 HStack(spacing: 4) {
                                     Image(systemName: "clock")
                                         .font(.caption2)
-                                    Text(timeString(startTime))
+                                    Text(timeString(dueDate))
                                         .font(.caption)
                                 }
                                 .foregroundColor(.white.opacity(0.7))
@@ -406,7 +409,8 @@ struct EnhancedTaskGlassRow: View {
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .opacity(isCompleted ? 0.7 : 1.0)
-        .animation(AnimationAnimation.easeInOut(duration: 0.1), value: isPressed)
+        // ✅ FIXED: Animation instead of AnimationAnimation
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
@@ -424,13 +428,29 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingNameSync(buildingId: task.buildingID)
+        // ✅ FIXED: Use simple building name lookup with fallback
+        getBuildingName(for: task.buildingId)
     }
     
     private func timeString(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
+    }
+    
+    // ✅ FIXED: Simple building name lookup function
+    private func getBuildingName(for buildingId: String) -> String {
+        if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingId }) {
+            return building.displayName
+        }
+        
+        switch buildingId {
+        case "1": return "12 West 18th"
+        case "14": return "Rubin Museum"
+        case "16": return "Stuyvesant Park"
+        case "17": return "178 Spring St"
+        default: return "Building \(buildingId)"
+        }
     }
 }
 
@@ -479,7 +499,8 @@ struct TodaysTasksGlassCard_Previews: PreviewProvider {
                     ]
                     
                     TodaysTasksGlassCard(tasks: sampleTasks) { task in
-                        print("Task tapped: \(task.name)")
+                        // ✅ FIXED: Use .title instead of .name
+                        print("Task tapped: \(task.title)")
                     }
                     
                     // Empty state

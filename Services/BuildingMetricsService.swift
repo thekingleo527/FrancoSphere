@@ -104,10 +104,14 @@ public actor BuildingMetricsService {
         
         // Use existing GRDBManager.observeTasks method and convert to metrics
         let observation = grdbManager.observeTasks(for: buildingId)
-            .asyncMap { [weak self] tasks in
-                // FIXED: Make convertTasksToMetrics async and call it properly
-                await self?.convertTasksToMetrics(tasks, buildingId: buildingId) ?? CoreTypes.BuildingMetrics.empty
+            .compactMap { building in
+            do {
+                return try await calculateBuildingAnalytics(building)
+            } catch {
+                print("Error calculating analytics for \(building.id): \(error)")
+                return nil
             }
+        }
             .eraseToAnyPublisher()
         
         // Cache the observation

@@ -1,12 +1,14 @@
 //
 //  TodayTasksViewModel.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  🔧 FIXED VERSION: All compilation errors resolved
-//  ✅ Fixed status property access (status is String, not enum)
-//  ✅ Proper initialization of analytics types (TaskProgress, TaskTrends, etc.)
-//  ✅ Added comprehensive task analysis methods
-//  ✅ Maintained code continuity with existing architecture
+//  🔧 SURGICAL FIXES: All compilation errors resolved
+//  ✅ Fixed WorkerID type handling (String, not optional)
+//  ✅ Proper CoreTypes.TaskProgress initialization
+//  ✅ Fixed ContextualTask.status property access via extension
+//  ✅ Correct PerformanceMetrics, TaskTrends, StreakData initialization
+//  ✅ Proper optional unwrapping for TaskCategory and TaskUrgency
+//  ✅ Aligned with GRDB actor architecture
 //
 
 import SwiftUI
@@ -20,7 +22,7 @@ class TodayTasksViewModel: ObservableObject {
     @Published var overdueTasks: [ContextualTask] = []
     @Published var isLoading = false
     
-    // Analytics properties with proper initialization
+    // Analytics properties with proper CoreTypes initialization
     @Published var progress: TaskProgress?
     @Published var taskTrends: TaskTrends?
     @Published var performanceMetrics: PerformanceMetrics?
@@ -38,19 +40,24 @@ class TodayTasksViewModel: ObservableObject {
     func loadTodaysTasks() async {
         isLoading = true
         
-        let workerId = await NewAuthManager.shared.getCurrentUser()?.workerId ?? ""
-        guard !workerId?.isEmpty == false else {
+        // ✅ FIXED: WorkerID is String, not optional - removed optional chaining
+        let currentUser = await NewAuthManager.shared.getCurrentUser()
+        let workerId = currentUser?.workerId ?? ""
+        
+        // ✅ FIXED: Proper boolean check instead of optional chaining on Bool?
+        guard !workerId.isEmpty else {
+            print("⚠️ No valid worker ID found")
             isLoading = false
             return
         }
         
         do {
-            let todaysTasks = try await taskService.getTasks(for: workerId ?? "unknown", date: Date())
+            let todaysTasks = try await taskService.getTasks(for: workerId, date: Date())
             
             await MainActor.run {
                 self.tasks = todaysTasks
                 
-                // ✅ FIXED: status is String, not enum - removed .rawValue
+                // ✅ FIXED: Using ContextualTask.status property from extension
                 self.completedTasks = todaysTasks.filter { $0.status == "completed" }
                 self.pendingTasks = todaysTasks.filter { $0.status == "pending" }
                 self.overdueTasks = todaysTasks.filter { task in
@@ -63,7 +70,7 @@ class TodayTasksViewModel: ObservableObject {
             }
             
         } catch {
-            print("Error loading tasks: \(error)")
+            print("❌ Error loading tasks: \(error)")
         }
         
         isLoading = false
@@ -71,18 +78,15 @@ class TodayTasksViewModel: ObservableObject {
     
     // MARK: - Analytics Update
     private func updateAnalytics() {
-        // Update task progress
+        // ✅ FIXED: Proper CoreTypes.TaskProgress initialization
         let totalTasks = tasks.count
         let completed = completedTasks.count
-        let remaining = totalTasks - completed
         let percentage = totalTasks > 0 ? Double(completed) / Double(totalTasks) * 100 : 0
         
         progress = TaskProgress(
-            completed: completed,
-            total: totalTasks,
-            remaining: remaining,
-            percentage: percentage,
-            overdueTasks: overdueTasks.count
+            completedTasks: completed,
+            totalTasks: totalTasks,
+            progressPercentage: percentage
         )
         
         // Update performance metrics
@@ -99,38 +103,47 @@ class TodayTasksViewModel: ObservableObject {
     private func calculatePerformanceMetrics() -> PerformanceMetrics {
         let totalTasks = tasks.count
         guard totalTasks > 0 else {
+            // ✅ FIXED: Proper CoreTypes.PerformanceMetrics initialization
             return PerformanceMetrics(
                 efficiency: 0,
-                completionRate: 0,
-                averageTime: 0
+                tasksCompleted: 0,
+                averageTime: 0,
+                qualityScore: 0
             )
         }
         
         let completionRate = Double(completedTasks.count) / Double(totalTasks) * 100
         let efficiency = max(0, completionRate - Double(overdueTasks.count) * 10) // Penalty for overdue
         let averageTime: TimeInterval = 1800 // 30 minutes average
+        let qualityScore = efficiency * 0.9 // Quality based on efficiency
         
+        // ✅ FIXED: Proper CoreTypes.PerformanceMetrics initialization
         return PerformanceMetrics(
             efficiency: efficiency,
-            completionRate: completionRate,
-            averageTime: averageTime
+            tasksCompleted: completedTasks.count,
+            averageTime: averageTime,
+            qualityScore: qualityScore
         )
     }
     
     private func calculateTaskTrends() -> TaskTrends {
-        // Calculate category breakdown
+        // ✅ FIXED: Proper optional unwrapping for TaskCategory
         var categoryBreakdown: [String: Int] = [:]
         for task in tasks {
-            let category = task.category.rawValue
+            let category = task.category?.rawValue ?? "Unknown"
             categoryBreakdown[category, default: 0] += 1
         }
         
         // Mock weekly completion data (in real app, would fetch from database)
         let weeklyCompletion = [0.8, 0.7, 0.9, 0.85, 0.92, 0.88, Double(completedTasks.count) / max(Double(tasks.count), 1.0)]
         
+        // ✅ FIXED: Proper CoreTypes.TaskTrends initialization with all required parameters
         return TaskTrends(
             weeklyCompletion: weeklyCompletion,
-            categoryBreakdown: categoryBreakdown
+            categoryBreakdown: categoryBreakdown,
+            changePercentage: 5.2, // Mock change percentage
+            comparisonPeriod: "Last Week",
+            trend: .up
         )
     }
     
@@ -139,10 +152,10 @@ class TodayTasksViewModel: ObservableObject {
         let currentStreak = completedTasks.count
         let longestStreak = max(currentStreak, 5) // Mock longest streak
         
+        // ✅ FIXED: Proper CoreTypes.StreakData initialization
         return StreakData(
             currentStreak: currentStreak,
-            longestStreak: longestStreak,
-            streakType: "daily_completion"
+            longestStreak: longestStreak
         )
     }
     
@@ -157,19 +170,20 @@ class TodayTasksViewModel: ObservableObject {
         await loadTodaysTasks()
     }
     
-    func getTasksByCategory(_ category: FrancoSphere.TaskCategory) -> [ContextualTask] {
+    func getTasksByCategory(_ category: TaskCategory) -> [ContextualTask] {
         return tasks.filter { $0.category == category }
     }
     
-    func getTasksByUrgency(_ urgency: FrancoSphere.TaskUrgency) -> [ContextualTask] {
+    func getTasksByUrgency(_ urgency: TaskUrgency) -> [ContextualTask] {
         return tasks.filter { $0.urgency == urgency }
     }
     
     func getTasksRequiringAttention() -> [ContextualTask] {
         return tasks.filter { task in
+            // ✅ FIXED: Using ContextualTask.status property from extension
             task.status != "completed" && (
                 task.urgency == .critical ||
-                task.urgency == .critical ||
+                task.urgency == .urgent ||
                 (task.dueDate != nil && task.dueDate! < Date())
             )
         }
@@ -177,11 +191,13 @@ class TodayTasksViewModel: ObservableObject {
     
     func formatTaskProgress() -> String {
         guard let progress = progress else { return "0/0" }
-        return "\(progress.completed)/\(progress.total)"
+        // ✅ FIXED: Using correct TaskProgress property names
+        return "\(progress.completedTasks)/\(progress.totalTasks)"
     }
     
     func getCompletionPercentage() -> Double {
-        return progress?.percentage ?? 0
+        // ✅ FIXED: Using correct TaskProgress property names
+        return progress?.progressPercentage ?? 0
     }
     
     func hasOverdueTasks() -> Bool {
@@ -189,6 +205,47 @@ class TodayTasksViewModel: ObservableObject {
     }
     
     func getUrgentTasksCount() -> Int {
-        return tasks.filter { $0.urgency == .critical || $0.urgency == .critical }.count
+        return tasks.filter { $0.urgency == .critical || $0.urgency == .urgent }.count
+    }
+}
+
+// MARK: - Supporting Extensions
+
+extension TodayTasksViewModel {
+    
+    /// Get summary statistics for display
+    var summaryStats: (completed: Int, total: Int, overdue: Int, urgent: Int) {
+        return (
+            completed: completedTasks.count,
+            total: tasks.count,
+            overdue: overdueTasks.count,
+            urgent: getUrgentTasksCount()
+        )
+    }
+    
+    /// Check if there are any tasks requiring immediate attention
+    var hasUrgentItems: Bool {
+        return !overdueTasks.isEmpty || getUrgentTasksCount() > 0
+    }
+    
+    /// Get progress as a 0.0-1.0 value for progress bars
+    var normalizedProgress: Double {
+        return getCompletionPercentage() / 100.0
+    }
+    
+    /// Get task efficiency description
+    var efficiencyDescription: String {
+        guard let metrics = performanceMetrics else { return "No data" }
+        
+        switch metrics.efficiency {
+        case 90...:
+            return "Excellent"
+        case 75..<90:
+            return "Good"
+        case 60..<75:
+            return "Average"
+        default:
+            return "Needs Improvement"
+        }
     }
 }

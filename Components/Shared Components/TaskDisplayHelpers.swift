@@ -180,18 +180,18 @@ struct TaskDisplayHelpers {
     }
     
     static func filterTasksByCategory(_ tasks: [ContextualTask], category: String) -> [ContextualTask] {
-        return tasks.filter { $0.category.rawValue.lowercased() == category.lowercased() }
+        return tasks.filter { $0.category?.rawValue.lowercased() ?? "" == category.lowercased() }
     }
     
     static func filterTasksByUrgency(_ tasks: [ContextualTask], urgency: String) -> [ContextualTask] {
-        return tasks.filter { $0.urgency.rawValue.lowercased() == urgency.lowercased() }
+        return tasks.filter { $0.urgency?.rawValue.lowercased() ?? "" == urgency.lowercased() }
     }
     
     // MARK: - Task Sorting
     static func sortTasksByPriority(_ tasks: [ContextualTask]) -> [ContextualTask] {
         return tasks.sorted { task1, task2 in
-            let priority1 = getUrgencyPriority(for: task1.urgency.rawValue)
-            let priority2 = getUrgencyPriority(for: task2.urgency.rawValue)
+            let priority1 = getUrgencyPriority(for: task1.urgency?.rawValue ?? "")
+            let priority2 = getUrgencyPriority(for: task2.urgency?.rawValue ?? "")
             return priority1 > priority2
         }
     }

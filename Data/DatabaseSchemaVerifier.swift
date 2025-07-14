@@ -109,7 +109,7 @@ public class DatabaseSchemaVerifier {
             let tables = try await manager.query("""
                 SELECT name FROM sqlite_master 
                 WHERE type='table' AND name=?
-            """, [tableName])
+            """, parameters: [tableName])
             
             guard !tables.isEmpty else {
                 throw VerificationError.missingTable(tableName)

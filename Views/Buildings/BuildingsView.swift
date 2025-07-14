@@ -150,7 +150,7 @@ struct BuildingsView: View {
         isLoading = true
         
         // Load buildings from the actor-based repository
-        let loadedBuildings = await BuildingService.shared.allBuildings
+        let loadedBuildings = await await BuildingService.shared.getAllBuildings()
         
         // Update on main thread
         await MainActor.run {
@@ -300,7 +300,7 @@ struct BuildingDetailPlaceholder: View {
         .preferredColorScheme(.dark)
         .task {
             // Load assigned workers
-            assignedWorkers = await BuildingService.shared.getAssignedWorkersFormatted(for: building.id)
+            assignedWorkers = await await BuildingService.shared.getAssignedWorkers(for: building.id)
             
             // Load routine tasks
             routineTasks = await BuildingService.shared.routineTasks(for: building.id)
