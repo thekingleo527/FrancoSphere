@@ -157,11 +157,11 @@ class TodayTasksViewModel: ObservableObject {
         await loadTodaysTasks()
     }
     
-    func getTasksByCategory(_ category: TaskCategory) -> [ContextualTask] {
+    func getTasksByCategory(_ category: FrancoSphere.TaskCategory) -> [ContextualTask] {
         return tasks.filter { $0.category == category }
     }
     
-    func getTasksByUrgency(_ urgency: TaskUrgency) -> [ContextualTask] {
+    func getTasksByUrgency(_ urgency: FrancoSphere.TaskUrgency) -> [ContextualTask] {
         return tasks.filter { $0.urgency == urgency }
     }
     

@@ -2,17 +2,14 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CLEANED: Removed all conflicting type definitions
-//  ✅ IMPORTS: All types now come from CoreTypes.swift
-//  ✅ FOCUSED: Only unique models that don't conflict
+//  ✅ CLEANED: Removed duplicate type definitions
+//  ✅ IMPORTS: All types from nested FrancoSphere struct
+//  ✅ FOCUSED: Only unique models, no conflicts
 //
 
 import Foundation
 import CoreLocation
 import SwiftUI
-
-// Import all types from CoreTypes
-// All type definitions are now in CoreTypes.swift to avoid conflicts
 
 // MARK: - Location & Coordinate Models
 
@@ -22,13 +19,15 @@ public struct NamedCoordinate: Identifiable, Codable, Hashable, Equatable {
     public let address: String?
     public let latitude: Double
     public let longitude: Double
+    public let imageAssetName: String?  // ✅ ADDED: Missing property
     
-    public init(id: String = UUID().uuidString, name: String, address: String? = nil, latitude: Double, longitude: Double) {
+    public init(id: String = UUID().uuidString, name: String, address: String? = nil, latitude: Double, longitude: Double, imageAssetName: String? = nil) {
         self.id = id
         self.name = name
         self.address = address
         self.latitude = latitude
         self.longitude = longitude
+        self.imageAssetName = imageAssetName
     }
     
     public var coordinate: CLLocationCoordinate2D {
@@ -86,7 +85,18 @@ public struct ContextualTask: Identifiable, Codable, Hashable {
     public let building: NamedCoordinate?
     public let worker: WorkerProfile?
     
-    public init(id: String = UUID().uuidString, title: String, description: String? = nil, isCompleted: Bool = false, completedDate: Date? = nil, scheduledDate: Date? = nil, dueDate: Date? = nil, category: TaskCategory? = nil, urgency: TaskUrgency? = nil, building: NamedCoordinate? = nil, worker: WorkerProfile? = nil) {
+    // ✅ ADDED: Missing properties for NotificationManager
+    public let buildingId: String?
+    public let buildingName: String?
+    public let priority: TaskUrgency?
+    
+    // Computed property for backward compatibility
+    public var isOverdue: Bool {
+        guard let dueDate = dueDate else { return false }
+        return !isCompleted && dueDate < Date()
+    }
+    
+    public init(id: String = UUID().uuidString, title: String, description: String? = nil, isCompleted: Bool = false, completedDate: Date? = nil, scheduledDate: Date? = nil, dueDate: Date? = nil, category: TaskCategory? = nil, urgency: TaskUrgency? = nil, building: NamedCoordinate? = nil, worker: WorkerProfile? = nil, buildingId: String? = nil, buildingName: String? = nil, priority: TaskUrgency? = nil) {
         self.id = id
         self.title = title
         self.description = description
@@ -98,6 +108,9 @@ public struct ContextualTask: Identifiable, Codable, Hashable {
         self.urgency = urgency
         self.building = building
         self.worker = worker
+        self.buildingId = buildingId ?? building?.id
+        self.buildingName = buildingName ?? building?.name
+        self.priority = priority ?? urgency
     }
 }
 
@@ -110,19 +123,22 @@ public struct WeatherData: Codable {
     public let conditions: String
     public let timestamp: Date
     
-    public init(temperature: Double, humidity: Double, windSpeed: Double, conditions: String, timestamp: Date = Date()) {
+    // ✅ ADDED: Missing properties for weather components
+    public let precipitation: Double
+    public let condition: WeatherCondition
+    
+    public init(temperature: Double, humidity: Double, windSpeed: Double, conditions: String, timestamp: Date = Date(), precipitation: Double = 0.0, condition: WeatherCondition = .clear) {
         self.temperature = temperature
         self.humidity = humidity
         self.windSpeed = windSpeed
         self.conditions = conditions
         self.timestamp = timestamp
+        self.precipitation = precipitation
+        self.condition = condition
     }
 }
 
-// MARK: - Filter Models
-
-
-// MARK: - WeatherData Extensions (Missing formattedTemperature)
+// MARK: - WeatherData Extensions
 
 extension WeatherData {
     /// Formatted temperature string
@@ -132,43 +148,12 @@ extension WeatherData {
     
     /// Icon name based on weather condition
     public var iconName: String {
-        switch condition {
-        case .clear, .sunny: return "sun.max.fill"
-        case .cloudy: return "cloud.fill"
-        case .rainy: return "cloud.rain.fill"
-        case .snowy: return "cloud.snow.fill"
-        case .stormy: return "cloud.bolt.fill"
-        case .foggy: return "cloud.fog.fill"
-        case .windy: return "wind"
-        }
+        return condition.icon
     }
 }
 
-extension WeatherCondition {
-    /// Icon name for each weather condition
-    public var icon: String {
-        switch self {
-        case .clear, .sunny: return "sun.max.fill"
-        case .cloudy: return "cloud.fill"
-        case .rainy: return "cloud.rain.fill"
-        case .snowy: return "cloud.snow.fill"
-        case .stormy: return "cloud.bolt.fill"
-        case .foggy: return "cloud.fog.fill"
-        case .windy: return "wind"
-        }
-    }
-}
+// MARK: - Type Aliases (Use existing FrancoSphere nested types)
 
-extension TaskCategory {
-    /// Icon name for each task category
-    public var icon: String {
-        switch self {
-        case .maintenance: return "wrench.and.screwdriver"
-        case .cleaning: return "sparkles"
-        case .inspection: return "magnifyingglass"
-        case .repair: return "hammer"
-        case .security: return "lock.shield"
-        case .landscaping: return "leaf"
-        }
-    }
-}
+// Import core enums and types (these are defined in the FrancoSphere struct elsewhere)
+// Note: TaskCategory, TaskUrgency, WeatherCondition use the existing nested definitions
+// Icon extensions for these types are in ModelColorsExtensions.swift

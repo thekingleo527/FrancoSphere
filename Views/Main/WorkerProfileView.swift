@@ -204,7 +204,7 @@ struct SimpleTaskRow: View {
         .padding(.vertical, 4)
     }
     
-    private func urgencyColor(for urgency: TaskUrgency) -> Color {
+    private func urgencyColor(for urgency: FrancoSphere.TaskUrgency) -> Color {
         switch urgency {
         case .critical, .urgent, .emergency:
             return .red

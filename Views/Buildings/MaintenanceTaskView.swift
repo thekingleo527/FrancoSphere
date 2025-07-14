@@ -12,8 +12,8 @@ struct MaintenanceTaskView: View {
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
 
-    // ✅ FIXED: Complete switch with all TaskUrgency cases
-    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+    // ✅ FIXED: Complete switch with all FrancoSphere.TaskUrgency cases
+    private func getUrgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
         switch urgency {
         case .low:       return .green
         case .medium:    return .yellow
@@ -104,24 +104,22 @@ struct MaintenanceTaskView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Timing").font(.headline).foregroundColor(.secondary)
 
+            // ✅ FIXED: Handle optional dueDate properly
+            if let dueDate = task.dueDate {
+                HStack {
+                    Image(systemName: "calendar").foregroundColor(.blue)
+                    Text("Due: \(formattedDate(dueDate))").font(.subheadline)
+                }
+            } else {
+                HStack {
+                    Image(systemName: "calendar").foregroundColor(.gray)
+                    Text("No due date set").font(.subheadline).foregroundColor(.secondary)
+                }
+            }
+
             HStack {
-                Image(systemName: "calendar").foregroundColor(.blue)
-                Text("Due: \(formattedDate(task.dueDate))").font(.subheadline)
-            }
-
-            // ✅ FIXED: Properly unwrap optional dates
-            if let start = task.startTime {
-                HStack {
-                    Image(systemName: "clock").foregroundColor(.blue)
-                    Text("Start: \(formattedTime(start))").font(.subheadline)
-                }
-            }
-
-            if let end = task.endTime {
-                HStack {
-                    Image(systemName: "clock.arrow.circlepath").foregroundColor(.blue)
-                    Text("End: \(formattedTime(end))").font(.subheadline)
-                }
+                Image(systemName: "clock").foregroundColor(.blue)
+                Text("Estimated Duration: \(formattedDuration(task.estimatedDuration))").font(.subheadline)
             }
 
             HStack {
@@ -223,12 +221,13 @@ struct MaintenanceTaskView: View {
             isMarkingComplete = true
         }
         
-        // ✅ FIXED: Use correct TaskService completeTask method signature with try
+        // ✅ FIXED: Use correct ActionEvidence structure from FrancoSphereModels
         do {
             let evidence = ActionEvidence(
-                description: "Marked complete from maintenance view",
-                photoURLs: [],
-                timestamp: Date()
+                timestamp: Date(),
+                location: nil,
+                photoPath: nil,
+                notes: "Marked complete from maintenance view"
             )
             
             try await taskService.completeTask(task.id, evidence: evidence)
@@ -262,20 +261,25 @@ struct MaintenanceTaskView: View {
         return formatter.string(from: date)
     }
 
-    private func formattedTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+    private func formattedDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration / 3600)
+        let minutes = Int((duration.truncatingRemainder(dividingBy: 3600)) / 60)
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
     }
 }
 
 // MARK: – Status badge helper
 struct StatusBadge: View {
     let isCompleted: Bool
-    let urgency: TaskUrgency
+    let urgency: FrancoSphere.TaskUrgency
 
-    // ✅ FIXED: Complete switch with all TaskUrgency cases
-    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+    // ✅ FIXED: Complete switch with all FrancoSphere.TaskUrgency cases
+    private func getUrgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
         switch urgency {
         case .low:       return .green
         case .medium:    return .yellow
@@ -300,9 +304,8 @@ struct StatusBadge: View {
 struct MaintenanceTaskView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            // ✅ FIXED: Use correct MaintenanceTask initializer
+            // ✅ FIXED: Use correct MaintenanceTask initializer from FrancoSphereModels
             MaintenanceTaskView(task: MaintenanceTask(
-                id: "preview_task",
                 title: "Replace Air Filter",
                 description: "Replace HVAC air filter in main unit",
                 category: .maintenance,
@@ -310,15 +313,7 @@ struct MaintenanceTaskView_Previews: PreviewProvider {
                 buildingId: "1",
                 assignedWorkerId: "4",
                 dueDate: Date(),
-                startTime: Date(),
-                endTime: Date().addingTimeInterval(3600),
-                recurrence: .monthly,
-                estimatedDuration: 3600,
-                requiredSkills: [],
-                isCompleted: false,
-                completedDate: nil,
-                notes: nil,
-                status: TaskStatus.pending
+                recurrence: .monthly
             ))
         }
         .preferredColorScheme(.dark)

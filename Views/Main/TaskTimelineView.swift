@@ -6,7 +6,7 @@
 //  ✅ FIXED: All `switch` statements are now exhaustive.
 //  ✅ FIXED: `MaintenanceTask` and `ContextualTask` initializers now use correct parameters.
 //  ✅ FIXED: All `Int64` to `String` conversions are handled correctly.
-//  ✅ FIXED: Missing `TaskCategory` enum cases have been added.
+//  ✅ FIXED: Missing `FrancoSphere.TaskCategory` enum cases have been added.
 //
 
 import SwiftUI
@@ -181,7 +181,7 @@ struct TaskTimelineView: View {
     }
     
     // ✅ FIXED: `switch` is now exhaustive
-    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
+    private func urgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
         case .medium: return .orange
@@ -306,7 +306,7 @@ struct TaskTimelineCard: View {
     }
     
     // ✅ FIXED: `switch` is now exhaustive
-    private func categoryColor(_ category: TaskCategory) -> Color {
+    private func categoryColor(_ category: FrancoSphere.TaskCategory) -> Color {
         switch category {
         case .cleaning: return .blue
         case .maintenance: return .orange
@@ -323,7 +323,7 @@ struct TaskTimelineCard: View {
     }
     
     // ✅ FIXED: `switch` is now exhaustive
-    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
+    private func urgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
         case .medium: return .orange
@@ -415,8 +415,8 @@ class TaskTimelineViewModel: ObservableObject {
 
 struct TaskFilterOptions {
     var showCompleted = true
-    var categories: Set<TaskCategory> = Set(TaskCategory.allCases)
-    var urgencies: Set<TaskUrgency> = Set(TaskUrgency.allCases)
+    var categories: Set<FrancoSphere.TaskCategory> = Set(FrancoSphere.TaskCategory.allCases)
+    var urgencies: Set<FrancoSphere.TaskUrgency> = Set(FrancoSphere.TaskUrgency.allCases)
 }
 
 struct TaskFilterView: View {
@@ -431,7 +431,7 @@ struct TaskFilterView: View {
                 }
                 
                 Section("Categories") {
-                    ForEach(TaskCategory.allCases, id: \.self) { category in
+                    ForEach(FrancoSphere.TaskCategory.allCases, id: \.self) { category in
                         Toggle(category.rawValue, isOn: Binding(
                             get: { filterOptions.categories.contains(category) },
                             set: { isOn in
@@ -446,7 +446,7 @@ struct TaskFilterView: View {
                 }
                 
                 Section("Urgency Levels") {
-                    ForEach(TaskUrgency.allCases, id: \.self) { urgency in
+                    ForEach(FrancoSphere.TaskUrgency.allCases, id: \.self) { urgency in
                         Toggle(urgency.rawValue, isOn: Binding(
                             get: { filterOptions.urgencies.contains(urgency) },
                             set: { isOn in

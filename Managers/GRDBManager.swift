@@ -54,7 +54,7 @@ public final class GRDBManager {
         }
     }
     
-    private func createTables(_ db: Database) throws {
+    public func createTables(_ db: Database) throws {
         // Workers table
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS workers (

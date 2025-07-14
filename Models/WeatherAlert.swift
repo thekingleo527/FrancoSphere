@@ -4,7 +4,7 @@
 //
 //  ✅ V6.0 REFACTOR: Updated for new ContextualTask structure and actor architecture
 //  ✅ Uses correct ContextualTask initializer with title, buildingName, etc.
-//  ✅ Integrates with CoreTypes and established WeatherCondition from FrancoSphereModels
+//  ✅ Integrates with CoreTypes and established FrancoSphere.WeatherCondition from FrancoSphereModels
 //  ✅ Follows actor-based architecture patterns
 //
 
@@ -17,7 +17,7 @@ import CoreLocation
 /// Weather data structure for task generation and alerts
 public struct FSWeatherData {
     public let temperature: Double
-    public let condition: WeatherCondition  // Use existing WeatherCondition from FrancoSphereModels
+    public let condition: FrancoSphere.WeatherCondition  // Use existing FrancoSphere.WeatherCondition from FrancoSphereModels
     public let precipitation: Double
     public let windSpeed: Double
     public let humidity: Double
@@ -25,7 +25,7 @@ public struct FSWeatherData {
     public let temperatureHigh: Double
     public let temperatureLow: Double
     
-    public init(temperature: Double, condition: WeatherCondition, precipitation: Double, windSpeed: Double, humidity: Double, date: Date, temperatureHigh: Double, temperatureLow: Double) {
+    public init(temperature: Double, condition: FrancoSphere.WeatherCondition, precipitation: Double, windSpeed: Double, humidity: Double, date: Date, temperatureHigh: Double, temperatureLow: Double) {
         self.temperature = temperature
         self.condition = condition
         self.precipitation = precipitation
@@ -233,7 +233,7 @@ public actor WeatherAlertManager {
     // MARK: - Helper Methods
     
     /// Get appropriate task category for weather conditions
-    private func getCategoryForWeather(_ condition: WeatherCondition) -> TaskCategory {
+    private func getCategoryForWeather(_ condition: FrancoSphere.WeatherCondition) -> FrancoSphere.TaskCategory {
         switch condition {
         case .rainy, .snowy, .stormy:
             return .emergency
@@ -245,7 +245,7 @@ public actor WeatherAlertManager {
     }
     
     /// Get appropriate urgency for weather conditions
-    private func getUrgencyForWeather(_ condition: WeatherCondition, temperature: Double) -> TaskUrgency {
+    private func getUrgencyForWeather(_ condition: FrancoSphere.WeatherCondition, temperature: Double) -> FrancoSphere.TaskUrgency {
         switch condition {
         case .stormy:
             return .urgent

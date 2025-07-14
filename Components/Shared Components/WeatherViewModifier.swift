@@ -1,173 +1,68 @@
-//
-//  WeatherViewModifier.swift
-//  FrancoSphere
-//
-//  ✅ FIXED: Added missing switch cases for exhaustive pattern matching
-//  ✅ FIXED: Uses proper WeatherData.condition property
-//  ✅ FIXED: All weatherCondition references corrected
-//
-
-import Foundation
 import SwiftUI
 
-// A ViewModifier to add weather-sensitive styling to task views
-struct WeatherSensitiveTaskModifier: ViewModifier {
-    let task: MaintenanceTask
-    // Use StateObject for singleton access instead of ObservedObject to avoid conformance issues
-    @StateObject private var weatherAdapter = WeatherDataAdapter.shared
+struct WeatherViewModifier: ViewModifier {
+    @State private var currentWeather: WeatherData?
+    @State private var showWeatherAlert = false
     
     func body(content: Content) -> some View {
         content
             .overlay(
-                weatherOverlay
-                    .padding(8)
-                    .background(weatherBackgroundColor.opacity(0.8))
-                    .cornerRadius(8)
-                    .padding(6),
+                weatherOverlay,
                 alignment: .topTrailing
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(weatherBorderColor, lineWidth: affectedByWeather ? 2 : 0)
-            )
+            .alert("Weather Alert", isPresented: $showWeatherAlert) {
+                Button("OK") {}
+            } message: {
+                Text(weatherAlertMessage)
+            }
+            .onAppear {
+                loadCurrentWeather()
+            }
     }
     
+    @ViewBuilder
     private var weatherOverlay: some View {
-        Group {
-            if affectedByWeather {
-                Image(systemName: weatherIconName)
-                    .foregroundColor(.white)
-                    .font(.system(size: 14))
-            } else {
-                EmptyView()
+        if let weather = currentWeather {
+            HStack(spacing: 8) {
+                Image(systemName: getWeatherIcon(for: weather.condition))
+                    .foregroundColor(getWeatherColor(for: weather.condition))
+                
+                Text(weather.formattedTemperature)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.8))
+            .clipShape(Capsule())
+            .shadow(radius: 2)
+            .padding()
+            .onTapGesture {
+                checkWeatherAlerts()
             }
         }
     }
     
-    private var affectedByWeather: Bool {
-        return weatherAdapter.shouldRescheduleTask(task)
-    }
-    
-    private var weatherIconName: String {
-        guard let currentWeather = weatherAdapter.currentWeather else {
-            return "cloud.rain"
-        }
-        
-        // ✅ FIXED: Added exhaustive switch cases
-        switch currentWeather.condition {
-        case .clear, .sunny:
-            return "sun.max"
-        case .cloudy:
-            return "cloud"
-        case .rainy:
-            return "cloud.rain"
-        case .snowy:
-            return "cloud.snow"
-        case .stormy:
-            return "cloud.bolt"
-        case .foggy:
-            return "cloud.fog"
-        case .windy:
-            return "wind"
-        }
-    }
-    
-    private var weatherBackgroundColor: Color {
-        guard let currentWeather = weatherAdapter.currentWeather else {
-            return .clear
-        }
-        
-        // ✅ FIXED: Added exhaustive switch cases
-        switch currentWeather.condition {
-        case .clear, .sunny:
-            return .yellow
-        case .cloudy:
-            return .gray
-        case .rainy:
-            return .blue
-        case .snowy:
-            return .cyan
-        case .stormy:
-            return .purple
-        case .foggy:
-            return .gray
-        case .windy:
-            return .orange
-        }
-    }
-    
-    private var weatherBorderColor: Color {
-        affectedByWeather ? .blue : .clear
-    }
-}
-
-// Extension to make it easier to apply the modifier
-extension View {
-    func weatherSensitive(for task: MaintenanceTask) -> some View {
-        self.modifier(WeatherSensitiveTaskModifier(task: task))
-    }
-}
-
-// A ViewModifier to add weather status information to building views
-struct WeatherStatusBuildingModifier: ViewModifier {
-    let building: NamedCoordinate
-    // Use StateObject for singleton access instead of ObservedObject
-    @StateObject private var weatherAdapter = WeatherDataAdapter.shared
-    
-    func body(content: Content) -> some View {
-        content
-            .overlay(
-                weatherIndicator
-                    .padding(6),
-                alignment: .topTrailing
-            )
-    }
-    
-    private var weatherIndicator: some View {
-        Group {
-            if let currentWeather = weatherAdapter.currentWeather {
-                HStack(spacing: 4) {
-                    Image(systemName: weatherIconName(for: currentWeather.condition))
-                        .foregroundColor(weatherIconColor(for: currentWeather.condition))
-                        .font(.system(size: 12))
-                    
-                    Text(currentWeather.formattedTemperature)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.primary)
-                }
-                .padding(4)
-                .background(Color(.systemBackground).opacity(0.8))
-                .cornerRadius(8)
-            } else {
-                EmptyView()
-            }
-        }
-    }
-    
-    // Helper function to handle weather condition icon
-    private func weatherIconName(for condition: WeatherCondition) -> String {
-        // ✅ FIXED: Added exhaustive switch cases
+    private func getWeatherIcon(for condition: FrancoSphere.WeatherCondition) -> String {
         switch condition {
         case .clear, .sunny:
-            return "sun.max"
+            return "sun.max.fill"
         case .cloudy:
-            return "cloud"
+            return "cloud.fill"
         case .rainy:
-            return "cloud.rain"
+            return "cloud.rain.fill"
         case .snowy:
-            return "cloud.snow"
+            return "cloud.snow.fill"
         case .stormy:
-            return "cloud.bolt"
+            return "cloud.bolt.fill"
         case .foggy:
-            return "cloud.fog"
+            return "cloud.fog.fill"
         case .windy:
             return "wind"
         }
     }
     
-    // Helper function to handle weather condition color
-    private func weatherIconColor(for condition: WeatherCondition) -> Color {
-        // ✅ FIXED: Added exhaustive switch cases
+    private func getWeatherColor(for condition: FrancoSphere.WeatherCondition) -> Color {
         switch condition {
         case .clear, .sunny:
             return .yellow
@@ -176,20 +71,68 @@ struct WeatherStatusBuildingModifier: ViewModifier {
         case .rainy:
             return .blue
         case .snowy:
-            return .cyan
+            return .white
         case .stormy:
             return .purple
         case .foggy:
-            return .gray.opacity(0.7)
+            return .gray
         case .windy:
-            return .orange
+            return .mint
+        }
+    }
+    
+    private var weatherAlertMessage: String {
+        guard let weather = currentWeather else { return "No weather data available" }
+        
+        switch weather.condition {
+        case .stormy:
+            return "Severe weather alert: Storm conditions detected"
+        case .rainy:
+            if weather.precipitation > 0.5 {
+                return "Heavy rain alert: Consider indoor tasks"
+            } else {
+                return "Rain detected: Monitor outdoor conditions"
+            }
+        case .snowy:
+            return "Snow alert: Use caution for outdoor work"
+        case .foggy:
+            return "Fog alert: Reduced visibility conditions"
+        case .windy:
+            if weather.windSpeed > 25 {
+                return "High wind alert: Secure outdoor materials"
+            } else {
+                return "Windy conditions detected"
+            }
+        default:
+            return "Current weather conditions are favorable"
+        }
+    }
+    
+    private func loadCurrentWeather() {
+        // Mock weather data - replace with real weather service
+        currentWeather = WeatherData(
+            temperature: 72.0,
+            humidity: 60,
+            windSpeed: 8.0,
+            conditions: "partly cloudy",
+            precipitation: 0.0,
+            condition: .cloudy
+        )
+    }
+    
+    private func checkWeatherAlerts() {
+        guard let weather = currentWeather else { return }
+        
+        if weather.condition == .stormy || 
+           weather.precipitation > 0.3 || 
+           weather.windSpeed > 20 {
+            showWeatherAlert = true
         }
     }
 }
 
-// Extension to make it easier to apply the modifier
 extension View {
-    func withWeatherStatus(for building: NamedCoordinate) -> some View {
-        self.modifier(WeatherStatusBuildingModifier(building: building))
+    func weatherAware() -> some View {
+        self.modifier(WeatherViewModifier())
     }
 }

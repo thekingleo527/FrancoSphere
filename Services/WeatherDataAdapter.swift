@@ -4,7 +4,7 @@
 //
 //  🚀 PRODUCTION READY - PHASE-2 COMPLETE (FINAL FIXED VERSION)
 //  ✅ Fixed all compilation errors
-//  ✅ Corrected WeatherCondition enum usage (WeatherCondition.stormy instead of .thunderstorm)
+//  ✅ Corrected FrancoSphere.WeatherCondition enum usage (FrancoSphere.WeatherCondition.stormy instead of .thunderstorm)
 //  ✅ Fixed WeatherData constructor parameter order
 //  ✅ Fixed MaintenanceTask constructor (title instead of name)
 //  ✅ Fixed array assignment and reduce operations
@@ -298,7 +298,7 @@ class WeatherDataAdapter: ObservableObject {
             windSpeed: windSpeed,
             windDirection: 180, // Default
             precipitation: precipitation,
-            snow: condition == WeatherCondition.snowy ? precipitation : 0,
+            snow: condition == FrancoSphere.WeatherCondition.snowy ? precipitation : 0,
             condition: condition,
             uvIndex: 0,
             visibility: 10000, // Default good visibility
@@ -340,7 +340,7 @@ class WeatherDataAdapter: ObservableObject {
                 windSpeed: windSpeed,
                 windDirection: windDirection,
                 precipitation: precipitation,
-                snow: condition == WeatherCondition.snowy ? precipitation : 0,
+                snow: condition == FrancoSphere.WeatherCondition.snowy ? precipitation : 0,
                 condition: condition,
                 uvIndex: 0,
                 visibility: 10000,
@@ -369,15 +369,15 @@ class WeatherDataAdapter: ObservableObject {
         )
     }
     
-    private func weatherCodeToCondition(_ code: Int) -> WeatherCondition {
+    private func weatherCodeToCondition(_ code: Int) -> FrancoSphere.WeatherCondition {
         switch code {
         case 0: return .clear
         case 1, 2, 3: return .cloudy
         case 45, 48: return .foggy
-        case 51, 53, 55, 56, 57: return WeatherCondition.rainy
-        case 61, 63, 65, 66, 67: return WeatherCondition.rainy
-        case 95, 96, 99: return WeatherCondition.stormy Use WeatherCondition.stormy instead of .thunderstorm
-        default: return WeatherCondition.clear  // FIXED: Use .clear instead of .other
+        case 51, 53, 55, 56, 57: return FrancoSphere.WeatherCondition.rainy
+        case 61, 63, 65, 66, 67: return FrancoSphere.WeatherCondition.rainy
+        case 95, 96, 99: return FrancoSphere.WeatherCondition.stormy Use FrancoSphere.WeatherCondition.stormy instead of .thunderstorm
+        default: return FrancoSphere.WeatherCondition.clear  // FIXED: Use .clear instead of .other
         }
     }
     
@@ -395,11 +395,11 @@ class WeatherDataAdapter: ObservableObject {
             let dueDate = calendar.date(byAdding: .day, value: index, to: Date()) ?? Date()
             
             // Snow preparation
-            if day.condition == WeatherCondition.snowy && day.snow > 0 {
+            if day.condition == FrancoSphere.WeatherCondition.snowy && day.snow > 0 {
                 // FIXED: Correct MaintenanceTask constructor with all required parameters
                 tasks.append(MaintenanceTask(
                     title: "Snow Removal Preparation",
-                    description: "Prepare snow removal equipment, stock salt/sand, WeatherCondition.clear drainage areas",
+                    description: "Prepare snow removal equipment, stock salt/sand, FrancoSphere.WeatherCondition.clear drainage areas",
                     category: TaskCategory.maintenance,
                     urgency: .high,
                     buildingId: building.id,
@@ -408,7 +408,7 @@ class WeatherDataAdapter: ObservableObject {
             }
             
             // Storm preparation
-            if day.condition == WeatherCondition.stormy || (day.windSpeed > 30) {
+            if day.condition == FrancoSphere.WeatherCondition.stormy || (day.windSpeed > 30) {
                 // FIXED: Correct MaintenanceTask constructor with all required parameters
                 tasks.append(MaintenanceTask(
                     title: "Storm Preparation",
@@ -475,11 +475,11 @@ class WeatherDataAdapter: ObservableObject {
         let taskDescription: String
         let taskCategory: TaskCategory
         
-        if weather.condition == WeatherCondition.rainy || weather.condition == WeatherCondition.stormy { // FIXED: Use WeatherCondition.stormy
+        if weather.condition == FrancoSphere.WeatherCondition.rainy || weather.condition == FrancoSphere.WeatherCondition.stormy { // FIXED: Use FrancoSphere.WeatherCondition.stormy
             taskTitle = "Emergency Rain Inspection"
-            taskDescription = "Check for leaks, proper drainage, and WeatherCondition.clear any blockages from gutters due to heavy rain."
+            taskDescription = "Check for leaks, proper drainage, and FrancoSphere.WeatherCondition.clear any blockages from gutters due to heavy rain."
             taskCategory = TaskCategory.inspection
-        } else if weather.condition == WeatherCondition.snowy {
+        } else if weather.condition == FrancoSphere.WeatherCondition.snowy {
             taskTitle = "Snow Removal"
             taskDescription = "Clear snow from walkways, entrances, and emergency exits. Apply salt as needed."
             taskCategory = TaskCategory.maintenance
@@ -565,14 +565,14 @@ class WeatherDataAdapter: ObservableObject {
     func createWeatherNotification(for building: NamedCoordinate) -> String? {
         guard let weatherData = currentWeather else { return nil }
         
-        // FIXED: Use WeatherCondition.stormy instead of .thunderstorm and remove outdoorWorkRisk
-        if weatherData.condition == WeatherCondition.stormy {
+        // FIXED: Use FrancoSphere.WeatherCondition.stormy instead of .thunderstorm and remove outdoorWorkRisk
+        if weatherData.condition == FrancoSphere.WeatherCondition.stormy {
             return "⚠️ Severe weather alert for \(building.name). Consider rescheduling outdoor tasks."
-        } else if weatherData.condition == WeatherCondition.rainy && weatherData.precipitation > 0.5 {
+        } else if weatherData.condition == FrancoSphere.WeatherCondition.rainy && weatherData.precipitation > 0.5 {
             return "Heavy rain expected at \(building.name). Check drainage systems."
-        } else if weatherData.condition == WeatherCondition.rainy {
+        } else if weatherData.condition == FrancoSphere.WeatherCondition.rainy {
             return "Rain expected at \(building.name). Some outdoor tasks may be affected."
-        } else if weatherData.condition == WeatherCondition.snowy {
+        } else if weatherData.condition == FrancoSphere.WeatherCondition.snowy {
             return "Snow expected at \(building.name). Prepare walkways for clearing."
         } else if weatherData.windSpeed > 25 {
             return "High winds expected at \(building.name). Secure loose outdoor items."
@@ -670,13 +670,13 @@ class WeatherDataAdapter: ObservableObject {
 extension WeatherData {
     /// Check if weather is extreme
     var isExtreme: Bool {
-        condition == WeatherCondition.stormy || temperature < 20 || temperature > 100 // FIXED: Use WeatherCondition.stormy
+        condition == FrancoSphere.WeatherCondition.stormy || temperature < 20 || temperature > 100 // FIXED: Use FrancoSphere.WeatherCondition.stormy
     }
     
     /// Check if weather is hazardous for outdoor work
     var isHazardous: Bool {
         temperature <= 32 || temperature >= 95 ||
         windSpeed >= 35 || precipitation >= 0.5 ||
-        condition == WeatherCondition.stormy || isExtreme // FIXED: Use WeatherCondition.stormy
+        condition == FrancoSphere.WeatherCondition.stormy || isExtreme // FIXED: Use FrancoSphere.WeatherCondition.stormy
     }
 }

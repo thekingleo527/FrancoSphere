@@ -751,13 +751,13 @@ struct EditTaskView: View {
                             .frame(minHeight: 100)
                     }
                     Picker("Category", selection: $category) {
-                        ForEach(TaskCategory.allCases, id: \.self) { cat in
+                        ForEach(FrancoSphere.TaskCategory.allCases, id: \.self) { cat in
                             Label(cat.rawValue, systemImage: cat.icon)
                                 .tag(cat)
                         }
                     }
                     Picker("Urgency", selection: $urgency) {
-                        ForEach(TaskUrgency.allCases, id: \.self) { urgency in
+                        ForEach(FrancoSphere.TaskUrgency.allCases, id: \.self) { urgency in
                             Text(urgency.rawValue)
                                 .tag(urgency)
                         }

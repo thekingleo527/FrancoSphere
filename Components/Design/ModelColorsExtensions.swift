@@ -11,7 +11,7 @@ import SwiftUI
 import Foundation
 
 // MARK: - TaskUrgency Color Extensions (EXHAUSTIVE)
-extension TaskUrgency {
+extension FrancoSphere.TaskUrgency {
     public var displayColor: Color {
         switch self {
         case .low: return .green
@@ -61,7 +61,7 @@ extension VerificationStatus {
 }
 
 // MARK: - TaskCategory Color Extensions (EXHAUSTIVE)
-extension TaskCategory {
+extension FrancoSphere.TaskCategory {
     public var displayColor: Color {
         switch self {
         case .maintenance: return .orange
@@ -271,7 +271,7 @@ extension ComplianceStatus {
 }
 
 // MARK: - WeatherCondition Color Extensions
-extension WeatherCondition {
+extension FrancoSphere.WeatherCondition {
     public var displayColor: Color {
         switch self {
         case .clear: return .yellow
@@ -326,5 +326,28 @@ extension View {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
             )
+    }
+}
+
+// MARK: - TaskUrgency Additional Properties (HeaderV3B Fix)
+
+extension TaskUrgency {
+    /// Font weight for UI display
+    public var fontWeight: Font.Weight {
+        switch self {
+        case .low: return .regular
+        case .medium: return .medium
+        case .high: return .semibold
+        case .critical, .emergency, .urgent: return .bold
+        }
+    }
+    
+    /// Haptic feedback style for interactions
+    public var feedbackStyle: UIImpactFeedbackGenerator.FeedbackStyle {
+        switch self {
+        case .low: return .light
+        case .medium: return .medium
+        case .high, .critical, .emergency, .urgent: return .heavy
+        }
     }
 }

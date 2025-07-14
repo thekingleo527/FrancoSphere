@@ -27,8 +27,8 @@ struct TaskRequestView: View {
     @State private var taskName: String = ""
     @State private var taskDescription: String = ""
     @State private var selectedBuildingID: String = ""
-    @State private var selectedCategory: TaskCategory = .maintenance
-    @State private var selectedUrgency: TaskUrgency = .medium
+    @State private var selectedCategory: FrancoSphere.TaskCategory = .maintenance
+    @State private var selectedUrgency: FrancoSphere.TaskUrgency = .medium
     @State private var selectedDate: Date = Date().addingTimeInterval(86400) // Tomorrow
     @State private var showCompletionAlert = false
     @State private var addStartTime = false
@@ -130,7 +130,7 @@ struct TaskRequestView: View {
     // MARK: - Helper Functions
     
     // ✅ FIXED: Add urgency color helper function
-    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+    private func getUrgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
         switch urgency {
         case .low:    return .green
         case .medium: return .yellow
@@ -161,7 +161,7 @@ struct TaskRequestView: View {
             
             // ✅ FIXED: Simplified urgency picker
             Picker("Urgency", selection: $selectedUrgency) {
-                ForEach(TaskUrgency.allCases, id: \.self) { urgency in
+                ForEach(FrancoSphere.TaskUrgency.allCases, id: \.self) { urgency in
                     HStack {
                         Circle()
                             .fill(getUrgencyColor(urgency))
@@ -187,7 +187,7 @@ struct TaskRequestView: View {
             
             if !selectedBuildingID.isEmpty {
                 Picker("Category", selection: $selectedCategory) {
-                    ForEach(TaskCategory.allCases, id: \.self) { category in
+                    ForEach(FrancoSphere.TaskCategory.allCases, id: \.self) { category in
                         Label(category.rawValue, systemImage: category.icon)
                             .tag(category)
                     }
@@ -418,7 +418,7 @@ struct TaskRequestView: View {
     }
     
     private func getCategoryIcon(_ category: String) -> String {
-        if let category = TaskCategory(rawValue: category) {
+        if let category = FrancoSphere.TaskCategory(rawValue: category) {
             return category.icon
         }
         return "square.grid.2x2"
@@ -430,17 +430,17 @@ struct TaskRequestView: View {
     
     private func getUrgencyIcon(_ urgency: String) -> String? {
         switch urgency {
-        case TaskUrgency.low.rawValue: return "arrow.down.circle"
-        case TaskUrgency.medium.rawValue: return "arrow.right.circle"
-        case TaskUrgency.high.rawValue: return "arrow.up.circle"
-        case TaskUrgency.urgent.rawValue: return "exclamationmark.triangle"
+        case FrancoSphere.TaskUrgency.low.rawValue: return "arrow.down.circle"
+        case FrancoSphere.TaskUrgency.medium.rawValue: return "arrow.right.circle"
+        case FrancoSphere.TaskUrgency.high.rawValue: return "arrow.up.circle"
+        case FrancoSphere.TaskUrgency.urgent.rawValue: return "exclamationmark.triangle"
         default: return nil
         }
     }
     
     // ✅ FIXED: Renamed to avoid confusion and use helper function
     private func getUrgencyColorFromString(_ urgency: String) -> Color {
-        if let urgency = TaskUrgency(rawValue: urgency) {
+        if let urgency = FrancoSphere.TaskUrgency(rawValue: urgency) {
             return getUrgencyColor(urgency)
         }
         return .gray
@@ -475,24 +475,24 @@ struct TaskRequestView: View {
                         id: "1",
                         title: "HVAC Filter Replacement",
                         description: "Regular maintenance to replace HVAC filters throughout the building.",
-                        category: TaskCategory.maintenance.rawValue,
-                        urgency: TaskUrgency.medium.rawValue,
+                        category: FrancoSphere.TaskCategory.maintenance.rawValue,
+                        urgency: FrancoSphere.TaskUrgency.medium.rawValue,
                         buildingId: buildingOptions.first?.id ?? ""
                     ),
                     TaskSuggestion(
                         id: "2",
                         title: "Lobby Floor Cleaning",
                         description: "Deep cleaning of lobby floor and entrance mats.",
-                        category: TaskCategory.cleaning.rawValue,
-                        urgency: TaskUrgency.low.rawValue,
+                        category: FrancoSphere.TaskCategory.cleaning.rawValue,
+                        urgency: FrancoSphere.TaskUrgency.low.rawValue,
                         buildingId: buildingOptions.first?.id ?? ""
                     ),
                     TaskSuggestion(
                         id: "3",
                         title: "Security Camera Inspection",
                         description: "Check all security cameras for proper functioning and positioning.",
-                        category: TaskCategory.inspection.rawValue,
-                        urgency: TaskUrgency.medium.rawValue,
+                        category: FrancoSphere.TaskCategory.inspection.rawValue,
+                        urgency: FrancoSphere.TaskUrgency.medium.rawValue,
                         buildingId: buildingOptions.first?.id ?? ""
                     )
                 ]
@@ -527,11 +527,11 @@ struct TaskRequestView: View {
         taskDescription = suggestion.description
         selectedBuildingID = suggestion.buildingId
         
-        if let category = TaskCategory(rawValue: suggestion.category) {
+        if let category = FrancoSphere.TaskCategory(rawValue: suggestion.category) {
             selectedCategory = category
         }
         
-        if let urgency = TaskUrgency(rawValue: suggestion.urgency) {
+        if let urgency = FrancoSphere.TaskUrgency(rawValue: suggestion.urgency) {
             selectedUrgency = urgency
         }
     }

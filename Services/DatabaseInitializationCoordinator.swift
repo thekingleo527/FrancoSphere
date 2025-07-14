@@ -1,85 +1,48 @@
-// DatabaseInitializationCoordinator.swift
-// Fixed version
-
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
-
-@MainActor
-class DatabaseInitializationCoordinator: ObservableObject {
-    static let shared = DatabaseInitializationCoordinator()
+class DatabaseInitializationCoordinator {
+    private let grdbManager = GRDBManager.shared
     
-    @Published var isInitialized = false
-    @Published var initializationError: String?
+    func initializeDatabase() async throws {
+        try await grdbManager.createTables()
+        try await seedInitialData()
+    }
     
-    private let sqliteManager = SQLiteManager.shared
-    
-    private init() {}
-    
-    func initializeApp() async {
-        // 1. Initialize SQLite using the shared instance
-        print("🔧 Initializing SQLite...")
+    private func seedInitialData() async throws {
+        // Check if data already exists
+        let workerCount = try await grdbManager.query("SELECT COUNT(*) as count FROM workers")
         
-        // Ensure database is ready
-        if !sqliteManager.isDatabaseReady() {
-            sqliteManager.quickInitialize()
-            
-            // Wait a moment for initialization
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-        }
-        
-        // 2. Check if we need to load initial data
-        do {
-            let workerCount = try await sqliteManager.query(parameters: "SELECT COUNT(*) as count FROM workers").first?["count"] as? Int64 ?? 0
-            
-            if workerCount == 0 {
-                print("📊 Loading test data...")
-                // Load minimal test data
-                try await loadTestData()
-            }
-            
-            // 3. Mark as initialized
-            print("✅ App initialization complete!")
-            isInitialized = true
-            
-        } catch {
-            print("❌ Initialization failed: \(error)")
-            initializationError = error.localizedDescription
+        if let count = workerCount.first?["count"] as? Int64, count == 0 {
+            try await seedWorkers()
+            try await seedBuildings()
         }
     }
     
-    private func loadTestData() async throws {
-        // Insert test building
-        try await sqliteManager.execute(parameters: """
-            INSERT INTO buildings (name, address, latitude, longitude, imageAssetName)
-            VALUES (?, ?, ?, ?, ?)
-            """, ["12 West 18th Street", "12 West 18th Street, New York, NY", 40.7390, -73.9936, "12West18thStreet"]
-        )
+    private func seedWorkers() async throws {
+        let workers = [
+            ("1", "Kevin Dutan", "kevin@example.com", "worker"),
+            ("2", "Edwin Lema", "edwin@example.com", "worker")
+        ]
         
-        // Insert test worker
-        try await sqliteManager.execute(parameters: """
-            INSERT INTO workers (name, email, passwordHash, role)
-            VALUES (?, ?, ?, ?)
-            """, ["Edwin Lema", "edwinlema911@gmail.com", "password", "worker"]
-        )
-        
-        print("✅ Test data loaded")
+        for worker in workers {
+            try await grdbManager.execute(
+                "INSERT INTO workers (id, name, email, role, isActive) VALUES (?, ?, ?, ?, ?)",
+                [worker.0, worker.1, worker.2, worker.3, 1]
+            )
+        }
     }
     
-    func resetAndReinitialize() async {
-        isInitialized = false
-        initializationError = nil
+    private func seedBuildings() async throws {
+        let buildings = [
+            ("14", "Rubin Museum", "150 W 17th St", 40.7401, -73.9978),
+            ("1", "12 West 18th Street", "12 W 18th St", 40.7389, -73.9936)
+        ]
         
-        // Clear existing data
-        do {
-            try await sqliteManager.execute(parameters: "DELETE FROM workers")
-            try await sqliteManager.execute(parameters: "DELETE FROM buildings")
-        } catch {
-            print("Error clearing data: \(error)")
+        for building in buildings {
+            try await grdbManager.execute(
+                "INSERT INTO buildings (id, name, address, latitude, longitude) VALUES (?, ?, ?, ?, ?)",
+                [building.0, building.1, building.2, building.3, building.4]
+            )
         }
-        
-        // Reinitialize
-        await initializeApp()
     }
 }

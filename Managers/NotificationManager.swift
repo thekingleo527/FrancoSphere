@@ -279,7 +279,7 @@ class NotificationManager: ObservableObject {
     /// Generate task-related notifications
     func generateTaskNotifications(for task: ContextualTask) {
         // ✅ FIXED: Use buildingId property directly
-        let buildingId = task.buildingId
+        let buildingId = task.buildingId ?? task.building?.id ?? "unknown"
         
         if task.isOverdue {
             addNotification(
@@ -300,7 +300,7 @@ class NotificationManager: ObservableObject {
             categoryName = "General"
         }
         
-        if task.priority == .high {
+        if task.priority ?? task.urgency ?? .medium == .high {
             addNotification(
                 title: "High Priority Task",
                 message: "High priority \(categoryName) task: \(task.title)",
