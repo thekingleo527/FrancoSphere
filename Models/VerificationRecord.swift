@@ -2,7 +2,9 @@
 //  VerificationRecord.swift
 //  FrancoSphere
 //
-//  ✅ CLEAN VERSION - All properties properly defined and consistent
+//  ✅ FIXED: Aligned with CoreTypes.VerificationStatus
+//  ✅ FIXED: TaskCompletionRecord initializer
+//  ✅ FIXED: All enum values corrected
 //
 
 import Foundation
@@ -13,7 +15,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
     public let buildingId: String
     public let workerId: String
     public let verificationDate: Date
-    public let status: VerificationStatus
+    public let status: CoreTypes.VerificationStatus  // ✅ FIXED: Use CoreTypes
     public let notes: String?
     public let photoPaths: [String]
     
@@ -23,7 +25,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
         buildingId: String,
         workerId: String,
         verificationDate: Date = Date(),
-        status: VerificationStatus = .pending,
+        status: CoreTypes.VerificationStatus = .pending,  // ✅ FIXED: CoreTypes
         notes: String? = nil,
         photoPaths: [String] = []
     ) {
@@ -51,11 +53,16 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
 // MARK: - Helper Methods
 extension VerificationRecord {
     
-    func createCompletionRecord() -> TaskCompletionRecord {
-        return TaskCompletionRecord(completionId: UUID().uuidString)
+    // ✅ FIXED: Correct TaskCompletionRecord initializer
+    func createCompletionRecord() -> CoreTypes.TaskCompletionRecord {
+        return CoreTypes.TaskCompletionRecord(
+            taskId: taskId,
+            completedDate: verificationDate,
+            workerId: workerId
+        )
     }
     
-    func updateVerificationStatus(_ newStatus: VerificationStatus) -> VerificationRecord {
+    func updateVerificationStatus(_ newStatus: CoreTypes.VerificationStatus) -> VerificationRecord {
         return VerificationRecord(
             id: id,
             taskId: taskId,
@@ -68,8 +75,9 @@ extension VerificationRecord {
         )
     }
     
+    // ✅ FIXED: Use .verified instead of .approved
     var isCompleted: Bool {
-        return status == .approved
+        return status == .verified
     }
     
     var formattedDate: String {
@@ -101,7 +109,7 @@ extension VerificationRecord {
         buildingId = try container.decode(String.self, forKey: .buildingId)
         workerId = try container.decode(String.self, forKey: .workerId)
         verificationDate = try container.decode(Date.self, forKey: .verificationDate)
-        status = try container.decode(VerificationStatus.self, forKey: .status)
+        status = try container.decode(CoreTypes.VerificationStatus.self, forKey: .status)  // ✅ FIXED
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         photoPaths = try container.decode([String].self, forKey: .photoPaths)
     }
@@ -127,7 +135,7 @@ extension VerificationRecord {
                 taskId: "task_001",
                 buildingId: "14", // Rubin Museum
                 workerId: "kevin",
-                status: .approved,
+                status: .verified,  // ✅ FIXED: Use .verified instead of .approved
                 notes: "Cleaning completed successfully. All areas thoroughly sanitized.",
                 photoPaths: ["rubin_cleaning_before.jpg", "rubin_cleaning_after.jpg"]
             ),
@@ -143,7 +151,7 @@ extension VerificationRecord {
                 taskId: "task_003",
                 buildingId: "1", // 12 West 18th Street
                 workerId: "kevin",
-                status: .requiresReview,
+                status: .needsReview,  // ✅ FIXED: Use .needsReview instead of .requiresReview
                 notes: "Additional documentation needed for electrical inspection.",
                 photoPaths: ["electrical_panel.jpg", "circuit_breaker.jpg"]
             ),
@@ -151,7 +159,7 @@ extension VerificationRecord {
                 taskId: "task_004",
                 buildingId: "14", // Rubin Museum
                 workerId: "kevin",
-                status: .approved,
+                status: .verified,  // ✅ FIXED: Use .verified instead of .approved
                 notes: "Landscaping maintenance completed. Sidewalk cleaned and cleared.",
                 photoPaths: ["sidewalk_before.jpg", "sidewalk_after.jpg", "garden_maintenance.jpg"]
             ),
@@ -159,7 +167,7 @@ extension VerificationRecord {
                 taskId: "task_005",
                 buildingId: "2", // 29-31 East 20th Street
                 workerId: "kevin",
-                status: .failed,
+                status: .rejected,  // ✅ FIXED: Use .rejected instead of .failed
                 notes: "Task could not be completed due to equipment malfunction.",
                 photoPaths: ["equipment_issue.jpg"]
             )
@@ -171,7 +179,7 @@ extension VerificationRecord {
             taskId: "sample_task_\(UUID().uuidString.prefix(8))",
             buildingId: buildingId,
             workerId: workerId,
-            status: .approved,
+            status: .verified,  // ✅ FIXED: Use .verified instead of .approved
             notes: "Sample verification record for testing purposes.",
             photoPaths: ["sample_photo_1.jpg", "sample_photo_2.jpg"]
         )

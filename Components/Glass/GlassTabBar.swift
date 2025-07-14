@@ -2,25 +2,15 @@
 //  GlassTabBar.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/8/25.
+//  ✅ FIXED: Removed .constant() reference that doesn't exist on Int
+//  ✅ Clean implementation using GlassTabItem from GlassTypes.swift
 //
-
-
-//
-//  GlassTabBar.swift
-//  FrancoSphere
-//
-//  Clean implementation using GlassTabItem from GlassTypes.swift
-//  Created by Shawn Magloire on 6/6/25.
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // MARK: - Glass Tab Bar (Uses GlassTabItem from GlassTypes.swift)
 struct GlassTabBar: View {
-    @State var selectedTab: Int
+    @Binding var selectedTab: Int
     let tabs: [GlassTabItem]
     
     var body: some View {

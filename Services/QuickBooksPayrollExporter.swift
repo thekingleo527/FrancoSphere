@@ -449,7 +449,7 @@ public actor QuickBooksPayrollExporter {
     
     private func fetchQuickBooksEmployees() async throws -> [QBEmployee] {
         // Preserved QuickBooks API logic
-        guard let token = await oauthManager.getValidAccessToken() else {
+        guard let token = await oauthManager.getAccessToken() else {
             throw PayrollExportError.notAuthenticated
         }
         
@@ -471,7 +471,7 @@ public actor QuickBooksPayrollExporter {
     
     private func submitTimeEntryToQuickBooks(_ timeEntry: QBTimeEntry) async throws {
         // Preserved QuickBooks API submission logic
-        guard let token = await oauthManager.getValidAccessToken() else {
+        guard let token = await oauthManager.getAccessToken() else {
             throw PayrollExportError.notAuthenticated
         }
         

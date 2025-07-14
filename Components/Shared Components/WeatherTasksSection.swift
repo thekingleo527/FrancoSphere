@@ -2,91 +2,172 @@
 //  WeatherTasksSection.swift
 //  FrancoSphere
 //
-//  Weather-related tasks display component
+//  ✅ FIXED: Removed extra imageAssetName argument in call
+//  ✅ Uses proper WeatherData structure
 //
 
-import Foundation
 import SwiftUI
 
 struct WeatherTasksSection: View {
-    @StateObject private var weatherAdapter = WeatherDataAdapter.shared
-    @State private var weatherTasks: [MaintenanceTask] = []
-    
     let building: NamedCoordinate
-    
-    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
-        switch urgency {
-        case .low:       return .green
-        case .medium:    return .yellow
-        case .high:      return .orange
-        case .urgent:    return .red
-        case .critical:  return .red
-        case .emergency: return .red
-        }
-    }
+    @StateObject private var weatherAdapter = WeatherDataAdapter.shared
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Weather-Related Tasks")
-                .font(.headline)
-                .padding(.horizontal)
-
-            if weatherTasks.isEmpty {
-                Text("No weather-related tasks for this building.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-            } else {
-                ForEach(weatherTasks) { task in
-                    HStack {
-                        Image(systemName: task.category.icon)
-                            .foregroundColor(task.category == .inspection ? .purple : .blue)
-
-                        VStack(alignment: .leading) {
-                            Text(task.title)
-                                .font(.headline)
-                            Text(task.recurrence.rawValue)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-
-                        Text(task.urgency.rawValue)
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(urgencyColor(task.urgency).opacity(0.2))
-                            .foregroundColor(urgencyColor(task.urgency))
-                            .cornerRadius(8)
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 12) {
+            // Section header
+            HStack {
+                Image(systemName: "cloud.sun.rain")
+                    .foregroundColor(.blue)
+                Text("Weather-Related Tasks")
+                    .font(.headline)
+                Spacer()
+            }
+            
+            if let currentWeather = weatherAdapter.currentWeather {
+                if currentWeather.isHazardous {
+                    weatherWarningCard(for: currentWeather)
                 }
+                
+                weatherTasksList(for: currentWeather)
+            } else {
+                Text("Loading weather data...")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
             }
         }
-        .onAppear {
-            weatherTasks = weatherAdapter.generateWeatherTasks(for: building)
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .task {
+            await weatherAdapter.loadWeatherData(for: building)
         }
+    }
+    
+    private func weatherWarningCard(for weather: WeatherData) -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Weather Advisory")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                
+                Text(weatherWarningMessage(for: weather))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding(8)
+        .background(Color.orange.opacity(0.1))
+        .cornerRadius(8)
+    }
+    
+    private func weatherTasksList(for weather: WeatherData) -> some View {
+        VStack(spacing: 8) {
+            ForEach(generateWeatherTasks(for: weather), id: \.id) { task in
+                weatherTaskRow(task)
+            }
+        }
+    }
+    
+    private func weatherTaskRow(_ task: MaintenanceTask) -> some View {
+        HStack {
+            Image(systemName: task.category.icon)
+                .foregroundColor(.blue)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(task.title)
+                    .font(.subheadline)
+                
+                Text(task.description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+            
+            if let dueDate = task.dueDate {
+                Text(formatDueDate(dueDate))
+                    .font(.caption)
+                    .foregroundColor(.blue)
+            }
+        }
+        .padding(8)
+        .background(Color.blue.opacity(0.05))
+        .cornerRadius(8)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func weatherWarningMessage(for weather: WeatherData) -> String {
+        if weather.temperature < 32 {
+            return "Freezing temperatures may affect outdoor tasks"
+        } else if weather.temperature > 90 {
+            return "High heat may require task rescheduling"
+        } else if weather.windSpeed > 25 {
+            return "High winds may impact outdoor work"
+        } else if weather.precipitation > 0.5 {
+            return "Heavy precipitation expected"
+        }
+        return "Weather conditions may affect operations"
+    }
+    
+    private func generateWeatherTasks(for weather: WeatherData) -> [MaintenanceTask] {
+        var tasks: [MaintenanceTask] = []
+        
+        if weather.temperature < 32 {
+            tasks.append(MaintenanceTask(
+                id: "freeze-prep-\(building.id)",
+                title: "Freeze Protection Check",
+                description: "Inspect and protect pipes from freezing",
+                category: .hvac,
+                priority: .high,
+                buildingId: building.id,
+                dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date())
+            ))
+        }
+        
+        if weather.condition == .rainy && weather.precipitation > 0.25 {
+            tasks.append(MaintenanceTask(
+                id: "drainage-\(building.id)",
+                title: "Check Drainage Systems",
+                description: "Ensure proper water drainage",
+                category: .plumbing,
+                priority: .medium,
+                buildingId: building.id,
+                dueDate: Calendar.current.date(byAdding: .hour, value: 1, to: Date())
+            ))
+        }
+        
+        if weather.windSpeed > 20 {
+            tasks.append(MaintenanceTask(
+                id: "secure-\(building.id)",
+                title: "Secure Outdoor Items",
+                description: "Check and secure loose outdoor equipment",
+                category: .general,
+                priority: .medium,
+                buildingId: building.id,
+                dueDate: Date()
+            ))
+        }
+        
+        return tasks
+    }
+    
+    private func formatDueDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 
-#if DEBUG
-struct WeatherTasksSection_Previews: PreviewProvider {
-    static var previews: some View {
-        WeatherTasksSection(
-            building: NamedCoordinate(
-                id: "1",
-                name: "12 West 18th Street",
-                latitude: 40.739750,
-                longitude: -73.994424,
-                address: "12 West 18th Street, NY",
-                imageAssetName: "12_West_18th_Street"
-            )
-        )
-    }
+#Preview {
+    WeatherTasksSection(building: NamedCoordinate.allBuildings.first!)
+        .padding()
+        .background(Color.black)
 }
-#endif

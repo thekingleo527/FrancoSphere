@@ -31,7 +31,7 @@ class DatabaseInitializationCoordinator: ObservableObject {
         
         // 2. Check if we need to load initial data
         do {
-            let workerCount = try await sqliteManager.query("SELECT COUNT(*) as count FROM workers").first?["count"] as? Int64 ?? 0
+            let workerCount = try await sqliteManager.query(parameters: "SELECT COUNT(*) as count FROM workers").first?["count"] as? Int64 ?? 0
             
             if workerCount == 0 {
                 print("📊 Loading test data...")
@@ -51,14 +51,14 @@ class DatabaseInitializationCoordinator: ObservableObject {
     
     private func loadTestData() async throws {
         // Insert test building
-        try await sqliteManager.execute("""
+        try await sqliteManager.execute(parameters: """
             INSERT INTO buildings (name, address, latitude, longitude, imageAssetName)
             VALUES (?, ?, ?, ?, ?)
             """, ["12 West 18th Street", "12 West 18th Street, New York, NY", 40.7390, -73.9936, "12West18thStreet"]
         )
         
         // Insert test worker
-        try await sqliteManager.execute("""
+        try await sqliteManager.execute(parameters: """
             INSERT INTO workers (name, email, passwordHash, role)
             VALUES (?, ?, ?, ?)
             """, ["Edwin Lema", "edwinlema911@gmail.com", "password", "worker"]
@@ -73,8 +73,8 @@ class DatabaseInitializationCoordinator: ObservableObject {
         
         // Clear existing data
         do {
-            try await sqliteManager.execute("DELETE FROM workers")
-            try await sqliteManager.execute("DELETE FROM buildings")
+            try await sqliteManager.execute(parameters: "DELETE FROM workers")
+            try await sqliteManager.execute(parameters: "DELETE FROM buildings")
         } catch {
             print("Error clearing data: \(error)")
         }

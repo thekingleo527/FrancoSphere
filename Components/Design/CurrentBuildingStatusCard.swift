@@ -1,84 +1,103 @@
-// UPDATED: Using centralized TypeRegistry for all types
-///  CurrentBuildingStatusCard.swift
+//
+//  CurrentBuildingStatusCard.swift
 //  FrancoSphere
 //
-//  Super minimal version - removes ALL potential type conversion issues
+//  ✅ FIXED: imageAssetName property reference corrected
+//  ✅ Real building data integration maintained
 //
-import MapKit
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
-
-// MARK: - Essential Extensions Only
-extension String {
-    func toInt64Safe() -> Int64? {
-        return Int64(self)
-    }
-    
-    func toIntSafe() -> Int? {
-        return Int(self)
-    }
-}
-
-// MARK: - Current Building Status Card
 struct CurrentBuildingStatusCard: View {
-    let buildingName: String
+    let building: NamedCoordinate
+    let isClockedIn: Bool
+    let taskCount: Int
     
     var body: some View {
-        GlassCard(intensity: .regular) {
-            HStack(spacing: 16) {
-                // Status indicator
-                ZStack {
-                    Circle()
-                        .fill(Color.green.opacity(0.3))
-                        .frame(width: 50, height: 50)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.green, lineWidth: 2)
-                        )
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.green)
-                }
+        HStack(spacing: 12) {
+            // Building image with fallback
+            buildingImage
+                .frame(width: 50, height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            
+            // Building info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(building.name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
                 
-                // Building info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Currently at")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Text(buildingName)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Text("Active since 8:30 AM")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
+                Text(building.fullAddress)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
                 
-                Spacer()
-                
-                // Quick actions
-                VStack(spacing: 8) {
-                    Button(action: {}) {
-                        Image(systemName: "list.bullet")
-                            .font(.title3)
-                            .foregroundColor(.blue)
-                    }
+                HStack(spacing: 8) {
+                    clockInStatus
                     
-                    Button(action: {}) {
-                        Image(systemName: "camera")
-                            .font(.title3)
+                    if taskCount > 0 {
+                        Text("\(taskCount) tasks")
+                            .font(.caption)
                             .foregroundColor(.blue)
                     }
                 }
             }
+            
+            Spacer()
+            
+            // Action buttons
+            VStack(spacing: 8) {
+                Button(action: {}) {
+                    Image(systemName: "list.bullet")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
+                
+                Button(action: {}) {
+                    Image(systemName: "camera")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+    
+    private var buildingImage: some View {
+        Group {
+            // ✅ FIXED: Use fallbackImageName instead of direct imageAssetName access
+            if let imageName = building.imageAssetName,
+               let image = UIImage(named: imageName) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                // Use fallback
+                if let fallbackImage = UIImage(named: building.fallbackImageName) {
+                    Image(uiImage: fallbackImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay(
+                            Image(systemName: "building.2")
+                                .foregroundColor(.gray)
+                        )
+                }
+            }
+        }
+    }
+    
+    private var clockInStatus: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(isClockedIn ? .green : .gray)
+                .frame(width: 8, height: 8)
+            
+            Text(isClockedIn ? "Clocked In" : "Not Clocked In")
+                .font(.caption)
+                .foregroundColor(isClockedIn ? .green : .secondary)
         }
     }
 }
@@ -109,91 +128,34 @@ struct WorkerBuildingRow: View {
                     )
             }
             
-            // Building info
             VStack(alignment: .leading, spacing: 4) {
                 Text(building.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .lineLimit(2)
+                    .font(.headline)
                 
-                HStack(spacing: 8) {
-                    if isClockedIn {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 6, height: 6)
-                            Text("Active")
-                                .font(.caption2)
-                                .foregroundColor(.green)
-                        }
-                    }
-                    
-                    if taskCount > 0 {
-                        Text("\(taskCount) tasks")
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.6))
-                    }
+                Text(isClockedIn ? "Clocked In" : "Available")
+                    .font(.caption)
+                    .foregroundColor(isClockedIn ? .green : .secondary)
+                
+                if taskCount > 0 {
+                    Text("\(taskCount) pending tasks")
+                        .font(.caption)
+                        .foregroundColor(.blue)
                 }
             }
             
             Spacer()
-            
-            // Status indicator
-            if isClockedIn {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.4))
-            }
         }
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(isClockedIn ? 0.1 : 0.05))
-        )
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
-// MARK: - Task Summary Item (Simplified)
-struct TaskSummaryItem: View {
-    let count: Int
-    let label: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("\(count)")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Minimal Preview (No extensions, no complex types)
-struct CurrentBuildingStatusCard_Previews: PreviewProvider {
-    static var previews: some View {
-        CurrentBuildingStatusCard(buildingName: "Rubin Museum")
-            .padding()
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.1, green: 0.1, blue: 0.3),
-                        Color(red: 0.2, green: 0.1, blue: 0.4)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .preferredColorScheme(.dark)
-    }
+#Preview {
+    CurrentBuildingStatusCard(
+        building: NamedCoordinate.allBuildings.first!,
+        isClockedIn: true,
+        taskCount: 3
+    )
+    .padding()
+    .background(Color.black)
 }

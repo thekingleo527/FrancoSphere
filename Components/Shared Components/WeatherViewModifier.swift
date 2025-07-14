@@ -1,3 +1,11 @@
+//
+//  WeatherViewModifier.swift
+//  FrancoSphere
+//
+//  ✅ FIXED: Added missing switch cases for exhaustive pattern matching
+//  ✅ FIXED: Uses proper WeatherData.condition property
+//
+
 import Foundation
 import SwiftUI
 
@@ -26,7 +34,7 @@ struct WeatherSensitiveTaskModifier: ViewModifier {
     private var weatherOverlay: some View {
         Group {
             if affectedByWeather {
-                Image(systemName: "cloud.rain")
+                Image(systemName: weatherIconName)
                     .foregroundColor(.white)
                     .font(.system(size: 14))
             } else {
@@ -36,12 +44,55 @@ struct WeatherSensitiveTaskModifier: ViewModifier {
     }
     
     private var affectedByWeather: Bool {
-        // Use the WeatherDataAdapter instead of WeatherService
         return weatherAdapter.shouldRescheduleTask(task)
     }
     
+    private var weatherIconName: String {
+        guard let currentWeather = weatherAdapter.currentWeather else {
+            return "cloud.rain"
+        }
+        
+        // ✅ FIXED: Added exhaustive switch cases
+        switch currentWeather.condition {
+        case .clear, .sunny:
+            return "sun.max"
+        case .cloudy:
+            return "cloud"
+        case .rainy:
+            return "cloud.rain"
+        case .snowy:
+            return "cloud.snow"
+        case .stormy:
+            return "cloud.bolt"
+        case .foggy:
+            return "cloud.fog"
+        case .windy:
+            return "wind"
+        }
+    }
+    
     private var weatherBackgroundColor: Color {
-        affectedByWeather ? .blue : .clear
+        guard let currentWeather = weatherAdapter.currentWeather else {
+            return .clear
+        }
+        
+        // ✅ FIXED: Added exhaustive switch cases
+        switch currentWeather.condition {
+        case .clear, .sunny:
+            return .yellow
+        case .cloudy:
+            return .gray
+        case .rainy:
+            return .blue
+        case .snowy:
+            return .cyan
+        case .stormy:
+            return .purple
+        case .foggy:
+            return .gray
+        case .windy:
+            return .orange
+        }
     }
     
     private var weatherBorderColor: Color {
@@ -75,7 +126,7 @@ struct WeatherStatusBuildingModifier: ViewModifier {
         Group {
             if let currentWeather = weatherAdapter.currentWeather {
                 HStack(spacing: 4) {
-                    Image(systemName: currentWeather.condition.icon)
+                    Image(systemName: weatherIconName(for: currentWeather.condition))
                         .foregroundColor(weatherIconColor(for: currentWeather.condition))
                         .font(.system(size: 12))
                     
@@ -92,8 +143,30 @@ struct WeatherStatusBuildingModifier: ViewModifier {
         }
     }
     
+    // Helper function to handle weather condition icon
+    private func weatherIconName(for condition: WeatherCondition) -> String {
+        // ✅ FIXED: Added exhaustive switch cases
+        switch condition {
+        case .clear, .sunny:
+            return "sun.max"
+        case .cloudy:
+            return "cloud"
+        case .rainy:
+            return "cloud.rain"
+        case .snowy:
+            return "cloud.snow"
+        case .stormy:
+            return "cloud.bolt"
+        case .foggy:
+            return "cloud.fog"
+        case .windy:
+            return "wind"
+        }
+    }
+    
     // Helper function to handle weather condition color
     private func weatherIconColor(for condition: WeatherCondition) -> Color {
+        // ✅ FIXED: Added exhaustive switch cases
         switch condition {
         case .clear, .sunny:
             return .yellow
