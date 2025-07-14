@@ -121,3 +121,54 @@ public struct WeatherData: Codable {
 
 // MARK: - Filter Models
 
+
+// MARK: - WeatherData Extensions (Missing formattedTemperature)
+
+extension WeatherData {
+    /// Formatted temperature string
+    public var formattedTemperature: String {
+        return "\(Int(temperature.rounded()))°F"
+    }
+    
+    /// Icon name based on weather condition
+    public var iconName: String {
+        switch condition {
+        case .clear, .sunny: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rainy: return "cloud.rain.fill"
+        case .snowy: return "cloud.snow.fill"
+        case .stormy: return "cloud.bolt.fill"
+        case .foggy: return "cloud.fog.fill"
+        case .windy: return "wind"
+        }
+    }
+}
+
+extension WeatherCondition {
+    /// Icon name for each weather condition
+    public var icon: String {
+        switch self {
+        case .clear, .sunny: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rainy: return "cloud.rain.fill"
+        case .snowy: return "cloud.snow.fill"
+        case .stormy: return "cloud.bolt.fill"
+        case .foggy: return "cloud.fog.fill"
+        case .windy: return "wind"
+        }
+    }
+}
+
+extension TaskCategory {
+    /// Icon name for each task category
+    public var icon: String {
+        switch self {
+        case .maintenance: return "wrench.and.screwdriver"
+        case .cleaning: return "sparkles"
+        case .inspection: return "magnifyingglass"
+        case .repair: return "hammer"
+        case .security: return "lock.shield"
+        case .landscaping: return "leaf"
+        }
+    }
+}

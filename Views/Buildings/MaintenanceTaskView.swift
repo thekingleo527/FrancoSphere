@@ -1,19 +1,5 @@
-import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct MaintenanceTaskView: View {
     let task: MaintenanceTask
@@ -22,26 +8,25 @@ struct MaintenanceTaskView: View {
     @State private var buildingName: String = "Loading..."
     @State private var isMarkingComplete = false
 
-    // ✅ FIXED: Use consolidated services
+    // ✅ Use consolidated services from v6.0
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
 
-    // Helper function for urgency color
+    // ✅ FIXED: Complete switch with all TaskUrgency cases
     private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
-        case .low:    return .green
-        case .medium: return .yellow
-        case .high:   return .red
-        case .urgent: return .purple
-            @unknown default: Text("Unknown")
-        @unknown default:
-            EmptyView()}
+        case .low:       return .green
+        case .medium:    return .yellow
+        case .high:      return .orange
+        case .urgent:    return .purple
+        case .critical:  return .red
+        case .emergency: return .red
+        }
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-
                 // Header
                 HStack {
                     Text(task.title).font(.title).bold()
@@ -107,8 +92,8 @@ struct MaintenanceTaskView: View {
             Text("Details").font(.headline).foregroundColor(.secondary)
 
             HStack {
-                Image(systemName: task."wrench.and.screwdriver").foregroundColor(.blue)
-                Text(task.category.rawValue).font(.subheadline)
+                Image(systemName: "wrench.and.screwdriver").foregroundColor(.blue)
+                Text(task.category.rawValue.capitalized).font(.subheadline)
             }
 
             Text(task.description).font(.body).padding(.top, 4)
@@ -124,6 +109,7 @@ struct MaintenanceTaskView: View {
                 Text("Due: \(formattedDate(task.dueDate))").font(.subheadline)
             }
 
+            // ✅ FIXED: Properly unwrap optional dates
             if let start = task.startTime {
                 HStack {
                     Image(systemName: "clock").foregroundColor(.blue)
@@ -140,7 +126,7 @@ struct MaintenanceTaskView: View {
 
             HStack {
                 Image(systemName: "repeat").foregroundColor(.blue)
-                Text("Recurrence: \(task.recurrence.rawValue)").font(.subheadline)
+                Text("Recurrence: \(task.recurrence.rawValue.capitalized)").font(.subheadline)
             }
         }
     }
@@ -149,17 +135,15 @@ struct MaintenanceTaskView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Assignments").font(.headline).foregroundColor(.secondary)
 
-            if [].isEmpty {
+            if let assignedWorkerId = task.assignedWorkerId {
                 HStack {
-                    Image(systemName: "person.badge.minus").foregroundColor(.orange)
-                    Text("No workers assigned").font(.subheadline).foregroundColor(.secondary)
+                    Image(systemName: "person.fill").foregroundColor(.blue)
+                    Text("Assigned Worker: \(assignedWorkerId)").font(.subheadline)
                 }
             } else {
-                ForEach([], id: \.self) { workerId in
-                    HStack {
-                        Image(systemName: "person.fill").foregroundColor(.blue)
-                        Text("Worker ID: \(workerId)").font(.subheadline)
-                    }
+                HStack {
+                    Image(systemName: "person.badge.minus").foregroundColor(.orange)
+                    Text("No worker assigned").font(.subheadline).foregroundColor(.secondary)
                 }
             }
         }
@@ -176,8 +160,7 @@ struct MaintenanceTaskView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     } else {
-                        Image(systemName: task.isCompleted ? "arrow.uturn.left"
-                                                          : "checkmark.circle")
+                        Image(systemName: task.isCompleted ? "arrow.uturn.left" : "checkmark.circle")
                     }
                     Text(isMarkingComplete ? "Processing..." :
                          (task.isCompleted ? "Mark as Pending" : "Mark as Complete"))
@@ -214,9 +197,10 @@ struct MaintenanceTaskView: View {
     
     /// Load building name asynchronously
     private func loadBuildingName() async {
-        // ✅ FIXED: Use BuildingService instead of BuildingRepository
+        // ✅ FIXED: Use correct BuildingService method
         do {
-            if let building = try await buildingService.getBuilding(task.buildingId) {
+            let buildings = try await buildingService.getAllBuildings()
+            if let building = buildings.first(where: { $0.id == task.buildingId }) {
                 await MainActor.run {
                     self.buildingName = building.name
                 }
@@ -239,21 +223,15 @@ struct MaintenanceTaskView: View {
             isMarkingComplete = true
         }
         
-        // ✅ FIXED: Use TaskService instead of TaskManager
+        // ✅ FIXED: Use correct TaskService completeTask method signature with try
         do {
-            // Convert MaintenanceTask to the required format for TaskService
-            let evidence = String(
-                photos: [],
-                timestamp: Date(),
-                locationLatitude: nil, locationLongitude: nil, notes: "Marked complete from maintenance view"
+            let evidence = ActionEvidence(
+                description: "Marked complete from maintenance view",
+                photoURLs: [],
+                timestamp: Date()
             )
             
-            try await taskService.completeTask(
-                task.id,
-                workerId: task.assignedWorkerId ?? "unknown",
-                buildingId: task.buildingId,
-                evidence: evidence
-            )
+            try await taskService.completeTask(task.id, evidence: evidence)
             
             await MainActor.run {
                 isMarkingComplete = false
@@ -270,7 +248,7 @@ struct MaintenanceTaskView: View {
     /// Reassign workers (placeholder for future implementation)
     private func reassignWorkers() async {
         // TODO: Implement worker reassignment logic using WorkerService
-        print("Reassigning workers for task: \(task.id)")
+        print("🔄 Reassigning workers for task: \(task.id)")
         
         // Future implementation would use WorkerService
         // let workerService = WorkerService.shared
@@ -279,11 +257,15 @@ struct MaintenanceTaskView: View {
 
     // MARK: – Helpers
     private func formattedDate(_ date: Date) -> String {
-        let f = DateFormatter(); f.dateStyle = .medium; return f.string(from: date)
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
     }
 
     private func formattedTime(_ date: Date) -> String {
-        let f = DateFormatter(); f.timeStyle = .short;  return f.string(from: date)
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 
@@ -292,20 +274,20 @@ struct StatusBadge: View {
     let isCompleted: Bool
     let urgency: TaskUrgency
 
-    // Helper function for urgency color
+    // ✅ FIXED: Complete switch with all TaskUrgency cases
     private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
-        case .low:    return .green
-        case .medium: return .yellow
-        case .high:   return .red
-        case .urgent: return .purple
-            @unknown default: Text("Unknown")
-        @unknown default:
-            EmptyView()}
+        case .low:       return .green
+        case .medium:    return .yellow
+        case .high:      return .orange
+        case .urgent:    return .purple
+        case .critical:  return .red
+        case .emergency: return .red
+        }
     }
 
     var body: some View {
-        Text(isCompleted ? "Completed" : urgency.rawValue)
+        Text(isCompleted ? "Completed" : urgency.rawValue.capitalized)
             .font(.caption).fontWeight(.bold)
             .padding(.horizontal, 10).padding(.vertical, 5)
             .background(isCompleted ? Color.gray : getUrgencyColor(urgency))
@@ -318,20 +300,25 @@ struct StatusBadge: View {
 struct MaintenanceTaskView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
+            // ✅ FIXED: Use correct MaintenanceTask initializer
             MaintenanceTaskView(task: MaintenanceTask(
                 id: "preview_task",
-                name: "Replace Air Filter",
-                buildingID: "1",
+                title: "Replace Air Filter",
                 description: "Replace HVAC air filter in main unit",
+                category: .maintenance,
+                urgency: .medium,
+                buildingId: "1",
+                assignedWorkerId: "4",
                 dueDate: Date(),
                 startTime: Date(),
                 endTime: Date().addingTimeInterval(3600),
-                category: .maintenance,
-                urgency: .medium,
                 recurrence: .monthly,
-                isComplete: false,
-                assignedWorkers: ["4"],
-                requiredSkillLevel: "Basic"
+                estimatedDuration: 3600,
+                requiredSkills: [],
+                isCompleted: false,
+                completedDate: nil,
+                notes: nil,
+                status: TaskStatus.pending
             ))
         }
         .preferredColorScheme(.dark)

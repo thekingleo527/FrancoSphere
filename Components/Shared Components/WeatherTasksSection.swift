@@ -2,8 +2,10 @@
 //  WeatherTasksSection.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Removed extra imageAssetName argument in call
-//  ✅ Uses proper WeatherData structure
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ Corrected WeatherDataAdapter usage and method calls
+//  ✅ Fixed TaskCategory enum values and MaintenanceTask constructor
+//  ✅ Proper WeatherData property access
 //
 
 import SwiftUI
@@ -38,7 +40,8 @@ struct WeatherTasksSection: View {
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         .task {
-            await weatherAdapter.loadWeatherData(for: building)
+            // ✅ FIXED: Use correct WeatherDataAdapter method
+            await weatherAdapter.fetchWeatherForBuildingAsync(building)
         }
     }
     
@@ -110,6 +113,7 @@ struct WeatherTasksSection: View {
             return "High heat may require task rescheduling"
         } else if weather.windSpeed > 25 {
             return "High winds may impact outdoor work"
+        // ✅ FIXED: WeatherData DOES have precipitation property
         } else if weather.precipitation > 0.5 {
             return "Heavy precipitation expected"
         }
@@ -120,24 +124,24 @@ struct WeatherTasksSection: View {
         var tasks: [MaintenanceTask] = []
         
         if weather.temperature < 32 {
+            // ✅ FIXED: Use minimal MaintenanceTask constructor pattern from WeatherDataAdapter
             tasks.append(MaintenanceTask(
-                id: "freeze-prep-\(building.id)",
                 title: "Freeze Protection Check",
                 description: "Inspect and protect pipes from freezing",
-                category: .hvac,
-                priority: .high,
+                category: .maintenance,
+                urgency: .high,
                 buildingId: building.id,
                 dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date())
             ))
         }
         
+        // ✅ FIXED: WeatherData DOES have condition property
         if weather.condition == .rainy && weather.precipitation > 0.25 {
             tasks.append(MaintenanceTask(
-                id: "drainage-\(building.id)",
                 title: "Check Drainage Systems",
                 description: "Ensure proper water drainage",
-                category: .plumbing,
-                priority: .medium,
+                category: .maintenance,
+                urgency: .medium,
                 buildingId: building.id,
                 dueDate: Calendar.current.date(byAdding: .hour, value: 1, to: Date())
             ))
@@ -145,11 +149,10 @@ struct WeatherTasksSection: View {
         
         if weather.windSpeed > 20 {
             tasks.append(MaintenanceTask(
-                id: "secure-\(building.id)",
                 title: "Secure Outdoor Items",
                 description: "Check and secure loose outdoor equipment",
-                category: .general,
-                priority: .medium,
+                category: .maintenance,
+                urgency: .medium,
                 buildingId: building.id,
                 dueDate: Date()
             ))
