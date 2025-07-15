@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: Animation syntax errors resolved (AnimationAnimation → Animation)
+//  ✅ FIXED: GlassIntensity .light → .thin, .strong → .thick
 //  ✅ ALIGNED: Updated for v6.0 architecture with proper SwiftUI patterns
 //  ✅ OPTIMIZED: Glass loading system for three-dashboard experience
 //
@@ -202,7 +203,7 @@ struct SkeletonLoadingView: View {
     let rows: Int
     let intensity: GlassIntensity
     
-    init(rows: Int = 3, intensity: GlassIntensity = .light) {
+    init(rows: Int = 3, intensity: GlassIntensity = .thin) {  // ✅ FIXED: .light → .thin
         self.rows = rows
         self.intensity = intensity
     }
@@ -307,7 +308,7 @@ struct GlassLoadingView_Previews: PreviewProvider {
             GlassLoadingView(
                 message: "Syncing data...",
                 showProgress: true,
-                intensity: .strong
+                intensity: .thick  // ✅ FIXED: .strong → .thick
             )
             
             LoadingDotsView()

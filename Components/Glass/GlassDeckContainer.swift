@@ -2,7 +2,8 @@
 //  GlassDeckContainer.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Animation syntax errors resolved (Animation → Animation)
+//  ✅ FIXED: Animation syntax errors resolved (AnimationAnimation → Animation)
+//  ✅ FIXED: GlassIntensity .light → .thin
 //  ✅ ALIGNED: Updated for v6.0 architecture with proper SwiftUI patterns
 //  ✅ OPTIMIZED: Glass deck system for three-dashboard experience
 //
@@ -72,7 +73,7 @@ struct GlassDeckContainer<Content: View>: View {
     }
     
     private func backgroundCard(at index: Int) -> some View {
-        GlassCard(intensity: .light) {
+        GlassCard(intensity: .thin) {  // ✅ FIXED: .light → .thin
             Rectangle()
                 .fill(Color.clear)
                 .frame(height: 80)
@@ -106,8 +107,6 @@ struct GlassDeckContainer<Content: View>: View {
         }
     }
 }
-
-// MARK: - Glass Intensity Enum
 
 // MARK: - Staggered Deck Animation
 struct StaggeredDeckAnimation: View {

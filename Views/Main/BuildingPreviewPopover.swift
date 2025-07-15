@@ -1,11 +1,12 @@
 //
 //  BuildingPreviewPopover.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ NEW COMPONENT - Building preview hover card for MapOverlayView
-//  ✅ Shows building photo, address, open tasks, sanitation schedule
-//  ✅ Double-tap pushes BuildingDetailView
-//  ✅ FIXED: Optional String unwrapping for imageAssetName
+//  ✅ FIXED: Missing tasks property added
+//  ✅ FIXED: Animation syntax errors resolved
+//  ✅ FIXED: Expression syntax issues corrected
+//  ✅ ALIGNED: With current CoreTypes structure and Phase 2.1 implementation
+//  ✅ GRDB: Real-time data integration ready
 //
 
 import SwiftUI
@@ -17,6 +18,7 @@ struct BuildingPreviewPopover: View {
     let onDismiss: () -> Void
     
     @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
+    @State private var tasks: [ContextualTask] = []  // ✅ FIXED: Added missing tasks property
     @State private var openTasksCount: Int = 0
     @State private var nextSanitationDate: String?
     @State private var isLoading = true
@@ -227,13 +229,16 @@ struct BuildingPreviewPopover: View {
     private func loadBuildingData() {
         Task {
             // Load real task data for this building
-            let allTasks = Task {
-                let tasks = await WorkerContextEngine.shared.getTodaysTasks()
+            let allTasksTask = Task {
+                let allTasks = await WorkerContextEngine.shared.getTodaysTasks()
                 await MainActor.run {
-                    self.tasks = tasks
+                    self.tasks = allTasks
                 }
             }
-            let buildingTasks = allTasks.filter { task in
+            
+            await allTasksTask.value  // ✅ FIXED: Proper task awaiting
+            
+            let buildingTasks = tasks.filter { task in
                 task.buildingName == building.name || task.buildingId == building.id
             }
             
@@ -242,16 +247,16 @@ struct BuildingPreviewPopover: View {
             
             // Find next sanitation task
             let sanitationTasks = buildingTasks.filter { task in
-                task.category.lowercased().contains("sanitation") ||
-                task.name.lowercased().contains("sanitation") ||
-                task.name.lowercased().contains("dsny") ||
-                task.name.lowercased().contains("trash")
+                task.category == .sanitation ||
+                task.title.lowercased().contains("sanitation") ||
+                task.title.lowercased().contains("dsny") ||
+                task.title.lowercased().contains("trash")
             }
             
             let nextSanitation = sanitationTasks.first { $0.status != "completed" }
             
             await MainActor.run {
-                withAnimation(.animation(.easeInOut) {
+                withAnimation(.easeInOut(duration: 0.6)) {  // ✅ FIXED: Proper animation syntax
                     openTasksCount = openTasks.count
                     
                     if let next = nextSanitation {
@@ -273,7 +278,7 @@ struct BuildingPreviewPopover: View {
     
     private func startDismissTimer() {
         dismissTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
-            withAnimation(Animation.easeOut) {
+            withAnimation(.easeOut(duration: 0.3)) {  // ✅ FIXED: Proper animation syntax
                 onDismiss()
             }
         }
@@ -295,7 +300,7 @@ struct PrimaryPreviewButtonStyle: ButtonStyle {
                     .fill(Color.blue)
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)  // ✅ FIXED: Proper animation syntax
     }
 }
 
@@ -316,29 +321,28 @@ struct SecondaryPreviewButtonStyle: ButtonStyle {
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)  // ✅ FIXED: Proper animation syntax
     }
-    
-    // MARK: - Preview
-    
-    struct BuildingPreviewPopover_Previews: PreviewProvider {
-        static var previews: some View {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                BuildingPreviewPopover(
-                    building: NamedCoordinate(
-                        id: "1",
-                        name: "12 West 18th Street",
-                        latitude: 40.7397,
-                        longitude: -73.9944,
-                        imageAssetName: "12_West_18th_Street"
-                    ),
-                    onDetails: { print("View details tapped") },
-                    onDismiss: { print("Dismiss tapped") }
-                )
-            }
-            .preferredColorScheme(.dark)
+}
+
+// MARK: - Preview
+struct BuildingPreviewPopover_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            BuildingPreviewPopover(
+                building: NamedCoordinate(
+                    id: "1",
+                    name: "12 West 18th Street",
+                    latitude: 40.7397,
+                    longitude: -73.9944,
+                    imageAssetName: "12_West_18th_Street"
+                ),
+                onDetails: { print("View details tapped") },
+                onDismiss: { print("Dismiss tapped") }
+            )
         }
+        .preferredColorScheme(.dark)
     }
 }

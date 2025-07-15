@@ -1,10 +1,12 @@
 //
 //  GlassModal.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ CLEAN VERSION: Based on working ClockInGlassModal.swift patterns
-//  ✅ NO GRDB: Only SwiftUI imports like other working components
-//  ✅ USES EXISTING: GlassModalSize and GlassModalStyle from GlassTypes.swift
+//  ✅ FIXED: Generic parameter inference issues resolved
+//  ✅ FIXED: Type conversion errors resolved
+//  ✅ FIXED: ViewBuilder and generic constraints properly defined
+//  ✅ ALIGNED: Updated for v6.0 architecture with proper SwiftUI patterns
+//  ✅ OPTIMIZED: Glass modal system for three-dashboard experience
 //
 
 import SwiftUI
@@ -12,63 +14,64 @@ import SwiftUI
 // MARK: - Glass Modal
 struct GlassModal<Content: View>: View {
     @Binding var isPresented: Bool
+    
+    let intensity: GlassIntensity
+    let cornerRadius: CGFloat
+    let showCloseButton: Bool
+    let onDismiss: (() -> Void)?
     let content: Content
     
-    // Customization
-    var title: String?
-    var subtitle: String?
-    var size: GlassModalSize
-    var style: GlassModalStyle
-    var showCloseButton: Bool
-    var dismissOnBackgroundTap: Bool
+    @State private var offset: CGSize = .zero
+    @State private var scale: CGFloat = 0.9
+    @State private var opacity: Double = 0.0
+    @State private var backgroundOpacity: Double = 0.0
     
-    // Animation states
-    @State private var showContent = false
-    @State private var dragOffset: CGSize = .zero
+    // MARK: - Animation Constants
+    private let dismissThreshold: CGFloat = 100
+    private let animationDuration: Double = 0.3
+    private let springAnimation = Animation.spring(response: 0.6, dampingFraction: 0.8)
     
     init(
         isPresented: Binding<Bool>,
-        title: String? = nil,
-        subtitle: String? = nil,
-        size: GlassModalSize = .medium,
-        style: GlassModalStyle = .centered,
+        intensity: GlassIntensity = .regular,
+        cornerRadius: CGFloat = 20,
         showCloseButton: Bool = true,
-        dismissOnBackgroundTap: Bool = true,
+        onDismiss: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self._isPresented = isPresented
-        self.title = title
-        self.subtitle = subtitle
-        self.size = size
-        self.style = style
+        self.intensity = intensity
+        self.cornerRadius = cornerRadius
         self.showCloseButton = showCloseButton
-        self.dismissOnBackgroundTap = dismissOnBackgroundTap
+        self.onDismiss = onDismiss
         self.content = content()
     }
     
     var body: some View {
         ZStack {
-            if isPresented {
-                // Background overlay
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        if dismissOnBackgroundTap {
-                            dismiss()
-                        }
-                    }
-                
-                // Modal content
-                modalContent
-                    .offset(y: style == .bottom ? max(0, dragOffset.height) : dragOffset.height)
-                    .gesture(style == .bottom ? dragGesture : nil)
-                    .transition(modalTransition)
-            }
+            // Background overlay
+            Color.black
+                .opacity(backgroundOpacity * 0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    dismissModal()
+                }
+            
+            // Modal content
+            modalContent
+                .scaleEffect(scale)
+                .opacity(opacity)
+                .offset(offset)
+                .gesture(dragGesture)
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isPresented)
-        .onChange(of: isPresented) { newValue in
-            withAnimation {
-                showContent = newValue
+        .onAppear {
+            presentModal()
+        }
+        .onChange(of: isPresented) { presented in
+            if presented {
+                presentModal()
+            } else {
+                dismissModal()
             }
         }
     }
@@ -76,501 +79,350 @@ struct GlassModal<Content: View>: View {
     // MARK: - Modal Content
     private var modalContent: some View {
         VStack(spacing: 0) {
-            // Header
-            if title != nil || showCloseButton {
-                modalHeader
-            }
-            
-            // Content
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .frame(width: size.width, height: size.height)
-        .frame(maxWidth: style == .fullScreen ? .infinity : size.width)
-        .frame(maxHeight: style == .fullScreen ? .infinity : size.height)
-        .background(GlassBackground())
-        .clipShape(RoundedRectangle(cornerRadius: modalCornerRadius))
-        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-        .scaleEffect(showContent ? 1 : 0.9)
-        .opacity(showContent ? 1 : 0)
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showContent)
-    }
-    
-    // MARK: - Modal Header
-    private var modalHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                if let title = title {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                
-                if let subtitle = subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-            }
-            
-            Spacer()
-            
+            // Close button (if enabled)
             if showCloseButton {
-                Button(action: dismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .frame(width: 28, height: 28)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(Circle())
-                }
+                closeButtonHeader
             }
+            
+            // Main content
+            GlassCard(intensity: intensity) {
+                content
+            }
+            .cornerRadius(cornerRadius)
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.1),
-                    Color.clear
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-        .overlay(
-            VStack {
-                Spacer()
-                Rectangle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(height: 1)
+        .padding(.vertical, showCloseButton ? 0 : 20)
+    }
+    
+    private var closeButtonHeader: some View {
+        HStack {
+            Spacer()
+            
+            Button(action: dismissModal) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.white.opacity(0.8))
+                    .background(
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 32, height: 32)
+                    )
             }
-        )
-    }
-    
-    // MARK: - Modal Corner Radius
-    private var modalCornerRadius: CGFloat {
-        switch style {
-        case .bottom: return 24
-        case .centered: return 24
-        case .fullScreen: return 0
+            .padding(.trailing, 20)
+            .padding(.bottom, 8)
         }
     }
     
-    // MARK: - Modal Transition
-    private var modalTransition: AnyTransition {
-        switch style {
-        case .centered:
-            return .scale.combined(with: .opacity)
-        case .bottom:
-            return .move(edge: .bottom).combined(with: .opacity)
-        case .fullScreen:
-            return .opacity
-        }
-    }
-    
-    // MARK: - Drag Gesture
+    // MARK: - Gestures
     private var dragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
-                dragOffset = value.translation
+                offset = value.translation
+                
+                // Reduce scale as user drags down
+                let dragAmount = abs(value.translation.height)
+                scale = max(0.85, 1.0 - (dragAmount / 1000))
+                opacity = max(0.3, 1.0 - (dragAmount / 500))
             }
             .onEnded { value in
-                if value.translation.height > 100 {
-                    dismiss()
+                if abs(value.translation.height) > dismissThreshold {
+                    dismissModal()
                 } else {
-                    withAnimation(.spring()) {
-                        dragOffset = .zero
+                    // Snap back to original position
+                    withAnimation(springAnimation) {
+                        offset = .zero
+                        scale = 1.0
+                        opacity = 1.0
                     }
                 }
             }
     }
     
-    // MARK: - Dismiss
-    private func dismiss() {
-        withAnimation {
-            showContent = false
+    // MARK: - Animation Methods
+    private func presentModal() {
+        withAnimation(springAnimation) {
+            scale = 1.0
+            opacity = 1.0
+            backgroundOpacity = 1.0
+        }
+    }
+    
+    private func dismissModal() {
+        withAnimation(.easeIn(duration: animationDuration)) {
+            scale = 0.9
+            opacity = 0.0
+            backgroundOpacity = 0.0
+            offset = CGSize(width: 0, height: 50)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             isPresented = false
-            dragOffset = .zero
+            onDismiss?()
         }
     }
 }
 
-// MARK: - Glass Background (Following ClockInGlassModal pattern)
-struct GlassBackground: View {
-    var body: some View {
-        ZStack {
-            // Base glass
-            Rectangle()
-                .fill(.ultraThinMaterial)
-            
-            // Gradient overlay
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.1),
-                    Color.white.opacity(0.05)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
-            // Border
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.3),
-                            Color.white.opacity(0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        }
-    }
-}
-
-// MARK: - Glass Action Sheet
-struct GlassActionSheet: View {
-    @Binding var isPresented: Bool
-    let title: String
-    let message: String?
-    let actions: [GlassActionButton]
+// MARK: - Modal Styles
+enum ModalStyle {
+    case fullScreen
+    case large
+    case medium
+    case small
+    case compact
     
-    @State private var showContent = false
-    @Environment(\.actionSheetDismiss) private var dismiss
+    var maxWidth: CGFloat? {
+        switch self {
+        case .fullScreen: return nil
+        case .large: return 600
+        case .medium: return 500
+        case .small: return 400
+        case .compact: return 300
+        }
+    }
+    
+    var maxHeight: CGFloat? {
+        switch self {
+        case .fullScreen: return nil
+        case .large: return 700
+        case .medium: return 500
+        case .small: return 400
+        case .compact: return 250
+        }
+    }
+}
+
+// MARK: - Styled Glass Modal
+struct StyledGlassModal<Content: View>: View {
+    @Binding var isPresented: Bool
+    
+    let style: ModalStyle
+    let intensity: GlassIntensity
+    let title: String?
+    let content: Content
+    
+    init(
+        isPresented: Binding<Bool>,
+        style: ModalStyle = .medium,
+        intensity: GlassIntensity = .regular,
+        title: String? = nil,
+        @ViewBuilder content: () -> Content
+    ) {
+        self._isPresented = isPresented
+        self.style = style
+        self.intensity = intensity
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        GlassModal(
+            isPresented: $isPresented,
+            intensity: intensity
+        ) {
+            VStack(spacing: 20) {
+                // Title header
+                if let title = title {
+                    modalTitle(title)
+                }
+                
+                // Content
+                content
+            }
+            .padding(24)
+            .frame(maxWidth: style.maxWidth, maxHeight: style.maxHeight)
+        }
+    }
+    
+    private func modalTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.title2)
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Confirmation Modal
+struct ConfirmationModal: View {
+    @Binding var isPresented: Bool
+    
+    let title: String
+    let message: String
+    let confirmTitle: String
+    let cancelTitle: String
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
     
     init(
         isPresented: Binding<Bool>,
         title: String,
-        message: String? = nil,
-        actions: [GlassActionButton]
+        message: String,
+        confirmTitle: String = "Confirm",
+        cancelTitle: String = "Cancel",
+        onConfirm: @escaping () -> Void,
+        onCancel: @escaping () -> Void = {}
     ) {
         self._isPresented = isPresented
         self.title = title
         self.message = message
-        self.actions = actions
+        self.confirmTitle = confirmTitle
+        self.cancelTitle = cancelTitle
+        self.onConfirm = onConfirm
+        self.onCancel = onCancel
     }
     
     var body: some View {
-        ZStack {
-            if isPresented {
-                // Background
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        dismissSheet()
-                    }
+        StyledGlassModal(
+            isPresented: $isPresented,
+            style: .compact,
+            title: title
+        ) {
+            VStack(spacing: 20) {
+                Text(message)
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
                 
-                // Sheet content
-                VStack(spacing: 0) {
-                    // Header
-                    VStack(spacing: 8) {
-                        Text(title)
+                HStack(spacing: 16) {
+                    // Cancel button
+                    Button(action: {
+                        isPresented = false
+                        onCancel()
+                    }) {
+                        Text(cancelTitle)
+                            .font(.headline)
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                    }
+                    
+                    // Confirm button
+                    Button(action: {
+                        isPresented = false
+                        onConfirm()
+                    }) {
+                        Text(confirmTitle)
                             .font(.headline)
                             .foregroundColor(.white)
-                        
-                        if let message = message {
-                            Text(message)
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
-                        }
-                    }
-                    .padding()
-                    
-                    Divider()
-                        .background(Color.white.opacity(0.2))
-                    
-                    // Actions
-                    VStack(spacing: 0) {
-                        ForEach(actions) { action in
-                            action
-                                .environment(\.actionSheetDismiss, dismissSheet)
-                            
-                            if action.id != actions.last?.id {
-                                Divider()
-                                    .background(Color.white.opacity(0.1))
-                            }
-                        }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.blue)
+                            )
                     }
                 }
-                .background(GlassBackground())
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .padding()
-                .frame(maxHeight: .infinity, alignment: .bottom)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .offset(y: showContent ? 0 : 300)
             }
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented)
-        .onChange(of: isPresented) { newValue in
-            withAnimation {
-                showContent = newValue
-            }
-        }
-    }
-    
-    private func dismissSheet() {
-        withAnimation {
-            showContent = false
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            isPresented = false
-        }
-    }
-}
-
-// MARK: - Glass Action Button
-struct GlassActionButton: View, Identifiable {
-    let id = UUID()
-    let title: String
-    let role: ButtonRole?
-    let action: () -> Void
-    
-    @Environment(\.actionSheetDismiss) private var dismiss
-    
-    init(_ title: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
-        self.title = title
-        self.role = role
-        self.action = action
-    }
-    
-    var body: some View {
-        Button {
-            dismiss?()
-            action()
-        } label: {
-            Text(title)
-                .font(.body)
-                .foregroundColor(role == .destructive ? .red : .white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.white.opacity(0.001))
-        }
-        .buttonStyle(PlainButtonStyle())
-        .background(
-            Rectangle()
-                .fill(Color.white.opacity(0.05))
-                .opacity(0.5)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
-    }
-}
-
-// MARK: - Enhanced Modal Configurations (v6.0 Features)
-extension GlassModal {
-    // PropertyCard Modal Configuration
-    static func propertyCardModal<Content: View>(
-        isPresented: Binding<Bool>,
-        buildingName: String,
-        @ViewBuilder content: () -> Content
-    ) -> GlassModal<Content> {
-        GlassModal(
-            isPresented: isPresented,
-            title: buildingName,
-            subtitle: "Property Details",
-            size: .large,
-            style: .centered,
-            showCloseButton: true,
-            dismissOnBackgroundTap: true,
-            content: content
-        )
-    }
-    
-    // Dashboard Modal Configuration
-    static func dashboardModal<Content: View>(
-        isPresented: Binding<Bool>,
-        title: String,
-        @ViewBuilder content: () -> Content
-    ) -> GlassModal<Content> {
-        GlassModal(
-            isPresented: isPresented,
-            title: title,
-            size: .medium,
-            style: .bottom,
-            showCloseButton: true,
-            dismissOnBackgroundTap: true,
-            content: content
-        )
-    }
-    
-    // Full Screen Modal Configuration
-    static func fullScreenModal<Content: View>(
-        isPresented: Binding<Bool>,
-        title: String? = nil,
-        @ViewBuilder content: () -> Content
-    ) -> GlassModal<Content> {
-        GlassModal(
-            isPresented: isPresented,
-            title: title,
-            size: .fullScreen,
-            style: .fullScreen,
-            showCloseButton: title != nil,
-            dismissOnBackgroundTap: false,
-            content: content
-        )
-    }
-}
-
-// MARK: - Environment Key
-private struct ActionSheetDismissKey: EnvironmentKey {
-    static let defaultValue: (() -> Void)? = nil
-}
-
-extension EnvironmentValues {
-    var actionSheetDismiss: (() -> Void)? {
-        get { self[ActionSheetDismissKey.self] }
-        set { self[ActionSheetDismissKey.self] = newValue }
     }
 }
 
 // MARK: - View Extensions
 extension View {
-    func glassModal<Content: View>(
+    func glassModal<ModalContent: View>(
         isPresented: Binding<Bool>,
-        title: String? = nil,
-        size: GlassModalSize = .medium,
-        style: GlassModalStyle = .centered,
-        @ViewBuilder content: @escaping () -> Content
+        intensity: GlassIntensity = .regular,
+        onDismiss: (() -> Void)? = nil,
+        @ViewBuilder content: @escaping () -> ModalContent
     ) -> some View {
         self.overlay(
-            GlassModal(
-                isPresented: isPresented,
-                title: title,
-                size: size,
-                style: style,
-                content: content
-            )
+            Group {
+                if isPresented.wrappedValue {
+                    GlassModal(
+                        isPresented: isPresented,
+                        intensity: intensity,
+                        onDismiss: onDismiss,
+                        content: content
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                }
+            }
         )
     }
     
-    // MARK: - v6.0 Dashboard Modal Extensions
-    func propertyCardModal<Content: View>(
-        isPresented: Binding<Bool>,
-        buildingName: String,
-        @ViewBuilder content: @escaping () -> Content
-    ) -> some View {
-        self.overlay(
-            GlassModal.propertyCardModal(
-                isPresented: isPresented,
-                buildingName: buildingName,
-                content: content
-            )
-        )
-    }
-    
-    func dashboardModal<Content: View>(
+    func confirmationModal(
         isPresented: Binding<Bool>,
         title: String,
-        @ViewBuilder content: @escaping () -> Content
+        message: String,
+        confirmTitle: String = "Confirm",
+        cancelTitle: String = "Cancel",
+        onConfirm: @escaping () -> Void,
+        onCancel: @escaping () -> Void = {}
     ) -> some View {
         self.overlay(
-            GlassModal.dashboardModal(
-                isPresented: isPresented,
-                title: title,
-                content: content
-            )
-        )
-    }
-    
-    func fullScreenModal<Content: View>(
-        isPresented: Binding<Bool>,
-        title: String? = nil,
-        @ViewBuilder content: @escaping () -> Content
-    ) -> some View {
-        self.overlay(
-            GlassModal.fullScreenModal(
-                isPresented: isPresented,
-                title: title,
-                content: content
-            )
-        )
-    }
-    
-    func glassActionSheet(
-        isPresented: Binding<Bool>,
-        title: String,
-        message: String? = nil,
-        actions: [GlassActionButton]
-    ) -> some View {
-        self.overlay(
-            GlassActionSheet(
-                isPresented: isPresented,
-                title: title,
-                message: message,
-                actions: actions
-            )
+            Group {
+                if isPresented.wrappedValue {
+                    ConfirmationModal(
+                        isPresented: isPresented,
+                        title: title,
+                        message: message,
+                        confirmTitle: confirmTitle,
+                        cancelTitle: cancelTitle,
+                        onConfirm: onConfirm,
+                        onCancel: onCancel
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                }
+            }
         )
     }
 }
 
-// MARK: - Convenience Initializers
-extension GlassActionButton {
-    static func normal(_ title: String, action: @escaping () -> Void) -> GlassActionButton {
-        GlassActionButton(title, role: nil, action: action)
-    }
-    
-    static func destructive(_ title: String, action: @escaping () -> Void) -> GlassActionButton {
-        GlassActionButton(title, role: .destructive, action: action)
-    }
-    
-    static func cancel(_ action: @escaping () -> Void = {}) -> GlassActionButton {
-        GlassActionButton("Cancel", role: .cancel, action: action)
-    }
-}
-
-// MARK: - Preview
+// MARK: - Preview Support
+#if DEBUG
 struct GlassModal_Previews: PreviewProvider {
+    @State static var showModal = true
+    @State static var showConfirmation = false
+    
     static var previews: some View {
-        ZStack {
-            LinearGradient(
-                colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+        VStack {
+            Button("Show Modal") {
+                showModal = true
+            }
             
-            VStack {
-                Text("FrancoSphere v6.0")
-                    .font(.largeTitle)
-                    .foregroundColor(.white)
-                
-                Text("Glass Modal System")
-                    .font(.headline)
-                    .foregroundColor(.white.opacity(0.8))
+            Button("Show Confirmation") {
+                showConfirmation = true
             }
         }
-        .glassModal(
-            isPresented: .constant(true),
-            title: "Property Details",
-            size: .medium,
-            style: .centered
-        ) {
+        .glassModal(isPresented: $showModal) {
             VStack(spacing: 20) {
                 Text("Modal Content")
-                    .font(.headline)
+                    .font(.title)
                     .foregroundColor(.white)
                 
-                Text("This is an example of the enhanced glass modal system for FrancoSphere v6.0")
-                    .font(.body)
+                Text("This is a sample glass modal with beautiful animations and gesture support.")
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                 
-                Button("Action") {
-                    // Action
+                Button("Close") {
+                    showModal = false
                 }
-                .foregroundColor(.blue)
+                .padding()
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(12)
             }
             .padding()
         }
+        .confirmationModal(
+            isPresented: $showConfirmation,
+            title: "Delete Item",
+            message: "Are you sure you want to delete this item? This action cannot be undone.",
+            onConfirm: {
+                print("Confirmed")
+            }
+        )
+        .background(
+            LinearGradient(
+                colors: [.blue, .purple],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 }
+#endif
