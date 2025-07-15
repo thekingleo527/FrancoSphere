@@ -1,13 +1,11 @@
 //
 //  BuildingMetricsService.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  🚀 CORRECTED: Fixed all GRDB access patterns and async/await issues
-//  ✅ Uses existing GRDBManager methods (no direct dbPool access)
-//  ✅ Fixed ValueObservation patterns
-//  ✅ Fixed Combine publisher patterns
-//  ✅ Actor-based thread-safe calculations
-//  ✅ FIXED: convertTasksToMetrics made nonisolated and ContextualTask.assignedWorkerId property
+//  ✅ PHASE ALIGNED: Fixed async/Combine issues and aligned with current GRDB implementation
+//  ✅ FIXED: Removed non-existent methods and corrected observation patterns
+//  ✅ REAL DATA: Uses actual GRDBManager methods that exist
+//  ✅ PRESERVED: All Kevin's Rubin Museum data and operational assignments
 //
 
 import Foundation
@@ -40,7 +38,9 @@ public actor BuildingMetricsService {
     }
     
     private init() {
-        setupRealTimeObservations()
+        Task {
+            await setupRealTimeObservations()
+        }
     }
     
     // MARK: - Public Interface
@@ -102,16 +102,12 @@ public actor BuildingMetricsService {
         
         print("🔄 Setting up real-time observation for building: \(buildingId)")
         
-        // Use existing GRDBManager.observeTasks method and convert to metrics
+        // ✅ FIXED: Use proper Combine pattern with existing GRDBManager methods
         let observation = grdbManager.observeTasks(for: buildingId)
-            .compactMap { building in
-            do {
-                return try await calculateBuildingAnalytics(building)
-            } catch {
-                print("Error calculating analytics for \(building.id): \(error)")
-                return nil
+            .map { [weak self] tasks in
+                // Convert synchronously to avoid async issues in Combine
+                self?.convertTasksToMetricsSync(tasks, buildingId: buildingId) ?? CoreTypes.BuildingMetrics.empty
             }
-        }
             .eraseToAnyPublisher()
         
         // Cache the observation
@@ -284,7 +280,7 @@ public actor BuildingMetricsService {
         let urgentRows = try await grdbManager.query("""
             SELECT COUNT(*) as count
             FROM tasks
-            WHERE buildingId = ? AND urgencyLevel = 'high' 
+            WHERE buildingId = ? AND urgencyLevel IN ('high', 'critical', 'urgent') 
               AND isCompleted = 0 AND date(scheduledDate) = date('now')
         """, [buildingId])
         
@@ -314,50 +310,49 @@ public actor BuildingMetricsService {
         print("🔄 Setting up GRDB real-time observations for building metrics")
         
         // Use existing GRDBManager observation capabilities
-        Task {
-            do {
-                // Observe building changes to invalidate caches
-                grdbManager.observeBuildings()
-                    .sink(
-                        receiveCompletion: { completion in
-                            if case .failure(let error) = completion {
-                                print("❌ Building observation error: \(error)")
-                            }
-                        },
-                        receiveValue: { [weak self] _ in
-                            Task {
-                                await self?.invalidateAllCaches()
-                                print("🔄 Invalidated all caches due to building updates")
-                            }
-                        }
-                    )
-                    .store(in: &cancellables)
-                
-            } catch {
-                print("❌ Failed to setup real-time observations: \(error)")
-            }
-        }
+        grdbManager.observeBuildings()
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Building observation error: \(error)")
+                    }
+                },
+                receiveValue: { [weak self] _ in
+                    Task {
+                        await self?.invalidateAllCaches()
+                        print("🔄 Invalidated all caches due to building updates")
+                    }
+                }
+            )
+            .store(in: &cancellables)
     }
     
     // MARK: - Helper Methods
     
-    // FIXED: Made this method async and nonisolated to work with Combine publishers
-    nonisolated private func convertTasksToMetrics(_ tasks: [ContextualTask], buildingId: String) async -> CoreTypes.BuildingMetrics {
+    // ✅ FIXED: Made this method synchronous and nonisolated to work with Combine publishers
+    nonisolated private func convertTasksToMetricsSync(_ tasks: [ContextualTask], buildingId: String) -> CoreTypes.BuildingMetrics {
         // Convert ContextualTask array to metrics (for real-time observation)
         let totalTasks = tasks.count
         let completedTasks = tasks.filter { $0.isCompleted }.count
         let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 1.0
         
         // Count urgent tasks
-        let urgentTasks = tasks.filter { $0.urgency == .high || $0.urgency == .critical }.count
+        let urgentTasks = tasks.filter { task in
+            if let urgency = task.urgency {
+                return urgency == .high || urgency == .critical || urgency == .urgent
+            }
+            return false
+        }.count
         
         // Count overdue tasks
         let overdueTasks = tasks.filter { task in
             !task.isCompleted && (task.dueDate ?? Date.distantFuture) < Date()
         }.count
         
-        // Get unique workers - FIXED: Use assignedWorkerId instead of workerId
-        let uniqueWorkers = Set(tasks.compactMap { $0.assignedWorkerId }).count
+        // Get unique workers - use worker property if available
+        let uniqueWorkers = Set(tasks.compactMap { task in
+            task.worker?.id
+        }).count
         
         // Simplified metrics for real-time updates (performance optimized)
         return CoreTypes.BuildingMetrics(
@@ -426,7 +421,7 @@ extension BuildingMetricsService {
     
     /// Get Edwin's Stuyvesant Park metrics
     public func getStuyvesantParkMetrics() async throws -> CoreTypes.BuildingMetrics {
-        return try await calculateMetrics(for: "17") // Stuyvesant Park building ID
+        return try await calculateMetrics(for: "15") // Stuyvesant Park building ID
     }
     
     /// Get all FrancoSphere portfolio metrics
@@ -436,19 +431,6 @@ extension BuildingMetricsService {
     }
 }
 
-// MARK: - Combine Helper Extension for asyncMap
+// MARK: - End of BuildingMetricsService
 
-extension Publisher {
-    func asyncMap<T>(
-        _ transform: @escaping (Output) async -> T
-    ) -> Publishers.FlatMap<Future<T, Never>, Self> {
-        flatMap { value in
-            Future { promise in
-                Task {
-                    let output = await transform(value)
-                    promise(.success(output))
-                }
-            }
-        }
-    }
-}
+// Note: CoreTypes.BuildingMetrics.empty already exists in CoreTypes.swift

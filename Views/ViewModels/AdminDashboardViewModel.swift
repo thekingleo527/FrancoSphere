@@ -2,10 +2,11 @@
 //  AdminDashboardViewModel.swift
 //  FrancoSphere
 //
-//  ✅ V6.0: Fixed to align with current implementation phase
-//  ✅ ALIGNED: With existing services and data structures
-//  ✅ FIXED: ContextualTask.isCompleted property usage
-//  ✅ CORRECTED: Service method calls and error handling
+//  ✅ V6.0: Fixed compilation errors and aligned with current implementation
+//  ✅ FIXED: async let try patterns for throwing vs non-throwing methods
+//  ✅ FIXED: getBuildingIntelligence optional binding issue
+//  ✅ FIXED: ContextualTask property usage (isCompleted vs status)
+//  ✅ ALIGNED: With GRDB-based services and actor patterns
 //
 
 import Foundation
@@ -59,17 +60,17 @@ class AdminDashboardViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            // ✅ FIXED: Use proper async/await without unnecessary try for non-throwing methods
-            async let buildingsResult = buildingService.getAllBuildings()
-            async let workersResult = workerService.getAllActiveWorkers()
-            async let tasksResult = loadAllTasks()
+            // ✅ FIXED: All three service methods throw - need try for all
+            async let buildingsResult = try buildingService.getAllBuildings()    // throws
+            async let workersResult = try workerService.getAllActiveWorkers()    // throws
+            async let tasksResult = try taskService.getAllTasks()                // throws
             
-            let (buildings, workers, tasks) = await (buildingsResult, workersResult, tasksResult)
+            let (buildings, workers, tasks) = await (try buildingsResult, try workersResult, try tasksResult)
             
             await MainActor.run {
                 self.buildings = buildings
                 self.activeWorkers = workers
-                // ✅ FIXED: Use isCompleted property instead of status
+                // ✅ FIXED: Use isCompleted property instead of status string comparison
                 self.ongoingTasks = tasks.filter { !$0.isCompleted }
                 self.isLoading = false
             }
@@ -84,17 +85,6 @@ class AdminDashboardViewModel: ObservableObject {
             print("🚨 Failed to load admin dashboard data: \(error)")
         }
     }
-    
-    /// Helper method to load all tasks with proper error handling
-    private func loadAllTasks() async -> [ContextualTask] {
-        do {
-            // ✅ FIXED: Use try await for TaskService methods that throw
-            return try await taskService.getAllTasks()
-        } catch {
-            print("⚠️ Failed to load tasks, using empty array: \(error)")
-            return []
-        }
-    }
 
     /// Fetches the detailed intelligence DTO for a specific building
     func fetchIntelligence(for buildingId: CoreTypes.BuildingID) async {
@@ -107,22 +97,19 @@ class AdminDashboardViewModel: ObservableObject {
         selectedBuildingIntelligence = nil
         
         do {
-            // ✅ FIXED: Use proper service method that exists
-            if let intelligence = try await buildingService.getBuildingIntelligence(for: buildingId) {
-                await MainActor.run {
-                    self.selectedBuildingIntelligence = intelligence
-                    self.isLoadingIntelligence = false
-                }
-                print("✅ Intelligence loaded for building \(buildingId)")
-            } else {
-                await MainActor.run {
-                    self.isLoadingIntelligence = false
-                }
-                print("⚠️ No intelligence data available for building \(buildingId)")
+            // ✅ FIXED: getBuildingIntelligence returns non-optional BuildingIntelligenceDTO
+            let intelligence = try await buildingService.getBuildingIntelligence(for: buildingId)
+            
+            await MainActor.run {
+                self.selectedBuildingIntelligence = intelligence
+                self.isLoadingIntelligence = false
             }
+            print("✅ Intelligence loaded for building \(buildingId)")
+            
         } catch {
             await MainActor.run {
                 self.isLoadingIntelligence = false
+                self.errorMessage = "Failed to fetch intelligence for building \(buildingId): \(error.localizedDescription)"
             }
             print("🚨 Failed to fetch intelligence for building \(buildingId): \(error)")
         }
@@ -131,6 +118,7 @@ class AdminDashboardViewModel: ObservableObject {
     /// Clears the selected building's intelligence data
     func clearIntelligence() {
         selectedBuildingIntelligence = nil
+        errorMessage = nil
         print("🧹 Cleared selected building intelligence")
     }
     

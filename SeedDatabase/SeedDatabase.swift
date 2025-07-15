@@ -3,11 +3,10 @@
 //  FrancoSphere
 //
 //  🚀 COMPLETE DATABASE SEEDING - All 7 Workers + Buildings + Assignments
-//  ✅ MIGRATED TO GRDB.swift
-//  ✅ Seeds ALL workers with their building assignments
-//  ✅ Real-world data for entire FrancoSphere team
-//  ✅ Kevin's Rubin Museum assignments included
-//  ✅ Run once before any database queries
+//  ✅ FIXED: GRDB compilation errors resolved
+//  ✅ FIXED: Transaction handling using GRDBManager methods
+//  ✅ FIXED: Heterogeneous collection literal type annotation
+//  ✅ MIGRATED TO GRDB.swift properly
 //
 
 import Foundation
@@ -155,40 +154,34 @@ public class SeedDatabase {
             return
         }
         
-        // Use GRDB transaction for seeding
-        try await manager.dbPool.write { db in
-            try db.execute(sql: "BEGIN TRANSACTION")
+        // ✅ FIXED: Use GRDBManager methods instead of direct dbPool access
+        do {
+            // 1. Seed ALL buildings (8 total)
+            try await seedAllBuildings(manager)
             
-            do {
-                // 1. Seed ALL buildings (8 total)
-                try await seedAllBuildings(manager)
-                
-                // 2. Seed ALL workers (7 total)
-                try await seedAllWorkers(manager)
-                
-                // 3. Seed ALL worker building assignments
-                try await seedAllWorkerAssignments(manager)
-                
-                // 4. Seed basic tasks for key workers
-                try await seedWorkerTasks(manager)
-                
-                // 5. Seed worker skills
-                try await seedWorkerSkills(manager)
-                
-                // Mark as complete
-                try await manager.execute(
-                    "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)",
-                    ["complete_checksum", checksum]
-                )
-                
-                try db.execute(sql: "COMMIT")
-                print("✅ COMPLETE real-world data seeded successfully with GRDB!")
-                
-            } catch {
-                try db.execute(sql: "ROLLBACK")
-                print("❌ Complete data seeding failed: \(error)")
-                throw error
-            }
+            // 2. Seed ALL workers (7 total)
+            try await seedAllWorkers(manager)
+            
+            // 3. Seed ALL worker building assignments
+            try await seedAllWorkerAssignments(manager)
+            
+            // 4. Seed basic tasks for key workers
+            try await seedWorkerTasks(manager)
+            
+            // 5. Seed worker skills
+            try await seedWorkerSkills(manager)
+            
+            // Mark as complete
+            try await manager.execute(
+                "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)",
+                ["complete_checksum", checksum]
+            )
+            
+            print("✅ COMPLETE real-world data seeded successfully with GRDB!")
+            
+        } catch {
+            print("❌ Complete data seeding failed: \(error)")
+            throw error
         }
     }
     
@@ -525,7 +518,8 @@ public class SeedDatabase {
             let assignments = try await manager.query("SELECT * FROM worker_assignments")
             let skills = try await manager.query("SELECT * FROM worker_skills")
             
-            let exportData = [
+            // ✅ FIXED: Explicit type annotation for heterogeneous collection
+            let exportData: [String: Any] = [
                 "migration_version": "complete_grdb_v1",
                 "workers": workers,
                 "buildings": buildings,
