@@ -2,6 +2,7 @@
 //  V003_WorkerAssignments.swift
 //  FrancoSphere
 //
+//  ✅ FIXED: Added missing 'parameters:' argument labels for all manager calls
 //  ✅ V6.0: GRDB Migration - Updated for GRDB-powered SQLiteManager
 //  ✅ Maintains Edwin's exact building assignments from CSV
 //  ✅ Uses GRDB-compatible parameter binding
@@ -107,11 +108,12 @@ struct V003_WorkerAssignments {
         
         // Insert all assignments with GRDB-compatible parameter binding
         for assignment in allAssignments {
+            // ✅ FIXED: Added missing parameters: label
             try await manager.execute("""
                 INSERT OR IGNORE INTO worker_assignments 
                 (worker_id, building_id, worker_name, is_active, is_primary, assigned_date) 
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, [
+            """, parameters: [
                 assignment.workerId,
                 assignment.buildingId,
                 assignment.workerName,
@@ -211,6 +213,7 @@ extension V003_WorkerAssignments {
     static func getAssignmentReport() async throws {
         let manager = SQLiteManager.shared
         
+        // ✅ FIXED: Added missing parameters: label
         let report = try await manager.query("""
             SELECT 
                 wa.worker_name,

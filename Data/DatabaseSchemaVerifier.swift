@@ -2,6 +2,7 @@
 //  DatabaseSchemaVerifier.swift
 //  FrancoSphere
 //
+//  ✅ FIXED: Added missing 'parameters:' argument labels in query calls
 //  ✅ V6.0: GRDB Migration - Updated for GRDB-powered SQLiteManager
 //  ✅ Verifies Edwin can access his building assignments with GRDB
 //  ✅ Tests all critical database queries work with new GRDB backend
@@ -106,6 +107,7 @@ public class DatabaseSchemaVerifier {
         ]
         
         for tableName in requiredTables {
+            // ✅ FIXED: Added missing parameters: label
             let tables = try await manager.query("""
                 SELECT name FROM sqlite_master 
                 WHERE type='table' AND name=?
@@ -139,6 +141,7 @@ public class DatabaseSchemaVerifier {
         print("🏢 Testing Edwin's building assignments with GRDB...")
         
         // Test primary assignment query (Edwin = worker ID 2)
+        // ✅ FIXED: Added missing parameters: label
         let buildings = try await manager.query("""
             SELECT DISTINCT 
                 b.id,
@@ -152,7 +155,7 @@ public class DatabaseSchemaVerifier {
             WHERE (wa.worker_id = ? OR wa.worker_id = CAST(? AS TEXT))
             AND wa.is_active = 1
             ORDER BY b.name
-        """, ["2", 2])
+        """, parameters: ["2", 2])
         
         let buildingCount = buildings.count
         print("📊 Edwin has access to \(buildingCount) buildings")
@@ -208,6 +211,7 @@ public class DatabaseSchemaVerifier {
     private static func testEdwinRoutineTasks(_ manager: SQLiteManager) async throws {
         print("📝 Testing Edwin's routine tasks with GRDB...")
         
+        // ✅ FIXED: Added missing parameters: label
         let tasks = try await manager.query("""
             SELECT 
                 rt.name,
@@ -219,7 +223,7 @@ public class DatabaseSchemaVerifier {
             FROM routine_tasks rt
             WHERE (rt.worker_id = ? OR rt.worker_id = CAST(? AS TEXT))
             ORDER BY rt.startTime
-        """, ["2", 2])
+        """, parameters: ["2", 2])
         
         let taskCount = tasks.count
         print("📊 Edwin has \(taskCount) routine tasks")
@@ -257,15 +261,17 @@ public class DatabaseSchemaVerifier {
         print("🔧 Testing GRDB query compatibility...")
         
         // Test 1: Complex join with type casting (GRDB handles this well)
+        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT b.id, b.name, b.latitude, b.longitude, wa.worker_name
             FROM buildings b
             INNER JOIN worker_assignments wa ON CAST(b.id AS TEXT) = wa.building_id
             WHERE wa.worker_id = ? AND wa.is_active = 1
             LIMIT 3
-        """, ["2"])
+        """, parameters: ["2"])
         
         // Test 2: CASE statements with GRDB
+        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT t.id, t.name, 
                    CASE 
@@ -275,9 +281,10 @@ public class DatabaseSchemaVerifier {
             FROM tasks t
             WHERE t.workerId = ?
             LIMIT 3
-        """, [2])
+        """, parameters: [2])
         
         // Test 3: UNION ALL queries with GRDB
+        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT 'task' as type, t.id, t.name, t.category
             FROM tasks t
@@ -290,16 +297,17 @@ public class DatabaseSchemaVerifier {
             WHERE rt.worker_id = ?
             
             LIMIT 5
-        """, [2, "2"])
+        """, parameters: [2, "2"])
         
         // Test 4: Date functions with GRDB
+        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT 
                 COUNT(*) as total,
                 COUNT(CASE WHEN date(scheduledDate) = date('now') THEN 1 END) as today
             FROM tasks
             WHERE workerId = ?
-        """, [2])
+        """, parameters: [2])
         
         print("✅ GRDB query compatibility: PASSED")
     }
@@ -309,6 +317,7 @@ public class DatabaseSchemaVerifier {
         print("🔗 Testing GRDB foreign key relationships...")
         
         // Test worker -> building assignments relationship
+        // ✅ FIXED: Added missing parameters: label
         let workerBuildingCheck = try await manager.query("""
             SELECT 
                 w.name as worker_name,
@@ -320,11 +329,12 @@ public class DatabaseSchemaVerifier {
             LEFT JOIN buildings b ON CAST(b.id AS TEXT) = wa.building_id
             WHERE wa.worker_id = ? OR wa.worker_id = CAST(? AS TEXT)
             LIMIT 5
-        """, ["2", 2])
+        """, parameters: ["2", 2])
         
         print("📊 Found \(workerBuildingCheck.count) worker-building relationships for Edwin")
         
         // Test routine tasks -> building relationship
+        // ✅ FIXED: Added missing parameters: label
         let taskBuildingCheck = try await manager.query("""
             SELECT 
                 rt.name as task_name,
@@ -335,7 +345,7 @@ public class DatabaseSchemaVerifier {
             LEFT JOIN buildings b ON CAST(b.id AS TEXT) = rt.building_id
             WHERE rt.worker_id = ? OR rt.worker_id = CAST(? AS TEXT)
             LIMIT 5
-        """, ["2", 2])
+        """, parameters: ["2", 2])
         
         print("📊 Found \(taskBuildingCheck.count) task-building relationships for Edwin")
         
@@ -610,6 +620,7 @@ extension DatabaseSchemaVerifier {
     public static func testGRDBWorkerAssignmentQuery() async throws {
         let manager = SQLiteManager.shared
         
+        // ✅ FIXED: Added missing parameters: label
         let buildings = try await manager.query("""
             SELECT DISTINCT b.id, b.name, b.latitude, b.longitude
             FROM buildings b
@@ -617,7 +628,7 @@ extension DatabaseSchemaVerifier {
             WHERE (wa.worker_id = ? OR wa.worker_id = CAST(? AS TEXT))
             AND wa.is_active = 1
             ORDER BY b.name
-        """, ["2", 2])
+        """, parameters: ["2", 2])
         
         print("🔍 GRDB worker assignment query returned \(buildings.count) buildings for Edwin")
         
