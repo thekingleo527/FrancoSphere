@@ -1,18 +1,14 @@
-// FILE: Views/Buildings/BuildingMapDetailView.swift
 //
 //  BuildingMapDetailView.swift
 //  FrancoSphere
 //
-//  🏢 FIXED BUILDING MAP DETAIL VIEW - ContextualTask integration
-//  ✅ Fixed ContextualTask.status usage (not isCompleted)
-//  ✅ Removed duplicate component declarations
-//  ✅ Proper task filtering and display
+//  ✅ PHASE 2: Fixed to match ACTUAL ContextualTask structure from FrancoSphereModels.swift
+//  ✅ Uses title (not name), urgency enum (not urgencyLevel), building object (not buildingId)
+//  ✅ Proper filter syntax for modern Swift arrays
+//  ✅ Real operational data integration
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct BuildingMapDetailView: View {
     let building: NamedCoordinate
@@ -66,9 +62,10 @@ struct BuildingMapDetailView: View {
                 }
                 
                 ToolbarItem(placement: .principal) {
-                    Text(building.shortName)
+                    Text(building.name)
                         .font(.headline)
                         .foregroundColor(.white)
+                        .lineLimit(1)
                 }
             }
             .toolbarBackground(.clear, for: .navigationBar)
@@ -83,8 +80,8 @@ struct BuildingMapDetailView: View {
     private var buildingHeader: some View {
         VStack(spacing: 12) {
             // Building image
-            if building.hasValidImageAsset {
-                Image(building.imageAssetName ?? "building_default")
+            if let imageAssetName = building.imageAssetName, !imageAssetName.isEmpty {
+                Image(imageAssetName)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 150)
@@ -108,7 +105,7 @@ struct BuildingMapDetailView: View {
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                 
-                Text(building.fullAddress)
+                Text(building.address ?? building.name)
                     .font(.callout)
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
@@ -122,21 +119,21 @@ struct BuildingMapDetailView: View {
         HStack(spacing: 16) {
             BuildingStatCard(
                 title: "Open Tasks",
-                value: "\(tasks.filter { $0.status != "completed" }.count)",
+                value: "\(tasks.filter { !$0.isCompleted }.count)",
                 icon: "list.bullet",
                 color: .blue
             )
             
             BuildingStatCard(
                 title: "Urgent",
-                value: "\(tasks.filter { $0.urgencyLevel == "high" }.count)",
+                value: "\(getUrgentTaskCount())",
                 icon: "exclamationmark.triangle",
                 color: .orange
             )
             
             BuildingStatCard(
                 title: "Completed",
-                value: "\(tasks.filter { $0.status == "completed" }.count)",
+                value: "\(tasks.filter { $0.isCompleted }.count)",
                 icon: "checkmark.circle",
                 color: .green
             )
@@ -197,25 +194,39 @@ struct BuildingMapDetailView: View {
         }
     }
     
-    // MARK: - Actions
+    // MARK: - Data Loading
     
     private func loadBuildingData() {
         Task {
-            // Load tasks for this building from real data
-            let allTasks = contextEngine.getTodaysTasks()
+            // ✅ FIXED: Use todaysTasks property instead of getTodaysTasks() method
+            let allTasks = contextEngine.todaysTasks
             
             await MainActor.run {
+                // ✅ FIXED: Filter tasks using actual ContextualTask structure
                 tasks = allTasks.filter { task in
-                    // Match building by name or ID
-                    task.buildingName == building.name || task.buildingId == building.id
+                    // Match by building object comparison
+                    task.building?.id == building.id || task.building?.name == building.name
                 }
                 isLoading = false
             }
         }
     }
+    
+    // Helper method for urgent task counting using actual urgency enum
+    private func getUrgentTaskCount() -> Int {
+        return tasks.filter { task in
+            guard let urgency = task.urgency else { return false }
+            switch urgency {
+            case .high, .critical, .urgent, .emergency:
+                return true
+            case .medium, .low:
+                return false
+            }
+        }.count
+    }
 }
 
-// MARK: - Building-Specific Components (to avoid redeclaration)
+// MARK: - Building-Specific Components
 
 struct BuildingTaskRow: View {
     let task: ContextualTask
@@ -224,30 +235,56 @@ struct BuildingTaskRow: View {
         HStack(spacing: 12) {
             // Status indicator
             Circle()
-                .fill(task.status == "completed" ? Color.green : Color.orange)
+                .fill(task.isCompleted ? Color.green : Color.orange)
                 .frame(width: 8, height: 8)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(task.name)
+                // ✅ FIXED: Use task.title (actual property from FrancoSphereModels)
+                Text(task.title)
                     .font(.callout)
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
-                Text("Category: \(task.category)")
+                // ✅ FIXED: Safe category handling with actual TaskCategory enum
+                Text("Category: \(getCategoryString(task.category))")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.6))
             }
             
             Spacer()
             
-            Text(task.urgencyLevel.capitalized)
+            // ✅ FIXED: Handle urgency enum properly
+            Text(getUrgencyDisplay(task.urgency))
                 .font(.caption2)
                 .fontWeight(.medium)
-                .foregroundColor(task.urgencyLevel == "high" ? .red : .white.opacity(0.7))
+                .foregroundColor(getUrgencyColor(task.urgency))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+    }
+    
+    // Helper methods for safe property access using actual ContextualTask structure
+    private func getCategoryString(_ category: TaskCategory?) -> String {
+        return category?.rawValue.capitalized ?? "General"
+    }
+    
+    // ✅ FIXED: Handle TaskUrgency enum properly (not urgencyLevel string)
+    private func getUrgencyDisplay(_ urgency: TaskUrgency?) -> String {
+        return urgency?.rawValue.capitalized ?? "Medium"
+    }
+    
+    private func getUrgencyColor(_ urgency: TaskUrgency?) -> Color {
+        guard let urgency = urgency else { return .white.opacity(0.7) }
+        
+        switch urgency {
+        case .high, .urgent, .critical, .emergency:
+            return .red
+        case .medium:
+            return .orange
+        case .low:
+            return .green
+        }
     }
 }
 

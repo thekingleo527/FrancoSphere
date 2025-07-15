@@ -2,11 +2,11 @@
 //  TaskTimelineRow.swift
 //  FrancoSphere
 //
-//  🔧 FIXED: All compilation errors resolved
-//  ✅ Fixed to match exact current ContextualTask constructor
-//  ✅ Uses task.name property (not task.title)
-//  ✅ Added missing .emergency case to switch statement
-//  ✅ Fixed TaskRecurrence.none reference
+//  ✅ FIXED: All compilation errors resolved for ACTUAL ContextualTask structure
+//  ✅ Uses task.title property (from FrancoSphereModels.swift)
+//  ✅ Fixed constructor to match actual ContextualTask init
+//  ✅ Handles optional urgency properly
+//  ✅ Uses isCompleted boolean instead of status string
 //
 
 import SwiftUI
@@ -18,16 +18,17 @@ struct TaskTimelineRow: View {
         HStack(spacing: 12) {
             // Status indicator
             Circle()
-                .fill(task.status == "completed" ? Color.green : Color.orange)
+                .fill(task.isCompleted ? Color.green : Color.orange)
                 .frame(width: 12, height: 12)
             
             VStack(alignment: .leading, spacing: 4) {
-                // ✅ FIXED: Using task.name (matches actual ContextualTask property)
-                Text(task.name)
+                // ✅ FIXED: Using task.title (actual property from FrancoSphereModels)
+                Text(task.title)
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text(task.description)
+                // ✅ FIXED: Safe unwrapping of optional description
+                Text(task.description ?? "No description")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
@@ -41,14 +42,24 @@ struct TaskTimelineRow: View {
             
             Spacer()
             
-            // Urgency badge
-            Text(task.urgency.rawValue.capitalized)
-                .font(.caption2)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(urgencyColor(for: task.urgency))
-                .foregroundColor(.white)
-                .cornerRadius(8)
+            // Urgency badge with safe handling of optional urgency
+            if let urgency = task.urgency {
+                Text(urgency.rawValue.capitalized)
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(urgencyColor(for: urgency))
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            } else {
+                Text("Medium")
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.orange)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            }
         }
         .padding(.vertical, 8)
     }
@@ -75,17 +86,32 @@ struct TaskTimelineRow_Previews: PreviewProvider {
     static var previews: some View {
         TaskTimelineRow(
             task: ContextualTask(
-                // ✅ FIXED: Using exact constructor that matches current codebase
+                // ✅ FIXED: Using actual ContextualTask constructor from FrancoSphereModels.swift
                 id: "preview-1",
-                name: "Sample Task",
+                title: "Sample Task",                    // ✅ Correct parameter name
                 description: "A sample task for preview",
-                buildingId: "1",
-                workerId: "1",
+                isCompleted: false,
+                completedDate: nil,
+                scheduledDate: Date(),
+                dueDate: Date(),
                 category: .maintenance,
                 urgency: .medium,
-                isCompleted: false,
-                dueDate: Date(),
-                estimatedDuration: 3600
+                building: NamedCoordinate(              // ✅ Use NamedCoordinate object
+                    id: "1",
+                    name: "Sample Building",
+                    latitude: 40.7128,
+                    longitude: -74.0060
+                ),
+                worker: WorkerProfile(                  // ✅ Use WorkerProfile object
+                    id: "1",
+                    name: "Sample Worker",
+                    email: "worker@test.com",
+                    phoneNumber: "555-0123",
+                    role: .worker,
+                    skills: [],
+                    certifications: [],
+                    hireDate: Date()
+                )
             )
         )
         .padding()

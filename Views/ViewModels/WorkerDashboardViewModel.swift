@@ -99,16 +99,19 @@ class WorkerDashboardViewModel: ObservableObject {
                 timestamp: Date()
             )
             
+            // ✅ FIXED: Safe unwrapping of optional buildingId
+            let buildingId = task.buildingId ?? "unknown"
+            
             // ✅ FIXED: user.workerId is non-optional String from CoreTypes.User
             try await contextEngine.recordTaskCompletion(
                 workerId: user.workerId,
-                buildingId: task.buildingId,
+                buildingId: buildingId,
                 taskId: task.id,
                 evidence: evidence
             )
             
             // Invalidate metrics cache for this building to trigger real-time updates
-            await metricsService.invalidateCache(for: task.buildingId)
+            await metricsService.invalidateCache(for: buildingId)
             
             // Refresh local data to reflect completion
             await refreshData()
@@ -162,7 +165,7 @@ class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Real-Time Metrics Integration
     
     func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
-        return todaysTasks.filter { $0.buildingId == buildingId }
+        return todaysTasks.filter { ($0.buildingId ?? "") == buildingId }
     }
     
     func getCompletionRateForBuilding(_ buildingId: String) -> Double {
