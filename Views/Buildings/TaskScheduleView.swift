@@ -669,6 +669,8 @@ struct TaskRow: View {
         case .utilities:    return "bolt"
         case .emergency:    return "exclamationmark.triangle"
         case .renovation:   return "house"
+        case .sanitation:   return "trash"
+        case .sanitation:   return "trash"
         }
     }
 }
@@ -779,6 +781,7 @@ struct FilterView: View {
         case .utilities:    return .yellow
         case .emergency:    return .red
         case .renovation:   return .brown
+        case .sanitation:   return .green
         }
     }
     
@@ -794,6 +797,8 @@ struct FilterView: View {
         case .utilities:    return "bolt"
         case .emergency:    return "exclamationmark.triangle"
         case .renovation:   return "house"
+        case .sanitation:   return "trash"
+        case .sanitation:   return "trash"
         }
     }
 }

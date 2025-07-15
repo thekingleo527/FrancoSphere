@@ -105,3 +105,59 @@ actor BuildingService {
         }
     }
 }
+
+    // MARK: - Inventory Management
+    
+    func getInventoryItems(for buildingId: String) async throws -> [CoreTypes.InventoryItem] {
+        let query = """
+            SELECT * FROM inventory WHERE buildingId = ? ORDER BY name
+        """
+        
+        let rows = try await GRDBManager.shared.query(query, [buildingId])
+        return rows.compactMap { row in
+            guard let name = row["name"] as? String,
+                  let categoryStr = row["category"] as? String,
+                  let category = CoreTypes.InventoryCategory(rawValue: categoryStr),
+                  let quantity = row["quantity"] as? Int,
+                  let minThreshold = row["minimumQuantity"] as? Int,
+                  let location = row["location"] as? String else {
+                return nil
+            }
+            
+            return CoreTypes.InventoryItem(
+                id: String(row["id"] as? Int64 ?? 0),
+                name: name,
+                category: category,
+                quantity: quantity,
+                minThreshold: minThreshold,
+                location: location,
+                currentStock: quantity,
+                minimumStock: minThreshold,
+                unit: row["unit"] as? String ?? "unit",
+                restockStatus: quantity < minThreshold ? .lowStock : .inStock
+            )
+        }
+    }
+    
+    func saveInventoryItem(_ item: CoreTypes.InventoryItem, buildingId: String) async throws {
+        let query = """
+            INSERT OR REPLACE INTO inventory 
+            (id, buildingId, name, quantity, unit, minimumQuantity, category, location)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        try await GRDBManager.shared.execute(query, [
+            item.id, buildingId, item.name, item.quantity, item.unit,
+            item.minThreshold, item.category.rawValue, item.location
+        ])
+    }
+    
+    func deleteInventoryItem(id: String) async throws {
+        let query = "DELETE FROM inventory WHERE id = ?"
+        try await GRDBManager.shared.execute(query, [id])
+    }
+    
+    func updateInventoryItemQuantity(id: String, newQuantity: Int) async throws {
+        let query = "UPDATE inventory SET quantity = ? WHERE id = ?"
+        try await GRDBManager.shared.execute(query, [newQuantity, id])
+    }

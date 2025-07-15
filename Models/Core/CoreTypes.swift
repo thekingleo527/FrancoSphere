@@ -77,6 +77,7 @@ public struct CoreTypes {
         case renovation = "Renovation"
         case landscaping = "Landscaping"
         case security = "Security"
+        case sanitation = "Sanitation"
     }
     
     public enum TaskUrgency: String, Codable, CaseIterable {
@@ -121,6 +122,10 @@ public struct CoreTypes {
         public let estimatedDuration: TimeInterval
         public let recurrence: TaskRecurrence
         public let notes: String?
+        public let startTime: Date?
+        public let endTime: Date?
+        public let isPastDue: Bool
+        public let status: VerificationStatus
         
         public init(
             id: String = UUID().uuidString,
@@ -134,7 +139,7 @@ public struct CoreTypes {
             dueDate: Date? = nil,
             estimatedDuration: TimeInterval = 3600,
             recurrence: TaskRecurrence = .none,
-            notes: String? = nil
+            notes: String? = nil, startTime: Date? = nil, endTime: Date? = nil, isPastDue: Bool = false, status: VerificationStatus = .pending
         ) {
             self.id = id
             self.title = title
@@ -148,6 +153,10 @@ public struct CoreTypes {
             self.estimatedDuration = estimatedDuration
             self.recurrence = recurrence
             self.notes = notes
+            self.startTime = startTime
+            self.endTime = endTime
+            self.isPastDue = isPastDue
+            self.status = status
         }
     }
     
@@ -434,14 +443,22 @@ public struct CoreTypes {
         public let quantity: Int
         public let minThreshold: Int
         public let location: String
+        public let currentStock: Int
+        public let minimumStock: Int
+        public let unit: String
+        public let restockStatus: RestockStatus
         
-        public init(id: String = UUID().uuidString, name: String, category: InventoryCategory, quantity: Int, minThreshold: Int, location: String) {
+        public init(id: String = UUID().uuidString, name: String, category: InventoryCategory, quantity: Int, minThreshold: Int, location: String, currentStock: Int? = nil, minimumStock: Int? = nil, unit: String = "unit", restockStatus: RestockStatus = .inStock) {
             self.id = id
             self.name = name
             self.category = category
             self.quantity = quantity
             self.minThreshold = minThreshold
             self.location = location
+            self.currentStock = currentStock ?? quantity
+            self.minimumStock = minimumStock ?? minThreshold
+            self.unit = unit
+            self.restockStatus = restockStatus
         }
     }
     

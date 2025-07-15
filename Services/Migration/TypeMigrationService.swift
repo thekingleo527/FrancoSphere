@@ -29,7 +29,7 @@ actor TypeMigrationService {
         print("🔧 Beginning type migration from Int64 to String for all primary keys...")
         
         // Use GRDB transaction to ensure all updates succeed or none do.
-        try await grdbManager.dbPool.write { db in
+        try await grdbManager.GRDBManager.shared.isDatabaseReady().write { db in
             do {
                 // A list of tables and their ID columns to be migrated.
                 let tablesToMigrate = [

@@ -2,9 +2,8 @@
 //  MapBackgroundView.swift
 //  FrancoSphere
 //
-//  ✅ V6.0 REFACTOR: All compilation errors resolved.
-//  ✅ FIXED: Uses the modern, block-based MapKit API for annotations.
-//  ✅ FIXED: `BuildingMarker` is now a standard SwiftUI View, resolving protocol errors.
+//  ✅ V6.0 FIXED: All compilation errors resolved
+//  ✅ FIXED: Proper State/Binding usage in SwiftUI
 //
 
 import SwiftUI
@@ -12,16 +11,13 @@ import MapKit
 
 struct MapBackgroundView: View {
     let buildings: [NamedCoordinate]
-    @State var region: MKCoordinateRegion
+    @Binding var region: MKCoordinateRegion
     let currentBuildingId: String?
     let onBuildingTap: ((NamedCoordinate) -> Void)?
 
     var body: some View {
-        // ✅ Use the modern Map view with a ViewBuilder for annotations
         Map(coordinateRegion: $region, annotationItems: buildings) { building in
-            // Use MapAnnotation, which is the correct type for this initializer
             MapAnnotation(coordinate: building.coordinate) {
-                // The content of the annotation is now a standard SwiftUI View
                 BuildingMarker(
                     building: building,
                     isCurrent: currentBuildingId == building.id,
@@ -33,7 +29,7 @@ struct MapBackgroundView: View {
     }
 }
 
-// MARK: - Inline BuildingMarker Component (No longer needs to conform to a special protocol)
+// MARK: - Building Marker Component
 
 private struct BuildingMarker: View {
     let building: NamedCoordinate
@@ -43,7 +39,6 @@ private struct BuildingMarker: View {
     var body: some View {
         Button(action: onTap) {
             ZStack {
-                // Green halo for current building
                 if isCurrent {
                     Circle()
                         .stroke(Color.green, lineWidth: 3)
@@ -51,16 +46,13 @@ private struct BuildingMarker: View {
                         .opacity(0.6)
                 }
 
-                // Main marker
                 Circle()
                     .fill(isCurrent ? Color.green.opacity(0.3) : Color.blue.opacity(0.3))
                     .frame(width: 50, height: 50)
                     .overlay(
-                        Circle()
-                            .stroke(isCurrent ? Color.green : Color.blue, lineWidth: 2)
+                        Circle().stroke(isCurrent ? Color.green : Color.blue, lineWidth: 2)
                     )
 
-                // Building thumbnail or icon
                 if let assetName = building.imageAssetName,
                    !assetName.isEmpty,
                    let uiImage = UIImage(named: assetName) {
@@ -75,7 +67,6 @@ private struct BuildingMarker: View {
                         .foregroundColor(isCurrent ? .green : .blue)
                 }
 
-                // Active indicator dot
                 if isCurrent {
                     Circle()
                         .fill(Color.green)
@@ -100,7 +91,6 @@ private struct BuildingMarker: View {
 // MARK: - Convenience Initializers
 
 extension MapBackgroundView {
-    /// Initializer without tap handling (for background use)
     init(buildings: [NamedCoordinate],
          region: Binding<MKCoordinateRegion>,
          currentBuildingId: String? = nil) {
@@ -110,7 +100,6 @@ extension MapBackgroundView {
         self.onBuildingTap = nil
     }
 
-    /// Initializer with tap handling
     init(buildings: [NamedCoordinate],
          region: Binding<MKCoordinateRegion>,
          currentBuildingId: String? = nil,
