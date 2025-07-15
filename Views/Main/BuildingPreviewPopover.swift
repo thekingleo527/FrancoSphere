@@ -318,27 +318,27 @@ struct SecondaryPreviewButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
-}
-
-// MARK: - Preview
-
-struct BuildingPreviewPopover_Previews: PreviewProvider {
-    static var previews: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            
-            BuildingPreviewPopover(
-                building: NamedCoordinate(
-                    id: "1",
-                    name: "12 West 18th Street",
-                    latitude: 40.7397,
-                    longitude: -73.9944,
-                    imageAssetName: "12_West_18th_Street"
-                ),
-                onDetails: { print("View details tapped") },
-                onDismiss: { print("Dismiss tapped") }
-            )
+    
+    // MARK: - Preview
+    
+    struct BuildingPreviewPopover_Previews: PreviewProvider {
+        static var previews: some View {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                BuildingPreviewPopover(
+                    building: NamedCoordinate(
+                        id: "1",
+                        name: "12 West 18th Street",
+                        latitude: 40.7397,
+                        longitude: -73.9944,
+                        imageAssetName: "12_West_18th_Street"
+                    ),
+                    onDetails: { print("View details tapped") },
+                    onDismiss: { print("Dismiss tapped") }
+                )
+            }
+            .preferredColorScheme(.dark)
         }
-        .preferredColorScheme(.dark)
     }
 }
