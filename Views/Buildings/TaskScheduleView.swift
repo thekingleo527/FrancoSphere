@@ -2,10 +2,9 @@
 //  TaskScheduleView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With actual ContextualTask structure from codebase analysis
-//  ✅ INTEGRATED: Proper constructor and property access
-//  ✅ EXHAUSTIVE: All switch statements handle all cases
+//  ✅ FIXED: Removed duplicate TaskFormView (exists in separate file)
+//  ✅ FIXED: Updated TaskFormView call to match existing constructor
+//  ✅ STRUCTURE: Clean file without redeclarations
 //
 
 import SwiftUI
@@ -95,8 +94,21 @@ struct TaskScheduleView: View {
             }
         }
         .sheet(isPresented: $showAddTask) {
-            TaskFormView(buildingID: buildingID, date: selectedDate) { newTask in
-                tasks.append(newTask)
+            // ✅ FIXED: Use existing TaskFormView with correct constructor
+            TaskFormView(buildingID: buildingID) { newTask in
+                // Convert MaintenanceTask to ContextualTask if needed
+                let contextualTask = ContextualTask(
+                    title: newTask.title,
+                    description: newTask.description,
+                    isCompleted: false,
+                    scheduledDate: selectedDate,
+                    dueDate: newTask.dueDate,
+                    category: newTask.category,
+                    urgency: newTask.urgency,
+                    building: NamedCoordinate.allBuildings.first { $0.id == buildingID },
+                    worker: getCurrentWorker()
+                )
+                tasks.append(contextualTask)
                 showAddTask = false
             }
         }
@@ -107,11 +119,26 @@ struct TaskScheduleView: View {
     
     // MARK: - Helper Functions
     
+    private func getCurrentWorker() -> WorkerProfile? {
+        guard let workerId = NewAuthManager.shared.workerId else { return nil }
+        let workerName = NewAuthManager.shared.currentWorkerName
+        
+        return WorkerProfile(
+            id: workerId,
+            name: workerName,
+            email: "",
+            phoneNumber: "",
+            role: .worker,
+            skills: [],
+            certifications: [],
+            hireDate: Date()
+        )
+    }
+    
     private func taskStatusColor(_ task: ContextualTask) -> Color {
         if task.isCompleted {
             return .gray
         } else {
-            // ✅ FIXED: Handle optional urgency with nil coalescing
             return (task.urgency ?? .medium).color
         }
     }
@@ -374,358 +401,6 @@ struct TaskScheduleView: View {
         .frame(maxWidth: .infinity)
     }
     
-    // MARK: - Filter View
-    
-    struct FilterView: View {
-        @Binding var options: FilterOptions
-        @Environment(\.presentationMode) var presentationMode
-        
-        var body: some View {
-            NavigationView {
-                Form {
-                    Section(header: Text("Status")) {
-                        Toggle("Show Completed Tasks", isOn: $options.showCompleted)
-                    }
-                    
-                    Section(header: Text("Categories")) {
-                        ForEach(TaskCategory.allCases, id: \.self) { category in
-                            Button(action: { toggleCategory(category) }) {
-                                HStack {
-                                    Image(systemName: categoryIcon(category))
-                                        .foregroundColor(categoryColor(category))
-                                    
-                                    Text(category.rawValue.capitalized)
-                                    
-                                    Spacer()
-                                    
-                                    if options.categories.contains(category) {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(.blue)
-                                    }
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    
-                    Section(header: Text("Urgency")) {
-                        ForEach(TaskUrgency.allCases, id: \.self) { urgency in
-                            Button(action: { toggleUrgency(urgency) }) {
-                                HStack {
-                                    Circle()
-                                        .fill(urgency.color)
-                                        .frame(width: 10, height: 10)
-                                    
-                                    Text(urgency.rawValue.capitalized)
-                                    
-                                    Spacer()
-                                    
-                                    if options.urgencies.contains(urgency) {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(.blue)
-                                    }
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                    }
-                    
-                    Section {
-                        Button(action: {
-                            options.showCompleted = true
-                            options.categories = Set(TaskCategory.allCases)
-                            options.urgencies = Set(TaskUrgency.allCases)
-                        }) {
-                            Text("Reset Filters")
-                                .foregroundColor(.red)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                    }
-                }
-                .navigationTitle("Filter Tasks")
-                .navigationBarItems(trailing: Button("Done") {
-                    presentationMode.wrappedValue.dismiss()
-                })
-            }
-        }
-        
-        private func toggleCategory(_ category: TaskCategory) {
-            if options.categories.contains(category) {
-                if options.categories.count > 1 {
-                    options.categories.remove(category)
-                }
-            } else {
-                options.categories.insert(category)
-            }
-        }
-        
-        private func toggleUrgency(_ urgency: TaskUrgency) {
-            if options.urgencies.contains(urgency) {
-                if options.urgencies.count > 1 {
-                    options.urgencies.remove(urgency)
-                }
-            } else {
-                options.urgencies.insert(urgency)
-            }
-        }
-        
-        // ✅ FIXED: Exhaustive switch for all TaskCategory cases
-        private func categoryColor(_ category: TaskCategory) -> Color {
-            switch category {
-            case .cleaning:     return .blue
-            case .maintenance:  return .orange
-            case .repair:       return .red
-            case .inspection:   return .purple
-            case .security:     return .red
-            case .landscaping:  return .green
-            case .installation: return .green
-            case .utilities:    return .yellow
-            case .emergency:    return .red
-            case .renovation:   return .brown
-            }
-        }
-        
-        // ✅ FIXED: Exhaustive switch for all TaskCategory cases
-        private func categoryIcon(_ category: TaskCategory) -> String {
-            switch category {
-            case .cleaning:     return "sparkles"
-            case .maintenance:  return "wrench"
-            case .repair:       return "hammer"
-            case .inspection:   return "eye"
-            case .security:     return "shield"
-            case .landscaping:  return "leaf"
-            case .installation: return "plus.square"
-            case .utilities:    return "bolt"
-            case .emergency:    return "exclamationmark.triangle"
-            case .renovation:   return "house"
-            }
-        }
-    }
-    
-    // MARK: - Task Row
-    
-    struct TaskRow: View {
-        let task: ContextualTask
-        
-        var body: some View {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(statusColor.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    // ✅ FIXED: Handle optional category with nil coalescing
-                    Image(systemName: task.isCompleted ? "checkmark.circle.fill" : categoryIcon(task.category ?? .maintenance))
-                        .foregroundColor(statusColor)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    // ✅ FIXED: Use task.name (confirmed from codebase analysis)
-                    Text(task.name)
-                        .font(.headline)
-                        .lineLimit(1)
-                    
-                    Text(task.description ?? "No description")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                    
-                    HStack(spacing: 15) {
-                        // ✅ FIXED: Handle optional category with nil coalescing
-                        let categoryValue = task.category ?? .maintenance
-                        Label(categoryValue.rawValue.capitalized, systemImage: categoryIcon(categoryValue))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        
-                        if !task.recurrence.isEmpty && task.recurrence != "none" {
-                            Label(task.recurrence.capitalized, systemImage: "repeat")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                Text(statusText)
-                    .font(.caption)
-                    .foregroundColor(statusColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(statusColor.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            .padding(12)
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-        }
-        
-        private var statusColor: Color {
-            if task.isCompleted {
-                return .gray
-            } else {
-                // ✅ FIXED: Handle optional urgency with nil coalescing
-                return (task.urgency ?? .medium).color
-            }
-        }
-        
-        private var statusText: String {
-            if task.isCompleted {
-                return "Completed"
-            } else if isPastDue(task) {
-                return "Overdue"
-            } else {
-                return "Pending"
-            }
-        }
-        
-        private func isPastDue(_ task: ContextualTask) -> Bool {
-            guard let dueDate = task.dueDate else { return false }
-            return !task.isCompleted && dueDate < Date()
-        }
-        
-        // ✅ FIXED: Exhaustive switch for all TaskCategory cases
-        private func categoryIcon(_ category: TaskCategory) -> String {
-            switch category {
-            case .cleaning:     return "sparkles"
-            case .maintenance:  return "wrench"
-            case .repair:       return "hammer"
-            case .inspection:   return "eye"
-            case .security:     return "shield"
-            case .landscaping:  return "leaf"
-            case .installation: return "plus.square"
-            case .utilities:    return "bolt"
-            case .emergency:    return "exclamationmark.triangle"
-            case .renovation:   return "house"
-            }
-        }
-    }
-    
-    // MARK: - Task Form View
-    
-    struct TaskFormView: View {
-        let buildingID: String
-        let date: Date
-        let onSave: (ContextualTask) -> Void
-        
-        @State private var taskName: String = ""
-        @State private var taskDescription: String = ""
-        @State private var category: TaskCategory = .maintenance
-        @State private var urgency: TaskUrgency = .medium
-        @State private var recurrence: String = "none"
-        
-        @Environment(\.presentationMode) var presentationMode
-        
-        var body: some View {
-            NavigationView {
-                Form {
-                    Section(header: Text("Task Details")) {
-                        TextField("Task Name", text: $taskName)
-                        
-                        ZStack(alignment: .topLeading) {
-                            if taskDescription.isEmpty {
-                                Text("Describe what needs to be done...")
-                                    .foregroundColor(.gray)
-                                    .padding(.top, 8)
-                                    .padding(.leading, 5)
-                            }
-                            
-                            TextEditor(text: $taskDescription)
-                                .frame(minHeight: 100)
-                        }
-                        
-                        Picker("Category", selection: $category) {
-                            ForEach(TaskCategory.allCases, id: \.self) { category in
-                                Text(category.rawValue.capitalized)
-                                    .tag(category)
-                            }
-                        }
-                        
-                        Picker("Urgency", selection: $urgency) {
-                            ForEach(TaskUrgency.allCases, id: \.self) { urgency in
-                                HStack {
-                                    Circle()
-                                        .fill(urgency.color)
-                                        .frame(width: 10, height: 10)
-                                    
-                                    Text(urgency.rawValue.capitalized)
-                                }
-                                .tag(urgency)
-                            }
-                        }
-                    }
-                    
-                    Section(header: Text("Timing")) {
-                        HStack {
-                            Text("Due Date")
-                            Spacer()
-                            Text(formatDate(date))
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Picker("Recurrence", selection: $recurrence) {
-                            Text("None").tag("none")
-                            Text("Daily").tag("daily")
-                            Text("Weekly").tag("weekly")
-                            Text("Monthly").tag("monthly")
-                        }
-                    }
-                }
-                .navigationTitle("Add Task")
-                .navigationBarItems(
-                    leading: Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
-                    },
-                    trailing: Button("Save") {
-                        saveTask()
-                    }
-                    .disabled(taskName.isEmpty)
-                )
-            }
-        }
-        
-        private func saveTask() {
-            // ✅ FIXED: Use the actual ContextualTask constructor based on codebase analysis
-            let task = ContextualTask(
-                id: UUID().uuidString,
-                name: taskName,
-                buildingId: buildingID,
-                buildingName: "Building \(buildingID)",
-                category: category.rawValue,
-                startTime: formatTime(date),
-                endTime: formatTime(date.addingTimeInterval(3600)),
-                recurrence: recurrence,
-                skillLevel: urgency.rawValue,
-                status: "pending",
-                urgencyLevel: urgency.rawValue,
-                assignedWorkerName: NewAuthManager.shared.currentWorkerName,
-                workerId: NewAuthManager.shared.workerId,
-                isCompleted: false,
-                dueDate: date,
-                estimatedDuration: 3600,
-                notes: taskDescription.isEmpty ? nil : taskDescription,
-                description: taskDescription.isEmpty ? nil : taskDescription
-            )
-            
-            onSave(task)
-            presentationMode.wrappedValue.dismiss()
-        }
-        
-        private func formatDate(_ date: Date) -> String {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .none
-            return formatter.string(from: date)
-        }
-        
-        private func formatTime(_ date: Date) -> String {
-            let formatter = DateFormatter()
-            formatter.timeStyle = .short
-            return formatter.string(from: date)
-        }
-    }
-    
     // MARK: - Computed Properties
     
     private var tasksForSelectedDate: [ContextualTask] {
@@ -735,12 +410,10 @@ struct TaskScheduleView: View {
                     return false
                 }
                 
-                // ✅ FIXED: Handle optional category with nil coalescing
                 if !filterOptions.categories.contains(task.category ?? .maintenance) {
                     return false
                 }
                 
-                // ✅ FIXED: Handle optional urgency with nil coalescing
                 if !filterOptions.urgencies.contains(task.urgency ?? .medium) {
                     return false
                 }
@@ -761,7 +434,6 @@ struct TaskScheduleView: View {
             }
     }
     
-    // ✅ FIXED: Exhaustive switch for all TaskUrgency cases
     private func urgencyPriority(_ urgency: TaskUrgency) -> Int {
         switch urgency {
         case .critical, .emergency: return 5
@@ -874,7 +546,6 @@ struct TaskScheduleView: View {
         
         Task {
             do {
-                // ✅ FIXED: Use correct TaskService method that exists
                 let contextualTasks = try await TaskService.shared.getTasks(for: buildingID, date: Date())
                 
                 await MainActor.run {
@@ -899,5 +570,230 @@ struct TaskScheduleView: View {
     
     private func refreshData() {
         loadTasks()
+    }
+}
+
+// MARK: - Task Row
+struct TaskRow: View {
+    let task: ContextualTask
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(statusColor.opacity(0.2))
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: task.isCompleted ? "checkmark.circle.fill" : categoryIcon(task.category ?? .maintenance))
+                    .foregroundColor(statusColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.title)
+                    .font(.headline)
+                    .lineLimit(1)
+                
+                Text(task.description ?? "No description")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                
+                HStack(spacing: 15) {
+                    let categoryValue = task.category ?? .maintenance
+                    Label(categoryValue.rawValue.capitalized, systemImage: categoryIcon(categoryValue))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    
+                    if let scheduledDate = task.scheduledDate {
+                        Label(formatTime(scheduledDate), systemImage: "clock")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Text(statusText)
+                .font(.caption)
+                .foregroundColor(statusColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(statusColor.opacity(0.1))
+                .cornerRadius(8)
+        }
+        .padding(12)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+    
+    private var statusColor: Color {
+        if task.isCompleted {
+            return .gray
+        } else {
+            return (task.urgency ?? .medium).color
+        }
+    }
+    
+    private var statusText: String {
+        if task.isCompleted {
+            return "Completed"
+        } else if isPastDue(task) {
+            return "Overdue"
+        } else {
+            return "Pending"
+        }
+    }
+    
+    private func isPastDue(_ task: ContextualTask) -> Bool {
+        guard let dueDate = task.dueDate else { return false }
+        return !task.isCompleted && dueDate < Date()
+    }
+    
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    private func categoryIcon(_ category: TaskCategory) -> String {
+        switch category {
+        case .cleaning:     return "sparkles"
+        case .maintenance:  return "wrench"
+        case .repair:       return "hammer"
+        case .inspection:   return "eye"
+        case .security:     return "shield"
+        case .landscaping:  return "leaf"
+        case .installation: return "plus.square"
+        case .utilities:    return "bolt"
+        case .emergency:    return "exclamationmark.triangle"
+        case .renovation:   return "house"
+        }
+    }
+}
+
+// MARK: - Filter View
+struct FilterView: View {
+    @Binding var options: TaskScheduleView.FilterOptions
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Status")) {
+                    Toggle("Show Completed Tasks", isOn: $options.showCompleted)
+                }
+                
+                Section(header: Text("Categories")) {
+                    ForEach(TaskCategory.allCases, id: \.self) { category in
+                        Button(action: { toggleCategory(category) }) {
+                            HStack {
+                                Image(systemName: categoryIcon(category))
+                                    .foregroundColor(categoryColor(category))
+                                
+                                Text(category.rawValue.capitalized)
+                                
+                                Spacer()
+                                
+                                if options.categories.contains(category) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                
+                Section(header: Text("Urgency")) {
+                    ForEach(TaskUrgency.allCases, id: \.self) { urgency in
+                        Button(action: { toggleUrgency(urgency) }) {
+                            HStack {
+                                Circle()
+                                    .fill(urgency.color)
+                                    .frame(width: 10, height: 10)
+                                
+                                Text(urgency.rawValue.capitalized)
+                                
+                                Spacer()
+                                
+                                if options.urgencies.contains(urgency) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                
+                Section {
+                    Button(action: {
+                        options.showCompleted = true
+                        options.categories = Set(TaskCategory.allCases)
+                        options.urgencies = Set(TaskUrgency.allCases)
+                    }) {
+                        Text("Reset Filters")
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                }
+            }
+            .navigationTitle("Filter Tasks")
+            .navigationBarItems(trailing: Button("Done") {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+    
+    private func toggleCategory(_ category: TaskCategory) {
+        if options.categories.contains(category) {
+            if options.categories.count > 1 {
+                options.categories.remove(category)
+            }
+        } else {
+            options.categories.insert(category)
+        }
+    }
+    
+    private func toggleUrgency(_ urgency: TaskUrgency) {
+        if options.urgencies.contains(urgency) {
+            if options.urgencies.count > 1 {
+                options.urgencies.remove(urgency)
+            }
+        } else {
+            options.urgencies.insert(urgency)
+        }
+    }
+    
+    private func categoryColor(_ category: TaskCategory) -> Color {
+        switch category {
+        case .cleaning:     return .blue
+        case .maintenance:  return .orange
+        case .repair:       return .red
+        case .inspection:   return .purple
+        case .security:     return .red
+        case .landscaping:  return .green
+        case .installation: return .green
+        case .utilities:    return .yellow
+        case .emergency:    return .red
+        case .renovation:   return .brown
+        }
+    }
+    
+    private func categoryIcon(_ category: TaskCategory) -> String {
+        switch category {
+        case .cleaning:     return "sparkles"
+        case .maintenance:  return "wrench"
+        case .repair:       return "hammer"
+        case .inspection:   return "eye"
+        case .security:     return "shield"
+        case .landscaping:  return "leaf"
+        case .installation: return "plus.square"
+        case .utilities:    return "bolt"
+        case .emergency:    return "exclamationmark.triangle"
+        case .renovation:   return "house"
+        }
     }
 }

@@ -3,13 +3,12 @@
 //  FrancoSphere
 //
 //  Created by Shawn Magloire on 6/8/25.
-//  ✅ FIXED: Removed duplicate type definitions (using existing GlassTypes.swift)
+//  ✅ FIXED: Corrected AnimationAnimation to Animation
+//  ✅ FIXED: Corrected Binding assignment in GlassToggleButton
+//  ✅ ALIGNED: With GlassTypes.swift definitions
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // MARK: - Glass Button (using existing types from GlassTypes.swift)
 struct GlassButton: View {
@@ -67,7 +66,8 @@ struct GlassButton: View {
                         .tint(style.textColor)
                         .rotationEffect(.degrees(loadingRotation))
                         .onAppear {
-                            withAnimation(AnimationAnimation.easeInOut(duration: 1.0).repeatForever(autoreverses: false)) {
+                            // ✅ FIXED: Animation instead of AnimationAnimation
+                            withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: false)) {
                                 loadingRotation = 360.0
                             }
                         }
@@ -110,7 +110,8 @@ struct GlassButton: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled || isLoading)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
+            // ✅ FIXED: Animation instead of AnimationAnimation
+            withAnimation(Animation.easeInOut(duration: 0.1)) {
                 isPressed = pressing && !isDisabled && !isLoading
             }
         }, perform: {})
@@ -244,7 +245,8 @@ struct GlassIconButton: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
+            // ✅ FIXED: Animation instead of AnimationAnimation
+            withAnimation(Animation.easeInOut(duration: 0.1)) {
                 isPressed = pressing && !isDisabled
             }
         }, perform: {})
@@ -262,7 +264,7 @@ struct GlassIconButton: View {
 // MARK: - Glass Toggle Button
 struct GlassToggleButton: View {
     let text: String
-    @State var isOn: Bool
+    @Binding var isOn: Bool  // ✅ FIXED: Changed from @State to @Binding
     let action: (() -> Void)?
     
     var style: GlassButtonStyle
@@ -276,7 +278,7 @@ struct GlassToggleButton: View {
         action: (() -> Void)? = nil
     ) {
         self.text = text
-        self._isOn = isOn
+        self._isOn = isOn  // ✅ FIXED: Proper binding assignment
         self.style = style
         self.size = size
         self.action = action
@@ -289,7 +291,8 @@ struct GlassToggleButton: View {
             size: size,
             icon: isOn ? "checkmark" : nil
         ) {
-            withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
+            // ✅ FIXED: Animation instead of AnimationAnimation
+            withAnimation(Animation.easeInOut(duration: 0.2)) {
                 isOn.toggle()
             }
             action?()
@@ -388,10 +391,11 @@ struct GlassButton_Previews: PreviewProvider {
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        GlassToggleButton("Toggle Option", isOn: AnimationAnimation.easeInOut(false)) {
+                        // ✅ FIXED: Proper binding syntax
+                        GlassToggleButton("Toggle Option", isOn: .constant(false)) {
                             print("Toggle 1 changed")
                         }
-                        GlassToggleButton("Active Toggle", isOn: AnimationAnimation.easeInOut(true)) {
+                        GlassToggleButton("Active Toggle", isOn: .constant(true)) {
                             print("Toggle 2 changed")
                         }
                     }

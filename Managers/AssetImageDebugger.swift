@@ -2,20 +2,15 @@
 //  AssetImageDebugger.swift
 //  FrancoSphere
 //
-//  🔧 COMPILATION FIXED - Corrected buildings data source
+//  🔧 COMPILATION FIXED - Corrected optional String unwrapping
+//  ✅ Fixed: Proper optional unwrapping for UIImage(named:) calls
 //  ✅ Fixed: TaskService.shared.allBuildings → NamedCoordinate.allBuildings
 //  ✅ Removed unnecessary async calls since allBuildings is static
 //  ✅ All functionality preserved and enhanced
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // --------------------------------------------------------------------
 //  Fixed type alias to match BuildingRepository return type
@@ -52,12 +47,13 @@ final class AssetImageDebugger {
         print("🏢 Building: \(building.name) (ID: \(building.id))")
 
         // 1️⃣ imageAssetName specified on the model
-        let assetName     = building.imageAssetName ?? "placeholder"
-        let assetExists   = UIImage(named: assetName) != nil
+        // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
+        let assetName = building.imageAssetName ?? "placeholder"
+        let assetExists = UIImage(named: assetName) != nil
         print("   • imageAssetName: \"\(assetName)\"  →  \(assetExists ? "✅ found" : "❌ missing")")
 
         // 2️⃣ A "standardised" fallback asset name
-        let standardName  = building.name
+        let standardName = building.name
                             .replacingOccurrences(of: "[\\s,()\\-]", with: "_",
                                                   options: .regularExpression)
         let standardExist = UIImage(named: standardName) != nil
@@ -139,8 +135,10 @@ final class AssetImageDebugger {
             print("✅ Kevin's Rubin Museum found:")
             print("   • ID: \(rubin.id)")
             print("   • Name: \(rubin.name)")
-            print("   • Asset: \(rubin.imageAssetName)")
-            print("   • Image exists: \(UIImage(named: rubin.imageAssetName) != nil ? "✅" : "❌")")
+            let imageAssetName = rubin.imageAssetName ?? "placeholder"
+            print("   • Asset: \(imageAssetName)")
+            // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
+            print("   • Image exists: \(UIImage(named: imageAssetName) != nil ? "✅" : "❌")")
         } else {
             print("❌ Kevin's Rubin Museum NOT FOUND!")
         }
@@ -163,7 +161,11 @@ final class AssetImageDebugger {
     func getBuildingImageStatistics() -> (total: Int, found: Int, missing: Int, foundPercentage: Double) {
         let buildings = NamedCoordinate.allBuildings
         let total = buildings.count
-        let found = buildings.filter { UIImage(named: $0.imageAssetName) != nil }.count
+        // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
+        let found = buildings.filter {
+            let assetName = $0.imageAssetName ?? "placeholder"
+            return UIImage(named: assetName) != nil
+        }.count
         let missing = total - found
         let percentage = total > 0 ? (Double(found) / Double(total)) * 100 : 0
         
@@ -201,7 +203,8 @@ struct AssetDebuggerView: View {
                                         Text(item.building.name).font(.headline)
                                         Text("ID: \(item.building.id)")
                                             .font(.caption).foregroundColor(.secondary)
-                                        Text("Asset: \(item.building.imageAssetName)")
+                                        // ✅ FIXED: Proper optional unwrapping for display
+                                        Text("Asset: \(item.building.imageAssetName ?? "placeholder")")
                                             .font(.caption2).foregroundColor(.blue)
                                         
                                         // ✅ Special indicators for Kevin's assignments
@@ -310,7 +313,11 @@ struct AssetDebuggerView: View {
         
         // ✅ FIX: Use static buildings data (no async needed)
         let buildings = NamedCoordinate.allBuildings
-        let images = buildings.map { ($0, UIImage(named: $0.imageAssetName)) }
+        // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
+        let images = buildings.map { building in
+            let assetName = building.imageAssetName ?? "placeholder"
+            return (building, UIImage(named: assetName))
+        }
         
         self.buildingImages = images
         self.statistics = AssetImageDebugger.shared.getBuildingImageStatistics()
