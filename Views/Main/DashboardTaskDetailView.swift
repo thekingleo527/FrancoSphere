@@ -28,16 +28,16 @@ struct DashboardTaskDetailView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Task Details")
-        .sheet(isPresented: ) {
+        .sheet(isPresented: $showingImagePicker) {
             // ✅ FIXED: Correctly initializes ImagePicker
-            ImagePicker(selectedImage: )
+            ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
         }
-        .sheet(isPresented: ) {
+        .sheet(isPresented: $showingImagePicker) {
             // Placeholder for completion sheet
             Text("Completion Sheet")
         }
         .task {
-            await viewModel.loadBuildingName(for: task.buildingId)
+            if let buildingId = task.buildingId { await viewModel.loadBuildingName(for: buildingId) }
         }
     }
     
@@ -45,11 +45,11 @@ struct DashboardTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 // ✅ FIXED: Uses .color property from new extension
-                Text(task.category.rawValue.capitalized)
+                if let category = task.category { Text(category.rawValue.capitalized) } else { Text("General") }
                     .font(.subheadline)
-                    .foregroundColor(task.category.color)
+                    .foregroundColor(getCategoryColor(task.category))
                     .padding(.horizontal, 12).padding(.vertical, 4)
-                    .background(task.category.color.opacity(0.1)).cornerRadius(8)
+                    .background(getCategoryColor(task.category).opacity(0.1)).cornerRadius(8)
                 Spacer()
                 Text(task.urgency.rawValue.capitalized)
                     .font(.caption).fontWeight(.medium).foregroundColor(.white)

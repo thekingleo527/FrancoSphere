@@ -313,7 +313,7 @@ final class RoutineRepository: ObservableObject {
         
         // Check if we already have routines
         do {
-            let count = try await manager.query("SELECT COUNT(*) as count FROM building_routines")
+            let count = try await manager.query("SELECT COUNT(*) as count FROM building_routines", parameters: [])
             if let first = count.first, let countValue = first["count"] as? Int64, countValue > 0 {
                 print("📋 Routines already exist, skipping sample data")
                 return

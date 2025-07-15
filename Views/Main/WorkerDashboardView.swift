@@ -83,14 +83,14 @@ struct WorkerDashboardView: View {
 
     // MARK: - Subviews (Preserving Original Design)
 
-    private var mapBackground: some View {
+    var mapBackground: some View {
         Map(interactionModes: [])
             .mapStyle(.standard(elevation: .realistic))
             .blur(radius: 4)
             .overlay(Color.black.opacity(0.5))
     }
     
-    private var loadingView: some View {
+    var loadingView: some View {
         ProgressView("Loading Dashboard...")
             .progressViewStyle(CircularProgressViewStyle(tint: .white))
             .scaleEffect(1.5)
@@ -98,7 +98,7 @@ struct WorkerDashboardView: View {
             .background(.black.opacity(0.4))
     }
     
-    private var mainContentScrollView: some View {
+    var mainContentScrollView: some View {
         ScrollView {
             VStack(spacing: 20) {
                 Spacer(minLength: 100) // Pushes content below the floating header
@@ -128,7 +128,7 @@ struct WorkerDashboardView: View {
         .cornerRadius(12)
     }
 
-    private var clockInSection: some View {
+    var clockInSection: some View {
         Button(action: {
             if viewModel.isClockedIn {
                 Task { await viewModel.handleClockInToggle() }
@@ -141,7 +141,7 @@ struct WorkerDashboardView: View {
                     .font(.title3).foregroundColor(viewModel.isClockedIn ? .green : .orange)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.isClockedIn ? "Clocked In" : "Clock In")
+                    Text(clockInButtonText)
                         .font(.headline).foregroundColor(.white)
                     Text(viewModel.isClockedIn ? "Working at \(viewModel.currentSession?.buildingName ?? "...")" : "Select a building to start your shift")
                         .font(.caption).foregroundColor(.white.opacity(0.7))
@@ -153,7 +153,7 @@ struct WorkerDashboardView: View {
         }.buttonStyle(.plain)
     }
 
-    private var todaysProgressSection: some View {
+    var todaysProgressSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Today's Progress").font(.headline).foregroundColor(.white)
             ProgressView(value: viewModel.taskProgress?.percentage ?? 0, total: 100)
@@ -168,7 +168,7 @@ struct WorkerDashboardView: View {
         .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private var mySitesSection: some View {
+    var mySitesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("My Sites").font(.headline).foregroundColor(.white)

@@ -28,15 +28,15 @@ class RealWorldDataSeeder {
         print("🌱 Starting real world data seeding with GRDB...")
         
         // Use transaction for speed (GRDB style)
-        try await manager.dbPool.write { db in
-            try db.execute(sql: "BEGIN TRANSACTION")
+        // Use proper execute method instead of direct dbPool access
+            try await manager.execute("BEGIN TRANSACTION", [])
             
             do {
                 // 1. Seed Edwin's 8 buildings with exact coordinates
                 try await seedEdwinBuildings(manager)
                 
                 // 2. Seed all 7 workers with FIXED IDs
-                try await seedAllWorkers(manager)
+                try await seedAllWorkers(manager, withRole: "maintenance")
                 
                 // 3. Seed Edwin's assignments using existing schema
                 try await seedEdwinAssignments(manager)
@@ -50,7 +50,7 @@ class RealWorldDataSeeder {
                     ["data_checksum", checksum]
                 )
                 
-                try db.execute(sql: "COMMIT")
+                try await manager.execute("COMMIT", [])
                 print("✅ Real world data seeding completed successfully with GRDB!")
                 
             } catch {
@@ -281,7 +281,6 @@ class RealWorldDataSeeder {
         
         return isValid
     }
-}
 
 // MARK: - GRDB Extensions for GRDBManager
 

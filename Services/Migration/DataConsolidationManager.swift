@@ -34,7 +34,7 @@ actor DataConsolidationManager {
         try await createRequiredTables()
 
         // Get the legacy hardcoded data
-        let legacyTasks = await OperationalDataManager.shared.getLegacyTaskAssignments()
+        let legacyTasks = await OperationalDataManager.shared.getAllLegacyTaskAssignments()
         guard !legacyTasks.isEmpty else {
             print("⚠️ No legacy tasks found in OperationalDataManager. Nothing to consolidate.")
             UserDefaults.standard.set(true, forKey: migrationKey) // Mark as complete to avoid re-running
@@ -44,8 +44,8 @@ actor DataConsolidationManager {
         print("   - Found \(legacyTasks.count) legacy tasks to migrate with GRDB.")
 
         // Use GRDB transaction syntax
-        try await grdbManager.dbPool.write { db in
-            try db.execute(sql: "BEGIN TRANSACTION")
+        // Use proper execute method instead of direct dbPool access
+            try await grdbManager.execute("BEGIN TRANSACTION", [])
 
             do {
                 var importedCount = 0
@@ -53,9 +53,8 @@ actor DataConsolidationManager {
                     // Convert these into task templates in the database
                     try await createTaskTemplate(from: task)
                     importedCount += 1
-                }
                 
-                try db.execute(sql: "COMMIT")
+                try await grdbManager.execute("COMMIT", [])
                 
                 // Mark consolidation as complete
                 UserDefaults.standard.set(true, forKey: migrationKey)
@@ -63,7 +62,7 @@ actor DataConsolidationManager {
 
             } catch {
                 print("🚨 CRITICAL: Data consolidation failed with GRDB. Rolling back changes.")
-                try db.execute(sql: "ROLLBACK")
+                try await grdbManager.execute("ROLLBACK", [])
                 throw error
             }
         }
@@ -352,7 +351,7 @@ extension OperationalDataManager {
  
  🔧 TRANSACTION SYNTAX:
  - ❌ BEFORE: try await sqliteManager.execute("BEGIN TRANSACTION")
- - ✅ AFTER: try await grdbManager.dbPool.write { db in try db.execute(sql: "BEGIN") }
+ - ✅ AFTER: // Use proper execute method instead of direct dbPool access try db.execute(sql: "BEGIN") }
  
  🔧 NEW GRDB FEATURES ADDED:
  - ✅ Enhanced table creation with foreign keys
