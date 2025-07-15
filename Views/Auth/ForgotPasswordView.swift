@@ -1,14 +1,14 @@
-//
+////
 //  ForgotPasswordView.swift
 //  FrancoSphere
 //
+//  ✅ FIXED: withAnimation syntax errors resolved
+//  ✅ FIXED: Missing closing parentheses in animation calls
+//  ✅ FIXED: Malformed closure expressions
 //  Glassmorphism-enhanced password reset view
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct ForgotPasswordView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -355,45 +355,48 @@ struct ForgotPasswordView: View {
     // MARK: - Helper Methods
     
     private func sendResetLink() {
-        withAnimation(.easeInOut(duration: 0.2) {
+        // ✅ FIXED: Proper withAnimation syntax with closing parenthesis
+        withAnimation(.easeInOut(duration: 0.2)) {
             message = nil
         }
-                      
-                      // Validate email
-                      guard !email.isEmpty else {
+        
+        // Validate email
+        guard !email.isEmpty else {
             withAnimation(.spring()) {
                 message = "Please enter your email address"
             }
             return
         }
-                      
-                      guard email.contains("@") && email.contains(".") else {
+        
+        guard email.contains("@") && email.contains(".") else {
             withAnimation(.spring()) {
                 message = "Please enter a valid email address"
             }
             return
         }
-                      
-                      withAnimation(.easeInOut(duration: 0.2) {
+        
+        // ✅ FIXED: Proper withAnimation syntax
+        withAnimation(.easeInOut(duration: 0.2)) {
             isLoading = true
-        },
-                                    
-                                    // Simulate API call
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation(.easeInOut(duration: 0.2) {
+        }
+        
+        // Simulate API call
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            // ✅ FIXED: Proper withAnimation syntax
+            withAnimation(.easeInOut(duration: 0.2)) {
                 isLoading = false
             }
-                          
-                          // Check if email exists (simulation)
-                          let knownEmails = [
-                            "g.hutson1989@gmail.com",
-                            "edwinlema911@gmail.com",
-                            "dutankevin1@gmail.com",
-                            "francosphere@francomanagementgroup.com",
-                            "shawn@fme-llc.com"
-                          ]
-                          
-                          if knownEmails.contains(email.lowercased()) || email.contains("@francosphere.com") {
+            
+            // Check if email exists (simulation)
+            let knownEmails = [
+                "g.hutson1989@gmail.com",
+                "edwinlema911@gmail.com",
+                "dutankevin1@gmail.com",
+                "francosphere@francomanagementgroup.com",
+                "shawn@fme-llc.com"
+            ]
+            
+            if knownEmails.contains(email.lowercased()) || email.contains("@francosphere.com") {
                 // Success
                 withAnimation(.spring()) {
                     isSuccess = true
@@ -449,13 +452,13 @@ struct ForgotPasswordView: View {
             }
         }
     }
-    
-    // MARK: - Preview
-    
-    struct ForgotPasswordView_Previews: PreviewProvider {
-        static var previews: some View {
-            ForgotPasswordView()
-                .preferredColorScheme(.dark)
-        }
+}
+
+// MARK: - Preview
+
+struct ForgotPasswordView_Previews: PreviewProvider {
+    static var previews: some View {
+        ForgotPasswordView()
+            .preferredColorScheme(.dark)
     }
 }

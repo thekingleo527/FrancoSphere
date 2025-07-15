@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  🔧 SURGICAL FIXES: All compilation errors resolved
+//  ✅ FIXED: Type ambiguity on line 182 - proper Boolean comparison
 //  ✅ Fixed WorkerID type handling (String, not optional)
 //  ✅ Proper CoreTypes.TaskProgress initialization
 //  ✅ Fixed ContextualTask.status property access via extension
@@ -180,8 +181,8 @@ class TodayTasksViewModel: ObservableObject {
     
     func getTasksRequiringAttention() -> [ContextualTask] {
         return tasks.filter { task in
-            // ✅ FIXED: Using ContextualTask.status property from extension
-            task.isCompleted != "completed" && (
+            // ✅ FIXED: Line 182 - Use proper Boolean comparison instead of string comparison
+            !task.isCompleted && (
                 task.urgency == .critical ||
                 task.urgency == .urgent ||
                 (task.dueDate != nil && task.dueDate! < Date())

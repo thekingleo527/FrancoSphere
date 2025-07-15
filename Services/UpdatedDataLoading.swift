@@ -2,6 +2,7 @@
 //  UpdatedDataLoading.swift
 //  FrancoSphere
 //
+//  ✅ FIXED: Added missing 'try' for getAllActiveWorkers() call
 //  ✅ Fixed with correct WorkerService method names
 //
 
@@ -25,7 +26,8 @@ class UpdatedDataLoading: ObservableObject {
             // Load workers using correct method name
             progress = 0.3
             statusMessage = "Loading workers..."
-            let workers = await workerService.getAllActiveWorkers() // Correct method name
+            // ✅ FIXED: Added 'try' since getAllActiveWorkers() throws
+            let workers = try await workerService.getAllActiveWorkers()
             
             // Load tasks using correct method name
             progress = 0.6
