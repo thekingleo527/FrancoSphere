@@ -1,10 +1,9 @@
 //
-//  GlassBadgeStyle.swift
+//  GlassStatusBadge.swift
 //  FrancoSphere
 //
 //  Created by Shawn Magloire on 6/6/25.
 //
-
 
 // GlassStatusBadge.swift
 // Glassmorphism status badge component for FrancoSphere
@@ -13,7 +12,6 @@
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 // MARK: - Badge Style
 enum GlassBadgeStyle {
@@ -126,7 +124,7 @@ struct GlassStatusBadge: View {
         .scaleEffect(isPulsing && pulseAnimation ? 1.05 : 1.0)
         .animation(
             isPulsing ?
-            AnimationAnimationAnimation.easeInOut(duration: 1.5)
+            Animation.easeInOut(duration: 1.5)
                 .repeatForever(autoreverses: true) :
             .default,
             value: pulseAnimation

@@ -475,25 +475,28 @@ struct TaskDetailView: View {
     }
     
     private func submitTaskToService() {
-        Task {
-            do {
-                // ✅ FIXED: Simplified evidence creation
-                let evidenceNotes = "Task completed via mobile app with photo verification"
-                
-                try await TaskService.shared.completeTask(
-                    task.id,
-                    workerId: "current_worker",  // ✅ FIXED: Use string instead of task.id
-                    buildingId: "current_building",  // ✅ FIXED: Use string instead of task.buildingId
-                    evidence: evidenceNotes  // ✅ FIXED: Use simple string evidence
-                )
-                
-                print("✅ Task submitted to TaskService successfully")
-                
-            } catch {
-                print("❌ Error submitting task to TaskService: \(error)")
+            Task {
+                do {
+                    // ✅ FIXED: Create ActionEvidence with correct structure
+                    let evidence = ActionEvidence(
+                        description: "Task completed via mobile app with photo verification",
+                        photoURLs: [],  // Could add photo URLs here if needed
+                        timestamp: Date()
+                    )
+                    
+                    // ✅ FIXED: Use correct method signature (only 2 parameters)
+                    try await TaskService.shared.completeTask(
+                        task.id,
+                        evidence: evidence
+                    )
+                    
+                    print("✅ Task submitted to TaskService successfully")
+                    
+                } catch {
+                    print("❌ Error submitting task to TaskService: \(error)")
+                }
             }
         }
-    }
     
     private func saveImageData(_ data: Data) -> String? {
         let fileName = "task_\(task.id)_\(Int(Date().timeIntervalSince1970)).jpg"

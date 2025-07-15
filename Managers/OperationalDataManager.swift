@@ -410,11 +410,28 @@ public class OperationalDataManager: ObservableObject {
     
     /// Enhanced building mapping using BuildingService (GRDB compatible)
     private func mapBuildingNameToId(_ buildingName: String) async throws -> Int {
-        // ✅ FIXED: Use correct BuildingService method
-        if let buildingId = await BuildingService.shared.id(forName: buildingName),
-           let id = Int(buildingId) {
+        // ✅ FIXED: Use correct BuildingService method by searching through buildings
+        let buildings = try await BuildingService.shared.getAllBuildings()
+        
+        // Clean the building name for comparison
+        let cleanedName = buildingName
+            .replacingOccurrences(of: "–", with: "-")
+            .replacingOccurrences(of: "—", with: "-")
+            .trimmingCharacters(in: .whitespaces)
+        
+        // Special case for Rubin Museum
+        if cleanedName.lowercased().contains("rubin") {
+            return 14
+        }
+        
+        // Find building by name comparison
+        if let building = buildings.first(where: { building in
+            building.name.compare(cleanedName, options: .caseInsensitive) == .orderedSame ||
+            building.name.compare(buildingName, options: .caseInsensitive) == .orderedSame
+        }), let id = Int(building.id) {
             return id
         }
+        
         throw OperationalError.buildingNotFound(buildingName)
     }
     
@@ -717,31 +734,74 @@ public class OperationalDataManager: ObservableObject {
             return workerNameToId[task.assignedWorker] == workerId
         }
         
-        // Convert to ContextualTask objects
+        // Convert to ContextualTask objects using the CORRECT initializer from FrancoSphereModels.swift
         var contextualTasks: [ContextualTask] = []
         
         for operationalTask in workerTasks {
-            // ✅ FIXED: Use correct ContextualTask initializer based on search results
+            // Get building and worker objects for the task
+            let buildingName = operationalTask.building
+            let buildingCoordinate = NamedCoordinate(
+                id: getBuildingIdFromName(operationalTask.building),
+                name: buildingName,
+                latitude: 0.0,
+                longitude: 0.0
+            )
+            
+            let workerProfile = WorkerProfile(
+                id: workerId,
+                name: operationalTask.assignedWorker,
+                email: "",
+                phoneNumber: "",
+                role: .worker,
+                skills: [],
+                certifications: [],
+                hireDate: Date(),
+                isActive: true
+            )
+            
+            // Map category and urgency
+            let taskCategory: TaskCategory?
+            switch operationalTask.category.lowercased() {
+            case "cleaning": taskCategory = .cleaning
+            case "maintenance": taskCategory = .maintenance
+            case "repair": taskCategory = .repair
+            case "inspection": taskCategory = .inspection
+            case "sanitation": taskCategory = .cleaning // Map sanitation to cleaning
+            case "operations": taskCategory = .maintenance // Map operations to maintenance
+            default: taskCategory = .maintenance
+            }
+            
+            let taskUrgency: TaskUrgency?
+            switch operationalTask.skillLevel.lowercased() {
+            case "basic": taskUrgency = .low
+            case "intermediate": taskUrgency = .medium
+            case "advanced": taskUrgency = .high
+            default: taskUrgency = .medium
+            }
+            
+            // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
             let task = ContextualTask(
                 id: generateExternalId(for: operationalTask, index: 0),
                 title: operationalTask.taskName,
                 description: "Imported from current active worker schedule",
-                category: TaskCategory(rawValue: operationalTask.category.lowercased()) ?? .maintenance,
-                urgency: TaskUrgency(rawValue: operationalTask.skillLevel == "Advanced" ? "high" : "medium") ?? .medium,
-                buildingId: getBuildingIdFromName(operationalTask.building),
-                dueDate: calculateDueDate(for: operationalTask.recurrence, from: date),
-                estimatedDuration: 3600,
-                assignedWorkerId: workerId,
                 isCompleted: false,
-                completedDate: nil as Date?,
-                notes: nil as String?
+                completedDate: nil,
+                scheduledDate: calculateDueDate(for: operationalTask.recurrence, from: date),
+                dueDate: calculateDueDate(for: operationalTask.recurrence, from: date),
+                category: taskCategory,
+                urgency: taskUrgency,
+                building: buildingCoordinate,
+                worker: workerProfile
             )
             contextualTasks.append(task)
         }
         
         // Special logging for Kevin's Rubin Museum tasks
         if workerId == "4" {
-            let rubinTasks = contextualTasks.filter { getBuildingNameFromId($0.buildingId).contains("Rubin") }
+            let rubinTasks = contextualTasks.filter { task in
+                guard let building = task.building else { return false }
+                return building.name.contains("Rubin")
+            }
             print("✅ PRESERVED: Kevin has \(rubinTasks.count) Rubin Museum tasks with building ID 14 (GRDB)")
         }
         
@@ -1452,47 +1512,3 @@ extension Date {
         ISO8601DateFormatter().string(from: self)
     }
 }
-
-// MARK: - 📝 GRDB MIGRATION NOTES
-/*
- ✅ COMPLETE GRDB MIGRATION WITH 100% DATA PRESERVATION:
- 
- 🔧 ALL ORIGINAL DATA PRESERVED:
- - ✅ realWorldTasks array: ALL 60+ task assignments preserved
- - ✅ Kevin's Rubin Museum duties: ALL 4 tasks preserved
- - ✅ Edwin's park operations: ALL preserved
- - ✅ Mercedes' glass circuit: ALL preserved
- - ✅ Luis, Angel, Greg, Shawn: ALL assignments preserved
- - ✅ Building mappings: ALL 20 buildings preserved
- - ✅ DSNY schedules: ALL routes preserved
- - ✅ Routine schedules: ALL preserved
- 
- 🔧 GRDB INTEGRATION:
- - ✅ Replaced SQLiteManager with GRDBManager
- - ✅ Updated all query/execute methods to GRDB format
- - ✅ Real-time sync with BuildingMetricsService
- - ✅ Proper async/await patterns throughout
- 
- 🔧 NO DATA LOSS:
- - ✅ All worker assignments maintained
- - ✅ All building relationships maintained
- - ✅ All task categories and schedules maintained
- - ✅ All validation logic maintained
- - ✅ All Kevin-specific Rubin Museum data maintained
- 
- 🔧 ENHANCED FEATURES:
- - ✅ Real-time data synchronization
- - ✅ Dynamic worker validation
- - ✅ Comprehensive data integrity checks
- - ✅ Enhanced error handling with GRDB
- 
- 🎯 STATUS: Complete GRDB migration with 100% data preservation
- 
- 🔧 COMPILATION FIXES APPLIED:
- - ✅ Fixed type ambiguity by renaming to OperationalDataTaskAssignment
- - ✅ Fixed BuildingService API calls to use correct methods
- - ✅ Fixed ContextualTask initializer with proper parameters
- - ✅ Fixed nil type annotations with explicit typing
- - ✅ Fixed String operations on NamedCoordinate types
- - ✅ Preserved ALL operational data while resolving conflicts
- */
