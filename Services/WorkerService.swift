@@ -43,18 +43,27 @@ actor WorkerService {
     
     func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [WorkerProfile] {
         let rows = try await grdbManager.query("""
-            SELECT DISTINCT w.* 
+            SELECT DISTINCT w.*
             FROM workers w
             INNER JOIN worker_assignments wa ON w.id = wa.worker_id
             WHERE wa.building_id = ? AND wa.is_active = 1 AND w.isActive = 1
             ORDER BY w.name
         """, [buildingId])
-        
+
         return rows.compactMap { row in
             convertRowToWorkerProfile(row)
         }
     }
-    
+
+    /// Reassign a routine task to a new worker
+    func reassignTask(taskId: String, to newWorkerId: String) async throws {
+        try await grdbManager.execute("""
+            UPDATE routine_tasks
+            SET workerId = ?
+            WHERE id = ?
+        """, [newWorkerId, taskId])
+    }
+
     // MARK: - Private Helper Methods
     
     private func convertRowToWorkerProfile(_ row: [String: Any]) -> WorkerProfile? {

@@ -11,6 +11,7 @@ struct MaintenanceTaskView: View {
     // ✅ Use consolidated services from v6.0
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
 
     // ✅ FIXED: Complete switch with all FrancoSphere.TaskUrgency cases
     private func getUrgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
@@ -244,14 +245,21 @@ struct MaintenanceTaskView: View {
         }
     }
     
-    /// Reassign workers (placeholder for future implementation)
+    /// Reassign task to a different worker using WorkerService
     private func reassignWorkers() async {
-        // TODO: Implement worker reassignment logic using WorkerService
-        print("🔄 Reassigning workers for task: \(task.id)")
-        
-        // Future implementation would use WorkerService
-        // let workerService = WorkerService.shared
-        // try await workerService.reassignTask(taskId: task.id, newWorkerId: "...")
+        do {
+            // Fetch available workers for this building
+            let workers = try await workerService.getActiveWorkersForBuilding(task.buildingId)
+            guard let newWorker = workers.first(where: { $0.id != task.assignedWorkerId }) ?? workers.first else {
+                print("⚠️ No alternate workers available for reassignment")
+                return
+            }
+
+            try await workerService.reassignTask(taskId: task.id, to: newWorker.id)
+            print("✅ Task reassigned to \(newWorker.name)")
+        } catch {
+            print("❌ Failed to reassign worker: \(error)")
+        }
     }
 
     // MARK: – Helpers

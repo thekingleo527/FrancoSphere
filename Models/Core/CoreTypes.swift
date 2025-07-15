@@ -2,10 +2,10 @@
 //  CoreTypes.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPREHENSIVE: Defines all types the codebase expects
-//  ✅ NO CONFLICTS: Carefully avoids redeclaration errors
+//  ✅ FIXED: PortfolioIntelligence property mismatches
+//  ✅ ALIGNED: With current three-dashboard implementation phase
 //  ✅ GRDB COMPATIBLE: Works with actor-based services
-//  ✅ NAMESPACE COMPLETE: Provides full CoreTypes structure
+//  ✅ COMPREHENSIVE: Defines all types the codebase expects
 //
 
 import Foundation
@@ -65,7 +65,7 @@ public struct CoreTypes {
         case parkMaintenance = "Park Maintenance"
     }
     
-    // MARK: - Task Types (Define here since FrancoSphere namespace access is broken)
+    // MARK: - Task Types
     public enum TaskCategory: String, Codable, CaseIterable {
         case maintenance = "Maintenance"
         case cleaning = "Cleaning"
@@ -94,6 +94,17 @@ public struct CoreTypes {
             case .medium: return .yellow
             case .high: return .orange
             case .critical, .emergency, .urgent: return .red
+            }
+        }
+        
+        public var rawValue: String {
+            switch self {
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            case .critical: return "Critical"
+            case .emergency: return "Emergency"
+            case .urgent: return "Urgent"
             }
         }
     }
@@ -139,7 +150,11 @@ public struct CoreTypes {
             dueDate: Date? = nil,
             estimatedDuration: TimeInterval = 3600,
             recurrence: TaskRecurrence = .none,
-            notes: String? = nil, startTime: Date? = nil, endTime: Date? = nil, isPastDue: Bool = false, status: VerificationStatus = .pending
+            notes: String? = nil,
+            startTime: Date? = nil,
+            endTime: Date? = nil,
+            isPastDue: Bool = false,
+            status: VerificationStatus = .pending
         ) {
             self.id = id
             self.title = title
@@ -285,21 +300,69 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Portfolio Types
+    // MARK: - Portfolio Types (FIXED for Three-Dashboard System)
     public struct PortfolioIntelligence: Codable {
         public let totalBuildings: Int
         public let activeWorkers: Int
         public let completionRate: Double
         public let criticalIssues: Int
         public let monthlyTrend: TrendDirection
+        public let completedTasks: Int
+        public let complianceScore: Int
+        public let weeklyTrend: Double
         
-        public init(totalBuildings: Int, activeWorkers: Int, completionRate: Double, criticalIssues: Int, monthlyTrend: TrendDirection) {
+        public init(
+            totalBuildings: Int,
+            activeWorkers: Int,
+            completionRate: Double,
+            criticalIssues: Int,
+            monthlyTrend: TrendDirection,
+            completedTasks: Int = 0,
+            complianceScore: Int = 85,
+            weeklyTrend: Double = 0.0
+        ) {
             self.totalBuildings = totalBuildings
             self.activeWorkers = activeWorkers
             self.completionRate = completionRate
             self.criticalIssues = criticalIssues
             self.monthlyTrend = monthlyTrend
+            self.completedTasks = completedTasks
+            self.complianceScore = complianceScore
+            self.weeklyTrend = weeklyTrend
         }
+        
+        // MARK: - Dashboard Display Properties
+        public var overallEfficiency: Double {
+            return completionRate
+        }
+        
+        public var averageComplianceScore: Double {
+            return Double(complianceScore) / 100.0
+        }
+        
+        public var trendDirection: TrendDirection {
+            return weeklyTrend > 0 ? .up : (weeklyTrend < 0 ? .down : .stable)
+        }
+        
+        public var totalActiveWorkers: Int {
+            return activeWorkers
+        }
+        
+        public var totalCompletedTasks: Int {
+            return completedTasks
+        }
+        
+        // MARK: - Default Instance
+        public static let `default` = PortfolioIntelligence(
+            totalBuildings: 0,
+            activeWorkers: 0,
+            completionRate: 0.0,
+            criticalIssues: 0,
+            monthlyTrend: .stable,
+            completedTasks: 0,
+            complianceScore: 0,
+            weeklyTrend: 0.0
+        )
     }
     
     // MARK: - Intelligence Types
@@ -347,7 +410,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Compliance Types (Complete definitions to avoid conflicts)
+    // MARK: - Compliance Types
     public enum ComplianceStatus: String, Codable, CaseIterable {
         case compliant = "Compliant"
         case needsReview = "Needs Review"

@@ -10,6 +10,9 @@
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
+#if canImport(WorkerRoutineEngine)
+import WorkerRoutineEngine
+#endif
 
 
 struct TodaysRoutineSummaryView: View {
@@ -288,13 +291,23 @@ struct TodaysRoutineSummaryView: View {
             isLoading = true
         }
         
-        // Get today's routine from WorkerRoutineEngine
+        // Get today's routine from WorkerRoutineEngine when available
         let workerId = contextEngine.getWorkerId()
-        
-        // For now, use today's tasks as routine data
-        // TODO: Replace with actual WorkerRoutineEngine.getTodaysRoutine(for: workerId)
+
+#if canImport(WorkerRoutineEngine)
+        if let workerId = workerId,
+           let tasks = try? await WorkerRoutineEngine.getTodaysRoutine(for: workerId) {
+            await MainActor.run {
+                routineTasks = tasks
+                isLoading = false
+            }
+            return
+        }
+#endif
+
+        // Fallback to tasks from the context engine
         let todaysTasks = contextEngine.getTodaysTasks()
-        
+
         await MainActor.run {
             routineTasks = todaysTasks
             isLoading = false

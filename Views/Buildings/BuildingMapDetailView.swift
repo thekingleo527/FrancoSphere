@@ -18,6 +18,8 @@ struct BuildingMapDetailView: View {
     @State private var tasks: [ContextualTask] = []
     @State private var isLoading = true
     @State private var showClockIn = false
+    @State private var showAllTasks = false
+    @State private var showDetails = false
     
     var body: some View {
         NavigationStack {
@@ -69,6 +71,12 @@ struct BuildingMapDetailView: View {
                 }
             }
             .toolbarBackground(.clear, for: .navigationBar)
+            .navigationDestination(isPresented: $showAllTasks) {
+                TaskScheduleView(buildingID: building.id)
+            }
+            .navigationDestination(isPresented: $showDetails) {
+                BuildingDetailView(building: building)
+            }
         }
         .onAppear {
             loadBuildingData()
@@ -156,7 +164,7 @@ struct BuildingMapDetailView: View {
             
             if tasks.count > 5 {
                 Button("View All \(tasks.count) Tasks") {
-                    // TODO: Navigate to full task list
+                    showAllTasks = true
                 }
                 .font(.callout)
                 .foregroundColor(.blue)
@@ -184,7 +192,7 @@ struct BuildingMapDetailView: View {
             }
             
             Button("View Building Details") {
-                // TODO: Navigate to full building detail
+                showDetails = true
             }
             .font(.callout)
             .foregroundColor(.blue)

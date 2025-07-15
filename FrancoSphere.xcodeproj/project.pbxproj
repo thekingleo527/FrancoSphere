@@ -167,7 +167,10 @@
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
 		23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */; };
-		23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */; };
+                23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */; };
+                23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */; };
+                23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */; };
+                23F9FC022E30000000AAAAAA /* NovaContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -352,7 +355,10 @@
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
 		23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
-		23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceInsightsView.swift; sourceTree = "<group>"; };
+                23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceInsightsView.swift; sourceTree = "<group>"; };
+                23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaCore.swift; sourceTree = "<group>"; };
+                23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaTypes.swift; sourceTree = "<group>"; };
+                23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaContextEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -652,9 +658,10 @@
 				234580E32DF78E3D00355F0A /* VerificationRecord.swift */,
 				234580E42DF78E3D00355F0A /* WeatherAlert.swift */,
 				234580E52DF78E3D00355F0A /* WorkerConstants.swift */,
-				234580E62DF78E3D00355F0A /* WorkerContextEngine.swift */,
-				234580E72DF78E3D00355F0A /* WorkerRoutineViewModel.swift */,
-			);
+                                234580E62DF78E3D00355F0A /* WorkerContextEngine.swift */,
+                                234580E72DF78E3D00355F0A /* WorkerRoutineViewModel.swift */,
+                                23F9FA002E2FFE0000AAAAAA /* AI */,
+                        );
 			path = Models;
 			sourceTree = "<group>";
 		};
@@ -797,15 +804,41 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		2374933D2E1C950700D9C70D /* Core */ = {
-			isa = PBXGroup;
-			children = (
-				23A3169E2E1E37B500469FA3 /* AITypes.swift */,
-				237493572E1C9F8800D9C70D /* CoreTypes.swift */,
-			);
-			path = Core;
-			sourceTree = "<group>";
-		};
+                2374933D2E1C950700D9C70D /* Core */ = {
+                        isa = PBXGroup;
+                        children = (
+                                23A3169E2E1E37B500469FA3 /* AITypes.swift */,
+                                237493572E1C9F8800D9C70D /* CoreTypes.swift */,
+                        );
+                        path = Core;
+                        sourceTree = "<group>";
+                };
+                23F9FA022E2FFE0000AAAAAA /* Core */ = {
+                        isa = PBXGroup;
+                        children = (
+                                23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */,
+                                23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */,
+                                23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */,
+                        );
+                        path = Core;
+                        sourceTree = "<group>";
+                };
+                23F9FA012E2FFE0000AAAAAA /* Nova */ = {
+                        isa = PBXGroup;
+                        children = (
+                                23F9FA022E2FFE0000AAAAAA /* Core */,
+                        );
+                        path = Nova;
+                        sourceTree = "<group>";
+                };
+                23F9FA002E2FFE0000AAAAAA /* AI */ = {
+                        isa = PBXGroup;
+                        children = (
+                                23F9FA012E2FFE0000AAAAAA /* Nova */,
+                        );
+                        path = AI;
+                        sourceTree = "<group>";
+                };
 		23E1E56D2E0F37CA0036127D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -1150,9 +1183,12 @@
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
-				2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */,
-				234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
-			);
+                                2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */,
+                                234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
+                                23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */,
+                                23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */,
+                                23F9FC022E30000000AAAAAA /* NovaContextEngine.swift in Sources */,
+                        );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		23423DC32D739D6900AACE3E /* Sources */ = {

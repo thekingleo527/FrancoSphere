@@ -2,15 +2,11 @@
 //  FilteredTaskResult.swift
 //  FrancoSphere
 //
-//  ✅ REMOVED duplicate TaskProgress struct
+//  ✅ FIXED: urgencyLevel -> urgency property access
 //  ✅ Clean FilteredTaskResult definition only
-//  ✅ No conflicts with TimeBasedTaskFilter.TaskProgress
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct FilteredTaskResult {
     let tasks: [ContextualTask]
@@ -51,18 +47,22 @@ struct FilteredTaskResult {
 extension FilteredTaskResult {
     /// Quick access to filtered tasks by status
     var pendingTasks: [ContextualTask] {
-        tasks.filter { $0.status != "completed" }
+        tasks.filter { !$0.isCompleted }
     }
     
     var completedTasks: [ContextualTask] {
-        tasks.filter { $0.status == "completed" }
+        tasks.filter { $0.isCompleted }
     }
     
-    /// Get tasks by urgency level
+    /// Get tasks by urgency level - FIXED: use urgency instead of urgencyLevel
     var urgentTasks: [ContextualTask] {
         tasks.filter {
-            $0.urgencyLevel.lowercased() == "urgent" ||
-            $0.urgencyLevel.lowercased() == "high"
+            if let urgency = $0.urgency {
+                return urgency.rawValue.lowercased() == "urgent" ||
+                       urgency.rawValue.lowercased() == "high" ||
+                       urgency.rawValue.lowercased() == "critical"
+            }
+            return false
         }
     }
     

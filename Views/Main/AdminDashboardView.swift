@@ -128,7 +128,11 @@ struct AdminDashboardView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(viewModel.activeWorkers) { worker in
-                        Text #TODO(worker: worker)
+                        ProfileBadge(
+                            workerName: worker.name,
+                            imageUrl: worker.profileImageUrl,
+                            isCompact: true
+                        )
                     }
                 }
             }
@@ -142,7 +146,7 @@ struct AdminDashboardView: View {
                 Text("No ongoing tasks.").font(.subheadline).foregroundColor(.secondary)
             } else {
                 ForEach(viewModel.ongoingTasks.prefix(5)) { task in
-                    Text #TODO(task: task)
+                    SimpleTaskRow(task: task)
                 }
             }
         }
