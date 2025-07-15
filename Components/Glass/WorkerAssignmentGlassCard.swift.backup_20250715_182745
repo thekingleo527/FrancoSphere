@@ -4,7 +4,7 @@
 //
 //  🔧 SURGICAL FIXES: All compilation errors resolved
 //  ✅ Fixed complex expression that exceeded type-check time limit
-//  ✅ Fixed Animation typo → .easeInOut animation
+//  ✅ Fixed AnimationAnimation typo → .easeInOut animation
 //  ✅ Simplified complex boolean logic for better compilation
 //
 
@@ -17,7 +17,7 @@ struct WorkerAssignmentGlassCard: View {
     let onWorkerTap: (FrancoWorkerAssignment) -> Void
     
     var body: some View {
-        GlassCard(intensity: GlassIntensity.thin) {
+        GlassCard(intensity: .thin) {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
                 headerSection
@@ -311,7 +311,7 @@ struct WorkerRowGlassView: View {
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            // ✅ FIXED: Animation typo → proper .easeInOut animation
+            // ✅ FIXED: AnimationAnimation typo → proper .easeInOut animation
             .animation(.easeInOut(duration: 0.1), value: isPressed)
             .contentShape(Rectangle())
         }

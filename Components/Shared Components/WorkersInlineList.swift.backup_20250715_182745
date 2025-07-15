@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  🔧 SURGICAL FIXES: All compilation errors resolved
-//  ✅ Fixed Animation typo → .easeInOut animation
+//  ✅ Fixed AnimationAnimation typo → .easeInOut animation
 //  ✅ Removed non-existent ContextualTask properties
 //  ✅ Simplified worker-task assignment logic
 //  ✅ Compatible with WorkerContextEngine actor architecture
@@ -144,7 +144,7 @@ struct WorkersInlineList: View {
     
     private var showMoreButton: some View {
         Button(action: {
-            // ✅ FIXED: Animation typo → proper .easeInOut animation
+            // ✅ FIXED: AnimationAnimation typo → proper .easeInOut animation
             withAnimation(.easeInOut(duration: 0.3)) {
                 showAllWorkers.toggle()
             }

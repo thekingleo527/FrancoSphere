@@ -75,7 +75,7 @@ struct SignUpView: View {
             // Main content
             VStack(spacing: 0) {
                 // Glass navigation header
-                GlassCard(intensity: GlassIntensity.ultraThin, cornerRadius: 0, padding: 0) {
+                GlassCard(intensity: .ultraThin, cornerRadius: 0, padding: 0) {
                     HStack {
                         Button(action: {
                             if currentStep > 1 {
@@ -172,7 +172,7 @@ struct SignUpView: View {
                         .padding(.horizontal, 40)
                         .opacity(progressOpacity)
                         .onAppear {
-                            withAnimation(Animation.easeInOut(duration: 0.4).delay(0.4)) {
+                            withAnimation(AnimationAnimation.easeInOut(duration: 0.4).delay(0.4)) {
                                 progressOpacity = 1.0
                             }
                         }
@@ -243,7 +243,7 @@ struct SignUpView: View {
     // MARK: - Step 1: Account Information
     
     private var Step1AccountInfo: some View {
-        GlassCard(intensity: GlassIntensity.regular, cornerRadius: 24) {
+        GlassCard(intensity: .regular, cornerRadius: 24) {
             VStack(spacing: 20) {
                 VStack(spacing: 8) {
                     Text("Step 1 of \(totalSteps)")
@@ -333,7 +333,7 @@ struct SignUpView: View {
     // MARK: - Step 2: Personal Information
     
     private var Step2PersonalInfo: some View {
-        GlassCard(intensity: GlassIntensity.regular, cornerRadius: 24) {
+        GlassCard(intensity: .regular, cornerRadius: 24) {
             VStack(spacing: 20) {
                 VStack(spacing: 8) {
                     Text("Step 2 of \(totalSteps)")
@@ -418,7 +418,7 @@ struct SignUpView: View {
     // MARK: - Step 3: Role Selection
     
     private var Step3RoleSelection: some View {
-        GlassCard(intensity: GlassIntensity.regular, cornerRadius: 24) {
+        GlassCard(intensity: .regular, cornerRadius: 24) {
             VStack(spacing: 20) {
                 VStack(spacing: 8) {
                     Text("Step 3 of \(totalSteps)")
@@ -447,7 +447,7 @@ struct SignUpView: View {
                         icon: "wrench.and.screwdriver",
                         isSelected: selectedRole == .worker
                     ) {
-                        withAnimation(Animation.easeInOut(duration: 0.2)) {
+                        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                             selectedRole = .worker
                         }
                     }
@@ -459,7 +459,7 @@ struct SignUpView: View {
                         icon: "person.2.badge.gearshape",
                         isSelected: selectedRole == .manager
                     ) {
-                        withAnimation(Animation.easeInOut(duration: 0.2)) {
+                        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                             selectedRole = .manager
                         }
                     }
@@ -522,7 +522,7 @@ struct SignUpView: View {
     }
     
     private func toggleBuilding(_ building: String) {
-        withAnimation(Animation.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             if selectedBuildings.contains(building) {
                 selectedBuildings.remove(building)
             } else {
@@ -588,7 +588,7 @@ struct GlassTextField: View {
             
             if isSecure {
                 Button(action: {
-                    withAnimation(Animation.easeInOut(duration: 0.2)) {
+                    withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                         showSecureText.toggle()
                     }
                 }) {
@@ -642,7 +642,7 @@ struct StepProgressIndicator: View {
                                 .scaleEffect(1.2)
                                 .opacity(0.5)
                                 .animation(
-                                    AnimationAnimation.easeInOut(duration: 1.5)
+                                    AnimationAnimationAnimation.easeInOut(duration: 1.5)
                                         .repeatForever(autoreverses: true),
                                     value: currentStep
                                 )

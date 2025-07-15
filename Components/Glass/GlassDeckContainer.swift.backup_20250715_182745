@@ -2,7 +2,7 @@
 //  GlassDeckContainer.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Animation syntax errors resolved (Animation → Animation)
+//  ✅ FIXED: Animation syntax errors resolved (AnimationAnimation → Animation)
 //  ✅ ALIGNED: Updated for v6.0 architecture with proper SwiftUI patterns
 //  ✅ OPTIMIZED: Glass deck system for three-dashboard experience
 //
@@ -108,6 +108,39 @@ struct GlassDeckContainer<Content: View>: View {
 }
 
 // MARK: - Glass Intensity Enum
+enum GlassIntensity: CaseIterable {
+    case light
+    case regular
+    case strong
+    case ultra
+    
+    var blurRadius: CGFloat {
+        switch self {
+        case .light: return 10
+        case .regular: return 20
+        case .strong: return 30
+        case .ultra: return 40
+        }
+    }
+    
+    var opacity: Double {
+        switch self {
+        case .light: return 0.1
+        case .regular: return 0.2
+        case .strong: return 0.3
+        case .ultra: return 0.4
+        }
+    }
+    
+    var brightness: Double {
+        switch self {
+        case .light: return 0.3
+        case .regular: return 0.2
+        case .strong: return 0.1
+        case .ultra: return 0.05
+        }
+    }
+}
 
 // MARK: - Staggered Deck Animation
 struct StaggeredDeckAnimation: View {

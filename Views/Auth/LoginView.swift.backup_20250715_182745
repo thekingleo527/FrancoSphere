@@ -163,7 +163,7 @@ struct LoginView: View {
                     }
                     
                     // Login form in glass card
-                    GlassCard(intensity: GlassIntensity.regular, cornerRadius: 24) {
+                    GlassCard(intensity: .regular, cornerRadius: 24) {
                         VStack(spacing: 20) {
                             // Email field
                             VStack(alignment: .leading, spacing: 8) {
@@ -199,7 +199,7 @@ struct LoginView: View {
                                     Section("Workers") {
                                         ForEach(workerEmails, id: \.self) { workerEmail in
                                             Button(action: {
-                                                withAnimation(Animation.easeInOut(duration: 0.2)) {
+                                                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                                     email = workerEmail
                                                     password = "password"
                                                 }
@@ -212,7 +212,7 @@ struct LoginView: View {
                                     Section("Admin/Client") {
                                         ForEach(specialEmails, id: \.self) { specialEmail in
                                             Button(action: {
-                                                withAnimation(Animation.easeInOut(duration: 0.2)) {
+                                                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                                     email = specialEmail
                                                     password = "password"
                                                 }
@@ -267,7 +267,7 @@ struct LoginView: View {
                                     }
                                     
                                     Button(action: {
-                                        withAnimation(Animation.easeInOut(duration: 0.2)) {
+                                        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                                             showPassword.toggle()
                                         }
                                     }) {
@@ -333,7 +333,7 @@ struct LoginView: View {
                     }
                     
                     // Quick access section
-                    GlassCard(intensity: GlassIntensity.thin, cornerRadius: 20) {
+                    GlassCard(intensity: .thin, cornerRadius: 20) {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Quick Access")
                                 .font(.headline)
@@ -388,7 +388,7 @@ struct LoginView: View {
     
     private func quickAccessButton(email: String, label: String, icon: String, color: Color) -> some View {
         Button(action: {
-            withAnimation(Animation.easeInOut(duration: 0.2)) {
+            withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                 self.email = email
                 self.password = "password"
             }
@@ -434,14 +434,14 @@ struct LoginView: View {
     private func performLogin() {
         guard !isLoading else { return }
         
-        withAnimation(Animation.easeInOut(duration: 0.2)) {
+        withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
             isLoading = true
             errorMessage = nil
         }
         
         authManager.login(email: email, password: password) { success, error in
             DispatchQueue.main.async {
-                withAnimation(Animation.easeInOut(duration: 0.2)) {
+                withAnimation(AnimationAnimation.easeInOut(duration: 0.2)) {
                     self.isLoading = false
                     
                     if !success {

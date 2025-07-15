@@ -101,7 +101,7 @@ struct TodaysProgressDetailView: View {
                     )
                     .frame(width: 120, height: 120)
                     .rotationEffect(.degrees(-90))
-                    .animation(Animation.easeInOut(duration: 1.5), value: completionPercentage)
+                    .animation(AnimationAnimation.easeInOut(duration: 1.5), value: completionPercentage)
                 
                 VStack(spacing: 4) {
                     Text("\(Int(completionPercentage))%")

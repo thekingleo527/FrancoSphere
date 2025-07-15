@@ -500,7 +500,7 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        GlassCard(intensity: GlassIntensity.regular) {
+                        GlassCard(intensity: .regular) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("12 West 18th Street")
@@ -517,7 +517,7 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                         }
                         .glassBadge("Onsite", icon: "location.fill", style: .success)
                         
-                        GlassCard(intensity: GlassIntensity.thin) {
+                        GlassCard(intensity: .thin) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("HVAC Maintenance")

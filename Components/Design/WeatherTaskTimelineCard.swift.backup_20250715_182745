@@ -17,7 +17,7 @@ struct WeatherTaskTimelineCard: View {
     let upcomingTasks: [MaintenanceTask]
     
     var body: some View {
-        GlassCard(intensity: GlassIntensity.regular) {
+        GlassCard(intensity: .regular) {
             VStack(alignment: .leading, spacing: 16) {
                 // Weather header
                 HStack {

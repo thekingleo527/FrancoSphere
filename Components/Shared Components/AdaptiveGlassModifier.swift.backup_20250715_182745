@@ -62,22 +62,22 @@ extension View {
 extension View {
     /// Property card glass effect (optimized for dashboard cards)
     func propertyCardGlass() -> some View {
-        self.francoGlassCard(intensity: GlassIntensity.regular)
+        self.francoGlassCard(intensity: .regular)
     }
     
     /// Metric card glass effect (optimized for data display)
     func metricCardGlass() -> some View {
-        self.francoGlassCard(intensity: GlassIntensity.thin)
+        self.francoGlassCard(intensity: .thin)
     }
     
     /// Header glass effect (optimized for navigation)
     func headerGlass() -> some View {
-        self.francoGlassCard(intensity: GlassIntensity.ultraThin)
+        self.francoGlassCard(intensity: .ultraThin)
     }
     
     /// Modal glass effect (optimized for overlays)
     func modalGlass() -> some View {
-        self.francoGlassCard(intensity: GlassIntensity.thick)
+        self.francoGlassCard(intensity: .thick)
     }
 }
 
@@ -87,11 +87,11 @@ extension View {
 extension View {
     @available(*, deprecated, message: "Use francoGlassCard(intensity:) instead")
     func glassMorphismCard() -> some View {
-        self.francoGlassCard(intensity: GlassIntensity.regular)
+        self.francoGlassCard(intensity: .regular)
     }
     
     @available(*, deprecated, message: "Use francoGlassCardCompact(intensity:) instead")
     func glassMorphismCardCompact() -> some View {
-        self.francoGlassCardCompact(intensity: GlassIntensity.thin)
+        self.francoGlassCardCompact(intensity: .thin)
     }
 }

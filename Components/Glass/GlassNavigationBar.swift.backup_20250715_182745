@@ -47,7 +47,7 @@ struct GlassNavigationBar<Content: View>: View {
             
             // Navigation content
             GlassCard(
-                intensity: GlassIntensity.regular,
+                intensity: .regular,
                 cornerRadius: 0,
                 padding: 0,
                 shadowRadius: 5

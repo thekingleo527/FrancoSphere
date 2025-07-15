@@ -3,7 +3,7 @@
 //  GlassCard.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Animation typo corrected to Animation
+//  ✅ FIXED: AnimationAnimation typo corrected to Animation
 //  ✅ FIXED: Removed duplicate GlassIntensity enum - using one from GlassTypes.swift
 //  ✅ ALIGNED: With Phase 2.1 implementation
 //
@@ -65,12 +65,12 @@ struct GlassCard<Content: View>: View {
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .onTapGesture {
-                // ✅ FIXED: Changed Animation to Animation
+                // ✅ FIXED: Changed AnimationAnimation to Animation
                 withAnimation(Animation.easeInOut(duration: 0.1)) {
                     isPressed = true
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    // ✅ FIXED: Changed Animation to Animation
+                    // ✅ FIXED: Changed AnimationAnimation to Animation
                     withAnimation(Animation.easeInOut(duration: 0.1)) {
                         isPressed = false
                     }
@@ -138,21 +138,21 @@ struct GlassCard_Previews: PreviewProvider {
             .ignoresSafeArea()
             
             VStack(spacing: 30) {
-                GlassCard(intensity: GlassIntensity.thin) {
+                GlassCard(intensity: .thin) {
                     Text("Thin Glass")
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
                 }
                 
-                GlassCard(intensity: GlassIntensity.regular) {
+                GlassCard(intensity: .regular) {
                     Text("Regular Glass")
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
                 }
                 
-                GlassCard(intensity: GlassIntensity.thick, hasGlow: true, glowColor: .blue) {
+                GlassCard(intensity: .thick, hasGlow: true, glowColor: .blue) {
                     Text("Thick Glass with Glow")
                         .font(.headline)
                         .foregroundColor(.white)

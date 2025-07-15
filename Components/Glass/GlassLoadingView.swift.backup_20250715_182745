@@ -2,7 +2,7 @@
 //  GlassLoadingView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Animation syntax errors resolved (AnimationAnimation → Animation)
+//  ✅ FIXED: Animation syntax errors resolved (AnimationAnimationAnimation → Animation)
 //  ✅ ALIGNED: Updated for v6.0 architecture with proper SwiftUI patterns
 //  ✅ OPTIMIZED: Glass loading system for three-dashboard experience
 //

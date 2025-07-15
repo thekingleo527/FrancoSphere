@@ -22,7 +22,7 @@ struct BuildingHeaderGlassOverlay: View {
             VStack(spacing: 0) {
                 Spacer()
                 
-                GlassCard(intensity: GlassIntensity.regular) {
+                GlassCard(intensity: .regular) {
                     VStack(alignment: .leading, spacing: 16) {
                         // Main building info row
                         HStack(alignment: .top, spacing: 16) {

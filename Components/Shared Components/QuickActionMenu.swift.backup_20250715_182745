@@ -81,7 +81,7 @@ struct QuickActionMenu: View {
                     .background(Color.white.opacity(0.2))
                     .padding(.horizontal, 20)
                     .opacity(animateIn ? 1 : 0)
-                    .animation(Animation.easeInOut(duration: 0.3).delay(0.2), value: animateIn)
+                    .animation(AnimationAnimation.easeInOut(duration: 0.3).delay(0.2), value: animateIn)
                 
                 // Ask Nova button (special)
                 askNovaButton()

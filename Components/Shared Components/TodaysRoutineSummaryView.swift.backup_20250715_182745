@@ -119,7 +119,7 @@ struct TodaysRoutineSummaryView: View {
                 .stroke(Color.green, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .frame(width: 80, height: 80)
                 .rotationEffect(.degrees(-90))
-                .animation(Animation.easeInOut(duration: 1.0), value: completionStats.percentage)
+                .animation(AnimationAnimation.easeInOut(duration: 1.0), value: completionStats.percentage)
             
             Text("\(Int(completionStats.percentage))%")
                 .font(.headline)

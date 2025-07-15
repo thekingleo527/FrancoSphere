@@ -126,7 +126,7 @@ struct PortfolioOverviewView: View {
                             metric: metric,
                             isSelected: selectedMetric == metric,
                             onTap: {
-                                withAnimation(Animation.easeInOut(duration: 0.3)) {
+                                withAnimation(AnimationAnimation.easeInOut(duration: 0.3)) {
                                     selectedMetric = metric
                                 }
                             }

@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  Created by Shawn Magloire on 6/8/25.
-//  ✅ FIXED: Corrected Animation to Animation
+//  ✅ FIXED: Corrected AnimationAnimation to Animation
 //  ✅ FIXED: Corrected Binding assignment in GlassToggleButton
 //  ✅ ALIGNED: With GlassTypes.swift definitions
 //
@@ -66,7 +66,7 @@ struct GlassButton: View {
                         .tint(style.textColor)
                         .rotationEffect(.degrees(loadingRotation))
                         .onAppear {
-                            // ✅ FIXED: Animation instead of Animation
+                            // ✅ FIXED: Animation instead of AnimationAnimation
                             withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: false)) {
                                 loadingRotation = 360.0
                             }
@@ -110,7 +110,7 @@ struct GlassButton: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled || isLoading)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            // ✅ FIXED: Animation instead of Animation
+            // ✅ FIXED: Animation instead of AnimationAnimation
             withAnimation(Animation.easeInOut(duration: 0.1)) {
                 isPressed = pressing && !isDisabled && !isLoading
             }
@@ -245,7 +245,7 @@ struct GlassIconButton: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            // ✅ FIXED: Animation instead of Animation
+            // ✅ FIXED: Animation instead of AnimationAnimation
             withAnimation(Animation.easeInOut(duration: 0.1)) {
                 isPressed = pressing && !isDisabled
             }
@@ -291,7 +291,7 @@ struct GlassToggleButton: View {
             size: size,
             icon: isOn ? "checkmark" : nil
         ) {
-            // ✅ FIXED: Animation instead of Animation
+            // ✅ FIXED: Animation instead of AnimationAnimation
             withAnimation(Animation.easeInOut(duration: 0.2)) {
                 isOn.toggle()
             }
