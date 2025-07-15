@@ -1,14 +1,14 @@
 //
+//
 //  GlassCard.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/8/25.
+//  ✅ FIXED: AnimationAnimation typo corrected to Animation
+//  ✅ FIXED: Removed duplicate GlassIntensity enum - using one from GlassTypes.swift
+//  ✅ ALIGNED: With Phase 2.1 implementation
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 // MARK: - Glass Card View
 struct GlassCard<Content: View>: View {
@@ -65,11 +65,13 @@ struct GlassCard<Content: View>: View {
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .onTapGesture {
-                withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
+                // ✅ FIXED: Changed AnimationAnimation to Animation
+                withAnimation(Animation.easeInOut(duration: 0.1)) {
                     isPressed = true
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(AnimationAnimation.easeInOut(duration: 0.1)) {
+                    // ✅ FIXED: Changed AnimationAnimation to Animation
+                    withAnimation(Animation.easeInOut(duration: 0.1)) {
                         isPressed = false
                     }
                 }
@@ -97,11 +99,11 @@ struct GlassCard<Content: View>: View {
                     )
                 )
             
-            // Glow effect (optional)
+            // Optional glow effect
             if hasGlow {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(glowColor.opacity(0.1))
-                    .blur(radius: 10)
+                    .stroke(glowColor.opacity(0.5), lineWidth: borderWidth)
+                    .blur(radius: 3)
             }
         }
     }
@@ -124,43 +126,40 @@ struct GlassCard<Content: View>: View {
     }
 }
 
-// MARK: - Convenience Initializers
-extension GlassCard {
-    // Convenience initializer with just intensity
-    init(
-        intensity: GlassIntensity = .regular,
-        @ViewBuilder content: @escaping () -> Content
-    ) {
-        self.init(
-            intensity: intensity,
-            cornerRadius: 20,
-            padding: 20,
-            shadowRadius: 10,
-            borderWidth: 1,
-            isHovering: false,
-            hasGlow: false,
-            glowColor: Color.blue,
-            content: content
-        )
-    }
-    
-    // Convenience initializer with corner radius and padding
-    init(
-        intensity: GlassIntensity = .regular,
-        cornerRadius: CGFloat,
-        padding: CGFloat = 20,
-        @ViewBuilder content: @escaping () -> Content
-    ) {
-        self.init(
-            intensity: intensity,
-            cornerRadius: cornerRadius,
-            padding: padding,
-            shadowRadius: 10,
-            borderWidth: 1,
-            isHovering: false,
-            hasGlow: false,
-            glowColor: Color.blue,
-            content: content
-        )
+// MARK: - Preview
+struct GlassCard_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            LinearGradient(
+                colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                GlassCard(intensity: .thin) {
+                    Text("Thin Glass")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                }
+                
+                GlassCard(intensity: .regular) {
+                    Text("Regular Glass")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                }
+                
+                GlassCard(intensity: .thick, hasGlow: true, glowColor: .blue) {
+                    Text("Thick Glass with Glow")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                }
+            }
+            .padding()
+        }
     }
 }

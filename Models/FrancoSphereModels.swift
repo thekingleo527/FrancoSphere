@@ -2,8 +2,9 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: WeatherCondition.icon property access
 //  ✅ CLEANED: Removed duplicate type definitions
-//  ✅ IMPORTS: All types from nested FrancoSphere struct
+//  ✅ IMPORTS: All types from CoreTypes.swift
 //  ✅ FOCUSED: Only unique models, no conflicts
 //
 
@@ -148,12 +149,55 @@ extension WeatherData {
     
     /// Icon name based on weather condition
     public var iconName: String {
-        return condition.icon
+        return getWeatherIcon(for: condition)
     }
 }
 
-// MARK: - Type Aliases (Use existing FrancoSphere nested types)
+// MARK: - WeatherCondition Extension with Icon Support
 
-// Import core enums and types (these are defined in the FrancoSphere struct elsewhere)
-// Note: TaskCategory, TaskUrgency, WeatherCondition use the existing nested definitions
-// Icon extensions for these types are in ModelColorsExtensions.swift
+extension WeatherCondition {
+    /// Icon name for each weather condition
+    public var icon: String {
+        return getWeatherIcon(for: self)
+    }
+}
+
+// ✅ FIXED: Helper function to get weather icons (avoiding extension conflicts)
+private func getWeatherIcon(for condition: WeatherCondition) -> String {
+    switch condition {
+    case .clear: return "sun.max"
+    case .sunny: return "sun.max.fill"
+    case .cloudy: return "cloud"
+    case .rainy: return "cloud.rain"
+    case .snowy: return "cloud.snow"
+    case .stormy: return "cloud.bolt"
+    case .foggy: return "cloud.fog"
+    case .windy: return "wind"
+    case .partlyCloudy: return "cloud.sun"
+    case .overcast: return "cloud.fill"
+    }
+}
+
+extension TaskCategory {
+    /// Icon name for each task category
+    public var icon: String {
+        switch self {
+        case .maintenance: return "wrench.and.screwdriver"
+        case .cleaning: return "sparkles"
+        case .inspection: return "magnifyingglass"
+        case .repair: return "hammer"
+        case .security: return "lock.shield"
+        case .landscaping: return "leaf"
+        case .utilities: return "bolt"
+        case .emergency: return "exclamationmark.triangle.fill"
+        case .renovation: return "building.2"
+        case .installation: return "plus.square"
+        case .sanitation: return "trash"
+        }
+    }
+}
+
+// MARK: - Type Aliases (Use existing CoreTypes)
+
+// Import core enums and types from CoreTypes.swift
+// Note: TaskCategory, TaskUrgency, WeatherCondition use the existing CoreTypes definitions
