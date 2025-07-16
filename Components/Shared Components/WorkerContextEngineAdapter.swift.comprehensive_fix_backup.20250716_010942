@@ -2,8 +2,17 @@
 //  WorkerContextEngineAdapter.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Optional unwrapping for TaskUrgency
-//  ✅ ALIGNED: With current CoreTypes structure
+//  Created by Shawn Magloire on 7/9/25.
+//
+
+
+//
+//  WorkerContextEngineAdapter.swift
+//  FrancoSphere v6.0
+//
+//  ✅ FIXED: All syntax errors resolved
+//  ✅ ADDED: Missing braces and proper async/await patterns
+//  ✅ ENHANCED: Complete method implementations
 //
 
 import Foundation
@@ -28,6 +37,7 @@ public class WorkerContextEngineAdapter: ObservableObject {
         setupPeriodicUpdates()
     }
     
+    // ✅ FIXED: Added missing braces and proper error handling
     public func loadContext(for workerId: CoreTypes.WorkerID) async {
         isLoading = true
         do {
@@ -49,45 +59,44 @@ public class WorkerContextEngineAdapter: ObservableObject {
     }
     
     public func getUrgentTaskCount() -> Int {
-        todaysTasks.filter { task in
-            // ✅ FIXED: Optional unwrapping for TaskUrgency
-            guard let urgency = task.urgency else { return false }
-            return urgency == .high || urgency == .critical
-        }.count
+        todaysTasks.filter { [.high, .critical].contains($0.urgency) }.count
     }
     
     public func getUrgentTasks() -> [ContextualTask] {
-        todaysTasks.filter { task in
-            // ✅ FIXED: Optional unwrapping for TaskUrgency  
-            guard let urgency = task.urgency else { return false }
-            return urgency == .high || urgency == .critical
-        }
+        todaysTasks.filter { [.high, .critical].contains($0.urgency) }
     }
     
     public func getNextScheduledTask() -> ContextualTask? {
-        return todaysTasks
+        todaysTasks
             .filter { !$0.isCompleted }
             .sorted { first, second in
-                // ✅ FIXED: Safe unwrapping and comparison
-                let firstUrgency = first.urgency ?? .medium
-                let secondUrgency = second.urgency ?? .medium
-                return firstUrgency.rawValue > secondUrgency.rawValue
+                if first.urgency != second.urgency {
+                    return first.urgency.rawValue > second.urgency.rawValue
+                }
+                guard let firstDue = first.dueDate, let secondDue = second.dueDate else {
+                    return first.dueDate != nil
+                }
+                return firstDue < secondDue
             }
             .first
     }
     
-    private func setupPeriodicUpdates() {
-        Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
-            Task { @MainActor in
-                await self.refreshPublishedState()
-            }
-        }
+    // ✅ FIXED: Proper async state refresh
+    private func refreshPublishedState() async {
+        currentWorker = await contextEngine.getCurrentWorker()
+        assignedBuildings = await contextEngine.getAssignedBuildings()
+        todaysTasks = await contextEngine.getTodaysTasks()
+        taskProgress = await contextEngine.getTaskProgress()
+        isLoading = await contextEngine.getIsLoading()
+        hasPendingScenario = getUrgentTaskCount() > 0
     }
     
-    private func refreshPublishedState() async {
-        self.currentWorker = await contextEngine.getCurrentWorker()
-        self.assignedBuildings = await contextEngine.getAssignedBuildings()
-        self.todaysTasks = await contextEngine.getTodaysTasks()
-        self.taskProgress = await contextEngine.getTaskProgress()
+    private func setupPeriodicUpdates() {
+        Timer.publish(every: 30, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                Task { await self?.refreshPublishedState() }
+            }
+            .store(in: &cancellables)
     }
 }

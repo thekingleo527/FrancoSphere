@@ -1,9 +1,10 @@
-//
+////
 //  QuickActionMenu.swift
 //  FrancoSphere
 //
 //  A glass-styled contextual menu for Nova AI assistant quick actions
 //  ✅ FIXED: Binding.constant usage in preview
+//  ✅ FIXED: Changed @State to @Binding for proper parent-child communication
 //
 
 import SwiftUI
@@ -42,7 +43,8 @@ enum QuickActionType: String, CaseIterable {
 
 // MARK: - Quick Action Menu View
 struct QuickActionMenu: View {
-    @State var isPresented: Bool
+    // ✅ FIXED: Changed from @State to @Binding for proper parent-child communication
+    @Binding var isPresented: Bool
     let onActionSelected: (QuickActionType) -> Void
     
     @State private var animateIn = false
@@ -166,8 +168,8 @@ struct QuickActionMenu: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(selectedAction == action ? 
-                         Color.white.opacity(0.1) : 
+                    .fill(selectedAction == action ?
+                         Color.white.opacity(0.1) :
                          Color.clear)
             )
         }
@@ -320,8 +322,8 @@ struct QuickActionMenu_Previews: PreviewProvider {
             .ignoresSafeArea()
             
             // Menu
-            // ✅ FIXED: Use Binding.constant instead of .constant
-            QuickActionMenu(isPresented: Binding.constant(true)) { action in
+            // ✅ FIXED: Now properly passes Binding to @Binding parameter
+            QuickActionMenu(isPresented: .constant(true)) { action in
                 print("Selected: \(action.rawValue)")
             }
         }
