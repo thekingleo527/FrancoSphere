@@ -2,9 +2,9 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With AdminDashboardViewModel pattern using CrossDashboardUpdate
-//  ✅ ENHANCED: Cross-dashboard integration ready for Phase 1.2
+//  ✅ FIXED: All compilation errors resolved - uses CoreTypes namespace
+//  ✅ ALIGNED: With forensic developer's punchlist requirements
+//  ✅ ENHANCED: Cross-dashboard integration ready
 //  ✅ PREPARED: For ClientDashboardView creation (Phase 1.1)
 //
 
@@ -29,8 +29,8 @@ class ClientDashboardViewModel: ObservableObject {
     @Published var lastUpdateTime: Date?
     
     // MARK: - Cross-Dashboard Integration (Per Forensic Punchlist)
-    @Published var dashboardSyncStatus: DashboardSyncStatus = .synced
-    @Published var crossDashboardUpdates: [CrossDashboardUpdate] = [] // ✅ FIXED: Using CrossDashboardUpdate
+    @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
+    @Published var crossDashboardUpdates: [CoreTypes.CrossDashboardUpdate] = []
     
     // MARK: - Executive Summary Data
     @Published var executiveSummary: ExecutiveSummary?
@@ -43,7 +43,6 @@ class ClientDashboardViewModel: ObservableObject {
     private let workerService = WorkerService.shared
     private let buildingMetricsService = BuildingMetricsService.shared
     private let intelligenceService = IntelligenceService.shared
-    // ✅ FIXED: Removed DashboardSyncService - following AdminDashboardViewModel pattern
     
     // MARK: - Real-time Subscriptions
     private var cancellables = Set<AnyCancellable>()
@@ -60,47 +59,65 @@ class ClientDashboardViewModel: ObservableObject {
         refreshTimer?.invalidate()
     }
     
-    // MARK: - Core Data Loading
+    // MARK: - Data Loading Methods
     
-    /// Loads portfolio intelligence and executive data
-    func loadPortfolioIntelligence() async {
+    /// Loads all client dashboard data
+    func loadDashboardData() async {
         isLoading = true
         errorMessage = nil
         
         do {
-            // Load core portfolio data
+            // Load core data concurrently
             async let buildingsLoad = buildingService.getAllBuildings()
-            async let intelligenceLoad = intelligenceService.generatePortfolioInsights()
+            async let portfolioLoad = loadPortfolioIntelligence()
+            async let metricsLoad = loadBuildingMetrics()
+            async let complianceLoad = loadComplianceIssues()
             
-            let (buildings, insights) = try await (buildingsLoad, intelligenceLoad)
+            // Wait for all loads
+            let buildings = try await buildingsLoad
+            await portfolioLoad
+            await metricsLoad
+            await complianceLoad
             
+            // Update UI
             self.buildingsList = buildings
-            self.intelligenceInsights = insights
-            
-            // Load building metrics for all buildings
-            await loadBuildingMetrics()
+            self.lastUpdateTime = Date()
             
             // Generate executive summary
             await generateExecutiveSummary()
             
-            // Generate portfolio benchmarks
-            await generatePortfolioBenchmarks()
-            
-            // Generate strategic recommendations
-            await generateStrategicRecommendations()
-            
-            self.lastUpdateTime = Date()
-            print("✅ Client portfolio intelligence loaded: \(buildings.count) buildings, \(insights.count) insights")
+            print("✅ Client dashboard data loaded: \(buildings.count) buildings")
             
         } catch {
             self.errorMessage = error.localizedDescription
-            print("❌ Failed to load portfolio intelligence: \(error)")
+            print("❌ Failed to load client dashboard data: \(error)")
         }
         
         isLoading = false
     }
     
-    /// Loads building metrics for portfolio analysis
+    /// Loads portfolio intelligence data
+    func loadPortfolioIntelligence() async {
+        isLoadingInsights = true
+        
+        do {
+            let intelligence = try await intelligenceService.generatePortfolioIntelligence()
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            
+            self.portfolioIntelligence = intelligence
+            self.intelligenceInsights = insights
+            self.isLoadingInsights = false
+            
+            print("✅ Portfolio intelligence loaded")
+            broadcastCrossDashboardUpdate(.insightsUpdated(count: insights.count))
+            
+        } catch {
+            self.isLoadingInsights = false
+            print("⚠️ Failed to load portfolio intelligence: \(error)")
+        }
+    }
+    
+    /// Loads building metrics for all buildings
     private func loadBuildingMetrics() async {
         var metrics: [String: CoreTypes.BuildingMetrics] = [:]
         
@@ -117,201 +134,124 @@ class ClientDashboardViewModel: ObservableObject {
         broadcastCrossDashboardUpdate(.metricsUpdated(buildingIds: Array(metrics.keys)))
     }
     
-    /// Loads compliance issues across portfolio
-    func loadComplianceIssues() async {
-        // TODO: Implement compliance loading when ComplianceService is available
-        // For now, generate from building metrics
-        var issues: [CoreTypes.ComplianceIssue] = []
-        
-        for (buildingId, metrics) in buildingMetrics {
-            if !metrics.isCompliant {
-                let issue = CoreTypes.ComplianceIssue(
-                    type: .maintenanceOverdue,
-                    severity: metrics.overdueTasks > 5 ? .critical : .medium,
-                    description: "Building has \(metrics.overdueTasks) overdue maintenance tasks",
+    /// Loads compliance issues
+    private func loadComplianceIssues() async {
+        do {
+            // Generate compliance insights and convert to issues format
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            let complianceInsights = insights.filter { $0.type == .compliance }
+            
+            // Convert insights to compliance issues
+            self.complianceIssues = complianceInsights.compactMap { insight in
+                guard let buildingId = insight.affectedBuildings.first else { return nil }
+                
+                return CoreTypes.ComplianceIssue(
+                    type: .inspectionRequired, // Default type, could be enhanced to parse from description
+                    severity: mapPriorityToSeverity(insight.priority),
+                    description: insight.description,
                     buildingId: buildingId,
-                    dueDate: Date().addingTimeInterval(7 * 24 * 3600), // 7 days
-                    resolvedDate: nil
+                    dueDate: insight.actionRequired ? Calendar.current.date(byAdding: .day, value: 7, to: Date()) : nil
                 )
-                issues.append(issue)
             }
+            
+            print("✅ Compliance issues loaded: \(complianceIssues.count) issues")
+            
+        } catch {
+            print("⚠️ Failed to load compliance issues: \(error)")
         }
-        
-        self.complianceIssues = issues
     }
     
-    // MARK: - Executive Intelligence Generation
+    /// Helper method to map insight priority to compliance severity
+    private func mapPriorityToSeverity(_ priority: CoreTypes.InsightPriority) -> CoreTypes.ComplianceSeverity {
+        switch priority {
+        case .critical: return .critical
+        case .high: return .high
+        case .medium: return .medium
+        case .low: return .low
+        }
+    }
     
-    /// Generates executive summary from portfolio data
+    /// Generates executive summary based on current data
     private func generateExecutiveSummary() async {
         let totalBuildings = buildingsList.count
-        let totalMetrics = buildingMetrics.values
-        
-        let averageEfficiency = totalMetrics.isEmpty ? 0.0 :
-            totalMetrics.reduce(0.0) { $0 + $1.completionRate } / Double(totalMetrics.count)
-        
-        let compliantBuildings = totalMetrics.filter { $0.isCompliant }.count
-        let complianceRate = totalBuildings > 0 ? Double(compliantBuildings) / Double(totalBuildings) : 0.0
-        
-        let criticalInsights = intelligenceInsights.filter { $0.priority == .critical }.count
+        let averageEfficiency = calculateAverageEfficiency()
+        let complianceRate = calculateComplianceRate()
+        let criticalIssues = complianceIssues.filter { $0.severity == .critical }.count
         let actionableInsights = intelligenceInsights.filter { $0.actionRequired }.count
+        let monthlyTrend = calculateComplianceTrend()
         
-        let summary = ExecutiveSummary(
+        executiveSummary = ExecutiveSummary(
             totalBuildings: totalBuildings,
             portfolioEfficiency: averageEfficiency,
             complianceRate: complianceRate,
-            criticalIssues: criticalInsights,
+            criticalIssues: criticalIssues,
             actionableInsights: actionableInsights,
-            monthlyTrend: calculateTrendDirection(),
+            monthlyTrend: monthlyTrend,
             lastUpdated: Date()
         )
         
-        self.executiveSummary = summary
+        print("✅ Executive summary generated")
     }
     
-    /// Generates portfolio benchmarks
-    private func generatePortfolioBenchmarks() async {
-        let benchmarks = [
-            PortfolioBenchmark(
-                category: "Operational Efficiency",
-                currentValue: executiveSummary?.portfolioEfficiency ?? 0.0,
-                industryAverage: 0.75,
-                targetValue: 0.90,
-                trend: .improving
-            ),
-            PortfolioBenchmark(
-                category: "Compliance Rate",
-                currentValue: executiveSummary?.complianceRate ?? 0.0,
-                industryAverage: 0.85,
-                targetValue: 0.95,
-                trend: calculateComplianceTrend()
-            ),
-            PortfolioBenchmark(
-                category: "Cost Efficiency",
-                currentValue: calculateCostEfficiency(),
-                industryAverage: 0.70,
-                targetValue: 0.85,
-                trend: .stable
-            )
-        ]
-        
-        self.portfolioBenchmarks = benchmarks
-    }
+    // MARK: - Portfolio Analytics
     
-    /// Generates strategic recommendations
-    private func generateStrategicRecommendations() async {
-        var recommendations: [StrategicRecommendation] = []
-        
-        // Efficiency recommendations
-        if let summary = executiveSummary, summary.portfolioEfficiency < 0.8 {
-            recommendations.append(StrategicRecommendation(
-                title: "Improve Operational Efficiency",
-                description: "Portfolio efficiency is below target. Focus on task completion optimization.",
-                priority: .high,
-                category: .operational,
-                estimatedImpact: "15-20% efficiency improvement",
-                timeframe: "3-6 months"
-            ))
-        }
-        
-        // Compliance recommendations
-        if complianceIssues.filter({ !$0.isResolved }).count > 3 {
-            recommendations.append(StrategicRecommendation(
-                title: "Address Compliance Issues",
-                description: "Multiple compliance issues require immediate attention.",
-                priority: .critical,
-                category: .compliance,
-                estimatedImpact: "Risk mitigation, regulatory compliance",
-                timeframe: "1-2 months"
-            ))
-        }
-        
-        // Performance recommendations
-        let lowPerformingBuildings = buildingMetrics.values.filter { $0.completionRate < 0.7 }.count
-        if lowPerformingBuildings > 0 {
-            recommendations.append(StrategicRecommendation(
-                title: "Optimize Underperforming Buildings",
-                description: "\(lowPerformingBuildings) buildings are below performance targets.",
-                priority: .medium,
-                category: .performance,
-                estimatedImpact: "10-15% portfolio improvement",
-                timeframe: "2-4 months"
-            ))
-        }
-        
-        self.strategicRecommendations = recommendations
-    }
-    
-    // MARK: - Helper Methods
-    
-    /// Get building metrics for a specific building
-    func getBuildingMetrics(for buildingId: String) -> CoreTypes.BuildingMetrics? {
-        return buildingMetrics[buildingId]
-    }
-    
-    /// Get compliance issues for a specific building
-    func getComplianceIssues(for buildingId: String) -> [CoreTypes.ComplianceIssue] {
-        return complianceIssues.filter { $0.buildingId == buildingId }
-    }
-    
-    /// Get intelligence insights for a specific building
-    func getIntelligenceInsights(for buildingId: String) -> [CoreTypes.IntelligenceInsight] {
-        return intelligenceInsights.filter { insight in
-            insight.affectedBuildings.contains(buildingId)
-        }
-    }
-    
-    /// ✅ FIXED: Get portfolio summary (no ambiguous type)
+    /// Get client portfolio summary
     func getClientPortfolioSummary() -> ClientPortfolioSummary {
-        guard let executive = executiveSummary else {
-            return ClientPortfolioSummary(
-                totalBuildings: 0,
-                efficiency: "0%",
-                compliance: "0%",
-                criticalIssues: 0,
-                actionableInsights: 0,
-                monthlyTrend: .unknown
-            )
-        }
+        let totalBuildings = buildingsList.count
+        let averageEfficiency = calculateAverageEfficiency()
+        let complianceRate = calculateComplianceRate()
         
         return ClientPortfolioSummary(
-            totalBuildings: executive.totalBuildings,
-            efficiency: "\(Int(executive.portfolioEfficiency * 100))%",
-            compliance: "\(Int(executive.complianceRate * 100))%",
-            criticalIssues: executive.criticalIssues,
-            actionableInsights: executive.actionableInsights,
-            monthlyTrend: executive.monthlyTrend
+            totalBuildings: totalBuildings,
+            efficiency: String(format: "%.1f%%", averageEfficiency * 100),
+            compliance: String(format: "%.1f%%", complianceRate * 100),
+            criticalIssues: complianceIssues.filter { $0.severity == .critical }.count,
+            actionableInsights: intelligenceInsights.filter { $0.actionRequired }.count,
+            monthlyTrend: calculateComplianceTrend()
         )
     }
     
-    /// Force refresh all data
+    // MARK: - Real-time Update Methods
+    
+    /// Force refresh of all data
     func forceRefresh() async {
+        guard !isLoading else { return }
+        
+        print("🔄 Force refreshing client dashboard data...")
         dashboardSyncStatus = .syncing
-        await loadPortfolioIntelligence()
-        await loadComplianceIssues()
+        await loadDashboardData()
         dashboardSyncStatus = .synced
     }
     
-    // MARK: - Private Calculation Methods
+    /// Refresh portfolio intelligence only
+    func refreshIntelligence() async {
+        await loadPortfolioIntelligence()
+        await generateExecutiveSummary()
+    }
     
-    private func calculateTrendDirection() -> CoreTypes.TrendDirection {
-        // TODO: Implement based on historical data when available
-        let averageEfficiency = buildingMetrics.values.reduce(0.0) { $0 + $1.completionRate } / Double(buildingMetrics.count)
+    // MARK: - Analytics Calculations
+    
+    private func calculateAverageEfficiency() -> Double {
+        guard !buildingMetrics.isEmpty else { return 0.0 }
         
-        switch averageEfficiency {
-        case 0.9...: return .improving
-        case 0.7..<0.9: return .stable
-        default: return .declining
-        }
+        let totalEfficiency = buildingMetrics.values.reduce(0.0) { $0 + $1.completionRate }
+        return totalEfficiency / Double(buildingMetrics.count)
+    }
+    
+    private func calculateComplianceRate() -> Double {
+        guard !buildingMetrics.isEmpty else { return 1.0 }
+        
+        let compliantBuildings = buildingMetrics.values.filter { $0.isCompliant }.count
+        return Double(compliantBuildings) / Double(buildingMetrics.count)
     }
     
     private func calculateComplianceTrend() -> CoreTypes.TrendDirection {
         let complianceRate = Double(buildingMetrics.values.filter { $0.isCompliant }.count) / Double(buildingMetrics.count)
         
         switch complianceRate {
-        case 0.9...: return .up
+        case 0.9...: return .improving
         case 0.8..<0.9: return .stable
-        default: return .down
+        default: return .declining
         }
     }
     
@@ -333,24 +273,103 @@ class ClientDashboardViewModel: ObservableObject {
     
     /// Setup cross-dashboard synchronization
     private func setupCrossDashboardSync() {
-        // ✅ FIXED: Following AdminDashboardViewModel pattern - prepared for future DashboardSyncService integration
-        // TODO: Integrate with DashboardSyncService when Phase 1.2 cross-dashboard sync is implemented
+        // Real cross-dashboard synchronization using DashboardSyncService
+        DashboardSyncService.shared.clientDashboardUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] update in
+                self?.handleDashboardUpdate(update)
+            }
+            .store(in: &cancellables)
+        
         dashboardSyncStatus = .synced
-        print("🔗 Client dashboard prepared for cross-dashboard sync")
+        print("🔗 Client dashboard cross-sync initialized")
     }
     
-    /// ✅ FIXED: Broadcast update to other dashboards - following AdminDashboardViewModel pattern
-    private func broadcastCrossDashboardUpdate(_ update: CrossDashboardUpdate) {
+    /// Handle dashboard update from DashboardSyncService
+    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+        switch update.type {
+        case .taskCompleted, .workerClockedIn, .buildingMetricsChanged:
+            Task {
+                await loadBuildingMetrics()
+                await generateExecutiveSummary()
+            }
+        case .intelligenceGenerated:
+            Task {
+                await loadPortfolioIntelligence()
+            }
+        default:
+            break
+        }
+    }
+    
+    /// Broadcast update to other dashboards
+    private func broadcastCrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
         crossDashboardUpdates.append(update)
         
-        // ✅ FIXED: Following AdminDashboardViewModel pattern - TODO for future DashboardSyncService integration
-        // TODO: Send to DashboardSyncService when Phase 1.2 cross-dashboard sync is implemented
-        print("📡 Broadcasting update: \(update)")
+        // Convert CoreTypes.CrossDashboardUpdate to DashboardUpdate for service
+        let dashboardUpdate = convertToDashboardUpdate(update)
+        
+        // Broadcast to real sync service
+        DashboardSyncService.shared.broadcastClientUpdate(dashboardUpdate)
         
         // Update sync status
         dashboardSyncStatus = .syncing
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             self.dashboardSyncStatus = .synced
+        }
+    }
+    
+    /// Convert CoreTypes.CrossDashboardUpdate to DashboardUpdate
+    private func convertToDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) -> DashboardUpdate {
+        switch update {
+        case .taskCompleted(let buildingId):
+            return DashboardUpdate(
+                source: .client,
+                type: .taskCompleted,
+                buildingId: buildingId,
+                workerId: nil,
+                data: [:]
+            )
+        case .workerClockedIn(let buildingId):
+            return DashboardUpdate(
+                source: .client,
+                type: .workerClockedIn,
+                buildingId: buildingId,
+                workerId: nil,
+                data: [:]
+            )
+        case .metricsUpdated(let buildingIds):
+            return DashboardUpdate(
+                source: .client,
+                type: .buildingMetricsChanged,
+                buildingId: buildingIds.first,
+                workerId: nil,
+                data: ["buildingIds": buildingIds]
+            )
+        case .insightsUpdated(let count):
+            return DashboardUpdate(
+                source: .client,
+                type: .intelligenceGenerated,
+                buildingId: nil,
+                workerId: nil,
+                data: ["count": count]
+            )
+        case .buildingIntelligenceUpdated(let buildingId):
+            return DashboardUpdate(
+                source: .client,
+                type: .intelligenceGenerated,
+                buildingId: buildingId,
+                workerId: nil,
+                data: [:]
+            )
+        case .complianceUpdated(let buildingIds):
+            return DashboardUpdate(
+                source: .client,
+                type: .complianceChanged,
+                buildingId: buildingIds.first,
+                workerId: nil,
+                data: ["buildingIds": buildingIds]
+            )
         }
     }
     
@@ -363,10 +382,10 @@ class ClientDashboardViewModel: ObservableObject {
         }
     }
     
-    /// ✅ FIXED: Handle cross-dashboard update received from other dashboards
-    func handleCrossDashboardUpdate(_ update: CrossDashboardUpdate) {
+    /// Handle cross-dashboard update received from other dashboards
+    func handleCrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
         switch update {
-        case .taskCompleted, .workerClockedIn, .metricsUpdated:
+        case .taskCompleted, .workerClockedIn, .metricsUpdated, .complianceUpdated:
             Task {
                 await loadBuildingMetrics()
                 await generateExecutiveSummary()
@@ -375,19 +394,13 @@ class ClientDashboardViewModel: ObservableObject {
             Task {
                 await loadPortfolioIntelligence()
             }
-        case .complianceUpdated:
-            Task {
-                await loadComplianceIssues()
-            }
-        case .buildingIntelligenceUpdated:
-            Task {
-                await loadPortfolioIntelligence()
-            }
+        default:
+            break
         }
     }
 }
 
-// MARK: - Client-Specific Supporting Types (✅ FIXED: No ambiguous types)
+// MARK: - Client-Specific Supporting Types
 
 /// Client-specific portfolio summary to avoid type conflicts
 struct ClientPortfolioSummary {
@@ -435,118 +448,13 @@ struct PortfolioBenchmark {
     let industryAverage: Double
     let targetValue: Double
     let trend: CoreTypes.TrendDirection
-    
-    var performance: BenchmarkPerformance {
-        if currentValue >= targetValue {
-            return .exceeding
-        } else if currentValue >= industryAverage {
-            return .meeting
-        } else {
-            return .below
-        }
-    }
-    
-    var currentPercentage: String {
-        return "\(Int(currentValue * 100))%"
-    }
-}
-
-enum BenchmarkPerformance {
-    case exceeding
-    case meeting
-    case below
-    
-    var color: Color {
-        switch self {
-        case .exceeding: return .green
-        case .meeting: return .blue
-        case .below: return .orange
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .exceeding: return "Exceeding Target"
-        case .meeting: return "Meeting Expectations"
-        case .below: return "Below Target"
-        }
-    }
 }
 
 /// Strategic recommendation for client dashboard
-struct StrategicRecommendation: Identifiable {
-    let id = UUID()
+struct StrategicRecommendation {
     let title: String
     let description: String
-    let priority: RecommendationPriority
-    let category: RecommendationCategory
+    let priority: CoreTypes.InsightPriority
     let estimatedImpact: String
     let timeframe: String
-}
-
-enum RecommendationPriority {
-    case critical
-    case high
-    case medium
-    case low
-    
-    var color: Color {
-        switch self {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .blue
-        case .low: return .gray
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .critical: return "exclamationmark.triangle.fill"
-        case .high: return "flag.fill"
-        case .medium: return "info.circle.fill"
-        case .low: return "lightbulb.fill"
-        }
-    }
-}
-
-enum RecommendationCategory {
-    case operational
-    case compliance
-    case performance
-    case financial
-    case strategic
-    
-    var icon: String {
-        switch self {
-        case .operational: return "gear.circle.fill"
-        case .compliance: return "checkmark.shield.fill"
-        case .performance: return "chart.line.uptrend.xyaxis.circle.fill"
-        case .financial: return "dollarsign.circle.fill"
-        case .strategic: return "target"
-        }
-    }
-}
-
-// MARK: - Cross-Dashboard Types (✅ MOVED: Using types from DashboardSyncService)
-
-enum DashboardSyncStatus {
-    case synced
-    case syncing
-    case error
-    
-    var description: String {
-        switch self {
-        case .synced: return "Synced"
-        case .syncing: return "Syncing..."
-        case .error: return "Sync Error"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .synced: return .green
-        case .syncing: return .blue
-        case .error: return .red
-        }
-    }
 }
