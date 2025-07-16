@@ -22,6 +22,7 @@
 		2312FC932E1BF5D700B64496 /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC922E1BF5C600B64496 /* InitializationView.swift */; };
 		2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */; };
 		23148E6E2E285F7300446441 /* WorkerContextEngine+DataFlow.swift in Resources */ = {isa = PBXBuildFile; fileRef = 23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */; };
+		23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23148E732E286AA200446441 /* UnifiedDataService.swift */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
 		233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */; };
@@ -54,7 +55,6 @@
 		234581492DF78E3D00355F0A /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809B2DF78E3D00355F0A /* GlassCard.swift */; };
 		2345814D2DF78E3D00355F0A /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A32DF78E3D00355F0A /* GlassTypes.swift */; };
 		2345814F2DF78E3D00355F0A /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D02DF78E3D00355F0A /* HapticManager.swift */; };
-		234581502DF78E3D00355F0A /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581072DF78E3D00355F0A /* RealWorldDataSeeder.swift */; };
 		234581522DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A62DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift */; };
 		234581542DF78E3D00355F0A /* BuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581152DF78E3D00355F0A /* BuildingsView.swift */; };
 		234581552DF78E3D00355F0A /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A92DF78E3D00355F0A /* MapRevealContainer.swift */; };
@@ -216,6 +216,7 @@
 		2312FC922E1BF5C600B64496 /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
 		2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerContextEngine+DataFlow.swift"; sourceTree = "<group>"; };
+		23148E732E286AA200446441 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -304,7 +305,6 @@
 		234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializationCoordinator.swift; sourceTree = "<group>"; };
 		234581052DF78E3D00355F0A /* DatabaseSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSeeder.swift; sourceTree = "<group>"; };
 		234581062DF78E3D00355F0A /* DataBootstrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBootstrapper.swift; sourceTree = "<group>"; };
-		234581072DF78E3D00355F0A /* RealWorldDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldDataSeeder.swift; sourceTree = "<group>"; };
 		2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
 		2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
 		2345810E2DF78E3D00355F0A /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
@@ -381,16 +381,6 @@
 		23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaContextEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		23B117A32DFE39AB0065F39E /* Exceptions for "SeedDatabase" folder in "FrancoSphere" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				SeedDatabase.swift,
-			);
-			target = 23423DB62D739D6800AACE3E /* FrancoSphere */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2312FC702E1B816700B64496 /* DTOs */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -405,14 +395,6 @@
 		238375EB2E18480200EC410D /* ViewModels */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		23AD7FB22DF5A95D00BDF90A /* SeedDatabase */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				23B117A32DFE39AB0065F39E /* Exceptions for "SeedDatabase" folder in "FrancoSphere" target */,
-			);
-			path = SeedDatabase;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -511,7 +493,6 @@
 				234581012DF78E3D00355F0A /* Resources */,
 				2345810D2DF78E3D00355F0A /* Services */,
 				234581292DF78E3D00355F0A /* Views */,
-				23AD7FB22DF5A95D00BDF90A /* SeedDatabase */,
 				23E1E56D2E0F37CA0036127D /* Frameworks */,
 				23423DB82D739D6800AACE3E /* Products */,
 			);
@@ -755,7 +736,6 @@
 				234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */,
 				234581052DF78E3D00355F0A /* DatabaseSeeder.swift */,
 				234581062DF78E3D00355F0A /* DataBootstrapper.swift */,
-				234581072DF78E3D00355F0A /* RealWorldDataSeeder.swift */,
 				2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */,
 				2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */,
 			);
@@ -835,6 +815,7 @@
 		2374933D2E1C950700D9C70D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				23148E732E286AA200446441 /* UnifiedDataService.swift */,
 				23A3169E2E1E37B500469FA3 /* AITypes.swift */,
 				237493572E1C9F8800D9C70D /* CoreTypes.swift */,
 			);
@@ -1086,7 +1067,6 @@
 				23B117A62DFE3A490065F39E /* DashboardTaskDetailView.swift in Sources */,
 				2345814D2DF78E3D00355F0A /* GlassTypes.swift in Sources */,
 				2345814F2DF78E3D00355F0A /* HapticManager.swift in Sources */,
-				234581502DF78E3D00355F0A /* RealWorldDataSeeder.swift in Sources */,
 				234581522DF78E3D00355F0A /* WorkerAssignmentGlassCard.swift in Sources */,
 				233F94E42DF7B96D00901707 /* WorkerDashboardView.swift in Sources */,
 				234581542DF78E3D00355F0A /* BuildingsView.swift in Sources */,
@@ -1154,6 +1134,7 @@
 				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */,
 				23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */,
+				23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */,
 				23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */,
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,

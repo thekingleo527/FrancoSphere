@@ -2,9 +2,10 @@
 //  InitializationViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Now actually calls UnifiedDataInitializer instead of placeholder sleeps
+//  ✅ FIXED: Compilation errors resolved
+//  ✅ FIXED: Uses DataInitializationManager instead of UnifiedDataInitializer
+//  ✅ FIXED: Proper MainActor async/await handling
 //  ✅ INTEGRATED: Real database seeding and worker assignments
-//  ✅ WORKING: Creates worker_assignments table and seeds real data
 //
 
 import Foundation
@@ -18,81 +19,112 @@ class InitializationViewModel: ObservableObject {
     @Published var isComplete: Bool = false
     @Published var initializationError: String?
     
-    // MARK: - Real Initialization with UnifiedDataInitializer
+    // Use the actual available initialization manager
+    private let dataManager = DataInitializationManager.shared
+    
+    // MARK: - Real Initialization with DataInitializationManager
     
     func startInitialization() async {
         guard !isInitializing else { return }
         isInitializing = true
         initializationError = nil
         
-        print("🚀 Starting real initialization with UnifiedDataInitializer...")
+        print("🚀 Starting real initialization with DataInitializationManager...")
         
         do {
-            // FIXED: Use UnifiedDataInitializer instead of placeholder sleeps
-            let initializer = UnifiedDataInitializer.shared
+            // Method 1: Use DataInitializationManager directly
+            let status = try await dataManager.initializeAllData()
             
-            // Monitor progress from UnifiedDataInitializer
-            await withTaskGroup(of: Void.self) { group in
-                // Task 1: Run the actual initialization
-                group.addTask {
-                    do {
-                        try await initializer.initializeIfNeeded()
-                    } catch {
-                        await MainActor.run {
-                            self.initializationError = error.localizedDescription
-                        }
-                    }
+            // Monitor progress by observing the published properties
+            while dataManager.initializationProgress < 1.0 && initializationError == nil {
+                // Update from published properties
+                self.progress = dataManager.initializationProgress
+                self.currentStep = dataManager.currentStatus
+                
+                // Check for errors
+                if dataManager.hasError {
+                    self.initializationError = dataManager.errorMessage
+                    break
                 }
                 
-                // Task 2: Monitor progress updates
-                group.addTask {
-                    while !initializer.isInitialized && self.initializationError == nil {
-                        await MainActor.run {
-                            self.progress = initializer.initializationProgress
-                            self.currentStep = initializer.currentStep
-                        }
-                        
-                        // Update every 100ms for smooth progress
-                        try? await Task.sleep(nanoseconds: 100_000_000)
-                    }
-                }
-                
-                // Wait for initialization to complete
-                await group.waitForAll()
+                // Update every 100ms for smooth progress
+                try? await Task.sleep(nanoseconds: 100_000_000)
             }
             
             // Check final status
-            if let error = initializer.error {
-                await MainActor.run {
-                    self.initializationError = "Initialization failed: \(error.localizedDescription)"
-                    self.isInitializing = false
-                }
+            if status.hasErrors {
+                self.initializationError = "Initialization completed with errors: \(status.errors.joined(separator: ", "))"
+            } else {
+                // Success!
+                self.progress = 1.0
+                self.currentStep = "FrancoSphere Ready!"
+                print("✅ Initialization completed successfully!")
+                
+                // Brief pause to show completion
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                
+                self.isComplete = true
+            }
+            
+        } catch {
+            self.initializationError = "Critical error: \(error.localizedDescription)"
+            print("❌ Initialization failed with error: \(error)")
+        }
+        
+        isInitializing = false
+    }
+    
+    // MARK: - Alternative Implementation using SeedDatabase directly
+    
+    func startInitializationAlternative() async {
+        guard !isInitializing else { return }
+        isInitializing = true
+        initializationError = nil
+        
+        print("🚀 Starting initialization with SeedDatabase...")
+        
+        do {
+            // Step 1: Database migrations
+            self.currentStep = "Running database migrations..."
+            self.progress = 0.2
+            try await SeedDatabase.runMigrations()
+            
+            // Step 2: Operational data
+            self.currentStep = "Initializing operational data..."
+            self.progress = 0.5
+            try await OperationalDataManager.shared.initializeOperationalData()
+            
+            // Step 3: Bootstrap additional data
+            self.currentStep = "Bootstrapping data..."
+            self.progress = 0.8
+            DataBootstrapper.runIfNeeded()
+            
+            // Step 4: Validation
+            self.currentStep = "Validating data integrity..."
+            self.progress = 0.9
+            let validation = await DatabaseSeeder.shared.validateDatabase()
+            
+            if !validation.success {
+                self.initializationError = "Data validation failed: \(validation.message)"
                 return
             }
             
             // Success!
-            await MainActor.run {
-                self.progress = 1.0
-                self.currentStep = "FrancoSphere Ready!"
-                print("✅ Initialization completed successfully!")
-                print("   Status: \(initializer.statusMessage)")
-            }
+            self.progress = 1.0
+            self.currentStep = "FrancoSphere Ready!"
+            print("✅ Initialization completed successfully!")
             
             // Brief pause to show completion
             try? await Task.sleep(nanoseconds: 500_000_000)
             
-            await MainActor.run {
-                self.isComplete = true
-                self.isInitializing = false
-            }
+            self.isComplete = true
             
         } catch {
-            await MainActor.run {
-                self.initializationError = "Critical error: \(error.localizedDescription)"
-                self.isInitializing = false
-            }
+            self.initializationError = "Critical error: \(error.localizedDescription)"
             print("❌ Initialization failed with error: \(error)")
         }
+        
+        isInitializing = false
     }
     
     // MARK: - Helper Methods
@@ -101,28 +133,96 @@ class InitializationViewModel: ObservableObject {
     func resetInitialization() async {
         guard !isInitializing else { return }
         
-        await MainActor.run {
-            self.isComplete = false
-            self.progress = 0.0
-            self.currentStep = "Preparing FrancoSphere..."
-            self.initializationError = nil
-        }
+        self.isComplete = false
+        self.progress = 0.0
+        self.currentStep = "Preparing FrancoSphere..."
+        self.initializationError = nil
         
         print("🔄 Initialization state reset")
     }
     
     /// Get detailed initialization status
     var detailedStatus: String {
-        let initializer = UnifiedDataInitializer.shared
-        
         if let error = initializationError {
             return "Error: \(error)"
         } else if isComplete {
-            return "Ready - \(initializer.statusMessage)"
+            return "Ready - Initialization completed successfully"
         } else if isInitializing {
             return currentStep
         } else {
             return "Waiting to start..."
         }
+    }
+    
+    /// Progress percentage as string
+    var progressPercentage: String {
+        return "\(Int(progress * 100))%"
+    }
+    
+    /// Check if we can start initialization
+    var canStartInitialization: Bool {
+        return !isInitializing && !isComplete
+    }
+}
+
+// MARK: - Initialization Options
+
+extension InitializationViewModel {
+    /// Quick initialization for development
+    func quickInitialization() async {
+        guard !isInitializing else { return }
+        isInitializing = true
+        initializationError = nil
+        
+        print("🚀 Quick initialization for development...")
+        
+        self.currentStep = "Quick setup..."
+        self.progress = 0.5
+        
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        
+        await dataManager.quickInitialize()
+        
+        self.progress = 1.0
+        self.currentStep = "Quick setup complete!"
+        
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        
+        self.isComplete = true
+        self.isInitializing = false
+        
+        print("✅ Quick initialization completed")
+    }
+    
+    /// Full initialization with schema migration
+    func fullInitializationWithMigration() async {
+        guard !isInitializing else { return }
+        isInitializing = true
+        initializationError = nil
+        
+        print("🚀 Full initialization with schema migration...")
+        
+        do {
+            let status = try await dataManager.initializeWithSchemaPatch()
+            
+            self.progress = dataManager.initializationProgress
+            self.currentStep = dataManager.currentStatus
+            
+            if status.hasErrors {
+                self.initializationError = "Migration completed with errors: \(status.errors.joined(separator: ", "))"
+            } else {
+                self.progress = 1.0
+                self.currentStep = "Full initialization complete!"
+                
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                self.isComplete = true
+            }
+            
+        } catch {
+            self.initializationError = "Migration failed: \(error.localizedDescription)"
+            print("❌ Full initialization failed: \(error)")
+        }
+        
+        isInitializing = false
     }
 }

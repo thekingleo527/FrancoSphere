@@ -288,66 +288,6 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     
     // MARK: - Fallback Data Methods
     
-    private func createFallbackWorkerData(_ building: NamedCoordinate) async {
-        // Create basic worker data when service fails
-        let fallbackWorker = WorkerProfile(
-            id: "fallback",
-            name: "Building Staff",
-            email: "staff@building.com",
-            phoneNumber: "(555) 123-4567",
-            role: .worker,
-            skills: [],
-            certifications: [],
-            hireDate: Date(),
-            isActive: true
-        )
-        
-        self.allAssignedWorkers = [fallbackWorker]
-        self.primaryWorkers = [fallbackWorker]
-        self.currentWorkersOnSite = []
-    }
-    
-    private func createFallbackScheduleData(_ building: NamedCoordinate) async {
-        // Create basic schedule data when service fails
-        let fallbackTask = ContextualTask(
-            id: "fallback-task",
-            title: "Building Maintenance",
-            description: "Routine building maintenance and inspection",
-            isCompleted: false,
-            completedDate: nil,
-            scheduledDate: Date(),
-            dueDate: Date().addingTimeInterval(3600),
-            category: .maintenance,
-            urgency: .medium,
-            building: building,
-            worker: nil
-        )
-        
-        self.todaysCompleteSchedule = [fallbackTask]
-        self.weeklyRoutineSchedule = [fallbackTask]
-    }
-    
-    private func createFallbackHistoryData(_ building: NamedCoordinate) async {
-        // Create basic history data when service fails
-        let fallbackHistoryTask = ContextualTask(
-            id: "fallback-history",
-            title: "Previous Maintenance",
-            description: "Recently completed maintenance task",
-            isCompleted: true,
-            completedDate: Date().addingTimeInterval(-3600),
-            scheduledDate: Date().addingTimeInterval(-7200),
-            dueDate: Date().addingTimeInterval(-3600),
-            category: .maintenance,
-            urgency: .medium,
-            building: building,
-            worker: nil
-        )
-        
-        self.buildingHistory = [fallbackHistoryTask]
-        self.patterns = ["Standard maintenance patterns", "Regular completion rate"]
-    }
-}
-    
     /// Create fallback worker data when service fails
     private func createFallbackWorkerData(_ building: NamedCoordinate) async {
         print("📝 Creating fallback worker data for: \(building.name)")
@@ -355,17 +295,17 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         // Create basic worker profiles based on building assignments
         var fallbackWorkers: [WorkerProfile] = []
         
-        // Determine workers based on building name patterns
+        // Determine workers based on building name patterns using correct UserRole enum
         if building.name.contains("Rubin") {
-            fallbackWorkers.append(createFallbackWorker(id: "4", name: "Kevin Dutan", role: .technician))
+            fallbackWorkers.append(createFallbackWorker(id: "4", name: "Kevin Dutan", role: .worker))
         } else if building.name.contains("Perry") {
-            fallbackWorkers.append(createFallbackWorker(id: "5", name: "Mercedes Inamagua", role: .maintenance))
+            fallbackWorkers.append(createFallbackWorker(id: "5", name: "Mercedes Inamagua", role: .worker))
         } else if building.name.contains("Walker") || building.name.contains("Elizabeth") {
-            fallbackWorkers.append(createFallbackWorker(id: "6", name: "Luis Lopez", role: .maintenance))
+            fallbackWorkers.append(createFallbackWorker(id: "6", name: "Luis Lopez", role: .worker))
         } else {
             // Default workers for other buildings
-            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: .manager))
-            fallbackWorkers.append(createFallbackWorker(id: "2", name: "Edwin Lema", role: .maintenance))
+            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: .supervisor))
+            fallbackWorkers.append(createFallbackWorker(id: "2", name: "Edwin Lema", role: .worker))
         }
         
         self.allAssignedWorkers = fallbackWorkers
@@ -373,21 +313,23 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         self.currentWorkersOnSite = [] // No one currently on site
     }
     
-    private func createFallbackWorker(id: String, name: String, role: CoreTypes.WorkerRole) -> WorkerProfile {
+    /// Create a fallback worker with correct WorkerProfile initializer
+    private func createFallbackWorker(id: String, name: String, role: UserRole) -> WorkerProfile {
         return WorkerProfile(
             id: id,
             name: name,
+            email: "\(name.lowercased().replacingOccurrences(of: " ", with: "."))@francosphere.com",
+            phoneNumber: "(555) 123-4567",
             role: role,
-            contactInfo: "",
-            skills: [],
-            isActive: true,
-            createdDate: Date(),
-            lastLoginDate: Date()
+            skills: ["Maintenance", "General"],
+            certifications: [],
+            hireDate: Date(),
+            isActive: true
         )
     }
     
     /// Generate fallback schedule when service fails
-    private func createFallbackSchedule(_ building: NamedCoordinate) async {
+    private func createFallbackScheduleData(_ building: NamedCoordinate) async {
         print("📝 Creating fallback schedule for: \(building.name)")
         
         let now = Date()
@@ -427,22 +369,51 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         self.weeklyRoutineSchedule = schedule // Use same for weekly
     }
     
+    /// Create a fallback task with correct ContextualTask initializer
     private func createFallbackTask(
         title: String,
         building: NamedCoordinate,
         startTime: String,
         category: CoreTypes.TaskCategory
     ) -> ContextualTask {
+        // ✅ FIXED: Use correct parameter order for ContextualTask
         return ContextualTask(
             id: UUID().uuidString,
             title: title,
             description: "\(title) at \(building.name)",
-            buildingId: building.id,
-            buildingName: building.name,
-            category: category,
-            urgency: .normal,
             isCompleted: false,
+            completedDate: nil,
             scheduledDate: Date(),
-            dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date())
+            dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date()),
+            category: category,
+            urgency: .medium, // ✅ FIXED: Use .medium instead of .normal
+            building: building,
+            worker: nil,
+            buildingId: building.id,
+            buildingName: building.name
         )
     }
+    
+    /// Create fallback history data when service fails
+    private func createFallbackHistoryData(_ building: NamedCoordinate) async {
+        // Create basic history data when service fails
+        let fallbackHistoryTask = ContextualTask(
+            id: "fallback-history",
+            title: "Previous Maintenance",
+            description: "Recently completed maintenance task",
+            isCompleted: true,
+            completedDate: Date().addingTimeInterval(-3600),
+            scheduledDate: Date().addingTimeInterval(-7200),
+            dueDate: Date().addingTimeInterval(-3600),
+            category: .maintenance,
+            urgency: .medium,
+            building: building,
+            worker: nil,
+            buildingId: building.id,
+            buildingName: building.name
+        )
+        
+        self.buildingHistory = [fallbackHistoryTask]
+        self.patterns = ["Standard maintenance patterns", "Regular completion rate"]
+    }
+}
