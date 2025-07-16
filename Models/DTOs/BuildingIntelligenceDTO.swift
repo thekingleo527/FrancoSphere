@@ -3,7 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
-//  ✅ FIXED: Aligned with actual DTO structures and method signatures
+//  ✅ FIXED: Exhaustive switch statement for ComplianceStatus
+//  ✅ ALIGNED: With actual DTO structures and method signatures
 //  ✅ CORRECTED: All method calls and property references
 //
 
@@ -170,13 +171,18 @@ extension BuildingIntelligenceDTO {
             ))
         }
         
-        // Compliance insights - using actual ComplianceStatus enum from ComplianceDataDTO
+        // ✅ FIXED: Exhaustive switch statement with all 4 ComplianceStatus cases
         if complianceData.complianceStatus != .compliant {
             let priorityLevel: CoreTypes.InsightPriority = {
                 switch complianceData.complianceStatus {
-                case .atRisk: return .critical
-                case .needsReview: return .medium
-                case .compliant: return .low
+                case .compliant:
+                    return .low
+                case .needsReview:
+                    return .medium
+                case .atRisk:
+                    return .high
+                case .nonCompliant:
+                    return .critical
                 }
             }()
             
@@ -219,11 +225,11 @@ extension BuildingIntelligenceDTO {
     }
 }
 
-// MARK: - Factory Methods
+// MARK: - Factory Methods (UPDATED: Remove StubFactory Dependencies)
 
 extension BuildingIntelligenceDTO {
     
-    /// Create a sample DTO for testing using StubFactory patterns
+    /// Create a sample DTO for testing using real data patterns instead of StubFactory
     static func sample(buildingId: CoreTypes.BuildingID) -> BuildingIntelligenceDTO {
         return BuildingIntelligenceDTO(
             buildingId: buildingId,
@@ -236,24 +242,106 @@ extension BuildingIntelligenceDTO {
                 urgentTasksCount: 2,
                 overdueTasksCount: 1
             ),
-            complianceData: StubFactory.makeComplianceData(for: buildingId),
-            workerMetrics: [StubFactory.makeWorkerMetrics(for: buildingId, workerId: "1")],
-            buildingSpecificData: StubFactory.makeBuildingSpecificData(for: buildingId),
-            dataQuality: StubFactory.makeDataQuality()
+            complianceData: sampleComplianceData(for: buildingId),
+            workerMetrics: [sampleWorkerMetrics(for: buildingId, workerId: "1")],
+            buildingSpecificData: sampleBuildingSpecificData(for: buildingId),
+            dataQuality: sampleDataQuality()
         )
     }
     
-    /// Create enhanced sample with multiple workers
+    /// Create enhanced sample with multiple workers (UPDATED: No StubFactory)
     static func enhancedSample(buildingId: CoreTypes.BuildingID, workerIds: [CoreTypes.WorkerID]) -> BuildingIntelligenceDTO {
-        let workerMetrics = workerIds.map { StubFactory.makeWorkerMetrics(for: buildingId, workerId: $0) }
+        let workerMetrics = workerIds.map { sampleWorkerMetrics(for: buildingId, workerId: $0) }
         
         return BuildingIntelligenceDTO(
             buildingId: buildingId,
-            operationalMetrics: StubFactory.makeOperationalMetrics(),
-            complianceData: StubFactory.makeComplianceData(for: buildingId),
+            operationalMetrics: sampleOperationalMetrics(),
+            complianceData: sampleComplianceData(for: buildingId),
             workerMetrics: workerMetrics,
-            buildingSpecificData: StubFactory.makeBuildingSpecificData(for: buildingId),
-            dataQuality: StubFactory.makeDataQuality()
+            buildingSpecificData: sampleBuildingSpecificData(for: buildingId),
+            dataQuality: sampleDataQuality()
+        )
+    }
+    
+    // MARK: - Sample Data Methods (Replacing StubFactory dependencies)
+    
+    private static func sampleOperationalMetrics() -> OperationalMetricsDTO {
+        return OperationalMetricsDTO(
+            score: Int.random(in: 75...95),
+            routineAdherence: Double.random(in: 0.8...0.98),
+            maintenanceEfficiency: Double.random(in: 0.8...0.95),
+            averageTaskDuration: TimeInterval(Int.random(in: 1800...3600)),
+            taskCompletionRate: Double.random(in: 0.75...0.95),
+            urgentTasksCount: Int.random(in: 0...5),
+            overdueTasksCount: Int.random(in: 0...3)
+        )
+    }
+    
+    private static func sampleComplianceData(for buildingId: CoreTypes.BuildingID) -> ComplianceDataDTO {
+        // Use real building-specific logic like StubFactory did
+        switch buildingId {
+        case "14": // Rubin Museum - higher compliance due to museum standards
+            return ComplianceDataDTO(
+                buildingId: buildingId,
+                hasValidPermits: true,
+                lastInspectionDate: Date().addingTimeInterval(-60 * 60 * 24 * 30), // 30 days ago
+                outstandingViolations: 0
+            )
+        case "7": // 136 W 17th Street - residential condo
+            return ComplianceDataDTO(
+                buildingId: buildingId,
+                hasValidPermits: true,
+                lastInspectionDate: Date().addingTimeInterval(-60 * 60 * 24 * 90), // 90 days ago
+                outstandingViolations: 1
+            )
+        default:
+            return ComplianceDataDTO(
+                buildingId: buildingId,
+                hasValidPermits: Bool.random(),
+                lastInspectionDate: Date().addingTimeInterval(TimeInterval(-Int.random(in: 60...400)) * 86400),
+                outstandingViolations: Int.random(in: 0...2)
+            )
+        }
+    }
+    
+    private static func sampleWorkerMetrics(for buildingId: CoreTypes.BuildingID, workerId: CoreTypes.WorkerID) -> WorkerMetricsDTO {
+        return WorkerMetricsDTO(
+            buildingId: buildingId,
+            workerId: workerId,
+            overallScore: Int.random(in: 75...95),
+            taskCompletionRate: Double.random(in: 0.8...0.98),
+            maintenanceEfficiency: Double.random(in: 0.8...0.95),
+            workerSatisfaction: Double.random(in: 0.8...1.0),
+            routineAdherence: Double.random(in: 0.9...1.0),
+            specializedTasksCompleted: Int.random(in: 1...5),
+            totalTasksAssigned: Int.random(in: 10...20),
+            averageTaskDuration: TimeInterval(Int.random(in: 1800...3600)),
+            lastActiveDate: Date().addingTimeInterval(TimeInterval(-Int.random(in: 1...5)) * 86400)
+        )
+    }
+    
+    private static func sampleBuildingSpecificData(for buildingId: CoreTypes.BuildingID) -> BuildingSpecificDataDTO {
+        let type: String
+        switch buildingId {
+        case "14":
+            type = "Cultural"
+        case "7", "6", "10":
+            type = "Residential"
+        default:
+            type = "Commercial"
+        }
+        return BuildingSpecificDataDTO(
+            buildingType: type,
+            yearBuilt: Int.random(in: 1920...2010),
+            squareFootage: Int.random(in: 15000...50000)
+        )
+    }
+    
+    private static func sampleDataQuality() -> DataQuality {
+        return DataQuality(
+            score: Double.random(in: 0.85...0.99),
+            isDataStale: Bool.random(),
+            missingReports: Int.random(in: 0...3)
         )
     }
 }
