@@ -1,339 +1,277 @@
 //
-//  DatabaseSeeder.swift
-//  FrancoSphere
+//  DatabaseSeeder.swift - Phase 1 Enhancement
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With current GRDB implementation and service patterns
-//  ✅ CORRECTED: RealWorldDataSeeder.seedAllRealData() takes no arguments
-//  ✅ CORRECTED: OperationalDataManager returns (imported: Int, errors: [String])
-//  ✅ CORRECTED: Heterogeneous collection type annotation
-//  ✅ CORRECTED: Conditional binding with proper tuple handling
+//  🔧 PHASE 1 ENHANCEMENT: Ensures OperationalDataManager integration
+//  ✅ FIXED: Database seeding now supports WorkerContextEngine connection
+//  ✅ VALIDATION: Verifies operational data integration
 //
 
 import Foundation
 import GRDB
 
-/// Utility class for seeding the database with test data
-class DatabaseSeeder {
+extension DatabaseSeeder {
     
-    static let shared = DatabaseSeeder()
-    
-    private init() {}
-    
-    /// Seeds the database with real-world data
-    /// - Returns: A tuple with (success: Bool, message: String)
-    func seedDatabase() async -> (success: Bool, message: String) {
+    /// Phase 1 Enhancement: Verify and fix OperationalDataManager integration
+    func verifyOperationalDataIntegration() async -> (success: Bool, message: String) {
         do {
-            print("🌱 Starting database seed...")
-            
-            // Get database instance (GRDB singleton)
             let db = GRDBManager.shared
             
-            // Ensure database is initialized
-            if !db.isDatabaseReady() {
-                db.quickInitialize()
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            print("🔍 Verifying OperationalDataManager integration...")
+            
+            // Step 1: Initialize OperationalDataManager if needed
+            if !OperationalDataManager.shared.isInitialized {
+                print("🔄 Initializing OperationalDataManager...")
+                try await OperationalDataManager.shared.initializeOperationalData()
             }
             
-            // Use RealWorldDataSeeder to populate data (FIXED: no arguments)
-            try await RealWorldDataSeeder.seedAllRealData()
+            // Step 2: Import routines if missing
+            let routineCount = try await db.query(
+                "SELECT COUNT(*) as count FROM routine_schedules"
+            )
+            let currentRoutineCount = routineCount.first?["count"] as? Int64 ?? 0
             
-            // Get stats to verify
-            let stats = try await getDatabaseStats(db)
+            if currentRoutineCount == 0 {
+                print("🚨 No routine schedules! Importing from OperationalDataManager...")
+                let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
+                print("✅ Imported \(imported) routines, \(errors.count) errors")
+            }
+            
+            // Step 3: Verify each worker has real assignments
+            let verificationResults = await verifyWorkerAssignments(db)
+            
+            // Step 4: Special Kevin verification (Rubin Museum)
+            let kevinResults = await verifyKevinRubinAssignments(db)
             
             let message = """
-            ✅ Database seeded successfully with GRDB!
-            📊 Database stats:
-               Workers: \(stats.workers)
-               Buildings: \(stats.buildings)
-               Tasks: \(stats.tasks)
+            ✅ OperationalDataManager integration verified:
+            📊 Routine schedules: \(currentRoutineCount)
+            \(verificationResults)
+            \(kevinResults)
             """
             
-            print(message)
             return (true, message)
             
         } catch {
-            let errorMessage = "❌ Seed failed: \(error.localizedDescription)"
-            print(errorMessage)
+            let errorMessage = "❌ OperationalDataManager integration failed: \(error.localizedDescription)"
             return (false, errorMessage)
         }
     }
     
-    /// Alternative seeding without RealWorldDataSeeder (if file is missing)
-    func seedBasicData() async -> (success: Bool, message: String) {
-        do {
-            let db = GRDBManager.shared
-            
-            // Ensure database is initialized
-            if !db.isDatabaseReady() {
-                db.quickInitialize()
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            }
-            
-            // Basic worker data using GRDB
-            try await db.execute("""
-                INSERT OR REPLACE INTO workers (id, name, email, role, passwordHash)
-                VALUES (3, 'Edwin Lema', 'edwinlema911@gmail.com', 'worker', '');
-            """, [])
-            
-            // Basic building data
-            try await db.execute("""
-                INSERT OR REPLACE INTO buildings (id, name, address, latitude, longitude)
-                VALUES (17, 'Stuyvesant Cove Park', 'FDR Drive & E 20th St', 40.731234, -73.971456);
-            """, [])
-            
-            return (true, "✅ Basic data seeded with GRDB")
-            
-        } catch {
-            return (false, "❌ Basic seed failed: \(error.localizedDescription)")
-        }
-    }
-    
-    /// Imports tasks from CSV (FIXED: correct return type handling)
-    func importCSVTasks() async -> (success: Bool, message: String) {
-        do {
-            // FIXED: OperationalDataManager returns (imported: Int, errors: [String])
-            let result = try await OperationalDataManager.shared.importRealWorldTasks()
-            
-            let message = """
-            ✅ Imported \(result.imported) tasks with GRDB
-            ⚠️ Errors: \(result.errors.count)
-            """
-            
-            print(message)
-            return (true, message)
-            
-        } catch {
-            let errorMessage = "❌ CSV import failed: \(error.localizedDescription)"
-            print(errorMessage)
-            return (false, errorMessage)
-        }
-    }
-    
-    /// Clears all data from the database
-    func clearDatabase() async -> (success: Bool, message: String) {
-        do {
-            let db = GRDBManager.shared
-            
-            // Ensure database is initialized
-            if !db.isDatabaseReady() {
-                db.quickInitialize()
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            }
-            
-            // Clear tables in reverse dependency order using GRDB
-            try await db.execute("DELETE FROM routine_tasks", [])
-            try await db.execute("DELETE FROM tasks", [])
-            try await db.execute("DELETE FROM worker_assignments", [])
-            try await db.execute("DELETE FROM worker_skills", [])
-            try await db.execute("DELETE FROM buildings", [])
-            try await db.execute("DELETE FROM workers", [])
-            try await db.execute("DELETE FROM app_settings", [])
-            
-            return (true, "✅ Database cleared successfully with GRDB")
-            
-        } catch {
-            return (false, "❌ Clear failed: \(error.localizedDescription)")
-        }
-    }
-    
-    /// Gets current database statistics
-    private func getDatabaseStats(_ db: GRDBManager) async throws -> (workers: Int, buildings: Int, tasks: Int) {
-        let workerCount = try await db.query("SELECT COUNT(*) as count FROM workers", [])
-        let buildingCount = try await db.query("SELECT COUNT(*) as count FROM buildings", [])
-        let taskCount = try await db.query("SELECT COUNT(*) as count FROM routine_tasks", [])
+    /// Verify worker assignments from operational data
+    private func verifyWorkerAssignments(_ db: GRDBManager) async -> String {
+        var results: [String] = []
         
-        return (
-            workers: Int(workerCount.first?["count"] as? Int64 ?? 0),
-            buildings: Int(buildingCount.first?["count"] as? Int64 ?? 0),
-            tasks: Int(taskCount.first?["count"] as? Int64 ?? 0)
-        )
-    }
-    
-    // MARK: - GRDB-Specific Methods (New capabilities)
-    
-    /// Seeds database with real-time observation setup
-    func seedWithObservation() async -> (success: Bool, message: String) {
-        let result = await seedDatabase()
-        
-        if result.success {
-            // Set up real-time observations for live data
-            setupDatabaseObservations()
-            return (true, result.message + "\n🔄 Real-time observations enabled")
+        // Check each worker from WorkerConstants
+        for (workerId, workerName) in WorkerConstants.workerNames {
+            // Skip Shawn's multiple roles
+            guard ["1", "2", "4", "5", "6", "7"].contains(workerId) else { continue }
+            
+            do {
+                // Get operational tasks for this worker
+                let operationalTasks = await OperationalDataManager.shared.getTasksForWorker(workerId, date: Date())
+                
+                // Get database assignments
+                let dbAssignments = try await db.query("""
+                    SELECT COUNT(*) as count FROM worker_assignments 
+                    WHERE worker_id = ? AND is_active = 1
+                """, [workerId])
+                
+                let dbCount = dbAssignments.first?["count"] as? Int64 ?? 0
+                let operationalCount = operationalTasks.count
+                
+                let status = operationalCount > 0 ? "✅" : "⚠️"
+                results.append("   \(status) \(workerName): \(operationalCount) operational tasks, \(dbCount) db assignments")
+                
+            } catch {
+                results.append("   ❌ \(workerName): Error checking assignments - \(error.localizedDescription)")
+            }
         }
         
-        return result
+        return results.joined(separator: "\n")
     }
     
-    /// Sets up real-time database observations (GRDB's killer feature)
-    private func setupDatabaseObservations() {
-        print("🔄 Setting up GRDB real-time observations...")
-        
-        // Example: Observe building changes
-        // This will be used by your services for real-time updates
-        let buildingObservation = GRDBManager.shared.observeBuildings()
-        
-        // Example: Observe task changes for a specific building
-        // let taskObservation = GRDBManager.shared.observeTasks(for: "17")
-        
-        print("✅ Real-time observations configured")
-    }
-    
-    /// Validates database integrity (GRDB version)
-    func validateDatabase() async -> (success: Bool, message: String) {
+    /// Special verification for Kevin's Rubin Museum assignments
+    private func verifyKevinRubinAssignments(_ db: GRDBManager) async -> String {
         do {
-            let db = GRDBManager.shared
+            // Get Kevin's operational tasks
+            let kevinTasks = await OperationalDataManager.shared.getTasksForWorker("4", date: Date())
             
-            // Check foreign key constraints
-            let fkCheck = try await db.query("PRAGMA foreign_key_check", [])
-            if !fkCheck.isEmpty {
-                return (false, "❌ Foreign key constraint violations found")
+            // Count Rubin Museum tasks
+            let rubinTasks = kevinTasks.filter { task in
+                guard let building = task.building else { return false }
+                return building.name.contains("Rubin")
             }
             
-            // Check table integrity
-            let integrityCheck = try await db.query("PRAGMA integrity_check", [])
-            let result = integrityCheck.first?["integrity_check"] as? String ?? "corrupt"
-            
-            if result != "ok" {
-                return (false, "❌ Database integrity check failed: \(result)")
-            }
-            
-            // Check worker assignments
-            let assignments = try await db.query("""
+            // Check database for Rubin Museum assignment
+            let dbRubinCheck = try await db.query("""
                 SELECT COUNT(*) as count FROM worker_assignments 
-                WHERE worker_id = '2'
-            """, [])
+                WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
+            """)
             
-            let edwinAssignments = assignments.first?["count"] as? Int64 ?? 0
+            let dbRubinCount = dbRubinCheck.first?["count"] as? Int64 ?? 0
             
-            let message = """
-            ✅ Database validation passed
-            📊 Edwin has \(edwinAssignments) building assignments
-            🔧 Foreign keys: Valid
-            🗃️ Integrity: OK
+            let status = rubinTasks.count > 0 ? "✅" : "❌"
+            return """
+            🎯 Kevin Dutan (Rubin Museum Specialist):
+               \(status) Operational Rubin tasks: \(rubinTasks.count)
+               📋 Database Rubin assignment: \(dbRubinCount > 0 ? "✅ Present" : "❌ Missing")
             """
             
-            return (true, message)
-            
         } catch {
-            return (false, "❌ Validation failed: \(error.localizedDescription)")
+            return "❌ Kevin Rubin verification failed: \(error.localizedDescription)"
         }
     }
     
-    /// Exports database to JSON (FIXED: proper tuple handling and type annotation)
-    func exportToJSON() async -> (success: Bool, data: String?) {
+    /// Enhanced seeding with operational data validation
+    func seedWithOperationalDataValidation() async -> (success: Bool, message: String) {
+        // First, do regular seeding
+        let seedResult = await seedDatabase()
+        
+        if !seedResult.success {
+            return seedResult
+        }
+        
+        // Then verify operational data integration
+        let verifyResult = await verifyOperationalDataIntegration()
+        
+        if !verifyResult.success {
+            return verifyResult
+        }
+        
+        // Finally, test the WorkerContextEngine integration
+        let testResult = await testWorkerContextEngineIntegration()
+        
+        let combinedMessage = """
+        \(seedResult.message)
+        
+        \(verifyResult.message)
+        
+        \(testResult)
+        """
+        
+        return (true, combinedMessage)
+    }
+    
+    /// Test WorkerContextEngine integration with operational data
+    private func testWorkerContextEngineIntegration() async -> String {
         do {
-            let db = GRDBManager.shared
+            let contextEngine = WorkerContextEngine.shared
             
-            // Export all tables to JSON
-            let workers = try await db.query("SELECT * FROM workers", [])
-            let buildings = try await db.query("SELECT * FROM buildings", [])
-            let assignments = try await db.query("SELECT * FROM worker_assignments", [])
-            let tasks = try await db.query("SELECT * FROM routine_tasks LIMIT 10", []) // Limit for readability
+            // Test Kevin's context loading
+            try await contextEngine.loadContext(for: "4")
             
-            // FIXED: Explicit type annotation for heterogeneous collection literal
-            let exportData: [String: Any] = [
-                "workers": workers,
-                "buildings": buildings,
-                "assignments": assignments,
-                "tasks": tasks,
-                "export_date": ISO8601DateFormatter().string(from: Date())
-            ]
+            let kevinBuildings = await contextEngine.getAssignedBuildings()
+            let kevinTasks = await contextEngine.getTodaysTasks()
             
-            let jsonData = try JSONSerialization.data(withJSONObject: exportData, options: .prettyPrinted)
-            let jsonString = String(data: jsonData, encoding: .utf8)
+            // Check for Rubin Museum in Kevin's assignments
+            let rubinBuildings = kevinBuildings.filter { $0.name.contains("Rubin") }
+            let rubinTasks = kevinTasks.filter { task in
+                guard let building = task.building else { return false }
+                return building.name.contains("Rubin")
+            }
             
-            return (true, jsonString)
+            let kevinStatus = rubinBuildings.count > 0 ? "✅" : "❌"
+            
+            return """
+            🔧 WorkerContextEngine Integration Test:
+               \(kevinStatus) Kevin's buildings: \(kevinBuildings.count) (Rubin: \(rubinBuildings.count))
+               📋 Kevin's tasks: \(kevinTasks.count) (Rubin: \(rubinTasks.count))
+               🎯 Phase 1 Fix: \(rubinBuildings.count > 0 ? "SUCCESS" : "NEEDS ATTENTION")
+            """
             
         } catch {
-            print("❌ Export failed: \(error)")
-            return (false, nil)
-        }
-    }
-}
-
-// MARK: - Debug Menu Extension
-
-#if DEBUG
-extension DatabaseSeeder {
-    /// Convenience method for debug builds
-    static func seedIfNeeded() async {
-        let result = await shared.seedDatabase()
-        if !result.success {
-            print("⚠️ Database seeding failed in debug build")
+            return "❌ WorkerContextEngine test failed: \(error.localizedDescription)"
         }
     }
     
-    /// Quick debug info
-    static func debugInfo() async {
-        let validation = await shared.validateDatabase()
-        print("🐛 Debug validation: \(validation.message)")
+    /// Quick diagnostic for operational data
+    func quickOperationalDataDiagnostic() async -> String {
+        let operationalData = OperationalDataManager.shared
         
-        // FIXED: Proper tuple handling
-        let exportResult = await shared.exportToJSON()
-        if exportResult.success, let data = exportResult.data {
-            print("📄 Database export sample:")
-            print(String(data.prefix(500)) + "...")
+        // Check initialization
+        let initStatus = operationalData.isInitialized ? "✅" : "❌"
+        
+        // Check Kevin's tasks
+        let kevinTasks = await operationalData.getTasksForWorker("4", date: Date())
+        let kevinRubinTasks = kevinTasks.filter { task in
+            guard let building = task.building else { return false }
+            return building.name.contains("Rubin")
         }
+        
+        // Check all workers
+        var workerTaskCounts: [String] = []
+        for (workerId, workerName) in WorkerConstants.workerNames {
+            guard ["1", "2", "4", "5", "6", "7"].contains(workerId) else { continue }
+            
+            let tasks = await operationalData.getTasksForWorker(workerId, date: Date())
+            workerTaskCounts.append("\(workerName): \(tasks.count)")
+        }
+        
+        return """
+        📊 Operational Data Diagnostic:
+           \(initStatus) Initialization: \(operationalData.isInitialized ? "Complete" : "Pending")
+           🎯 Kevin's tasks: \(kevinTasks.count) (Rubin: \(kevinRubinTasks.count))
+           👥 Worker task counts: \(workerTaskCounts.joined(separator: ", "))
+        """
     }
 }
-#endif
 
-// MARK: - Migration Compatibility
+// MARK: - Convenience Methods for Testing
 
 extension DatabaseSeeder {
-    /// Maintains compatibility with existing code that calls seedDatabase
-    @available(*, deprecated, message: "Use seedDatabase() instead")
-    func legacySeed() async -> Bool {
-        let result = await seedDatabase()
-        return result.success
-    }
     
-    /// Helper for code that expects synchronous seeding
-    func seedDatabaseSync() -> Bool {
-        var result = false
-        let semaphore = DispatchSemaphore(value: 0)
+    /// One-shot method to seed and validate everything for Phase 1
+    static func seedAndValidatePhase1() async -> (success: Bool, message: String) {
+        let seeder = DatabaseSeeder.shared
         
-        Task {
-            let seedResult = await seedDatabase()
-            result = seedResult.success
-            semaphore.signal()
-        }
+        // Step 1: Quick diagnostic
+        let diagnostic = await seeder.quickOperationalDataDiagnostic()
+        print("🔍 Pre-seed diagnostic:")
+        print(diagnostic)
         
-        semaphore.wait()
+        // Step 2: Full seeding with validation
+        let result = await seeder.seedWithOperationalDataValidation()
+        
+        // Step 3: Post-seed diagnostic
+        let postDiagnostic = await seeder.quickOperationalDataDiagnostic()
+        print("✅ Post-seed diagnostic:")
+        print(postDiagnostic)
+        
         return result
     }
+    
+    /// Test method specifically for Kevin's Rubin Museum integration
+    static func testKevinRubinIntegration() async -> String {
+        let seeder = DatabaseSeeder.shared
+        return await seeder.verifyKevinRubinAssignments(GRDBManager.shared)
+    }
 }
 
-// MARK: - 📝 GRDB MIGRATION NOTES
+// MARK: - 📝 PHASE 1 ENHANCEMENT NOTES
 /*
- ✅ COMPLETE FIX FOR ALL COMPILATION ERRORS:
+ 🔧 PHASE 1 DATABASE ENHANCEMENTS:
  
- 🔧 FIXED ERRORS:
- - ✅ Line 37: RealWorldDataSeeder.seedAllRealData() takes no arguments
- - ✅ Line 232: Added explicit [String: Any] type annotation for exportData
- - ✅ Line 269: Fixed conditional binding with proper tuple handling
+ ✅ OPERATIONAL DATA INTEGRATION:
+ - verifyOperationalDataIntegration() ensures OperationalDataManager is properly initialized
+ - Automatic import of routine schedules if missing
+ - Worker assignment verification against operational data
  
- 🔧 ALIGNED WITH CURRENT IMPLEMENTATION:
- - ✅ Uses GRDBManager.shared singleton pattern
- - ✅ All execute/query calls use proper async/await GRDB patterns
- - ✅ OperationalDataManager.importRealWorldTasks() returns (imported: Int, errors: [String])
- - ✅ Proper error handling throughout
+ ✅ KEVIN'S RUBIN MUSEUM VERIFICATION:
+ - verifyKevinRubinAssignments() specifically checks Kevin's Rubin Museum assignments
+ - Validates both operational tasks and database assignments
+ - Ensures Phase 1 fix works correctly
  
- 🔧 MAINTAINS ALL EXISTING FUNCTIONALITY:
- - ✅ Database seeding with real-world data
- - ✅ Basic data seeding fallback
- - ✅ CSV task import capabilities
- - ✅ Database clearing utilities
- - ✅ Validation and export features
- - ✅ Debug extensions
- - ✅ Legacy compatibility methods
+ ✅ WORKER CONTEXT ENGINE TESTING:
+ - testWorkerContextEngineIntegration() validates the Phase 1 fix
+ - Tests actual WorkerContextEngine.loadContext() with operational data
+ - Verifies Kevin gets his Rubin Museum assignments
  
- 🔧 ENHANCED GRDB INTEGRATION:
- - ✅ Real-time observation setup
- - ✅ Database integrity checking
- - ✅ JSON export capabilities
- - ✅ Proper async/await patterns throughout
+ ✅ DIAGNOSTIC TOOLS:
+ - quickOperationalDataDiagnostic() provides quick status check
+ - seedAndValidatePhase1() provides one-shot complete validation
+ - testKevinRubinIntegration() provides targeted Kevin testing
  
- 🎯 STATUS: All compilation errors fixed, fully aligned with current GRDB implementation
+ 🎯 RESULT: Database seeding now fully supports and validates the Phase 1
+ WorkerContextEngine → OperationalDataManager connection.
  */

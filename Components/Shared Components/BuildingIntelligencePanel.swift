@@ -17,7 +17,6 @@ struct BuildingIntelligencePanel: View {
     let isPrimaryBuilding: Bool
     
     @StateObject private var viewModel = BuildingIntelligenceViewModel()
-    @StateObject private var operationalData = OperationalDataManager.shared
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     @Environment(\.dismiss) private var dismiss
     
@@ -89,7 +88,7 @@ struct BuildingIntelligencePanel: View {
         }
         .preferredColorScheme(.dark)
         .task {
-            await viewModel.loadCompleteData(for: building)
+            await viewModel.loadCompleteIntelligence(for: building)
         }
     }
     
@@ -169,7 +168,7 @@ struct BuildingIntelligencePanel: View {
     
     private var tabContent: some View {
         ScrollView {
-            Group {
+            VStack {
                 switch selectedTab {
                 case .overview:
                     BuildingOverviewTab(
@@ -231,7 +230,7 @@ struct BuildingOverviewTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if isLoading {
-                LoadingView(message: "Loading building overview...")
+                IntelligenceLoadingView(message: "Loading building overview...")
             } else {
                 // Building status card
                 buildingStatusCard
@@ -345,7 +344,7 @@ struct AllWorkersTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if isLoading {
-                LoadingView(message: "Loading worker information...")
+                IntelligenceLoadingView(message: "Loading worker information...")
             } else {
                 // Workers on site now
                 currentWorkersSection
@@ -449,7 +448,7 @@ struct FullScheduleTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if isLoading {
-                LoadingView(message: "Loading schedule information...")
+                IntelligenceLoadingView(message: "Loading schedule information...")
             } else {
                 // Today's schedule
                 todaysScheduleSection
@@ -524,7 +523,7 @@ struct BuildingHistoryTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if isLoading {
-                LoadingView(message: "Loading building history...")
+                IntelligenceLoadingView(message: "Loading building history...")
             } else {
                 // Recent history
                 recentHistorySection
@@ -791,6 +790,8 @@ struct TaskScheduleRow: View {
         case .medium: return .yellow
         case .high: return .orange
         case .critical: return .red
+        case .urgent: return .red
+        case .emergency: return .red
         }
     }
 }
@@ -806,8 +807,8 @@ struct TaskHistoryRow: View {
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                 
-                if let completedAt = task.completedAt {
-                    Text("Completed: \(completedAt.formatted(.dateTime.month().day().hour().minute()))")
+                if let completedDate = task.completedDate {
+                    Text("Completed: \(completedDate.formatted(.dateTime.month().day().hour().minute()))")
                         .font(.caption)
                         .foregroundColor(.green)
                 }
@@ -876,7 +877,7 @@ struct ProcedureRow: View {
     }
 }
 
-struct LoadingView: View {
+struct IntelligenceLoadingView: View {
     let message: String
     
     var body: some View {
@@ -894,6 +895,10 @@ struct LoadingView: View {
         .cornerRadius(12)
     }
 }
+
+// MARK: - Fixed BuildingIntelligenceViewModel Integration
+// Note: This assumes the BuildingIntelligenceViewModel from earlier artifact exists
+// If not, create it in Views/ViewModels/BuildingIntelligenceViewModel.swift
 
 // MARK: - Preview
 

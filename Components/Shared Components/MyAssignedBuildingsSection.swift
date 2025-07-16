@@ -1,19 +1,11 @@
 //
 //  MyAssignedBuildingsSection.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/16/25.
-//
-
-
-//
-//  MyAssignedBuildingsSection.swift
 //  FrancoSphere v6.0
 //
-//  ✅ Phase 1.2: Enhanced Building Assignment Components
-//  ✅ Uses existing BuildingMetricsService for real-time metrics
-//  ✅ Integrates with existing WorkerContextEngineAdapter
-//  ✅ Supports coverage access through building search/navigation
+//  ✅ FIXED: BuildingMetricsService actor usage (removed @StateObject)
+//  ✅ FIXED: Uses CoreTypes.BuildingMetrics instead of BuildingMetrics
+//  ✅ ALIGNED: With existing BuildingMetricsService actor pattern
+//  ✅ ENHANCED: Proper async/await patterns for actor service calls
 //
 
 import SwiftUI
@@ -24,8 +16,10 @@ struct MyAssignedBuildingsSection: View {
     let onBuildingTap: (NamedCoordinate) -> Void
     let onShowAllBuildings: () -> Void
     
-    @StateObject private var metricsService = BuildingMetricsService.shared
-    @State private var buildingMetrics: [String: BuildingMetrics] = [:]
+    // FIXED: Remove @StateObject wrapper - BuildingMetricsService is an actor, not ObservableObject
+    private let buildingMetricsService = BuildingMetricsService.shared
+    
+    @State private var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
     @State private var isLoadingMetrics = false
     
     var body: some View {
@@ -115,11 +109,12 @@ struct MyAssignedBuildingsSection: View {
     private func loadAllBuildingMetrics() async {
         isLoadingMetrics = true
         
-        await withTaskGroup(of: (String, BuildingMetrics?).self) { group in
+        await withTaskGroup(of: (String, CoreTypes.BuildingMetrics?).self) { group in
             for building in buildings {
                 group.addTask {
                     do {
-                        let metrics = try await metricsService.calculateMetrics(for: building.id)
+                        // FIXED: Proper async actor call to BuildingMetricsService
+                        let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
                         return (building.id, metrics)
                     } catch {
                         print("❌ Failed to load metrics for building \(building.id): \(error)")
@@ -144,7 +139,7 @@ struct MyAssignedBuildingsSection: View {
 struct MyBuildingCard: View {
     let building: NamedCoordinate
     let isPrimary: Bool
-    let metrics: BuildingMetrics?
+    let metrics: CoreTypes.BuildingMetrics?
     let isLoadingMetrics: Bool
     let onTap: () -> Void
     
@@ -248,7 +243,7 @@ struct MyBuildingCard: View {
     
     // MARK: - Building Metrics Display
     
-    private func buildingMetrics(_ metrics: BuildingMetrics) -> some View {
+    private func buildingMetrics(_ metrics: CoreTypes.BuildingMetrics) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 // Completion indicator

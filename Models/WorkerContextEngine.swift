@@ -1,13 +1,11 @@
 //
 //  WorkerContextEngine.swift
-//  FrancoSphere v6.0 — COMPLETE ACTOR IMPLEMENTATION
+//  FrancoSphere v6.0 — PHASE 1 FIXED: Connected to OperationalDataManager
 //
-//  🔧 SURGICAL FIXES: All compilation errors resolved
-//  ✅ Fixed ClockInSession.building property access (doesn't exist)
-//  ✅ Fixed optional TaskUrgency unwrapping before rawValue access
-//  ✅ Uses correct ContextualTask property names
-//  ✅ ENHANCED: Proper actor isolation patterns
-//  ✅ COMPATIBLE: Works with WorkerContextEngineAdapter
+//  🔧 FIXED: Real operational data connection implemented
+//  ✅ CONNECTED: WorkerContextEngine ↔ OperationalDataManager
+//  ✅ PRESERVED: Kevin's Rubin Museum assignments from operational data
+//  ✅ REAL DATA: Workers see actual assignments, not hardcoded data
 //
 
 import Foundation
@@ -32,6 +30,10 @@ public actor WorkerContextEngine {
     private let taskService = TaskService.shared
     private let buildingService = BuildingService.shared
     
+    // 🔧 PHASE 1 FIX: Add OperationalDataManager dependency
+    private let operationalData = OperationalDataManager.shared
+    private let weatherAdapter = WeatherDataAdapter.shared
+    
     private init() {}
     
     // MARK: - Public API (All methods async)
@@ -44,20 +46,48 @@ public actor WorkerContextEngine {
         print("🔄 Loading context for worker: \(workerId)")
         
         do {
-            // Load REAL worker data from database
-            async let profile = workerService.getWorkerProfile(for: workerId)
-            async let buildings = buildingService.getBuildingsForWorker(workerId)
-            async let tasks = taskService.getTasks(for: workerId, date: Date())
-            async let progress = taskService.getTaskProgress(for: workerId)
+            // Load worker profile from database
+            let profile = try await workerService.getWorkerProfile(for: workerId)
+            self.currentWorker = profile
             
-            // Update state atomically
-            self.currentWorker = try await profile
-            self.assignedBuildings = try await buildings
-            self.todaysTasks = try await tasks
-            self.taskProgress = try await progress
+            // 🔧 PHASE 1 FIX: Get real assignments from OperationalDataManager
+            let workerName = WorkerConstants.getWorkerName(id: workerId)
+            print("📋 Loading assignments for: \(workerName)")
             
-            // ✅ FIXED: ClockInSession doesn't have a building property
-            // Instead, reconstruct NamedCoordinate from session data
+            let realWorldAssignments = await operationalData.getTasksForWorker(workerId, date: Date())
+            
+            // Extract unique buildings from operational tasks
+            var uniqueBuildingIds = Set<String>()
+            for task in realWorldAssignments {
+                if let buildingId = task.building?.id {
+                    uniqueBuildingIds.insert(buildingId)
+                }
+            }
+            
+            // Get building details for each unique building
+            var buildings: [NamedCoordinate] = []
+            for buildingId in uniqueBuildingIds {
+                if let building = try await buildingService.getBuilding(buildingId: buildingId) {
+                    buildings.append(building)
+                }
+            }
+            
+            // 🔧 PHASE 1 FIX: Use operational data for assignments
+            self.assignedBuildings = buildings
+            
+            // 🔧 PHASE 1 FIX: Generate contextual tasks from operational data
+            let contextualTasks = await generateContextualTasks(
+                for: workerId,
+                workerName: workerName,
+                buildings: buildings,
+                operationalTasks: realWorldAssignments
+            )
+            self.todaysTasks = contextualTasks
+            
+            // Get task progress from service
+            self.taskProgress = try await taskService.getTaskProgress(for: workerId)
+            
+            // Handle clock-in status
             let status = await ClockInManager.shared.getClockInStatus(for: workerId)
             if let session = status.session {
                 // Create NamedCoordinate from session data
@@ -72,7 +102,20 @@ public actor WorkerContextEngine {
                 self.clockInStatus = (status.isClockedIn, nil)
             }
             
-            print("✅ Context loaded: \(self.assignedBuildings.count) buildings, \(self.todaysTasks.count) tasks")
+            // 🔧 PHASE 1 SUCCESS: Log results
+            print("✅ Context loaded from operational data:")
+            print("   📍 Buildings: \(self.assignedBuildings.count)")
+            print("   📋 Tasks: \(self.todaysTasks.count)")
+            
+            // Special logging for Kevin's Rubin Museum
+            if workerId == "4" {
+                let rubinBuildings = buildings.filter { $0.name.contains("Rubin") }
+                let rubinTasks = contextualTasks.filter { task in
+                    guard let building = task.building else { return false }
+                    return building.name.contains("Rubin")
+                }
+                print("   🎯 Kevin's Rubin Museum: \(rubinBuildings.count) buildings, \(rubinTasks.count) tasks")
+            }
             
         } catch {
             lastError = error
@@ -81,6 +124,166 @@ public actor WorkerContextEngine {
         }
         
         isLoading = false
+    }
+    
+    // 🔧 PHASE 1 FIX: New method to generate contextual tasks from operational data
+    private func generateContextualTasks(
+        for workerId: String,
+        workerName: String,
+        buildings: [NamedCoordinate],
+        operationalTasks: [ContextualTask]
+    ) async -> [ContextualTask] {
+        var enhancedTasks: [ContextualTask] = []
+        
+        // Start with operational tasks
+        for task in operationalTasks {
+            // Add weather context if building location available
+            var enhancedTask = task
+            if let building = task.building {
+                let weather = await weatherAdapter.getWeatherForLocation(building.coordinate)
+                if let weather = weather {
+                    enhancedTask = addWeatherContext(to: task, weather: weather)
+                }
+            }
+            enhancedTasks.append(enhancedTask)
+        }
+        
+        // Add weather-based tasks if needed
+        if let aggregatedWeather = await getAggregatedWeather(for: buildings) {
+            let weatherTasks = await generateWeatherTasks(
+                weather: aggregatedWeather,
+                buildings: buildings,
+                workerId: workerId
+            )
+            enhancedTasks.append(contentsOf: weatherTasks)
+        }
+        
+        // Sort by urgency
+        return enhancedTasks.sorted { first, second in
+            let firstUrgency = first.urgency ?? .medium
+            let secondUrgency = second.urgency ?? .medium
+            return firstUrgency.rawValue > secondUrgency.rawValue
+        }
+    }
+    
+    // 🔧 PHASE 1 FIX: Add weather context to tasks
+    private func addWeatherContext(to task: ContextualTask, weather: WeatherData) -> ContextualTask {
+        var enhancedTask = task
+        
+        // Add weather-based urgency adjustments
+        if weather.condition == .rainy || weather.condition == .stormy {
+            // Increase urgency for outdoor tasks
+            if task.category == .cleaning || task.category == .maintenance {
+                enhancedTask.urgency = .high
+            }
+        }
+        
+        // Add weather notes
+        let weatherNote = "Weather: \(weather.condition.rawValue), \(Int(weather.temperature))°F"
+        enhancedTask.notes = [task.notes, weatherNote].compactMap { $0 }.joined(separator: " | ")
+        
+        return enhancedTask
+    }
+    
+    // 🔧 PHASE 1 FIX: Get aggregated weather for all buildings
+    private func getAggregatedWeather(for buildings: [NamedCoordinate]) async -> WeatherData? {
+        guard !buildings.isEmpty else { return nil }
+        
+        // Get weather for first building as representative
+        let firstBuilding = buildings.first!
+        return await weatherAdapter.getWeatherForLocation(firstBuilding.coordinate)
+    }
+    
+    // 🔧 PHASE 1 FIX: Generate weather-based tasks
+    private func generateWeatherTasks(
+        weather: WeatherData,
+        buildings: [NamedCoordinate],
+        workerId: String
+    ) async -> [ContextualTask] {
+        var weatherTasks: [ContextualTask] = []
+        
+        // Generate weather-specific tasks
+        switch weather.condition {
+        case .rainy, .stormy:
+            // Add drainage check tasks
+            for building in buildings {
+                let drainageTask = createWeatherTask(
+                    title: "Storm Drain Check",
+                    description: "Check drainage systems due to storm conditions",
+                    building: building,
+                    workerId: workerId,
+                    urgency: .high
+                )
+                weatherTasks.append(drainageTask)
+            }
+            
+        case .snowy:
+            // Add snow removal tasks
+            for building in buildings {
+                let snowTask = createWeatherTask(
+                    title: "Snow Removal",
+                    description: "Clear walkways and entrances of snow",
+                    building: building,
+                    workerId: workerId,
+                    urgency: .high
+                )
+                weatherTasks.append(snowTask)
+            }
+            
+        case .windy:
+            // Add debris cleanup tasks
+            for building in buildings {
+                let debrisTask = createWeatherTask(
+                    title: "Wind Debris Cleanup",
+                    description: "Clear debris from walkways due to high winds",
+                    building: building,
+                    workerId: workerId,
+                    urgency: .medium
+                )
+                weatherTasks.append(debrisTask)
+            }
+            
+        default:
+            break
+        }
+        
+        return weatherTasks
+    }
+    
+    // 🔧 PHASE 1 FIX: Create weather-specific task
+    private func createWeatherTask(
+        title: String,
+        description: String,
+        building: NamedCoordinate,
+        workerId: String,
+        urgency: TaskUrgency
+    ) -> ContextualTask {
+        // Get worker profile
+        let workerProfile = WorkerProfile(
+            id: workerId,
+            name: WorkerConstants.getWorkerName(id: workerId),
+            email: "",
+            phoneNumber: "",
+            role: .worker,
+            skills: [],
+            certifications: [],
+            hireDate: Date(),
+            isActive: true
+        )
+        
+        return ContextualTask(
+            id: UUID().uuidString,
+            title: title,
+            description: description,
+            isCompleted: false,
+            completedDate: nil,
+            scheduledDate: Date(),
+            dueDate: Date().addingTimeInterval(7200), // 2 hours
+            category: .maintenance,
+            urgency: urgency,
+            building: building,
+            worker: workerProfile
+        )
     }
     
     // MARK: - Getter Methods (Replace @Published)
@@ -129,7 +332,7 @@ public actor WorkerContextEngine {
     }
     
     public func addTask(_ task: ContextualTask) async throws {
-        print("➕ Adding new task: \(task.title ?? task.description ?? "Unknown")")
+        print("➕ Adding new task: \(task.title)")
         
         // Add to database
         try await taskService.createTask(task)
@@ -205,7 +408,6 @@ public actor WorkerContextEngine {
     
     public func getUrgentTasks() -> [ContextualTask] {
         return todaysTasks.filter { task in
-            // ✅ FIXED: Handle optional TaskUrgency properly
             guard let urgency = task.urgency else { return false }
             return urgency == .high || urgency == .critical
         }
@@ -215,7 +417,6 @@ public actor WorkerContextEngine {
         return todaysTasks
             .filter { !$0.isCompleted }
             .sorted { first, second in
-                // ✅ FIXED: Handle optional TaskUrgency properly with safe unwrapping
                 let firstUrgency = first.urgency ?? .medium
                 let secondUrgency = second.urgency ?? .medium
                 
@@ -243,13 +444,12 @@ public actor WorkerContextEngine {
     }
     
     public func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
-        return todaysTasks.filter { $0.buildingId == buildingId }
+        return todaysTasks.filter { $0.building?.id == buildingId }
     }
     
     // MARK: - Legacy Compatibility Methods
     
     public func todayWorkers() -> [WorkerProfile] {
-        // Return current worker as array for compatibility
         if let worker = currentWorker {
             return [worker]
         }
@@ -292,6 +492,7 @@ public enum WorkerContextError: Error {
     case buildingNotFound
     case taskNotFound
     case clockInFailed(String)
+    case operationalDataUnavailable
     
     public var localizedDescription: String {
         switch self {
@@ -303,6 +504,8 @@ public enum WorkerContextError: Error {
             return "Task not found"
         case .clockInFailed(let reason):
             return "Clock in failed: \(reason)"
+        case .operationalDataUnavailable:
+            return "Operational data not available"
         }
     }
 }
@@ -336,3 +539,37 @@ public struct WorkerSummary {
     public let isClockedIn: Bool
     public let currentBuilding: String?
 }
+
+// MARK: - 📝 PHASE 1 IMPLEMENTATION NOTES
+/*
+ 🔧 PHASE 1 FIXES IMPLEMENTED:
+ 
+ ✅ CRITICAL DATA FLOW CONNECTION:
+ - Added OperationalDataManager dependency
+ - Connected to real operational data via getTasksForWorker()
+ - Workers now see actual assignments from realWorldTasks array
+ 
+ ✅ KEVIN'S RUBIN MUSEUM PRESERVED:
+ - Kevin (ID "4") gets his Rubin Museum tasks from operational data
+ - Building assignments come from actual operational assignments
+ - All worker assignments preserved from OperationalDataManager
+ 
+ ✅ WEATHER INTEGRATION:
+ - Added WeatherDataAdapter for contextual task generation
+ - Weather-based task urgency adjustments
+ - Dynamic weather task creation (storm drains, snow removal)
+ 
+ ✅ ENHANCED TASK GENERATION:
+ - generateContextualTasks() uses operational data as foundation
+ - Weather context added to existing tasks
+ - Intelligent task sorting by urgency
+ 
+ ✅ PRESERVED FUNCTIONALITY:
+ - All existing methods maintained
+ - Clock in/out functionality preserved
+ - Task management capabilities intact
+ - Real-time updates continue working
+ 
+ 🎯 RESULT: WorkerContextEngine now connects to real operational data
+ while preserving all existing functionality and Kevin's Rubin Museum assignments.
+ */
