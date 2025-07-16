@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0 - PORTFOLIO SEEDING FIXED
 //
 //  ✅ FIXED: Kevin's building assignments corrected
+//  ✅ FIXED: Removed duplicate WorkerConstants struct
 //  ✅ ADDED: Portfolio access logic for all workers
 //  ✅ FIXED: Database seeding with proper assignments
 //
@@ -59,6 +60,15 @@ public class SeedDatabase {
                 start_date TEXT NOT NULL DEFAULT (datetime('now')),
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 UNIQUE(worker_id, building_id)
+            );
+        """)
+        
+        // Create app_settings table if it doesn't exist
+        try await manager.execute("""
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TEXT DEFAULT (datetime('now'))
             );
         """)
         
@@ -190,12 +200,12 @@ public class SeedDatabase {
         }
         
         for (workerId, count) in workerAssignments {
-            let workerName = WorkerConstants.getWorkerName(id: workerId)
+            // FIXED: Use local helper to avoid conflicts
+            let workerName = getWorkerNameHelper(id: workerId)
             print("   \(workerName): \(count) assigned buildings")
         }
     }
     
-    // Rest of seeding methods remain the same...
     private static func seedAllBuildings(_ manager: GRDBManager) async throws {
         print("🏢 Seeding ALL buildings...")
         
@@ -280,20 +290,20 @@ public class SeedDatabase {
         
         print("✅ Seeded sample tasks for workers")
     }
-}
-
-// MARK: - Worker Constants Helper
-struct WorkerConstants {
-    static func getWorkerName(id: String) -> String {
-        switch id {
-        case "1": return "Greg Hutson"
-        case "2": return "Edwin Lema"
-        case "4": return "Kevin Dutan"
-        case "5": return "Mercedes Inamagua"
-        case "6": return "Luis Lopez"
-        case "7": return "Angel Guirachocha"
-        case "8": return "Shawn Magloire"
-        default: return "Unknown Worker"
-        }
+    
+    // MARK: - Helper Methods
+    
+    /// Local helper to get worker name without conflicts
+    private static func getWorkerNameHelper(id: String) -> String {
+        let workerNames: [String: String] = [
+            "1": "Greg Hutson",
+            "2": "Edwin Lema",
+            "4": "Kevin Dutan",
+            "5": "Mercedes Inamagua",
+            "6": "Luis Lopez",
+            "7": "Angel Guirachocha",
+            "8": "Shawn Magloire"
+        ]
+        return workerNames[id] ?? "Unknown Worker"
     }
 }

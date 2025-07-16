@@ -2,7 +2,7 @@
 //  DatabaseSeeder.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPILATION FIX: All missing 'await' keywords added
+//  ✅ COMPILATION FIXED: All @MainActor calls properly awaited
 //  ✅ REAL DATA: Uses actual worker names from operational data
 //  ✅ KEVIN PRESERVED: Rubin Museum assignments maintained
 //
@@ -197,22 +197,25 @@ extension DatabaseSeeder {
             print("🔍 Verifying OperationalDataManager integration...")
             
             // Step 1: Initialize OperationalDataManager if needed
-            // ✅ FIX: Add await keyword (Line 201)
-            if !OperationalDataManager.shared.isInitialized {
+            let operationalManager = OperationalDataManager.shared
+            
+            // ✅ FIXED Line 202: OperationalDataManager is @MainActor - ALL calls need await
+            if !(await operationalManager.isInitialized) {
                 print("🔄 Initializing OperationalDataManager...")
-                try await OperationalDataManager.shared.initializeOperationalData()
+                // ✅ FIXED: Both @MainActor access AND async method
+                try await operationalManager.initializeOperationalData()
             }
             
             // Step 2: Import routines if missing
             let routineCount = try await db.query(
-                "SELECT COUNT(*) as count FROM routine_schedules"
+                "SELECT COUNT(*) as count FROM routine_schedules", []
             )
             let currentRoutineCount = routineCount.first?["count"] as? Int64 ?? 0
             
             if currentRoutineCount == 0 {
                 print("🚨 No routine schedules! Importing from OperationalDataManager...")
-                // ✅ CORRECT: Use actual return type (routines: Int, dsny: Int)
-                let (routines, dsny) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
+                // ✅ FIXED Line 247: OperationalDataManager is @MainActor - ALL calls need await
+                let (routines, dsny) = try await operationalManager.importRoutinesAndDSNY()
                 print("✅ Imported \(routines) routines, \(dsny) DSNY schedules")
             }
             
@@ -241,17 +244,17 @@ extension DatabaseSeeder {
     private func verifyWorkerAssignments(_ db: GRDBManager) async -> String {
         var results: [String] = []
         
-        // ✅ FIX: Add await keyword (Line 245)
+        // ✅ FIXED: OperationalDataManager is @MainActor - ALL calls need await
         let workerTaskSummary = await OperationalDataManager.shared.getWorkerTaskSummary()
         
-        // ✅ REAL NAMES: Use actual worker names from operational data
+        // Real worker names
         let realWorkerNames = [
-            "1": "Greg Hutson",        // NOT "Greg Miller"
+            "1": "Greg Hutson",
             "2": "Edwin Lema",
             "4": "Kevin Dutan",
             "5": "Mercedes Inamagua",
             "6": "Luis Lopez",
-            "7": "Angel Guirachocha",  // NOT "Angel Ventura"
+            "7": "Angel Guirachocha",
             "8": "Shawn Magloire"
         ]
         
@@ -286,7 +289,7 @@ extension DatabaseSeeder {
     /// Special verification for Kevin's Rubin Museum assignments
     private func verifyKevinRubinAssignments(_ db: GRDBManager) async -> String {
         do {
-            // ✅ FIX: Add await keyword (Line 290)
+            // ✅ FIXED Line 292: OperationalDataManager is @MainActor - ALL calls need await
             let buildingCoverage = await OperationalDataManager.shared.getBuildingCoverage()
             
             // Check if Kevin is assigned to Rubin Museum in operational data
@@ -298,11 +301,11 @@ extension DatabaseSeeder {
                 buildingName.contains("Rubin")
             }
             
-            // Check database for Rubin Museum assignment
+            // Database query
             let dbRubinCheck = try await db.query("""
                 SELECT COUNT(*) as count FROM worker_assignments 
                 WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
-            """)
+            """, [])
             
             let dbRubinCount = dbRubinCheck.first?["count"] as? Int64 ?? 0
             
@@ -353,10 +356,10 @@ extension DatabaseSeeder {
         do {
             let contextEngine = WorkerContextEngine.shared
             
-            // Test Kevin's context loading
+            // Test Kevin's context loading (ASYNC method needs await)
             try await contextEngine.loadContext(for: "4")
             
-            // ✅ FIX: Add await keywords (Lines 387, 390)
+            // ✅ FIXED Lines 391, 394-395: WorkerContextEngine is an ACTOR - ALL calls need await
             let kevinBuildings = await contextEngine.getAssignedBuildings()
             let kevinTasks = await contextEngine.getTodaysTasks()
             
@@ -384,10 +387,10 @@ extension DatabaseSeeder {
     func quickOperationalDataDiagnostic() async -> String {
         let operationalData = OperationalDataManager.shared
         
-        // Check initialization
-        let initStatus = operationalData.isInitialized ? "✅" : "❌"
+        // ✅ FIXED Line 413: OperationalDataManager is @MainActor - ALL property access needs await
+        let initStatus = (await operationalData.isInitialized) ? "✅" : "❌"
         
-        // ✅ FIX: Add await keywords (Lines 393, 396)
+        // ✅ FIXED: OperationalDataManager is @MainActor - ALL method calls need await
         let workerTaskSummary = await operationalData.getWorkerTaskSummary()
         let buildingCoverage = await operationalData.getBuildingCoverage()
         
@@ -407,7 +410,7 @@ extension DatabaseSeeder {
         
         return """
         📊 Operational Data Diagnostic:
-           \(initStatus) Initialization: \(operationalData.isInitialized ? "Complete" : "Pending")
+           \(initStatus) Initialization: \((await operationalData.isInitialized) ? "Complete" : "Pending")
            🎯 Kevin's Rubin assignments: \(kevinRubinBuildings.count)
            👥 Worker task counts: \(workerTaskCounts.joined(separator: ", "))
         """

@@ -63,7 +63,7 @@ struct IntelligencePreviewPanel: View {
                     ))
                     .frame(width: 40, height: 40)
                 
-                Image(systemName: "brain.head.profile")
+                AIAssistantImageLoader.circularAIAssistantView(diameter: 40)
                     .font(.title2)
                     .foregroundColor(.white)
                     .symbolEffect(.pulse.wholeSymbol, isActive: !insights.isEmpty)
@@ -186,7 +186,7 @@ struct IntelligencePreviewPanel: View {
     
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "brain.head.profile")
+            AIAssistantImageLoader.circularAIAssistantView(diameter: 40)
                 .font(.system(size: 40))
                 .foregroundColor(.secondary.opacity(0.6))
             

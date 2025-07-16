@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0 - PROGRESS CALCULATION FIXED
 //
 //  ✅ FIXED: Progress calculation to show real numbers
+//  ✅ FIXED: Use correct TaskProgress properties (progressPercentage, not completionRate)
 //  ✅ ADDED: Explicit task progress calculation
 //  ✅ ENHANCED: Real-time progress updates
 //
@@ -71,15 +72,16 @@ class WorkerDashboardViewModel: ObservableObject {
         let totalTasks = todaysTasks.count
         let completedTasks = todaysTasks.filter { $0.isCompleted }.count
         
-        let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
+        let progressPercentage = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) * 100.0 : 0.0
         
+        // FIXED: Use correct TaskProgress initializer with progressPercentage
         self.taskProgress = TaskProgress(
-            totalTasks: totalTasks,
             completedTasks: completedTasks,
-            completionRate: completionRate
+            totalTasks: totalTasks,
+            progressPercentage: progressPercentage
         )
         
-        print("✅ Progress calculated: \(completedTasks)/\(totalTasks) tasks (\(Int(completionRate * 100))%)")
+        print("✅ Progress calculated: \(completedTasks)/\(totalTasks) tasks (\(Int(progressPercentage))%)")
     }
     
     func refreshData() async {
@@ -174,12 +176,35 @@ class WorkerDashboardViewModel: ObservableObject {
     }
 }
 
-// MARK: - TaskProgress Model Enhancement
+// MARK: - TaskProgress Helper Extensions
 
 extension TaskProgress {
-    init(totalTasks: Int, completedTasks: Int, completionRate: Double) {
-        self.totalTasks = totalTasks
-        self.completedTasks = completedTasks
-        self.completionRate = completionRate
+    /// Get completion rate as a 0.0-1.0 value for progress bars
+    var normalizedProgress: Double {
+        return progressPercentage / 100.0
+    }
+    
+    /// Get a formatted string representation
+    var formattedProgress: String {
+        return "\(completedTasks)/\(totalTasks)"
+    }
+    
+    /// Check if all tasks are completed
+    var isComplete: Bool {
+        return completedTasks == totalTasks && totalTasks > 0
+    }
+    
+    /// Get efficiency description based on completion percentage
+    var efficiencyDescription: String {
+        switch progressPercentage {
+        case 90...100:
+            return "Excellent"
+        case 75..<90:
+            return "Good"
+        case 60..<75:
+            return "Average"
+        default:
+            return "Needs Improvement"
+        }
     }
 }

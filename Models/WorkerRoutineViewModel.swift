@@ -129,7 +129,11 @@ class WorkerRoutineViewModel: ObservableObject {
     func loadDailyRoutes() async {
         do {
             // Load routes from real data via WorkerContextEngine
-            await contextEngine.refreshContext()
+            do {
+                try await contextEngine.refreshData()
+            } catch {
+                print("❌ Failed to refresh context: \(error)")
+            }
             dailyRoutes = await fetchRoutesFromDatabase()
         } catch {
             errorMessage = "Failed to load daily routes: \(error.localizedDescription)"

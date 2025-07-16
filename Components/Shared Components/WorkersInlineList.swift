@@ -2,10 +2,9 @@
 //  WorkersInlineList.swift
 //  FrancoSphere v6.0
 //
-//  🔧 SURGICAL FIXES: All compilation errors resolved
+//  🔧 FIXED: WorkerContextEngine.todayWorkers() compilation error
+//  ✅ Changed to use WorkerService.getAllActiveWorkers() for multiple workers
 //  ✅ Fixed Animation typo → .easeInOut animation
-//  ✅ Removed non-existent ContextualTask properties
-//  ✅ Simplified worker-task assignment logic
 //  ✅ Compatible with WorkerContextEngine actor architecture
 //
 
@@ -249,47 +248,128 @@ struct WorkersInlineList: View {
             isLoading = true
         }
         
-        // ✅ FIXED: Get workers through WorkerContextEngine actor
-        let detailedWorkers = await WorkerContextEngine.shared.todayWorkers()
-        
-        var loadedWorkers: [WorkerInfo] = []
-        
-        for detailedWorker in detailedWorkers {
-            let worker = WorkerInfo(
-                id: detailedWorker.id,
-                name: detailedWorker.name,
-                displayName: formatWorkerDisplayName(detailedWorker.name),
-                role: detailedWorker.role.rawValue,
-                shift: getWorkerShift(detailedWorker.id),
-                isActive: isWorkerActive(detailedWorker.id),
-                isClockedIn: await isWorkerClockedIn(detailedWorker.id),
-                taskCount: await getWorkerTaskCount(detailedWorker.id),
-                isDSNYWorker: await isDSNYWorker(detailedWorker.name)
-            )
-            loadedWorkers.append(worker)
-        }
-        
-        // Sort workers by priority (clocked in first, then by task count)
-        loadedWorkers.sort { worker1, worker2 in
-            if worker1.isClockedIn != worker2.isClockedIn {
-                return worker1.isClockedIn
+        do {
+            // ✅ FIXED: Get workers assigned to this building directly
+            let buildingWorkers = try await WorkerService.shared.getActiveWorkersForBuilding(buildingId)
+            
+            var loadedWorkers: [WorkerInfo] = []
+            
+            for workerProfile in buildingWorkers {
+                let worker = WorkerInfo(
+                    id: workerProfile.id,
+                    name: workerProfile.name,
+                    displayName: formatWorkerDisplayName(workerProfile.name),
+                    role: workerProfile.role.rawValue,
+                    shift: getWorkerShift(workerProfile.id),
+                    isActive: workerProfile.isActive,
+                    isClockedIn: await isWorkerClockedIn(workerProfile.id),
+                    taskCount: await getWorkerTaskCount(workerProfile.id),
+                    isDSNYWorker: await isDSNYWorker(workerProfile.name)
+                )
+                loadedWorkers.append(worker)
             }
-            return worker1.taskCount > worker2.taskCount
-        }
-        
-        await MainActor.run {
-            self.workers = loadedWorkers
-            self.isLoading = false
+            
+            // Sort workers by priority (clocked in first, then by task count)
+            loadedWorkers.sort { worker1, worker2 in
+                if worker1.isClockedIn != worker2.isClockedIn {
+                    return worker1.isClockedIn
+                }
+                return worker1.taskCount > worker2.taskCount
+            }
+            
+            await MainActor.run {
+                self.workers = loadedWorkers
+                self.isLoading = false
+            }
+            
+        } catch {
+            print("❌ Failed to load workers: \(error)")
+            await MainActor.run {
+                self.workers = []
+                self.isLoading = false
+            }
         }
     }
     
     // MARK: - Helper Methods
     
+    private func formatWorkerDisplayName(_ name: String) -> String {
+        let components = name.components(separatedBy: " ")
+        if components.count >= 2 {
+            return "\(components[0]) \(String(components[1].prefix(1)))."
+        }
+        return name
+    }
+    
+    private func getWorkerShift(_ workerId: String) -> String {
+        switch workerId {
+        case "1": return "9:00-17:00"  // Greg
+        case "2": return "6:00-15:00"  // Edwin
+        case "4": return "6:00-17:00"  // Kevin
+        case "5": return "6:30-11:00"  // Mercedes
+        case "6": return "7:00-16:00"  // Luis
+        case "7": return "18:00-22:00" // Angel
+        case "8": return "Flexible"    // Shawn
+        default: return "9:00-17:00"
+        }
+    }
+    
+    private func isWorkerClockedIn(_ workerId: String) async -> Bool {
+        // Check if worker is currently clocked in through ClockInManager
+        do {
+            let status = await ClockInManager.shared.getClockInStatus(for: workerId)
+            return status.isClockedIn
+        } catch {
+            return false
+        }
+    }
+    
+    private func getWorkerTaskCount(_ workerId: String) async -> Int {
+        do {
+            // Get tasks for this worker for today
+            let tasks = try await TaskService.shared.getTasks(for: workerId, date: Date())
+            
+            // Filter tasks for this specific building
+            return tasks.filter { task in
+                task.buildingId == buildingId
+            }.count
+            
+        } catch {
+            print("❌ Failed to get task count for worker \(workerId): \(error)")
+            return 0
+        }
+    }
+    
+    private func isDSNYWorker(_ workerName: String) async -> Bool {
+        // Check if worker has DSNY/sanitation tasks
+        let workerId = getWorkerIdFromName(workerName)
+        
+        do {
+            let tasks = try await TaskService.shared.getTasks(for: workerId, date: Date())
+            
+            for task in tasks {
+                let isDSNYTask = task.category?.rawValue.lowercased().contains("sanitation") == true ||
+                               task.title.lowercased().contains("trash") ||
+                               task.title.lowercased().contains("recycling") ||
+                               task.title.lowercased().contains("dsny") ||
+                               task.title.lowercased().contains("garbage")
+                
+                if isDSNYTask && task.buildingId == buildingId {
+                    return true
+                }
+            }
+        } catch {
+            print("❌ Failed to check DSNY status for \(workerName): \(error)")
+        }
+        
+        return false
+    }
+    
     private func getWorkerIdFromName(_ name: String) -> String {
         let workerMap: [String: String] = [
             "Greg Hutson": "1",
             "Edwin Lema": "2",
-            "Kevin Dutan": "1", // Kevin's corrected ID
+            "Kevin Dutan": "4",    // ✅ FIXED: Kevin's correct ID is 4
             "Mercedes Inamagua": "5",
             "Luis Lopez": "6",
             "Angel Guirachocha": "7",
@@ -307,66 +387,11 @@ struct WorkersInlineList: View {
         return "unknown"
     }
     
-    private func formatWorkerDisplayName(_ name: String) -> String {
-        let components = name.components(separatedBy: " ")
-        if components.count >= 2 {
-            return "\(components[0]) \(String(components[1].prefix(1)))."
-        }
-        return name
-    }
-    
-    private func getWorkerShift(_ workerId: String) -> String {
-        switch workerId {
-        case "1": return "9:00-17:00"  // Kevin - Updated
-        case "2": return "6:00-15:00"  // Edwin
-        case "5": return "6:30-11:00"  // Mercedes
-        default: return "9:00-17:00"
-        }
-    }
-    
-    private func isWorkerActive(_ workerId: String) -> Bool {
-        let activeWorkerIds = ["1", "2", "5", "6", "7", "8"]
-        return activeWorkerIds.contains(workerId)
-    }
-    
-    private func isWorkerClockedIn(_ workerId: String) async -> Bool {
-        // Check if worker is currently clocked in through WorkerContextEngine
-        let isCurrentlyClockedIn = await WorkerContextEngine.shared.isWorkerClockedIn()
-        let currentWorkerId = await WorkerContextEngine.shared.getWorkerId()
-        return isCurrentlyClockedIn && currentWorkerId == workerId
-    }
-    
-    private func getWorkerTaskCount(_ workerId: String) async -> Int {
-        let tasks = await WorkerContextEngine.shared.getTodaysTasks()
-        
-        // ✅ SIMPLIFIED: Count tasks for this building (simplified assignment logic)
-        return tasks.filter { task in
-            task.buildingId == buildingId
-        }.count / max(workers.count, 1) // Distribute tasks among workers
-    }
-    
-    private func isDSNYWorker(_ workerName: String) async -> Bool {
-        let tasks = await WorkerContextEngine.shared.getTodaysTasks()
-        
-        // ✅ FIXED: Use correct ContextualTask properties
-        for task in tasks {
-            let isDSNYTask = task.category?.rawValue.lowercased().contains("sanitation") == true ||
-                           task.title.lowercased().contains("trash") ||
-                           task.title.lowercased().contains("recycling") ||
-                           task.title.lowercased().contains("dsny")
-            
-            if isDSNYTask && task.buildingId == buildingId {
-                return true
-            }
-        }
-        
-        return false
-    }
-    
     private func getWorkerAccentColor(_ worker: WorkerInfo) -> Color {
         switch worker.id {
-        case "1": return .blue    // Kevin
+        case "1": return .blue    // Greg
         case "2": return .green   // Edwin
+        case "4": return .purple  // Kevin
         case "5": return .orange  // Mercedes
         case "6": return .pink    // Luis
         case "7": return .teal    // Angel
