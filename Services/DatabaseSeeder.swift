@@ -2,16 +2,15 @@
 //  DatabaseSeeder.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPLETE: DatabaseSeeder with Phase 1 Enhancement integrated
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ENHANCED: OperationalDataManager integration validation
-//  ✅ ALIGNED: With current GRDB implementation and service patterns
+//  ✅ COMPILATION FIX: All missing 'await' keywords added
+//  ✅ REAL DATA: Uses actual worker names from operational data
+//  ✅ KEVIN PRESERVED: Rubin Museum assignments maintained
 //
 
 import Foundation
 import GRDB
 
-/// Utility class for seeding the database with test data
+/// Utility class for seeding the database with real-world operational data
 class DatabaseSeeder {
     
     static let shared = DatabaseSeeder()
@@ -22,7 +21,7 @@ class DatabaseSeeder {
     /// - Returns: A tuple with (success: Bool, message: String)
     func seedDatabase() async -> (success: Bool, message: String) {
         do {
-            print("🌱 Starting database seed...")
+            print("🌱 Starting database seed with real operational data...")
             
             // Get database instance (GRDB singleton)
             let db = GRDBManager.shared
@@ -198,6 +197,7 @@ extension DatabaseSeeder {
             print("🔍 Verifying OperationalDataManager integration...")
             
             // Step 1: Initialize OperationalDataManager if needed
+            // ✅ FIX: Add await keyword (Line 201)
             if !OperationalDataManager.shared.isInitialized {
                 print("🔄 Initializing OperationalDataManager...")
                 try await OperationalDataManager.shared.initializeOperationalData()
@@ -211,8 +211,9 @@ extension DatabaseSeeder {
             
             if currentRoutineCount == 0 {
                 print("🚨 No routine schedules! Importing from OperationalDataManager...")
-                let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
-                print("✅ Imported \(imported) routines, \(errors.count) errors")
+                // ✅ CORRECT: Use actual return type (routines: Int, dsny: Int)
+                let (routines, dsny) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
+                print("✅ Imported \(routines) routines, \(dsny) DSNY schedules")
             }
             
             // Step 3: Verify each worker has real assignments
@@ -236,15 +237,26 @@ extension DatabaseSeeder {
         }
     }
     
-    /// Verify worker assignments from operational data
+    /// Verify worker assignments from operational data using REAL worker names
     private func verifyWorkerAssignments(_ db: GRDBManager) async -> String {
         var results: [String] = []
         
-        // Get worker task summary from operational data
-        let workerTaskSummary = OperationalDataManager.shared.getWorkerTaskSummary()
+        // ✅ FIX: Add await keyword (Line 245)
+        let workerTaskSummary = await OperationalDataManager.shared.getWorkerTaskSummary()
         
-        // Check each worker from WorkerConstants
-        for (workerId, workerName) in WorkerConstants.workerNames {
+        // ✅ REAL NAMES: Use actual worker names from operational data
+        let realWorkerNames = [
+            "1": "Greg Hutson",        // NOT "Greg Miller"
+            "2": "Edwin Lema",
+            "4": "Kevin Dutan",
+            "5": "Mercedes Inamagua",
+            "6": "Luis Lopez",
+            "7": "Angel Guirachocha",  // NOT "Angel Ventura"
+            "8": "Shawn Magloire"
+        ]
+        
+        // Check each worker
+        for (workerId, workerName) in realWorkerNames {
             // Skip Shawn's multiple roles
             guard ["1", "2", "4", "5", "6", "7"].contains(workerId) else { continue }
             
@@ -274,8 +286,8 @@ extension DatabaseSeeder {
     /// Special verification for Kevin's Rubin Museum assignments
     private func verifyKevinRubinAssignments(_ db: GRDBManager) async -> String {
         do {
-            // Get building coverage from operational data
-            let buildingCoverage = OperationalDataManager.shared.getBuildingCoverage()
+            // ✅ FIX: Add await keyword (Line 290)
+            let buildingCoverage = await OperationalDataManager.shared.getBuildingCoverage()
             
             // Check if Kevin is assigned to Rubin Museum in operational data
             let kevinAssignedBuildings = buildingCoverage.filter { (buildingName, workers) in
@@ -344,6 +356,7 @@ extension DatabaseSeeder {
             // Test Kevin's context loading
             try await contextEngine.loadContext(for: "4")
             
+            // ✅ FIX: Add await keywords (Lines 387, 390)
             let kevinBuildings = await contextEngine.getAssignedBuildings()
             let kevinTasks = await contextEngine.getTodaysTasks()
             
@@ -374,22 +387,20 @@ extension DatabaseSeeder {
         // Check initialization
         let initStatus = operationalData.isInitialized ? "✅" : "❌"
         
-        // Get worker task summary
-        let workerTaskSummary = operationalData.getWorkerTaskSummary()
-        
-        // Get building coverage
-        let buildingCoverage = operationalData.getBuildingCoverage()
+        // ✅ FIX: Add await keywords (Lines 393, 396)
+        let workerTaskSummary = await operationalData.getWorkerTaskSummary()
+        let buildingCoverage = await operationalData.getBuildingCoverage()
         
         // Check Kevin's Rubin Museum assignments
         let kevinRubinBuildings = buildingCoverage.filter { (buildingName, workers) in
             buildingName.contains("Rubin") && workers.contains("Kevin Dutan")
         }
         
-        // Check all workers
+        // Check all workers using REAL names
         var workerTaskCounts: [String] = []
-        for (_, workerName) in WorkerConstants.workerNames {
-            guard ["Greg Miller", "Edwin Lema", "Kevin Dutan", "Mercedes Inamagua", "Luis Lopez", "Angel Cornejo"].contains(workerName) else { continue }
-            
+        let realWorkerNames = ["Greg Hutson", "Edwin Lema", "Kevin Dutan", "Mercedes Inamagua", "Luis Lopez", "Angel Guirachocha"]
+        
+        for workerName in realWorkerNames {
             let taskCount = workerTaskSummary[workerName] ?? 0
             workerTaskCounts.append("\(workerName): \(taskCount)")
         }
@@ -480,35 +491,3 @@ extension DatabaseSeeder {
         return result
     }
 }
-
-// MARK: - 📝 PHASE 1 ENHANCEMENT NOTES
-/*
- 🔧 PHASE 1 DATABASE ENHANCEMENTS:
- 
- ✅ COMPLETE INTEGRATION:
- - Combined existing DatabaseSeeder with Phase 1 enhancements
- - All methods use proper async/await patterns
- - Full GRDB integration maintained
- 
- ✅ OPERATIONAL DATA INTEGRATION:
- - verifyOperationalDataIntegration() ensures OperationalDataManager is properly initialized
- - Uses public OperationalDataManager methods (getWorkerTaskSummary, getBuildingCoverage)
- - Worker assignment verification against operational data
- 
- ✅ KEVIN'S RUBIN MUSEUM VERIFICATION:
- - verifyKevinRubinAssignments() specifically checks Kevin's Rubin Museum assignments
- - Uses getBuildingCoverage() to check operational assignments
- - Ensures Phase 1 fix works correctly
- 
- ✅ WORKER CONTEXT ENGINE TESTING:
- - testWorkerContextEngineIntegration() validates the Phase 1 fix
- - Tests actual WorkerContextEngine.loadContext() with operational data
- - Verifies Kevin gets his Rubin Museum assignments
- 
- ✅ CONVENIENCE METHODS:
- - seedAndValidatePhase1() provides one-shot complete validation
- - testKevinRubinIntegration() provides targeted Kevin testing
- - quickOperationalDataDiagnostic() provides quick status check
- 
- 🎯 RESULT: Complete DatabaseSeeder with Phase 1 WorkerContextEngine → OperationalDataManager integration
- */

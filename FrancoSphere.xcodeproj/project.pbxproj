@@ -169,6 +169,7 @@
 		23EA1E9B2E27EA23009FFF54 /* BuildingIntelligencePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E9A2E27EA23009FFF54 /* BuildingIntelligencePanel.swift */; };
 		23EA1E9F2E27EC4F009FFF54 /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */; };
 		23EA1EBC2E28030E009FFF54 /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1EBB2E28030E009FFF54 /* NovaInteractionView.swift */; };
+		23EA1ED92E2809D3009FFF54 /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
@@ -363,6 +364,7 @@
 		23EA1E9A2E27EA23009FFF54 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
 		23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
 		23EA1EBB2E28030E009FFF54 /* NovaInteractionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaInteractionView.swift; sourceTree = "<group>"; };
+		23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
@@ -864,6 +866,7 @@
 		23F9FA022E2FFE0000AAAAAA /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */,
 				23EA1EBB2E28030E009FFF54 /* NovaInteractionView.swift */,
 				23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */,
 				23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */,
@@ -1199,6 +1202,7 @@
 				23B117932DFE008D0065F39E /* HeroStatusCard.swift in Sources */,
 				234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */,
 				234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */,
+				23EA1ED92E2809D3009FFF54 /* NovaAPIService.swift in Sources */,
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
