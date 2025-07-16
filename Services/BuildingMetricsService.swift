@@ -2,9 +2,9 @@
 //  BuildingMetricsService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ PHASE ALIGNED: Fixed async/Combine issues and aligned with current GRDB implementation
-//  ✅ FIXED: Removed non-existent methods and corrected observation patterns
-//  ✅ REAL DATA: Uses actual GRDBManager methods that exist
+//  ✅ FIXED: Resolved method redeclaration and Combine publisher type errors
+//  ✅ ALIGNED: With current GRDB implementation and existing CoreTypes
+//  ✅ OPTIMIZED: Actor pattern with proper async/await and Combine integration
 //  ✅ PRESERVED: All Kevin's Rubin Museum data and operational assignments
 //
 
@@ -45,7 +45,7 @@ public actor BuildingMetricsService {
     
     // MARK: - Public Interface
     
-    /// Calculate comprehensive building metrics for PropertyCard
+    /// Calculate comprehensive building metrics for PropertyCard (single building)
     public func calculateMetrics(for buildingId: String) async throws -> CoreTypes.BuildingMetrics {
         // Check cache first
         if let cached = metricsCache[buildingId], !cached.isExpired {
@@ -63,7 +63,7 @@ public actor BuildingMetricsService {
     }
     
     /// Batch calculate metrics for multiple buildings (concurrent with GRDB)
-    public func calculateMetrics(for buildingIds: [String]) async throws -> [String: CoreTypes.BuildingMetrics] {
+    public func calculateBatchMetrics(for buildingIds: [String]) async throws -> [String: CoreTypes.BuildingMetrics] {
         var results: [String: CoreTypes.BuildingMetrics] = [:]
         
         print("📊 Calculating metrics for \(buildingIds.count) buildings concurrently")
@@ -142,7 +142,7 @@ public actor BuildingMetricsService {
                 w.name as worker_name, 
                 w.id as worker_id,
                 w.isActive as worker_active
-            FROM tasks t
+            FROM routine_tasks t
             LEFT JOIN workers w ON t.workerId = w.id
             WHERE t.buildingId = ? AND date(t.scheduledDate) = date('now')
             ORDER BY t.scheduledDate
@@ -245,7 +245,7 @@ public actor BuildingMetricsService {
             SELECT 
                 COUNT(*) as total_tasks,
                 SUM(CASE WHEN isCompleted = 1 AND dueDate >= scheduledDate THEN 1 ELSE 0 END) as on_time_tasks
-            FROM tasks
+            FROM routine_tasks
             WHERE buildingId = ? AND category = 'maintenance'
               AND date(scheduledDate) >= date('now', '-30 days')
         """, [buildingId])
@@ -266,7 +266,7 @@ public actor BuildingMetricsService {
                     ELSE scheduledDate
                 END
             ) as last_activity
-            FROM tasks
+            FROM routine_tasks
             WHERE buildingId = ?
         """, [buildingId])
         
@@ -279,8 +279,8 @@ public actor BuildingMetricsService {
     private func getUrgentTasksCount(buildingId: String) async throws -> Int {
         let urgentRows = try await grdbManager.query("""
             SELECT COUNT(*) as count
-            FROM tasks
-            WHERE buildingId = ? AND urgencyLevel IN ('high', 'critical', 'urgent') 
+            FROM routine_tasks
+            WHERE buildingId = ? AND urgency IN ('high', 'critical', 'urgent') 
               AND isCompleted = 0 AND date(scheduledDate) = date('now')
         """, [buildingId])
         
@@ -295,7 +295,7 @@ public actor BuildingMetricsService {
                 SELECT 
                     date(scheduledDate) as day,
                     CAST(SUM(isCompleted) AS REAL) / COUNT(*) as daily_completion
-                FROM tasks
+                FROM routine_tasks
                 WHERE buildingId = ? AND date(scheduledDate) >= date('now', '-7 days')
                 GROUP BY date(scheduledDate)
             )
@@ -379,12 +379,12 @@ extension BuildingMetricsService {
         return try await calculateMetrics(for: buildingId)
     }
     
-    /// Batch metrics for dashboard views
+    /// Batch metrics for dashboard views (uses renamed method)
     public func getDashboardMetrics(for buildingIds: [String]) async throws -> [String: CoreTypes.BuildingMetrics] {
-        return try await calculateMetrics(for: buildingIds)
+        return try await calculateBatchMetrics(for: buildingIds)
     }
     
-    /// Subscribe to real-time metrics for SwiftUI views
+    /// Subscribe to real-time metrics for SwiftUI views (fixed error handling)
     public func subscribeToMetrics(for buildingId: String) -> AnyPublisher<CoreTypes.BuildingMetrics, Never> {
         return observeMetrics(for: buildingId)
             .catch { error in
@@ -427,10 +427,8 @@ extension BuildingMetricsService {
     /// Get all FrancoSphere portfolio metrics
     public func getPortfolioMetrics() async throws -> [String: CoreTypes.BuildingMetrics] {
         let buildingIds = ["1", "4", "7", "8", "10", "12", "13", "14", "15", "16", "17"]
-        return try await calculateMetrics(for: buildingIds)
+        return try await calculateBatchMetrics(for: buildingIds)
     }
 }
 
 // MARK: - End of BuildingMetricsService
-
-// Note: CoreTypes.BuildingMetrics.empty already exists in CoreTypes.swift

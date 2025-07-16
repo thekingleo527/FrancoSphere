@@ -12,7 +12,6 @@
 		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
 		2312FC6D2E1B7BD500B64496 /* WorkerAssignmentEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */; };
 		2312FC6F2E1B809F00B64496 /* EnhancedMapOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6E2E1B809F00B64496 /* EnhancedMapOverlay.swift */; };
-		2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC7A2E1BEC8200B64496 /* StubFactory.swift */; };
 		2312FC7E2E1BED3700B64496 /* DataSynchronizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC7D2E1BED2600B64496 /* DataSynchronizationService.swift */; };
 		2312FC812E1BEDB000B64496 /* WorkerEventOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC802E1BEDA300B64496 /* WorkerEventOutbox.swift */; };
 		2312FC832E1BEE2400B64496 /* WorkerFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC822E1BEE2400B64496 /* WorkerFeedbackManager.swift */; };
@@ -198,7 +197,6 @@
 		2312FC6A2E1B77B400B64496 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
 		2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentEngine.swift; sourceTree = "<group>"; };
 		2312FC6E2E1B809F00B64496 /* EnhancedMapOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMapOverlay.swift; sourceTree = "<group>"; };
-		2312FC7A2E1BEC8200B64496 /* StubFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubFactory.swift; sourceTree = "<group>"; };
 		2312FC7D2E1BED2600B64496 /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
 		2312FC802E1BEDA300B64496 /* WorkerEventOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerEventOutbox.swift; sourceTree = "<group>"; };
 		2312FC822E1BEE2400B64496 /* WorkerFeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerFeedbackManager.swift; sourceTree = "<group>"; };
@@ -720,7 +718,6 @@
 				2312FC862E1BF06A00B64496 /* Configuration */,
 				2312FC842E1BEFF300B64496 /* BuildingService+Intelligence.swift */,
 				2312FC7C2E1BED0E00B64496 /* RealTime */,
-				2312FC7A2E1BEC8200B64496 /* StubFactory.swift */,
 				2312FC652E1B66C900B64496 /* Migration */,
 				237DE3FE2E182F510002A14D /* TelemetryService.swift */,
 				236106F22E17AF4500463A59 /* QuickBooksPayrollExporter.swift */,
@@ -1191,7 +1188,6 @@
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
-				2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */,
 				234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
 				23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */,
 				23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */,
