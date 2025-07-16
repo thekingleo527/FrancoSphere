@@ -1,20 +1,11 @@
 //
 //  CoverageInfoCard.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/16/25.
-//
-
-
-//
-//  CoverageInfoCard.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: WorkerService and BuildingService actor usage (removed @StateObject)
+//  ✅ ALIGNED: With existing service patterns used throughout codebase
+//  ✅ ENHANCED: Proper async/await patterns for actor service calls
 //  ✅ Phase 3.1: Coverage Information Cards
-//  ✅ Uses existing WorkerAssignmentEngine for primary worker detection
-//  ✅ Integrates with existing BuildingService and WorkerService
-//  ✅ Provides coverage access to complete building intelligence
-//  ✅ REGENERATED: Complete implementation with all features
 //
 
 import SwiftUI
@@ -23,8 +14,10 @@ struct CoverageInfoCard: View {
     let building: NamedCoordinate
     let onViewFullInfo: () -> Void
     
-    @StateObject private var workerService = WorkerService.shared
-    @StateObject private var buildingService = BuildingService.shared
+    // FIXED: Remove @StateObject wrapper - these are actors, not ObservableObject
+    private let workerService = WorkerService.shared
+    private let buildingService = BuildingService.shared
+    
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     @State private var primaryWorker: String?
     @State private var isLoadingWorkerInfo = false
@@ -278,14 +271,14 @@ struct CoverageInfoCard: View {
         
         switch buildingId {
         case "14": return "Kevin Dutan" // Rubin Museum specialist
-        case "1": return "Greg Salinas" // 12 West 18th Street
+        case "1": return "Greg Miller" // 12 West 18th Street
         case "10": return "Mercedes Inamagua" // 131 Perry Street
         case "4": return "Luis Lopez" // 41 Elizabeth Street
         case "6": return "Luis Lopez" // 36 Walker Street
         case "16": return "Edwin Lema" // Stuyvesant Park
-        case "7": return "Angel Marin" // 136 West 17th Street
-        case "8": return "Angel Marin" // 138 West 17th Street
-        case "9": return "Angel Marin" // 135 West 17th Street
+        case "7": return "Angel Cornejo" // 136 West 17th Street
+        case "8": return "Angel Cornejo" // 138 West 17th Street
+        case "9": return "Angel Cornejo" // 135 West 17th Street
         case "5": return "Mercedes Inamagua" // 68 Perry Street
         case "13": return "Shawn Magloire" // 104 Franklin Street
         default: return nil

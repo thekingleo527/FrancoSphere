@@ -1679,76 +1679,10 @@ private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
         return date
     }
 }
+// MARK: - Extension for Additional Helper Methods
+// Remove duplicate methods and keep only new functionality
+
 extension OperationalDataManager {
-    
-    /// Get tasks for a specific worker on a specific date
-    /// This method connects WorkerContextEngine to real operational data
-    func getTasksForWorker(_ workerId: String, date: Date) async -> [ContextualTask] {
-        print("🔍 Getting tasks for worker: \(workerId) on date: \(date)")
-        
-        // Get worker name from ID
-        let workerName = WorkerConstants.getWorkerName(id: workerId)
-        
-        // Filter real-world tasks for this worker
-        let workerTasks = realWorldTasks.filter { task in
-            task.assignedWorker == workerName
-        }
-        
-        print("📋 Found \(workerTasks.count) operational tasks for \(workerName)")
-        
-        // Convert to ContextualTask objects
-        var contextualTasks: [ContextualTask] = []
-        
-        for operationalTask in workerTasks {
-            // Get building coordinate for this task
-            let building = await getBuildingCoordinate(for: operationalTask.building)
-            
-            // Create worker profile
-            let workerProfile = WorkerProfile(
-                id: workerId,
-                name: workerName,
-                email: "",
-                phoneNumber: "",
-                role: .worker,
-                skills: [],
-                certifications: [],
-                hireDate: Date(),
-                isActive: true
-            )
-            
-            // Calculate due date based on recurrence
-            let dueDate = calculateDueDate(for: operationalTask.recurrence, from: date)
-            
-            // Map category to TaskCategory
-            let taskCategory = mapToTaskCategory(operationalTask.category)
-            
-            // Map skill level to urgency
-            let urgency = mapSkillLevelToUrgency(operationalTask.skillLevel)
-            
-            // Create ContextualTask
-            let contextualTask = ContextualTask(
-                id: UUID().uuidString,
-                title: operationalTask.taskName,
-                description: generateTaskDescription(operationalTask),
-                isCompleted: false,
-                completedDate: nil,
-                scheduledDate: date,
-                dueDate: dueDate,
-                category: taskCategory,
-                urgency: urgency,
-                building: building,
-                worker: workerProfile,
-                buildingId: building?.id,
-                buildingName: operationalTask.building,
-                priority: urgency
-            )
-            
-            contextualTasks.append(contextualTask)
-        }
-        
-        print("✅ Converted to \(contextualTasks.count) ContextualTask objects")
-        return contextualTasks
-    }
     
     /// Get building coordinate for a building name
     private func getBuildingCoordinate(for buildingName: String) async -> NamedCoordinate? {
@@ -1807,31 +1741,57 @@ extension OperationalDataManager {
         return description
     }
     
-    /// Calculate due date based on recurrence pattern
-    private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
+    /// Calculate realistic scheduling offset for task due dates
+    /// Returns number of days to add based on operational scheduling logic
+    private func calculateRealScore() -> Int {
         let calendar = Calendar.current
+        let today = Date()
+        let dayOfWeek = calendar.component(.weekday, from: today)
         
+        // Smart scheduling logic based on operational patterns
+        switch dayOfWeek {
+        case 1: // Sunday - Schedule for Monday
+            return 1
+        case 2: // Monday - Schedule for same day or next day
+            return Int.random(in: 0...1)
+        case 3: // Tuesday - Schedule within 2 days
+            return Int.random(in: 0...2)
+        case 4: // Wednesday - Schedule within 3 days
+            return Int.random(in: 0...3)
+        case 5: // Thursday - Schedule for Friday or Monday
+            return Int.random(in: 1...4)
+        case 6: // Friday - Schedule for Monday
+            return 3
+        case 7: // Saturday - Schedule for Monday
+            return 2
+        default:
+            return 1
+        }
+    }
+    
+    /// Calculate fixed scheduling offset for predictable task scheduling
+    private func calculateFixedScore(for recurrence: String) -> Int {
         switch recurrence {
         case "Daily":
-            return date
+            return 0 // Same day
         case "Weekly":
-            return calendar.date(byAdding: .day, value: 7, to: date) ?? date
+            return 7 // Next week
         case "Bi-Weekly":
-            return calendar.date(byAdding: .day, value: 14, to: date) ?? date
+            return 14 // Two weeks
         case "Monthly":
-            return calendar.date(byAdding: .month, value: 1, to: date) ?? date
+            return 30 // Next month
         case "Bi-Monthly":
-            return calendar.date(byAdding: .month, value: 2, to: date) ?? date
+            return 60 // Two months
         case "Quarterly":
-            return calendar.date(byAdding: .month, value: 3, to: date) ?? date
+            return 90 // Three months
         case "Semiannual":
-            return calendar.date(byAdding: .month, value: 6, to: date) ?? date
+            return 180 // Six months
         case "Annual":
-            return calendar.date(byAdding: .year, value: 1, to: date) ?? date
+            return 365 // Next year
         case "On-Demand":
-            return calendar.date(byAdding: .day, value: 1, to: date) ?? date
+            return 1 // Next day
         default:
-            return calendar.date(byAdding: .day, value: 1, to: date) ?? date
+            return 1
         }
     }
 }
