@@ -3,19 +3,33 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
+//  ✅ FIXED: Added public initializer and properties for BuildingIntelligenceDTO compatibility
 //  ✅ Defines the data structure for building compliance information.
 //
 
 import Foundation
 
 public struct ComplianceDataDTO: Codable, Hashable {
-    let buildingId: CoreTypes.BuildingID
-    let hasValidPermits: Bool
-    let lastInspectionDate: Date
-    let outstandingViolations: Int
+    public let buildingId: CoreTypes.BuildingID
+    public let hasValidPermits: Bool
+    public let lastInspectionDate: Date
+    public let outstandingViolations: Int
+    
+    // ✅ ADDED: Public initializer for external creation
+    public init(
+        buildingId: CoreTypes.BuildingID,
+        hasValidPermits: Bool,
+        lastInspectionDate: Date,
+        outstandingViolations: Int
+    ) {
+        self.buildingId = buildingId
+        self.hasValidPermits = hasValidPermits
+        self.lastInspectionDate = lastInspectionDate
+        self.outstandingViolations = outstandingViolations
+    }
     
     // A computed property to quickly assess compliance risk
-    var complianceStatus: ComplianceStatus {
+    public var complianceStatus: ComplianceStatus {
         if !hasValidPermits || outstandingViolations > 0 {
             return .atRisk
         }
@@ -25,5 +39,3 @@ public struct ComplianceDataDTO: Codable, Hashable {
         return .compliant
     }
 }
-
-
