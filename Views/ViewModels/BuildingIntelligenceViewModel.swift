@@ -103,18 +103,19 @@ class BuildingIntelligenceViewModel: ObservableObject {
                 overdueTasks: 0,
                 activeWorkers: 0,
                 urgentTasksCount: 0,
-                maintenanceEfficiency: 0.0,
-                weeklyCompletionTrend: 0.0,
                 overallScore: 0,
                 isCompliant: false,
-                hasWorkerOnSite: false
+                hasWorkerOnSite: false,
+                maintenanceEfficiency: 0.0,
+                weeklyCompletionTrend: 0.0,
+                lastActivityDate: nil
             )
         }
     }
     
     private func loadBuildingStatus(for building: NamedCoordinate) async {
         // Load current building operational status
-        let status = BuildingOperationalStatus(
+        let status = LocalBuildingOperationalStatus(
             operational: true,
             secure: true,
             lastUpdated: Date()
@@ -213,6 +214,7 @@ class BuildingIntelligenceViewModel: ObservableObject {
                 id: task.id,
                 time: task.scheduledDate ?? Date(),
                 activity: task.title ?? "Task",
+                // FIXED: Use existing assignedWorkerName property from ContextualTaskIntelligence extension
                 assignedWorker: task.assignedWorkerName ?? "Unknown",
                 status: task.isCompleted ? .completed : .scheduled,
                 duration: 60 // Default duration
@@ -281,8 +283,8 @@ class BuildingIntelligenceViewModel: ObservableObject {
             task.isCompleted && (task.buildingId == buildingId || task.building?.id == buildingId)
         }
         
-        // Convert to HistoryEntry
-        return completedTasks.compactMap { task in
+        // Convert to HistoryEntry - FIXED: Use optional return for compactMap
+        return completedTasks.compactMap { task -> HistoryEntry? in
             // FIXED: Use completedDate instead of completedAt
             guard let completedDate = task.completedDate else { return nil }
             
@@ -290,6 +292,7 @@ class BuildingIntelligenceViewModel: ObservableObject {
                 id: task.id,
                 date: completedDate,
                 event: task.title ?? "Task Completed",
+                // FIXED: Use existing assignedWorkerName property from ContextualTaskIntelligence extension
                 worker: task.assignedWorkerName ?? "Unknown",
                 duration: 60, // Default duration
                 notes: task.description ?? ""
@@ -307,8 +310,8 @@ class BuildingIntelligenceViewModel: ObservableObject {
             task.category == .maintenance
         }
         
-        // Convert to CoreTypes.MaintenanceRecord
-        return maintenanceTasks.compactMap { task in
+        // Convert to CoreTypes.MaintenanceRecord - FIXED: Use optional return for compactMap
+        return maintenanceTasks.compactMap { task -> CoreTypes.MaintenanceRecord? in
             // FIXED: Use completedDate instead of completedAt
             guard let completedDate = task.completedDate else { return nil }
             
@@ -316,6 +319,7 @@ class BuildingIntelligenceViewModel: ObservableObject {
                 id: task.id,
                 buildingId: buildingId,
                 taskId: task.id,
+                // FIXED: Use existing assignedWorkerName property from ContextualTaskIntelligence extension
                 workerId: task.assignedWorkerName ?? "unknown",
                 completedDate: completedDate,
                 description: task.description ?? task.title ?? "Maintenance Task",
@@ -458,10 +462,18 @@ class BuildingIntelligenceViewModel: ObservableObject {
 
 // MARK: - Supporting Types (Unique names to avoid conflicts)
 
-struct BuildingOperationalStatus {
+// FIXED: Use LocalBuildingOperationalStatus to avoid conflicts
+struct LocalBuildingOperationalStatus: BuildingOperationalStatus {
     let operational: Bool
     let secure: Bool
     let lastUpdated: Date
+}
+
+// FIXED: Make BuildingOperationalStatus a protocol to avoid conflicts
+protocol BuildingOperationalStatus {
+    var operational: Bool { get }
+    var secure: Bool { get }
+    var lastUpdated: Date { get }
 }
 
 struct ScheduleEntry: Identifiable {
