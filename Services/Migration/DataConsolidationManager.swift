@@ -3,10 +3,8 @@
 //  FrancoSphere
 //
 //  🚀 MIGRATED TO GRDB.swift - Data Source Consolidation
-//  ✅ V6.0: Phase 0.2 - Data Source Consolidation
-//  ✅ Migrates hardcoded data from OperationalDataManager to the GRDB database
-//  ✅ Establishes the database as the single, authoritative source of truth
-//  ✅ Preserves all of your aggregated real-world task and routine data
+//  ✅ V6.0: Phase 0.2 - Data Source Consolidation - SYNTAX ERRORS FIXED
+//  ✅ FIXED: Method name mismatch and transaction structure
 //
 
 import Foundation
@@ -33,8 +31,8 @@ actor DataConsolidationManager {
         // Ensure the necessary tables exist before we try to write to them
         try await createRequiredTables()
 
-        // Get the legacy hardcoded data
-        let legacyTasks = await OperationalDataManager.shared.getAllLegacyTaskAssignments()
+        // ✅ FIXED: Correct method name (without "All")
+        let legacyTasks = await OperationalDataManager.shared.getLegacyTaskAssignments()
         guard !legacyTasks.isEmpty else {
             print("⚠️ No legacy tasks found in OperationalDataManager. Nothing to consolidate.")
             UserDefaults.standard.set(true, forKey: migrationKey) // Mark as complete to avoid re-running
@@ -43,28 +41,27 @@ actor DataConsolidationManager {
         
         print("   - Found \(legacyTasks.count) legacy tasks to migrate with GRDB.")
 
-        // Use GRDB transaction syntax
-        // Use proper execute method instead of direct dbPool access
+        // ✅ FIXED: Proper transaction structure with GRDB
+        do {
             try await grdbManager.execute("BEGIN TRANSACTION", [])
-
-            do {
-                var importedCount = 0
-                for task in legacyTasks {
-                    // Convert these into task templates in the database
-                    try await createTaskTemplate(from: task)
-                    importedCount += 1
-                
-                try await grdbManager.execute("COMMIT", [])
-                
-                // Mark consolidation as complete
-                UserDefaults.standard.set(true, forKey: migrationKey)
-                print("🎉 Data consolidation successful with GRDB. Migrated \(importedCount) task templates to the database.")
-
-            } catch {
-                print("🚨 CRITICAL: Data consolidation failed with GRDB. Rolling back changes.")
-                try await grdbManager.execute("ROLLBACK", [])
-                throw error
+            
+            var importedCount = 0
+            for task in legacyTasks {
+                // Convert these into task templates in the database
+                try await createTaskTemplate(from: task)
+                importedCount += 1
             }
+            
+            try await grdbManager.execute("COMMIT", [])
+            
+            // Mark consolidation as complete
+            UserDefaults.standard.set(true, forKey: migrationKey)
+            print("🎉 Data consolidation successful with GRDB. Migrated \(importedCount) task templates to the database.")
+
+        } catch {
+            print("🚨 CRITICAL: Data consolidation failed with GRDB. Rolling back changes.")
+            try await grdbManager.execute("ROLLBACK", [])
+            throw error
         }
     }
 
@@ -84,7 +81,7 @@ actor DataConsolidationManager {
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(name, category)
             );
-        """)
+        """, [])
         
         // Create operational_data_migration table to track what's been migrated
         try await grdbManager.execute("""
@@ -97,7 +94,7 @@ actor DataConsolidationManager {
                 checksum TEXT,
                 UNIQUE(migration_type, source_system)
             );
-        """)
+        """, [])
         
         // Create worker_task_templates for worker-specific task assignments
         try await grdbManager.execute("""
@@ -114,13 +111,13 @@ actor DataConsolidationManager {
                 FOREIGN KEY (task_template_id) REFERENCES task_templates(id),
                 UNIQUE(worker_id, building_id, task_template_id)
             );
-        """)
+        """, [])
         
         print("✅ Required tables created with GRDB")
     }
 
     /// Converts a legacy hardcoded task into a reusable task template in the database using GRDB
-    private func createTaskTemplate(from legacyTask: CoreTypes.OperationalTaskAssignment) async throws {
+    private func createTaskTemplate(from legacyTask: LegacyTaskAssignment) async throws {
         let description = "Migrated from OperationalDataManager: \(legacyTask.taskName)"
         let urgency = determineUrgency(from: legacyTask)
         let duration = calculateDuration(from: legacyTask)
@@ -140,25 +137,35 @@ actor DataConsolidationManager {
         ])
         
         // Create worker-specific assignment if we have worker and building info
-        if let workerId = legacyTask.workerId,
-           let buildingId = legacyTask.buildingId,
-           templateId > 0 {
-            
+        if templateId > 0 {
             let startTime = formatTime(hour: legacyTask.startHour)
             let endTime = formatTime(hour: legacyTask.endHour)
             
-            try await grdbManager.execute("""
-                INSERT OR IGNORE INTO worker_task_templates 
-                (worker_id, building_id, task_template_id, start_time, end_time)
-                VALUES (?, ?, ?, ?, ?);
-            """, [workerId, buildingId, templateId, startTime, endTime])
+            // Use building name and worker name to look up IDs
+            let buildingResults = try await grdbManager.query("""
+                SELECT id FROM buildings WHERE name LIKE ?
+            """, ["%\(legacyTask.building)%"])
+            
+            let workerResults = try await grdbManager.query("""
+                SELECT id FROM workers WHERE name = ?
+            """, [legacyTask.assignedWorker])
+            
+            if let buildingId = buildingResults.first?["id"] as? String,
+               let workerId = workerResults.first?["id"] as? String {
+                
+                try await grdbManager.execute("""
+                    INSERT OR IGNORE INTO worker_task_templates 
+                    (worker_id, building_id, task_template_id, start_time, end_time)
+                    VALUES (?, ?, ?, ?, ?);
+                """, [workerId, buildingId, templateId, startTime, endTime])
+            }
         }
     }
     
     // MARK: - Helper Methods
     
     /// Determines task urgency based on legacy task properties
-    private func determineUrgency(from task: CoreTypes.OperationalTaskAssignment) -> String {
+    private func determineUrgency(from task: LegacyTaskAssignment) -> String {
         switch task.skillLevel {
         case "Advanced", "Expert":
             return "high"
@@ -170,7 +177,7 @@ actor DataConsolidationManager {
     }
     
     /// Calculates task duration in minutes
-    private func calculateDuration(from task: CoreTypes.OperationalTaskAssignment) -> Int {
+    private func calculateDuration(from task: LegacyTaskAssignment) -> Int {
         let startHour = task.startHour ?? 9
         let endHour = task.endHour ?? startHour + 1
         return max((endHour - startHour) * 60, 30) // Minimum 30 minutes
@@ -186,22 +193,22 @@ actor DataConsolidationManager {
     
     /// Analyzes the migrated data for insights
     func analyzeConsolidatedData() async throws -> ConsolidationReport {
-        let taskTemplates = try await grdbManager.query("SELECT COUNT(*) as count FROM task_templates")
-        let workerAssignments = try await grdbManager.query("SELECT COUNT(*) as count FROM worker_task_templates")
+        let taskTemplates = try await grdbManager.query("SELECT COUNT(*) as count FROM task_templates", [])
+        let workerAssignments = try await grdbManager.query("SELECT COUNT(*) as count FROM worker_task_templates", [])
         
         let categoryBreakdown = try await grdbManager.query("""
             SELECT category, COUNT(*) as count 
             FROM task_templates 
             GROUP BY category 
             ORDER BY count DESC
-        """)
+        """, [])
         
         let skillLevelBreakdown = try await grdbManager.query("""
             SELECT skill_level, COUNT(*) as count 
             FROM task_templates 
             GROUP BY skill_level 
             ORDER BY count DESC
-        """)
+        """, [])
         
         return ConsolidationReport(
             totalTaskTemplates: Int(taskTemplates.first?["count"] as? Int64 ?? 0),
@@ -234,19 +241,20 @@ actor DataConsolidationManager {
     
     /// Cleans up legacy data after successful migration
     func cleanupLegacyData() async {
-        await OperationalDataManager.shared.clearLegacyData()
-        print("✅ Legacy data cleared from OperationalDataManager")
+        // Note: clearLegacyData method would need to be implemented in OperationalDataManager
+        // await OperationalDataManager.shared.clearLegacyData()
+        print("✅ Legacy data cleanup requested (method not implemented in OperationalDataManager)")
     }
     
     /// Exports consolidated data for verification
     func exportConsolidatedData() async throws -> ConsolidationExport {
-        let taskTemplates = try await grdbManager.query("SELECT * FROM task_templates ORDER BY category, name")
+        let taskTemplates = try await grdbManager.query("SELECT * FROM task_templates ORDER BY category, name", [])
         let workerAssignments = try await grdbManager.query("""
             SELECT wtt.*, tt.name as task_name, tt.category 
             FROM worker_task_templates wtt
             JOIN task_templates tt ON wtt.task_template_id = tt.id
             ORDER BY wtt.worker_id, wtt.building_id
-        """)
+        """, [])
         
         return ConsolidationExport(
             taskTemplates: taskTemplates,
@@ -288,83 +296,3 @@ struct ConsolidationExport {
     let exportDate: Date
     let totalRecords: Int
 }
-
-// MARK: - Extension for OperationalDataManager
-
-/// Extension to provide access to legacy data for migration
-extension OperationalDataManager {
-    
-    /// Provides access to the legacy, hardcoded task data for migration
-    func getLegacyTaskAssignments() async -> [OperationalTaskAssignment] {
-        // Return the real-world tasks that were previously hardcoded
-        // This should be implemented to return your actual realWorldTasks array
-        
-        // For now, return sample data that matches your real structure
-        let sampleTasks = [
-            OperationalTaskAssignment(
-                workerId: "2",
-                buildingId: "17",
-                taskName: "Put Mats Out",
-                category: "Cleaning",
-                skillLevel: "Basic",
-                startHour: 6,
-                endHour: 7
-            ),
-            OperationalTaskAssignment(
-                workerId: "4",
-                buildingId: "14",
-                taskName: "Museum Floor Cleaning",
-                category: "Cleaning",
-                skillLevel: "Advanced",
-                startHour: 6,
-                endHour: 8
-            )
-        ]
-        
-        print("⚠️ getLegacyTaskAssignments should return your actual realWorldTasks array")
-        return sampleTasks
-    }
-    
-    /// Clears legacy data after successful migration
-    func clearLegacyData() {
-        // Clear the hardcoded arrays to free up memory
-        // e.g., self.realWorldTasks = []
-        print("✅ Legacy data cleared from OperationalDataManager")
-    }
-}
-
-// MARK: - Sample OperationalTaskAssignment Structure
-
-/// Structure representing a legacy operational task assignment
-
-// MARK: - 📝 GRDB MIGRATION NOTES
-/*
- ✅ CONVERTED FROM SQLite.swift TO GRDB.swift:
- 
- 🔧 IMPORT CHANGES:
- - ❌ BEFORE: import SQLite
- - ✅ AFTER: import GRDB
- 
- 🔧 MANAGER CHANGES:
- - ❌ BEFORE: SQLiteManager.shared
- - ✅ AFTER: GRDBManager.shared
- 
- 🔧 TRANSACTION SYNTAX:
- - ❌ BEFORE: try await sqliteManager.execute("BEGIN TRANSACTION")
- - ✅ AFTER: // Use proper execute method instead of direct dbPool access try db.execute(sql: "BEGIN") }
- 
- 🔧 NEW GRDB FEATURES ADDED:
- - ✅ Enhanced table creation with foreign keys
- - ✅ Migration tracking table
- - ✅ Data analysis and reporting capabilities
- - ✅ Export functionality for verification
- - ✅ Better error handling and rollback
- 
- 🔧 ENHANCED FUNCTIONALITY:
- - ✅ Worker-specific task template assignments
- - ✅ Migration metadata tracking
- - ✅ Data analysis and reporting
- - ✅ Comprehensive consolidation verification
- 
- 🎯 STATUS: DataConsolidationManager fully converted to GRDB.swift with enhanced features
- */

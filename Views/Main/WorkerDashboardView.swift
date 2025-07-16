@@ -1,11 +1,12 @@
 //
 //  WorkerDashboardView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ V6.0 REFACTOR: Complete architectural overhaul.
-//  ✅ FIXED: All compilation errors resolved.
-//  ✅ INTEGRATED: Correctly uses the ViewModel and actor-based services.
-//  ✅ PRESERVED: Original UI design and functionality.
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With existing ViewModel pattern and CoreTypes
+//  ✅ CORRECTED: Uses proper ClockInManager.ClockInSession type
+//  ✅ CORRECTED: Uses existing TaskProgress from CoreTypes
+//  ✅ CORRECTED: Proper HeaderV3B parameters (no hasPendingScenario)
 //
 
 import SwiftUI
@@ -34,18 +35,18 @@ struct WorkerDashboardView: View {
                 
                 // Custom header floats on top
                 VStack {
-                    // This uses the existing HeaderV3B, ensuring the look is preserved
                     HeaderV3B(
                         workerName: viewModel.workerProfile?.name ?? "Worker",
                         clockedInStatus: viewModel.isClockedIn,
                         onClockToggle: { Task { await viewModel.handleClockInToggle() } },
                         onProfilePress: { showProfileView = true },
-                        nextTaskName: viewModel.todaysTasks.first(where: { !$0.isCompleted })?.name,
-                        hasUrgentWork: viewModel.todaysTasks.contains { $0.urgency == .high || $0.urgency == .urgent },
+                        nextTaskName: viewModel.todaysTasks.first(where: { !$0.isCompleted })?.title,
+                        hasUrgentWork: viewModel.todaysTasks.contains { task in
+                            task.urgency == .high || task.urgency == .urgent || task.urgency == .critical
+                        },
                         onNovaPress: { /* TODO: Show Nova AI */ },
                         onNovaLongPress: { /* TODO: Show Nova AI Long Press */ },
-                        isNovaProcessing: false, // This would come from an AIManager
-                        hasPendingScenario: false, // This would come from an AIManager
+                        isNovaProcessing: false,
                         showClockPill: true
                     )
                     .background(.ultraThinMaterial)
@@ -59,14 +60,13 @@ struct WorkerDashboardView: View {
                 BuildingSelectionSheet(
                     buildings: viewModel.assignedBuildings,
                     onSelect: { building in
-                        Task { await viewModel.handleClockIn(for: building) }
+                        Task { await viewModel.clockIn(at: building) }
                         showBuildingList = false
                     },
                     onCancel: { showBuildingList = false }
                 )
             }
             .sheet(isPresented: $showProfileView) {
-                // Assuming you have a ProfileView that can be presented
                 ProfileView()
             }
             .fullScreenCover(isPresented: $showMapOverlay) {
@@ -81,16 +81,22 @@ struct WorkerDashboardView: View {
         }
     }
 
-    // MARK: - Subviews (Preserving Original Design)
+    // MARK: - Computed Properties
+    
+    private var clockInButtonText: String {
+        return viewModel.isClockedIn ? "Clock Out" : "Start Shift"
+    }
 
-    var mapBackground: some View {
+    // MARK: - Subviews
+
+    private var mapBackground: some View {
         Map(interactionModes: [])
             .mapStyle(.standard(elevation: .realistic))
             .blur(radius: 4)
             .overlay(Color.black.opacity(0.5))
     }
     
-    var loadingView: some View {
+    private var loadingView: some View {
         ProgressView("Loading Dashboard...")
             .progressViewStyle(CircularProgressViewStyle(tint: .white))
             .scaleEffect(1.5)
@@ -98,7 +104,7 @@ struct WorkerDashboardView: View {
             .background(.black.opacity(0.4))
     }
     
-    var mainContentScrollView: some View {
+    private var mainContentScrollView: some View {
         ScrollView {
             VStack(spacing: 20) {
                 Spacer(minLength: 100) // Pushes content below the floating header
@@ -128,7 +134,7 @@ struct WorkerDashboardView: View {
         .cornerRadius(12)
     }
 
-    var clockInSection: some View {
+    private var clockInSection: some View {
         Button(action: {
             if viewModel.isClockedIn {
                 Task { await viewModel.handleClockInToggle() }
@@ -138,52 +144,73 @@ struct WorkerDashboardView: View {
         }) {
             HStack(spacing: 12) {
                 Image(systemName: viewModel.isClockedIn ? "location.fill" : "location.slash")
-                    .font(.title3).foregroundColor(viewModel.isClockedIn ? .green : .orange)
+                    .font(.title3)
+                    .foregroundColor(viewModel.isClockedIn ? .green : .orange)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(clockInButtonText)
-                        .font(.headline).foregroundColor(.white)
-                    Text(viewModel.isClockedIn ? "Working at \(viewModel.currentSession?.buildingName ?? "...")" : "Select a building to start your shift")
-                        .font(.caption).foregroundColor(.white.opacity(0.7))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text(viewModel.isClockedIn ? "Working at \(viewModel.currentSession?.buildingName ?? "Unknown")" : "Select a building to start your shift")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
                 }
                 Spacer()
-                Image(systemName: "chevron.right").foregroundColor(.white.opacity(0.6))
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.6))
             }
-            .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        }.buttonStyle(.plain)
+            .padding(16)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
     }
 
-    var todaysProgressSection: some View {
+    private var todaysProgressSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Today's Progress").font(.headline).foregroundColor(.white)
+            Text("Today's Progress")
+                .font(.headline)
+                .foregroundColor(.white)
+            
             ProgressView(value: viewModel.taskProgress?.percentage ?? 0, total: 100)
                 .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+            
             HStack {
                 Text("\(Int(viewModel.taskProgress?.percentage ?? 0))% Complete")
                 Spacer()
                 Text("\(viewModel.taskProgress?.completed ?? 0)/\(viewModel.taskProgress?.total ?? 0) Tasks")
             }
-            .font(.caption).foregroundColor(.white.opacity(0.7))
+            .font(.caption)
+            .foregroundColor(.white.opacity(0.7))
         }
-        .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    var mySitesSection: some View {
+    private var mySitesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("My Sites").font(.headline).foregroundColor(.white)
+                Text("My Sites")
+                    .font(.headline)
+                    .foregroundColor(.white)
                 Spacer()
-                Button("View All") { showMapOverlay = true }
-                    .font(.caption).foregroundColor(.blue)
+                Button("View All") {
+                    showMapOverlay = true
+                }
+                .font(.caption)
+                .foregroundColor(.blue)
             }
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
                 ForEach(viewModel.assignedBuildings.prefix(6)) { building in
-                    // This now uses the consolidated, reusable component from its own file
                     MySitesCard(building: building)
                 }
             }
         }
-        .padding(16).background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -197,22 +224,29 @@ struct BuildingSelectionSheet: View {
         NavigationView {
             List(buildings) { building in
                 Button(action: { onSelect(building) }) {
-                    HStack { Text(building.name); Spacer(); Image(systemName: "chevron.right") }
+                    HStack {
+                        Text(building.name)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
                 }
             }
             .navigationTitle("Select a Building")
-            .navigationBarItems(leading: Button("Cancel", action: onCancel))
-        }.preferredColorScheme(.dark)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel", action: onCancel)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }
 
 // MARK: - Preview
 struct WorkerDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        let authManager = NewAuthManager.shared
-        // Use a task to call the async login method for the preview
-        Task { try? await authManager.login(email: "dutankevin1@gmail.com", password: "password") }
-        
-        return WorkerDashboardView().environmentObject(authManager)
+        WorkerDashboardView()
+            .environmentObject(NewAuthManager.shared)
     }
 }

@@ -162,15 +162,15 @@
 		23DED85B2E1E24F100E5F9F5 /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 		23EA1D1B2E234F79009FFF54 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */; };
-		23EA1D7A2E2473AB009FFF54 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1D792E2473AB009FFF54 /* GRDB */; };
+		23EA1E5E2E271759009FFF54 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1E5D2E271759009FFF54 /* GRDB */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
 		23EE82722E1C79D700C298C7 /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */; };
-                23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */; };
-                23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */; };
-                23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */; };
-                23F9FC022E30000000AAAAAA /* NovaContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */; };
+		23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */; };
+		23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */; };
+		23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */; };
+		23F9FC022E30000000AAAAAA /* NovaContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -355,10 +355,10 @@
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
 		23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
-                23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceInsightsView.swift; sourceTree = "<group>"; };
-                23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaCore.swift; sourceTree = "<group>"; };
-                23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaTypes.swift; sourceTree = "<group>"; };
-                23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaContextEngine.swift; sourceTree = "<group>"; };
+		23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceInsightsView.swift; sourceTree = "<group>"; };
+		23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaCore.swift; sourceTree = "<group>"; };
+		23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaTypes.swift; sourceTree = "<group>"; };
+		23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaContextEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -402,7 +402,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23EA1D7A2E2473AB009FFF54 /* GRDB in Frameworks */,
+				23EA1E5E2E271759009FFF54 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,10 +658,10 @@
 				234580E32DF78E3D00355F0A /* VerificationRecord.swift */,
 				234580E42DF78E3D00355F0A /* WeatherAlert.swift */,
 				234580E52DF78E3D00355F0A /* WorkerConstants.swift */,
-                                234580E62DF78E3D00355F0A /* WorkerContextEngine.swift */,
-                                234580E72DF78E3D00355F0A /* WorkerRoutineViewModel.swift */,
-                                23F9FA002E2FFE0000AAAAAA /* AI */,
-                        );
+				234580E62DF78E3D00355F0A /* WorkerContextEngine.swift */,
+				234580E72DF78E3D00355F0A /* WorkerRoutineViewModel.swift */,
+				23F9FA002E2FFE0000AAAAAA /* AI */,
+			);
 			path = Models;
 			sourceTree = "<group>";
 		};
@@ -804,41 +804,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-                2374933D2E1C950700D9C70D /* Core */ = {
-                        isa = PBXGroup;
-                        children = (
-                                23A3169E2E1E37B500469FA3 /* AITypes.swift */,
-                                237493572E1C9F8800D9C70D /* CoreTypes.swift */,
-                        );
-                        path = Core;
-                        sourceTree = "<group>";
-                };
-                23F9FA022E2FFE0000AAAAAA /* Core */ = {
-                        isa = PBXGroup;
-                        children = (
-                                23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */,
-                                23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */,
-                                23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */,
-                        );
-                        path = Core;
-                        sourceTree = "<group>";
-                };
-                23F9FA012E2FFE0000AAAAAA /* Nova */ = {
-                        isa = PBXGroup;
-                        children = (
-                                23F9FA022E2FFE0000AAAAAA /* Core */,
-                        );
-                        path = Nova;
-                        sourceTree = "<group>";
-                };
-                23F9FA002E2FFE0000AAAAAA /* AI */ = {
-                        isa = PBXGroup;
-                        children = (
-                                23F9FA012E2FFE0000AAAAAA /* Nova */,
-                        );
-                        path = AI;
-                        sourceTree = "<group>";
-                };
+		2374933D2E1C950700D9C70D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				23A3169E2E1E37B500469FA3 /* AITypes.swift */,
+				237493572E1C9F8800D9C70D /* CoreTypes.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
 		23E1E56D2E0F37CA0036127D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -852,6 +826,32 @@
 				23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */,
 			);
 			path = Templates;
+			sourceTree = "<group>";
+		};
+		23F9FA002E2FFE0000AAAAAA /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				23F9FA012E2FFE0000AAAAAA /* Nova */,
+			);
+			path = AI;
+			sourceTree = "<group>";
+		};
+		23F9FA012E2FFE0000AAAAAA /* Nova */ = {
+			isa = PBXGroup;
+			children = (
+				23F9FA022E2FFE0000AAAAAA /* Core */,
+			);
+			path = Nova;
+			sourceTree = "<group>";
+		};
+		23F9FA022E2FFE0000AAAAAA /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */,
+				23F9FB012E2FFF0000AAAAAA /* NovaTypes.swift */,
+				23F9FB022E2FFF0000AAAAAA /* NovaContextEngine.swift */,
+			);
+			path = Core;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -877,7 +877,7 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				23EA1D792E2473AB009FFF54 /* GRDB */,
+				23EA1E5D2E271759009FFF54 /* GRDB */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -956,7 +956,7 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				23EA1D782E2473AB009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */,
+				23EA1E5C2E271759009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1183,12 +1183,12 @@
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
-                                2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */,
-                                234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
-                                23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */,
-                                23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */,
-                                23F9FC022E30000000AAAAAA /* NovaContextEngine.swift in Sources */,
-                        );
+				2312FC7B2E1BEC8200B64496 /* StubFactory.swift in Sources */,
+				234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
+				23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */,
+				23F9FC012E30000000AAAAAA /* NovaTypes.swift in Sources */,
+				23F9FC022E30000000AAAAAA /* NovaContextEngine.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		23423DC32D739D6900AACE3E /* Sources */ = {
@@ -1512,7 +1512,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		23EA1D782E2473AB009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */ = {
+		23EA1E5C2E271759009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -1523,9 +1523,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		23EA1D792E2473AB009FFF54 /* GRDB */ = {
+		23EA1E5D2E271759009FFF54 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 23EA1D782E2473AB009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */;
+			package = 23EA1E5C2E271759009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */

@@ -2,7 +2,8 @@
 //  PortfolioOverviewView.swift
 //  FrancoSphere
 //
-//  ✅ V6.0: FIXED - Updated for CoreTypes architecture
+//  ✅ FIXED: Preview initializer parameters aligned with CoreTypes
+//  ✅ V6.0: Updated for CoreTypes architecture
 //  ✅ Real-time portfolio metrics display
 //  ✅ Performance trends and key indicators
 //  ✅ Quick action dashboard for executives
@@ -623,20 +624,22 @@ enum MetricType: String, CaseIterable {
     }
 }
 
-// MARK: - Preview
+// MARK: - Preview (FIXED: Correct initializer parameters)
 
 struct PortfolioOverviewView_Previews: PreviewProvider {
     static var previews: some View {
         PortfolioOverviewView(
             intelligence: CoreTypes.PortfolioIntelligence(
                 totalBuildings: 12,
-                totalCompletedTasks: 132,
-                averageComplianceScore: 0.92,
-                totalActiveWorkers: 24,
-                overallEfficiency: 0.87,
-                trendDirection: CoreTypes.TrendDirection.up
+                activeWorkers: 24,
+                completionRate: 0.87,
+                criticalIssues: 3,
+                monthlyTrend: .up,
+                completedTasks: 132,
+                complianceScore: 92,
+                weeklyTrend: 0.05
             )
         )
-        .preferredColorScheme(ColorScheme.dark)
+        .preferredColorScheme(.dark)
     }
 }

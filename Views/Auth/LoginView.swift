@@ -1,14 +1,10 @@
-//
 //  LoginView.swift
 //  FrancoSphere
 //
-//  Glassmorphism-enhanced login with AbstractFrancoSphereLogo - FIXED
+//  Glassmorphism-enhanced login with AbstractFrancoSphereLogo - COMPILATION FIX V2
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 
 struct LoginView: View {
     @State private var email: String = ""
@@ -308,7 +304,7 @@ struct LoginView: View {
                                 .transition(.scale.combined(with: .opacity))
                             }
                             
-                            // Login button - FIXED: action closure at the end
+                            // Login button - FIXED: Use trailing closure syntax only
                             GlassButton(
                                 "LOG IN",
                                 style: .primary,
@@ -317,7 +313,9 @@ struct LoginView: View {
                                 isDisabled: !isValidForm,
                                 isLoading: isLoading
                             ) {
-                                performLogin()
+                                Task {
+                                    await performLogin()
+                                }
                             }
                             .padding(.top, 8)
                         }
@@ -392,7 +390,9 @@ struct LoginView: View {
                 self.email = email
                 self.password = "password"
             }
-            performLogin()
+            Task {
+                await performLogin()
+            }
         }) {
             HStack(spacing: 12) {
                 ZStack {
@@ -431,26 +431,34 @@ struct LoginView: View {
         !email.isEmpty && !password.isEmpty
     }
     
-    private func performLogin() {
+    // FIXED: Use async/await pattern to match NewAuthManager
+    private func performLogin() async {
         guard !isLoading else { return }
         
-        withAnimation(Animation.easeInOut(duration: 0.2)) {
-            isLoading = true
-            errorMessage = nil
+        await MainActor.run {
+            withAnimation(Animation.easeInOut(duration: 0.2)) {
+                isLoading = true
+                errorMessage = nil
+            }
         }
         
-        authManager.login(email: email, password: password) { success, error in
-            DispatchQueue.main.async {
+        do {
+            try await authManager.login(email: email, password: password)
+            
+            await MainActor.run {
                 withAnimation(Animation.easeInOut(duration: 0.2)) {
-                    self.isLoading = false
-                    
-                    if !success {
-                        self.errorMessage = error ?? "Login failed. Please try again."
-                    } else {
-                        print("✅ Login successful for: \(self.authManager.currentWorkerName)")
-                        print("   Role: \(self.authManager.userRole)")
-                        print("   Worker ID: \(self.authManager.workerId)")
-                    }
+                    isLoading = false
+                }
+                print("✅ Login successful for: \(authManager.currentWorkerName)")
+                print("   Role: \(authManager.userRole)")
+                print("   Worker ID: \(authManager.workerId ?? "nil")")
+            }
+            
+        } catch {
+            await MainActor.run {
+                withAnimation(Animation.easeInOut(duration: 0.2)) {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
                 }
             }
         }
