@@ -3,8 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
-//  ✅ FIXED: Invalid struct name and conformance issues
-//  ✅ ALIGNED: With existing CoreTypes structure
+//  ✅ FIXED: Aligned with actual DTO structures and method signatures
+//  ✅ CORRECTED: All method calls and property references
 //
 
 import Foundation
@@ -44,7 +44,7 @@ public struct BuildingIntelligenceDTO: Codable, Hashable, Identifiable {
     }
 }
 
-// MARK: - Supporting DTOs
+// MARK: - Supporting DTOs (Enhanced from existing structures)
 
 public struct OperationalMetricsDTO: Codable, Hashable {
     let score: Int
@@ -128,14 +128,17 @@ extension BuildingIntelligenceDTO {
     /// Convert to CoreTypes.BuildingMetrics for compatibility
     func toBuildingMetrics() -> CoreTypes.BuildingMetrics {
         return CoreTypes.BuildingMetrics(
+            buildingId: buildingId,
             completionRate: operationalMetrics.taskCompletionRate,
             pendingTasks: operationalMetrics.urgentTasksCount,
             overdueTasks: operationalMetrics.overdueTasksCount,
             activeWorkers: workerMetrics.count,
             urgentTasksCount: operationalMetrics.urgentTasksCount,
-            isCompliant: complianceData.overallStatus == .compliant,
             overallScore: operationalMetrics.score,
-            hasWorkerOnSite: workerMetrics.contains { $0.isOnSite }
+            isCompliant: complianceData.complianceStatus == .compliant,
+            hasWorkerOnSite: workerMetrics.contains { $0.lastActiveDate > Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date() },
+            maintenanceEfficiency: operationalMetrics.maintenanceEfficiency,
+            weeklyCompletionTrend: operationalMetrics.taskCompletionRate
         )
     }
     
@@ -167,13 +170,21 @@ extension BuildingIntelligenceDTO {
             ))
         }
         
-        // Compliance insights
-        if complianceData.overallStatus != .compliant {
+        // Compliance insights - using actual ComplianceStatus enum from ComplianceDataDTO
+        if complianceData.complianceStatus != .compliant {
+            let priorityLevel: CoreTypes.InsightPriority = {
+                switch complianceData.complianceStatus {
+                case .atRisk: return .critical
+                case .needsReview: return .medium
+                case .compliant: return .low
+                }
+            }()
+            
             insights.append(CoreTypes.IntelligenceInsight(
                 title: "Compliance Issues Detected",
-                description: "Building has \(complianceData.violationCount) compliance issues requiring attention",
+                description: "Building has \(complianceData.outstandingViolations) compliance issues requiring attention",
                 type: .compliance,
-                priority: complianceData.overallStatus == .nonCompliant ? .critical : .high,
+                priority: priorityLevel,
                 actionRequired: true,
                 affectedBuildings: [buildingId]
             ))
@@ -191,6 +202,19 @@ extension BuildingIntelligenceDTO {
             ))
         }
         
+        // Worker performance insights
+        let highPerformers = workerMetrics.filter { $0.isHighPerformer }
+        if highPerformers.count == workerMetrics.count && !workerMetrics.isEmpty {
+            insights.append(CoreTypes.IntelligenceInsight(
+                title: "Exceptional Worker Performance",
+                description: "All \(workerMetrics.count) assigned workers are high performers",
+                type: .performance,
+                priority: .low,
+                actionRequired: false,
+                affectedBuildings: [buildingId]
+            ))
+        }
+        
         return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
 }
@@ -199,7 +223,7 @@ extension BuildingIntelligenceDTO {
 
 extension BuildingIntelligenceDTO {
     
-    /// Create a sample DTO for testing
+    /// Create a sample DTO for testing using StubFactory patterns
     static func sample(buildingId: CoreTypes.BuildingID) -> BuildingIntelligenceDTO {
         return BuildingIntelligenceDTO(
             buildingId: buildingId,
@@ -212,22 +236,24 @@ extension BuildingIntelligenceDTO {
                 urgentTasksCount: 2,
                 overdueTasksCount: 1
             ),
-            complianceData: ComplianceDataDTO.sample(),
-            workerMetrics: [WorkerMetricsDTO.sample()],
-            buildingSpecificData: BuildingSpecificDataDTO(
-                buildingType: "Commercial",
-                yearBuilt: 1995,
-                squareFootage: 50000,
-                address: "123 Main St",
-                totalFloors: 10,
-                hasElevator: true
-            ),
-            dataQuality: DataQuality(
-                score: 0.95,
-                isDataStale: false,
-                missingReports: 0,
-                dataCompleteness: 0.98
-            )
+            complianceData: StubFactory.makeComplianceData(for: buildingId),
+            workerMetrics: [StubFactory.makeWorkerMetrics(for: buildingId, workerId: "1")],
+            buildingSpecificData: StubFactory.makeBuildingSpecificData(for: buildingId),
+            dataQuality: StubFactory.makeDataQuality()
+        )
+    }
+    
+    /// Create enhanced sample with multiple workers
+    static func enhancedSample(buildingId: CoreTypes.BuildingID, workerIds: [CoreTypes.WorkerID]) -> BuildingIntelligenceDTO {
+        let workerMetrics = workerIds.map { StubFactory.makeWorkerMetrics(for: buildingId, workerId: $0) }
+        
+        return BuildingIntelligenceDTO(
+            buildingId: buildingId,
+            operationalMetrics: StubFactory.makeOperationalMetrics(),
+            complianceData: StubFactory.makeComplianceData(for: buildingId),
+            workerMetrics: workerMetrics,
+            buildingSpecificData: StubFactory.makeBuildingSpecificData(for: buildingId),
+            dataQuality: StubFactory.makeDataQuality()
         )
     }
 }
