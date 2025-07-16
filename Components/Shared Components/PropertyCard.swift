@@ -1,120 +1,93 @@
 //
 //  PropertyCard.swift
-//  FrancoSphere
+//  FrancoSphere v6.0 - THEME FIXES
 //
-//  ✅ UNIFIED BUILDING COMPONENT
-//  ✅ Multi-dashboard support (Worker, Admin, Client)
-//  ✅ Real-time metrics from BuildingMetricsService
-//  ✅ Actor-compatible async data loading
+//  ✅ FIXED: Building image mapping with fallbacks
+//  ✅ FIXED: Dark mode compatibility
+//  ✅ FIXED: Copy changes from "My Sites" to "Portfolio"
 //
 
 import SwiftUI
 
 struct PropertyCard: View {
     let building: NamedCoordinate
-    let displayMode: DisplayMode
-    let onTap: (() -> Void)?
+    let metrics: BuildingMetrics?
+    let mode: PropertyCardMode
+    let onTap: () -> Void
     
-    @State private var metrics: BuildingMetrics?
-    @State private var isLoadingMetrics = false
-    
-    enum DisplayMode {
-        case dashboard   // Worker view
-        case admin      // Admin view
-        case client     // Client view
-        case minimal    // List view
+    enum PropertyCardMode {
+        case worker
+        case admin
+        case client
     }
+    
+    private let imageSize: CGFloat = 60
     
     var body: some View {
-        Button(action: { onTap?() }) {
-            VStack(alignment: .leading, spacing: 12) {
-                // Building header
-                HStack {
-                    Image(buildingImageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: imageSize, height: imageSize)
-                        .cornerRadius(8)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(building.name)
-                            .font(.headline)
-                            .lineLimit(2)
-                        
-                        if displayMode != .minimal {
-                            Text(building.address ?? "")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    if isLoadingMetrics {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                }
-                
-                // Mode-specific content
-                if displayMode != .minimal {
-                    Group {
-                        switch displayMode {
-                        case .dashboard:
-                            workerContent
-                        case .admin:
-                            adminContent
-                        case .client:
-                            clientContent
-                        case .minimal:
-                            EmptyView()
-                        }
-                    }
-                    .opacity(metrics != nil ? 1.0 : 0.3)
-                }
+        Button(action: onTap) {
+            HStack(spacing: 16) {
+                buildingImage
+                buildingContent
+                Spacer()
+                chevron
             }
             .padding()
+            .background(.ultraThinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
+            .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .task {
-            await loadMetrics()
+    }
+    
+    private var buildingImage: some View {
+        Group {
+            if let image = UIImage(named: buildingImageName) {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: imageSize, height: imageSize)
+                    .cornerRadius(8)
+            } else {
+                // Fallback placeholder
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: imageSize, height: imageSize)
+                    .overlay(
+                        Image(systemName: "building.2.fill")
+                            .font(.system(size: imageSize * 0.4))
+                            .foregroundColor(.white.opacity(0.7))
+                    )
+            }
         }
     }
     
-    // MARK: - Real Building Asset Mapping
-    
-    private var buildingImageName: String {
-        switch building.id {
-        case "1": return "12_West_18th_Street"
-        case "4": return "41_Elizabeth_Street"
-        case "5", "6": return "68_Perry_Street"
-        case "7": return "136_West_17th_Street"
-        case "8": return "138West17thStreet"
-        case "9": return "135West17thStreet"
-        case "10": return "131_Perry_Street"
-        case "13": return "104_Franklin_Street"
-        case "14": return "Rubin_Museum_142_148_West_17th_Street"
-        case "16": return "Stuyvesant_Cove_Park"
-        default: return "building_placeholder"
+    private var buildingContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(building.name)
+                .font(.headline)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .lineLimit(2)
+            
+            switch mode {
+            case .worker:
+                workerContent
+            case .admin:
+                adminContent
+            case .client:
+                clientContent
+            }
         }
     }
-    
-    private var imageSize: CGFloat {
-        switch displayMode {
-        case .minimal: return 40
-        case .dashboard: return 60
-        case .admin, .client: return 56
-        }
-    }
-    
-    // MARK: - Content Views
     
     private var workerContent: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let metrics = metrics {
                 HStack {
-                    Label("Today's Tasks", systemImage: "checklist")
+                    Label("Portfolio", systemImage: "building.2.fill")  // CHANGED FROM "Today's Tasks"
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
@@ -125,17 +98,14 @@ struct PropertyCard: View {
                         .foregroundColor(metrics.pendingTasks > 0 ? .blue : .green)
                 }
                 
+                // Progress bar
                 ProgressView(value: metrics.completionRate)
-                    .tint(metrics.completionRate > 0.8 ? .green : .orange)
-                
-                if metrics.hasWorkerOnSite {
-                    HStack {
-                        Circle().fill(.green).frame(width: 6, height: 6)
-                        Text("On Site").font(.caption).foregroundColor(.green)
-                        Spacer()
-                        Text("Active").font(.caption).foregroundColor(.secondary)
-                    }
-                }
+                    .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
+                    .frame(height: 4)
+            } else {
+                Text("Loading...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
     }
@@ -144,103 +114,201 @@ struct PropertyCard: View {
         VStack(alignment: .leading, spacing: 8) {
             if let metrics = metrics {
                 HStack {
-                    Text("Efficiency: \(Int(metrics.completionRate * 100))%")
-                        .font(.caption)
+                    Label("Efficiency", systemImage: "chart.line.uptrend.xyaxis")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
                     Spacer()
-                    Text("\(metrics.activeWorkers) workers")
+                    
+                    Text("\(Int(metrics.efficiency))%")
                         .font(.caption)
+                        .foregroundColor(efficiencyColor)
                 }
                 
-                if metrics.overdueTasks > 0 {
+                HStack {
+                    Label("Workers", systemImage: "person.3.fill")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(metrics.activeWorkers)")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                }
+                
+                if metrics.overdueCount > 0 {
                     HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption2)
-                        Text("\(metrics.overdueTasks) overdue")
+                        Label("Overdue", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundColor(.red)
+                        
                         Spacer()
+                        
+                        Text("\(metrics.overdueCount)")
+                            .font(.caption)
+                            .foregroundColor(.red)
                     }
                 }
-                
-                ProgressView(value: metrics.completionRate)
-                    .tint(metrics.completionRate > 0.8 ? .green : .orange)
+            } else {
+                Text("Loading metrics...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
     }
     
     private var clientContent: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: 8) {
             if let metrics = metrics {
-                Image(systemName: metrics.isCompliant ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
-                    .foregroundColor(metrics.isCompliant ? .green : .orange)
-                Text(metrics.isCompliant ? "Compliant" : "Needs Review")
+                HStack {
+                    Label("Compliance", systemImage: "checkmark.shield.fill")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(Int(metrics.complianceScore))%")
+                        .font(.caption)
+                        .foregroundColor(complianceColor)
+                }
+                
+                HStack {
+                    Label("Score", systemImage: "star.fill")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(String(format: "%.1f", metrics.overallScore))")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                }
+                
+                if metrics.requiresReview {
+                    HStack {
+                        Label("Review", systemImage: "flag.fill")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                        
+                        Spacer()
+                        
+                        Text("Required")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                }
+            } else {
+                Text("Loading compliance...")
                     .font(.caption)
-                Spacer()
-                Text("Score: \(metrics.overallScore)")
-                    .font(.caption.weight(.medium))
-                    .foregroundColor(scoreColor(metrics.overallScore))
+                    .foregroundColor(.secondary)
             }
         }
     }
     
-    // MARK: - Real-Time Metrics Loading
-    
-    private func loadMetrics() async {
-        isLoadingMetrics = true
-        
-        do {
-            metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
-        } catch {
-            print("❌ Failed to load metrics for building \(building.id): \(error)")
-            // Set default metrics on error
-            metrics = BuildingMetrics(
-                completionRate: 0.0,
-                pendingTasks: 0,
-                overdueTasks: 0,
-                activeWorkers: 0,
-                isCompliant: false,
-                overallScore: 0,
-                hasWorkerOnSite: false
-            )
-        }
-        
-        isLoadingMetrics = false
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
     }
     
-    private func scoreColor(_ score: Int) -> Color {
-        switch score {
+    // MARK: - Helper Properties
+    
+    private var buildingImageName: String {
+        switch building.id {
+        case "1": return "12_West_18th_Street"
+        case "2": return "29_East_20th_Street"
+        case "3": return "135West17thStreet"
+        case "4": return "104_Franklin_Street"
+        case "5": return "138West17thStreet"
+        case "6": return "68_Perry_Street"
+        case "7": return "112_West_18th_Street"
+        case "8": return "41_Elizabeth_Street"
+        case "9": return "117_West_17th_Street"
+        case "10": return "131_Perry_Street"
+        case "11": return "123_1st_Avenue"
+        case "13": return "136_West_17th_Street"
+        case "14": return "Rubin_Museum_142_148_West_17th_Street"
+        case "15": return "133_East_15th_Street"
+        case "16": return "Stuyvesant_Cove_Park"
+        case "17": return "178_Spring_Street"
+        case "18": return "36_Walker_Street"
+        case "19": return "115_7th_Avenue"
+        case "20": return "FrancoSphere_HQ"
+        default: 
+            print("⚠️ No image found for building ID: \(building.id)")
+            return "building_placeholder"
+        }
+    }
+    
+    private var progressColor: Color {
+        guard let metrics = metrics else { return .gray }
+        switch Int(metrics.completionRate * 100) {
+        case 80...100: return .green
+        case 50...79: return .yellow
+        default: return .red
+        }
+    }
+    
+    private var efficiencyColor: Color {
+        guard let metrics = metrics else { return .gray }
+        switch Int(metrics.efficiency) {
         case 90...100: return .green
-        case 70...89: return .blue
-        case 50...69: return .orange
+        case 70...89: return .yellow
+        default: return .red
+        }
+    }
+    
+    private var complianceColor: Color {
+        guard let metrics = metrics else { return .gray }
+        switch Int(metrics.complianceScore) {
+        case 95...100: return .green
+        case 80...94: return .yellow
         default: return .red
         }
     }
 }
 
-// MARK: - Preview
+// MARK: - Preview Provider
+
 struct PropertyCard_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleBuilding = NamedCoordinate(
-            id: "14",
-            name: "Rubin Museum",
-            latitude: 40.7402,
-            longitude: -73.9980
-        )
-        
         VStack(spacing: 16) {
-            PropertyCard(building: sampleBuilding, displayMode: .dashboard) {
-                print("Dashboard card tapped")
-            }
+            PropertyCard(
+                building: NamedCoordinate(
+                    id: "14",
+                    name: "Rubin Museum",
+                    latitude: 40.7401,
+                    longitude: -73.9978
+                ),
+                metrics: BuildingMetrics(
+                    pendingTasks: 3,
+                    completionRate: 0.75,
+                    efficiency: 85,
+                    activeWorkers: 2,
+                    overdueCount: 1,
+                    complianceScore: 92,
+                    overallScore: 4.2,
+                    requiresReview: false
+                ),
+                mode: .worker,
+                onTap: {}
+            )
             
-            PropertyCard(building: sampleBuilding, displayMode: .admin) {
-                print("Admin card tapped")
-            }
-            
-            PropertyCard(building: sampleBuilding, displayMode: .client) {
-                print("Client card tapped")
-            }
+            PropertyCard(
+                building: NamedCoordinate(
+                    id: "1",
+                    name: "12 West 18th Street",
+                    latitude: 40.7389,
+                    longitude: -73.9936
+                ),
+                metrics: nil,
+                mode: .worker,
+                onTap: {}
+            )
         }
         .padding()
+        .background(Color.black)
+        .preferredColorScheme(.dark)
     }
 }
