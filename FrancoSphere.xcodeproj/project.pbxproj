@@ -163,6 +163,8 @@
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 		23EA1D1B2E234F79009FFF54 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */; };
 		23EA1E5E2E271759009FFF54 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1E5D2E271759009FFF54 /* GRDB */; };
+		23EA1E7A2E275DD1009FFF54 /* ClientDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */; };
+		23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
@@ -351,6 +353,8 @@
 		23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceService.swift; sourceTree = "<group>"; };
 		23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 		23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
+		23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardView.swift; sourceTree = "<group>"; };
+		23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSyncService.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
@@ -710,6 +714,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */,
 				23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */,
 				2374938F2E1D7E9C00D9C70D /* BuildingMetricsService.swift */,
 				2312FC862E1BF06A00B64496 /* Configuration */,
@@ -766,6 +771,7 @@
 		234581272DF78E3D00355F0A /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */,
 				23EE82732E1C7A3200C298C7 /* IntelligenceInsightsView.swift */,
 				23EE82712E1C79D700C298C7 /* ComplianceOverviewView.swift */,
 				23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */,
@@ -1122,6 +1128,7 @@
 				23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */,
 				234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */,
 				234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */,
+				23EA1E7A2E275DD1009FFF54 /* ClientDashboardView.swift in Sources */,
 				234581872DF78E3D00355F0A /* LoginView.swift in Sources */,
 				234581892DF78E3D00355F0A /* OperationalDataManager.swift in Sources */,
 				2345818A2DF78E3D00355F0A /* GlassStatusBadge.swift in Sources */,
@@ -1179,6 +1186,7 @@
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
+				23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */,
 				23A3169D2E1E377500469FA3 /* WorkerContextEngineAdapter.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,

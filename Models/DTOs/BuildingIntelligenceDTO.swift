@@ -311,7 +311,6 @@ extension BuildingIntelligenceDTO {
             overallScore: Int.random(in: 75...95),
             taskCompletionRate: Double.random(in: 0.8...0.98),
             maintenanceEfficiency: Double.random(in: 0.8...0.95),
-            workerSatisfaction: Double.random(in: 0.8...1.0),
             routineAdherence: Double.random(in: 0.9...1.0),
             specializedTasksCompleted: Int.random(in: 1...5),
             totalTasksAssigned: Int.random(in: 10...20),
