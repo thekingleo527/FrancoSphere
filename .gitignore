@@ -105,3 +105,15 @@ build_scripts/csv2sql.sh
 **/csv_import.*
 **/legacy_data.*
 
+
+# Auto-cleanup prevention (added Tue Jul 15 22:40:31 EDT 2025)
+*.backup.*
+*.bak
+*PUNCHLIST.md
+cleanup_inventory_*.txt
+integration_test_report_*.txt
+*_report_*.txt
+# Prevent script accumulation
+service_reference_fix.sh
+cleanup_redundant_files.sh
+integration_test.sh

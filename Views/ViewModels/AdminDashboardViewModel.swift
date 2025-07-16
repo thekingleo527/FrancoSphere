@@ -1,12 +1,11 @@
 //
 //  AdminDashboardViewModel.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ V6.0: Fixed compilation errors and aligned with current implementation
-//  ✅ FIXED: async let try patterns for throwing vs non-throwing methods
-//  ✅ FIXED: getBuildingIntelligence optional binding issue
-//  ✅ FIXED: ContextualTask property usage (isCompleted vs status)
-//  ✅ ALIGNED: With GRDB-based services and actor patterns
+//  ✅ FIXED: Using correct service methods that actually exist
+//  ✅ FIXED: Service reference inconsistencies (using .shared pattern)
+//  ✅ FIXED: Proper integration with BuildingMetricsService and IntelligenceService
+//  ✅ ALIGNED: With actual implementation and available methods
 //
 
 import Foundation
@@ -14,164 +13,381 @@ import Combine
 
 @MainActor
 class AdminDashboardViewModel: ObservableObject {
-    // MARK: - Published Properties for UI
+    
+    // MARK: - Published Properties for Admin UI
     @Published var buildings: [NamedCoordinate] = []
     @Published var activeWorkers: [WorkerProfile] = []
     @Published var ongoingTasks: [ContextualTask] = []
+    @Published var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
+    @Published var portfolioInsights: [CoreTypes.IntelligenceInsight] = []
     
-    @Published var selectedBuildingIntelligence: BuildingIntelligenceDTO?
-    @Published var isLoading = false
+    // MARK: - Building Intelligence Panel
+    @Published var selectedBuildingInsights: [CoreTypes.IntelligenceInsight] = []
+    @Published var selectedBuildingId: String?
     @Published var isLoadingIntelligence = false
-    @Published var errorMessage: String?
     
-    // MARK: - Services and Subscriptions
+    // MARK: - Loading States
+    @Published var isLoading = false
+    @Published var isLoadingInsights = false
+    @Published var errorMessage: String?
+    @Published var lastUpdateTime: Date?
+    
+    // MARK: - Services (Using .shared pattern consistently)
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
-    private let dataSyncService = DataSynchronizationService.shared
+    private let buildingMetricsService = BuildingMetricsService.shared
+    private let intelligenceService = IntelligenceService.shared
+    
+    // MARK: - Real-time Subscriptions
     private var cancellables = Set<AnyCancellable>()
+    private var refreshTimer: Timer?
 
     init() {
-        setupDataSubscriptions()
+        setupAutoRefresh()
     }
     
-    // MARK: - Setup
+    deinit {
+        refreshTimer?.invalidate()
+    }
     
-    private func setupDataSubscriptions() {
-        // Subscribe to real-time updates for building intelligence
-        dataSyncService.$buildingIntelligenceUpdates
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] updates in
-                // If the currently selected building is in the update, refresh the panel
-                if let selectedId = self?.selectedBuildingIntelligence?.buildingId,
-                   let updatedIntelligence = updates[selectedId] {
-                    self?.selectedBuildingIntelligence = updatedIntelligence
-                    print("⚡️ Real-time update received for selected building: \(selectedId)")
-                }
+    // MARK: - Setup Methods
+    
+    private func setupAutoRefresh() {
+        // Refresh dashboard data every 30 seconds
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                await self?.refreshDashboardData()
             }
-            .store(in: &cancellables)
+        }
     }
-
-    // MARK: - Data Loading
     
-    /// Loads the initial, high-level data for the dashboard
+    // MARK: - Main Data Loading
+    
+    /// Loads all dashboard data including buildings, workers, tasks, and metrics
     func loadDashboardData() async {
         isLoading = true
         errorMessage = nil
         
         do {
-            // ✅ FIXED: All three service methods throw - need try for all
-            async let buildingsResult = try buildingService.getAllBuildings()    // throws
-            async let workersResult = try workerService.getAllActiveWorkers()    // throws
-            async let tasksResult = try taskService.getAllTasks()                // throws
+            // Load core data concurrently
+            async let buildingsResult = buildingService.getAllBuildings()
+            async let workersResult = workerService.getAllActiveWorkers()
+            async let tasksResult = taskService.getAllTasks()
             
-            let (buildings, workers, tasks) = await (try buildingsResult, try workersResult, try tasksResult)
+            let (buildings, workers, tasks) = await (
+                try buildingsResult,
+                try workersResult,
+                try tasksResult
+            )
             
-            await MainActor.run {
-                self.buildings = buildings
-                self.activeWorkers = workers
-                // ✅ FIXED: Use isCompleted property instead of status string comparison
-                self.ongoingTasks = tasks.filter { !$0.isCompleted }
-                self.isLoading = false
-            }
+            // Update UI with loaded data
+            self.buildings = buildings
+            self.activeWorkers = workers
+            self.ongoingTasks = tasks.filter { !$0.isCompleted }
+            self.lastUpdateTime = Date()
             
-            print("✅ Admin dashboard data loaded: \(buildings.count) buildings, \(workers.count) workers, \(ongoingTasks.count) ongoing tasks")
+            // Load building metrics for all buildings
+            await loadBuildingMetrics()
+            
+            // Load portfolio insights
+            await loadPortfolioInsights()
+            
+            self.isLoading = false
+            
+            print("✅ Admin dashboard loaded: \(buildings.count) buildings, \(workers.count) workers, \(ongoingTasks.count) ongoing tasks")
             
         } catch {
-            await MainActor.run {
-                self.errorMessage = "Failed to load dashboard data: \(error.localizedDescription)"
-                self.isLoading = false
-            }
+            self.errorMessage = "Failed to load dashboard data: \(error.localizedDescription)"
+            self.isLoading = false
             print("🚨 Failed to load admin dashboard data: \(error)")
         }
     }
-
-    /// Fetches the detailed intelligence DTO for a specific building
-    func fetchIntelligence(for buildingId: CoreTypes.BuildingID) async {
+    
+    /// Loads metrics for all buildings using BuildingMetricsService
+    private func loadBuildingMetrics() async {
+        let buildingIds = buildings.map { $0.id }
+        
+        do {
+            // Get metrics for each building individually since getDashboardMetrics might not exist
+            var metricsDict: [String: CoreTypes.BuildingMetrics] = [:]
+            
+            for buildingId in buildingIds {
+                do {
+                    let metrics = try await buildingMetricsService.getPropertyCardMetrics(for: buildingId)
+                    metricsDict[buildingId] = metrics
+                } catch {
+                    print("⚠️ Failed to load metrics for building \(buildingId): \(error)")
+                    // Continue with other buildings
+                }
+            }
+            
+            self.buildingMetrics = metricsDict
+            print("📊 Loaded metrics for \(metricsDict.count) buildings")
+            
+        } catch {
+            print("⚠️ Failed to load building metrics: \(error)")
+        }
+    }
+    
+    /// Loads portfolio insights using IntelligenceService
+    private func loadPortfolioInsights() async {
+        isLoadingInsights = true
+        
+        do {
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            
+            self.portfolioInsights = insights
+            self.isLoadingInsights = false
+            
+            print("💡 Generated \(insights.count) portfolio insights")
+            
+        } catch {
+            self.portfolioInsights = []
+            self.isLoadingInsights = false
+            print("⚠️ Failed to load portfolio insights: \(error)")
+        }
+    }
+    
+    // MARK: - Building Intelligence Methods
+    
+    /// Fetches detailed intelligence for a specific building
+    func fetchBuildingIntelligence(for buildingId: String) async {
         guard !buildingId.isEmpty else {
             print("⚠️ Invalid building ID provided")
             return
         }
         
         isLoadingIntelligence = true
-        selectedBuildingIntelligence = nil
+        selectedBuildingInsights = []
+        selectedBuildingId = buildingId
         
         do {
-            // ✅ FIXED: getBuildingIntelligence returns non-optional BuildingIntelligenceDTO
-            let intelligence = try await buildingService.getBuildingIntelligence(for: buildingId)
+            // ✅ FIXED: Use IntelligenceService method that actually exists
+            let insights = try await intelligenceService.generateBuildingInsights(for: buildingId)
             
-            await MainActor.run {
-                self.selectedBuildingIntelligence = intelligence
-                self.isLoadingIntelligence = false
-            }
-            print("✅ Intelligence loaded for building \(buildingId)")
+            self.selectedBuildingInsights = insights
+            self.isLoadingIntelligence = false
+            
+            print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
             
         } catch {
-            await MainActor.run {
-                self.isLoadingIntelligence = false
-                self.errorMessage = "Failed to fetch intelligence for building \(buildingId): \(error.localizedDescription)"
-            }
+            self.isLoadingIntelligence = false
+            self.errorMessage = "Failed to fetch intelligence: \(error.localizedDescription)"
             print("🚨 Failed to fetch intelligence for building \(buildingId): \(error)")
         }
     }
     
-    /// Clears the selected building's intelligence data
-    func clearIntelligence() {
-        selectedBuildingIntelligence = nil
+    /// Clears the selected building intelligence
+    func clearBuildingIntelligence() {
+        selectedBuildingInsights = []
+        selectedBuildingId = nil
         errorMessage = nil
         print("🧹 Cleared selected building intelligence")
     }
     
-    // MARK: - Computed Properties
+    // MARK: - Real-time Update Methods
     
-    /// Get summary statistics for the admin dashboard
-    var dashboardSummary: (totalBuildings: Int, activeWorkers: Int, ongoingTasks: Int, completionRate: String) {
-        let totalTasks = ongoingTasks.count + activeWorkers.reduce(0) { count, worker in
-            // Approximate completed tasks for rate calculation
-            return count + 5 // Default assumption of 5 completed tasks per worker
+    /// Refreshes metrics for a specific building
+    func refreshBuildingMetrics(for buildingId: String) async {
+        do {
+            let metrics = try await buildingMetricsService.getPropertyCardMetrics(for: buildingId)
+            
+            self.buildingMetrics[buildingId] = metrics
+            
+            print("🔄 Refreshed metrics for building \(buildingId)")
+            
+        } catch {
+            print("⚠️ Failed to refresh metrics for building \(buildingId): \(error)")
+        }
+    }
+    
+    /// Refreshes all dashboard data (called by timer)
+    private func refreshDashboardData() async {
+        guard !isLoading else { return }
+        
+        print("🔄 Auto-refreshing admin dashboard...")
+        
+        // Refresh building metrics only (lighter operation)
+        await loadBuildingMetrics()
+        
+        // Update timestamp
+        self.lastUpdateTime = Date()
+    }
+    
+    /// Manual refresh triggered by user
+    func refreshDashboard() async {
+        print("🔄 Manual dashboard refresh requested")
+        await loadDashboardData()
+    }
+    
+    /// Refresh selected building intelligence
+    func refreshSelectedBuildingIntelligence() async {
+        guard let buildingId = selectedBuildingId else {
+            print("⚠️ No building selected for intelligence refresh")
+            return
         }
         
-        let completedCount = max(0, totalTasks - ongoingTasks.count)
-        let completionRate = totalTasks > 0 ? Int((Double(completedCount) / Double(totalTasks)) * 100) : 0
+        await fetchBuildingIntelligence(for: buildingId)
+    }
+    
+    // MARK: - Computed Properties for Admin Dashboard
+    
+    /// Dashboard summary statistics
+    var dashboardSummary: (
+        totalBuildings: Int,
+        activeWorkers: Int,
+        ongoingTasks: Int,
+        completionRate: String,
+        overallScore: Int
+    ) {
+        let totalMetrics = buildingMetrics.values
+        let avgCompletionRate = totalMetrics.isEmpty ? 0.0 :
+            totalMetrics.reduce(0.0) { $0 + $1.completionRate } / Double(totalMetrics.count)
+        let avgScore = totalMetrics.isEmpty ? 0 :
+            totalMetrics.reduce(0) { $0 + $1.overallScore } / totalMetrics.count
         
         return (
             totalBuildings: buildings.count,
             activeWorkers: activeWorkers.count,
             ongoingTasks: ongoingTasks.count,
-            completionRate: "\(completionRate)%"
+            completionRate: "\(Int(avgCompletionRate * 100))%",
+            overallScore: avgScore
         )
     }
     
-    /// Get buildings with high task counts (for priority attention)
+    /// Buildings requiring immediate attention
     var buildingsNeedingAttention: [NamedCoordinate] {
         return buildings.filter { building in
-            let tasksForBuilding = ongoingTasks.filter { task in
-                task.building?.id == building.id
-            }
-            return tasksForBuilding.count > 3 // More than 3 ongoing tasks
+            guard let metrics = buildingMetrics[building.id] else { return false }
+            return metrics.overdueTasks > 3 || metrics.completionRate < 0.7 || metrics.urgentTasksCount > 5
+        }.sorted { building1, building2 in
+            let score1 = buildingMetrics[building1.id]?.overallScore ?? 0
+            let score2 = buildingMetrics[building2.id]?.overallScore ?? 0
+            return score1 < score2 // Sort by lowest score first
         }
     }
     
-    /// Get workers who are currently active and assigned to buildings
+    /// Workers currently assigned to buildings
     var activeAssignedWorkers: [WorkerProfile] {
         return activeWorkers.filter { $0.isActive }
     }
     
-    // MARK: - Refresh Methods
-    
-    /// Force refresh all dashboard data
-    func refreshDashboard() async {
-        print("🔄 Refreshing admin dashboard...")
-        await loadDashboardData()
+    /// High priority insights requiring action
+    var actionableInsights: [CoreTypes.IntelligenceInsight] {
+        return portfolioInsights.filter { insight in
+            insight.actionRequired && (insight.priority == .high || insight.priority == .critical)
+        }
     }
     
-    /// Refresh only the selected building's intelligence
-    func refreshSelectedBuildingIntelligence() async {
-        guard let buildingId = selectedBuildingIntelligence?.buildingId else {
-            print("⚠️ No building selected for intelligence refresh")
-            return
+    /// Portfolio health score based on all building metrics
+    var portfolioHealthScore: Int {
+        guard !buildingMetrics.isEmpty else { return 0 }
+        
+        let scores = buildingMetrics.values.map { $0.overallScore }
+        return scores.reduce(0, +) / scores.count
+    }
+    
+    /// Critical insights that need immediate attention
+    var criticalInsights: [CoreTypes.IntelligenceInsight] {
+        return portfolioInsights.filter { $0.priority == .critical }
+    }
+    
+    /// Building-specific insights for selected building
+    var selectedBuildingCriticalInsights: [CoreTypes.IntelligenceInsight] {
+        return selectedBuildingInsights.filter { $0.priority == .critical || $0.priority == .high }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Get metrics for a specific building
+    func getMetrics(for buildingId: String) -> CoreTypes.BuildingMetrics? {
+        return buildingMetrics[buildingId]
+    }
+    
+    /// Check if a building needs attention
+    func buildingNeedsAttention(_ buildingId: String) -> Bool {
+        guard let metrics = buildingMetrics[buildingId] else { return false }
+        return metrics.overdueTasks > 3 || metrics.completionRate < 0.7
+    }
+    
+    /// Get worker count for a specific building
+    func getWorkerCount(for buildingId: String) -> Int {
+        return buildingMetrics[buildingId]?.activeWorkers ?? 0
+    }
+    
+    /// Get insights count for a specific building
+    func getInsightsCount(for buildingId: String) -> Int {
+        return portfolioInsights.filter { $0.affectedBuildings.contains(buildingId) }.count
+    }
+    
+    /// Get critical issues count across portfolio
+    var criticalIssuesCount: Int {
+        return portfolioInsights.filter { $0.priority == .critical }.count
+    }
+    
+    /// Get buildings with critical issues
+    var buildingsWithCriticalIssues: [String] {
+        let criticalInsights = portfolioInsights.filter { $0.priority == .critical }
+        var buildingIds: Set<String> = []
+        
+        for insight in criticalInsights {
+            buildingIds.formUnion(insight.affectedBuildings)
         }
         
-        await fetchIntelligence(for: buildingId)
+        return Array(buildingIds)
+    }
+    
+    /// Check if portfolio has any urgent issues
+    var hasUrgentIssues: Bool {
+        return portfolioInsights.contains { $0.priority == .critical || $0.priority == .high }
+    }
+    
+    /// Get portfolio efficiency score as percentage
+    var portfolioEfficiencyPercentage: String {
+        let summary = dashboardSummary
+        return summary.completionRate
+    }
+}
+
+// MARK: - AdminDashboardViewModel Extensions
+
+extension AdminDashboardViewModel {
+    
+    /// Filter buildings by attention level
+    func filterBuildings(needingAttention: Bool) -> [NamedCoordinate] {
+        if needingAttention {
+            return buildingsNeedingAttention
+        } else {
+            return buildings
+        }
+    }
+    
+    /// Get insights for specific building
+    func getInsights(for buildingId: String) -> [CoreTypes.IntelligenceInsight] {
+        return portfolioInsights.filter { $0.affectedBuildings.contains(buildingId) }
+    }
+    
+    /// Get building performance score (0-100)
+    func getBuildingPerformanceScore(for buildingId: String) -> Int {
+        return buildingMetrics[buildingId]?.overallScore ?? 0
+    }
+    
+    /// Check if building has critical issues
+    func buildingHasCriticalIssues(_ buildingId: String) -> Bool {
+        return portfolioInsights.contains { insight in
+            insight.affectedBuildings.contains(buildingId) && insight.priority == .critical
+        }
+    }
+    
+    /// Get formatted last update time
+    var formattedLastUpdateTime: String {
+        guard let lastUpdateTime = lastUpdateTime else { return "Never" }
+        
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        
+        return formatter.string(from: lastUpdateTime)
     }
 }

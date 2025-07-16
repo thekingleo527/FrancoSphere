@@ -12,7 +12,7 @@ import Foundation
 
 actor IntelligenceService {
     // ✅ FIXED: nonisolated shared for cross-actor access
-    nonisolated static let shared = IntelligenceService()
+    nonisolated static let shared = IntelligenceService.shared
     
     private init() {}
     

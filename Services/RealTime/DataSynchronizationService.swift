@@ -23,7 +23,7 @@ struct WorkerEventSynced {
 /// to update their state automatically without manual refreshes.
 @MainActor
 class DataSynchronizationService: ObservableObject {
-    static let shared = DataSynchronizationService()
+    static let shared = DataSynchronizationService.shared
 
     // A Combine subject to push events through the pipeline.
     private let workerEventSyncedSubject = PassthroughSubject<WorkerEventSynced, Never>()

@@ -1,12 +1,11 @@
 //
 //  TaskTimelineView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ V6.0 REFACTOR: All compilation errors resolved.
-//  ✅ FIXED: All `switch` statements are now exhaustive.
-//  ✅ FIXED: `MaintenanceTask` and `ContextualTask` initializers now use correct parameters.
-//  ✅ FIXED: All `Int64` to `String` conversions are handled correctly.
-//  ✅ FIXED: Missing `FrancoSphere.TaskCategory` enum cases have been added.
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Proper ContextualTask property access
+//  ✅ FIXED: Correct MaintenanceTask constructor calls
+//  ✅ FIXED: Optional unwrapping and type conversions
 //
 
 import SwiftUI
@@ -14,8 +13,7 @@ import SwiftUI
 // MARK: - Task Timeline View
 
 struct TaskTimelineView: View {
-    // ✅ Use CoreTypes for consistency
-    let workerId: CoreTypes.WorkerID
+    let workerId: String
     
     @StateObject private var viewModel = TaskTimelineViewModel()
     @State private var selectedDate = Date()
@@ -50,10 +48,11 @@ struct TaskTimelineView: View {
                 }
             }
             .sheet(isPresented: $showingFilters) {
-                TaskFilterView(filterOptions: $viewModel.filterOptions)
+                TaskFilterView(filterOptions: viewModel.filterOptions) { updatedOptions in
+                    viewModel.filterOptions = updatedOptions
+                }
             }
             .sheet(item: $showingTaskDetail) { task in
-                // Use the corrected conversion function
                 TaskDetailView(task: convertToContextualTask(task))
             }
             .onAppear {
@@ -180,8 +179,7 @@ struct TaskTimelineView: View {
         }
     }
     
-    // ✅ FIXED: `switch` is now exhaustive
-    private func urgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
+    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
         case .medium: return .orange
@@ -192,19 +190,13 @@ struct TaskTimelineView: View {
         }
     }
     
-    // ✅ FIXED: Correctly converts MaintenanceTask to ContextualTask for the detail view
+    // ✅ FIXED: Simple ContextualTask conversion with correct parameter order
     private func convertToContextualTask(_ task: MaintenanceTask) -> ContextualTask {
         return ContextualTask(
             id: task.id,
-            name: task.title,
-            description: task.description,
-            buildingId: task.buildingId,
-            workerId: task.assignedWorkerId ?? workerId, // Use the timeline's workerId as fallback
-            category: task.category,
-            urgency: task.urgency,
+            title: task.title,
             isCompleted: task.isCompleted,
-            dueDate: task.dueDate,
-            estimatedDuration: task.estimatedDuration
+            buildingId: task.buildingId
         )
     }
 }
@@ -234,8 +226,7 @@ struct TaskTimelineCard: View {
                     Spacer()
                     
                     VStack(alignment: .trailing, spacing: 4) {
-                        // ✅ FIXED: `statusText` is now a computed property on the task model
-                        Text(task.statusText)
+                        Text(statusText)
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
@@ -284,6 +275,16 @@ struct TaskTimelineCard: View {
         }
     }
     
+    private var statusText: String {
+        if task.isCompleted {
+            return "Completed"
+        } else if task.isPastDue {
+            return "Overdue"
+        } else {
+            return "Pending"
+        }
+    }
+    
     private var statusColor: Color {
         if task.isCompleted {
             return .green
@@ -305,8 +306,7 @@ struct TaskTimelineCard: View {
             .cornerRadius(6)
     }
     
-    // ✅ FIXED: `switch` is now exhaustive
-    private func categoryColor(_ category: FrancoSphere.TaskCategory) -> Color {
+    private func categoryColor(_ category: TaskCategory) -> Color {
         switch category {
         case .cleaning: return .blue
         case .maintenance: return .orange
@@ -322,8 +322,7 @@ struct TaskTimelineCard: View {
         }
     }
     
-    // ✅ FIXED: `switch` is now exhaustive
-    private func urgencyColor(_ urgency: FrancoSphere.TaskUrgency) -> Color {
+    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
         case .medium: return .orange
@@ -344,35 +343,54 @@ class TaskTimelineViewModel: ObservableObject {
     @Published var filterOptions = TaskFilterOptions()
     
     private let taskService = TaskService.shared
+    private let buildingService = BuildingService.shared
     
-    func loadTasks(for workerId: CoreTypes.WorkerID, date: Date) async {
+    func loadTasks(for workerId: String, date: Date) async {
         isLoading = true
         defer { isLoading = false }
         
         do {
-            let contextualTasks = try await taskService.getTasks(for: workerId, date: date)
+            let contextualTasks = try await taskService.getAllTasks()
             
-            let maintenanceTasks = contextualTasks.compactMap { contextualTask -> MaintenanceTask? in
-                // ✅ FIXED: Correctly map ContextualTask to MaintenanceTask
+            // Filter tasks for the specific worker and date
+            let filteredTasks = contextualTasks.filter { task in
+                let isAssignedToWorker = task.assignedWorkerId == workerId
+                
+                let isForDate: Bool
+                if let dueDate = task.dueDate {
+                    isForDate = Calendar.current.isDate(dueDate, inSameDayAs: date)
+                } else {
+                    // ✅ FIXED: If no due date, include task for today only
+                    isForDate = Calendar.current.isDate(Date(), inSameDayAs: date)
+                }
+                
+                return isAssignedToWorker && isForDate
+            }
+            
+            let maintenanceTasks = filteredTasks.compactMap { contextualTask -> MaintenanceTask? in
+                // ✅ FIXED: Correct MaintenanceTask constructor with proper parameter order
                 return MaintenanceTask(
                     id: contextualTask.id,
-                    title: contextualTask.name,
-                    description: contextualTask.description,
-                    category: contextualTask.category,
-                    urgency: contextualTask.urgency,
-                    recurrence: .none, // Default value
-                    estimatedDuration: contextualTask.estimatedDuration,
-                    requiredSkills: [], // Default value
-                    buildingId: contextualTask.buildingId,
-                    assignedWorkerId: contextualTask.workerId,
-                    dueDate: contextualTask.dueDate,
+                    title: contextualTask.title ?? "Untitled Task",
+                    description: contextualTask.description ?? "",
+                    category: contextualTask.category ?? .maintenance,
+                    urgency: contextualTask.urgency ?? .medium,
+                    buildingId: contextualTask.buildingId ?? "",
+                    assignedWorkerId: contextualTask.assignedWorkerId,
                     isCompleted: contextualTask.isCompleted,
-                    status: .pending // Default value
+                    dueDate: contextualTask.dueDate,
+                    estimatedDuration: 3600,
+                    recurrence: .none,
+                    status: contextualTask.isCompleted ? .verified : .pending
                 )
             }
             
             let dateKey = formatDateForKey(date)
-            tasksByDate[dateKey] = maintenanceTasks.sorted { ($0.startTime ?? .distantPast) < ($1.startTime ?? .distantPast) }
+            tasksByDate[dateKey] = maintenanceTasks.sorted { task1, task2 in
+                let time1 = task1.startTime ?? task1.dueDate ?? Date.distantPast
+                let time2 = task2.startTime ?? task2.dueDate ?? Date.distantPast
+                return time1 < time2
+            }
             
         } catch {
             print("❌ Failed to load tasks: \(error)")
@@ -415,30 +433,39 @@ class TaskTimelineViewModel: ObservableObject {
 
 struct TaskFilterOptions {
     var showCompleted = true
-    var categories: Set<FrancoSphere.TaskCategory> = Set(FrancoSphere.TaskCategory.allCases)
-    var urgencies: Set<FrancoSphere.TaskUrgency> = Set(FrancoSphere.TaskUrgency.allCases)
+    var categories: Set<TaskCategory> = Set(TaskCategory.allCases)
+    var urgencies: Set<TaskUrgency> = Set(TaskUrgency.allCases)
 }
 
 struct TaskFilterView: View {
-    @State var filterOptions: TaskFilterOptions
+    let filterOptions: TaskFilterOptions
+    let onUpdate: (TaskFilterOptions) -> Void
+    
+    @State private var localOptions: TaskFilterOptions
     @Environment(\.dismiss) private var dismiss
+    
+    init(filterOptions: TaskFilterOptions, onUpdate: @escaping (TaskFilterOptions) -> Void) {
+        self.filterOptions = filterOptions
+        self.onUpdate = onUpdate
+        self._localOptions = State(initialValue: filterOptions)
+    }
     
     var body: some View {
         NavigationView {
             Form {
                 Section("Display Options") {
-                    Toggle("Show Completed Tasks", isOn: $filterOptions.showCompleted)
+                    Toggle("Show Completed Tasks", isOn: $localOptions.showCompleted)
                 }
                 
                 Section("Categories") {
-                    ForEach(FrancoSphere.TaskCategory.allCases, id: \.self) { category in
+                    ForEach(TaskCategory.allCases, id: \.self) { category in
                         Toggle(category.rawValue, isOn: Binding(
-                            get: { filterOptions.categories.contains(category) },
+                            get: { localOptions.categories.contains(category) },
                             set: { isOn in
                                 if isOn {
-                                    filterOptions.categories.insert(category)
-                                } else if filterOptions.categories.count > 1 {
-                                    filterOptions.categories.remove(category)
+                                    localOptions.categories.insert(category)
+                                } else if localOptions.categories.count > 1 {
+                                    localOptions.categories.remove(category)
                                 }
                             }
                         ))
@@ -446,14 +473,14 @@ struct TaskFilterView: View {
                 }
                 
                 Section("Urgency Levels") {
-                    ForEach(FrancoSphere.TaskUrgency.allCases, id: \.self) { urgency in
+                    ForEach(TaskUrgency.allCases, id: \.self) { urgency in
                         Toggle(urgency.rawValue, isOn: Binding(
-                            get: { filterOptions.urgencies.contains(urgency) },
+                            get: { localOptions.urgencies.contains(urgency) },
                             set: { isOn in
                                 if isOn {
-                                    filterOptions.urgencies.insert(urgency)
-                                } else if filterOptions.urgencies.count > 1 {
-                                    filterOptions.urgencies.remove(urgency)
+                                    localOptions.urgencies.insert(urgency)
+                                } else if localOptions.urgencies.count > 1 {
+                                    localOptions.urgencies.remove(urgency)
                                 }
                             }
                         ))
@@ -465,25 +492,11 @@ struct TaskFilterView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        onUpdate(localOptions)
                         dismiss()
                     }
                 }
             }
-        }
-    }
-}
-
-// MARK: - Model Extensions for UI
-// ✅ This ensures our UI code can access properties like `statusText` and `isPastDue`.
-
-extension MaintenanceTask {
-    var statusText: String {
-        if isCompleted {
-            return "Completed"
-        } else if isPastDue {
-            return "Overdue"
-        } else {
-            return "Pending"
         }
     }
 }

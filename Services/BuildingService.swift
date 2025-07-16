@@ -11,7 +11,7 @@ import Foundation
 import GRDB
 
 actor BuildingService {
-    static let shared = BuildingService()
+    static let shared = BuildingService.shared
     
     private let grdbManager = GRDBManager.shared
     
