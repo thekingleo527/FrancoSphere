@@ -4,6 +4,7 @@
 //
 //  ✅ FIXED: All property access issues resolved
 //  ✅ FIXED: Proper AIScenario and AIScenarioData usage
+//  ✅ FIXED: Complete switch statements with all AIScenarioType cases
 //  ✅ SIMPLIFIED: Removed non-existent properties and methods
 //
 
@@ -197,7 +198,7 @@ struct AIAvatarOverlayView: View {
         }
     }
     
-    // ✅ FIXED: Icon mapping for scenario types
+    // ✅ FIXED: Complete switch with all AIScenarioType cases
     private func iconForScenarioType(_ type: AIScenarioType) -> String {
         switch type {
         case .routineIncomplete: return "checklist"
@@ -209,9 +210,12 @@ struct AIAvatarOverlayView: View {
         case .taskCompletion: return "checkmark.circle.fill"
         case .inventoryLow: return "shippingbox.circle.fill"
         case .emergencyResponse: return "exclamationmark.triangle.fill"
+        case .maintenanceRequired: return "wrench.and.screwdriver.fill"
+        case .scheduleConflict: return "calendar.badge.exclamationmark.fill"
         }
     }
     
+    // ✅ FIXED: Complete switch with all AIScenarioType cases
     private func colorForScenarioType(_ type: AIScenarioType) -> Color {
         switch type {
         case .routineIncomplete: return .orange
@@ -223,6 +227,8 @@ struct AIAvatarOverlayView: View {
         case .taskCompletion: return .green
         case .inventoryLow: return .orange
         case .emergencyResponse: return .red
+        case .maintenanceRequired: return .orange
+        case .scheduleConflict: return .red
         }
     }
 }

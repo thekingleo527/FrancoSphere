@@ -3,7 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: Binding conversion issues and missing UserRole cases
-//  ✅ FIXED: Animation syntax errors
+//  ✅ FIXED: Use correct UserRole enum cases (no .manager, use .admin instead)
+//  ✅ FIXED: Remove incorrect .wrappedValue usage
 //
 
 import SwiftUI
@@ -58,17 +59,17 @@ struct SignUpView: View {
     
     private var formSection: some View {
         VStack(spacing: 20) {
-            // ✅ FIXED: Use .wrappedValue for binding conversion
+            // ✅ FIXED: Remove incorrect .wrappedValue usage - fullName is already a String
             CustomTextField(
                 title: "Full Name",
                 text: $fullName,
-                isValid: isValidName(fullName.wrappedValue)
+                isValid: isValidName(fullName)
             )
             
             CustomTextField(
                 title: "Email",
                 text: $email,
-                isValid: isValidEmail(email.wrappedValue)
+                isValid: isValidEmail(email)
             )
             
             CustomTextField(
@@ -79,7 +80,7 @@ struct SignUpView: View {
             )
             
             CustomTextField(
-                title: "Confirm Password", 
+                title: "Confirm Password",
                 text: $confirmPassword,
                 isSecure: true,
                 isValid: password == confirmPassword && !password.isEmpty
@@ -95,9 +96,9 @@ struct SignUpView: View {
                 .font(.headline)
                 .foregroundColor(.white)
             
-            // ✅ FIXED: Include manager role and proper cases
+            // ✅ FIXED: Use actual UserRole cases - no .manager, use .admin instead
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                ForEach([UserRole.worker, UserRole.admin, UserRole.client, UserRole.manager], id: \.self) { role in
+                ForEach([UserRole.worker, UserRole.admin, UserRole.supervisor, UserRole.client], id: \.self) { role in
                     roleButton(for: role)
                 }
             }
@@ -113,7 +114,7 @@ struct SignUpView: View {
                     .font(.title2)
                     .foregroundColor(selectedRole == role ? .blue : .white.opacity(0.7))
                 
-                Text(role.rawValue)
+                Text(role.rawValue.capitalized)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundColor(selectedRole == role ? .blue : .white.opacity(0.7))
@@ -166,9 +167,9 @@ struct SignUpView: View {
     private func iconForRole(_ role: UserRole) -> String {
         switch role {
         case .worker: return "person.fill"
-        case .admin: return "person.badge.key.fill"
+        case .admin: return "person.badge.key.fill"  // ✅ FIXED: Use .admin instead of .manager
+        case .supervisor: return "person.3.fill"     // ✅ FIXED: Use .supervisor for management-like role
         case .client: return "building.2.fill"
-        case .manager: return "person.3.fill"  // ✅ FIXED: Added manager case
         }
     }
     
