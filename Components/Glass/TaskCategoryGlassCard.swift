@@ -1,26 +1,14 @@
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-//
-//  TaskCategoryGlassCard.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 6/7/25.
-//
-
-
-//
-//  TaskCategoryGlassCard.swift
-//  FrancoSphere
-//
-//  Glass card for displaying categorized tasks with expand/collapse functionality
-//
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
+//
+//  TaskCategoryGlassCard.swift
+//  FrancoSphere
+//
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ CORRECTED: MaintenanceTask property access and constructor calls
+//  ✅ ALIGNED: With CoreTypes.MaintenanceTask structure
+//
 
 struct TaskCategoryGlassCard: View {
     let title: String
@@ -35,7 +23,8 @@ struct TaskCategoryGlassCard: View {
     @State private var expandedTasks: Set<String> = []
     
     var pendingTasks: [MaintenanceTask] {
-        tasks.filter { !$0.isComplete }
+        // FIXED: Use .isCompleted instead of .isComplete
+        tasks.filter { !$0.isCompleted }
     }
     
     var body: some View {
@@ -165,7 +154,9 @@ struct TaskCategoryGlassCard: View {
     private var showMoreButton: some View {
         Button(action: {
             // In a real implementation, this would navigate to a full task list
-            onTaskTap(pendingTasks.first!)
+            if let firstTask = pendingTasks.first {
+                onTaskTap(firstTask)
+            }
         }) {
             HStack {
                 Text("View all \(pendingTasks.count) tasks")
@@ -223,7 +214,9 @@ struct TaskCategoryGlassCard: View {
     }
     
     private func isScheduledForToday(_ task: MaintenanceTask) -> Bool {
-        Calendar.current.isDateInToday(task.dueDate)
+        // FIXED: Handle optional dueDate properly
+        guard let dueDate = task.dueDate else { return false }
+        return Calendar.current.isDateInToday(dueDate)
     }
     
     private func getTodayTasksCount() -> Int {
@@ -232,7 +225,10 @@ struct TaskCategoryGlassCard: View {
     
     private func getOverdueTasksCount() -> Int {
         let today = Calendar.current.startOfDay(for: Date())
-        return pendingTasks.filter { $0.dueDate < today }.count
+        return pendingTasks.filter {
+            guard let dueDate = $0.dueDate else { return false }
+            return dueDate < today
+        }.count
     }
 }
 
@@ -256,41 +252,8 @@ struct TaskRowGlassView: View {
                     // Task status indicator
                     taskStatusIndicator
                     
-                    // Task content
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(task.name)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.leading)
-                        
-                        HStack(spacing: 8) {
-                            // Time or recurrence
-                            if let startTime = task.startTime {
-                                Text(formatTime(startTime))
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
-                            } else {
-                                Text(task.recurrence.rawValue)
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                            
-                            // Priority badge
-                            priorityBadge
-                            
-                            if isToday {
-                                Text("TODAY")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.orange)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.orange.opacity(0.2))
-                                    .cornerRadius(6)
-                            }
-                        }
-                    }
+                    // Task content - FIXED: Simplified to avoid complex expression
+                    taskContent
                     
                     Spacer()
                     
@@ -327,13 +290,52 @@ struct TaskRowGlassView: View {
     
     // MARK: - Sub-components
     
+    // FIXED: Separated task content to avoid complex expression
+    private var taskContent: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(task.title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
+            
+            HStack(spacing: 8) {
+                // Time or recurrence
+                if let startTime = task.startTime {
+                    Text(formatTime(startTime))
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                } else {
+                    Text(task.recurrence.rawValue)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                // Priority badge
+                priorityBadge
+                
+                if isToday {
+                    Text("TODAY")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(6)
+                }
+            }
+        }
+    }
+    
     private var taskStatusIndicator: some View {
         ZStack {
             Circle()
                 .stroke(urgencyColor, lineWidth: 2)
                 .frame(width: 20, height: 20)
             
-            if task.isComplete {
+            // FIXED: Use .isCompleted instead of .isComplete
+            if task.isCompleted {
                 Circle()
                     .fill(Color.green)
                     .frame(width: 12, height: 12)
@@ -415,10 +417,13 @@ struct TaskRowGlassView: View {
     // MARK: - Computed Properties
     
     private var urgencyColor: Color {
+        // FIXED: Complete switch with all TaskUrgency cases
         switch task.urgency {
         case .low: return .green
         case .medium: return .yellow
-        case .high: return .red
+        case .high: return .orange
+        case .critical: return .red
+        case .emergency: return .red
         case .urgent: return .purple
         }
     }
@@ -437,43 +442,38 @@ struct TaskRowGlassView: View {
 struct TaskCategoryGlassCard_Previews: PreviewProvider {
     static var sampleTasks: [MaintenanceTask] {
         [
+            // FIXED: Correct parameter order with assignedWorkerId before dueDate
             MaintenanceTask(
-                id: "1",
-                name: "Clean Lobby Windows",
-                buildingID: "15",
+                title: "Clean Lobby Windows",
                 description: "Clean all glass surfaces in the main lobby area",
+                category: .cleaning,
+                urgency: .medium,
+                buildingId: "15",
+                assignedWorkerId: "2",
                 dueDate: Date(),
                 startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()),
                 endTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date()),
-                category: .cleaning,
-                urgency: .medium,
-                recurrence: .weekly,
-                isComplete: false,
-                assignedWorkers: ["2"]
+                recurrence: .weekly
             ),
             MaintenanceTask(
-                id: "2",
-                name: "Vacuum Common Areas",
-                buildingID: "15",
+                title: "Vacuum Common Areas",
                 description: "Vacuum all carpeted areas including hallways and lobby",
-                dueDate: Date(),
                 category: .cleaning,
                 urgency: .low,
-                recurrence: .daily,
-                isComplete: false,
-                assignedWorkers: ["2"]
+                buildingId: "15",
+                assignedWorkerId: "2",
+                dueDate: Date(),
+                recurrence: .daily
             ),
             MaintenanceTask(
-                id: "3",
-                name: "Emergency Light Check",
-                buildingID: "15",
+                title: "Emergency Light Check",
                 description: "Test all emergency lighting systems",
-                dueDate: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
                 category: .inspection,
                 urgency: .urgent,
-                recurrence: .monthly,
-                isComplete: false,
-                assignedWorkers: ["1"]
+                buildingId: "15",
+                assignedWorkerId: "1",
+                dueDate: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
+                recurrence: .monthly
             )
         ]
     }
