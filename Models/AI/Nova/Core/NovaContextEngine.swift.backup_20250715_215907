@@ -1,7 +1,3 @@
-import Foundation
-// Import Nova Types
-// All Nova types (NovaContext, NovaPrompt, etc.) come from NovaTypes.swift
-
 //
 //  NovaContextEngine.swift
 //  FrancoSphere v6.0 - Nova AI Context Engine

@@ -1,7 +1,3 @@
-import SwiftUI
-// Import Nova Types
-// All Nova types (NovaContext, NovaPrompt, etc.) come from NovaTypes.swift
-
 //
 //  NovaAvatar.swift - PHASE-2 FIXED VERSION
 //  FrancoSphere
