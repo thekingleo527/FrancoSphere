@@ -165,6 +165,9 @@
 		23EA1E7A2E275DD1009FFF54 /* ClientDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */; };
 		23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */; };
 		23EA1E7E2E278585009FFF54 /* CrossDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7D2E278585009FFF54 /* CrossDashboardTypes.swift */; };
+		23EA1E992E27E9B8009FFF54 /* MyAssignedBuildingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E982E27E9B8009FFF54 /* MyAssignedBuildingsSection.swift */; };
+		23EA1E9B2E27EA23009FFF54 /* BuildingIntelligencePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E9A2E27EA23009FFF54 /* BuildingIntelligencePanel.swift */; };
+		23EA1E9F2E27EC4F009FFF54 /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
@@ -355,6 +358,9 @@
 		23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardView.swift; sourceTree = "<group>"; };
 		23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSyncService.swift; sourceTree = "<group>"; };
 		23EA1E7D2E278585009FFF54 /* CrossDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossDashboardTypes.swift; sourceTree = "<group>"; };
+		23EA1E982E27E9B8009FFF54 /* MyAssignedBuildingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAssignedBuildingsSection.swift; sourceTree = "<group>"; };
+		23EA1E9A2E27EA23009FFF54 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
+		23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
@@ -565,6 +571,9 @@
 		234580B62DF78E3D00355F0A /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */,
+				23EA1E9A2E27EA23009FFF54 /* BuildingIntelligencePanel.swift */,
+				23EA1E982E27E9B8009FFF54 /* MyAssignedBuildingsSection.swift */,
 				23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */,
 				2312FC6A2E1B77B400B64496 /* StatCard.swift */,
 				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
@@ -1099,6 +1108,7 @@
 				233F94E22DF7B74A00901707 /* UpdatedDataLoading.swift in Sources */,
 				234581732DF78E3D00355F0A /* ForgotPasswordView.swift in Sources */,
 				23EE82742E1C7A3200C298C7 /* IntelligenceInsightsView.swift in Sources */,
+				23EA1E9F2E27EC4F009FFF54 /* CoverageInfoCard.swift in Sources */,
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
 				233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */,
 				234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */,
@@ -1115,6 +1125,7 @@
 				2345817F2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift in Sources */,
 				234581802DF78E3D00355F0A /* InventoryView.swift in Sources */,
 				23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */,
+				23EA1E9B2E27EA23009FFF54 /* BuildingIntelligencePanel.swift in Sources */,
 				234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */,
 				234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */,
 				2312FC852E1BF00B00B64496 /* BuildingService+Intelligence.swift in Sources */,
@@ -1147,6 +1158,7 @@
 				236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
 				234581932DF78E3D00355F0A /* GlassTabBar.swift in Sources */,
+				23EA1E992E27E9B8009FFF54 /* MyAssignedBuildingsSection.swift in Sources */,
 				234581952DF78E3D00355F0A /* WeatherViewModifier.swift in Sources */,
 				234581962DF78E3D00355F0A /* NotificationManager.swift in Sources */,
 				23B117952DFE00A40065F39E /* MapInteractionHint.swift in Sources */,
