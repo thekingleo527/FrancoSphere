@@ -347,3 +347,102 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         self.patterns = ["Standard maintenance patterns", "Regular completion rate"]
     }
 }
+    
+    /// Create fallback worker data when service fails
+    private func createFallbackWorkerData(_ building: NamedCoordinate) async {
+        print("📝 Creating fallback worker data for: \(building.name)")
+        
+        // Create basic worker profiles based on building assignments
+        var fallbackWorkers: [WorkerProfile] = []
+        
+        // Determine workers based on building name patterns
+        if building.name.contains("Rubin") {
+            fallbackWorkers.append(createFallbackWorker(id: "4", name: "Kevin Dutan", role: .technician))
+        } else if building.name.contains("Perry") {
+            fallbackWorkers.append(createFallbackWorker(id: "5", name: "Mercedes Inamagua", role: .maintenance))
+        } else if building.name.contains("Walker") || building.name.contains("Elizabeth") {
+            fallbackWorkers.append(createFallbackWorker(id: "6", name: "Luis Lopez", role: .maintenance))
+        } else {
+            // Default workers for other buildings
+            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: .manager))
+            fallbackWorkers.append(createFallbackWorker(id: "2", name: "Edwin Lema", role: .maintenance))
+        }
+        
+        self.allAssignedWorkers = fallbackWorkers
+        self.primaryWorkers = Array(fallbackWorkers.prefix(1)) // First worker is primary
+        self.currentWorkersOnSite = [] // No one currently on site
+    }
+    
+    private func createFallbackWorker(id: String, name: String, role: CoreTypes.WorkerRole) -> WorkerProfile {
+        return WorkerProfile(
+            id: id,
+            name: name,
+            role: role,
+            contactInfo: "",
+            skills: [],
+            isActive: true,
+            createdDate: Date(),
+            lastLoginDate: Date()
+        )
+    }
+    
+    /// Generate fallback schedule when service fails
+    private func createFallbackSchedule(_ building: NamedCoordinate) async {
+        print("📝 Creating fallback schedule for: \(building.name)")
+        
+        let now = Date()
+        var schedule: [ContextualTask] = []
+        
+        // Morning tasks (8 AM - 12 PM)
+        schedule.append(createFallbackTask(
+            title: "Morning Inspection",
+            building: building,
+            startTime: "08:00",
+            category: .inspection
+        ))
+        
+        schedule.append(createFallbackTask(
+            title: "Routine Maintenance",
+            building: building,
+            startTime: "10:00",
+            category: .maintenance
+        ))
+        
+        // Afternoon tasks (1 PM - 5 PM)
+        schedule.append(createFallbackTask(
+            title: "Cleaning Services",
+            building: building,
+            startTime: "13:00",
+            category: .cleaning
+        ))
+        
+        schedule.append(createFallbackTask(
+            title: "Security Check",
+            building: building,
+            startTime: "16:00",
+            category: .security
+        ))
+        
+        self.todaysCompleteSchedule = schedule
+        self.weeklyRoutineSchedule = schedule // Use same for weekly
+    }
+    
+    private func createFallbackTask(
+        title: String,
+        building: NamedCoordinate,
+        startTime: String,
+        category: CoreTypes.TaskCategory
+    ) -> ContextualTask {
+        return ContextualTask(
+            id: UUID().uuidString,
+            title: title,
+            description: "\(title) at \(building.name)",
+            buildingId: building.id,
+            buildingName: building.name,
+            category: category,
+            urgency: .normal,
+            isCompleted: false,
+            scheduledDate: Date(),
+            dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date())
+        )
+    }

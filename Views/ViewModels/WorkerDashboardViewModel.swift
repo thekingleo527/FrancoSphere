@@ -136,13 +136,22 @@ class WorkerDashboardViewModel: ObservableObject {
             try await contextEngine.clockIn(at: building)
             
             // Update state
-            self.isClockedIn = true
-            self.currentBuilding = building
+            await MainActor.run {
+                self.isClockedIn = true
+                self.currentBuilding = building
+                self.errorMessage = nil
+            }
             
             print("✅ Clocked in at \(building.name)")
             
+            // Refresh data to update tasks
+            await refreshData()
+            
         } catch {
-            errorMessage = error.localizedDescription
+            await MainActor.run {
+                self.errorMessage = "Failed to clock in: \(error.localizedDescription)"
+            }
+            print("❌ Clock-in failed: \(error)")
         }
     }
     

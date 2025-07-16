@@ -30,6 +30,13 @@ public actor WorkerContextEngine {
     private let taskService = TaskService.shared
     private let buildingService = BuildingService.shared
     
+    // MARK: - Dependencies (ADD OperationalDataManager)
+    private let authManager = NewAuthManager.shared
+    private let workerService = WorkerService.shared
+    private let taskService = TaskService.shared
+    private let buildingService = BuildingService.shared
+    private let operationalData = OperationalDataManager.shared  // NEW: Real operational data
+    
     private init() {}
     
     // MARK: - Public API (All methods async)
@@ -42,19 +49,55 @@ public actor WorkerContextEngine {
         print("🔄 Loading context for worker: \(workerId)")
         
         do {
-            // Load worker data with enhanced error handling
-            async let profile = workerService.getWorkerProfile(for: workerId)
-            async let assignedBuildings = buildingService.getBuildingsForWorker(workerId)
-            async let portfolioBuildings = buildingService.getAllBuildings()  // NEW: Portfolio access
-            async let tasks = taskService.getTasks(for: workerId, date: Date())
-            async let progress = taskService.getTaskProgress(for: workerId)
+            // Load worker profile
+            let profile = try await workerService.getWorkerProfile(for: workerId)
+            self.currentWorker = profile
             
-            // Update state atomically
-            self.currentWorker = try await profile
-            self.assignedBuildings = try await assignedBuildings
-            self.portfolioBuildings = try await portfolioBuildings  // NEW: Portfolio access
-            self.todaysTasks = try await tasks
-            self.taskProgress = try await progress
+            // CRITICAL FIX: Get real assignments from OperationalDataManager
+            let workerName = WorkerConstants.getWorkerName(id: workerId)
+            let realWorldAssignments = operationalData.realWorldTasks.filter { 
+                $0.assignedWorker == workerName 
+            }
+            
+            // Convert to unique buildings
+            var uniqueBuildings = Set<String>()
+            for task in realWorldAssignments {
+                uniqueBuildings.insert(task.building)
+            }
+            
+            // Get building details for assigned buildings
+            var assignedBuildings: [NamedCoordinate] = []
+            for buildingName in uniqueBuildings {
+                if let buildingId = await operationalData.getRealBuildingId(from: buildingName),
+                   let building = try? await buildingService.getBuilding(buildingId: buildingId) {
+                    assignedBuildings.append(building)
+                }
+            }
+            self.assignedBuildings = assignedBuildings
+            
+            // Get ALL buildings for portfolio access (coverage)
+            let allBuildings = try await buildingService.getAllBuildings()
+            self.portfolioBuildings = allBuildings
+            
+            // Generate contextual tasks from real operational data
+            let todaysTasks = await generateContextualTasks(
+                for: workerId,
+                workerName: workerName,
+                assignedBuildings: assignedBuildings
+            )
+            self.todaysTasks = todaysTasks
+            
+            // Calculate task progress
+            let completedTasks = todaysTasks.filter { $0.isCompleted }.count
+            let totalTasks = todaysTasks.count
+            let progressPercentage = totalTasks > 0 ? 
+                Double(completedTasks) / Double(totalTasks) * 100.0 : 0.0
+            
+            self.taskProgress = TaskProgress(
+                completedTasks: completedTasks,
+                totalTasks: totalTasks,
+                progressPercentage: progressPercentage
+            )
             
             // Clock-in status with enhanced error handling
             let status = await ClockInManager.shared.getClockInStatus(for: workerId)
@@ -70,7 +113,7 @@ public actor WorkerContextEngine {
                 self.clockInStatus = (status.isClockedIn, nil)
             }
             
-            print("✅ Context loaded: \(self.assignedBuildings.count) assigned, \(self.portfolioBuildings.count) portfolio")
+            print("✅ Context loaded: \(self.assignedBuildings.count) assigned, \(self.portfolioBuildings.count) portfolio, \(todaysTasks.count) tasks")
             
         } catch {
             lastError = error
@@ -81,6 +124,63 @@ public actor WorkerContextEngine {
         isLoading = false
     }
     
+    // NEW: Generate contextual tasks from operational data
+    private func generateContextualTasks(
+        for workerId: String,
+        workerName: String,
+        assignedBuildings: [NamedCoordinate]
+    ) async -> [ContextualTask] {
+        var tasks: [ContextualTask] = []
+        
+        // Get routine tasks from OperationalDataManager
+        let routineTasks = operationalData.realWorldTasks.filter {
+            $0.assignedWorker == workerName
+        }
+        
+        // Convert to ContextualTasks
+        for routine in routineTasks {
+            let building = assignedBuildings.first { $0.name.contains(routine.building) }
+            
+            let task = ContextualTask(
+                id: UUID().uuidString,
+                title: routine.taskName,
+                description: "Routine task: \(routine.taskName) at \(routine.building)",
+                buildingId: building?.id,
+                buildingName: routine.building,
+                category: mapToTaskCategory(routine.category),
+                urgency: mapToUrgency(routine.skillLevel),
+                isCompleted: false,
+                scheduledDate: Date(),
+                dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date())
+            )
+            tasks.append(task)
+        }
+        
+        return tasks.sorted { task1, task2 in
+            let urgency1 = task1.urgency?.numericValue ?? 0
+            let urgency2 = task2.urgency?.numericValue ?? 0
+            return urgency1 > urgency2
+        }
+    }
+    
+    // Helper mapping functions
+    private func mapToTaskCategory(_ category: String) -> CoreTypes.TaskCategory {
+        switch category.lowercased() {
+        case "cleaning": return .cleaning
+        case "maintenance": return .maintenance
+        case "inspection": return .inspection
+        case "security": return .security
+        default: return .maintenance
+        }
+    }
+    
+    private func mapToUrgency(_ skillLevel: String) -> CoreTypes.TaskUrgency {
+        switch skillLevel.lowercased() {
+        case "critical", "high": return .critical
+        case "medium": return .urgent
+        default: return .normal
+        }
+    }
     // MARK: - Enhanced Getter Methods
     
     public func getCurrentWorker() -> WorkerProfile? { currentWorker }

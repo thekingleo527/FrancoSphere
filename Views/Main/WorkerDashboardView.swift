@@ -102,8 +102,7 @@ struct WorkerDashboardView: View {
             ProfileView()
         }
         .sheet(isPresented: $showNovaAssistant) {
-            // This will use the NovaInteractionView when created
-            Text("Nova AI Assistant")
+            NovaInteractionView()
                 .presentationDetents([.large])
         }
     }
