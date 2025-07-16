@@ -7,6 +7,7 @@
 //  ✅ FIXED: Removed redeclared WorkerConstants struct
 //  ✅ FIXED: Proper TaskProgress property usage
 //  ✅ ADDED: Portfolio access UI with building selection modes
+//  ✅ FIXED: Clean Nova integration without corruption
 //
 
 import SwiftUI
@@ -25,9 +26,6 @@ struct WorkerDashboardView: View {
         case clockIn        // Show all buildings for coverage
         case myBuildings    // Show only assigned buildings
         case coverage       // Show all buildings for coverage access
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
     
     var body: some View {
@@ -60,29 +58,21 @@ struct WorkerDashboardView: View {
                         
                         // Progress section
                         progressSection
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
                     .padding()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showNovaAssistant = true }) {
+                        AIAssistantImageLoader.circularAIAssistantView(diameter: 32)
+                    }
+                }
+            }
         }
         .task {
             await loadWorkerSpecificData()
             await runDatabaseSanityCheck()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .sheet(isPresented: $showBuildingSelection) {
             BuildingSelectionSheet(
@@ -94,26 +84,13 @@ struct WorkerDashboardView: View {
                 },
                 onCancel: {
                     showBuildingSelection = false
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
             )
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .sheet(isPresented: $showBuildingDetail) {
             if let building = selectedBuilding {
-                // FIXED: Use correct parameter name and type
                 BuildingDetailView(building: building)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .sheet(isPresented: $showNovaAssistant) {
             NovaInteractionView()
@@ -144,32 +121,17 @@ struct WorkerDashboardView: View {
                              "Choose any building in the portfolio")
                             .font(.caption)
                             .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
                 .padding()
                 .background(.ultraThinMaterial)
                 .cornerRadius(12)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
@@ -185,9 +147,6 @@ struct WorkerDashboardView: View {
                 Text("\(contextAdapter.assignedBuildings.count) buildings")
                     .font(.caption)
                     .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
             if contextAdapter.assignedBuildings.isEmpty {
@@ -206,44 +165,20 @@ struct WorkerDashboardView: View {
                                 selectedBuilding = building
                                 selectedBuildingIsAssigned = true
                                 showBuildingDetail = true
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                             }
                         )
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
                     
                     if contextAdapter.assignedBuildings.count > 3 {
                         Button("View All My Buildings") {
                             buildingSelectionMode = .myBuildings
                             showBuildingSelection = true
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                         }
                         .font(.caption)
                         .foregroundColor(.blue)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
@@ -263,38 +198,17 @@ struct WorkerDashboardView: View {
                 VStack(spacing: 8) {
                     ForEach(contextAdapter.todaysTasks.prefix(3), id: \.id) { task in
                         WorkerTaskCard(task: task)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
                     
                     if contextAdapter.todaysTasks.count > 3 {
                         Button("View All Tasks") {
                             // Navigate to full task list
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                         }
                         .font(.caption)
                         .foregroundColor(.blue)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
@@ -312,16 +226,7 @@ struct WorkerDashboardView: View {
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
@@ -331,27 +236,15 @@ struct WorkerDashboardView: View {
         if viewModel.isClockedIn {
             Task {
                 await viewModel.clockOut()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
         } else {
             buildingSelectionMode = .clockIn
             showBuildingSelection = true
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
     private func handleProfileTap() {
         // Show profile or settings
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
     
     private func handleBuildingSelection(_ building: NamedCoordinate) {
@@ -360,29 +253,17 @@ struct WorkerDashboardView: View {
             Task {
                 await viewModel.clockIn(at: building)
                 showBuildingSelection = false
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
         case .myBuildings, .coverage:
             selectedBuilding = building
             selectedBuildingIsAssigned = contextAdapter.isBuildingAssigned(building.id)
             showBuildingDetail = true
             showBuildingSelection = false
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
     private func loadWorkerSpecificData() async {
         await viewModel.loadInitialData()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
     
     // MARK: - Debug Sanity Check
@@ -415,23 +296,13 @@ struct WorkerDashboardView: View {
                 
                 if workerId == "4" { // Kevin's assignments
                     print("   Kevin → \(buildingName)")
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
             print("📊 Worker assignment counts:")
             for (workerId, count) in workerCounts {
-                // FIXED: Use existing WorkerConstants.getWorkerName(id:)
                 let workerName = WorkerConstants.getWorkerName(id: workerId)
                 print("   \(workerName): \(count) buildings")
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
             // Check if Kevin has Rubin Museum
@@ -439,34 +310,19 @@ struct WorkerDashboardView: View {
                 let workerId = row["worker_id"] as? String
                 let buildingName = row["building_name"] as? String
                 return workerId == "4" && buildingName?.contains("Rubin") == true
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
             if kevinRubin != nil {
                 print("✅ Kevin correctly assigned to Rubin Museum")
             } else {
                 print("❌ Kevin NOT assigned to Rubin Museum!")
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
         } catch {
             print("❌ Database sanity check failed: \(error)")
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         #endif
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
 }
 
 // MARK: - Building Selection Sheet
@@ -488,48 +344,24 @@ struct BuildingSelectionSheet: View {
                 
                 // Building list
                 buildingList
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel", action: onCancel)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
                 
                 if mode == .clockIn && !showingCoverageBuildings {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Coverage") {
                             showingCoverageBuildings = true
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                         }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
     
     private var modeHeader: some View {
@@ -552,9 +384,6 @@ struct BuildingSelectionSheet: View {
                     Text("Clock in anywhere for coverage support")
                         .font(.caption)
                         .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
                 
             case .myBuildings:
@@ -574,19 +403,10 @@ struct BuildingSelectionSheet: View {
                 Text("All buildings available for coverage support")
                     .font(.caption)
                     .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .padding()
         .background(.ultraThinMaterial)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
     
     private var buildingList: some View {
@@ -596,15 +416,9 @@ struct BuildingSelectionSheet: View {
                 isAssigned: assignedBuildings.contains { $0.id == building.id },
                 onTap: { onSelect(building) }
             )
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .listStyle(PlainListStyle())
         .background(Color.black)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
     
     private var buildingsToShow: [NamedCoordinate] {
@@ -615,12 +429,6 @@ struct BuildingSelectionSheet: View {
             return assignedBuildings
         case .coverage:
             return portfolioBuildings
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
     
@@ -629,17 +437,8 @@ struct BuildingSelectionSheet: View {
         case .clockIn: return "Clock In"
         case .myBuildings: return "My Buildings"
         case .coverage: return "Coverage"
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
         }
     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
 }
 
 // MARK: - Supporting Views
@@ -672,19 +471,10 @@ struct BuildingSelectionRow: View {
                             Label("Coverage", systemImage: "circle.dashed")
                                 .font(.caption)
                                 .foregroundColor(.orange)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                         }
                         
                         Spacer()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
                 
                 Spacer()
@@ -692,23 +482,11 @@ struct BuildingSelectionRow: View {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             .padding(.vertical, 8)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .buttonStyle(PlainButtonStyle())
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
 }
 
 struct WorkerBuildingCard: View {
@@ -738,13 +516,7 @@ struct WorkerBuildingCard: View {
                         Text("Assigned Building")
                             .font(.caption)
                             .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
                 
                 Spacer()
@@ -752,25 +524,13 @@ struct WorkerBuildingCard: View {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             .padding()
             .background(.ultraThinMaterial)
             .cornerRadius(8)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .buttonStyle(PlainButtonStyle())
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
 }
 
 struct WorkerTaskCard: View {
@@ -792,13 +552,7 @@ struct WorkerTaskCard: View {
                     Text(buildingName)
                         .font(.caption)
                         .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
                 }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
             Spacer()
@@ -806,24 +560,12 @@ struct WorkerTaskCard: View {
             if task.isCompleted {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .padding()
         .background(.ultraThinMaterial)
         .cornerRadius(8)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
 }
 
 struct WorkerProgressCard: View {
@@ -841,12 +583,8 @@ struct WorkerProgressCard: View {
                 Text("\(progress.completedTasks)/\(progress.totalTasks)")
                     .font(.headline)
                     .foregroundColor(.white)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
             
-            // FIXED: Use progressPercentage and normalize it
             ProgressView(value: progress.progressPercentage / 100.0)
                 .progressViewStyle(LinearProgressViewStyle(tint: .green))
             
@@ -856,22 +594,10 @@ struct WorkerProgressCard: View {
                     .foregroundColor(.secondary)
                 
                 Spacer()
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
         }
         .padding()
         .background(.ultraThinMaterial)
         .cornerRadius(12)
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
     }
-        .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
-        }
 }

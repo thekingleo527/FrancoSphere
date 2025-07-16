@@ -10,21 +10,31 @@
 //  NovaInteractionView.swift
 //  FrancoSphere v6.0
 //
-//  Nova AI Chat Interface - Uses existing AIAssistant.png
+//  ✅ CLEAN: Nova AI Chat Interface
+//  ✅ USES: Existing AIAssistantImageLoader from Assets.xcassets
+//  ✅ INTEGRATES: With existing WorkerContextEngineAdapter
+//  ✅ ALIGNS: With current FrancoSphere architecture
 //
 
 import SwiftUI
 
 struct NovaInteractionView: View {
-    @StateObject private var novaCore = NovaCore.shared
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
-    @StateObject private var operationalData = OperationalDataManager.shared
     @Environment(\.dismiss) private var dismiss
     
     @State private var userQuery = ""
     @State private var messages: [NovaMessage] = []
     @State private var isProcessing = false
     @State private var showingTypingIndicator = false
+    
+    // Quick suggestions based on current context
+    private let quickSuggestions = [
+        "What should I prioritize today?",
+        "Show me building efficiency insights",
+        "Are there any urgent maintenance items?",
+        "How is our portfolio performing?",
+        "What patterns do you see in our data?"
+    ]
     
     var body: some View {
         NavigationStack {
@@ -64,6 +74,11 @@ struct NovaInteractionView: View {
                     }
                 }
                 
+                // Quick suggestions (when no messages)
+                if messages.isEmpty && !isProcessing {
+                    quickSuggestionsView
+                }
+                
                 // Input area
                 novaInputBar
             }
@@ -71,9 +86,19 @@ struct NovaInteractionView: View {
             .navigationTitle("Nova AI Assistant")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") { dismiss() }
+                        .foregroundColor(.white)
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .foregroundColor(.blue)
+                    Button("Clear") {
+                        withAnimation {
+                            messages.removeAll()
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .disabled(messages.isEmpty)
                 }
             }
         }
@@ -82,9 +107,11 @@ struct NovaInteractionView: View {
         }
     }
     
+    // MARK: - Header with AIAssistant Image
+    
     private var novaHeader: some View {
         VStack(spacing: 12) {
-            // Use AIAssistantImageLoader for consistent loading
+            // Use existing AIAssistantImageLoader
             AIAssistantImageLoader.circularAIAssistantView(
                 diameter: 80,
                 borderColor: isProcessing ? .purple : .blue
@@ -105,6 +132,7 @@ struct NovaInteractionView: View {
                     )
                     .opacity(isProcessing ? 1 : 0)
             )
+            .shadow(color: .purple.opacity(0.5), radius: 10)
             
             Text("Nova AI")
                 .font(.title2)
@@ -120,75 +148,133 @@ struct NovaInteractionView: View {
         .background(.ultraThinMaterial)
     }
     
+    // MARK: - Welcome Message
+    
     private var welcomeMessage: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 AIAssistantImageLoader.circularAIAssistantView(diameter: 32)
-                Text("Nova AI")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.purple)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Hello! I'm Nova")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text("I can help you with insights about your buildings, workers, and portfolio performance.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+                
                 Spacer()
             }
             
-            Text("Hello! I'm Nova, your intelligent portfolio assistant. I can help you with:")
-                .font(.body)
-                .foregroundColor(.primary)
+            Text("Try asking me about:")
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .padding(.top, 8)
             
             VStack(alignment: .leading, spacing: 8) {
-                Text("• Building intelligence and insights")
-                Text("• Task optimization and scheduling")
-                Text("• Worker assignments and coverage")
-                Text("• Performance analytics and trends")
-                Text("• Emergency procedures and contacts")
+                suggestionRow("📊", "Portfolio performance and efficiency")
+                suggestionRow("🏢", "Building-specific insights")
+                suggestionRow("⚡", "Priority tasks and recommendations")
+                suggestionRow("🔧", "Maintenance patterns and predictions")
             }
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-            .padding(.leading, 16)
-            
-            Text("What would you like to know?")
-                .font(.body)
-                .foregroundColor(.primary)
         }
         .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(16)
-        .padding(.horizontal)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
+    
+    private func suggestionRow(_ icon: String, _ text: String) -> some View {
+        HStack(spacing: 12) {
+            Text(icon)
+                .font(.title2)
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+        }
+    }
+    
+    // MARK: - Quick Suggestions
+    
+    private var quickSuggestionsView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(quickSuggestions, id: \.self) { suggestion in
+                    Button(action: {
+                        userQuery = suggestion
+                        sendMessage()
+                    }) {
+                        Text(suggestion)
+                            .font(.subheadline)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .foregroundColor(.white)
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                            )
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+        .padding(.vertical, 8)
+    }
+    
+    // MARK: - Typing Indicator
     
     private var typingIndicator: some View {
         HStack {
             AIAssistantImageLoader.circularAIAssistantView(diameter: 32)
             
-            HStack(spacing: 4) {
-                ForEach(0..<3) { index in
-                    Circle()
-                        .fill(Color.purple)
-                        .frame(width: 8, height: 8)
-                        .scaleEffect(showingTypingIndicator ? 1.2 : 0.8)
-                        .animation(
-                            .easeInOut(duration: 0.6)
-                                .repeatForever(autoreverses: true)
-                                .delay(Double(index) * 0.2),
-                            value: showingTypingIndicator
-                        )
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Nova is thinking...")
+                    .font(.subheadline)
+                    .foregroundColor(.purple)
+                
+                HStack(spacing: 4) {
+                    ForEach(0..<3) { index in
+                        Circle()
+                            .fill(Color.purple)
+                            .frame(width: 6, height: 6)
+                            .scaleEffect(showingTypingIndicator ? 1.2 : 0.8)
+                            .animation(
+                                .easeInOut(duration: 0.6)
+                                    .repeatForever(autoreverses: true)
+                                    .delay(Double(index) * 0.2),
+                                value: showingTypingIndicator
+                            )
+                    }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color.purple.opacity(0.2))
-            .cornerRadius(16)
             
             Spacer()
         }
-        .padding(.horizontal)
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(16)
     }
+    
+    // MARK: - Input Bar
     
     private var novaInputBar: some View {
         HStack(spacing: 12) {
-            TextField("Ask Nova anything...", text: $userQuery)
+            TextField("Ask Nova anything...", text: $userQuery, axis: .vertical)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .disabled(isProcessing)
+                .lineLimit(1...3)
                 .onSubmit {
                     if !userQuery.isEmpty {
                         sendMessage()
@@ -207,6 +293,8 @@ struct NovaInteractionView: View {
         .background(.ultraThinMaterial)
     }
     
+    // MARK: - Actions
+    
     private func sendMessage() {
         let query = userQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return }
@@ -219,7 +307,10 @@ struct NovaInteractionView: View {
             content: query,
             timestamp: Date()
         )
-        messages.append(userMessage)
+        
+        withAnimation {
+            messages.append(userMessage)
+        }
         
         // Process with Nova
         Task {
@@ -232,7 +323,7 @@ struct NovaInteractionView: View {
         showingTypingIndicator = true
         
         // Simulate processing delay
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
         
         // Generate Nova response
         let response = await generateNovaResponse(for: query)
@@ -246,7 +337,9 @@ struct NovaInteractionView: View {
         )
         
         await MainActor.run {
-            messages.append(novaMessage)
+            withAnimation {
+                messages.append(novaMessage)
+            }
             isProcessing = false
         }
     }
@@ -286,6 +379,17 @@ struct NovaInteractionView: View {
         
         if lowercaseQuery.contains("schedule") {
             return "Your typical schedule varies by building assignment. Would you like me to show you today's schedule or help you plan upcoming tasks?"
+        }
+        
+        if lowercaseQuery.contains("priorit") || lowercaseQuery.contains("today") {
+            let urgentTasks = contextAdapter.getUrgentTasks()
+            let urgentCount = urgentTasks.count
+            
+            if urgentCount > 0 {
+                return "I found \(urgentCount) urgent task\(urgentCount == 1 ? "" : "s") that need your attention today. These include maintenance items and priority inspections. Would you like me to break down the specific tasks by building?"
+            } else {
+                return "Great news! You don't have any urgent tasks today. Focus on your routine maintenance schedule and consider tackling some preventive maintenance items to stay ahead."
+            }
         }
         
         // Default response with helpful suggestions
@@ -337,13 +441,14 @@ struct NovaMessageBubble: View {
                         .foregroundColor(.white)
                         .cornerRadius(16)
                         .textSelection(.enabled)
+                        .frame(maxWidth: 280, alignment: message.role == .user ? .trailing : .leading)
                     
                     if message.role == .user {
                         Circle()
                             .fill(Color.blue)
                             .frame(width: 24, height: 24)
                             .overlay(
-                                Text(message.role == .user ? "You" : "AI")
+                                Text("U")
                                     .font(.caption2)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
@@ -359,5 +464,14 @@ struct NovaMessageBubble: View {
             if message.role == .assistant { Spacer() }
         }
         .padding(.horizontal)
+    }
+}
+
+// MARK: - Preview
+
+struct NovaInteractionView_Previews: PreviewProvider {
+    static var previews: some View {
+        NovaInteractionView()
+            .preferredColorScheme(.dark)
     }
 }

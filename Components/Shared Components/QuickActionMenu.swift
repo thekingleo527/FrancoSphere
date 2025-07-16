@@ -1,16 +1,17 @@
 ////
+//
 //  QuickActionMenu.swift
 //  FrancoSphere
 //
 //  A glass-styled contextual menu for Nova AI assistant quick actions
 //  ✅ FIXED: Binding.constant usage in preview
 //  ✅ FIXED: Changed @State to @Binding for proper parent-child communication
+//  ✅ FIXED: Clean Nova integration without corruption
 //
 
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 // MARK: - Quick Action Types
 enum QuickActionType: String, CaseIterable {
@@ -27,12 +28,6 @@ enum QuickActionType: String, CaseIterable {
         case .showMap: return "map.fill"
         case .askNova: return "bubble.left.and.bubble.right.fill"
         case .viewInsights: return "brain"
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
         }
     }
     
@@ -43,17 +38,8 @@ enum QuickActionType: String, CaseIterable {
         case .showMap: return .green
         case .askNova: return .purple
         case .viewInsights: return .indigo
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
         }
     }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
 }
 
 // MARK: - Quick Action Menu View
@@ -78,9 +64,6 @@ struct QuickActionMenu: View {
                 .opacity(animateIn ? 1 : 0)
                 .onTapGesture {
                     dismissMenu()
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
                 }
             
             // Floating menu
@@ -95,9 +78,6 @@ struct QuickActionMenu: View {
                                 .delay(Double(primaryActions.firstIndex(of: action) ?? 0) * 0.05),
                             value: animateIn
                         )
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
                 }
                 
                 // Separator
@@ -116,9 +96,6 @@ struct QuickActionMenu: View {
                             .delay(0.25),
                         value: animateIn
                     )
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
             .padding()
             .background(
@@ -142,24 +119,15 @@ struct QuickActionMenu: View {
             )
             .frame(maxWidth: 280)
             .offset(y: animateIn ? 0 : 20)
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
         }
         .transition(.opacity)
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 animateIn = true
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
             
             // Haptic feedback
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
         }
         .sheet(isPresented: $showNovaChat) {
             NovaInteractionView()
@@ -175,9 +143,6 @@ struct QuickActionMenu: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 onActionSelected(action)
                 dismissMenu()
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
         }) {
             HStack(spacing: 16) {
@@ -190,9 +155,6 @@ struct QuickActionMenu: View {
                     Image(systemName: action.icon)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(action.color)
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
                 }
                 
                 // Label
@@ -206,9 +168,6 @@ struct QuickActionMenu: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.secondary.opacity(0.5))
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -218,14 +177,8 @@ struct QuickActionMenu: View {
                          Color.white.opacity(0.1) :
                          Color.clear)
             )
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
         }
         .buttonStyle(PlainButtonStyle())
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
     }
     
     // MARK: - Ask Nova Button (Special)
@@ -237,9 +190,6 @@ struct QuickActionMenu: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 showNovaChat = true
                 dismissMenu()
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
         }) {
             HStack(spacing: 16) {
@@ -287,9 +237,6 @@ struct QuickActionMenu: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
                 }
                 
                 // Label with gradient
@@ -307,9 +254,6 @@ struct QuickActionMenu: View {
                     Text("Get instant help")
                         .font(.caption)
                         .foregroundColor(.secondary)
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
                 }
                 
                 Spacer()
@@ -324,9 +268,6 @@ struct QuickActionMenu: View {
                             endPoint: .bottomTrailing
                         )
                     )
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -357,38 +298,20 @@ struct QuickActionMenu: View {
                             )
                     )
             )
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
         }
         .buttonStyle(PlainButtonStyle())
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
     }
     
     // MARK: - Dismiss
     private func dismissMenu() {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             animateIn = false
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             isPresented = false
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
-        }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
         }
     }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
 }
 
 // MARK: - Preview Provider
@@ -407,20 +330,8 @@ struct QuickActionMenu_Previews: PreviewProvider {
             // ✅ FIXED: Now properly passes Binding to @Binding parameter
             QuickActionMenu(isPresented: .constant(true)) { action in
                 print("Selected: \(action.rawValue)")
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
             }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
         }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
     }
-        .sheet(isPresented: $showNovaChat) {
-            NovaInteractionView()
-        }
 }

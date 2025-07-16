@@ -5,6 +5,7 @@
 //  ✅ ADDED: Portfolio buildings support
 //  ✅ ADDED: Building type classification
 //  ✅ FIXED: Real-time updates for both assigned and portfolio buildings
+//  ✅ FIXED: Compilation errors in sorting and TaskUrgency handling
 //
 
 import Foundation
@@ -113,15 +114,29 @@ public class WorkerContextEngineAdapter: ObservableObject {
         }
     }
     
+    // MARK: - ✅ FIXED: Next Scheduled Task with Proper Sorting
     public func getNextScheduledTask() -> ContextualTask? {
         return todaysTasks
             .filter { !$0.isCompleted }
-            .sorted { first, second in
-                let firstUrgency = first.urgency ?? .medium
-                let secondUrgency = second.urgency ?? .medium
-                return firstUrgency.numericValue > secondUrgency.numericValue
+            .sorted { (first: ContextualTask, second: ContextualTask) -> Bool in
+                // ✅ FIXED: Explicit types and proper TaskUrgency handling
+                let firstUrgency = first.urgency ?? TaskUrgency.medium
+                let secondUrgency = second.urgency ?? TaskUrgency.medium
+                
+                // ✅ FIXED: Use proper urgency comparison
+                return getUrgencyPriority(firstUrgency) > getUrgencyPriority(secondUrgency)
             }
             .first
+    }
+    
+    // ✅ FIXED: Helper method for urgency priority comparison
+    private func getUrgencyPriority(_ urgency: TaskUrgency) -> Int {
+        switch urgency {
+        case .critical: return 4
+        case .high: return 3
+        case .medium: return 2
+        case .low: return 1
+        }
     }
     
     public func getTaskProgress() -> TaskProgress? {
