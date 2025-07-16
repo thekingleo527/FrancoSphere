@@ -2,6 +2,7 @@
 //  WorkerDashboardView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ COMPILATION FIXES: All errors resolved
 //  ✅ VISUAL RESTORATION: Glassmorphism and floating cards
 //  ✅ USES: All existing ViewModels, Services, and Components
 //  ✅ NO NEW MANAGERS: Uses existing WorkerContextEngineAdapter
@@ -47,7 +48,7 @@ struct WorkerDashboardView: View {
                         .padding(.horizontal, 20)
                     
                     // Clock-in card with glass effect
-                    if !viewModel.isClockedIn {  // ✅ FIXED: Use viewModel instead of contextAdapter
+                    if !viewModel.isClockedIn {
                         clockInGlassCard
                             .padding(.horizontal, 20)
                     }
@@ -87,7 +88,7 @@ struct WorkerDashboardView: View {
         .sheet(isPresented: $showBuildingList) {
             BuildingSelectionView(
                 buildings: showOnlyMyBuildings ? contextAdapter.assignedBuildings : getAllBuildings()
-            ) { building in  // ✅ FIXED: Use closure syntax, no onCancel
+            ) { building in
                 navigateToBuilding(building)
                 showBuildingList = false
             }
@@ -181,7 +182,7 @@ struct WorkerDashboardView: View {
             Spacer()
             
             // Clock-in status
-            if viewModel.isClockedIn {  // ✅ FIXED: Use viewModel instead of contextAdapter
+            if viewModel.isClockedIn {
                 GlassStatusBadge(
                     text: "Active",
                     icon: "clock.fill",
@@ -268,11 +269,9 @@ struct WorkerDashboardView: View {
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.6))
             }
-            .padding(20)
-            .francoGlassBackground()
-            .francoShadow()
         }
         .buttonStyle(PlainButtonStyle())
+        .francoGlassCard()
     }
     
     // MARK: - Clock In Glass Card
@@ -308,9 +307,7 @@ struct WorkerDashboardView: View {
                 }
             }
         }
-        .padding(20)
-        .francoGlassBackground()
-        .francoShadow()
+        .francoGlassCard()
     }
     
     // MARK: - Progress Overview Card
@@ -354,9 +351,7 @@ struct WorkerDashboardView: View {
             }
             .frame(height: 8)
         }
-        .padding(20)
-        .francoGlassBackground()
-        .francoShadow()
+        .francoGlassCard()
     }
     
     // MARK: - My Buildings Section
@@ -424,10 +419,9 @@ struct WorkerDashboardView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(12)
-            .francoGlassBackground(cornerRadius: 16)
         }
         .buttonStyle(PlainButtonStyle())
+        .francoGlassCardCompact()
     }
     
     // MARK: - Floating Insights Section
@@ -477,8 +471,7 @@ struct WorkerDashboardView: View {
             
             Spacer()
         }
-        .padding(16)
-        .francoGlassBackground(cornerRadius: 12, opacity: 0.8)
+        .francoGlassCardCompact(intensity: .thick)
     }
     
     // MARK: - Map Bubble Markers
@@ -501,7 +494,7 @@ struct WorkerDashboardView: View {
         .shadow(color: .white.opacity(0.3), radius: 4)
     }
     
-    // MARK: - Keep ALL Existing Helper Methods
+    // MARK: - Helper Methods
     
     private func getWorkerInitials() -> String {
         guard let worker = contextAdapter.currentWorker else { return "WO" }
@@ -519,7 +512,7 @@ struct WorkerDashboardView: View {
         Button(action: {
             Task {
                 do {
-                    try await viewModel.clockIn(at: building)  // ✅ Use viewModel methods
+                    try await viewModel.clockIn(at: building)
                 } catch {
                     print("❌ Failed to clock in: \(error)")
                 }
@@ -537,12 +530,12 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // KEEP ALL YOUR EXISTING METHODS UNCHANGED
+    // FIXED: Use contextAdapter directly instead of non-existent viewModel method
     private func loadWorkerSpecificData() async {
         await viewModel.loadInitialData()
         
-        // Update worker name from context
-        workerName = await viewModel.getCurrentWorkerName()
+        // FIXED: Update worker name from contextAdapter directly
+        workerName = contextAdapter.currentWorker?.name ?? "Worker"
         
         // NEW: Determine primary building for current worker
         let primary = determinePrimaryBuilding(for: contextAdapter.currentWorker?.id)
@@ -555,7 +548,6 @@ struct WorkerDashboardView: View {
     }
     
     private func determinePrimaryBuilding(for workerId: String?) -> NamedCoordinate? {
-        // YOUR EXISTING IMPLEMENTATION
         let buildings = contextAdapter.assignedBuildings
         guard let workerId = workerId else { return buildings.first }
         
@@ -572,7 +564,6 @@ struct WorkerDashboardView: View {
     }
     
     private func getEnhancedWorkerRole() -> String {
-        // YOUR EXISTING IMPLEMENTATION
         guard let worker = contextAdapter.currentWorker else { return "Building Operations" }
         
         switch worker.id {
@@ -588,7 +579,6 @@ struct WorkerDashboardView: View {
     }
     
     private func navigateToBuilding(_ building: NamedCoordinate) {
-        // YOUR EXISTING IMPLEMENTATION
         let isMyBuilding = contextAdapter.assignedBuildings.contains { $0.id == building.id }
         selectedBuilding = building
         selectedBuildingIsAssigned = isMyBuilding
@@ -596,7 +586,6 @@ struct WorkerDashboardView: View {
     }
     
     private func getAllBuildings() -> [NamedCoordinate] {
-        // YOUR EXISTING IMPLEMENTATION
         return contextAdapter.assignedBuildings
     }
 }

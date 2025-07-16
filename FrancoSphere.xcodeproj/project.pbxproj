@@ -21,6 +21,7 @@
 		2312FC8F2E1BF2DC00B64496 /* WorkerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */; };
 		2312FC932E1BF5D700B64496 /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC922E1BF5C600B64496 /* InitializationView.swift */; };
 		2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */; };
+		23148E6E2E285F7300446441 /* WorkerContextEngine+DataFlow.swift in Resources */ = {isa = PBXBuildFile; fileRef = 23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
 		233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */; };
@@ -170,6 +171,8 @@
 		23EA1E9F2E27EC4F009FFF54 /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */; };
 		23EA1ED92E2809D3009FFF54 /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */; };
 		23EA1F2C2E285103009FFF54 /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1F2B2E285103009FFF54 /* NovaInteractionView.swift */; };
+		23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */; };
+		23EA1F302E285E87009FFF54 /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1F2F2E285E87009FFF54 /* GlassMorphismStyles.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
@@ -212,6 +215,7 @@
 		2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
 		2312FC922E1BF5C600B64496 /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
 		2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
+		23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerContextEngine+DataFlow.swift"; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -365,6 +369,8 @@
 		23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
 		23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
 		23EA1F2B2E285103009FFF54 /* NovaInteractionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaInteractionView.swift; sourceTree = "<group>"; };
+		23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataInitializer.swift; sourceTree = "<group>"; };
+		23EA1F2F2E285E87009FFF54 /* GlassMorphismStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassMorphismStyles.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
@@ -542,6 +548,7 @@
 		234580A72DF78E3D00355F0A /* Glass */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1F2F2E285E87009FFF54 /* GlassMorphismStyles.swift */,
 				234580972DF78E3D00355F0A /* BuildingStatsGlassCard.swift */,
 				234580982DF78E3D00355F0A /* ClockInGlassModal.swift */,
 				234580992DF78E3D00355F0A /* GlassButton.swift */,
@@ -667,6 +674,7 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */,
 				2374933D2E1C950700D9C70D /* Core */,
 				2312FCC02E1C07E900B64496 /* Enums */,
 				2312FC8E2E1BF2DC00B64496 /* WorkerActionType.swift */,
@@ -728,6 +736,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */,
 				23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */,
 				23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */,
 				2374938F2E1D7E9C00D9C70D /* BuildingMetricsService.swift */,
@@ -1012,6 +1021,7 @@
 				234581342DF78E3D00355F0A /* 135West17thStreet.jpg in Resources */,
 				234581362DF78E3D00355F0A /* 12_West_18th_Street.jpg in Resources */,
 				234581372DF78E3D00355F0A /* 133_East_15th_Street.jpg in Resources */,
+				23148E6E2E285F7300446441 /* WorkerContextEngine+DataFlow.swift in Resources */,
 				234581382DF78E3D00355F0A /* AppIcon.png in Resources */,
 				2345813A2DF78E3D00355F0A /* 41_Elizabeth_Street.jpeg in Resources */,
 				2345813B2DF78E3D00355F0A /* Preview Assets.xcassets in Resources */,
@@ -1118,6 +1128,7 @@
 				23EA1E9F2E27EC4F009FFF54 /* CoverageInfoCard.swift in Sources */,
 				234581742DF78E3D00355F0A /* GlassTransitions.swift in Sources */,
 				233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */,
+				23EA1F302E285E87009FFF54 /* GlassMorphismStyles.swift in Sources */,
 				234581752DF78E3D00355F0A /* ModelColorsExtensions.swift in Sources */,
 				234581762DF78E3D00355F0A /* AIAssistantManager.swift in Sources */,
 				234581782DF78E3D00355F0A /* TaskDetailView.swift in Sources */,
@@ -1209,6 +1220,7 @@
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */,
 				23A3169D2E1E377500469FA3 /* WorkerContextEngineAdapter.swift in Sources */,
+				23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
