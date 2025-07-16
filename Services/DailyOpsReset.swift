@@ -2,30 +2,23 @@
 //  DailyOpsReset.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Aligned with GRDB actor-based architecture
-//  ✅ CORRECTED: Uses actual service API methods that exist
-//  ✅ ENHANCED: Proper async/await patterns throughout
-//  ✅ INTEGRATED: With WorkerContextEngine and three-dashboard system
+//  ✅ FIXED: Uses actual ContextualTask properties and initializer
+//  ✅ CORRECTED: Removed non-existent recurrence, assignedWorkerName, estimatedDuration
+//  ✅ CORRECTED: Uses proper TaskCategory cases (no .compliance)
+//  ✅ ALIGNED: With actual v6.0 GRDB actor architecture
 //
 
 import Foundation
 import UIKit
 
-/// Manages the daily operations reset for the FrancoSphere v6.0 system
-/// Integrates with GRDB-based services and actor architecture
 @MainActor
 class DailyOpsReset: ObservableObject {
     static let shared = DailyOpsReset()
     
-    /// Whether the system has been initialized
     private var isInitialized = false
-    
-    /// The date of the last reset
     private var lastResetDate: Date?
     
-    /// Private initializer to prevent multiple instances
     private init() {
-        // Load last reset date from UserDefaults if available
         if UserDefaults.standard.object(forKey: "lastResetTimeStamp") != nil {
             let lastResetTimeStamp = UserDefaults.standard.double(forKey: "lastResetTimeStamp")
             if lastResetTimeStamp > 0 {
@@ -34,42 +27,30 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    /// Start the daily reset scheduler
     func start() {
-        if isInitialized {
-            return
-        }
-        
+        if isInitialized { return }
         isInitialized = true
         
-        // Check if we need to do an immediate reset
         Task {
             await checkIfResetNeeded()
         }
         
-        // Schedule the next reset
         scheduleReset()
         
-        // Listen for app coming to foreground
         NotificationCenter.default.addObserver(self,
                                               selector: #selector(appWillEnterForeground),
                                               name: UIApplication.willEnterForegroundNotification,
                                               object: nil)
     }
     
-    /// Check if a reset is needed (i.e., if we've passed midnight since the last reset)
     private func checkIfResetNeeded() async {
         let calendar = Calendar.current
-        
-        // If we've never reset or if the last reset was before today, do a reset
         if lastResetDate == nil || !calendar.isDateInToday(lastResetDate!) {
             await performReset()
         }
     }
     
-    /// Schedule the next reset at 12:01 AM
     private func scheduleReset() {
-        // Calculate time until next reset (12:01 AM)
         let calendar = Calendar.current
         var dateComponents = DateComponents()
         dateComponents.hour = 0
@@ -84,16 +65,14 @@ class DailyOpsReset: ObservableObject {
         
         let timeInterval = tomorrowReset.timeIntervalSince(Date())
         
-        // Schedule the reset
         DispatchQueue.main.asyncAfter(deadline: .now() + timeInterval) { [weak self] in
             Task {
                 await self?.performReset()
-                self?.scheduleReset() // Schedule next reset
+                self?.scheduleReset()
             }
         }
     }
     
-    /// Handle app coming to foreground
     @objc private func appWillEnterForeground() {
         Task {
             await checkIfResetNeeded()
@@ -102,21 +81,17 @@ class DailyOpsReset: ObservableObject {
     
     // MARK: - Reset Operations
     
-    /// Perform the actual reset operations
     private func performReset() async {
         print("🔄 Starting daily operations reset at \(Date())")
         
-        // Update the last reset date
         lastResetDate = Date()
         UserDefaults.standard.set(lastResetDate!.timeIntervalSince1970, forKey: "lastResetTimeStamp")
         
-        // Perform reset operations in sequence
         await resetBuildingStatuses()
         await markMissedTasks()
         await generateNewTasks()
         await refreshWorkerContexts()
         
-        // Post notification that daily ops have been reset
         await MainActor.run {
             NotificationCenter.default.post(name: NSNotification.Name("DailyOpsReset"), object: nil)
         }
@@ -124,41 +99,36 @@ class DailyOpsReset: ObservableObject {
         print("✅ Daily operations reset completed at \(Date())")
     }
     
-    /// Reset all building statuses to 'pending'
     private func resetBuildingStatuses() async {
         print("🏢 Resetting building statuses...")
         
-        // Post notification to reset building statuses
         await MainActor.run {
             NotificationCenter.default.post(name: NSNotification.Name("BuildingStatusesReset"), object: nil)
         }
         
-        // Clear any cached building metrics to force fresh calculations
-        await BuildingMetricsService.shared.clearCache()
+        // ✅ FIXED: Use actual method invalidateAllCaches()
+        await BuildingMetricsService.shared.invalidateAllCaches()
     }
     
-    /// Mark unfinished tasks from yesterday as missed/overdue
     private func markMissedTasks() async {
         print("📋 Processing missed tasks from yesterday...")
         
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
         
         do {
-            // ✅ FIXED: Use actual TaskService actor API
             let allTasks = try await TaskService.shared.getAllTasks()
             let yesterdayTasks = allTasks.filter { task in
-                Calendar.current.isDate(task.scheduledDate, inSameDayAs: yesterday)
+                guard let scheduledDate = task.scheduledDate else { return false }
+                return Calendar.current.isDate(scheduledDate, inSameDayAs: yesterday)
             }
             
             var missedCount = 0
             for task in yesterdayTasks where !task.isCompleted {
-                print("⚠️ Missed task: \(task.name) in building \(task.buildingId)")
+                print("⚠️ Missed task: \(task.title) in building \(task.buildingId ?? "unknown")")
                 missedCount += 1
                 
-                // If this task is recurring, create the next occurrence
-                if task.recurrence != .none {
-                    await createNextRecurrence(for: task)
-                }
+                // ✅ FIXED: Simple recurring task creation without recurrence property
+                await createRecurringTaskInstance(from: task)
             }
             
             print("📊 Processed \(missedCount) missed tasks from yesterday")
@@ -168,26 +138,60 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    /// Create next occurrence for recurring task
-    private func createNextRecurrence(for task: ContextualTask) async {
-        if let nextTask = task.createNextOccurrence() {
-            do {
-                // Note: TaskService would need a createTask method for this to work
-                // For now, just log the intention
-                print("🔄 Would create next occurrence for recurring task: \(task.name)")
-                // try await TaskService.shared.createTask(nextTask)
-            } catch {
-                print("❌ Error creating next task occurrence: \(error)")
-            }
+    // ✅ FIXED: Create new task instance for recurring tasks
+    private func createRecurringTaskInstance(from task: ContextualTask) async {
+        // Determine if this is a recurring task based on title patterns
+        let isRecurring = task.title.lowercased().contains("daily") ||
+                         task.title.lowercased().contains("weekly") ||
+                         task.title.lowercased().contains("monthly")
+        
+        guard isRecurring else { return }
+        
+        let nextScheduleDate = calculateNextOccurrence(from: task)
+        
+        // ✅ FIXED: Use actual ContextualTask initializer
+        let newTask = ContextualTask(
+            title: task.title,
+            description: task.description,
+            isCompleted: false,
+            scheduledDate: nextScheduleDate,
+            dueDate: nextScheduleDate,
+            category: task.category,
+            urgency: task.urgency,
+            building: task.building,
+            worker: task.worker,
+            buildingId: task.buildingId,
+            buildingName: task.buildingName
+        )
+        
+        do {
+            try await TaskService.shared.createTask(newTask)
+            print("🔄 Created next occurrence for recurring task: \(task.title)")
+        } catch {
+            print("❌ Error creating recurring task instance: \(error)")
         }
     }
     
-    /// Generate new daily and weekly tasks for today
+    private func calculateNextOccurrence(from task: ContextualTask) -> Date {
+        let calendar = Calendar.current
+        let baseDate = task.scheduledDate ?? Date()
+        
+        // Determine recurrence from task title
+        if task.title.lowercased().contains("daily") {
+            return calendar.date(byAdding: .day, value: 1, to: baseDate) ?? Date()
+        } else if task.title.lowercased().contains("weekly") {
+            return calendar.date(byAdding: .weekOfYear, value: 1, to: baseDate) ?? Date()
+        } else if task.title.lowercased().contains("monthly") {
+            return calendar.date(byAdding: .month, value: 1, to: baseDate) ?? Date()
+        }
+        
+        return Date()
+    }
+    
     private func generateNewTasks() async {
         print("🆕 Generating new tasks for today...")
         
         do {
-            // ✅ FIXED: Use actual BuildingService actor API
             let allBuildings = try await BuildingService.shared.getAllBuildings()
             
             for building in allBuildings {
@@ -202,93 +206,156 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    /// Generate weather-related tasks for a building
     private func generateWeatherRelatedTasks(for building: NamedCoordinate) async {
-        // Check weather conditions and generate appropriate tasks
         await MainActor.run {
             let weatherAdapter = WeatherDataAdapter.shared
             let weatherTasks = weatherAdapter.generateWeatherTasks(for: building)
             
             if !weatherTasks.isEmpty {
                 print("🌤️ Generated \(weatherTasks.count) weather-related tasks for \(building.name)")
-                // Note: Would need TaskService.createWeatherBasedTasks method
-                // For now, just log the intention
+                
+                Task {
+                    for weatherTask in weatherTasks {
+                        // ✅ FIXED: Use actual ContextualTask initializer with proper building reference
+                        let contextualTask = ContextualTask(
+                            title: weatherTask.title,
+                            description: weatherTask.description,
+                            isCompleted: false,
+                            scheduledDate: weatherTask.dueDate ?? Date(),
+                            dueDate: weatherTask.dueDate ?? Date(),
+                            category: TaskCategory.maintenance,
+                            urgency: TaskUrgency.medium,
+                            building: building,
+                            buildingId: building.id,
+                            buildingName: building.name
+                        )
+                        
+                        do {
+                            try await TaskService.shared.createTask(contextualTask)
+                            print("✅ Created weather task: \(weatherTask.title)")
+                        } catch {
+                            print("❌ Failed to create weather task: \(error)")
+                        }
+                    }
+                }
             }
         }
     }
     
-    /// Generate scheduled recurring tasks for a building
     private func generateScheduledTasks(for building: NamedCoordinate) async {
         let calendar = Calendar.current
         let today = Date()
         let weekday = calendar.component(.weekday, from: today)
         
-        // Generate daily tasks (every day)
         await generateDailyTasks(for: building)
         
-        // Generate weekly tasks (specific days)
         if weekday == 2 { // Monday
             await generateWeeklyTasks(for: building)
         }
         
-        // Generate monthly tasks (first of month)
         if calendar.component(.day, from: today) == 1 {
             await generateMonthlyTasks(for: building)
         }
     }
     
-    /// Generate daily recurring tasks
     private func generateDailyTasks(for building: NamedCoordinate) async {
-        // Example daily tasks that should be generated
         let dailyTaskTemplates = [
-            "Morning building inspection",
-            "Check emergency equipment",
-            "Review security systems"
+            ("Daily Morning building inspection", "Perform daily building safety and operational check"),
+            ("Daily Check emergency equipment", "Verify emergency systems are functional"),
+            ("Daily Review security systems", "Check security equipment and access systems")
         ]
         
-        for template in dailyTaskTemplates {
-            print("📅 Generated daily task: \(template) for \(building.name)")
-            // Note: Would create actual tasks here with TaskService
+        for (title, description) in dailyTaskTemplates {
+            // ✅ FIXED: Use actual ContextualTask initializer
+            let task = ContextualTask(
+                title: title,
+                description: description,
+                isCompleted: false,
+                scheduledDate: Date(),
+                dueDate: Date(),
+                category: TaskCategory.inspection,
+                urgency: TaskUrgency.medium,
+                building: building,
+                buildingId: building.id,
+                buildingName: building.name
+            )
+            
+            do {
+                try await TaskService.shared.createTask(task)
+                print("📅 Generated daily task: \(title) for \(building.name)")
+            } catch {
+                print("❌ Failed to create daily task: \(error)")
+            }
         }
     }
     
-    /// Generate weekly recurring tasks
     private func generateWeeklyTasks(for building: NamedCoordinate) async {
         let weeklyTaskTemplates = [
-            "Weekly maintenance review",
-            "Deep cleaning common areas",
-            "Equipment maintenance check"
+            ("Weekly maintenance review", "Comprehensive review of building maintenance needs"),
+            ("Weekly Deep cleaning common areas", "Thorough cleaning of shared spaces"),
+            ("Weekly Equipment maintenance check", "Inspect and maintain building equipment")
         ]
         
-        for template in weeklyTaskTemplates {
-            print("📅 Generated weekly task: \(template) for \(building.name)")
-            // Note: Would create actual tasks here with TaskService
+        for (title, description) in weeklyTaskTemplates {
+            let task = ContextualTask(
+                title: title,
+                description: description,
+                isCompleted: false,
+                scheduledDate: Date(),
+                dueDate: Date(),
+                category: TaskCategory.maintenance,
+                urgency: TaskUrgency.medium,
+                building: building,
+                buildingId: building.id,
+                buildingName: building.name
+            )
+            
+            do {
+                try await TaskService.shared.createTask(task)
+                print("📅 Generated weekly task: \(title) for \(building.name)")
+            } catch {
+                print("❌ Failed to create weekly task: \(error)")
+            }
         }
     }
     
-    /// Generate monthly recurring tasks
     private func generateMonthlyTasks(for building: NamedCoordinate) async {
         let monthlyTaskTemplates = [
-            "Monthly compliance audit",
-            "HVAC system maintenance",
-            "Fire safety inspection"
+            ("Monthly inspection audit", "Review inspection status and requirements"),
+            ("Monthly HVAC system maintenance", "Service heating and cooling systems"),
+            ("Monthly Fire safety inspection", "Comprehensive fire safety check")
         ]
         
-        for template in monthlyTaskTemplates {
-            print("📅 Generated monthly task: \(template) for \(building.name)")
-            // Note: Would create actual tasks here with TaskService
+        for (title, description) in monthlyTaskTemplates {
+            // ✅ FIXED: Use .inspection instead of non-existent .compliance
+            let task = ContextualTask(
+                title: title,
+                description: description,
+                isCompleted: false,
+                scheduledDate: Date(),
+                dueDate: Date(),
+                category: TaskCategory.inspection,
+                urgency: TaskUrgency.high,
+                building: building,
+                buildingId: building.id,
+                buildingName: building.name
+            )
+            
+            do {
+                try await TaskService.shared.createTask(task)
+                print("📅 Generated monthly task: \(title) for \(building.name)")
+            } catch {
+                print("❌ Failed to create monthly task: \(error)")
+            }
         }
     }
     
-    /// Refresh all worker contexts after reset
     private func refreshWorkerContexts() async {
         print("👥 Refreshing worker contexts...")
         
         do {
-            // ✅ FIXED: Use actual WorkerService actor API
             let activeWorkers = try await WorkerService.shared.getAllActiveWorkers()
             
-            // Refresh each worker's context with WorkerContextEngine
             for worker in activeWorkers {
                 do {
                     try await WorkerContextEngine.shared.loadContext(for: worker.id)
@@ -305,21 +372,18 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    /// Manually trigger a reset (for admin use)
     func manualReset() {
         Task {
             await performReset()
         }
     }
     
-    /// Get reset status information
     func getResetStatus() -> (lastReset: Date?, needsReset: Bool) {
         let calendar = Calendar.current
         let needsReset = lastResetDate == nil || !calendar.isDateInToday(lastResetDate!)
         return (lastResetDate, needsReset)
     }
     
-    /// Schedule immediate reset for testing
     func scheduleImmediateReset(delay: TimeInterval = 5.0) {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             Task {
@@ -331,9 +395,7 @@ class DailyOpsReset: ObservableObject {
 
 // MARK: - Extension for App Initialization
 extension DailyOpsReset {
-    /// Initialize and configure the daily reset system
     static func configure() {
-        // Start the daily reset scheduler on main actor
         Task { @MainActor in
             shared.start()
         }
@@ -342,7 +404,6 @@ extension DailyOpsReset {
 
 // MARK: - Integration with Three-Dashboard System
 extension DailyOpsReset {
-    /// Get dashboard-specific reset metrics
     func getDashboardMetrics() async -> DailyResetMetrics {
         do {
             let buildings = try await BuildingService.shared.getAllBuildings()
@@ -350,7 +411,8 @@ extension DailyOpsReset {
             let workers = try await WorkerService.shared.getAllActiveWorkers()
             
             let todaysTasks = tasks.filter { task in
-                Calendar.current.isDate(task.scheduledDate, inSameDayAs: Date())
+                guard let scheduledDate = task.scheduledDate else { return false }
+                return Calendar.current.isDate(scheduledDate, inSameDayAs: Date())
             }
             
             return DailyResetMetrics(
