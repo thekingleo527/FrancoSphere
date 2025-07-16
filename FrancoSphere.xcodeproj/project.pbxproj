@@ -164,6 +164,7 @@
 		23EA1E5E2E271759009FFF54 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1E5D2E271759009FFF54 /* GRDB */; };
 		23EA1E7A2E275DD1009FFF54 /* ClientDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */; };
 		23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */; };
+		23EA1E7E2E278585009FFF54 /* CrossDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7D2E278585009FFF54 /* CrossDashboardTypes.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
 		23EE826E2E1C790400C298C7 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */; };
@@ -353,6 +354,7 @@
 		23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
 		23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardView.swift; sourceTree = "<group>"; };
 		23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSyncService.swift; sourceTree = "<group>"; };
+		23EA1E7D2E278585009FFF54 /* CrossDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossDashboardTypes.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		23EE826D2E1C790400C298C7 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
@@ -473,6 +475,7 @@
 		2312FCC02E1C07E900B64496 /* Enums */ = {
 			isa = PBXGroup;
 			children = (
+				23EA1E7D2E278585009FFF54 /* CrossDashboardTypes.swift */,
 				2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */,
 			);
 			path = Enums;
@@ -1064,6 +1067,7 @@
 				234581542DF78E3D00355F0A /* BuildingsView.swift in Sources */,
 				23BBD7682E0265AB00013D90 /* TaskDisplayHelpers.swift in Sources */,
 				237493902E1D7E9C00D9C70D /* BuildingMetricsService.swift in Sources */,
+				23EA1E7E2E278585009FFF54 /* CrossDashboardTypes.swift in Sources */,
 				236106E82E1788EC00463A59 /* BuildingService.swift in Sources */,
 				234581552DF78E3D00355F0A /* MapRevealContainer.swift in Sources */,
 				234581582DF78E3D00355F0A /* FrancoSphereDesign.swift in Sources */,

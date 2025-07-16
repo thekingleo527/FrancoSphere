@@ -881,3 +881,57 @@ public typealias BuildingType = CoreTypes.BuildingType
 public typealias BuildingTab = CoreTypes.BuildingTab
 public typealias BuildingInsight = CoreTypes.BuildingInsight
 public typealias BuildingMetrics = CoreTypes.BuildingMetrics
+// MARK: - Cross-Dashboard Synchronization Types
+
+extension CoreTypes {
+    
+    /// Dashboard synchronization status
+    public enum DashboardSyncStatus {
+        case synced
+        case syncing
+        case error
+        
+        public var description: String {
+            switch self {
+            case .synced: return "Synced"
+            case .syncing: return "Syncing..."
+            case .error: return "Sync Error"
+            }
+        }
+        
+        public var color: SwiftUI.Color {
+            switch self {
+            case .synced: return .green
+            case .syncing: return .blue
+            case .error: return .red
+            }
+        }
+    }
+    
+    /// Cross-dashboard update events
+    public enum CrossDashboardUpdate {
+        case taskCompleted(buildingId: String)
+        case workerClockedIn(buildingId: String)
+        case metricsUpdated(buildingIds: [String])
+        case insightsUpdated(count: Int)
+        case buildingIntelligenceUpdated(buildingId: String)
+        case complianceUpdated(buildingIds: [String])
+        
+        public var description: String {
+            switch self {
+            case .taskCompleted(let buildingId):
+                return "Task completed at building \(buildingId)"
+            case .workerClockedIn(let buildingId):
+                return "Worker clocked in at building \(buildingId)"
+            case .metricsUpdated(let buildingIds):
+                return "Metrics updated for \(buildingIds.count) buildings"
+            case .insightsUpdated(let count):
+                return "\(count) portfolio insights updated"
+            case .buildingIntelligenceUpdated(let buildingId):
+                return "Intelligence updated for building \(buildingId)"
+            case .complianceUpdated(let buildingIds):
+                return "Compliance updated for \(buildingIds.count) buildings"
+            }
+        }
+    }
+}
