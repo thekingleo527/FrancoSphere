@@ -136,42 +136,8 @@ class TodayTasksViewModel: ObservableObject {
         }
         
         // Mock weekly completion data (in real app, would fetch from database)
-        let weeklyCompletion = [0.8, 0.7, 0.9, 0.85, 0.92, 0.88, Double(completedTasks.count) / max(Double(tasks.count), 1.0)]
-        
-        // ✅ FIXED: Proper CoreTypes.TaskTrends initialization with all required parameters
-        return TaskTrends(
-            weeklyCompletion: weeklyCompletion,
-            categoryBreakdown: categoryBreakdown,
-            changePercentage: 5.2, // Mock change percentage
-            comparisonPeriod: "Last Week",
-            trend: .up
-        )
-    }
-    
-    private func calculateStreakData() -> StreakData {
-        // Calculate completion streak (simplified)
-        let currentStreak = completedTasks.count
-        let longestStreak = max(currentStreak, 5) // Mock longest streak
-        
-        // ✅ FIXED: Proper CoreTypes.StreakData initialization
-        return StreakData(
-            currentStreak: currentStreak,
-            longestStreak: longestStreak
-        )
-    }
-    
-    // MARK: - Helper Methods
-    private func setupBindings() {
-        // Setup any reactive bindings if needed
-        // Currently minimal setup to avoid complex constructor issues
-    }
-    
-    // MARK: - Public Utility Methods
-    func refreshTasks() async {
-        await loadTodaysTasks()
-    }
-    
-    func getTasksByCategory(_ category: TaskCategory) -> [ContextualTask] {
+        // Real weekly completion data from database
+        let weeklyCompletion = await getWeeklyCompletionData()
         return tasks.filter { $0.category == category }
     }
     
@@ -250,3 +216,36 @@ extension TodayTasksViewModel {
         }
     }
 }
+
+    // MARK: - Real Data Methods
+    
+    private func getWeeklyCompletionData() async -> [Double] {
+        let calendar = Calendar.current
+        var weeklyData: [Double] = []
+        
+        for dayOffset in -6...0 {
+            guard let date = calendar.date(byAdding: .day, value: dayOffset, to: Date()) else { continue }
+            
+            do {
+                let dayTasks = try await taskService.getTasks(for: currentUser?.workerId ?? "", date: date)
+                let completionRate = dayTasks.isEmpty ? 0.0 : 
+                    Double(dayTasks.filter { $0.isCompleted }.count) / Double(dayTasks.count)
+                weeklyData.append(completionRate)
+            } catch {
+                weeklyData.append(0.0)
+            }
+        }
+        
+        return weeklyData
+    }
+    
+    private func calculateRealChangePercentage() async -> Double {
+        let weeklyData = await getWeeklyCompletionData()
+        guard weeklyData.count >= 2 else { return 0.0 }
+        
+        let currentRate = weeklyData.last ?? 0.0
+        let previousRate = weeklyData[weeklyData.count - 2]
+        
+        guard previousRate > 0 else { return 0.0 }
+        return ((currentRate - previousRate) / previousRate) * 100
+    }

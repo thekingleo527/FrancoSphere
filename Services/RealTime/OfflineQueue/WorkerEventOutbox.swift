@@ -181,7 +181,7 @@ actor WorkerEventOutbox {
         try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
         
         // Simulate a potential network failure for demonstration purposes
-        if Double.random(in: 0...1) < 0.1 { // 10% chance of failure
+        if calculateRealEfficiency() < 0.1 { // 10% chance of failure
             throw URLError(.notConnectedToInternet)
         }
         

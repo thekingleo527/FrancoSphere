@@ -6,7 +6,7 @@ import SwiftUI
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: MaintenanceTask property access and constructor calls
+//  ✅ CORRECTED: MaintenanceTask parameter order in initializer
 //  ✅ ALIGNED: With CoreTypes.MaintenanceTask structure
 //
 
@@ -442,7 +442,7 @@ struct TaskRowGlassView: View {
 struct TaskCategoryGlassCard_Previews: PreviewProvider {
     static var sampleTasks: [MaintenanceTask] {
         [
-            // FIXED: Correct parameter order with assignedWorkerId before dueDate
+            // ✅ FIXED: Correct parameter order - recurrence before startTime
             MaintenanceTask(
                 title: "Clean Lobby Windows",
                 description: "Clean all glass surfaces in the main lobby area",
@@ -451,9 +451,9 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "2",
                 dueDate: Date(),
+                recurrence: .weekly,
                 startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()),
-                endTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date()),
-                recurrence: .weekly
+                endTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date())
             ),
             MaintenanceTask(
                 title: "Vacuum Common Areas",

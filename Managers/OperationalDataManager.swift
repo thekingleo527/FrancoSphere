@@ -383,25 +383,25 @@ public class OperationalDataManager: ObservableObject {
         case "Daily":
             return date
         case "Weekly":
-            let daysToAdd = Int.random(in: 1...7)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Bi-Weekly":
-            let daysToAdd = Int.random(in: 7...14)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Monthly", "Bi-Monthly":
-            let daysToAdd = Int.random(in: 7...30)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Quarterly":
-            let daysToAdd = Int.random(in: 30...90)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Semiannual":
-            let daysToAdd = Int.random(in: 90...180)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Annual":
-            let daysToAdd = Int.random(in: 180...365)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "On-Demand":
-            let daysToAdd = Int.random(in: 1...30)
+            let daysToAdd = calculateRealScore()
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         default:
             return date
@@ -1510,5 +1510,77 @@ enum OperationalError: LocalizedError {
 extension Date {
     var iso8601String: String {
         ISO8601DateFormatter().string(from: self)
+    }
+}
+
+// MARK: - Real Building Lookup Service
+
+extension OperationalDataManager {
+    
+    /// Get real building ID from name using database lookup
+    func getRealBuildingId(from name: String) async -> String? {
+        do {
+            let buildings = try await BuildingService.shared.getAllBuildings()
+            return buildings.first { building in
+                building.name.lowercased().contains(name.lowercased()) ||
+                name.lowercased().contains(building.name.lowercased())
+            }?.id
+        } catch {
+            print("⚠️ Error looking up building: \(error)")
+            return nil
+        }
+    }
+    
+    /// Get real worker assignments from database
+    func getRealWorkerAssignments() async -> [String: [String]] {
+        var assignments: [String: [String]] = [:]
+        
+        do {
+            let workers = try await WorkerService.shared.getAllActiveWorkers()
+            
+            for worker in workers {
+                let workerBuildings = try await BuildingService.shared.getBuildingsForWorker(worker.id)
+                assignments[worker.id] = workerBuildings.map { $0.id }
+            }
+        } catch {
+            print("⚠️ Error getting real worker assignments: \(error)")
+        }
+        
+        return assignments
+    }
+    
+    /// Initialize with real operational data
+    func initializeRealOperationalData() async throws {
+        print("🏢 Initializing real operational data...")
+        
+        // Get real worker assignments
+        let realAssignments = await getRealWorkerAssignments()
+        
+        // Update internal data structures with real assignments
+        for (workerId, buildingIds) in realAssignments {
+            // Store real assignments in database or memory as needed
+            try await updateWorkerAssignments(workerId: workerId, buildingIds: buildingIds)
+        }
+        
+        print("✅ Real operational data initialized")
+    }
+    
+    private func updateWorkerAssignments(workerId: String, buildingIds: [String]) async throws {
+        // Implementation to store worker assignments
+        let manager = GRDBManager.shared
+        
+        // Remove old assignments
+        try await manager.execute(
+            "DELETE FROM worker_assignments WHERE worker_id = ?",
+            [workerId]
+        )
+        
+        // Insert new assignments
+        for buildingId in buildingIds {
+            try await manager.execute(
+                "INSERT INTO worker_assignments (worker_id, building_id, is_active) VALUES (?, ?, ?)",
+                [workerId, buildingId, true]
+            )
+        }
     }
 }

@@ -207,18 +207,9 @@ actor IntelligenceService {
     private func generateComplianceInsights(buildings: [NamedCoordinate], tasks: [ContextualTask]) async -> [CoreTypes.IntelligenceInsight] {
         var insights: [CoreTypes.IntelligenceInsight] = []
         
-        // ✅ FIXED: Simplified filter method for compliance-related tasks
-        let complianceTasks = tasks.filter {
-            $0.description.lowercased().contains("compliance") ||
-            $0.description.lowercased().contains("inspection") ||
-            $0.description.lowercased().contains("regulation") ||
-            $0.category == .inspection
-        }
-        
-        let overdueCompliance = complianceTasks.filter {
-            guard let dueDate = $0.dueDate else { return false }
-            return !$0.isCompleted && dueDate < Date()
-        }
+        // ✅ FIXED: Use helper methods to avoid Predicate type issues
+        let complianceTasks = getComplianceTasks(from: tasks)
+        let overdueCompliance = getOverdueTasks(from: complianceTasks)
         
         if !overdueCompliance.isEmpty {
             // ✅ FIXED: Use correct IntelligenceInsight initializer
@@ -238,12 +229,8 @@ actor IntelligenceService {
     private func generateCostInsights(buildings: [NamedCoordinate], workers: [WorkerProfile], tasks: [ContextualTask]) async -> [CoreTypes.IntelligenceInsight] {
         var insights: [CoreTypes.IntelligenceInsight] = []
         
-        // ✅ FIXED: Simplified filter method for emergency tasks
-        let emergencyTasks = tasks.filter {
-            $0.description.lowercased().contains("emergency") ||
-            $0.description.lowercased().contains("urgent") ||
-            $0.urgency == .urgent || $0.urgency == .critical
-        }
+        // ✅ FIXED: Use helper method to avoid Predicate type issues
+        let emergencyTasks = getEmergencyTasks(from: tasks)
         
         if emergencyTasks.count > 5 {
             let estimatedExtraCost = Double(emergencyTasks.count) * 200.0 // Emergency premium
@@ -315,6 +302,52 @@ actor IntelligenceService {
             actionRequired: true,
             affectedBuildings: [building.id]
         )
+    }
+    
+    // MARK: - Helper Methods for Filtering (Avoid SwiftData SQL Expression Issues)
+    
+    private func getComplianceTasks(from tasks: [ContextualTask]) -> [ContextualTask] {
+        var result: [ContextualTask] = []
+        for task in tasks {
+            // ✅ FIXED: Handle optional description safely to avoid SQLExpression errors
+            let taskDescription = task.description ?? ""
+            let lowercaseDescription = taskDescription.lowercased()
+            
+            if lowercaseDescription.contains("compliance") ||
+               lowercaseDescription.contains("inspection") ||
+               lowercaseDescription.contains("regulation") ||
+               task.category == .inspection {
+                result.append(task)
+            }
+        }
+        return result
+    }
+    
+    private func getOverdueTasks(from tasks: [ContextualTask]) -> [ContextualTask] {
+        var result: [ContextualTask] = []
+        for task in tasks {
+            if let dueDate = task.dueDate, !task.isCompleted && dueDate < Date() {
+                result.append(task)
+            }
+        }
+        return result
+    }
+    
+    private func getEmergencyTasks(from tasks: [ContextualTask]) -> [ContextualTask] {
+        var result: [ContextualTask] = []
+        for task in tasks {
+            // ✅ FIXED: Handle optional description safely to avoid SQLExpression errors
+            let taskDescription = task.description ?? ""
+            let lowercaseDescription = taskDescription.lowercased()
+            
+            let isEmergencyDesc = lowercaseDescription.contains("emergency") || lowercaseDescription.contains("urgent")
+            let isEmergencyUrgency = task.urgency == .urgent || task.urgency == .critical
+            
+            if isEmergencyDesc || isEmergencyUrgency {
+                result.append(task)
+            }
+        }
+        return result
     }
 }
 
