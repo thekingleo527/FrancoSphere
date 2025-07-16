@@ -73,6 +73,9 @@ extension BuildingService {
         return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
+    // MARK: - Fixed generatePortfolioIntelligence Method
+    // Replace the existing method in your BuildingService+Intelligence.swift
+
     /// Generate portfolio-wide intelligence using existing service methods
     func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
         
@@ -82,9 +85,140 @@ extension BuildingService {
         // Use existing getAllActiveWorkers() method
         let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
         
-        // Use BuildingMetricsService to get all building metrics
+        // Use BuildingMetricsService batch method for multiple buildings
         let buildingIds = allBuildings.map { $0.id }
-        let allMetrics = try await BuildingMetricsService.shared.calculateMetrics(for: buildingIds)
+        
+        // FIX: Use calculateBatchMetrics instead of calculateMetrics for array input
+        let allMetrics = try await BuildingMetricsService.shared.calculateBatchMetrics(for: buildingIds)
+        
+        // Calculate portfolio metrics
+        let totalBuildings = allBuildings.count
+        let activeWorkers = allWorkers.count
+        
+        // Calculate overall completion rate
+        let totalCompletionRate = allMetrics.values.reduce(0.0) { sum, metrics in
+            sum + metrics.completionRate
+        }
+        let completionRate = totalBuildings > 0 ? totalCompletionRate / Double(totalBuildings) : 1.0
+        
+        // Count critical issues (overdue + urgent tasks)
+        let criticalIssues = allMetrics.values.reduce(0) { sum, metrics in
+            sum + metrics.overdueTasks + metrics.urgentTasksCount
+        }
+        
+        // Determine trend based on completion rate
+        let monthlyTrend: CoreTypes.TrendDirection = {
+            if completionRate > 0.85 {
+                return .improving
+            } else if completionRate < 0.6 {
+                return .declining
+            } else {
+                return .stable
+            }
+        }()
+        
+        return CoreTypes.PortfolioIntelligence(
+            totalBuildings: totalBuildings,
+            activeWorkers: activeWorkers,
+            completionRate: completionRate,
+            criticalIssues: criticalIssues,
+            monthlyTrend: monthlyTrend
+        )
+    }
+
+    // MARK: - Alternative: Loop Through Individual Buildings
+    // If you prefer to call calculateMetrics for each building individually:
+
+    /// Generate portfolio-wide intelligence using individual building calculations
+    func generatePortfolioIntelligenceIndividual() async throws -> CoreTypes.PortfolioIntelligence {
+        
+        // Use existing getAllBuildings() method
+        let allBuildings = try await getAllBuildings()
+        
+        // Use existing getAllActiveWorkers() method
+        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
+        
+        // Calculate metrics for each building individually
+        var allMetrics: [String: CoreTypes.BuildingMetrics] = [:]
+        
+        for building in allBuildings {
+            do {
+                let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
+                allMetrics[building.id] = metrics
+            } catch {
+                print("⚠️ Failed to get metrics for building \(building.id): \(error)")
+                // Continue with other buildings
+            }
+        }
+        
+        // Calculate portfolio metrics
+        let totalBuildings = allBuildings.count
+        let activeWorkers = allWorkers.count
+        
+        // Calculate overall completion rate
+        let totalCompletionRate = allMetrics.values.reduce(0.0) { sum, metrics in
+            sum + metrics.completionRate
+        }
+        let completionRate = totalBuildings > 0 ? totalCompletionRate / Double(totalBuildings) : 1.0
+        
+        // Count critical issues (overdue + urgent tasks)
+        let criticalIssues = allMetrics.values.reduce(0) { sum, metrics in
+            sum + metrics.overdueTasks + metrics.urgentTasksCount
+        }
+        
+        // Determine trend based on completion rate
+        let monthlyTrend: CoreTypes.TrendDirection = {
+            if completionRate > 0.85 {
+                return .improving
+            } else if completionRate < 0.6 {
+                return .declining
+            } else {
+                return .stable
+            }
+        }()
+        
+        return CoreTypes.PortfolioIntelligence(
+            totalBuildings: totalBuildings,
+            activeWorkers: activeWorkers,
+            completionRate: completionRate,
+            criticalIssues: criticalIssues,
+            monthlyTrend: monthlyTrend
+        )
+    }
+
+    // MARK: - Concurrent Version for Better Performance
+    // If you want optimal performance with concurrent execution:
+
+    /// Generate portfolio-wide intelligence using concurrent building calculations
+    func generatePortfolioIntelligenceConcurrent() async throws -> CoreTypes.PortfolioIntelligence {
+        
+        // Use existing getAllBuildings() method
+        let allBuildings = try await getAllBuildings()
+        
+        // Use existing getAllActiveWorkers() method
+        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
+        
+        // Calculate metrics for all buildings concurrently
+        let allMetrics = try await withThrowingTaskGroup(
+            of: (String, CoreTypes.BuildingMetrics).self,
+            returning: [String: CoreTypes.BuildingMetrics].self
+        ) { group in
+            
+            // Add tasks for each building
+            for building in allBuildings {
+                group.addTask {
+                    let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
+                    return (building.id, metrics)
+                }
+            }
+            
+            // Collect results
+            var results: [String: CoreTypes.BuildingMetrics] = [:]
+            for try await (buildingId, metrics) in group {
+                results[buildingId] = metrics
+            }
+            return results
+        }
         
         // Calculate portfolio metrics
         let totalBuildings = allBuildings.count

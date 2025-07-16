@@ -130,89 +130,92 @@ actor WorkerEventOutbox {
         addEvent(event)
     }
 
-    /// Attempts to send all pending events to the server
-    func attemptFlush() async {
-        guard !pendingEvents.isEmpty else { return }
-        
-        print("📤 Attempting to flush \(pendingEvents.count) events...")
-        
-        var successfullySyncedEvents: [String] = []
+    // COMPLETE FIX for WorkerEventOutbox.swift
+    // Replace the problematic section around lines 170-190 with this:
 
-        for var event in pendingEvents {
-            do {
-                // Simulate a network request
-                try await submitEventToServer(event)
-                
-                // If successful, mark for removal and broadcast completion
-                successfullySyncedEvents.append(event.id)
-                
-                // ✅ FIXED: Convert to standalone WorkerEvent and broadcast
-                await dataSyncService.broadcastSyncCompletion(for: event.toSyncEvent())
-                
-            } catch {
-                // Handle retry logic
-                event.retryCount += 1
-                print("⚠️ Failed to sync event \(event.id), retry \(event.retryCount). Error: \(error)")
-                
-                // Update the event in the queue with the new retry count
-                if let index = pendingEvents.firstIndex(where: { $0.id == event.id }) {
-                    pendingEvents[index] = event
-                }
-                
-                // If retry count exceeds threshold, log and possibly remove
-                if event.retryCount >= 5 {
-                    print("🚨 Event \(event.id) has exceeded retry limit, removing from queue")
+        /// Attempts to send all pending events to the server
+        func attemptFlush() async {
+            guard !pendingEvents.isEmpty else { return }
+            
+            print("📤 Attempting to flush \(pendingEvents.count) events...")
+            
+            var successfullySyncedEvents: [String] = []
+
+            for var event in pendingEvents {
+                do {
+                    // Simulate a network request
+                    try await submitEventToServer(event)
+                    
+                    // If successful, mark for removal and broadcast completion
                     successfullySyncedEvents.append(event.id)
+                    
+                    // ✅ FIXED: Convert to standalone WorkerEvent and broadcast
+                    await dataSyncService.broadcastSyncCompletion(for: event.toSyncEvent())
+                    
+                } catch {
+                    // Handle retry logic
+                    event.retryCount += 1
+                    print("⚠️ Failed to sync event \(event.id), retry \(event.retryCount). Error: \(error)")
+                    
+                    // Update the event in the queue with the new retry count
+                    if let index = pendingEvents.firstIndex(where: { $0.id == event.id }) {
+                        pendingEvents[index] = event
+                    }
+                    
+                    // If retry count exceeds threshold, log and possibly remove
+                    if event.retryCount >= 5 {
+                        print("🚨 Event \(event.id) has exceeded retry limit, removing from queue")
+                        successfullySyncedEvents.append(event.id)
+                    }
                 }
+            }
+            
+            // Remove successfully synced events from the queue
+            if !successfullySyncedEvents.isEmpty {
+                pendingEvents.removeAll { successfullySyncedEvents.contains($0.id) }
+                savePendingEvents()
+                print("✅ Flushed \(successfullySyncedEvents.count) events successfully.")
             }
         }
         
-        // Remove successfully synced events from the queue
-        if !successfullySyncedEvents.isEmpty {
-            pendingEvents.removeAll { successfullySyncedEvents.contains($0.id) }
+        /// Simulates submitting a single event to a remote server
+        private func submitEventToServer(_ event: OutboxEvent) async throws {
+            // Simulate network latency
+            try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
+            
+            // ✅ FIXED: Simulate a potential network failure for demonstration purposes
+            if Double.random(in: 0...1) < 0.1 { // 10% chance of failure
+                throw URLError(.notConnectedToInternet)
+            }
+            
+            // If we reach here, the sync is considered successful
+            print("   -> Successfully synced event \(event.id) to server.")
+        }
+        
+        // MARK: - Queue Management
+        
+        /// Get the current number of pending events
+        func getPendingEventCount() -> Int {
+            return pendingEvents.count
+        }
+        
+        /// Get all pending events (for debugging)
+        func getPendingEvents() -> [OutboxEvent] {
+            return pendingEvents
+        }
+        
+        /// Clear all pending events (use with caution)
+        func clearAllEvents() {
+            pendingEvents.removeAll()
             savePendingEvents()
-            print("✅ Flushed \(successfullySyncedEvents.count) events successfully.")
-        }
-    }
-    
-    /// Simulates submitting a single event to a remote server
-    private func submitEventToServer(_ event: OutboxEvent) async throws {
-        // Simulate network latency
-        try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
-        
-        // Simulate a potential network failure for demonstration purposes
-        if calculateRealEfficiency() < 0.1 { // 10% chance of failure
-            throw URLError(.notConnectedToInternet)
+            print("🧹 Cleared all pending events from outbox")
         }
         
-        // If we reach here, the sync is considered successful
-        print("   -> Successfully synced event \(event.id) to server.")
-    }
-    
-    // MARK: - Queue Management
-    
-    /// Get the current number of pending events
-    func getPendingEventCount() -> Int {
-        return pendingEvents.count
-    }
-    
-    /// Get all pending events (for debugging)
-    func getPendingEvents() -> [OutboxEvent] {
-        return pendingEvents
-    }
-    
-    /// Clear all pending events (use with caution)
-    func clearAllEvents() {
-        pendingEvents.removeAll()
-        savePendingEvents()
-        print("🧹 Cleared all pending events from outbox")
-    }
-    
-    /// Force retry all failed events
-    func retryAllEvents() async {
-        print("🔄 Forcing retry of all pending events...")
-        await attemptFlush()
-    }
+        /// Force retry all failed events
+        func retryAllEvents() async {
+            print("🔄 Forcing retry of all pending events...")
+            await attemptFlush()
+        }
     
     // MARK: - Persistence (Simplified using UserDefaults)
     

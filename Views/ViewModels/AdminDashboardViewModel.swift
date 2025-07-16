@@ -1,5 +1,4 @@
 //
-//
 //  AdminDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
@@ -70,14 +69,14 @@ class AdminDashboardViewModel: ObservableObject {
         
         do {
             async let buildingsLoad = buildingService.getAllBuildings()
-            async let workersLoad = workerService.getAllWorkers()
+            async let workersLoad = workerService.getAllActiveWorkers() // ✅ FIXED: Use correct method name
             async let tasksLoad = taskService.getAllTasks()
             
             let (buildings, workers, tasks) = try await (buildingsLoad, workersLoad, tasksLoad)
             
             self.buildings = buildings
-            self.activeWorkers = workers.filter { $0.isActive }.map { WorkerProfile(from: $0) }
-            self.ongoingTasks = tasks.filter { !$0.isCompleted }.map { ContextualTask(from: $0) }
+            self.activeWorkers = workers.filter { $0.isActive } // ✅ FIXED: No conversion needed
+            self.ongoingTasks = tasks.filter { !$0.isCompleted } // ✅ FIXED: No conversion needed
             
             // Load building metrics
             await loadBuildingMetrics()
