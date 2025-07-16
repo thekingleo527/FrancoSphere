@@ -753,3 +753,377 @@ extension CoreTypes.InsightType {
     )
     .preferredColorScheme(.dark)
 }
+// ADD this to your existing IntelligenceInsightsView.swift file
+// This adds the Nova AI floating assistant to the intelligence view
+
+// MODIFY your existing IntelligenceInsightsView to include Nova integration:
+
+struct IntelligenceInsightsView: View {
+    let insights: [CoreTypes.IntelligenceInsight]
+    let onInsightAction: ((CoreTypes.IntelligenceInsight) -> Void)?
+    let onRefreshInsights: (() async -> Void)?
+    
+    // ADD: Nova AI integration
+    @StateObject private var novaCore = NovaCore.shared
+    @State private var showNovaAssistant = false
+    @State private var novaHasNewInsights = false
+    
+    // Existing state variables...
+    @State private var selectedFilter: LocalInsightFilter = .all
+    @State private var selectedInsight: CoreTypes.IntelligenceInsight?
+    @State private var showingDetailSheet = false
+    @State private var showingActionSheet = false
+    @State private var isRefreshing = false
+    
+    var body: some View {
+        ZStack {
+            // Existing content...
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Existing header and content...
+                    headerSection
+                    
+                    // Filter controls
+                    filterSection
+                    
+                    // Insights display
+                    insightsSection
+                }
+                .padding()
+            }
+            .refreshable {
+                await refreshInsights()
+            }
+            
+            // ADD: Nova floating assistant
+            .overlay(alignment: .bottomTrailing) {
+                NovaFloatingAssistant(
+                    hasNewInsights: novaHasNewInsights,
+                    isProcessing: novaCore.isProcessing,
+                    onTap: {
+                        showNovaAssistant = true
+                    }
+                )
+                .padding()
+            }
+        }
+        .sheet(isPresented: $showNovaAssistant) {
+            NovaInteractionView()
+        }
+        .sheet(isPresented: $showingDetailSheet) {
+            if let insight = selectedInsight {
+                InsightDetailSheet(insight: insight, onAction: onInsightAction)
+            }
+        }
+        .actionSheet(isPresented: $showingActionSheet) {
+            if let insight = selectedInsight {
+                ActionSheet(
+                    title: Text(insight.title),
+                    buttons: [
+                        .default(Text("Take Action")) {
+                            onInsightAction?(insight)
+                        },
+                        .cancel()
+                    ]
+                )
+            } else {
+                ActionSheet(title: Text("No Action Available"), buttons: [.cancel()])
+            }
+        }
+        .task {
+            await checkForNovaInsights()
+        }
+    }
+    
+    // ADD: Nova insight checking
+    private func checkForNovaInsights() async {
+        // Generate Nova insights for current context
+        await MainActor.run {
+            // Check if Nova has processed any new insights
+            if novaCore.currentPrompt != nil {
+                novaHasNewInsights = true
+            }
+            
+            // Generate contextual insights based on current data
+            Task {
+                await generateContextualInsights()
+            }
+        }
+    }
+    
+    private func generateContextualInsights() async {
+        // Generate insights based on current intelligence data
+        if !insights.isEmpty {
+            let highPriorityInsights = insights.filter { $0.priority == .high }
+            if !highPriorityInsights.isEmpty {
+                novaHasNewInsights = true
+            }
+        }
+    }
+    
+    // Existing sections...
+    private var headerSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Intelligence Insights")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("\(filteredInsights.count) insights available")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                Task { await refreshInsights() }
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                    .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                    .animation(.linear(duration: 1), value: isRefreshing)
+            }
+            .disabled(isRefreshing)
+        }
+    }
+    
+    private var filterSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(LocalInsightFilter.allCases, id: \.self) { filter in
+                    FilterButton(
+                        title: filter.displayName,
+                        isSelected: selectedFilter == filter,
+                        action: { selectedFilter = filter }
+                    )
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var insightsSection: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(filteredInsights) { insight in
+                InsightCard(insight: insight) {
+                    selectedInsight = insight
+                    showingDetailSheet = true
+                }
+            }
+        }
+    }
+    
+    private var filteredInsights: [CoreTypes.IntelligenceInsight] {
+        switch selectedFilter {
+        case .all:
+            return insights
+        case .high:
+            return insights.filter { $0.priority == .high }
+        case .medium:
+            return insights.filter { $0.priority == .medium }
+        case .low:
+            return insights.filter { $0.priority == .low }
+        case .actionable:
+            return insights.filter { $0.isActionable }
+        }
+    }
+    
+    private func refreshInsights() async {
+        isRefreshing = true
+        await onRefreshInsights?()
+        isRefreshing = false
+        
+        // Check for new Nova insights after refresh
+        await checkForNovaInsights()
+    }
+}
+
+// MARK: - Nova Floating Assistant Component
+
+struct NovaFloatingAssistant: View {
+    let hasNewInsights: Bool
+    let isProcessing: Bool
+    let onTap: () -> Void
+    
+    @State private var breathe = false
+    @State private var rotationAngle = 0.0
+    
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                // Pulsing background when has insights
+                if hasNewInsights {
+                    Circle()
+                        .fill(Color.purple.opacity(0.3))
+                        .frame(width: 70, height: 70)
+                        .scaleEffect(breathe ? 1.2 : 1.0)
+                        .animation(
+                            .easeInOut(duration: 2).repeatForever(autoreverses: true),
+                            value: breathe
+                        )
+                }
+                
+                // Nova avatar using AIAssistant image
+                AIAssistantImageLoader.circularAIAssistantView(
+                    diameter: 60,
+                    borderColor: isProcessing ? .purple : .blue
+                )
+                .shadow(color: .purple.opacity(0.5), radius: 10)
+                
+                // Processing indicator
+                if isProcessing {
+                    Circle()
+                        .stroke(
+                            AngularGradient(
+                                colors: [.purple, .blue, .purple],
+                                center: .center
+                            ),
+                            lineWidth: 2
+                        )
+                        .frame(width: 64, height: 64)
+                        .rotationEffect(.degrees(rotationAngle))
+                        .animation(
+                            .linear(duration: 2).repeatForever(autoreverses: false),
+                            value: rotationAngle
+                        )
+                }
+                
+                // New insights badge
+                if hasNewInsights && !isProcessing {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 16, height: 16)
+                        .overlay(
+                            Text("!")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                        )
+                        .offset(x: 20, y: -20)
+                }
+            }
+        }
+        .onAppear {
+            breathe = true
+            if isProcessing {
+                rotationAngle = 360
+            }
+        }
+        .onChange(of: isProcessing) { newValue in
+            if newValue {
+                rotationAngle = 360
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Components
+
+struct FilterButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    isSelected ? Color.blue : Color.gray.opacity(0.2)
+                )
+                .foregroundColor(isSelected ? .white : .primary)
+                .cornerRadius(20)
+        }
+    }
+}
+
+struct InsightCard: View {
+    let insight: CoreTypes.IntelligenceInsight
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(insight.title)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    PriorityIndicator(priority: insight.priority)
+                }
+                
+                Text(insight.summary)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+                
+                HStack {
+                    Text(insight.category.rawValue)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.2))
+                        .cornerRadius(8)
+                    
+                    Spacer()
+                    
+                    if insight.isActionable {
+                        Text("Actionable")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.green)
+                    }
+                }
+            }
+            .padding()
+            .background(.ultraThinMaterial)
+            .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct PriorityIndicator: View {
+    let priority: CoreTypes.IntelligencePriority
+    
+    var body: some View {
+        Circle()
+            .fill(priorityColor)
+            .frame(width: 12, height: 12)
+    }
+    
+    private var priorityColor: Color {
+        switch priority {
+        case .high: return .red
+        case .medium: return .orange
+        case .low: return .green
+        }
+    }
+}
+
+// MARK: - Filter Enum
+
+enum LocalInsightFilter: String, CaseIterable {
+    case all = "all"
+    case high = "high"
+    case medium = "medium"
+    case low = "low"
+    case actionable = "actionable"
+    
+    var displayName: String {
+        switch self {
+        case .all: return "All"
+        case .high: return "High Priority"
+        case .medium: return "Medium Priority"
+        case .low: return "Low Priority"
+        case .actionable: return "Actionable"
+        }
+    }
+}

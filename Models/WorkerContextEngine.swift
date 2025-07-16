@@ -140,8 +140,13 @@ public actor WorkerContextEngine {
             // Add weather context if building location available
             var enhancedTask = task
             if let building = task.building {
-                let weather = await weatherAdapter.getWeatherForLocation(building.coordinate)
-                if let weather = weather {
+                // Trigger weather fetch for building
+                weatherAdapter.fetchWeatherForBuilding(building)
+                
+                // Wait briefly for weather to load
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                
+                if let weather = await weatherAdapter.currentWeather {
                     enhancedTask = addWeatherContext(to: task, weather: weather)
                 }
             }
@@ -162,27 +167,58 @@ public actor WorkerContextEngine {
         return enhancedTasks.sorted { first, second in
             let firstUrgency = first.urgency ?? .medium
             let secondUrgency = second.urgency ?? .medium
-            return firstUrgency.rawValue > secondUrgency.rawValue
+            return getUrgencyPriority(firstUrgency) > getUrgencyPriority(secondUrgency)
+        }
+    }
+    
+    // Helper method to get numeric priority for urgency
+    private func getUrgencyPriority(_ urgency: TaskUrgency) -> Int {
+        switch urgency {
+        case .low: return 1
+        case .medium: return 2
+        case .high: return 3
+        case .urgent: return 4
+        case .critical: return 5
+        case .emergency: return 6
         }
     }
     
     // 🔧 PHASE 1 FIX: Add weather context to tasks
     private func addWeatherContext(to task: ContextualTask, weather: WeatherData) -> ContextualTask {
-        var enhancedTask = task
-        
-        // Add weather-based urgency adjustments
+        // Create new task with weather-adjusted urgency
+        let weatherAdjustedUrgency: TaskUrgency
         if weather.condition == .rainy || weather.condition == .stormy {
             // Increase urgency for outdoor tasks
             if task.category == .cleaning || task.category == .maintenance {
-                enhancedTask.urgency = .high
+                weatherAdjustedUrgency = .high
+            } else {
+                weatherAdjustedUrgency = task.urgency ?? .medium
             }
+        } else {
+            weatherAdjustedUrgency = task.urgency ?? .medium
         }
         
-        // Add weather notes
+        // Add weather context to description
         let weatherNote = "Weather: \(weather.condition.rawValue), \(Int(weather.temperature))°F"
-        enhancedTask.notes = [task.notes, weatherNote].compactMap { $0 }.joined(separator: " | ")
+        let enhancedDescription = [task.description, weatherNote].compactMap { $0 }.joined(separator: " | ")
         
-        return enhancedTask
+        // Create new ContextualTask with weather enhancements
+        return ContextualTask(
+            id: task.id,
+            title: task.title,
+            description: enhancedDescription,
+            isCompleted: task.isCompleted,
+            completedDate: task.completedDate,
+            scheduledDate: task.scheduledDate,
+            dueDate: task.dueDate,
+            category: task.category,
+            urgency: weatherAdjustedUrgency,
+            building: task.building,
+            worker: task.worker,
+            buildingId: task.buildingId,
+            buildingName: task.buildingName,
+            priority: weatherAdjustedUrgency
+        )
     }
     
     // 🔧 PHASE 1 FIX: Get aggregated weather for all buildings
@@ -191,7 +227,12 @@ public actor WorkerContextEngine {
         
         // Get weather for first building as representative
         let firstBuilding = buildings.first!
-        return await weatherAdapter.getWeatherForLocation(firstBuilding.coordinate)
+        weatherAdapter.fetchWeatherForBuilding(firstBuilding)
+        
+        // Wait briefly for weather to load
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        return await weatherAdapter.currentWeather
     }
     
     // 🔧 PHASE 1 FIX: Generate weather-based tasks
@@ -421,7 +462,7 @@ public actor WorkerContextEngine {
                 let secondUrgency = second.urgency ?? .medium
                 
                 if firstUrgency != secondUrgency {
-                    return firstUrgency.rawValue > secondUrgency.rawValue
+                    return getUrgencyPriority(firstUrgency) > getUrgencyPriority(secondUrgency)
                 }
                 
                 guard let firstDue = first.dueDate, let secondDue = second.dueDate else {

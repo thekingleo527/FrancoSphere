@@ -1679,3 +1679,159 @@ private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
         return date
     }
 }
+extension OperationalDataManager {
+    
+    /// Get tasks for a specific worker on a specific date
+    /// This method connects WorkerContextEngine to real operational data
+    func getTasksForWorker(_ workerId: String, date: Date) async -> [ContextualTask] {
+        print("🔍 Getting tasks for worker: \(workerId) on date: \(date)")
+        
+        // Get worker name from ID
+        let workerName = WorkerConstants.getWorkerName(id: workerId)
+        
+        // Filter real-world tasks for this worker
+        let workerTasks = realWorldTasks.filter { task in
+            task.assignedWorker == workerName
+        }
+        
+        print("📋 Found \(workerTasks.count) operational tasks for \(workerName)")
+        
+        // Convert to ContextualTask objects
+        var contextualTasks: [ContextualTask] = []
+        
+        for operationalTask in workerTasks {
+            // Get building coordinate for this task
+            let building = await getBuildingCoordinate(for: operationalTask.building)
+            
+            // Create worker profile
+            let workerProfile = WorkerProfile(
+                id: workerId,
+                name: workerName,
+                email: "",
+                phoneNumber: "",
+                role: .worker,
+                skills: [],
+                certifications: [],
+                hireDate: Date(),
+                isActive: true
+            )
+            
+            // Calculate due date based on recurrence
+            let dueDate = calculateDueDate(for: operationalTask.recurrence, from: date)
+            
+            // Map category to TaskCategory
+            let taskCategory = mapToTaskCategory(operationalTask.category)
+            
+            // Map skill level to urgency
+            let urgency = mapSkillLevelToUrgency(operationalTask.skillLevel)
+            
+            // Create ContextualTask
+            let contextualTask = ContextualTask(
+                id: UUID().uuidString,
+                title: operationalTask.taskName,
+                description: generateTaskDescription(operationalTask),
+                isCompleted: false,
+                completedDate: nil,
+                scheduledDate: date,
+                dueDate: dueDate,
+                category: taskCategory,
+                urgency: urgency,
+                building: building,
+                worker: workerProfile,
+                buildingId: building?.id,
+                buildingName: operationalTask.building,
+                priority: urgency
+            )
+            
+            contextualTasks.append(contextualTask)
+        }
+        
+        print("✅ Converted to \(contextualTasks.count) ContextualTask objects")
+        return contextualTasks
+    }
+    
+    /// Get building coordinate for a building name
+    private func getBuildingCoordinate(for buildingName: String) async -> NamedCoordinate? {
+        do {
+            let buildings = try await BuildingService.shared.getAllBuildings()
+            return buildings.first { building in
+                building.name.lowercased().contains(buildingName.lowercased()) ||
+                buildingName.lowercased().contains(building.name.lowercased())
+            }
+        } catch {
+            print("⚠️ Error getting building coordinate for \(buildingName): \(error)")
+            return nil
+        }
+    }
+    
+    /// Map operational category to TaskCategory
+    private func mapToTaskCategory(_ category: String) -> TaskCategory {
+        switch category.lowercased() {
+        case "cleaning": return .cleaning
+        case "maintenance": return .maintenance
+        case "inspection": return .inspection
+        case "repair": return .repair
+        case "emergency": return .emergency
+        default: return .maintenance
+        }
+    }
+    
+    /// Map skill level to urgency
+    private func mapSkillLevelToUrgency(_ skillLevel: String) -> TaskUrgency {
+        switch skillLevel.lowercased() {
+        case "basic": return .low
+        case "intermediate": return .medium
+        case "advanced": return .high
+        case "expert": return .critical
+        default: return .medium
+        }
+    }
+    
+    /// Generate task description with operational context
+    private func generateTaskDescription(_ task: OperationalDataTaskAssignment) -> String {
+        var description = task.taskName
+        
+        // Add time context if available
+        if let startHour = task.startHour, let endHour = task.endHour {
+            description += " (Scheduled: \(startHour):00 - \(endHour):00)"
+        }
+        
+        // Add days of week if specified
+        if let daysOfWeek = task.daysOfWeek {
+            description += " [Days: \(daysOfWeek)]"
+        }
+        
+        // Add recurrence pattern
+        description += " - \(task.recurrence)"
+        
+        return description
+    }
+    
+    /// Calculate due date based on recurrence pattern
+    private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
+        let calendar = Calendar.current
+        
+        switch recurrence {
+        case "Daily":
+            return date
+        case "Weekly":
+            return calendar.date(byAdding: .day, value: 7, to: date) ?? date
+        case "Bi-Weekly":
+            return calendar.date(byAdding: .day, value: 14, to: date) ?? date
+        case "Monthly":
+            return calendar.date(byAdding: .month, value: 1, to: date) ?? date
+        case "Bi-Monthly":
+            return calendar.date(byAdding: .month, value: 2, to: date) ?? date
+        case "Quarterly":
+            return calendar.date(byAdding: .month, value: 3, to: date) ?? date
+        case "Semiannual":
+            return calendar.date(byAdding: .month, value: 6, to: date) ?? date
+        case "Annual":
+            return calendar.date(byAdding: .year, value: 1, to: date) ?? date
+        case "On-Demand":
+            return calendar.date(byAdding: .day, value: 1, to: date) ?? date
+        default:
+            return calendar.date(byAdding: .day, value: 1, to: date) ?? date
+        }
+    }
+}
