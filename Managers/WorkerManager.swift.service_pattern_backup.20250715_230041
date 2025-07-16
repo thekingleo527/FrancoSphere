@@ -14,7 +14,7 @@ import Combine
 
 @MainActor
 public class WorkerManager: ObservableObject {
-    public static let shared = WorkerService.shared
+    public static let shared = WorkerService()
     
     @Published public var currentWorker: WorkerProfile?
     @Published public var allWorkers: [WorkerProfile] = []

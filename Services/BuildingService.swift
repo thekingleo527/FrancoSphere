@@ -13,7 +13,7 @@ import GRDB
 
 actor BuildingService {
     // ✅ FIXED: Circular reference - creates new instance instead of referencing self
-    static let shared = BuildingService.shared
+    static let shared = BuildingService()
     
     private let grdbManager = GRDBManager.shared
     

@@ -2,7 +2,7 @@
 //  DataSynchronizationService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Circular reference resolved
+//  ✅ FIXED: Circular reference resolved - proper singleton pattern
 //  ✅ V6.0: Phase 2.1 - Cross-Dashboard Broadcasting
 //  ✅ The central hub for real-time updates across the application
 //  ✅ Uses a Combine pipeline to broadcast events
@@ -55,8 +55,8 @@ struct WorkerEvent {
 /// to update their state automatically without manual refreshes
 @MainActor
 class DataSynchronizationService: ObservableObject {
-    // ✅ FIXED: Circular reference - creates new instance instead of referencing self
-    static let shared = DataSynchronizationService.shared
+    // ✅ FIXED: Proper singleton pattern - creates new instance, not circular reference
+    static let shared = DataSynchronizationService()
 
     // A Combine subject to push events through the pipeline
     private let workerEventSyncedSubject = PassthroughSubject<WorkerEventSynced, Never>()
@@ -69,7 +69,7 @@ class DataSynchronizationService: ObservableObject {
     // A stream for broadcasting building intelligence updates
     @Published private(set) var buildingIntelligenceUpdates: [String: [CoreTypes.IntelligenceInsight]] = [:]
     
-    // Services
+    // Services - using shared instances
     private let buildingService = BuildingService.shared
     private let intelligenceService = IntelligenceService.shared
 

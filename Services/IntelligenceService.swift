@@ -2,422 +2,411 @@
 //  IntelligenceService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: Method signatures with actual service implementations
-//  ✅ CORRECTED: Optional unwrapping and error handling
-//  ✅ FUNCTIONAL: Real data integration with existing services
+//  ✅ FIXED: Actor isolation and service singleton patterns
+//  ✅ ENHANCED: Proper nonisolated shared access pattern
+//  ✅ INTEGRATED: With real data from existing services
 //
 
 import Foundation
 
 actor IntelligenceService {
     // ✅ FIXED: nonisolated shared for cross-actor access
-    nonisolated static let shared = IntelligenceService.shared
+    nonisolated static let shared = IntelligenceService()
     
+    // ✅ FIXED: Private init for singleton
     private init() {}
     
     // MARK: - Main Intelligence Generation
     
     /// Generate portfolio-wide intelligence insights from real data
-    func generatePortfolioInsights() async throws -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
+    func generatePortfolioInsights() async throws -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
         
-        // ✅ FIXED: Use .shared pattern for all services
+        // ✅ FIXED: Use shared instances for proper singleton pattern
         let buildingService = BuildingService.shared
         let taskService = TaskService.shared
         let workerService = WorkerService.shared
         
-        do {
-            // Get real data from services
-            let buildings = try await buildingService.getAllBuildings()
-            let allTasks = try await taskService.getAllTasks()
-            let activeWorkers = try await workerService.getAllActiveWorkers()
-            
-            // Generate insights from real data
-            insights.append(contentsOf: await generatePerformanceInsights(buildings: buildings, tasks: allTasks))
-            insights.append(contentsOf: await generateMaintenanceInsights(buildings: buildings, tasks: allTasks))
-            insights.append(contentsOf: await generateEfficiencyInsights(buildings: buildings, tasks: allTasks, workers: activeWorkers))
-            insights.append(contentsOf: await generateComplianceInsights(buildings: buildings, tasks: allTasks))
-            
-        } catch {
-            print("⚠️ Error generating portfolio insights: \(error)")
-            // Return basic insight about the error
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "Intelligence Service Unavailable",
-                description: "Unable to generate full portfolio insights at this time",
-                type: .performance,
-                priority: .medium,
-                actionRequired: false,
-                affectedBuildings: []
-            ))
-        }
+        // Get real data from services
+        let buildings = try await buildingService.getAllBuildings()
+        let allTasks = try await taskService.getAllTasks()
+        let activeWorkers = try await workerService.getAllActiveWorkers()
+        
+        // Generate insights from real data
+        insights.append(contentsOf: await generatePerformanceInsights(buildings: buildings, tasks: allTasks))
+        insights.append(contentsOf: await generateMaintenanceInsights(buildings: buildings, tasks: allTasks))
+        insights.append(contentsOf: await generateEfficiencyInsights(buildings: buildings, tasks: allTasks, workers: activeWorkers))
+        insights.append(contentsOf: await generateComplianceInsights(buildings: buildings, tasks: allTasks))
+        insights.append(contentsOf: await generateCostInsights(buildings: buildings, workers: activeWorkers, tasks: allTasks))
         
         return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
     /// Generate insights for a specific building
-    func generateBuildingInsights(for buildingId: String) async throws -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
+    func generateBuildingInsights(for buildingId: String) async throws -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
         
-        // ✅ FIXED: Use .shared pattern
+        // ✅ FIXED: Use shared instances
         let buildingService = BuildingService.shared
         let taskService = TaskService.shared
         
-        do {
-            // ✅ FIXED: Add correct argument label 'buildingId:'
-            guard let building = try await buildingService.getBuilding(buildingId: buildingId) else {
-                return insights
-            }
-            
-            // ✅ FIXED: Use correct TaskService method that exists
-            let allTasks = try await taskService.getAllTasks()
-            // Filter tasks for this building
-            let tasks = allTasks.filter { $0.buildingId == buildingId }
-            
-            // Building-specific insights
-            let completedTasks = tasks.filter { $0.isCompleted }.count
-            let completionRate = tasks.count > 0 ? Double(completedTasks) / Double(tasks.count) : 1.0
-            
-            if completionRate < 0.7 {
-                insights.append(CoreTypes.IntelligenceInsight(
-                    title: "Low Completion Rate",
-                    description: "Building \(building.name) has \(Int(completionRate * 100))% completion rate",
-                    type: .performance,
-                    priority: completionRate < 0.5 ? .critical : .high,
-                    actionRequired: true,
-                    affectedBuildings: [buildingId]
-                ))
-            }
-            
-            let overdueTasks = tasks.filter { task in
-                guard let dueDate = task.dueDate else { return false }
-                return !task.isCompleted && dueDate < Date()
-            }
-            
-            if overdueTasks.count > 3 {
-                insights.append(CoreTypes.IntelligenceInsight(
-                    title: "Multiple Overdue Tasks",
-                    description: "Building \(building.name) has \(overdueTasks.count) overdue tasks",
-                    type: .maintenance,
-                    priority: overdueTasks.count > 10 ? .critical : .high,
-                    actionRequired: true,
-                    affectedBuildings: [buildingId]
-                ))
-            }
-            
-        } catch {
-            print("⚠️ Error generating building insights: \(error)")
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "Building Analysis Unavailable",
-                description: "Unable to analyze building \(buildingId) at this time",
-                type: .performance,
-                priority: .low,
-                actionRequired: false,
-                affectedBuildings: [buildingId]
-            ))
+        guard let building = try await buildingService.getBuilding(buildingId) else {
+            throw IntelligenceError.buildingNotFound(buildingId)
         }
         
-        return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
-    }
-    
-    // MARK: - Private Insight Generation Methods
-    
-    private func generatePerformanceInsights(
-        buildings: [NamedCoordinate],
-        tasks: [ContextualTask]
-    ) async -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
+        let buildingTasks = try await taskService.getTasks(for: buildingId)
+        let analytics = try await buildingService.getBuildingAnalytics(buildingId)
         
-        let totalTasks = tasks.count
-        let completedTasks = tasks.filter { $0.isCompleted }.count
-        let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 1.0
+        // Generate building-specific insights
+        if analytics.completionRate < 0.7 {
+            insights.append(createLowCompletionInsight(building: building, analytics: analytics))
+        }
         
-        if completionRate < 0.8 && totalTasks > 0 {
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "Portfolio Performance Below Target",
-                description: "Overall completion rate is \(Int(completionRate * 100))%, below 80% target",
-                type: .performance,
-                priority: completionRate < 0.6 ? .critical : .high,
-                actionRequired: true,
-                affectedBuildings: buildings.map { $0.id }
-            ))
+        if analytics.overdueTasks > 5 {
+            insights.append(createOverdueTasksInsight(building: building, count: analytics.overdueTasks))
         }
         
         return insights
     }
     
-    private func generateMaintenanceInsights(
-        buildings: [NamedCoordinate],
-        tasks: [ContextualTask]
-    ) async -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
-        
-        let maintenanceTasks = tasks.filter { $0.category == .maintenance }
-        let overdueMaintenance = maintenanceTasks.filter { task in
-            guard let dueDate = task.dueDate else { return false }
-            return !task.isCompleted && dueDate < Date()
-        }
-        
-        if overdueMaintenance.count > 5 {
-            // ✅ FIXED: Properly handle optional strings - collect non-nil buildingIds
-            let affectedBuildingIds: [String] = overdueMaintenance.compactMap { task -> String? in
-                // Handle optional buildingId safely - check if nil or empty
-                guard let buildingId = task.buildingId, !buildingId.isEmpty else { return nil }
-                return buildingId
-            }
-            
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "Overdue Maintenance Tasks",
-                description: "\(overdueMaintenance.count) maintenance tasks are overdue across portfolio",
-                type: .maintenance,
-                priority: overdueMaintenance.count > 15 ? .critical : .high,
-                actionRequired: true,
-                affectedBuildings: Array(Set(affectedBuildingIds))
-            ))
-        }
-        
-        return insights
-    }
+    // MARK: - Portfolio Intelligence Generation
     
-    private func generateEfficiencyInsights(
-        buildings: [NamedCoordinate],
-        tasks: [ContextualTask],
-        workers: [WorkerProfile]
-    ) async -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
-        
-        let avgTasksPerWorker = workers.count > 0 ? Double(tasks.count) / Double(workers.count) : 0.0
-        
-        if avgTasksPerWorker > 20 {
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "High Task Load Per Worker",
-                description: "Average of \(Int(avgTasksPerWorker)) tasks per worker exceeds recommended capacity",
-                type: .efficiency,
-                priority: avgTasksPerWorker > 30 ? .high : .medium,
-                actionRequired: true,
-                affectedBuildings: buildings.map { $0.id }
-            ))
-        }
-        
-        return insights
-    }
-    
-    private func generateComplianceInsights(
-        buildings: [NamedCoordinate],
-        tasks: [ContextualTask]
-    ) async -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
-        
-        let inspectionTasks = tasks.filter { $0.category == .inspection }
-        let overdueInspections = inspectionTasks.filter { task in
-            guard let dueDate = task.dueDate else { return false }
-            return !task.isCompleted && dueDate < Date()
-        }
-        
-        if overdueInspections.count > 0 {
-            // ✅ FIXED: Properly handle optional strings - collect non-nil buildingIds
-            let affectedBuildingIds: [String] = overdueInspections.compactMap { task -> String? in
-                // Handle optional buildingId safely - check if nil or empty
-                guard let buildingId = task.buildingId, !buildingId.isEmpty else { return nil }
-                return buildingId
-            }
-            
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "Overdue Safety Inspections",
-                description: "\(overdueInspections.count) safety/compliance inspections are overdue",
-                type: .compliance,
-                priority: .critical,
-                actionRequired: true,
-                affectedBuildings: Array(Set(affectedBuildingIds))
-            ))
-        }
-        
-        return insights
-    }
-    
-    // MARK: - Portfolio Analysis Methods
-    
-    /// Generate insights for worker efficiency across portfolio
-    func generateWorkerEfficiencyInsights() async throws -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
-        
-        let workerService = WorkerService.shared
+    func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
+        // ✅ FIXED: Use shared instances
+        let buildingService = BuildingService.shared
         let taskService = TaskService.shared
+        let buildingMetricsService = BuildingMetricsService.shared
         
-        do {
-            let workers = try await workerService.getAllActiveWorkers()
-            let allTasks = try await taskService.getAllTasks()
-            
-            // Analyze worker performance
-            for worker in workers {
-                // ✅ FIXED: Use correct property name for worker assignment
-                let workerTasks = allTasks.filter { task in
-                    // Check if this worker is assigned to this task
-                    // Using assignedWorkerId (singular) instead of assignedWorkerIds
-                    return task.assignedWorkerId == worker.id
-                }
-                let completedTasks = workerTasks.filter { $0.isCompleted }.count
-                let completionRate = workerTasks.count > 0 ? Double(completedTasks) / Double(workerTasks.count) : 1.0
-                
-                if completionRate < 0.6 && workerTasks.count > 5 {
-                    // ✅ FIXED: Safely handle optional buildingIds
-                    let affectedBuildingIds: [String] = workerTasks.compactMap { task -> String? in
-                        guard let buildingId = task.buildingId, !buildingId.isEmpty else { return nil }
-                        return buildingId
-                    }
-                    
-                    insights.append(CoreTypes.IntelligenceInsight(
-                        title: "Worker Performance Issue",
-                        description: "Worker \(worker.name) has low completion rate of \(Int(completionRate * 100))%",
-                        type: .performance,
-                        priority: .medium,
-                        actionRequired: true,
-                        affectedBuildings: Array(Set(affectedBuildingIds))
-                    ))
-                }
-            }
-            
-        } catch {
-            print("⚠️ Error generating worker insights: \(error)")
-        }
+        let buildings = try await buildingService.getAllBuildings()
         
-        return insights
-    }
-    
-    /// Generate cost-related insights
-    func generateCostInsights() async throws -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
+        // Calculate portfolio metrics
+        var totalCompletionRate: Double = 0
+        var totalPendingTasks = 0
+        var totalOverdueTasks = 0
+        var complianceIssues: [CoreTypes.ComplianceIssue] = []
         
-        let taskService = TaskService.shared
-        
-        do {
-            let allTasks = try await taskService.getAllTasks()
+        for building in buildings {
+            let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
+            totalCompletionRate += metrics.completionRate
+            totalPendingTasks += metrics.pendingTasks
+            totalOverdueTasks += metrics.overdueTasks
             
-            // Analyze emergency tasks (high cost impact)
-            let emergencyTasks = allTasks.filter { $0.urgency == .emergency || $0.urgency == .critical }
-            
-            if emergencyTasks.count > 5 {
-                let estimatedExtraCost = Double(emergencyTasks.count) * 500.0 // Emergency premium
-                
-                // ✅ FIXED: Safely handle optional buildingIds
-                let affectedBuildingIds: [String] = emergencyTasks.compactMap { task -> String? in
-                    guard let buildingId = task.buildingId, !buildingId.isEmpty else { return nil }
-                    return buildingId
-                }
-                
-                insights.append(CoreTypes.IntelligenceInsight(
-                    title: "High Emergency Task Volume",
-                    description: "\(emergencyTasks.count) emergency tasks detected. Estimated extra cost: $\(Int(estimatedExtraCost))",
-                    type: .cost,
-                    priority: .medium,
-                    actionRequired: true,
-                    affectedBuildings: Array(Set(affectedBuildingIds))
+            // Check for compliance issues
+            if !metrics.isCompliant {
+                complianceIssues.append(CoreTypes.ComplianceIssue(
+                    type: .maintenanceOverdue,
+                    severity: .medium,
+                    description: "Building \(building.name) not compliant",
+                    buildingId: building.id,
+                    dueDate: Calendar.current.date(byAdding: .day, value: 7, to: Date())
                 ))
             }
-            
-            // Analyze overdue tasks (cost escalation risk)
-            let overdueTasks = allTasks.filter { task in
-                guard let dueDate = task.dueDate else { return false }
-                return !task.isCompleted && dueDate < Date()
-            }
-            
-            if overdueTasks.count > 20 {
-                // ✅ FIXED: Safely handle optional buildingIds
-                let affectedBuildingIds: [String] = overdueTasks.compactMap { task -> String? in
-                    guard let buildingId = task.buildingId, !buildingId.isEmpty else { return nil }
-                    return buildingId
-                }
-                
-                insights.append(CoreTypes.IntelligenceInsight(
-                    title: "High Overdue Task Volume",
-                    description: "\(overdueTasks.count) tasks are overdue, risking cost escalation",
-                    type: .cost,
-                    priority: .high,
-                    actionRequired: true,
-                    affectedBuildings: Array(Set(affectedBuildingIds))
-                ))
-            }
-            
-        } catch {
-            print("⚠️ Error generating cost insights: \(error)")
         }
         
-        return insights
-    }
-    
-    // MARK: - Utility Methods
-    
-    /// Get insight summary statistics
-    func getInsightStatistics() async throws -> InsightStatistics {
-        let portfolioInsights = try await generatePortfolioInsights()
+        let averageCompletionRate = buildings.isEmpty ? 0 : totalCompletionRate / Double(buildings.count)
         
-        let criticalCount = portfolioInsights.filter { $0.priority == .critical }.count
-        let highCount = portfolioInsights.filter { $0.priority == .high }.count
-        let actionableCount = portfolioInsights.filter { $0.actionRequired }.count
-        
-        return InsightStatistics(
-            totalInsights: portfolioInsights.count,
-            criticalInsights: criticalCount,
-            highPriorityInsights: highCount,
-            actionableInsights: actionableCount,
+        return CoreTypes.PortfolioIntelligence(
+            totalBuildings: buildings.count,
+            averageCompletionRate: averageCompletionRate,
+            totalPendingTasks: totalPendingTasks,
+            totalOverdueTasks: totalOverdueTasks,
+            complianceIssues: complianceIssues,
+            trendDirection: await calculateTrendDirection(buildings: buildings),
             lastUpdated: Date()
         )
     }
     
-    /// Check if there are any critical insights requiring immediate attention
-    func hasCriticalInsights() async throws -> Bool {
-        let insights = try await generatePortfolioInsights()
-        return insights.contains { $0.priority == .critical }
+    // MARK: - Helper Methods
+    
+    private func generatePerformanceInsights(buildings: [NamedCoordinate], tasks: [ContextualTask]) async -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
+        
+        // Calculate overall performance metrics
+        let completedTasks = tasks.filter { $0.isCompleted }.count
+        let totalTasks = tasks.count
+        let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0
+        
+        if completionRate < 0.8 {
+            insights.append(IntelligenceInsight(
+                title: "Portfolio Performance Below Target",
+                description: "Overall task completion rate is \(Int(completionRate * 100))%, below 80% target",
+                type: .performance,
+                priority: .high,
+                category: .portfolio,
+                dataSource: "TaskService",
+                confidence: 0.9,
+                impact: InsightImpact(
+                    severity: .significant,
+                    scope: .portfolio,
+                    financialImpact: 5000.0,
+                    timeImpact: 3600,
+                    qualityImpact: 0.15,
+                    riskLevel: 0.6
+                ),
+                recommendations: [
+                    "Review task assignment distribution",
+                    "Identify bottlenecks in workflow",
+                    "Consider additional resource allocation"
+                ]
+            ))
+        }
+        
+        return insights
     }
     
-    /// Get insights filtered by type
-    func getInsightsByType(_ type: CoreTypes.InsightType) async throws -> [CoreTypes.IntelligenceInsight] {
-        let allInsights = try await generatePortfolioInsights()
-        return allInsights.filter { $0.type == type }
-    }
-}
-
-// MARK: - Helper Types
-
-struct InsightStatistics {
-    let totalInsights: Int
-    let criticalInsights: Int
-    let highPriorityInsights: Int
-    let actionableInsights: Int
-    let lastUpdated: Date
-}
-
-// MARK: - Helper Extensions
-
-extension CoreTypes.IntelligenceInsight {
-    var isUrgent: Bool {
-        return priority.priorityValue >= 3
+    private func generateMaintenanceInsights(buildings: [NamedCoordinate], tasks: [ContextualTask]) async -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
+        
+        let maintenanceTasks = tasks.filter { $0.category == "Maintenance" }
+        let overdueMaintenance = maintenanceTasks.filter { task in
+            guard let urgency = task.urgency else { return false }
+            return urgency.priorityValue > 3 // High priority maintenance
+        }
+        
+        if overdueMaintenance.count > 3 {
+            insights.append(IntelligenceInsight(
+                title: "Critical Maintenance Backlog",
+                description: "\(overdueMaintenance.count) high-priority maintenance tasks overdue",
+                type: .maintenance,
+                priority: .critical,
+                category: .portfolio,
+                dataSource: "TaskService",
+                confidence: 1.0,
+                impact: InsightImpact(
+                    severity: .major,
+                    scope: .portfolio,
+                    financialImpact: Double(overdueMaintenance.count) * 500.0,
+                    timeImpact: TimeInterval(overdueMaintenance.count * 1800),
+                    qualityImpact: 0.25,
+                    riskLevel: 0.8
+                ),
+                recommendations: [
+                    "Prioritize critical maintenance tasks",
+                    "Allocate emergency maintenance budget",
+                    "Review preventive maintenance schedule"
+                ]
+            ))
+        }
+        
+        return insights
     }
     
-    var isActionable: Bool {
-        return actionRequired
+    private func generateEfficiencyInsights(buildings: [NamedCoordinate], tasks: [ContextualTask], workers: [WorkerProfile]) async -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
+        
+        // Calculate worker efficiency
+        let activeWorkerCount = workers.filter { $0.role == .worker }.count
+        let tasksPerWorker = activeWorkerCount > 0 ? Double(tasks.count) / Double(activeWorkerCount) : 0
+        
+        if tasksPerWorker > 15 {
+            insights.append(IntelligenceInsight(
+                title: "High Worker Task Load",
+                description: "Average \(Int(tasksPerWorker)) tasks per worker, above recommended 12-task limit",
+                type: .efficiency,
+                priority: .medium,
+                category: .workforce,
+                dataSource: "WorkerService",
+                confidence: 0.8,
+                impact: InsightImpact(
+                    severity: .moderate,
+                    scope: .workforce,
+                    financialImpact: 3000.0,
+                    timeImpact: 7200,
+                    qualityImpact: 0.1,
+                    riskLevel: 0.4
+                ),
+                recommendations: [
+                    "Consider hiring additional workers",
+                    "Optimize task scheduling",
+                    "Review task complexity distribution"
+                ]
+            ))
+        }
+        
+        return insights
     }
     
-    var riskScore: Double {
-        switch priority {
-        case .critical: return 1.0
-        case .high: return 0.8
-        case .medium: return 0.5
-        case .low: return 0.2
+    private func generateComplianceInsights(buildings: [NamedCoordinate], tasks: [ContextualTask]) async -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
+        
+        // Check for compliance-related tasks
+        let complianceTasks = tasks.filter { task in
+            task.description.lowercased().contains("compliance") ||
+            task.description.lowercased().contains("inspection") ||
+            task.description.lowercased().contains("regulation")
+        }
+        
+        let overdueCompliance = complianceTasks.filter { task in
+            guard let urgency = task.urgency else { return false }
+            return urgency.priorityValue > 2
+        }
+        
+        if !overdueCompliance.isEmpty {
+            insights.append(IntelligenceInsight(
+                title: "Compliance Tasks Require Attention",
+                description: "\(overdueCompliance.count) compliance-related tasks need immediate attention",
+                type: .compliance,
+                priority: .high,
+                category: .compliance,
+                dataSource: "TaskService",
+                confidence: 0.95,
+                impact: InsightImpact(
+                    severity: .significant,
+                    scope: .compliance,
+                    financialImpact: Double(overdueCompliance.count) * 1000.0,
+                    timeImpact: TimeInterval(overdueCompliance.count * 3600),
+                    qualityImpact: 0.2,
+                    riskLevel: 0.7
+                ),
+                recommendations: [
+                    "Prioritize compliance tasks immediately",
+                    "Schedule compliance review meetings",
+                    "Update compliance tracking procedures"
+                ]
+            ))
+        }
+        
+        return insights
+    }
+    
+    private func generateCostInsights(buildings: [NamedCoordinate], workers: [WorkerProfile], tasks: [ContextualTask]) async -> [IntelligenceInsight] {
+        var insights: [IntelligenceInsight] = []
+        
+        // Estimate emergency vs planned task costs
+        let emergencyTasks = tasks.filter { task in
+            task.description.lowercased().contains("emergency") ||
+            task.description.lowercased().contains("urgent")
+        }
+        
+        if emergencyTasks.count > 5 {
+            let estimatedExtraCost = Double(emergencyTasks.count) * 200.0 // Emergency premium
+            
+            insights.append(IntelligenceInsight(
+                title: "High Emergency Task Costs",
+                description: "\(emergencyTasks.count) emergency tasks generating estimated $\(Int(estimatedExtraCost)) in premium costs",
+                type: .cost,
+                priority: .medium,
+                category: .portfolio,
+                dataSource: "TaskService",
+                confidence: 0.8,
+                impact: InsightImpact(
+                    severity: .moderate,
+                    scope: .portfolio,
+                    financialImpact: estimatedExtraCost,
+                    timeImpact: 3600,
+                    qualityImpact: 0.05,
+                    riskLevel: 0.5
+                ),
+                recommendations: [
+                    "Review preventive maintenance schedules",
+                    "Identify root causes of emergencies",
+                    "Consider proactive maintenance investments"
+                ]
+            ))
+        }
+        
+        return insights
+    }
+    
+    private func calculateTrendDirection(buildings: [NamedCoordinate]) async -> CoreTypes.TrendDirection {
+        // Simple trend calculation - in a full implementation, this would analyze historical data
+        let buildingMetricsService = BuildingMetricsService.shared
+        
+        var totalTrend: Double = 0
+        var trendCount = 0
+        
+        for building in buildings {
+            do {
+                let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
+                totalTrend += metrics.weeklyCompletionTrend
+                trendCount += 1
+            } catch {
+                // Skip buildings with metric errors
+                continue
+            }
+        }
+        
+        guard trendCount > 0 else { return .stable }
+        
+        let averageTrend = totalTrend / Double(trendCount)
+        
+        if averageTrend > 0.05 {
+            return .improving
+        } else if averageTrend < -0.05 {
+            return .declining
+        } else {
+            return .stable
         }
     }
+    
+    private func createLowCompletionInsight(building: NamedCoordinate, analytics: BuildingAnalytics) -> IntelligenceInsight {
+        return IntelligenceInsight(
+            title: "Low Task Completion Rate",
+            description: "Building \(building.name) has completion rate of \(Int(analytics.completionRate * 100))%",
+            type: .performance,
+            priority: .high,
+            category: .building,
+            dataSource: "BuildingService",
+            confidence: 0.9,
+            impact: InsightImpact(
+                severity: .significant,
+                scope: .single,
+                financialImpact: 2500.0,
+                timeImpact: 1800,
+                qualityImpact: 0.2,
+                riskLevel: 0.6
+            ),
+            recommendations: [
+                "Review worker assignments for this building",
+                "Check for resource constraints",
+                "Analyze task complexity"
+            ],
+            affectedBuildings: [building.id]
+        )
+    }
+    
+    private func createOverdueTasksInsight(building: NamedCoordinate, count: Int) -> IntelligenceInsight {
+        return IntelligenceInsight(
+            title: "Multiple Overdue Tasks",
+            description: "Building \(building.name) has \(count) overdue tasks requiring attention",
+            type: .maintenance,
+            priority: count > 10 ? .critical : .high,
+            category: .building,
+            dataSource: "TaskService",
+            confidence: 1.0,
+            impact: InsightImpact(
+                severity: count > 10 ? .major : .significant,
+                scope: .single,
+                financialImpact: Double(count) * 100.0,
+                timeImpact: TimeInterval(count * 300),
+                qualityImpact: 0.15,
+                riskLevel: 0.7
+            ),
+            recommendations: [
+                "Prioritize overdue tasks",
+                "Reassign workers if needed",
+                "Review task scheduling"
+            ],
+            affectedBuildings: [building.id]
+        )
+    }
 }
 
-extension Array where Element == CoreTypes.IntelligenceInsight {
-    func filterByPriority(_ priority: CoreTypes.InsightPriority) -> [CoreTypes.IntelligenceInsight] {
-        return self.filter { $0.priority == priority }
-    }
+// MARK: - Supporting Types
+
+enum IntelligenceError: Error, LocalizedError {
+    case buildingNotFound(String)
+    case dataUnavailable
+    case analysisFailure(String)
     
-    func filterActionable() -> [CoreTypes.IntelligenceInsight] {
-        return self.filter { $0.actionRequired }
-    }
-    
-    func sortedByPriority() -> [CoreTypes.IntelligenceInsight] {
-        return self.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
+    var errorDescription: String? {
+        switch self {
+        case .buildingNotFound(let id):
+            return "Building with ID \(id) not found"
+        case .dataUnavailable:
+            return "Required data not available for analysis"
+        case .analysisFailure(let reason):
+            return "Intelligence analysis failed: \(reason)"
+        }
     }
 }

@@ -56,7 +56,7 @@ struct WorkerEvent {
 @MainActor
 class DataSynchronizationService: ObservableObject {
     // ✅ FIXED: Circular reference - creates new instance instead of referencing self
-    static let shared = DataSynchronizationService()
+    static let shared = DataSynchronizationService.shared
 
     // A Combine subject to push events through the pipeline
     private let workerEventSyncedSubject = PassthroughSubject<WorkerEventSynced, Never>()

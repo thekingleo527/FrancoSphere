@@ -2,7 +2,8 @@
 //  WorkerEventOutbox.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Type conversion between WorkerEventOutbox.WorkerEvent and DataSynchronizationService.WorkerEvent
+//  ✅ FIXED: Correctly aligned with DataSynchronizationService WorkerEvent structure
+//  ✅ FIXED: WorkerEvent is standalone struct, not nested in DataSynchronizationService
 //  ✅ V6.0: Phase 2.2 - Enhanced Offline Queue
 //  ✅ Safely stores worker actions for reliable synchronization
 //  ✅ Triggers the DataSynchronizationService upon successful sync
@@ -16,8 +17,8 @@ import Foundation
 actor WorkerEventOutbox {
     static let shared = WorkerEventOutbox()
 
-    /// Represents a single worker action that needs to be synced
-    struct WorkerEvent: Codable, Identifiable {
+    /// Represents a single worker action that needs to be synced (Local version)
+    struct OutboxEvent: Codable, Identifiable {
         let id: String
         let type: WorkerActionType
         let payload: Data // A flexible container for any Codable data
@@ -47,28 +48,32 @@ actor WorkerEventOutbox {
             self.retryCount = 0
         }
         
-        // ✅ ADDED: Convert to DataSynchronizationService.WorkerEvent for broadcasting
-        func toSyncEvent() -> DataSynchronizationService.WorkerEvent {
-            // Map WorkerActionType to DataSynchronizationService.WorkerEvent.EventType
-            let eventType: DataSynchronizationService.WorkerEvent.EventType
+        // ✅ FIXED: Convert to standalone WorkerEvent for DataSynchronizationService
+        func toSyncEvent() -> WorkerEvent {
+            // Map WorkerActionType to WorkerEvent.EventType
+            let eventType: WorkerEvent.EventType
             switch self.type {
-            case .taskCompletion:
+            case .taskCompletion, .taskComplete:
                 eventType = .taskCompletion
             case .clockIn:
                 eventType = .clockIn
             case .clockOut:
                 eventType = .clockOut
-            case .taskStart:
+            case .photoUpload, .commentUpdate:
+                // Map these to task completion for simplicity
+                eventType = .taskCompletion
+            case .routineInspection:
+                // Map routine inspection to task start
                 eventType = .taskStart
-            case .buildingArrival:
+            case .buildingStatusUpdate:
+                // Map building status update to building arrival
                 eventType = .buildingArrival
-            case .buildingDeparture:
-                eventType = .buildingDeparture
-            default:
-                eventType = .taskCompletion // Default fallback
+            case .emergencyReport:
+                // Map emergency to task completion with priority
+                eventType = .taskCompletion
             }
             
-            return DataSynchronizationService.WorkerEvent(
+            return WorkerEvent(
                 buildingId: self.buildingId,
                 workerId: self.workerId,
                 type: eventType,
@@ -78,7 +83,7 @@ actor WorkerEventOutbox {
     }
     
     // In-memory queue for pending events. This would be backed by a persistent store in a full implementation
-    private var pendingEvents: [WorkerEvent] = []
+    private var pendingEvents: [OutboxEvent] = []
     
     private let dataSyncService = DataSynchronizationService.shared
 
@@ -88,7 +93,7 @@ actor WorkerEventOutbox {
     }
 
     /// Adds a new event to the outbox to be synced
-    func addEvent(_ event: WorkerEvent) {
+    func addEvent(_ event: OutboxEvent) {
         print("📬 Adding event to outbox: \(event.type.rawValue) (ID: \(event.id))")
         pendingEvents.append(event)
         savePendingEvents()
@@ -101,22 +106,27 @@ actor WorkerEventOutbox {
     
     /// Convenience methods for adding common events
     func addTaskCompletionEvent(workerId: String, buildingId: String, taskId: String) {
-        let event = WorkerEvent(type: .taskCompletion, workerId: workerId, buildingId: buildingId)
+        let event = OutboxEvent(type: .taskCompletion, workerId: workerId, buildingId: buildingId)
         addEvent(event)
     }
     
     func addClockInEvent(workerId: String, buildingId: String) {
-        let event = WorkerEvent(type: .clockIn, workerId: workerId, buildingId: buildingId)
+        let event = OutboxEvent(type: .clockIn, workerId: workerId, buildingId: buildingId)
         addEvent(event)
     }
     
     func addClockOutEvent(workerId: String, buildingId: String) {
-        let event = WorkerEvent(type: .clockOut, workerId: workerId, buildingId: buildingId)
+        let event = OutboxEvent(type: .clockOut, workerId: workerId, buildingId: buildingId)
         addEvent(event)
     }
     
-    func addBuildingArrivalEvent(workerId: String, buildingId: String) {
-        let event = WorkerEvent(type: .buildingArrival, workerId: workerId, buildingId: buildingId)
+    func addBuildingStatusEvent(workerId: String, buildingId: String) {
+        let event = OutboxEvent(type: .buildingStatusUpdate, workerId: workerId, buildingId: buildingId)
+        addEvent(event)
+    }
+    
+    func addRoutineInspectionEvent(workerId: String, buildingId: String) {
+        let event = OutboxEvent(type: .routineInspection, workerId: workerId, buildingId: buildingId)
         addEvent(event)
     }
 
@@ -136,7 +146,7 @@ actor WorkerEventOutbox {
                 // If successful, mark for removal and broadcast completion
                 successfullySyncedEvents.append(event.id)
                 
-                // ✅ FIXED: Convert to the correct type for DataSynchronizationService
+                // ✅ FIXED: Convert to standalone WorkerEvent and broadcast
                 await dataSyncService.broadcastSyncCompletion(for: event.toSyncEvent())
                 
             } catch {
@@ -166,7 +176,7 @@ actor WorkerEventOutbox {
     }
     
     /// Simulates submitting a single event to a remote server
-    private func submitEventToServer(_ event: WorkerEvent) async throws {
+    private func submitEventToServer(_ event: OutboxEvent) async throws {
         // Simulate network latency
         try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
         
@@ -187,7 +197,7 @@ actor WorkerEventOutbox {
     }
     
     /// Get all pending events (for debugging)
-    func getPendingEvents() -> [WorkerEvent] {
+    func getPendingEvents() -> [OutboxEvent] {
         return pendingEvents
     }
     
@@ -220,7 +230,7 @@ actor WorkerEventOutbox {
     private func loadPendingEvents() {
         guard let data = UserDefaults.standard.data(forKey: persistenceKey) else { return }
         do {
-            pendingEvents = try JSONDecoder().decode([WorkerEvent].self, from: data)
+            pendingEvents = try JSONDecoder().decode([OutboxEvent].self, from: data)
             print("📦 Loaded \(pendingEvents.count) pending events from previous session.")
         } catch {
             print("🚨 Failed to load pending events from UserDefaults: \(error)")
@@ -231,23 +241,21 @@ actor WorkerEventOutbox {
 // MARK: - WorkerActionType Extension
 
 extension WorkerActionType {
-    /// Map to DataSynchronizationService.WorkerEvent.EventType
-    var syncEventType: DataSynchronizationService.WorkerEvent.EventType {
+    /// Map to standalone WorkerEvent.EventType
+    var syncEventType: WorkerEvent.EventType {
         switch self {
-        case .taskCompletion:
+        case .taskCompletion, .taskComplete:
             return .taskCompletion
         case .clockIn:
             return .clockIn
         case .clockOut:
             return .clockOut
-        case .taskStart:
+        case .routineInspection:
             return .taskStart
-        case .buildingArrival:
+        case .buildingStatusUpdate:
             return .buildingArrival
-        case .buildingDeparture:
-            return .buildingDeparture
-        default:
-            return .taskCompletion // Default fallback
+        case .photoUpload, .commentUpdate, .emergencyReport:
+            return .taskCompletion // Default mapping
         }
     }
 }
@@ -258,7 +266,7 @@ extension WorkerEventOutbox {
     
     /// Create and queue an event from a ContextualTask completion
     func recordTaskCompletion(task: ContextualTask, workerId: String) {
-        let event = WorkerEvent(
+        let event = OutboxEvent(
             type: .taskCompletion,
             workerId: workerId,
             buildingId: task.buildingId ?? "unknown"
@@ -269,14 +277,31 @@ extension WorkerEventOutbox {
     /// Create and queue an event from worker clock operations
     func recordClockOperation(workerId: String, buildingId: String, isClockIn: Bool) {
         let eventType: WorkerActionType = isClockIn ? .clockIn : .clockOut
-        let event = WorkerEvent(type: eventType, workerId: workerId, buildingId: buildingId)
+        let event = OutboxEvent(type: eventType, workerId: workerId, buildingId: buildingId)
         addEvent(event)
     }
     
-    /// Create and queue an event for location-based actions
-    func recordLocationEvent(workerId: String, buildingId: String, isArrival: Bool) {
-        let eventType: WorkerActionType = isArrival ? .buildingArrival : .buildingDeparture
-        let event = WorkerEvent(type: eventType, workerId: workerId, buildingId: buildingId)
+    /// Create and queue an event for building status updates
+    func recordBuildingStatusEvent(workerId: String, buildingId: String) {
+        let event = OutboxEvent(type: .buildingStatusUpdate, workerId: workerId, buildingId: buildingId)
+        addEvent(event)
+    }
+    
+    /// Create and queue an event for routine inspections
+    func recordRoutineInspectionEvent(workerId: String, buildingId: String) {
+        let event = OutboxEvent(type: .routineInspection, workerId: workerId, buildingId: buildingId)
+        addEvent(event)
+    }
+    
+    /// Create and queue an event for photo uploads
+    func recordPhotoUploadEvent(workerId: String, buildingId: String) {
+        let event = OutboxEvent(type: .photoUpload, workerId: workerId, buildingId: buildingId)
+        addEvent(event)
+    }
+    
+    /// Create and queue an event for emergency reports
+    func recordEmergencyReportEvent(workerId: String, buildingId: String) {
+        let event = OutboxEvent(type: .emergencyReport, workerId: workerId, buildingId: buildingId)
         addEvent(event)
     }
 }
