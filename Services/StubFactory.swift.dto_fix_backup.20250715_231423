@@ -18,11 +18,11 @@ import Foundation
 
 public enum StubFactory {
 
-    /// Creates a complete, stubbed [CoreTypes.IntelligenceInsight] for a given building ID.
-    public static func makeBuildingIntelligence(for buildingId: CoreTypes.BuildingID, workerIds: [CoreTypes.WorkerID]) -> [CoreTypes.IntelligenceInsight] {
+    /// Creates a complete, stubbed BuildingIntelligenceDTO for a given building ID.
+    public static func makeBuildingIntelligence(for buildingId: CoreTypes.BuildingID, workerIds: [CoreTypes.WorkerID]) -> BuildingIntelligenceDTO {
         let workerMetrics = workerIds.map { makeWorkerMetrics(for: buildingId, workerId: $0) }
         
-        return [CoreTypes.IntelligenceInsight](
+        return BuildingIntelligenceDTO(
             buildingId: buildingId,
             operationalMetrics: makeOperationalMetrics(),
             complianceData: makeComplianceData(for: buildingId),

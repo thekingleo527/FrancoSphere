@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: SwiftUI import added for Color type
-//  ✅ FIXED: Using existing CoreTypes.IntelligenceInsight (no duplicate [CoreTypes.IntelligenceInsight])
+//  ✅ FIXED: Using existing CoreTypes.IntelligenceInsight (no duplicate BuildingIntelligenceDTO)
 //  ✅ FIXED: Service reference patterns using .shared consistently
 //  ✅ ALIGNED: With current implementation phase
 //

@@ -1,5 +1,5 @@
 //
-//  [CoreTypes.IntelligenceInsight].swift
+//  BuildingIntelligenceDTO.swift
 //  FrancoSphere
 //
 //  ✅ V6.0: Phase 1.1 - Comprehensive DTO System
@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct [CoreTypes.IntelligenceInsight]: Codable, Hashable, Identifiable {
+public struct BuildingIntelligenceDTO: Codable, Hashable, Identifiable {
     public var id: CoreTypes.BuildingID { buildingId }
     
     let buildingId: CoreTypes.BuildingID

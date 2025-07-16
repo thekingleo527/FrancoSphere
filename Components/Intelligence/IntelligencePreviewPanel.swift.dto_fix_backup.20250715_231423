@@ -11,13 +11,13 @@
 //  FrancoSphere
 //
 //  ✅ V6.0: Phase 4.1 - Real-Time Admin Dashboard UI
-//  ✅ A reusable component to display the [CoreTypes.IntelligenceInsight].
+//  ✅ A reusable component to display the BuildingIntelligenceDTO.
 //
 
 import SwiftUI
 
 struct IntelligencePreviewPanel: View {
-    let intelligence: [CoreTypes.IntelligenceInsight]
+    let intelligence: BuildingIntelligenceDTO
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
