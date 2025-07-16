@@ -1,9 +1,9 @@
-
 //
 //  QuickActionMenu.swift
 //  FrancoSphere
 //
 //  A glass-styled contextual menu for Nova AI assistant quick actions
+//  ✅ FIXED: Binding.constant usage in preview
 //
 
 import SwiftUI
@@ -320,7 +320,8 @@ struct QuickActionMenu_Previews: PreviewProvider {
             .ignoresSafeArea()
             
             // Menu
-            QuickActionMenu(isPresented: .constant(true)) { action in
+            // ✅ FIXED: Use Binding.constant instead of .constant
+            QuickActionMenu(isPresented: Binding.constant(true)) { action in
                 print("Selected: \(action.rawValue)")
             }
         }

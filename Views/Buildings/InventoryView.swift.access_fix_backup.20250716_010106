@@ -7,15 +7,14 @@
 //  ✅ FIXED: Added missing InventoryCategory icon extension
 //  ✅ FIXED: Corrected reduce syntax and generic parameters
 //  ✅ FIXED: Color.tertiary usage and access levels for preview
-//  ✅ FIXED: Public access level for preview compatibility
 //  ✅ ALIGNED: With current CoreTypes structure
 //
 
 import SwiftUI
 
-public struct InventoryView: View {
-    public let buildingId: String
-    public let buildingName: String
+struct InventoryView: View {
+    let buildingId: String
+    let buildingName: String
     
     @State private var inventoryItems: [InventoryItem] = []
     @State private var filteredItems: [InventoryItem] = []
@@ -29,13 +28,7 @@ public struct InventoryView: View {
     
     private var categories: [InventoryCategory] = InventoryCategory.allCases
     
-    // ✅ ADDED: Explicit public initializer
-    public init(buildingId: String, buildingName: String) {
-        self.buildingId = buildingId
-        self.buildingName = buildingName
-    }
-    
-    public var body: some View {
+    var body: some View {
         NavigationView {
             ZStack {
                 Color.black.ignoresSafeArea()
@@ -237,18 +230,12 @@ public struct InventoryView: View {
 
 // MARK: - Supporting Views
 
-public struct CategoryButton: View {
-    public let category: InventoryCategory
-    public let isSelected: Bool
-    public let action: () -> Void
+struct CategoryButton: View {
+    let category: InventoryCategory
+    let isSelected: Bool
+    let action: () -> Void
     
-    public init(category: InventoryCategory, isSelected: Bool, action: @escaping () -> Void) {
-        self.category = category
-        self.isSelected = isSelected
-        self.action = action
-    }
-    
-    public var body: some View {
+    var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: category.icon)
@@ -274,18 +261,13 @@ public struct CategoryButton: View {
     }
 }
 
-public struct InventoryItemRow: View {
-    public let item: InventoryItem
-    public let onUpdate: (InventoryItem) -> Void
+struct InventoryItemRow: View {
+    let item: InventoryItem
+    let onUpdate: (InventoryItem) -> Void
     
     @State private var showingDetail = false
     
-    public init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
-        self.item = item
-        self.onUpdate = onUpdate
-    }
-    
-    public var body: some View {
+    var body: some View {
         Button(action: { showingDetail = true }) {
             HStack(spacing: 12) {
                 // Category icon
@@ -336,18 +318,12 @@ public struct InventoryItemRow: View {
     }
 }
 
-public struct StockIndicator: View {
-    public let current: Int
-    public let minimum: Int
-    public let status: RestockStatus
+struct StockIndicator: View {
+    let current: Int
+    let minimum: Int
+    let status: RestockStatus
     
-    public init(current: Int, minimum: Int, status: RestockStatus) {
-        self.current = current
-        self.minimum = minimum
-        self.status = status
-    }
-    
-    public var body: some View {
+    var body: some View {
         HStack(spacing: 4) {
             Circle()
                 .fill(statusColor)
@@ -369,14 +345,10 @@ public struct StockIndicator: View {
     }
 }
 
-public struct EmptyStateView: View {
-    public let category: InventoryCategory
+struct EmptyStateView: View {
+    let category: InventoryCategory
     
-    public init(category: InventoryCategory) {
-        self.category = category
-    }
-    
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 16) {
             Image(systemName: category.icon)
                 .font(.system(size: 48))
@@ -396,16 +368,11 @@ public struct EmptyStateView: View {
     }
 }
 
-public struct ErrorView: View {
-    public let message: String
-    public let onRetry: () -> Void
+struct ErrorView: View {
+    let message: String
+    let onRetry: () -> Void
     
-    public init(message: String, onRetry: @escaping () -> Void) {
-        self.message = message
-        self.onRetry = onRetry
-    }
-    
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 48))
@@ -430,9 +397,9 @@ public struct ErrorView: View {
 
 // MARK: - Add Inventory Item View
 
-public struct AddInventoryItemView: View {
-    public let buildingId: String
-    public let onComplete: (Bool) -> Void
+struct AddInventoryItemView: View {
+    let buildingId: String
+    let onComplete: (Bool) -> Void
     
     @State private var itemName = ""
     @State private var itemDescription = ""
@@ -446,12 +413,7 @@ public struct AddInventoryItemView: View {
     
     private let commonUnits = ["unit", "box", "bottle", "pack", "case", "piece", "gallon", "liter"]
     
-    public init(buildingId: String, onComplete: @escaping (Bool) -> Void) {
-        self.buildingId = buildingId
-        self.onComplete = onComplete
-    }
-    
-    public var body: some View {
+    var body: some View {
         NavigationView {
             Form {
                 Section("Item Details") {
@@ -534,21 +496,21 @@ public struct AddInventoryItemView: View {
 
 // MARK: - Inventory Item Detail View
 
-public struct InventoryItemDetailView: View {
-    public let item: InventoryItem
-    public let onUpdate: (InventoryItem) -> Void
+struct InventoryItemDetailView: View {
+    let item: InventoryItem
+    let onUpdate: (InventoryItem) -> Void
     
     @Environment(\.dismiss) private var dismiss
     @State private var currentStock: Int
     @State private var isUpdating = false
     
-    public init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
+    init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
         self.item = item
         self.onUpdate = onUpdate
         self._currentStock = State(initialValue: item.currentStock)
     }
     
-    public var body: some View {
+    var body: some View {
         NavigationView {
             Form {
                 Section("Item Information") {
@@ -672,7 +634,7 @@ extension InventoryItem {
 
 struct InventoryView_Previews: PreviewProvider {
     static var previews: some View {
-        // ✅ FIXED: Now works with explicit public access level
+        // ✅ FIXED: Removed private access level to make accessible for preview
         InventoryView(
             buildingId: "14",
             buildingName: "Rubin Museum"
