@@ -52,7 +52,7 @@ struct BuildingDetailView: View {
     }
     
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        return VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
                 .tint(.blue)
@@ -64,7 +64,7 @@ struct BuildingDetailView: View {
     }
     
     private var mainContent: some View {
-        ScrollView {
+        return ScrollView {
             VStack(spacing: 20) {
                 buildingHeader
                 tabSection
@@ -75,7 +75,7 @@ struct BuildingDetailView: View {
     }
     
     private var buildingHeader: some View {
-        VStack(spacing: 16) {
+        return VStack(spacing: 16) {
             // Building image
             buildingImageView
             
@@ -89,7 +89,7 @@ struct BuildingDetailView: View {
     }
     
     private var buildingImageView: some View {
-        ZStack {
+        return ZStack {
             if let imageName = building.imageAssetName,
                let image = UIImage(named: imageName) {
                 Image(uiImage: image)
@@ -150,7 +150,7 @@ struct BuildingDetailView: View {
     }
     
     private var clockInButton: some View {
-        Button {
+        return Button {
             handleClockIn()
         } label: {
             HStack(spacing: 12) {
@@ -181,7 +181,7 @@ struct BuildingDetailView: View {
     }
     
     private var clockedInStatus: some View {
-        HStack(spacing: 12) {
+        return HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.title3)
                 .foregroundColor(.green)
@@ -223,9 +223,9 @@ struct BuildingDetailView: View {
     }
     
     private var tabSection: some View {
-        let tabs = ["Overview", "Tasks", "Workers", "Analytics"]
-        
-        HStack(spacing: 0) {
+        return HStack(spacing: 0) {
+            let tabs = ["Overview", "Tasks", "Workers", "Analytics"]
+            
             ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
                 Button(action: {
                     selectedTab = index
@@ -243,7 +243,7 @@ struct BuildingDetailView: View {
     }
     
     private var contentSection: some View {
-        Group {
+        return Group {
             switch selectedTab {
             case 0:
                 overviewTab
