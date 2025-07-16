@@ -140,12 +140,20 @@ public final class GRDBManager {
     
     public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
         return try await dbPool.read { db in
-            // ✅ FIXED: Use direct parameter passing without StatementArguments wrapper
+            // ✅ FIXED: Convert [Any] to proper GRDB arguments
             let rows: [Row]
             if parameters.isEmpty {
                 rows = try Row.fetchAll(db, sql: sql)
             } else {
-                rows = try Row.fetchAll(db, sql: sql, arguments: parameters)
+                // Convert [Any] to [DatabaseValueConvertible]
+                let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                    if let convertible = param as? DatabaseValueConvertible {
+                        return convertible
+                    } else {
+                        return String(describing: param)
+                    }
+                }
+                rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(grdbParams))
             }
             
             // ✅ FIXED: Proper Row to Dictionary conversion
@@ -161,22 +169,38 @@ public final class GRDBManager {
     
     public func execute(_ sql: String, _ parameters: [Any] = []) async throws {
         try await dbPool.write { db in
-            // ✅ FIXED: Use direct parameter passing without StatementArguments wrapper
+            // ✅ FIXED: Convert [Any] to proper GRDB arguments
             if parameters.isEmpty {
                 try db.execute(sql: sql)
             } else {
-                try db.execute(sql: sql, arguments: parameters)
+                // Convert [Any] to [DatabaseValueConvertible]
+                let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                    if let convertible = param as? DatabaseValueConvertible {
+                        return convertible
+                    } else {
+                        return String(describing: param)
+                    }
+                }
+                try db.execute(sql: sql, arguments: StatementArguments(grdbParams))
             }
         }
     }
     
     public func insertAndReturnID(_ sql: String, _ parameters: [Any] = []) async throws -> Int64 {
         return try await dbPool.write { db in
-            // ✅ FIXED: Use direct parameter passing without StatementArguments wrapper
+            // ✅ FIXED: Convert [Any] to proper GRDB arguments
             if parameters.isEmpty {
                 try db.execute(sql: sql)
             } else {
-                try db.execute(sql: sql, arguments: parameters)
+                // Convert [Any] to [DatabaseValueConvertible]
+                let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                    if let convertible = param as? DatabaseValueConvertible {
+                        return convertible
+                    } else {
+                        return String(describing: param)
+                    }
+                }
+                try db.execute(sql: sql, arguments: StatementArguments(grdbParams))
             }
             return db.lastInsertedRowID
         }
@@ -212,7 +236,7 @@ public final class GRDBManager {
         // ✅ FIXED: Simplified publisher with proper parameter handling
         let publisher = ValueObservation
             .tracking { db in
-                // ✅ FIXED: Direct parameter passing to avoid StatementArguments issues
+                // ✅ FIXED: Use StatementArguments with proper type conversion
                 try Row.fetchAll(db, sql: """
                     SELECT t.*, b.name as buildingName, w.name as workerName 
                     FROM routine_tasks t
@@ -220,7 +244,7 @@ public final class GRDBManager {
                     LEFT JOIN workers w ON t.workerId = w.id
                     WHERE t.buildingId = ?
                     ORDER BY t.scheduledDate
-                """, arguments: [buildingId])
+                """, arguments: StatementArguments([buildingId]))
             }
             .publisher(in: dbPool)
         
