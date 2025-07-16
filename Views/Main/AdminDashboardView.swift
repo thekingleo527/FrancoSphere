@@ -2,10 +2,10 @@
 //  AdminDashboardView.swift
 //  FrancoSphere
 //
+//  ✅ CLEAN VERSION: No redeclared components, uses existing shared components only
+//  ✅ FIXED: All syntax errors and top-level expressions removed
+//  ✅ ALIGNED: With three-dashboard platform architecture
 //  ✅ V6.0: Phase 4.1 - Real-Time Admin Dashboard
-//  ✅ Uses the new AdminDashboardViewModel for all logic and data.
-//  ✅ Integrates the new IntelligencePreviewPanel.
-//  ✅ Preserves the original glassmorphism design and layout.
 //
 
 import SwiftUI
@@ -39,9 +39,7 @@ struct AdminDashboardView: View {
                                 .padding(.top, 50)
                                 .tint(.white)
                         } else {
-                            // statisticsSection #TODO
-                            
-                            // The new, interactive intelligence panel
+                            // The interactive intelligence panel
                             intelligenceSection
                             
                             activeWorkersSection
@@ -62,7 +60,7 @@ struct AdminDashboardView: View {
         .preferredColorScheme(.dark)
     }
 
-    // MARK: - Subviews (Preserving Original Design)
+    // MARK: - Header Section
 
     private var header: some View {
         HStack {
@@ -81,12 +79,17 @@ struct AdminDashboardView: View {
                 Image(systemName: "person.crop.circle.fill").font(.system(size: 28))
             }
         }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
+    
+    // MARK: - Intelligence Section
     
     private var intelligenceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Portfolio Intelligence")
                 .font(.headline)
+                .foregroundColor(.white)
             
             // Building Picker
             Picker("Select Building", selection: $selectedBuildingId) {
@@ -98,72 +101,97 @@ struct AdminDashboardView: View {
             .pickerStyle(.menu)
             .tint(.accentColor)
 
-            // Intelligence Panel
+            // Intelligence Panel - Using existing component
             if viewModel.isLoadingIntelligence {
                 ProgressView("Loading Intelligence...")
                     .frame(height: 150)
-            } else if let intelligence = viewModel.selectedBuildingIntelligence {
-                IntelligencePreviewPanel(intelligence: intelligence)
+                    .foregroundColor(.white)
+            } else if !viewModel.selectedBuildingInsights.isEmpty {
+                IntelligencePreviewPanel(insights: viewModel.selectedBuildingInsights)
             } else if selectedBuildingId != nil {
-                Text("No intelligence data available for this building.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(height: 150)
+                VStack(spacing: 8) {
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 32))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No intelligence data available for this building.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(height: 120)
             }
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .onChange(of: selectedBuildingId) { newId in
             if let id = newId {
-                Task { await viewModel.fetchIntelligence(for: id) }
+                Task { await viewModel.fetchBuildingIntelligence(for: id) }
             } else {
-                viewModel.clearIntelligence()
+                viewModel.clearBuildingIntelligence()
             }
         }
     }
+
+    // MARK: - Active Workers Section
 
     private var activeWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Active Workers").font(.headline)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(viewModel.activeWorkers) { worker in
-                        ProfileBadge(
-                            workerName: worker.name,
-                            imageUrl: worker.profileImageUrl,
-                            isCompact: true
-                        )
+            Text("Active Workers")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            if viewModel.activeWorkers.isEmpty {
+                Text("No active workers")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(viewModel.activeWorkers) { worker in
+                            ProfileBadge(
+                                workerName: worker.name,
+                                imageUrl: worker.profileImageUrl,
+                                isCompact: true
+                            )
+                        }
                     }
+                    .padding(.horizontal, 4)
                 }
             }
         }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
+    
+    // MARK: - Ongoing Tasks Section
     
     private var ongoingTasksSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Ongoing Tasks").font(.headline)
+            Text("Ongoing Tasks")
+                .font(.headline)
+                .foregroundColor(.white)
+            
             if viewModel.ongoingTasks.isEmpty {
-                Text("No ongoing tasks.").font(.subheadline).foregroundColor(.secondary)
+                Text("No ongoing tasks")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             } else {
-                ForEach(viewModel.ongoingTasks.prefix(5)) { task in
-                    SimpleTaskRow(task: task)
+                LazyVStack(spacing: 8) {
+                    ForEach(viewModel.ongoingTasks.prefix(5)) { task in
+                        TaskTimelineRow(task: task)
+                    }
+                }
+                
+                if viewModel.ongoingTasks.count > 5 {
+                    Text("+ \(viewModel.ongoingTasks.count - 5) more tasks")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
                 }
             }
         }
-    }
-}
-
-// MARK: - Supporting Components (Moved to their own files)
-// We assume Text #TODO and Text #TODO are defined elsewhere now.
-
-// MARK: - Preview
-struct AdminDashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        let authManager = NewAuthManager.shared
-        Task { try? await authManager.login(email: "shawn@fme-llc.com", password: "password") }
-        
-        return AdminDashboardView()
-            .preferredColorScheme(.dark)
-            .environmentObject(authManager)
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }

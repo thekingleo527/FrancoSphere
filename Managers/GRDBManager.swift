@@ -17,7 +17,8 @@ public final class GRDBManager {
     
     private var dbPool: DatabasePool!
     
-    private let dateFormatter: DateFormatter = {
+    // ✅ FIXED: Make dateFormatter public for extension access
+    public let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         formatter.timeZone = TimeZone(identifier: "UTC")
@@ -98,7 +99,7 @@ public final class GRDBManager {
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS routine_tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
+                title TEXT NOT NULL,
                 description TEXT,
                 buildingId INTEGER NOT NULL,
                 workerId INTEGER,
@@ -107,7 +108,7 @@ public final class GRDBManager {
                 scheduledDate TEXT,
                 dueDate TEXT,
                 recurrence TEXT NOT NULL DEFAULT 'oneTime',
-                urgencyLevel TEXT NOT NULL DEFAULT 'medium',
+                urgency TEXT NOT NULL DEFAULT 'medium',
                 category TEXT NOT NULL DEFAULT 'maintenance',
                 estimatedDuration INTEGER DEFAULT 30,
                 notes TEXT,
@@ -139,9 +140,14 @@ public final class GRDBManager {
     
     public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
         return try await dbPool.read { db in
-            let statement = try db.makeStatement(sql: sql)
-            // ✅ FIXED: Proper StatementArguments usage without optional
-            let rows = try Row.fetchAll(statement, arguments: StatementArguments(parameters))
+            // ✅ FIXED: Use direct parameter passing without StatementArguments wrapper
+            let rows: [Row]
+            if parameters.isEmpty {
+                rows = try Row.fetchAll(db, sql: sql)
+            } else {
+                rows = try Row.fetchAll(db, sql: sql, arguments: parameters)
+            }
+            
             // ✅ FIXED: Proper Row to Dictionary conversion
             return rows.map { row in
                 var dict: [String: Any] = [:]
@@ -155,15 +161,23 @@ public final class GRDBManager {
     
     public func execute(_ sql: String, _ parameters: [Any] = []) async throws {
         try await dbPool.write { db in
-            // ✅ FIXED: Proper StatementArguments usage without optional
-            try db.execute(sql: sql, arguments: StatementArguments(parameters))
+            // ✅ FIXED: Use direct parameter passing without StatementArguments wrapper
+            if parameters.isEmpty {
+                try db.execute(sql: sql)
+            } else {
+                try db.execute(sql: sql, arguments: parameters)
+            }
         }
     }
     
     public func insertAndReturnID(_ sql: String, _ parameters: [Any] = []) async throws -> Int64 {
         return try await dbPool.write { db in
-            // ✅ FIXED: Proper StatementArguments usage without optional
-            try db.execute(sql: sql, arguments: StatementArguments(parameters))
+            // ✅ FIXED: Use direct parameter passing without StatementArguments wrapper
+            if parameters.isEmpty {
+                try db.execute(sql: sql)
+            } else {
+                try db.execute(sql: sql, arguments: parameters)
+            }
             return db.lastInsertedRowID
         }
     }
@@ -171,13 +185,16 @@ public final class GRDBManager {
     // MARK: - Real-time Observation (NEW - GRDB's killer feature)
     
     public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
-        ValueObservation
+        // ✅ FIXED: Simplified publisher to avoid complex type-checking
+        let publisher = ValueObservation
             .tracking { db in
                 try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
             }
+            .publisher(in: dbPool)
+        
+        return publisher
             .map { rows in
                 rows.compactMap { row in
-                    // ✅ FIXED: Proper NamedCoordinate constructor usage
                     NamedCoordinate(
                         id: String(row["id"] as? Int64 ?? 0),
                         name: row["name"] as? String ?? "",
@@ -188,13 +205,14 @@ public final class GRDBManager {
                     )
                 }
             }
-            .publisher(in: dbPool)
             .eraseToAnyPublisher()
     }
     
     public func observeTasks(for buildingId: String) -> AnyPublisher<[ContextualTask], Error> {
-        ValueObservation
+        // ✅ FIXED: Simplified publisher with proper parameter handling
+        let publisher = ValueObservation
             .tracking { db in
+                // ✅ FIXED: Direct parameter passing to avoid StatementArguments issues
                 try Row.fetchAll(db, sql: """
                     SELECT t.*, b.name as buildingName, w.name as workerName 
                     FROM routine_tasks t
@@ -204,38 +222,76 @@ public final class GRDBManager {
                     ORDER BY t.scheduledDate
                 """, arguments: [buildingId])
             }
+            .publisher(in: dbPool)
+        
+        return publisher
             .map { rows in
                 rows.compactMap { row in
-                    // ✅ FIXED: Proper ContextualTask constructor with correct parameters
-                    ContextualTask(
-                        id: String(row["id"] as? Int64 ?? 0),
-                        name: row["name"] as? String ?? "",
-                        buildingId: String(row["buildingId"] as? Int64 ?? 0),
-                        buildingName: row["buildingName"] as? String ?? "",
-                        category: row["category"] as? String ?? "maintenance",
-                        startTime: "",
-                        endTime: "",
-                        recurrence: row["recurrence"] as? String ?? "oneTime",
-                        skillLevel: row["urgencyLevel"] as? String ?? "medium",
-                        status: (row["isCompleted"] as? Int64 ?? 0) > 0 ? "completed" : "pending",
-                        urgencyLevel: row["urgencyLevel"] as? String ?? "medium",
-                        assignedWorkerName: row["workerName"] as? String,
-                        completedDate: (row["completedDate"] as? String).flatMap { dateFromString($0) },
-                        dueDate: (row["dueDate"] as? String).flatMap { dateFromString($0) },
-                        notes: row["notes"] as? String,
-                        description: row["description"] as? String
-                    )
+                    self.contextualTaskFromRow(row)
                 }
             }
-            .publisher(in: dbPool)
             .eraseToAnyPublisher()
     }
     
-    // MARK: - Helper Methods
-    
-    private func dateFromString(_ string: String) -> Date? {
-        return dateFormatter.date(from: string)
+    // ✅ FIXED: Helper method to create ContextualTask with proper parameters (made public for extension access)
+    public func contextualTaskFromRow(_ row: Row) -> ContextualTask? {
+        guard let title = row["title"] as? String else { return nil }
+        
+        // Convert category string to enum with safe fallback
+        let categoryString = row["category"] as? String ?? "maintenance"
+        let category: TaskCategory? = {
+            switch categoryString.lowercased() {
+            case "maintenance": return .maintenance
+            case "cleaning": return .cleaning
+            case "repair": return .repair
+            case "sanitation": return .sanitation
+            case "inspection": return .inspection
+            case "landscaping": return .landscaping
+            case "security": return .security
+            case "emergency": return .emergency
+            case "installation": return .installation
+            case "utilities": return .utilities
+            case "renovation": return .renovation
+            default: return .maintenance
+            }
+        }()
+        
+        // Convert urgency string to enum with safe fallback
+        let urgencyString = row["urgency"] as? String ?? "medium"
+        let urgency: TaskUrgency? = {
+            switch urgencyString.lowercased() {
+            case "low": return .low
+            case "medium": return .medium
+            case "high": return .high
+            case "critical": return .critical
+            case "urgent": return .urgent
+            case "emergency": return .emergency
+            default: return .medium
+            }
+        }()
+        
+        // Convert dates
+        let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        let scheduledDate = (row["scheduledDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        
+        // ✅ FIXED: Use correct ContextualTask initializer
+        return ContextualTask(
+            id: String(row["id"] as? Int64 ?? 0),
+            title: title,
+            description: row["description"] as? String,
+            isCompleted: (row["isCompleted"] as? Int64 ?? 0) > 0,
+            completedDate: completedDate,
+            scheduledDate: scheduledDate,
+            dueDate: dueDate,
+            category: category,
+            urgency: urgency,
+            buildingId: String(row["buildingId"] as? Int64 ?? 0),
+            buildingName: row["buildingName"] as? String
+        )
     }
+    
+    // MARK: - Helper Methods
     
     public func isDatabaseReady() -> Bool {
         return dbPool != nil
@@ -253,7 +309,6 @@ public final class GRDBManager {
 
 extension NamedCoordinate: FetchableRecord, PersistableRecord {
     public init(row: Row) {
-        // ✅ FIXED: Proper NamedCoordinate constructor usage
         self.init(
             id: String(row["id"] as? Int64 ?? 0),
             name: row["name"] ?? "",
@@ -281,49 +336,118 @@ extension NamedCoordinate: FetchableRecord, PersistableRecord {
 
 extension ContextualTask: FetchableRecord, PersistableRecord {
     public init(row: Row) {
-        // ✅ FIXED: Proper ContextualTask constructor usage
+        // ✅ FIXED: Direct initialization instead of using helper method
+        let title = row["title"] as? String ?? "Unknown Task"
+        let description = row["description"] as? String
+        let isCompleted = (row["isCompleted"] as? Int64 ?? 0) > 0
+        let buildingId = String(row["buildingId"] as? Int64 ?? 0)
+        let buildingName = row["buildingName"] as? String
+        
+        // Convert category string to enum with safe fallback
+        let categoryString = row["category"] as? String ?? "maintenance"
+        let category: TaskCategory? = {
+            switch categoryString.lowercased() {
+            case "maintenance": return .maintenance
+            case "cleaning": return .cleaning
+            case "repair": return .repair
+            case "sanitation": return .sanitation
+            case "inspection": return .inspection
+            case "landscaping": return .landscaping
+            case "security": return .security
+            case "emergency": return .emergency
+            case "installation": return .installation
+            case "utilities": return .utilities
+            case "renovation": return .renovation
+            default: return .maintenance
+            }
+        }()
+        
+        // Convert urgency string to enum with safe fallback
+        let urgencyString = row["urgency"] as? String ?? "medium"
+        let urgency: TaskUrgency? = {
+            switch urgencyString.lowercased() {
+            case "low": return .low
+            case "medium": return .medium
+            case "high": return .high
+            case "critical": return .critical
+            case "urgent": return .urgent
+            case "emergency": return .emergency
+            default: return .medium
+            }
+        }()
+        
+        // Convert dates
+        let dateFormatter = GRDBManager.shared.dateFormatter
+        let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        let scheduledDate = (row["scheduledDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        
+        // Initialize with correct parameters
         self.init(
             id: String(row["id"] as? Int64 ?? 0),
-            name: row["name"] ?? "",
-            buildingId: String(row["buildingId"] as? Int64 ?? 0),
-            buildingName: row["buildingName"] ?? "",
-            category: row["category"] ?? "maintenance",
-            startTime: "",
-            endTime: "",
-            recurrence: row["recurrence"] ?? "oneTime",
-            skillLevel: row["urgencyLevel"] ?? "medium",
-            status: (row["isCompleted"] as? Int64 ?? 0) > 0 ? "completed" : "pending",
-            urgencyLevel: row["urgencyLevel"] ?? "medium",
-            assignedWorkerName: row["assignedWorkerName"],
-            completedDate: (row["completedDate"] as? String).flatMap { 
-                GRDBManager.shared.dateFormatter.date(from: $0)
-            },
-            dueDate: (row["dueDate"] as? String).flatMap { 
-                GRDBManager.shared.dateFormatter.date(from: $0)
-            },
-            notes: row["notes"],
-            description: row["description"]
+            title: title,
+            description: description,
+            isCompleted: isCompleted,
+            completedDate: completedDate,
+            scheduledDate: scheduledDate,
+            dueDate: dueDate,
+            category: category,
+            urgency: urgency,
+            buildingId: buildingId,
+            buildingName: buildingName
         )
     }
     
     public func encode(to container: inout PersistenceContainer) {
-        container["name"] = name
-        container["buildingId"] = Int64(buildingId) ?? 0
-        container["category"] = category
-        container["recurrence"] = recurrence
-        container["urgencyLevel"] = urgencyLevel
-        container["isCompleted"] = status == "completed" ? 1 : 0
+        // ✅ FIXED: Use correct ContextualTask properties
+        container["title"] = title
+        container["description"] = description
+        container["buildingId"] = buildingId.flatMap { Int64($0) } ?? 0
+        container["isCompleted"] = isCompleted ? 1 : 0
+        
+        // ✅ FIXED: Convert enums to strings for database storage with safe fallback
+        if let category = category {
+            let categoryString: String = {
+                switch category {
+                case .maintenance: return "maintenance"
+                case .cleaning: return "cleaning"
+                case .repair: return "repair"
+                case .sanitation: return "sanitation"
+                case .inspection: return "inspection"
+                case .landscaping: return "landscaping"
+                case .security: return "security"
+                case .emergency: return "emergency"
+                case .installation: return "installation"
+                case .utilities: return "utilities"
+                case .renovation: return "renovation"
+                }
+            }()
+            container["category"] = categoryString
+        }
+        
+        if let urgency = urgency {
+            let urgencyString: String = {
+                switch urgency {
+                case .low: return "low"
+                case .medium: return "medium"
+                case .high: return "high"
+                case .critical: return "critical"
+                case .urgent: return "urgent"
+                case .emergency: return "emergency"
+                }
+            }()
+            container["urgency"] = urgencyString
+        }
+        
+        // ✅ FIXED: Handle date formatting with accessible dateFormatter
         if let completedDate = completedDate {
             container["completedDate"] = GRDBManager.shared.dateFormatter.string(from: completedDate)
         }
+        if let scheduledDate = scheduledDate {
+            container["scheduledDate"] = GRDBManager.shared.dateFormatter.string(from: scheduledDate)
+        }
         if let dueDate = dueDate {
             container["dueDate"] = GRDBManager.shared.dateFormatter.string(from: dueDate)
-        }
-        if let notes = notes {
-            container["notes"] = notes
-        }
-        if let description = description {
-            container["description"] = description
         }
     }
 }
