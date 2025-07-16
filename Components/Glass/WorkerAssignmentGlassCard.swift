@@ -3,9 +3,11 @@
 //  FrancoSphere v6.0
 //
 //  🔧 SURGICAL FIXES: All compilation errors resolved
+//  ✅ FIXED: Optional binding error - worker.shift is String, not String?
 //  ✅ Fixed complex expression that exceeded type-check time limit
 //  ✅ Fixed Animation typo → .easeInOut animation
 //  ✅ Simplified complex boolean logic for better compilation
+//  ✅ ALIGNED: With correct FrancoWorkerAssignment type definition
 //
 
 import SwiftUI
@@ -219,11 +221,14 @@ struct WorkerAssignmentGlassCard: View {
     }
     
     private func hasShiftData() -> Bool {
-        workers.contains { $0.shift != nil }
+        // ✅ FIXED: worker.shift is String (non-optional), so check for non-empty instead
+        workers.contains { !$0.shift.isEmpty }
     }
     
     private func getShiftDistribution() -> [(String, Int)] {
-        let shiftCounts = Dictionary(grouping: workers.compactMap { $0.shift }) { $0 }
+        // ✅ FIXED: worker.shift is String (non-optional), so filter non-empty instead of compactMap
+        let shifts = workers.map { $0.shift }.filter { !$0.isEmpty }
+        let shiftCounts = Dictionary(grouping: shifts) { $0 }
             .mapValues { $0.count }
         
         return Array(shiftCounts).sorted { $0.0 < $1.0 }
@@ -267,18 +272,20 @@ struct WorkerRowGlassView: View {
                     }
                     
                     HStack(spacing: 12) {
-                        if let shift = worker.shift {
+                        // ✅ FIXED: worker.shift is String (non-optional), use directly
+                        if !worker.shift.isEmpty {
                             HStack(spacing: 4) {
                                 Image(systemName: "clock")
                                     .font(.caption2)
                                     .foregroundColor(.white.opacity(0.7))
                                 
-                                Text(shift)
+                                Text(worker.shift)
                                     .font(.caption)
                                     .foregroundColor(.white.opacity(0.8))
                             }
                         }
                         
+                        // ✅ OK: worker.specialRole is String? (optional), use if let
                         if let role = worker.specialRole {
                             HStack(spacing: 4) {
                                 Image(systemName: "star.fill")
@@ -441,3 +448,33 @@ struct WorkerAssignmentGlassCard_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
+
+// MARK: - 📝 FIX NOTES
+/*
+ ✅ COMPLETE FIX FOR COMPILATION ERROR:
+ 
+ 🔧 FIXED OPTIONAL BINDING ERROR (Line 270):
+ - ✅ BEFORE: if let shift = worker.shift { ... } ← ERROR: shift is String, not String?
+ - ✅ AFTER: if !worker.shift.isEmpty { ... } ← CORRECT: Check for non-empty String
+ - ✅ worker.shift is declared as String (non-optional) in FrancoWorkerAssignment
+ - ✅ worker.specialRole is declared as String? (optional) - kept if let binding
+ 
+ 🔧 UPDATED SHIFT HANDLING METHODS:
+ - ✅ hasShiftData(): Check for non-empty strings instead of nil
+ - ✅ getShiftDistribution(): Filter empty strings instead of using compactMap
+ - ✅ Direct access to worker.shift since it's guaranteed to exist
+ 
+ 🔧 MAINTAINED ALL OTHER FIXES:
+ - ✅ Complex expression simplified in shiftDistributionView
+ - ✅ Animation typo fixed: .easeInOut instead of .easeInOut
+ - ✅ Boolean logic simplified in isWorkerOnSite
+ - ✅ All UI components properly structured
+ 
+ 🔧 TYPE ALIGNMENT:
+ - ✅ Matches CoreTypes.swift FrancoWorkerAssignment definition
+ - ✅ shift: String (non-optional) → use directly with empty check
+ - ✅ specialRole: String? (optional) → use with if let binding
+ - ✅ Proper handling of worker ID type conversions
+ 
+ 🎯 STATUS: Compilation error fixed, proper type handling implemented
+ */

@@ -3,10 +3,9 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With existing ViewModel pattern and CoreTypes
-//  ✅ CORRECTED: Uses proper ClockInManager.ClockInSession type
-//  ✅ CORRECTED: Uses existing TaskProgress from CoreTypes
-//  ✅ CORRECTED: Proper HeaderV3B parameters (no hasPendingScenario)
+//  ✅ CORRECTED: Uses actual ViewModel properties and methods that exist
+//  ✅ SIMPLIFIED: Clock toggle logic to use existing clockOut() method
+//  ✅ ENHANCED: Proper error handling and state management
 //
 
 import SwiftUI
@@ -20,6 +19,7 @@ struct WorkerDashboardView: View {
     @State private var showBuildingList = false
     @State private var showMapOverlay = false
     @State private var showProfileView = false
+    @State private var workerName = "Worker" // Local state for worker name
     
     var body: some View {
         NavigationView {
@@ -36,9 +36,17 @@ struct WorkerDashboardView: View {
                 // Custom header floats on top
                 VStack {
                     HeaderV3B(
-                        workerName: viewModel.workerProfile?.name ?? "Worker",
+                        workerName: workerName,
                         clockedInStatus: viewModel.isClockedIn,
-                        onClockToggle: { Task { await viewModel.handleClockInToggle() } },
+                        onClockToggle: {
+                            Task {
+                                if viewModel.isClockedIn {
+                                    await viewModel.clockOut()
+                                } else {
+                                    showBuildingList = true
+                                }
+                            }
+                        },
                         onProfilePress: { showProfileView = true },
                         nextTaskName: viewModel.todaysTasks.first(where: { !$0.isCompleted })?.title,
                         hasUrgentWork: viewModel.todaysTasks.contains { task in
@@ -55,6 +63,8 @@ struct WorkerDashboardView: View {
             }
             .task {
                 await viewModel.loadInitialData()
+                // Load worker name separately
+                workerName = await viewModel.getCurrentWorkerName()
             }
             .sheet(isPresented: $showBuildingList) {
                 BuildingSelectionSheet(
@@ -73,7 +83,7 @@ struct WorkerDashboardView: View {
                 EnhancedMapOverlay(
                     isPresented: $showMapOverlay,
                     buildings: viewModel.assignedBuildings,
-                    currentBuildingId: viewModel.currentSession?.buildingId
+                    currentBuildingId: viewModel.currentBuilding?.id
                 )
             }
             .navigationBarHidden(true)
@@ -85,6 +95,14 @@ struct WorkerDashboardView: View {
     
     private var clockInButtonText: String {
         return viewModel.isClockedIn ? "Clock Out" : "Start Shift"
+    }
+    
+    private var clockInStatusText: String {
+        if viewModel.isClockedIn {
+            return "Working at \(viewModel.currentBuilding?.name ?? "Unknown Location")"
+        } else {
+            return "Select a building to start your shift"
+        }
     }
 
     // MARK: - Subviews
@@ -137,7 +155,7 @@ struct WorkerDashboardView: View {
     private var clockInSection: some View {
         Button(action: {
             if viewModel.isClockedIn {
-                Task { await viewModel.handleClockInToggle() }
+                Task { await viewModel.clockOut() }
             } else {
                 showBuildingList = true
             }
@@ -151,7 +169,7 @@ struct WorkerDashboardView: View {
                     Text(clockInButtonText)
                         .font(.headline)
                         .foregroundColor(.white)
-                    Text(viewModel.isClockedIn ? "Working at \(viewModel.currentSession?.buildingName ?? "Unknown")" : "Select a building to start your shift")
+                    Text(clockInStatusText)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -171,13 +189,14 @@ struct WorkerDashboardView: View {
                 .font(.headline)
                 .foregroundColor(.white)
             
-            ProgressView(value: viewModel.taskProgress?.percentage ?? 0, total: 100)
+            // ✅ FIXED: Use progressPercentage property that actually exists
+            ProgressView(value: viewModel.taskProgress?.progressPercentage ?? 0, total: 100)
                 .progressViewStyle(LinearProgressViewStyle(tint: .blue))
             
             HStack {
-                Text("\(Int(viewModel.taskProgress?.percentage ?? 0))% Complete")
+                Text("\(Int(viewModel.taskProgress?.progressPercentage ?? 0))% Complete")
                 Spacer()
-                Text("\(viewModel.taskProgress?.completed ?? 0)/\(viewModel.taskProgress?.total ?? 0) Tasks")
+                Text("\(viewModel.taskProgress?.completedTasks ?? 0)/\(viewModel.taskProgress?.totalTasks ?? 0) Tasks")
             }
             .font(.caption)
             .foregroundColor(.white.opacity(0.7))
