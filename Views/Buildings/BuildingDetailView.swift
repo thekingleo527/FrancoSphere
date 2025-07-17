@@ -9,7 +9,13 @@
 //
 
 import SwiftUI
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 import MapKit
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 
 struct BuildingDetailView: View {
     let building: NamedCoordinate

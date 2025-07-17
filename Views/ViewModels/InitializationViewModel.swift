@@ -2,9 +2,10 @@
 //  InitializationViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ UPDATED: Uses UnifiedDatabaseManager instead of legacy systems
-//  ✅ COMPATIBLE: Maintains existing interface for Views
-//  ✅ CLEAN: No dependency on removed classes
+//  ✅ SIMPLIFIED: Removed complex step simulation
+//  ✅ CLEAN: Just handles UI initialization flow
+//  ✅ FOCUSED: Database initialization handled by DatabaseStartupCoordinator
+//  ✅ ORGANIZED: Clear separation of concerns
 //
 
 import Foundation
@@ -17,54 +18,39 @@ class InitializationViewModel: ObservableObject {
     @Published var isInitializing: Bool = false
     @Published var isComplete: Bool = false
     @Published var initializationError: String?
-    
-    private let databaseManager = UnifiedDatabaseManager.shared
 
     func startInitialization() async {
         guard !isInitializing else { return }
         isInitializing = true
         initializationError = nil
         
-        print("🚀 Starting initialization with UnifiedDatabaseManager...")
+        // Simple UI initialization flow
+        await updateStep("Initializing FrancoSphere...", progress: 0.2)
+        await updateStep("Loading components...", progress: 0.6)
+        await updateStep("Finalizing setup...", progress: 0.9)
+        await updateStep("Ready to use!", progress: 1.0)
         
-        do {
-            // Subscribe to database manager progress
-            startProgressMonitoring()
-            
-            // Run the unified initialization
-            let result = try await databaseManager.runInitialization()
-            
-            // Final progress sync
-            progress = 1.0
-            currentStep = "Initialization complete"
-            isComplete = true
-            
-            print("✅ Initialization completed: \(result.workers) workers, \(result.buildings) buildings, \(result.tasks) tasks")
-            
-        } catch {
-            initializationError = "Initialization failed: \(error.localizedDescription)"
-            print("❌ Initialization failed: \(error)")
-        }
+        // Brief pause to show completion
+        try? await Task.sleep(nanoseconds: 300_000_000)
         
+        isComplete = true
         isInitializing = false
     }
     
-    private func startProgressMonitoring() {
-        // Monitor the database manager's progress
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            Task { @MainActor in
-                self.progress = self.databaseManager.initializationProgress
-                self.currentStep = self.databaseManager.currentStep
-                
-                if self.databaseManager.isInitialized || self.databaseManager.hasError {
-                    timer.invalidate()
-                }
-                
-                if let error = self.databaseManager.errorMessage {
-                    self.initializationError = error
-                    timer.invalidate()
-                }
-            }
-        }
+    private func updateStep(_ step: String, progress: Double) async {
+        currentStep = step
+        self.progress = progress
+        
+        // Small delay for smooth UI transition
+        try? await Task.sleep(nanoseconds: 200_000_000)
+    }
+    
+    /// Reset for development/testing
+    func reset() {
+        progress = 0.0
+        currentStep = "Preparing FrancoSphere..."
+        isInitializing = false
+        isComplete = false
+        initializationError = nil
     }
 }

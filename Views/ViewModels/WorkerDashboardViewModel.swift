@@ -68,7 +68,7 @@ class WorkerDashboardViewModel: ObservableObject {
     
     // MARK: - Progress Calculation Fix
     
-    `cat temp_worker_dashboard_patch.swift`
+    // COMPILATION FIX: Removed invalid syntax
     
     func refreshData() async {
         do {

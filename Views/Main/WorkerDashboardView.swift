@@ -10,7 +10,13 @@
 //
 
 import SwiftUI
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 import MapKit
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 
 struct WorkerDashboardView: View {
     // KEEP ALL EXISTING STATE OBJECTS - NO CHANGES

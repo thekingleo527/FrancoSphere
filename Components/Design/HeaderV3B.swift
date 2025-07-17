@@ -8,6 +8,9 @@
 //
 
 import SwiftUI
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 
 struct HeaderV3B: View {
     let workerName: String
@@ -153,7 +156,7 @@ struct HeaderV3B: View {
     private var isWorkerRole: Bool {
         // Check if current user is a worker (not admin/client)
         guard let worker = contextAdapter.currentWorker else { return true }
-        return worker.role == .worker
+        return worker.role == .currentWorker
     }
     
     private func getEnhancedWorkerRole() -> String {

@@ -13,25 +13,6 @@ import Foundation
 import SwiftUI
 
 // MARK: - Import Error Types
-enum ImportError: Error, LocalizedError {
-    case databaseUnavailable
-    case invalidData
-    case workerServiceFailure
-    case buildingServiceFailure
-    
-    var errorDescription: String? {
-        switch self {
-        case .databaseUnavailable:
-            return "Database service not available"
-        case .invalidData:
-            return "Invalid data provided for import"
-        case .workerServiceFailure:
-            return "Failed to load workers from database"
-        case .buildingServiceFailure:
-            return "Failed to load buildings from database"
-        }
-    }
-}
 
 // MARK: - Initialization Status View
 struct InitializationStatusView: View {

@@ -25,7 +25,6 @@
 		23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23148E732E286AA200446441 /* UnifiedDataService.swift */; };
 		2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */; };
 		2317FED42E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */; };
-		2317FED62E2982F50013D5A7 /* DatabaseStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */; };
 		2317FF892E299B2E0013D5A7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2317FF882E299B2E0013D5A7 /* GRDB */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
@@ -105,7 +104,6 @@
 		234581952DF78E3D00355F0A /* WeatherViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B52DF78E3D00355F0A /* WeatherViewModifier.swift */; };
 		234581962DF78E3D00355F0A /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D52DF78E3D00355F0A /* NotificationManager.swift */; };
 		234581972DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */; };
-		234581982DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */; };
 		2345819A2DF78E3D00355F0A /* VerificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E32DF78E3D00355F0A /* VerificationRecord.swift */; };
 		2345819B2DF78E3D00355F0A /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811F2DF78E3D00355F0A /* DashboardView.swift */; };
 		2345819C2DF78E3D00355F0A /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580992DF78E3D00355F0A /* GlassButton.swift */; };
@@ -122,7 +120,6 @@
 		234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */; };
 		234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A42DF78E3D00355F0A /* PressableGlassCard.swift */; };
 		234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581162DF78E3D00355F0A /* BuildingTaskDetailView.swift */; };
-		234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */; };
 		234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AB2DF78E3D00355F0A /* AIAvatarOverlayView.swift */; };
 		234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580AC2DF78E3D00355F0A /* FrancoSphereColors.swift */; };
 		234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581102DF78E3D00355F0A /* SignUpView.swift */; };
@@ -218,7 +215,6 @@
 		23148E732E286AA200446441 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldDataSeeder.swift; sourceTree = "<group>"; };
 		2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OperationalDataManager+DatabaseIntegration.swift"; sourceTree = "<group>"; };
-		2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseStartupCoordinator.swift; sourceTree = "<group>"; };
 		2317FED72E29836A0013D5A7 /* WorkerContextEngineAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngineAdapter.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
@@ -273,7 +269,6 @@
 		234580CC2DF78E3D00355F0A /* ClockInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInManager.swift; sourceTree = "<group>"; };
 		234580CD2DF78E3D00355F0A /* OperationalDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationalDataManager.swift; sourceTree = "<group>"; };
 		234580CE2DF78E3D00355F0A /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
-		234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataInitializationManager.swift; sourceTree = "<group>"; };
 		234580D02DF78E3D00355F0A /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		234580D22DF78E3D00355F0A /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		234580D42DF78E3D00355F0A /* NewAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewAuthManager.swift; sourceTree = "<group>"; };
@@ -304,7 +299,6 @@
 		234580FC2DF78E3D00355F0A /* Stuyvesant_Cove_Park.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Stuyvesant_Cove_Park.jpg; sourceTree = "<group>"; };
 		234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		234581032DF78E3D00355F0A /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
-		234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializationCoordinator.swift; sourceTree = "<group>"; };
 		2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
 		2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
 		2345810E2DF78E3D00355F0A /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
@@ -642,7 +636,6 @@
 				234580CC2DF78E3D00355F0A /* ClockInManager.swift */,
 				234580CD2DF78E3D00355F0A /* OperationalDataManager.swift */,
 				234580CE2DF78E3D00355F0A /* DatabaseManager.swift */,
-				234580CF2DF78E3D00355F0A /* DataInitializationManager.swift */,
 				234580D02DF78E3D00355F0A /* HapticManager.swift */,
 				234580D22DF78E3D00355F0A /* LocationManager.swift */,
 				234580D42DF78E3D00355F0A /* NewAuthManager.swift */,
@@ -716,7 +709,6 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */,
 				2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */,
 				23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */,
 				23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */,
@@ -734,7 +726,6 @@
 				2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */,
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				234581032DF78E3D00355F0A /* DailyOpsReset.swift */,
-				234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */,
 				2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */,
 				2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */,
 			);
@@ -1056,7 +1047,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */,
-				2317FED62E2982F50013D5A7 /* DatabaseStartupCoordinator.swift in Sources */,
 				2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */,
 				233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
@@ -1160,7 +1150,6 @@
 				234581962DF78E3D00355F0A /* NotificationManager.swift in Sources */,
 				23B117952DFE00A40065F39E /* MapInteractionHint.swift in Sources */,
 				234581972DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift in Sources */,
-				234581982DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift in Sources */,
 				2345819A2DF78E3D00355F0A /* VerificationRecord.swift in Sources */,
 				233F94E82DF7E55000901707 /* AdaptiveGlassModifier.swift in Sources */,
 				2312FC8B2E1BF0EC00B64496 /* IntelligencePreviewPanel.swift in Sources */,
@@ -1196,7 +1185,6 @@
 				23EA1ED92E2809D3009FFF54 /* NovaAPIService.swift in Sources */,
 				234581AE2DF78E3D00355F0A /* BuildingTaskDetailView.swift in Sources */,
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
-				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */,
 				23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */,

@@ -259,33 +259,6 @@ struct InsightsTab: View {
 
 // MARK: - Supporting Card Components
 
-struct MetricCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(width: 80)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
-    }
-}
 
 struct PerformanceOverviewCard: View {
     let efficiency: Double

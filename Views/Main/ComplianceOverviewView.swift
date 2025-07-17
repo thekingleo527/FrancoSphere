@@ -864,65 +864,6 @@ struct AuditTimelineItem: View {
     }
 }
 
-struct ComplianceIssueCard: View {
-    let issue: ComplianceIssue
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        // FIXED: Use type instead of issueType
-                        Text(issue.type.rawValue)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text("Building \(issue.buildingId)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    SeverityBadge(severity: issue.severity)
-                }
-                
-                Text(issue.description)
-                    .font(.subheadline)
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.leading)
-                
-                if let dueDate = issue.dueDate {
-                    HStack {
-                        Image(systemName: "calendar")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("Due: \(formattedDueDate(dueDate))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                    }
-                }
-            }
-            .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(issue.severity.color.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    private func formattedDueDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
-    }
-}
 
 struct UpcomingAuditCard: View {
     let date: Date
@@ -1244,23 +1185,6 @@ struct ComplianceExportSheet: View {
 
 // MARK: - Supporting Enums
 
-enum ComplianceTab: String, CaseIterable {
-    case overview = "Overview"
-    case issues = "Issues"
-    case audits = "Audits"
-    case reports = "Reports"
-    
-    var title: String { rawValue }
-    
-    var icon: String {
-        switch self {
-        case .overview: return "chart.pie"
-        case .issues: return "exclamationmark.triangle"
-        case .audits: return "calendar.badge.clock"
-        case .reports: return "doc.text"
-        }
-    }
-}
 
 enum AuditStatus: String, CaseIterable {
     case scheduled = "Scheduled"

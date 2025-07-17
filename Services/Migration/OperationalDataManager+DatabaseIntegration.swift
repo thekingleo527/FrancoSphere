@@ -1,3 +1,6 @@
+import Foundation
+import SwiftUI
+
 
 //  OperationalDataManager+DatabaseIntegration.swift
 //  FrancoSphere v6.0
@@ -44,7 +47,7 @@ extension OperationalDataManager {
     }
     
     /// Import a single task with proper worker and building resolution
-    private func importSingleTask(_ task: RealWorldTask, using manager: GRDBManager) async throws {
+    private func importSingleTask(_ task: ContextualTask, using manager: GRDBManager) async throws {
         // Get worker ID from name
         guard let workerId = await getWorkerIdFromName(task.assignedWorker) else {
             throw ImportError.workerNotFound(task.assignedWorker)
@@ -64,9 +67,9 @@ extension OperationalDataManager {
         print("✅ Imported: \(task.taskName) for \(task.assignedWorker) at \(task.building)")
     }
     
-    /// Convert RealWorldTask to ContextualTask
+    /// Convert ContextualTask to ContextualTask
     private func createContextualTask(
-        from realTask: RealWorldTask, 
+        from realTask: ContextualTask, 
         workerId: String, 
         buildingId: String
     ) -> ContextualTask {
@@ -85,7 +88,7 @@ extension OperationalDataManager {
             buildingName: realTask.building,
             category: mapTaskCategory(realTask.category),
             urgency: mapTaskUrgency(realTask),
-            skillLevel: mapSkillLevel(realTask.skillLevel),
+            skillLevel: mapWorkerSkill(realTask.skillLevel),
             estimatedDuration: TimeInterval(realTask.estimatedDuration ?? 3600),
             isCompleted: false,
             completedAt: nil,
@@ -172,7 +175,7 @@ extension OperationalDataManager {
     }
     
     /// Calculate next due date based on recurrence pattern
-    private func calculateNextDueDate(from task: RealWorldTask, baseDate: Date) -> Date {
+    private func calculateNextDueDate(from task: ContextualTask, baseDate: Date) -> Date {
         let calendar = Calendar.current
         
         switch task.recurrence.lowercased() {
@@ -190,7 +193,7 @@ extension OperationalDataManager {
     }
     
     /// Generate detailed task description
-    private func generateTaskDescription(from task: RealWorldTask) -> String {
+    private func generateTaskDescription(from task: ContextualTask) -> String {
         var description = task.taskName
         
         if let startHour = task.startHour, let endHour = task.endHour {
@@ -209,7 +212,7 @@ extension OperationalDataManager {
     }
     
     /// Generate task notes with operational context
-    private func generateTaskNotes(from task: RealWorldTask) -> String {
+    private func generateTaskNotes(from task: ContextualTask) -> String {
         var notes = "Imported from operational data"
         
         if task.building.contains("Rubin") {
@@ -246,7 +249,7 @@ extension OperationalDataManager {
         }
     }
     
-    private func mapTaskUrgency(_ task: RealWorldTask) -> TaskUrgency {
+    private func mapTaskUrgency(_ task: ContextualTask) -> TaskUrgency {
         if task.taskName.lowercased().contains("emergency") {
             return .critical
         } else if task.taskName.lowercased().contains("urgent") {
@@ -257,7 +260,7 @@ extension OperationalDataManager {
         return .medium
     }
     
-    private func mapSkillLevel(_ skillLevel: String) -> SkillLevel {
+    private func mapWorkerSkill(_ skillLevel: String) -> WorkerSkill {
         switch skillLevel.lowercased() {
         case "basic", "entry":
             return .beginner
@@ -272,7 +275,7 @@ extension OperationalDataManager {
         }
     }
     
-    private func mapTaskPriority(from task: RealWorldTask) -> TaskPriority {
+    private func mapTaskPriority(from task: ContextualTask) -> TaskPriority {
         if task.building.contains("Rubin") {
             return .high // Cultural site gets high priority
         } else if task.recurrence == "daily" {

@@ -9,6 +9,9 @@
 //
 
 import SwiftUI
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 
 struct BuildingIntelligencePanel: View {
     let building: NamedCoordinate
