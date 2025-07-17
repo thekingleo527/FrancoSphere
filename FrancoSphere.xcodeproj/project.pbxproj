@@ -23,6 +23,7 @@
 		2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */; };
 		23148E6E2E285F7300446441 /* WorkerContextEngine+DataFlow.swift in Resources */ = {isa = PBXBuildFile; fileRef = 23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */; };
 		23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23148E732E286AA200446441 /* UnifiedDataService.swift */; };
+		2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
 		233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */; };
@@ -60,7 +61,6 @@
 		234581552DF78E3D00355F0A /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A92DF78E3D00355F0A /* MapRevealContainer.swift */; };
 		234581582DF78E3D00355F0A /* FrancoSphereDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580912DF78E3D00355F0A /* FrancoSphereDesign.swift */; };
 		2345815A2DF78E3D00355F0A /* NewAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D42DF78E3D00355F0A /* NewAuthManager.swift */; };
-		2345815B2DF78E3D00355F0A /* SQLiteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580D72DF78E3D00355F0A /* SQLiteManager.swift */; };
 		2345815D2DF78E3D00355F0A /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581142DF78E3D00355F0A /* BuildingSelectionView.swift */; };
 		2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C62DF78E3D00355F0A /* V003_WorkerAssignments.swift */; };
 		234581612DF78E3D00355F0A /* WorkerRoutineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E72DF78E3D00355F0A /* WorkerRoutineViewModel.swift */; };
@@ -89,7 +89,6 @@
 		234581802DF78E3D00355F0A /* InventoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581172DF78E3D00355F0A /* InventoryView.swift */; };
 		234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581122DF78E3D00355F0A /* AssignedBuildingsView.swift */; };
 		234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A82DF78E3D00355F0A /* MapBackgroundView.swift */; };
-		234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581052DF78E3D00355F0A /* DatabaseSeeder.swift */; };
 		234581852DF78E3D00355F0A /* WeatherAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E42DF78E3D00355F0A /* WeatherAlert.swift */; };
 		234581862DF78E3D00355F0A /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580B02DF78E3D00355F0A /* RouteStatItem.swift */; };
 		234581872DF78E3D00355F0A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810F2DF78E3D00355F0A /* LoginView.swift */; };
@@ -217,6 +216,7 @@
 		2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerContextEngine+DataFlow.swift"; sourceTree = "<group>"; };
 		23148E732E286AA200446441 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
+		2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldDataSeeder.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -275,7 +275,6 @@
 		234580D22DF78E3D00355F0A /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		234580D42DF78E3D00355F0A /* NewAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewAuthManager.swift; sourceTree = "<group>"; };
 		234580D52DF78E3D00355F0A /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		234580D72DF78E3D00355F0A /* SQLiteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteManager.swift; sourceTree = "<group>"; };
 		234580DE2DF78E3D00355F0A /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
 		234580E32DF78E3D00355F0A /* VerificationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerificationRecord.swift; sourceTree = "<group>"; };
 		234580E42DF78E3D00355F0A /* WeatherAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAlert.swift; sourceTree = "<group>"; };
@@ -303,7 +302,6 @@
 		234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		234581032DF78E3D00355F0A /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
 		234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializationCoordinator.swift; sourceTree = "<group>"; };
-		234581052DF78E3D00355F0A /* DatabaseSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSeeder.swift; sourceTree = "<group>"; };
 		234581062DF78E3D00355F0A /* DataBootstrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBootstrapper.swift; sourceTree = "<group>"; };
 		2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
 		2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
@@ -647,7 +645,6 @@
 				234580D22DF78E3D00355F0A /* LocationManager.swift */,
 				234580D42DF78E3D00355F0A /* NewAuthManager.swift */,
 				234580D52DF78E3D00355F0A /* NotificationManager.swift */,
-				234580D72DF78E3D00355F0A /* SQLiteManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -717,6 +714,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */,
 				23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */,
 				23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */,
 				23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */,
@@ -734,7 +732,6 @@
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				234581032DF78E3D00355F0A /* DailyOpsReset.swift */,
 				234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */,
-				234581052DF78E3D00355F0A /* DatabaseSeeder.swift */,
 				234581062DF78E3D00355F0A /* DataBootstrapper.swift */,
 				2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */,
 				2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */,
@@ -1077,7 +1074,6 @@
 				234581552DF78E3D00355F0A /* MapRevealContainer.swift in Sources */,
 				234581582DF78E3D00355F0A /* FrancoSphereDesign.swift in Sources */,
 				2345815A2DF78E3D00355F0A /* NewAuthManager.swift in Sources */,
-				2345815B2DF78E3D00355F0A /* SQLiteManager.swift in Sources */,
 				2345815D2DF78E3D00355F0A /* BuildingSelectionView.swift in Sources */,
 				23B1179D2DFE22A80065F39E /* DatabaseSchemaVerifier.swift in Sources */,
 				2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */,
@@ -1131,7 +1127,6 @@
 				2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */,
 				2312FC812E1BEDB000B64496 /* WorkerEventOutbox.swift in Sources */,
 				2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */,
-				234581842DF78E3D00355F0A /* DatabaseSeeder.swift in Sources */,
 				2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */,
 				23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */,
 				23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */,
@@ -1153,6 +1148,7 @@
 				2345818D2DF78E3D00355F0A /* ImagePicker.swift in Sources */,
 				2345818E2DF78E3D00355F0A /* WeatherTasksSection.swift in Sources */,
 				236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */,
+				2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */,
 				2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */,
 				236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
