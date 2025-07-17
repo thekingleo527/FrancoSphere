@@ -26,7 +26,7 @@
 		2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */; };
 		2317FED42E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */; };
 		2317FED62E2982F50013D5A7 /* DatabaseStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */; };
-		2317FED82E29836A0013D5A7 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED72E29836A0013D5A7 /* WorkerContextEngineAdapter.swift */; };
+		2317FF892E299B2E0013D5A7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2317FF882E299B2E0013D5A7 /* GRDB */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
 		233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */; };
@@ -141,7 +141,6 @@
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
 		2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560D2E11086300B3F105 /* WorkersInlineList.swift */; };
 		23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169A2E1E368500469FA3 /* TaskService.swift */; };
-		23A3169D2E1E377500469FA3 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */; };
 		23A3169F2E1E37B500469FA3 /* AITypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169E2E1E37B500469FA3 /* AITypes.swift */; };
 		23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178C2DFDB0310065F39E /* MySitesCard.swift */; };
 		23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178E2DFDB0570065F39E /* HeaderV3B.swift */; };
@@ -163,7 +162,6 @@
 		23DED85B2E1E24F100E5F9F5 /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */; };
 		23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E1E5762E0F51C30036127D /* DatabaseMigrations.swift */; };
 		23EA1D1B2E234F79009FFF54 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1D1A2E234F78009FFF54 /* GRDBManager.swift */; };
-		23EA1E5E2E271759009FFF54 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 23EA1E5D2E271759009FFF54 /* GRDB */; };
 		23EA1E7A2E275DD1009FFF54 /* ClientDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E792E275DD1009FFF54 /* ClientDashboardView.swift */; };
 		23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */; };
 		23EA1E7E2E278585009FFF54 /* CrossDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E7D2E278585009FFF54 /* CrossDashboardTypes.swift */; };
@@ -343,7 +341,6 @@
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
 		2399560D2E11086300B3F105 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
 		23A3169A2E1E368500469FA3 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TaskService.swift; path = Services/TaskService.swift; sourceTree = "<group>"; };
-		23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngineAdapter.swift; sourceTree = "<group>"; };
 		23A3169E2E1E37B500469FA3 /* AITypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITypes.swift; sourceTree = "<group>"; };
 		23B1178C2DFDB0310065F39E /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
 		23B1178E2DFDB0570065F39E /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
@@ -406,7 +403,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23EA1E5E2E271759009FFF54 /* GRDB in Frameworks */,
+				2317FF892E299B2E0013D5A7 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -570,7 +567,6 @@
 				23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */,
 				23EA1E9A2E27EA23009FFF54 /* BuildingIntelligencePanel.swift */,
 				23EA1E982E27E9B8009FFF54 /* MyAssignedBuildingsSection.swift */,
-				23A3169C2E1E377500469FA3 /* WorkerContextEngineAdapter.swift */,
 				2312FC6A2E1B77B400B64496 /* StatCard.swift */,
 				2399560D2E11086300B3F105 /* WorkersInlineList.swift */,
 				239956072E11079F00B3F105 /* AIScenarioSheetView.swift */,
@@ -891,7 +887,7 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				23EA1E5D2E271759009FFF54 /* GRDB */,
+				2317FF882E299B2E0013D5A7 /* GRDB */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -970,7 +966,7 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				23EA1E5C2E271759009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */,
+				2317FF872E299B2E0013D5A7 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1203,11 +1199,9 @@
 				234581AF2DF78E3D00355F0A /* DataInitializationManager.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */,
-				23A3169D2E1E377500469FA3 /* WorkerContextEngineAdapter.swift in Sources */,
 				23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
-				2317FED82E29836A0013D5A7 /* WorkerContextEngineAdapter.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
 				234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
 				23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */,
@@ -1537,7 +1531,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		23EA1E5C2E271759009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */ = {
+		2317FF872E299B2E0013D5A7 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -1548,9 +1542,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		23EA1E5D2E271759009FFF54 /* GRDB */ = {
+		2317FF882E299B2E0013D5A7 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 23EA1E5C2E271759009FFF54 /* XCRemoteSwiftPackageReference "GRDB" */;
+			package = 2317FF872E299B2E0013D5A7 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */
