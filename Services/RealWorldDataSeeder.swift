@@ -306,99 +306,15 @@ class RealWorldDataSeeder {
         print("👷 Seeding all workers with REAL contact information...")
         
         // ⚠️ IMPORTANT: Phone numbers need to be added for push notifications
-        // Current phone numbers are placeholders - need real numbers from HR/Management
+        // Current phone numbers are NULL - need real numbers from HR/Management
         let workers = [
-            WorkerInfo(
-                id: 1,
-                name: "Greg Hutson",
-                email: "g.hutson1989@gmail.com", // ✅ REAL EMAIL
-                role: "worker",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 25.0,
-                skills: "cleaning,sanitation,operations,maintenance",
-                address: "To be provided",
-                hireDate: "2022-03-15"
-            ),
-            WorkerInfo(
-                id: 2,
-                name: "Edwin Lema",
-                email: "edwinlema911@gmail.com", // ✅ REAL EMAIL
-                role: "worker",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 27.0,
-                skills: "painting,carpentry,general_maintenance,landscaping",
-                address: "To be provided",
-                hireDate: "2023-01-10"
-            ),
-            WorkerInfo(
-                id: 4,
-                name: "Kevin Dutan",
-                email: "dutankevin1@gmail.com", // ✅ REAL EMAIL
-                role: "worker",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 30.0,
-                skills: "plumbing,electrical,hvac,general_maintenance,museum_operations",
-                address: "To be provided",
-                hireDate: "2021-08-20"
-            ),
-            WorkerInfo(
-                id: 5,
-                name: "Mercedes Inamagua",
-                email: "jneola@gmail.com", // ✅ REAL EMAIL
-                role: "worker",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 24.0,
-                skills: "cleaning,general_maintenance,residential_services",
-                address: "To be provided",
-                hireDate: "2022-11-05"
-            ),
-            WorkerInfo(
-                id: 6,
-                name: "Luis Lopez",
-                email: "luislopez030@yahoo.com", // ✅ REAL EMAIL
-                role: "worker",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 26.0,
-                skills: "maintenance,repair,painting,downtown_operations",
-                address: "To be provided",
-                hireDate: "2023-02-18"
-            ),
-            WorkerInfo(
-                id: 7,
-                name: "Angel Guirachocha",
-                email: "lio.angel71@gmail.com", // ✅ REAL EMAIL
-                role: "worker",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 23.0,
-                skills: "sanitation,waste_management,recycling,evening_operations",
-                address: "To be provided",
-                hireDate: "2022-07-12"
-            ),
-            WorkerInfo(
-                id: 8,
-                name: "Shawn Magloire",
-                email: "shawn@francomanagementgroup.com", // ✅ REAL EMAIL
-                role: "admin",
-                phone: nil, // ⚠️ NEEDS REAL PHONE NUMBER
-                emergencyContact: "To be provided",
-                emergencyPhone: nil,
-                hourlyRate: 45.0,
-                skills: "management,supervision,client_relations,portfolio_oversight",
-                address: "To be provided",
-                hireDate: "2020-01-15"
-            )
+            (id: 1, name: "Greg Hutson", email: "g.hutson1989@gmail.com", role: "worker", hourlyRate: 25.0, skills: "cleaning,sanitation,operations,maintenance", hireDate: "2022-03-15"),
+            (id: 2, name: "Edwin Lema", email: "edwinlema911@gmail.com", role: "worker", hourlyRate: 27.0, skills: "painting,carpentry,general_maintenance,landscaping", hireDate: "2023-01-10"),
+            (id: 4, name: "Kevin Dutan", email: "dutankevin1@gmail.com", role: "worker", hourlyRate: 30.0, skills: "plumbing,electrical,hvac,general_maintenance,museum_operations", hireDate: "2021-08-20"),
+            (id: 5, name: "Mercedes Inamagua", email: "jneola@gmail.com", role: "worker", hourlyRate: 24.0, skills: "cleaning,general_maintenance,residential_services", hireDate: "2022-11-05"),
+            (id: 6, name: "Luis Lopez", email: "luislopez030@yahoo.com", role: "worker", hourlyRate: 26.0, skills: "maintenance,repair,painting,downtown_operations", hireDate: "2023-02-18"),
+            (id: 7, name: "Angel Guirachocha", email: "lio.angel71@gmail.com", role: "worker", hourlyRate: 23.0, skills: "sanitation,waste_management,recycling,evening_operations", hireDate: "2022-07-12"),
+            (id: 8, name: "Shawn Magloire", email: "shawn@francomanagementgroup.com", role: "admin", hourlyRate: 45.0, skills: "management,supervision,client_relations,portfolio_oversight", hireDate: "2020-01-15")
         ]
         
         for worker in workers {
@@ -411,19 +327,19 @@ class RealWorldDataSeeder {
                 worker.name,
                 worker.email,
                 worker.role,
-                worker.phone ?? NSNull(),
-                worker.emergencyContact,
-                worker.emergencyPhone ?? NSNull(),
+                NSNull(), // Phone number - to be added
+                "To be provided", // Emergency contact
+                NSNull(), // Emergency phone
                 worker.hourlyRate,
                 worker.skills,
-                worker.address,
+                "To be provided", // Address
                 worker.hireDate
             ])
         }
         
         print("✅ Seeded \(workers.count) workers with REAL email addresses")
         print("⚠️ WARNING: Phone numbers are missing and need to be added for push notifications")
-        print("📞 To add phone numbers, update the WorkerInfo structs above with real numbers")
+        print("📞 To add phone numbers, use the updateWorkerPhoneNumbers method")
     }
     
     // MARK: - Complete Worker Assignments (VERIFIED FROM OPERATIONAL DATA)
@@ -433,12 +349,12 @@ class RealWorldDataSeeder {
         
         // Get operational data to create assignments
         let operationalData = OperationalDataManager.shared
-        let realWorldTasks = await operationalData.getRealWorldTasks()
+        let legacyTasks = await operationalData.getLegacyTaskAssignments()
         
         // Create worker-building assignments from operational data
         var assignments: Set<String> = []
         
-        for task in realWorldTasks {
+        for task in legacyTasks {
             let workerName = task.assignedWorker
             let buildingName = task.building
             
@@ -477,11 +393,11 @@ class RealWorldDataSeeder {
         print("📝 Seeding all operational tasks from real operational data...")
         
         let operationalData = OperationalDataManager.shared
-        let realWorldTasks = await operationalData.getRealWorldTasks()
+        let legacyTasks = await operationalData.getLegacyTaskAssignments()
         
         var taskCount = 0
         
-        for (index, task) in realWorldTasks.enumerated() {
+        for (index, task) in legacyTasks.enumerated() {
             let workerId = mapWorkerNameToId(task.assignedWorker)
             let buildingId = mapBuildingNameToId(task.building)
             
@@ -721,20 +637,6 @@ class RealWorldDataSeeder {
 }
 
 // MARK: - Supporting Types
-
-struct WorkerInfo {
-    let id: Int
-    let name: String
-    let email: String
-    let role: String
-    let phone: String?
-    let emergencyContact: String
-    let emergencyPhone: String?
-    let hourlyRate: Double
-    let skills: String
-    let address: String
-    let hireDate: String
-}
 
 struct ValidationResult {
     let isValid: Bool
