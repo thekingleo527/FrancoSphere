@@ -1,566 +1,540 @@
 //
 //  UnifiedDataService.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/16/25.
-//
-
-
-//
-//  UnifiedDataService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ SINGLE SOURCE OF TRUTH: All data flows through OperationalDataManager
-//  ✅ NO CONFLICTS: Replaces all other data sources
-//  ✅ REAL DATA: Uses actual operational tasks
+//  ✅ CRITICAL FIX: Bridges OperationalDataManager to Intelligence Services
+//  ✅ FALLBACK: Provides real data when database is empty
+//  ✅ VERIFICATION: Ensures data integrity across all services
+//  ✅ INTELLIGENCE: Enables proper insight generation
 //
 
 import Foundation
-import GRDB
+import Combine
 
+/// Unified service that bridges OperationalDataManager real data to GRDB services
+/// Provides fallback mechanisms and ensures intelligence cards display properly
 @MainActor
 public class UnifiedDataService: ObservableObject {
     public static let shared = UnifiedDataService()
     
+    // MARK: - Dependencies
     private let operationalData = OperationalDataManager.shared
     private let grdbManager = GRDBManager.shared
+    private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
+    private let buildingService = BuildingService.shared
     
-    // Cache for converted data
-    private var contextualTaskCache: [String: [ContextualTask]] = [:]
-    private var buildingCache: [String: NamedCoordinate] = [:]
+    // MARK: - Published State
+    @Published public var isInitialized = false
+    @Published public var dataStatus: DataStatus = .unknown
+    @Published public var lastSyncTime: Date?
+    @Published public var syncProgress: Double = 0.0
+    
+    // MARK: - Private State
+    private var cancellables = Set<AnyCancellable>()
+    private var hasVerifiedData = false
+    
+    public enum DataStatus {
+        case unknown
+        case empty
+        case partial
+        case complete
+        case syncing
+        case error(String)
+        
+        var description: String {
+            switch self {
+            case .unknown: return "Unknown"
+            case .empty: return "Empty Database"
+            case .partial: return "Partial Data"
+            case .complete: return "Complete Data"
+            case .syncing: return "Syncing..."
+            case .error(let msg): return "Error: \(msg)"
+            }
+        }
+    }
     
     private init() {
         Task {
-            await initializeData()
+            await initializeUnifiedData()
         }
     }
     
     // MARK: - Initialization
     
-    /// Initialize all data from OperationalDataManager
-    public func initializeData() async {
-        print("🚀 Initializing UnifiedDataService from OperationalDataManager...")
+    /// Initialize unified data service and verify data integrity
+    public func initializeUnifiedData() async {
+        print("🔄 Initializing UnifiedDataService...")
+        dataStatus = .syncing
         
-        // 1. Ensure database tables exist
-        await createRequiredTables()
-        
-        // 2. Import operational data to database
-        await importOperationalData()
-        
-        // 3. Build caches
-        await buildCaches()
-        
-        print("✅ UnifiedDataService initialized with \(operationalData.realWorldTasks.count) tasks")
-    }
-    
-    // MARK: - Database Setup
-    
-    private func createRequiredTables() async {
         do {
-            // Create unified tasks table
-            try await grdbManager.execute("""
-                CREATE TABLE IF NOT EXISTS unified_tasks (
-                    id TEXT PRIMARY KEY,
-                    worker_id TEXT NOT NULL,
-                    worker_name TEXT NOT NULL,
-                    building_id TEXT NOT NULL,
-                    building_name TEXT NOT NULL,
-                    task_name TEXT NOT NULL,
-                    description TEXT,
-                    category TEXT NOT NULL,
-                    skill_level TEXT NOT NULL,
-                    start_time TEXT,
-                    duration_minutes INTEGER DEFAULT 60,
-                    is_completed INTEGER DEFAULT 0,
-                    completed_date TEXT,
-                    scheduled_date TEXT NOT NULL,
-                    urgency TEXT DEFAULT 'medium',
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
+            // Step 1: Verify database integrity
+            let integrity = await verifyDatabaseIntegrity()
+            print("📊 Database integrity: \(integrity)")
             
-            // Create indexes for performance
-            try await grdbManager.execute("""
-                CREATE INDEX IF NOT EXISTS idx_unified_tasks_worker 
-                ON unified_tasks(worker_id, scheduled_date)
-            """)
-            
-            try await grdbManager.execute("""
-                CREATE INDEX IF NOT EXISTS idx_unified_tasks_building 
-                ON unified_tasks(building_id, scheduled_date)
-            """)
-            
-            print("✅ Database tables created/verified")
-            
-        } catch {
-            print("❌ Failed to create tables: \(error)")
-        }
-    }
-    
-    // MARK: - Import from OperationalDataManager
-    
-    private func importOperationalData() async {
-        do {
-            // Clear existing data
-            try await grdbManager.execute("DELETE FROM unified_tasks")
-            
-            // Import each operational task
-            for (index, opTask) in operationalData.realWorldTasks.enumerated() {
-                let taskId = "op_task_\(index)"
-                let workerId = getWorkerId(for: opTask.assignedWorker)
-                let buildingId = getBuildingId(for: opTask.building)
-                
-                try await grdbManager.execute("""
-                    INSERT INTO unified_tasks (
-                        id, worker_id, worker_name, building_id, building_name,
-                        task_name, description, category, skill_level, start_time,
-                        duration_minutes, scheduled_date, urgency
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now'), ?)
-                """, [
-                    taskId,
-                    workerId,
-                    opTask.assignedWorker,
-                    buildingId,
-                    opTask.building,
-                    opTask.taskName,
-                    opTask.taskDescription ?? "",
-                    opTask.category,
-                    opTask.skillLevel,
-                    opTask.startTime ?? "09:00",
-                    opTask.estimatedDuration,
-                    mapUrgency(opTask.urgencyLevel)
-                ])
+            // Step 2: Sync OperationalDataManager to database if needed
+            if integrity.needsSync {
+                await syncOperationalDataToDatabase()
             }
             
-            print("✅ Imported \(operationalData.realWorldTasks.count) tasks from OperationalDataManager")
+            // Step 3: Verify data flow to services
+            let serviceData = await verifyServiceDataFlow()
+            print("🔗 Service data flow: \(serviceData)")
+            
+            // Step 4: Update status
+            dataStatus = serviceData.isComplete ? .complete : .partial
+            lastSyncTime = Date()
+            isInitialized = true
+            
+            print("✅ UnifiedDataService initialized successfully")
             
         } catch {
-            print("❌ Failed to import operational data: \(error)")
+            dataStatus = .error(error.localizedDescription)
+            print("❌ UnifiedDataService initialization failed: \(error)")
         }
     }
     
-    // MARK: - Public API (Replaces TaskService)
+    // MARK: - Data Verification
     
-    /// Get all tasks from unified source
-    public func getAllTasks() async -> [ContextualTask] {
-        do {
-            let rows = try await grdbManager.query("""
-                SELECT * FROM unified_tasks
-                ORDER BY scheduled_date, start_time
-            """)
-            
-            return rows.compactMap { convertToContextualTask($0) }
-            
-        } catch {
-            print("❌ Failed to get all tasks: \(error)")
-            // Fallback to operational data
-            return convertOperationalTasks(operationalData.realWorldTasks)
-        }
-    }
-    
-    /// Get tasks for specific worker
-    public func getTasks(for workerId: String, date: Date = Date()) async -> [ContextualTask] {
-        // Check cache first
-        let cacheKey = "\(workerId)-\(date.timeIntervalSince1970)"
-        if let cached = contextualTaskCache[cacheKey] {
-            return cached
-        }
+    /// Comprehensive database integrity check
+    public func verifyDatabaseIntegrity() async -> DatabaseIntegrity {
+        var integrity = DatabaseIntegrity()
         
         do {
-            let dateString = ISO8601DateFormatter().string(from: date)
-            let rows = try await grdbManager.query("""
-                SELECT * FROM unified_tasks
-                WHERE worker_id = ? AND DATE(scheduled_date) = DATE(?)
-                ORDER BY start_time
-            """, [workerId, dateString])
+            // Check critical tables
+            integrity.hasWorkers = try await verifyWorkersTable()
+            integrity.hasBuildings = try await verifyBuildingsTable()
+            integrity.hasTasks = try await verifyTasksTable()
+            integrity.hasAssignments = try await verifyAssignmentsTable()
             
-            let tasks = rows.compactMap { convertToContextualTask($0) }
+            // Count records
+            integrity.workerCount = try await getTableCount("workers")
+            integrity.buildingCount = try await getTableCount("buildings")
+            integrity.taskCount = try await getTableCount("routine_tasks")
+            integrity.assignmentCount = try await getTableCount("worker_assignments")
             
-            // Cache result
-            contextualTaskCache[cacheKey] = tasks
+            // Compare with OperationalDataManager
+            let operationalTaskCount = operationalData.realWorldTasks.count
+            let operationalWorkerCount = Set(operationalData.realWorldTasks.map { $0.assignedWorker }).count
             
-            return tasks
+            integrity.needsSync = integrity.taskCount < operationalTaskCount / 2 // If less than half
+            integrity.isComplete = integrity.hasWorkers && integrity.hasBuildings &&
+                                 integrity.hasTasks && integrity.hasAssignments
+            
+            print("📊 Database Integrity Report:")
+            print("   Workers: \(integrity.workerCount) (needs: \(operationalWorkerCount))")
+            print("   Buildings: \(integrity.buildingCount)")
+            print("   Tasks: \(integrity.taskCount) (operational: \(operationalTaskCount))")
+            print("   Assignments: \(integrity.assignmentCount)")
+            print("   Needs Sync: \(integrity.needsSync)")
             
         } catch {
-            print("❌ Failed to get worker tasks: \(error)")
-            // Fallback to operational data
-            let workerName = WorkerConstants.getWorkerName(id: workerId)
-            let workerTasks = operationalData.realWorldTasks.filter { 
-                $0.assignedWorker == workerName 
+            print("❌ Database integrity check failed: \(error)")
+            integrity.hasError = true
+            integrity.errorMessage = error.localizedDescription
+        }
+        
+        return integrity
+    }
+    
+    /// Verify service data flow works end-to-end
+    public func verifyServiceDataFlow() async -> ServiceDataFlow {
+        var dataFlow = ServiceDataFlow()
+        
+        do {
+            // Test TaskService
+            let allTasks = try await taskService.getAllTasks()
+            dataFlow.taskServiceWorking = true
+            dataFlow.taskCount = allTasks.count
+            
+            // Test WorkerService
+            let allWorkers = try await workerService.getAllActiveWorkers()
+            dataFlow.workerServiceWorking = true
+            dataFlow.workerCount = allWorkers.count
+            
+            // Test BuildingService
+            let allBuildings = try await buildingService.getAllBuildings()
+            dataFlow.buildingServiceWorking = true
+            dataFlow.buildingCount = allBuildings.count
+            
+            // Test IntelligenceService (the final goal)
+            let insights = try await IntelligenceService.shared.generatePortfolioInsights()
+            dataFlow.intelligenceServiceWorking = true
+            dataFlow.insightCount = insights.count
+            
+            dataFlow.isComplete = dataFlow.taskServiceWorking &&
+                                dataFlow.workerServiceWorking &&
+                                dataFlow.buildingServiceWorking &&
+                                dataFlow.intelligenceServiceWorking &&
+                                dataFlow.insightCount > 0
+            
+            print("🔗 Service Data Flow Report:")
+            print("   TaskService: \(dataFlow.taskServiceWorking) (\(dataFlow.taskCount) tasks)")
+            print("   WorkerService: \(dataFlow.workerServiceWorking) (\(dataFlow.workerCount) workers)")
+            print("   BuildingService: \(dataFlow.buildingServiceWorking) (\(dataFlow.buildingCount) buildings)")
+            print("   IntelligenceService: \(dataFlow.intelligenceServiceWorking) (\(dataFlow.insightCount) insights)")
+            print("   Complete: \(dataFlow.isComplete)")
+            
+        } catch {
+            print("❌ Service data flow verification failed: \(error)")
+            dataFlow.hasError = true
+            dataFlow.errorMessage = error.localizedDescription
+        }
+        
+        return dataFlow
+    }
+    
+    // MARK: - Data Synchronization
+    
+    /// Sync OperationalDataManager data to database tables
+    public func syncOperationalDataToDatabase() async {
+        print("🔄 Syncing OperationalDataManager to database...")
+        syncProgress = 0.0
+        
+        do {
+            // Initialize OperationalDataManager if needed
+            if !operationalData.isInitialized {
+                print("📦 Initializing OperationalDataManager...")
+                try await operationalData.initializeOperationalData()
+                syncProgress = 0.2
             }
-            return convertOperationalTasks(workerTasks)
-        }
-    }
-    
-    /// Get tasks for specific building
-    public func getTasksForBuilding(_ buildingId: String) async -> [ContextualTask] {
-        do {
-            let rows = try await grdbManager.query("""
-                SELECT * FROM unified_tasks
-                WHERE building_id = ? AND DATE(scheduled_date) = DATE('now')
-                ORDER BY start_time
-            """, [buildingId])
             
-            return rows.compactMap { convertToContextualTask($0) }
+            // Import routines and DSNY schedules
+            print("📅 Importing routines and schedules...")
+            let (routines, dsny) = try await operationalData.importRoutinesAndDSNY()
+            print("✅ Imported \(routines) routines, \(dsny) DSNY schedules")
+            syncProgress = 0.5
+            
+            // Convert OperationalDataManager tasks to routine_tasks table
+            print("🔄 Converting operational tasks to database...")
+            await convertOperationalTasksToDatabase()
+            syncProgress = 0.8
+            
+            // Verify the sync worked
+            let verification = await verifyDatabaseIntegrity()
+            if verification.isComplete {
+                print("✅ Data synchronization completed successfully")
+            } else {
+                print("⚠️ Data synchronization partially complete")
+            }
+            syncProgress = 1.0
             
         } catch {
-            print("❌ Failed to get building tasks: \(error)")
-            // Fallback
-            let buildingName = getBuildingName(for: buildingId)
-            let buildingTasks = operationalData.realWorldTasks.filter {
-                $0.building == buildingName
-            }
-            return convertOperationalTasks(buildingTasks)
+            print("❌ Data synchronization failed: \(error)")
+            dataStatus = .error(error.localizedDescription)
         }
     }
     
-    /// Get task progress for worker
-    public func getTaskProgress(for workerId: String) async -> TaskProgress {
-        let tasks = await getTasks(for: workerId)
-        let completedCount = tasks.filter { $0.isCompleted }.count
-        let totalCount = tasks.count
+    /// Convert OperationalDataManager realWorldTasks to routine_tasks table
+    private func convertOperationalTasksToDatabase() async {
+        let tasks = operationalData.realWorldTasks
+        print("🔄 Converting \(tasks.count) operational tasks to database...")
         
-        let progressPercentage = totalCount > 0 ? 
-            Double(completedCount) / Double(totalCount) * 100 : 0
+        var converted = 0
+        var skipped = 0
         
-        // Count urgent tasks
-        let urgentCount = tasks.filter { task in
-            task.urgency == .high || task.urgency == .critical
-        }.count
-        
-        return TaskProgress(
-            totalTasks: totalCount,
-            completedTasks: completedCount,
-            remainingTasks: totalCount - completedCount,
-            urgentTasks: urgentCount,
-            progressPercentage: progressPercentage
-        )
-    }
-    
-    /// Get buildings for worker (from their tasks)
-    public func getBuildingsForWorker(_ workerId: String) async -> [NamedCoordinate] {
-        do {
-            let rows = try await grdbManager.query("""
-                SELECT DISTINCT building_id, building_name 
-                FROM unified_tasks
-                WHERE worker_id = ?
-            """, [workerId])
-            
-            var buildings: [NamedCoordinate] = []
-            
-            for row in rows {
-                if let buildingId = row["building_id"] as? String,
-                   let buildingName = row["building_name"] as? String {
-                    
-                    if let building = await getBuilding(id: buildingId, name: buildingName) {
-                        buildings.append(building)
-                    }
+        for (index, operationalTask) in tasks.enumerated() {
+            do {
+                // Map worker name to ID
+                guard let workerId = getWorkerIdFromName(operationalTask.assignedWorker) else {
+                    print("⚠️ Skipping task for unknown worker: \(operationalTask.assignedWorker)")
+                    skipped += 1
+                    continue
                 }
+                
+                // Map building name to ID
+                guard let buildingId = await getBuildingIdFromName(operationalTask.building) else {
+                    print("⚠️ Skipping task for unknown building: \(operationalTask.building)")
+                    skipped += 1
+                    continue
+                }
+                
+                // Generate unique external ID
+                let externalId = "op_task_\(workerId)_\(buildingId)_\(operationalTask.taskName.hash)"
+                
+                // Check if already exists
+                let existing = try await grdbManager.query(
+                    "SELECT id FROM routine_tasks WHERE external_id = ?",
+                    [externalId]
+                )
+                
+                if !existing.isEmpty {
+                    skipped += 1
+                    continue
+                }
+                
+                // Convert to database format
+                try await grdbManager.execute("""
+                    INSERT INTO routine_tasks (
+                        worker_id, building_id, task_name, category, skill_level,
+                        recurrence, start_time, end_time, is_active, external_id,
+                        created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now'))
+                """, [
+                    workerId,
+                    buildingId,
+                    operationalTask.taskName,
+                    operationalTask.category,
+                    operationalTask.skillLevel,
+                    operationalTask.recurrence,
+                    operationalTask.startHour != nil ? String(operationalTask.startHour!) : nil,
+                    operationalTask.endHour != nil ? String(operationalTask.endHour!) : nil,
+                    externalId
+                ])
+                
+                converted += 1
+                
+                // Log progress for important tasks
+                if operationalTask.assignedWorker == "Kevin Dutan" && operationalTask.building.contains("Rubin") {
+                    print("✅ Converted Kevin's Rubin Museum task: \(operationalTask.taskName)")
+                }
+                
+            } catch {
+                print("❌ Failed to convert task: \(operationalTask.taskName) - \(error)")
+                skipped += 1
             }
             
-            return buildings
-            
-        } catch {
-            print("❌ Failed to get worker buildings: \(error)")
-            return []
+            // Update progress
+            if index % 10 == 0 {
+                syncProgress = 0.5 + (0.3 * Double(index) / Double(tasks.count))
+            }
         }
+        
+        print("✅ Conversion complete: \(converted) converted, \(skipped) skipped")
     }
     
-    // MARK: - Intelligence Support Methods
+    // MARK: - Fallback Data Access
     
-    /// Get metrics for intelligence generation
-    public func getPortfolioMetrics() async -> PortfolioMetrics {
+    /// Get tasks with fallback to OperationalDataManager
+    public func getTasksWithFallback(for workerId: String, date: Date) async -> [ContextualTask] {
         do {
-            // Overall completion rate
-            let completionRows = try await grdbManager.query("""
-                SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed
-                FROM unified_tasks
-                WHERE DATE(scheduled_date) = DATE('now')
-            """)
+            // Try database first
+            let dbTasks = try await taskService.getTasks(for: workerId, date: date)
+            if !dbTasks.isEmpty {
+                return dbTasks
+            }
             
-            let total = completionRows.first?["total"] as? Int64 ?? 0
-            let completed = completionRows.first?["completed"] as? Int64 ?? 0
-            let completionRate = total > 0 ? Double(completed) / Double(total) : 0
-            
-            // Overdue tasks
-            let overdueRows = try await grdbManager.query("""
-                SELECT COUNT(*) as count
-                FROM unified_tasks
-                WHERE is_completed = 0 
-                AND datetime(scheduled_date || ' ' || start_time) < datetime('now')
-            """)
-            
-            let overdueCount = overdueRows.first?["count"] as? Int64 ?? 0
-            
-            // Active workers
-            let workerRows = try await grdbManager.query("""
-                SELECT COUNT(DISTINCT worker_id) as count
-                FROM unified_tasks
-                WHERE DATE(scheduled_date) = DATE('now')
-            """)
-            
-            let activeWorkers = workerRows.first?["count"] as? Int64 ?? 0
-            
-            return PortfolioMetrics(
-                totalTasks: Int(total),
-                completedTasks: Int(completed),
-                completionRate: completionRate,
-                overdueTasksCount: Int(overdueCount),
-                activeWorkersCount: Int(activeWorkers)
-            )
+            // Fallback to OperationalDataManager
+            print("⚡ Using OperationalDataManager fallback for worker \(workerId)")
+            return await getTasksFromOperationalData(workerId: workerId, date: date)
             
         } catch {
-            print("❌ Failed to get portfolio metrics: \(error)")
-            return PortfolioMetrics(
-                totalTasks: 0,
-                completedTasks: 0,
-                completionRate: 0,
-                overdueTasksCount: 0,
-                activeWorkersCount: 0
-            )
+            print("❌ Database tasks failed, using fallback: \(error)")
+            return await getTasksFromOperationalData(workerId: workerId, date: date)
         }
     }
     
-    // MARK: - Private Helpers
+    /// Get all tasks with fallback to OperationalDataManager
+    public func getAllTasksWithFallback() async -> [ContextualTask] {
+        do {
+            // Try database first
+            let dbTasks = try await taskService.getAllTasks()
+            if !dbTasks.isEmpty {
+                return dbTasks
+            }
+            
+            // Fallback to OperationalDataManager
+            print("⚡ Using OperationalDataManager fallback for all tasks")
+            return await getAllTasksFromOperationalData()
+            
+        } catch {
+            print("❌ Database tasks failed, using fallback: \(error)")
+            return await getAllTasksFromOperationalData()
+        }
+    }
     
-    private func convertToContextualTask(_ row: [String: Any]) -> ContextualTask? {
-        guard let id = row["id"] as? String,
-              let title = row["task_name"] as? String,
-              let buildingId = row["building_id"] as? String,
-              let buildingName = row["building_name"] as? String,
-              let workerId = row["worker_id"] as? String,
-              let workerName = row["worker_name"] as? String else {
+    /// Get portfolio insights with fallback data
+    public func generatePortfolioInsightsWithFallback() async -> [CoreTypes.IntelligenceInsight] {
+        do {
+            // Try normal intelligence service first
+            let insights = try await IntelligenceService.shared.generatePortfolioInsights()
+            if !insights.isEmpty {
+                return insights
+            }
+            
+            // Fallback: Generate insights from OperationalDataManager directly
+            print("⚡ Generating insights from OperationalDataManager fallback")
+            return await generateInsightsFromOperationalData()
+            
+        } catch {
+            print("❌ Normal insights failed, using fallback: \(error)")
+            return await generateInsightsFromOperationalData()
+        }
+    }
+    
+    // MARK: - Private Helper Methods
+    
+    private func verifyWorkersTable() async throws -> Bool {
+        let result = try await grdbManager.query("SELECT COUNT(*) as count FROM workers WHERE isActive = 1")
+        return (result.first?["count"] as? Int64 ?? 0) > 0
+    }
+    
+    private func verifyBuildingsTable() async throws -> Bool {
+        let result = try await grdbManager.query("SELECT COUNT(*) as count FROM buildings")
+        return (result.first?["count"] as? Int64 ?? 0) > 0
+    }
+    
+    private func verifyTasksTable() async throws -> Bool {
+        let result = try await grdbManager.query("SELECT COUNT(*) as count FROM routine_tasks")
+        return (result.first?["count"] as? Int64 ?? 0) > 0
+    }
+    
+    private func verifyAssignmentsTable() async throws -> Bool {
+        let result = try await grdbManager.query("SELECT COUNT(*) as count FROM worker_assignments WHERE is_active = 1")
+        return (result.first?["count"] as? Int64 ?? 0) > 0
+    }
+    
+    private func getTableCount(_ tableName: String) async throws -> Int {
+        let result = try await grdbManager.query("SELECT COUNT(*) as count FROM \(tableName)")
+        return Int(result.first?["count"] as? Int64 ?? 0)
+    }
+    
+    private func getWorkerIdFromName(_ workerName: String) -> String? {
+        let workerNameMap: [String: String] = [
+            "Greg Hutson": "1",
+            "Edwin Lema": "2",
+            "Kevin Dutan": "4",
+            "Mercedes Inamagua": "5",
+            "Luis Lopez": "6",
+            "Angel Guirachocha": "7",
+            "Shawn Magloire": "8"
+        ]
+        return workerNameMap[workerName]
+    }
+    
+    private func getBuildingIdFromName(_ buildingName: String) async -> String? {
+        do {
+            let buildings = try await buildingService.getAllBuildings()
+            return buildings.first { building in
+                building.name.lowercased().contains(buildingName.lowercased()) ||
+                buildingName.lowercased().contains(building.name.lowercased())
+            }?.id
+        } catch {
             return nil
         }
+    }
+    
+    private func getTasksFromOperationalData(workerId: String, date: Date) async -> [ContextualTask] {
+        let workerName = WorkerConstants.getWorkerName(id: workerId)
+        let workerTasks = operationalData.realWorldTasks.filter { $0.assignedWorker == workerName }
         
-        // Create building and worker objects
-        let building = NamedCoordinate(
-            id: buildingId,
-            name: buildingName,
-            latitude: 40.7589,  // Default NYC coords
-            longitude: -73.9851
-        )
-        
-        let worker = WorkerProfile(
-            id: workerId,
-            name: workerName,
-            role: .worker,
-            email: "\(workerId)@francosphere.com",
-            phone: "",
-            certifications: [],
-            specializations: [],
-            assignedBuildings: []
-        )
+        return workerTasks.map { operationalTask in
+            convertOperationalTaskToContextualTask(operationalTask, workerId: workerId)
+        }
+    }
+    
+    private func getAllTasksFromOperationalData() async -> [ContextualTask] {
+        return operationalData.realWorldTasks.compactMap { operationalTask in
+            guard let workerId = getWorkerIdFromName(operationalTask.assignedWorker) else { return nil }
+            return convertOperationalTaskToContextualTask(operationalTask, workerId: workerId)
+        }
+    }
+    
+    private func convertOperationalTaskToContextualTask(_ operationalTask: OperationalDataTaskAssignment, workerId: String) -> ContextualTask {
+        let buildingId = getBuildingIdFromName(operationalTask.building)
         
         return ContextualTask(
-            id: id,
-            title: title,
-            description: row["description"] as? String,
+            id: "op_\(operationalTask.taskName.hash)",
+            title: operationalTask.taskName,
+            description: "Operational task: \(operationalTask.taskName) at \(operationalTask.building)",
+            isCompleted: false,
+            completedDate: nil,
+            scheduledDate: Date(),
+            dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date()),
+            category: mapToTaskCategory(operationalTask.category),
+            urgency: mapToTaskUrgency(operationalTask.skillLevel),
+            building: nil, // Would need to fetch from BuildingService
+            worker: nil,   // Would need to fetch from WorkerService
             buildingId: buildingId,
-            buildingName: buildingName,
-            category: TaskCategory(rawValue: row["category"] as? String ?? "") ?? .maintenance,
-            urgency: TaskUrgency(rawValue: row["urgency"] as? String ?? "") ?? .medium,
-            skillLevel: SkillLevel(rawValue: row["skill_level"] as? String ?? "") ?? .intermediate,
-            estimatedDuration: 3600,  // 1 hour default
-            isCompleted: (row["is_completed"] as? Int64 ?? 0) == 1,
-            completedAt: nil,
-            completedBy: nil,
-            notes: nil,
-            building: building,
-            worker: worker
+            buildingName: operationalTask.building
         )
     }
     
-    private func convertOperationalTasks(_ tasks: [OperationalTask]) -> [ContextualTask] {
-        return tasks.enumerated().map { index, opTask in
-            let workerId = getWorkerId(for: opTask.assignedWorker)
-            let buildingId = getBuildingId(for: opTask.building)
-            
-            let building = NamedCoordinate(
-                id: buildingId,
-                name: opTask.building,
-                latitude: 40.7589,
-                longitude: -73.9851
-            )
-            
-            let worker = WorkerProfile(
-                id: workerId,
-                name: opTask.assignedWorker,
-                role: .worker,
-                email: "\(workerId)@francosphere.com",
-                phone: "",
-                certifications: [],
-                specializations: [],
-                assignedBuildings: []
-            )
-            
-            return ContextualTask(
-                id: "op_\(index)",
-                title: opTask.taskName,
-                description: opTask.taskDescription,
-                buildingId: buildingId,
-                buildingName: opTask.building,
-                category: mapCategory(opTask.category),
-                urgency: mapTaskUrgency(opTask.urgencyLevel),
-                skillLevel: mapSkillLevel(opTask.skillLevel),
-                estimatedDuration: TimeInterval(opTask.estimatedDuration * 60),
-                isCompleted: false,
-                completedAt: nil,
-                completedBy: nil,
-                notes: nil,
-                building: building,
-                worker: worker
-            )
-        }
-    }
-    
-    private func buildCaches() async {
-        // Pre-build building cache
-        let buildingMappings: [(name: String, id: String)] = [
-            ("Rubin Museum", "14"),
-            ("12 West 18th Street", "1"),
-            ("135-139 West 17th Street", "3"),
-            ("131 Perry Street", "10"),
-            ("41 Elizabeth Street", "7"),
-            ("178 Spring Street", "17"),
-            ("Stuyvesant Park", "16")
-        ]
+    private func generateInsightsFromOperationalData() async -> [CoreTypes.IntelligenceInsight] {
+        var insights: [CoreTypes.IntelligenceInsight] = []
         
-        for mapping in buildingMappings {
-            buildingCache[mapping.name] = NamedCoordinate(
-                id: mapping.id,
-                name: mapping.name,
-                latitude: 40.7589,
-                longitude: -73.9851
-            )
-        }
-    }
-    
-    private func getWorkerId(for name: String) -> String {
-        return WorkerConstants.getWorkerId(name: name) ?? "unknown"
-    }
-    
-    private func getBuildingId(for name: String) -> String {
-        // Map building names to IDs
-        let mappings: [String: String] = [
-            "Rubin Museum": "14",
-            "12 West 18th Street": "1",
-            "135-139 West 17th Street": "3",
-            "131 Perry Street": "10",
-            "41 Elizabeth Street": "7",
-            "178 Spring Street": "17",
-            "Stuyvesant Park": "16",
-            "136 West 17th Street": "13",
-            "138 West 17th Street": "5",
-            "117 West 17th Street": "9",
-            "36 Walker Street": "11",
-            "68 Perry Street": "6"
-        ]
+        // Get task distribution by worker
+        let workerTaskCounts = operationalData.getWorkerTaskSummary()
         
-        return mappings[name] ?? "unknown"
-    }
-    
-    private func getBuildingName(for id: String) -> String {
-        // Reverse mapping
-        let mappings: [String: String] = [
-            "14": "Rubin Museum",
-            "1": "12 West 18th Street",
-            "3": "135-139 West 17th Street",
-            "10": "131 Perry Street",
-            "7": "41 Elizabeth Street",
-            "17": "178 Spring Street",
-            "16": "Stuyvesant Park"
-        ]
-        
-        return mappings[id] ?? "Unknown Building"
-    }
-    
-    private func getBuilding(id: String, name: String) async -> NamedCoordinate? {
-        if let cached = buildingCache[name] {
-            return cached
+        // Generate insights about task distribution
+        for (workerName, taskCount) in workerTaskCounts {
+            if taskCount > 20 {
+                insights.append(CoreTypes.IntelligenceInsight(
+                    title: "High Task Load",
+                    description: "\(workerName) has \(taskCount) tasks assigned",
+                    type: .performance,
+                    priority: .medium,
+                    actionRequired: false,
+                    affectedBuildings: []
+                ))
+            }
         }
         
-        // Create new building
-        let building = NamedCoordinate(
-            id: id,
-            name: name,
-            latitude: 40.7589,
-            longitude: -73.9851
-        )
+        // Generate insights about building coverage
+        let buildingCoverage = operationalData.getBuildingCoverage()
+        for (building, workers) in buildingCoverage {
+            if workers.count == 1 {
+                insights.append(CoreTypes.IntelligenceInsight(
+                    title: "Single Worker Coverage",
+                    description: "\(building) relies on single worker: \(workers.first ?? "Unknown")",
+                    type: .maintenance,
+                    priority: .medium,
+                    actionRequired: true,
+                    affectedBuildings: []
+                ))
+            }
+        }
         
-        buildingCache[name] = building
-        return building
+        return insights
     }
     
-    // MARK: - Mapping Functions
-    
-    private func mapCategory(_ category: String) -> TaskCategory {
+    private func mapToTaskCategory(_ category: String) -> CoreTypes.TaskCategory {
         switch category.lowercased() {
         case "cleaning": return .cleaning
         case "maintenance": return .maintenance
-        case "inspection": return .inspection
-        case "security": return .security
-        case "emergency": return .emergency
         case "sanitation": return .sanitation
+        case "inspection": return .inspection
         default: return .maintenance
         }
     }
     
-    private func mapTaskUrgency(_ urgency: String) -> TaskUrgency {
-        switch urgency.lowercased() {
-        case "low": return .low
-        case "medium": return .medium
-        case "high": return .high
-        case "critical", "emergency": return .critical
+    private func mapToTaskUrgency(_ skillLevel: String) -> CoreTypes.TaskUrgency {
+        switch skillLevel.lowercased() {
+        case "advanced": return .high
+        case "intermediate": return .medium
+        case "basic": return .low
         default: return .medium
-        }
-    }
-    
-    private func mapSkillLevel(_ level: String) -> SkillLevel {
-        switch level.lowercased() {
-        case "basic": return .basic
-        case "intermediate": return .intermediate
-        case "advanced": return .advanced
-        case "expert": return .expert
-        default: return .intermediate
-        }
-    }
-    
-    private func mapUrgency(_ level: String) -> String {
-        switch level.lowercased() {
-        case "emergency": return "critical"
-        default: return level.lowercased()
         }
     }
 }
 
 // MARK: - Supporting Types
 
-public struct PortfolioMetrics {
-    let totalTasks: Int
-    let completedTasks: Int
-    let completionRate: Double
-    let overdueTasksCount: Int
-    let activeWorkersCount: Int
+public struct DatabaseIntegrity {
+    var hasWorkers = false
+    var hasBuildings = false
+    var hasTasks = false
+    var hasAssignments = false
+    var workerCount = 0
+    var buildingCount = 0
+    var taskCount = 0
+    var assignmentCount = 0
+    var needsSync = true
+    var isComplete = false
+    var hasError = false
+    var errorMessage: String?
 }
 
-// MARK: - WorkerConstants Extension
-
-extension WorkerConstants {
-    static func getWorkerId(name: String) -> String? {
-        let nameToId: [String: String] = [
-            "Greg Hutson": "1",
-            "Edwin Lema": "2",
-            "Enrique Balam": "3",
-            "Kevin Dutan": "4",
-            "Mercedes Inamagua": "5",
-            "Luis Lopez": "6",
-            "Angel Guirachocha": "7",
-            "Shawn": "8"
-        ]
-        return nameToId[name]
-    }
+public struct ServiceDataFlow {
+    var taskServiceWorking = false
+    var workerServiceWorking = false
+    var buildingServiceWorking = false
+    var intelligenceServiceWorking = false
+    var taskCount = 0
+    var workerCount = 0
+    var buildingCount = 0
+    var insightCount = 0
+    var isComplete = false
+    var hasError = false
+    var errorMessage: String?
 }

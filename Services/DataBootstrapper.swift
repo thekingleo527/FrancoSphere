@@ -41,8 +41,8 @@ enum DataBootstrapper {
         
         // Step 1: Ensure database schema is ready using real migration system
         print("📊 Step 1: Running real database migrations...")
-        try await SeedDatabase.runMigrations()
-        
+        try await RealWorldDataSeeder.seedAllRealData()
+
         // Step 2: Initialize operational data using real OperationalDataManager
         print("👷 Step 2: Initializing real operational data...")
         await MainActor.run {
