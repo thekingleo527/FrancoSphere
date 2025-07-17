@@ -2,7 +2,7 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved - uses CoreTypes namespace
+//  ✅ FIXED: All compilation errors resolved - uses correct ExecutiveSummary signature
 //  ✅ ALIGNED: With forensic developer's punchlist requirements
 //  ✅ ENHANCED: Cross-dashboard integration ready
 //  ✅ PREPARED: For ClientDashboardView creation (Phase 1.1)
@@ -171,7 +171,7 @@ class ClientDashboardViewModel: ObservableObject {
         }
     }
     
-    /// Generates executive summary based on current data
+    /// Generates executive summary based on current data (FIXED)
     private func generateExecutiveSummary() async {
         let totalBuildings = buildingsList.count
         let averageEfficiency = calculateAverageEfficiency()
@@ -180,14 +180,24 @@ class ClientDashboardViewModel: ObservableObject {
         let actionableInsights = intelligenceInsights.filter { $0.actionRequired }.count
         let monthlyTrend = calculateComplianceTrend()
         
+        // Get active workers count
+        let activeWorkers = portfolioIntelligence?.activeWorkers ?? 0
+        
+        // Convert values to match expected ExecutiveSummary initializer
+        let portfolioHealth = Int(averageEfficiency * 100)  // Convert Double to Int percentage
+        let complianceScore = Int(complianceRate * 100)     // Convert Double to Int percentage
+        let monthlyTrendString = monthlyTrend.rawValue       // Convert TrendDirection to String
+        
+        // Create ExecutiveSummary with correct parameter types
         executiveSummary = ExecutiveSummary(
             totalBuildings: totalBuildings,
-            portfolioEfficiency: averageEfficiency,
-            complianceRate: complianceRate,
-            criticalIssues: criticalIssues,
-            actionableInsights: actionableInsights,
-            monthlyTrend: monthlyTrend,
-            lastUpdated: Date()
+            activeWorkers: activeWorkers,           // Added missing parameter
+            portfolioHealth: portfolioHealth,       // Changed from portfolioEfficiency (Double) to portfolioHealth (Int)
+            complianceScore: complianceScore,       // Changed from complianceRate (Double) to complianceScore (Int)
+            criticalIssues: criticalIssues,         // This stays as Int
+            averageCompletion: averageEfficiency,   // Added missing averageCompletion parameter
+            monthlyTrend: monthlyTrendString        // Changed from CoreTypes.TrendDirection to String
+            // Removed lastUpdated parameter as it's not expected
         )
         
         print("✅ Executive summary generated")
@@ -412,31 +422,54 @@ struct ClientPortfolioSummary {
     let monthlyTrend: CoreTypes.TrendDirection
 }
 
-/// Executive summary for client dashboard
+/// Executive summary for client dashboard (FIXED to match expected signature)
 struct ExecutiveSummary {
     let totalBuildings: Int
-    let portfolioEfficiency: Double
-    let complianceRate: Double
-    let criticalIssues: Int
-    let actionableInsights: Int
-    let monthlyTrend: CoreTypes.TrendDirection
-    let lastUpdated: Date
+    let activeWorkers: Int          // Added missing property
+    let portfolioHealth: Int        // Changed from portfolioEfficiency (Double) to portfolioHealth (Int)
+    let complianceScore: Int        // Changed from complianceRate (Double) to complianceScore (Int)
+    let criticalIssues: Int         // This stays as Int
+    let averageCompletion: Double   // Added missing averageCompletion parameter
+    let monthlyTrend: String        // Changed from CoreTypes.TrendDirection to String
+    // Removed lastUpdated property as it's not expected
     
+    // Updated computed properties to work with new types
     var efficiencyGrade: String {
-        switch portfolioEfficiency {
-        case 0.9...: return "A"
-        case 0.8..<0.9: return "B"
-        case 0.7..<0.8: return "C"
+        switch portfolioHealth {
+        case 90...: return "A"
+        case 80..<90: return "B"
+        case 70..<80: return "C"
         default: return "D"
         }
     }
     
     var complianceGrade: String {
-        switch complianceRate {
-        case 0.95...: return "A+"
-        case 0.9..<0.95: return "A"
-        case 0.8..<0.9: return "B"
+        switch complianceScore {
+        case 95...: return "A+"
+        case 90..<95: return "A"
+        case 80..<90: return "B"
         default: return "C"
+        }
+    }
+    
+    // Helper computed properties for UI
+    var portfolioHealthPercentage: Double {
+        return Double(portfolioHealth) / 100.0
+    }
+    
+    var complianceRatePercentage: Double {
+        return Double(complianceScore) / 100.0
+    }
+    
+    var averageCompletionPercentage: Double {
+        return averageCompletion // Already a percentage (0.0-1.0)
+    }
+    
+    var monthlyTrendDirection: CoreTypes.TrendDirection {
+        switch monthlyTrend.lowercased() {
+        case "improving", "up": return .improving
+        case "declining", "down": return .declining
+        default: return .stable
         }
     }
 }

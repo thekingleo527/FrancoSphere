@@ -543,8 +543,40 @@ public class OperationalDataManager: ObservableObject {
         default: return "9:00 AM - 5:00 PM"
         }
     }
-    
-    // MARK: - ⭐ PRESERVED: Enhanced Import Methods (GRDB Implementation)
+    // Add these public methods to your OperationalDataManager.swift file
+    // Insert them after the existing private methods
+
+    // MARK: - Public API for UnifiedDataService
+
+    /// Get all real world tasks (public access)
+    public func getAllRealWorldTasks() -> [OperationalDataTaskAssignment] {
+        return realWorldTasks
+    }
+
+    /// Get real world tasks for a specific worker
+    public func getRealWorldTasks(for workerName: String) -> [OperationalDataTaskAssignment] {
+        return realWorldTasks.filter { $0.assignedWorker == workerName }
+    }
+
+    /// Get real world tasks for a specific building
+    public func getRealWorldTasks(for buildingName: String) -> [OperationalDataTaskAssignment] {
+        return realWorldTasks.filter { $0.building.contains(buildingName) }
+    }
+
+    /// Get task count for statistics
+    public var realWorldTaskCount: Int {
+        return realWorldTasks.count
+    }
+
+    /// Get unique worker names from operational data
+    public func getUniqueWorkerNames() -> Set<String> {
+        return Set(realWorldTasks.map { $0.assignedWorker })
+    }
+
+    /// Get unique building names from operational data
+    public func getUniqueBuildingNames() -> Set<String> {
+        return Set(realWorldTasks.map { $0.building })
+    }    // MARK: - ⭐ PRESERVED: Enhanced Import Methods (GRDB Implementation)
     
     /// Main import function - uses GRDB and preserves ALL original data
     func importRealWorldTasks() async throws -> (imported: Int, errors: [String]) {

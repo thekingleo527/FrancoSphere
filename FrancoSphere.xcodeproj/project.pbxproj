@@ -64,7 +64,6 @@
 		2345815D2DF78E3D00355F0A /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581142DF78E3D00355F0A /* BuildingSelectionView.swift */; };
 		2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580C62DF78E3D00355F0A /* V003_WorkerAssignments.swift */; };
 		234581612DF78E3D00355F0A /* WorkerRoutineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580E72DF78E3D00355F0A /* WorkerRoutineViewModel.swift */; };
-		234581622DF78E3D00355F0A /* DataBootstrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581062DF78E3D00355F0A /* DataBootstrapper.swift */; };
 		234581632DF78E3D00355F0A /* GlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809E2DF78E3D00355F0A /* GlassModal.swift */; };
 		234581642DF78E3D00355F0A /* GlassDeckContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809C2DF78E3D00355F0A /* GlassDeckContainer.swift */; };
 		234581652DF78E3D00355F0A /* GlassLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345809D2DF78E3D00355F0A /* GlassLoadingView.swift */; };
@@ -302,7 +301,6 @@
 		234580FE2DF78E3D00355F0A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		234581032DF78E3D00355F0A /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
 		234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializationCoordinator.swift; sourceTree = "<group>"; };
-		234581062DF78E3D00355F0A /* DataBootstrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBootstrapper.swift; sourceTree = "<group>"; };
 		2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
 		2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
 		2345810E2DF78E3D00355F0A /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
@@ -732,7 +730,6 @@
 				233F94E12DF7B74A00901707 /* UpdatedDataLoading.swift */,
 				234581032DF78E3D00355F0A /* DailyOpsReset.swift */,
 				234581042DF78E3D00355F0A /* DatabaseInitializationCoordinator.swift */,
-				234581062DF78E3D00355F0A /* DataBootstrapper.swift */,
 				2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */,
 				2345810B2DF78E3D00355F0A /* WeatherDataAdapter.swift */,
 			);
@@ -1079,7 +1076,6 @@
 				2345815E2DF78E3D00355F0A /* V003_WorkerAssignments.swift in Sources */,
 				23BBD75E2E0016E400013D90 /* BuildingPreviewPopover.swift in Sources */,
 				234581612DF78E3D00355F0A /* WorkerRoutineViewModel.swift in Sources */,
-				234581622DF78E3D00355F0A /* DataBootstrapper.swift in Sources */,
 				234581632DF78E3D00355F0A /* GlassModal.swift in Sources */,
 				234581642DF78E3D00355F0A /* GlassDeckContainer.swift in Sources */,
 				234581652DF78E3D00355F0A /* GlassLoadingView.swift in Sources */,
