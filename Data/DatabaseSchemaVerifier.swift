@@ -1,13 +1,11 @@
 //
 //  DatabaseSchemaVerifier.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Added missing 'parameters:' argument labels in query calls
-//  ✅ V6.0: GRDB Migration - Updated for GRDB-powered SQLiteManager
-//  ✅ Verifies Edwin can access his building assignments with GRDB
-//  ✅ Tests all critical database queries work with new GRDB backend
-//  ✅ Maintains full compatibility with existing verification logic
-//  ✅ Enhanced with GRDB-specific validation features
+//  ✅ GRDB MIGRATION: Updated from SQLiteManager to GRDBManager
+//  ✅ PRESERVED: All Edwin verification logic and GRDB testing
+//  ✅ ASYNC/AWAIT: Modern concurrency patterns
+//  ✅ COMPREHENSIVE: Complete database verification suite
 //
 
 import Foundation
@@ -23,7 +21,8 @@ public class DatabaseSchemaVerifier {
     public static func verifySchemaFix() async throws {
         print("🔍 Starting comprehensive GRDB database schema verification...")
         
-        let manager = SQLiteManager.shared
+        // FIXED: Use GRDBManager instead of SQLiteManager
+        let manager = GRDBManager.shared
         let startTime = Date()
         
         do {
@@ -60,7 +59,7 @@ public class DatabaseSchemaVerifier {
     // MARK: - Individual Test Methods (GRDB-Enhanced)
     
     /// Test 1: GRDB Database Connectivity
-    private static func testGRDBConnectivity(_ manager: SQLiteManager) async throws {
+    private static func testGRDBConnectivity(_ manager: GRDBManager) async throws {
         print("🔗 Testing GRDB database connectivity...")
         
         // Test basic GRDB query
@@ -93,7 +92,7 @@ public class DatabaseSchemaVerifier {
     }
     
     /// Test 2: GRDB Table Structure Verification
-    private static func testGRDBTableStructure(_ manager: SQLiteManager) async throws {
+    private static func testGRDBTableStructure(_ manager: GRDBManager) async throws {
         print("📋 Testing GRDB table structure...")
         
         let requiredTables = [
@@ -107,11 +106,10 @@ public class DatabaseSchemaVerifier {
         ]
         
         for tableName in requiredTables {
-            // ✅ FIXED: Added missing parameters: label
             let tables = try await manager.query("""
                 SELECT name FROM sqlite_master 
                 WHERE type='table' AND name=?
-            """, parameters: [tableName])
+            """, [tableName])
             
             guard !tables.isEmpty else {
                 throw VerificationError.missingTable(tableName)
@@ -137,11 +135,10 @@ public class DatabaseSchemaVerifier {
     }
     
     /// Test 3: Edwin's Building Assignments with GRDB
-    private static func testEdwinBuildingAssignments(_ manager: SQLiteManager) async throws {
+    private static func testEdwinBuildingAssignments(_ manager: GRDBManager) async throws {
         print("🏢 Testing Edwin's building assignments with GRDB...")
         
         // Test primary assignment query (Edwin = worker ID 2)
-        // ✅ FIXED: Added missing parameters: label
         let buildings = try await manager.query("""
             SELECT DISTINCT 
                 b.id,
@@ -155,7 +152,7 @@ public class DatabaseSchemaVerifier {
             WHERE (wa.worker_id = ? OR wa.worker_id = CAST(? AS TEXT))
             AND wa.is_active = 1
             ORDER BY b.name
-        """, parameters: ["2", 2])
+        """, ["2", 2])
         
         let buildingCount = buildings.count
         print("📊 Edwin has access to \(buildingCount) buildings")
@@ -208,10 +205,9 @@ public class DatabaseSchemaVerifier {
     }
     
     /// Test 4: Edwin's Routine Tasks with GRDB
-    private static func testEdwinRoutineTasks(_ manager: SQLiteManager) async throws {
+    private static func testEdwinRoutineTasks(_ manager: GRDBManager) async throws {
         print("📝 Testing Edwin's routine tasks with GRDB...")
         
-        // ✅ FIXED: Added missing parameters: label
         let tasks = try await manager.query("""
             SELECT 
                 rt.name,
@@ -223,7 +219,7 @@ public class DatabaseSchemaVerifier {
             FROM routine_tasks rt
             WHERE (rt.worker_id = ? OR rt.worker_id = CAST(? AS TEXT))
             ORDER BY rt.startTime
-        """, parameters: ["2", 2])
+        """, ["2", 2])
         
         let taskCount = tasks.count
         print("📊 Edwin has \(taskCount) routine tasks")
@@ -257,21 +253,19 @@ public class DatabaseSchemaVerifier {
     }
     
     /// Test 5: GRDB Query Compatibility
-    private static func testGRDBQueryCompatibility(_ manager: SQLiteManager) async throws {
+    private static func testGRDBQueryCompatibility(_ manager: GRDBManager) async throws {
         print("🔧 Testing GRDB query compatibility...")
         
         // Test 1: Complex join with type casting (GRDB handles this well)
-        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT b.id, b.name, b.latitude, b.longitude, wa.worker_name
             FROM buildings b
             INNER JOIN worker_assignments wa ON CAST(b.id AS TEXT) = wa.building_id
             WHERE wa.worker_id = ? AND wa.is_active = 1
             LIMIT 3
-        """, parameters: ["2"])
+        """, ["2"])
         
         // Test 2: CASE statements with GRDB
-        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT t.id, t.name, 
                    CASE 
@@ -281,10 +275,9 @@ public class DatabaseSchemaVerifier {
             FROM tasks t
             WHERE t.workerId = ?
             LIMIT 3
-        """, parameters: [2])
+        """, [2])
         
         // Test 3: UNION ALL queries with GRDB
-        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT 'task' as type, t.id, t.name, t.category
             FROM tasks t
@@ -297,27 +290,25 @@ public class DatabaseSchemaVerifier {
             WHERE rt.worker_id = ?
             
             LIMIT 5
-        """, parameters: [2, "2"])
+        """, [2, "2"])
         
         // Test 4: Date functions with GRDB
-        // ✅ FIXED: Added missing parameters: label
         let _ = try await manager.query("""
             SELECT 
                 COUNT(*) as total,
                 COUNT(CASE WHEN date(scheduledDate) = date('now') THEN 1 END) as today
             FROM tasks
             WHERE workerId = ?
-        """, parameters: [2])
+        """, [2])
         
         print("✅ GRDB query compatibility: PASSED")
     }
     
     /// Test 6: GRDB Foreign Key Relationships
-    private static func testGRDBForeignKeyRelationships(_ manager: SQLiteManager) async throws {
+    private static func testGRDBForeignKeyRelationships(_ manager: GRDBManager) async throws {
         print("🔗 Testing GRDB foreign key relationships...")
         
         // Test worker -> building assignments relationship
-        // ✅ FIXED: Added missing parameters: label
         let workerBuildingCheck = try await manager.query("""
             SELECT 
                 w.name as worker_name,
@@ -329,12 +320,11 @@ public class DatabaseSchemaVerifier {
             LEFT JOIN buildings b ON CAST(b.id AS TEXT) = wa.building_id
             WHERE wa.worker_id = ? OR wa.worker_id = CAST(? AS TEXT)
             LIMIT 5
-        """, parameters: ["2", 2])
+        """, ["2", 2])
         
         print("📊 Found \(workerBuildingCheck.count) worker-building relationships for Edwin")
         
         // Test routine tasks -> building relationship
-        // ✅ FIXED: Added missing parameters: label
         let taskBuildingCheck = try await manager.query("""
             SELECT 
                 rt.name as task_name,
@@ -345,7 +335,7 @@ public class DatabaseSchemaVerifier {
             LEFT JOIN buildings b ON CAST(b.id AS TEXT) = rt.building_id
             WHERE rt.worker_id = ? OR rt.worker_id = CAST(? AS TEXT)
             LIMIT 5
-        """, parameters: ["2", 2])
+        """, ["2", 2])
         
         print("📊 Found \(taskBuildingCheck.count) task-building relationships for Edwin")
         
@@ -370,7 +360,7 @@ public class DatabaseSchemaVerifier {
     }
     
     /// Test 7: GRDB-Specific Features
-    private static func testGRDBSpecificFeatures(_ manager: SQLiteManager) async throws {
+    private static func testGRDBSpecificFeatures(_ manager: GRDBManager) async throws {
         print("⚡ Testing GRDB-specific features...")
         
         // Test GRDB transaction support
@@ -429,7 +419,7 @@ public class DatabaseSchemaVerifier {
     
     /// Get a comprehensive summary of Edwin's current GRDB database state
     public static func getEdwinGRDBDiagnostics() async -> EdwinGRDBDiagnostics {
-        let manager = SQLiteManager.shared
+        let manager = GRDBManager.shared
         
         var diagnostics = EdwinGRDBDiagnostics()
         
@@ -599,7 +589,7 @@ extension DatabaseSchemaVerifier {
     /// Quick GRDB check - verify Edwin has buildings
     public static func quickEdwinGRDBCheck() async -> Bool {
         do {
-            let manager = SQLiteManager.shared
+            let manager = GRDBManager.shared
             let buildings = try await manager.query("""
                 SELECT COUNT(*) as count 
                 FROM worker_assignments 
@@ -618,9 +608,8 @@ extension DatabaseSchemaVerifier {
     
     /// Test just the critical worker assignment query with GRDB
     public static func testGRDBWorkerAssignmentQuery() async throws {
-        let manager = SQLiteManager.shared
+        let manager = GRDBManager.shared
         
-        // ✅ FIXED: Added missing parameters: label
         let buildings = try await manager.query("""
             SELECT DISTINCT b.id, b.name, b.latitude, b.longitude
             FROM buildings b
@@ -628,7 +617,7 @@ extension DatabaseSchemaVerifier {
             WHERE (wa.worker_id = ? OR wa.worker_id = CAST(? AS TEXT))
             AND wa.is_active = 1
             ORDER BY b.name
-        """, parameters: ["2", 2])
+        """, ["2", 2])
         
         print("🔍 GRDB worker assignment query returned \(buildings.count) buildings for Edwin")
         
@@ -648,7 +637,7 @@ extension DatabaseSchemaVerifier {
     public static func testGRDBRealTimeFeatures() async throws {
         print("⚡ Testing GRDB real-time observation features...")
         
-        let manager = SQLiteManager.shared
+        let manager = GRDBManager.shared
         
         // Test that we can observe workers (this would be used in real-time UI)
         let workers = try await manager.query("""
@@ -673,3 +662,28 @@ extension DatabaseSchemaVerifier {
         print("✅ GRDB real-time features: READY")
     }
 }
+
+// MARK: - 📝 GRDB MIGRATION NOTES
+/*
+ ✅ COMPLETE GRDB MIGRATION:
+ 
+ 🔧 FIXED DATABASE MANAGER:
+ - ✅ Changed SQLiteManager.shared → GRDBManager.shared
+ - ✅ Maintained all existing query patterns and async methods
+ - ✅ Preserved all parameter passing (GRDBManager handles automatically)
+ 
+ 🔧 PRESERVED ALL VERIFICATION LOGIC:
+ - ✅ Edwin's building assignment verification (8 buildings expected)
+ - ✅ Complete database schema verification suite
+ - ✅ GRDB-specific feature testing
+ - ✅ Foreign key relationship validation
+ - ✅ Real-time observation capability testing
+ 
+ 🔧 ENHANCED DIAGNOSTICS:
+ - ✅ Comprehensive Edwin diagnostic reporting
+ - ✅ Database health checking with GRDB
+ - ✅ Performance monitoring and stats
+ - ✅ Error handling and troubleshooting
+ 
+ 🎯 STATUS: GRDB migration complete, all Edwin verification preserved
+ */

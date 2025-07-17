@@ -1,10 +1,11 @@
 //
 //  RoutinePriority.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Missing argument label 'parameters:' in SQLiteManager calls
-//  ✅ FIXED: Proper async method usage for executeAsync and queryAsync
-//  ✅ ALIGNED: With current SQLiteManager method signatures
+//  ✅ GRDB MIGRATION: Updated from SQLiteManager to GRDBManager
+//  ✅ PRESERVED: All real-world building routine data
+//  ✅ ASYNC/AWAIT: Modern concurrency patterns
+//  ✅ KEVIN'S DATA: All sample routines for 6+ buildings preserved
 //
 
 import Foundation
@@ -144,7 +145,7 @@ struct BuildingRoutine: Identifiable, Hashable {
     }
 }
 
-// MARK: - Routine Repository Service
+// MARK: - Routine Repository Service (GRDB MIGRATED)
 
 @MainActor
 final class RoutineRepository: ObservableObject {
@@ -154,7 +155,8 @@ final class RoutineRepository: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
     
-    private var sqliteManager: SQLiteManager?
+    // FIXED: Changed from SQLiteManager to GRDBManager
+    private let grdbManager = GRDBManager.shared
     private var lastRefresh: Date = Date.distantPast
     private let refreshInterval: TimeInterval = 300 // 5 minutes
     
@@ -200,19 +202,16 @@ final class RoutineRepository: ObservableObject {
         isLoading = false
     }
     
-    // MARK: - Database Operations
+    // MARK: - Database Operations (GRDB MIGRATED)
     
     private func initializeDatabase() async {
-        sqliteManager = SQLiteManager.shared
         await createRoutinesTableIfNeeded()
     }
     
     private func createRoutinesTableIfNeeded() async {
-        guard let manager = sqliteManager else { return }
-        
         do {
-            // FIXED: Using executeAsync with proper parameters
-            try await manager.executeAsync("""
+            // FIXED: Use GRDBManager execute method (no Async suffix)
+            try await grdbManager.execute("""
                 CREATE TABLE IF NOT EXISTS building_routines (
                     id TEXT PRIMARY KEY,
                     building_id TEXT NOT NULL,
@@ -226,9 +225,9 @@ final class RoutineRepository: ObservableObject {
                     is_active INTEGER NOT NULL DEFAULT 1,
                     created_date DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """, parameters: [])
+            """)
             
-            print("✅ Building routines table ready")
+            print("✅ Building routines table ready with GRDBManager")
         } catch {
             print("❌ Failed to create routines table: \(error)")
         }
@@ -240,15 +239,13 @@ final class RoutineRepository: ObservableObject {
     }
     
     private func loadRoutinesFromDatabase() async {
-        guard let manager = sqliteManager else { return }
-        
         do {
-            // FIXED: Using queryAsync with proper parameters
-            let results = try await manager.queryAsync("""
+            // FIXED: Use GRDBManager query method (no Async suffix)
+            let results = try await grdbManager.query("""
                 SELECT * FROM building_routines 
                 WHERE is_active = 1 
                 ORDER BY building_id, priority DESC, start_time
-            """, parameters: [])
+            """)
             
             let loadedRoutines = results.compactMap { row -> BuildingRoutine? in
                 guard let id = row["id"] as? String,
@@ -284,7 +281,7 @@ final class RoutineRepository: ObservableObject {
             }
             
             routines = loadedRoutines
-            print("✅ Loaded \(routines.count) building routines from database")
+            print("✅ Loaded \(routines.count) building routines from GRDBManager")
             
         } catch {
             print("❌ Failed to load routines: \(error)")
@@ -292,14 +289,12 @@ final class RoutineRepository: ObservableObject {
         }
     }
     
-    // MARK: - Sample Data for Development
+    // MARK: - Sample Data for Development (ALL KEVIN'S DATA PRESERVED)
     
     private func loadSampleRoutines() async {
-        guard let manager = sqliteManager else { return }
-        
-        // Check if we already have routines - FIXED: Using queryAsync with parameters
+        // Check if we already have routines - FIXED: Use GRDBManager query
         do {
-            let count = try await manager.queryAsync("SELECT COUNT(*) as count FROM building_routines", parameters: [])
+            let count = try await grdbManager.query("SELECT COUNT(*) as count FROM building_routines")
             if let first = count.first, let countValue = first["count"] as? Int64, countValue > 0 {
                 print("📋 Routines already exist, skipping sample data")
                 return
@@ -308,6 +303,7 @@ final class RoutineRepository: ObservableObject {
             print("⚠️ Could not check routine count, proceeding with sample data")
         }
         
+        // PRESERVED: All original sample routines for Kevin's buildings
         let sampleRoutines = [
             // Building 3 (Kevin's building)
             ("routine_3_daily_sweep", "3", "Daily Lobby Sweep", "Sweep and mop lobby area", "daily", "", "08:00", 30, "medium"),
@@ -337,18 +333,80 @@ final class RoutineRepository: ObservableObject {
         
         do {
             for (id, buildingId, name, desc, scheduleType, days, startTime, duration, priority) in sampleRoutines {
-                // FIXED: Using executeAsync with proper parameters
-                try await manager.executeAsync("""
+                // FIXED: Use GRDBManager execute method
+                try await grdbManager.execute("""
                     INSERT OR IGNORE INTO building_routines 
                     (id, building_id, routine_name, description, schedule_type, schedule_days, start_time, estimated_duration, priority, is_active) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                """, parameters: [id, buildingId, name, desc, scheduleType, days, startTime, duration, priority])
+                """, [id, buildingId, name, desc, scheduleType, days, startTime, duration, priority])
             }
             
-            print("✅ Sample building routines created")
+            print("✅ Sample building routines created with GRDBManager")
         } catch {
             print("❌ Failed to create sample routines: \(error)")
         }
+    }
+    
+    // MARK: - CRUD Operations (GRDBManager)
+    
+    func addRoutine(_ routine: BuildingRoutine) async throws {
+        try await grdbManager.execute("""
+            INSERT INTO building_routines (
+                id, building_id, routine_name, description, schedule_type,
+                schedule_days, start_time, estimated_duration, priority, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            routine.id,
+            routine.buildingId,
+            routine.routineName,
+            routine.description,
+            routine.scheduleType,
+            routine.scheduleDays.joined(separator: ","),
+            routine.startTime,
+            routine.estimatedDuration,
+            routine.priority.rawValue,
+            routine.isActive ? 1 : 0
+        ])
+        
+        self.routines.append(routine)
+        print("✅ Added routine: \(routine.routineName)")
+    }
+    
+    func updateRoutine(_ routine: BuildingRoutine) async throws {
+        try await grdbManager.execute("""
+            UPDATE building_routines 
+            SET routine_name = ?, description = ?, schedule_type = ?,
+                schedule_days = ?, start_time = ?, estimated_duration = ?,
+                priority = ?, is_active = ?
+            WHERE id = ?
+        """, [
+            routine.routineName,
+            routine.description,
+            routine.scheduleType,
+            routine.scheduleDays.joined(separator: ","),
+            routine.startTime,
+            routine.estimatedDuration,
+            routine.priority.rawValue,
+            routine.isActive ? 1 : 0,
+            routine.id
+        ])
+        
+        if let index = routines.firstIndex(where: { $0.id == routine.id }) {
+            routines[index] = routine
+        }
+        
+        print("✅ Updated routine: \(routine.routineName)")
+    }
+    
+    func deleteRoutine(_ routineId: String) async throws {
+        try await grdbManager.execute("""
+            UPDATE building_routines 
+            SET is_active = 0 
+            WHERE id = ?
+        """, [routineId])
+        
+        routines.removeAll { $0.id == routineId }
+        print("✅ Deleted routine: \(routineId)")
     }
     
     // MARK: - Utility Methods
@@ -368,34 +426,28 @@ final class RoutineRepository: ObservableObject {
     }
 }
 
-// MARK: - 📝 FIX NOTES
+// MARK: - 📝 GRDB MIGRATION NOTES
 /*
- ✅ COMPLETE FIX FOR MISSING PARAMETER LABELS:
+ ✅ COMPLETE GRDB MIGRATION:
  
- 🔧 FIXED DATABASE METHOD CALLS:
- - ✅ Line ~220: executeAsync(..., parameters: []) for table creation
- - ✅ Line ~235: queryAsync(..., parameters: []) for data loading
- - ✅ Line ~280: queryAsync(..., parameters: []) for count check
- - ✅ Line ~320: executeAsync(..., parameters: [...]) for sample data insertion
+ 🔧 FIXED DATABASE MANAGER:
+ - ✅ Changed SQLiteManager.shared → GRDBManager.shared
+ - ✅ Changed executeAsync() → execute()
+ - ✅ Changed queryAsync() → query()
+ - ✅ Removed parameters: labels (GRDBManager handles this automatically)
  
- 🔧 ALIGNED WITH SQLITEMANAGER:
- - ✅ Uses executeAsync instead of execute for async operations
- - ✅ Uses queryAsync instead of query for async operations
- - ✅ Proper parameters: [DBParameter] argument labels
- - ✅ Consistent with current SQLiteManager method signatures
+ 🔧 PRESERVED ALL DATA:
+ - ✅ All Kevin's building routines (Buildings 3, 6, 7, 9, 11, 16)
+ - ✅ All task types (daily sweeps, trash pickup, maintenance, security)
+ - ✅ All priority levels and scheduling patterns
+ - ✅ Complete CRUD operations for routine management
  
- 🔧 ENHANCED FUNCTIONALITY:
- - ✅ Building routine management for Kevin's 6+ buildings
- - ✅ Daily, weekly, and monthly scheduling support
- - ✅ Priority-based routine organization
- - ✅ Overdue and due-today calculation logic
+ 🔧 MAINTAINED FUNCTIONALITY:
+ - ✅ Building routine management system
+ - ✅ Due today / overdue calculation logic
+ - ✅ Priority-based organization
+ - ✅ Schedule type handling (daily/weekly/monthly)
  - ✅ Database persistence with sample data
  
- 🔧 ACTOR COMPATIBILITY:
- - ✅ @MainActor for UI thread safety
- - ✅ Async/await patterns throughout
- - ✅ ObservableObject for SwiftUI integration
- - ✅ Thread-safe database operations
- 
- 🎯 STATUS: All compilation errors fixed, proper async database operations
+ 🎯 STATUS: GRDB migration complete, all real-world data preserved
  */
