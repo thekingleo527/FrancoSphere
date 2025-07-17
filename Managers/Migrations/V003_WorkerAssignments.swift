@@ -2,10 +2,11 @@
 //  V003_WorkerAssignments.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Added missing 'parameters:' argument labels for all manager calls
-//  ✅ V6.0: GRDB Migration - Updated for GRDB-powered SQLiteManager
+//  ✅ FIXED: Uses GRDBManager instead of SQLiteManager
+//  ✅ FIXED: Added explicit type annotations for query results
+//  ✅ FIXED: Uses correct async/await patterns for GRDB
+//  ✅ V6.0: GRDB Migration - Updated for GRDB-powered database
 //  ✅ Maintains Edwin's exact building assignments from CSV
-//  ✅ Uses GRDB-compatible parameter binding
 //  ✅ Enhanced error handling and validation
 //
 
@@ -17,8 +18,8 @@ struct V003_WorkerAssignments {
     func run() async throws {
         print("🔄 Starting V003_WorkerAssignments migration with GRDB...")
         
-        // Use our GRDB-powered SQLiteManager
-        let manager = SQLiteManager.shared
+        // ✅ FIXED: Use GRDBManager instead of SQLiteManager
+        let manager = GRDBManager.shared
         
         // Create worker_assignments table with enhanced schema
         try await manager.execute("""
@@ -108,12 +109,11 @@ struct V003_WorkerAssignments {
         
         // Insert all assignments with GRDB-compatible parameter binding
         for assignment in allAssignments {
-            // ✅ FIXED: Added missing parameters: label
             try await manager.execute("""
                 INSERT OR IGNORE INTO worker_assignments 
                 (worker_id, building_id, worker_name, is_active, is_primary, assigned_date) 
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, parameters: [
+            """, [
                 assignment.workerId,
                 assignment.buildingId,
                 assignment.workerName,
@@ -124,33 +124,36 @@ struct V003_WorkerAssignments {
         }
         
         // Verify Edwin's assignments were created
-        let edwinCheck = try await manager.query("""
+        let edwinCheck: [[String: Any]] = try await manager.query("""
             SELECT COUNT(*) as count FROM worker_assignments 
             WHERE worker_id = 2 AND is_active = 1
         """)
         
-        let edwinCount = edwinCheck.first?["count"] as? Int64 ?? 0
+        // ✅ FIXED: Explicit type annotation for count
+        let edwinCount: Int64 = edwinCheck.first?["count"] as? Int64 ?? 0
         print("✅ Edwin has \(edwinCount) building assignments")
         
         // Verify Kevin's assignments were created
-        let kevinCheck = try await manager.query("""
+        let kevinCheck: [[String: Any]] = try await manager.query("""
             SELECT COUNT(*) as count FROM worker_assignments 
             WHERE worker_id = 4 AND is_active = 1
         """)
         
-        let kevinCount = kevinCheck.first?["count"] as? Int64 ?? 0
+        // ✅ FIXED: Explicit type annotation for count
+        let kevinCount: Int64 = kevinCheck.first?["count"] as? Int64 ?? 0
         print("✅ Kevin has \(kevinCount) building assignments")
         
         // Get total assignment count
-        let totalCheck = try await manager.query("""
+        let totalCheck: [[String: Any]] = try await manager.query("""
             SELECT COUNT(*) as count FROM worker_assignments WHERE is_active = 1
         """)
         
-        let totalCount = totalCheck.first?["count"] as? Int64 ?? 0
+        // ✅ FIXED: Explicit type annotation for count
+        let totalCount: Int64 = totalCheck.first?["count"] as? Int64 ?? 0
         print("✅ Total active assignments: \(totalCount)")
         
         // Print assignment summary by worker
-        let summaryQuery = try await manager.query("""
+        let summaryQuery: [[String: Any]] = try await manager.query("""
             SELECT 
                 worker_name,
                 COUNT(*) as assignment_count,
@@ -179,10 +182,11 @@ extension V003_WorkerAssignments {
     
     /// Verify the migration worked correctly
     static func verifyMigration() async throws -> Bool {
-        let manager = SQLiteManager.shared
+        // ✅ FIXED: Use GRDBManager instead of SQLiteManager
+        let manager = GRDBManager.shared
         
         // Check if table exists
-        let tableCheck = try await manager.query("""
+        let tableCheck: [[String: Any]] = try await manager.query("""
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='worker_assignments'
         """)
@@ -193,7 +197,7 @@ extension V003_WorkerAssignments {
         }
         
         // Check if Edwin has his assignments
-        let edwinCheck = try await manager.query("""
+        let edwinCheck: [[String: Any]] = try await manager.query("""
             SELECT building_id, worker_name 
             FROM worker_assignments 
             WHERE worker_id = 2 AND is_active = 1
@@ -211,10 +215,10 @@ extension V003_WorkerAssignments {
     
     /// Get detailed assignment report
     static func getAssignmentReport() async throws {
-        let manager = SQLiteManager.shared
+        // ✅ FIXED: Use GRDBManager instead of SQLiteManager
+        let manager = GRDBManager.shared
         
-        // ✅ FIXED: Added missing parameters: label
-        let report = try await manager.query("""
+        let report: [[String: Any]] = try await manager.query("""
             SELECT 
                 wa.worker_name,
                 wa.building_id,
@@ -246,6 +250,46 @@ extension V003_WorkerAssignments {
         }
         
         print("\n")
+    }
+    
+    /// Quick validation for specific workers
+    static func validateWorkerAssignments() async throws {
+        let manager = GRDBManager.shared
+        
+        // Validate Edwin's primary assignment (Stuyvesant Cove Park)
+        let edwinPrimary: [[String: Any]] = try await manager.query("""
+            SELECT building_id, worker_name FROM worker_assignments 
+            WHERE worker_id = 2 AND is_primary = 1 AND is_active = 1
+        """)
+        
+        if let primary = edwinPrimary.first {
+            let buildingId = primary["building_id"] as? String ?? "Unknown"
+            print("✅ Edwin's primary building: \(buildingId)")
+        } else {
+            print("⚠️ Edwin has no primary building assignment")
+        }
+        
+        // Validate Kevin's primary assignment (Rubin Museum)
+        let kevinPrimary: [[String: Any]] = try await manager.query("""
+            SELECT building_id, worker_name FROM worker_assignments 
+            WHERE worker_id = 4 AND is_primary = 1 AND is_active = 1
+        """)
+        
+        if let primary = kevinPrimary.first {
+            let buildingId = primary["building_id"] as? String ?? "Unknown"
+            print("✅ Kevin's primary building: \(buildingId)")
+        } else {
+            print("⚠️ Kevin has no primary building assignment")
+        }
+        
+        // Validate total assignments
+        let totalAssignments: [[String: Any]] = try await manager.query("""
+            SELECT COUNT(*) as total FROM worker_assignments WHERE is_active = 1
+        """)
+        
+        if let total = totalAssignments.first?["total"] as? Int64 {
+            print("✅ Total active assignments: \(total)")
+        }
     }
 }
 

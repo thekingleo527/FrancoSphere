@@ -1827,3 +1827,17 @@ extension OperationalDataManager {
         }
     }
 }
+
+    // MARK: - Development Reset (DEBUG ONLY)
+    
+    #if DEBUG
+    func reset() async {
+        await MainActor.run {
+            hasImported = false
+            isInitialized = false
+            importProgress = 0.0
+            currentStatus = "Reset complete"
+        }
+        print("🔄 OperationalDataManager reset for development")
+    }
+    #endif

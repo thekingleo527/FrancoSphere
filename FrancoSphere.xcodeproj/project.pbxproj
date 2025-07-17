@@ -24,6 +24,9 @@
 		23148E6E2E285F7300446441 /* WorkerContextEngine+DataFlow.swift in Resources */ = {isa = PBXBuildFile; fileRef = 23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */; };
 		23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23148E732E286AA200446441 /* UnifiedDataService.swift */; };
 		2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */; };
+		2317FED42E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */; };
+		2317FED62E2982F50013D5A7 /* DatabaseStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */; };
+		2317FED82E29836A0013D5A7 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED72E29836A0013D5A7 /* WorkerContextEngineAdapter.swift */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
 		233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */; };
@@ -216,6 +219,9 @@
 		23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerContextEngine+DataFlow.swift"; sourceTree = "<group>"; };
 		23148E732E286AA200446441 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldDataSeeder.swift; sourceTree = "<group>"; };
+		2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OperationalDataManager+DatabaseIntegration.swift"; sourceTree = "<group>"; };
+		2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseStartupCoordinator.swift; sourceTree = "<group>"; };
+		2317FED72E29836A0013D5A7 /* WorkerContextEngineAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngineAdapter.swift; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		233F94D92DF7B0AD00901707 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
@@ -424,6 +430,8 @@
 		2312FC652E1B66C900B64496 /* Migration */ = {
 			isa = PBXGroup;
 			children = (
+				2317FED72E29836A0013D5A7 /* WorkerContextEngineAdapter.swift */,
+				2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */,
 				2312FC6C2E1B7BC500B64496 /* WorkerAssignmentEngine.swift */,
 				2312FC682E1B709600B64496 /* DataConsolidationManager.swift */,
 				2312FC662E1B66F300B64496 /* TypeMigrationService.swift */,
@@ -712,6 +720,7 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2317FED52E2982F50013D5A7 /* DatabaseStartupCoordinator.swift */,
 				2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */,
 				23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */,
 				23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */,
@@ -1051,6 +1060,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */,
+				2317FED62E2982F50013D5A7 /* DatabaseStartupCoordinator.swift in Sources */,
 				2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */,
 				233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
@@ -1167,6 +1177,7 @@
 				237493582E1C9F8800D9C70D /* CoreTypes.swift in Sources */,
 				234581A02DF78E3D00355F0A /* TaskScheduleView.swift in Sources */,
 				237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */,
+				2317FED42E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift in Sources */,
 				23A3169F2E1E37B500469FA3 /* AITypes.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
@@ -1196,6 +1207,7 @@
 				23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
+				2317FED82E29836A0013D5A7 /* WorkerContextEngineAdapter.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
 				234581B62DF78E3D00355F0A /* GlassButtonModifier.swift in Sources */,
 				23F9FC002E30000000AAAAAA /* NovaCore.swift in Sources */,

@@ -2,10 +2,10 @@
 //  InitializationViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Compilation errors resolved
-//  ✅ FIXED: Uses DataInitializationManager instead of UnifiedDataInitializer
-//  ✅ FIXED: Proper MainActor async/await handling
-//  ✅ INTEGRATED: Real database seeding and worker assignments
+//  🚨 CRITICAL FIX: Added DatabaseStartupCoordinator integration
+//  ✅ FIXED: Progress 0/0 issue by ensuring data import runs at startup
+//  ✅ ADDED: Real operational data verification
+//  ✅ ENHANCED: Kevin-specific validation for user stories
 //
 
 import Foundation
@@ -18,211 +18,203 @@ class InitializationViewModel: ObservableObject {
     @Published var isInitializing: Bool = false
     @Published var isComplete: Bool = false
     @Published var initializationError: String?
-    
-    // Use the actual available initialization manager
-    private let dataManager = DataInitializationManager.shared
-    
-    // MARK: - Real Initialization with DataInitializationManager
-    
+
     func startInitialization() async {
         guard !isInitializing else { return }
         isInitializing = true
         initializationError = nil
         
-        print("🚀 Starting real initialization with DataInitializationManager...")
-        
-        do {
-            // Method 1: Use DataInitializationManager directly
-            let status = try await dataManager.initializeAllData()
+        // CRITICAL: Enhanced initialization sequence with real data import
+        let steps: [(String, Double, () async throws -> Void)] = [
+            ("Connecting to Database...", 0.2, {
+                try await GRDBManager.shared.configure()
+            }),
             
-            // Monitor progress by observing the published properties
-            while dataManager.initializationProgress < 1.0 && initializationError == nil {
-                // Update from published properties
-                self.progress = dataManager.initializationProgress
-                self.currentStep = dataManager.currentStatus
-                
-                // Check for errors
-                if dataManager.hasError {
-                    self.initializationError = dataManager.errorMessage
-                    break
-                }
-                
-                // Update every 100ms for smooth progress
-                try? await Task.sleep(nanoseconds: 100_000_000)
-            }
+            ("Verifying Database Structure...", 0.4, {
+                try await self.verifyDatabaseStructure()
+            }),
             
-            // Check final status
-            if status.hasErrors {
-                self.initializationError = "Initialization completed with errors: \(status.errors.joined(separator: ", "))"
-            } else {
-                // Success!
-                self.progress = 1.0
-                self.currentStep = "FrancoSphere Ready!"
-                print("✅ Initialization completed successfully!")
-                
-                // Brief pause to show completion
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                
-                self.isComplete = true
-            }
+            ("Importing Real Operational Data...", 0.6, {
+                // CRITICAL FIX: This ensures real tasks are in database
+                try await DatabaseStartupCoordinator.shared.ensureDataIntegrity()
+            }),
             
-        } catch {
-            self.initializationError = "Critical error: \(error.localizedDescription)"
-            print("❌ Initialization failed with error: \(error)")
-        }
-        
-        isInitializing = false
-    }
-    
-    // MARK: - Alternative Implementation using SeedDatabase directly
-    
-    func startInitializationAlternative() async {
-        guard !isInitializing else { return }
-        isInitializing = true
-        initializationError = nil
-        
-        print("🚀 Starting initialization with SeedDatabase...")
-        
-        do {
-            // Step 1: Database migrations
-            self.currentStep = "Running database migrations..."
-            self.progress = 0.2
-            try await SeedDatabase.runMigrations()
+            ("Validating Kevin's Assignments...", 0.8, {
+                try await self.validateKevinWorkflow()
+            }),
             
-            // Step 2: Operational data
-            self.currentStep = "Initializing operational data..."
-            self.progress = 0.5
-            try await OperationalDataManager.shared.initializeOperationalData()
+            ("Finalizing Setup...", 1.0, {
+                try await Task.sleep(nanoseconds: 200_000_000)
+            })
+        ]
+
+        for (stepName, stepProgress, stepAction) in steps {
+            currentStep = stepName
+            progress = stepProgress
             
-            // Step 3: Bootstrap additional data
-            self.currentStep = "Bootstrapping data..."
-            self.progress = 0.8
-            DataBootstrapper.runIfNeeded()
-            
-            // Step 4: Validation
-            self.currentStep = "Validating data integrity..."
-            self.progress = 0.9
-            let validation = await DatabaseSeeder.shared.validateDatabase()
-            
-            if !validation.success {
-                self.initializationError = "Data validation failed: \(validation.message)"
+            do {
+                try await stepAction()
+                print("✅ Completed: \(stepName)")
+            } catch {
+                let errorMsg = "Error during '\(stepName)': \(error.localizedDescription)"
+                print("❌ \(errorMsg)")
+                initializationError = errorMsg
+                isInitializing = false
                 return
             }
-            
-            // Success!
-            self.progress = 1.0
-            self.currentStep = "FrancoSphere Ready!"
-            print("✅ Initialization completed successfully!")
-            
-            // Brief pause to show completion
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            
-            self.isComplete = true
-            
-        } catch {
-            self.initializationError = "Critical error: \(error.localizedDescription)"
-            print("❌ Initialization failed with error: \(error)")
         }
-        
+
+        currentStep = "Initialization Complete"
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        isComplete = true
         isInitializing = false
+        
+        print("✅ FrancoSphere v6.0 initialization completed successfully")
     }
     
-    // MARK: - Helper Methods
+    // MARK: - Validation Methods
     
-    /// Reset initialization state (for development/testing)
-    func resetInitialization() async {
-        guard !isInitializing else { return }
+    /// Verify database structure exists
+    private func verifyDatabaseStructure() async throws {
+        let manager = GRDBManager.shared
         
-        self.isComplete = false
-        self.progress = 0.0
-        self.currentStep = "Preparing FrancoSphere..."
-        self.initializationError = nil
+        // Check critical tables exist
+        let requiredTables = ["routine_tasks", "workers", "buildings", "worker_assignments"]
         
-        print("🔄 Initialization state reset")
-    }
-    
-    /// Get detailed initialization status
-    var detailedStatus: String {
-        if let error = initializationError {
-            return "Error: \(error)"
-        } else if isComplete {
-            return "Ready - Initialization completed successfully"
-        } else if isInitializing {
-            return currentStep
-        } else {
-            return "Waiting to start..."
+        for tableName in requiredTables {
+            let rows = try await manager.query("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name=?
+            """, [tableName])
+            
+            guard !rows.isEmpty else {
+                throw InitializationError.missingTable(tableName)
+            }
         }
+        
+        print("✅ Database structure verification passed")
     }
     
-    /// Progress percentage as string
-    var progressPercentage: String {
-        return "\(Int(progress * 100))%"
-    }
-    
-    /// Check if we can start initialization
-    var canStartInitialization: Bool {
-        return !isInitializing && !isComplete
+    /// Validate Kevin's workflow requirements (CRITICAL for user stories)
+    private func validateKevinWorkflow() async throws {
+        let manager = GRDBManager.shared
+        
+        // Verify Kevin exists and is active
+        let kevinCheck = try await manager.query("""
+            SELECT id, name, isActive FROM workers WHERE id = '4'
+        """)
+        
+        guard let kevin = kevinCheck.first,
+              let isActive = kevin["isActive"] as? Int64,
+              isActive == 1 else {
+            throw InitializationError.kevinNotFound
+        }
+        
+        // Verify Kevin has tasks
+        let kevinTasks = try await manager.query("""
+            SELECT COUNT(*) as task_count FROM routine_tasks WHERE workerId = '4'
+        """)
+        
+        let taskCount = kevinTasks.first?["task_count"] as? Int64 ?? 0
+        guard taskCount > 0 else {
+            throw InitializationError.kevinHasNoTasks
+        }
+        
+        // Verify Kevin has building assignments (especially Rubin Museum)
+        let kevinBuildings = try await manager.query("""
+            SELECT DISTINCT buildingId FROM routine_tasks WHERE workerId = '4'
+        """)
+        
+        let buildingIds = kevinBuildings.compactMap { $0["buildingId"] as? String }
+        let hasRubinMuseum = buildingIds.contains("rubin-museum")
+        
+        guard buildingIds.count >= 3 else {
+            throw InitializationError.kevinInsufficientBuildings(buildingIds.count)
+        }
+        
+        guard hasRubinMuseum else {
+            throw InitializationError.kevinMissingRubinMuseum
+        }
+        
+        print("✅ Kevin workflow validation passed:")
+        print("   Tasks: \(taskCount)")
+        print("   Buildings: \(buildingIds.count)")
+        print("   Rubin Museum: ✅")
     }
 }
 
-// MARK: - Initialization Options
+// MARK: - Initialization Errors
+
+enum InitializationError: LocalizedError {
+    case timeout(String)
+    case unknown
+    case missingTable(String)
+    case kevinNotFound
+    case kevinHasNoTasks
+    case kevinInsufficientBuildings(Int)
+    case kevinMissingRubinMuseum
+    case dataImportFailed(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .timeout(let message):
+            return "Timeout: \(message)"
+        case .unknown:
+            return "Unknown initialization error"
+        case .missingTable(let table):
+            return "Required database table missing: \(table)"
+        case .kevinNotFound:
+            return "Kevin Dutan not found in workers table"
+        case .kevinHasNoTasks:
+            return "Kevin has no tasks assigned (critical for user stories)"
+        case .kevinInsufficientBuildings(let count):
+            return "Kevin has only \(count) buildings (needs at least 3)"
+        case .kevinMissingRubinMuseum:
+            return "Kevin missing Rubin Museum assignment (critical requirement)"
+        case .dataImportFailed(let details):
+            return "Data import failed: \(details)"
+        }
+    }
+}
+
+// MARK: - Progress Tracking Extension
 
 extension InitializationViewModel {
-    /// Quick initialization for development
-    func quickInitialization() async {
-        guard !isInitializing else { return }
-        isInitializing = true
-        initializationError = nil
-        
-        print("🚀 Quick initialization for development...")
-        
-        self.currentStep = "Quick setup..."
-        self.progress = 0.5
-        
-        try? await Task.sleep(nanoseconds: 200_000_000)
-        
-        await dataManager.quickInitialize()
-        
-        self.progress = 1.0
-        self.currentStep = "Quick setup complete!"
-        
-        try? await Task.sleep(nanoseconds: 300_000_000)
-        
-        self.isComplete = true
-        self.isInitializing = false
-        
-        print("✅ Quick initialization completed")
-    }
     
-    /// Full initialization with schema migration
-    func fullInitializationWithMigration() async {
-        guard !isInitializing else { return }
-        isInitializing = true
-        initializationError = nil
+    /// Get detailed initialization status for debugging
+    var detailedStatus: String {
+        let progressPercent = Int(progress * 100)
         
-        print("🚀 Full initialization with schema migration...")
-        
-        do {
-            let status = try await dataManager.initializeWithSchemaPatch()
-            
-            self.progress = dataManager.initializationProgress
-            self.currentStep = dataManager.currentStatus
-            
-            if status.hasErrors {
-                self.initializationError = "Migration completed with errors: \(status.errors.joined(separator: ", "))"
-            } else {
-                self.progress = 1.0
-                self.currentStep = "Full initialization complete!"
-                
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                self.isComplete = true
-            }
-            
-        } catch {
-            self.initializationError = "Migration failed: \(error.localizedDescription)"
-            print("❌ Full initialization failed: \(error)")
+        if let error = initializationError {
+            return "❌ Error (\(progressPercent)%): \(error)"
         }
         
-        isInitializing = false
+        if isComplete {
+            return "✅ Complete (100%): FrancoSphere ready"
+        }
+        
+        if isInitializing {
+            return "🔄 Progress (\(progressPercent)%): \(currentStep)"
+        }
+        
+        return "⏸️ Not started"
+    }
+    
+    /// Check if initialization is in a failure state
+    var hasFailed: Bool {
+        return initializationError != nil
+    }
+    
+    /// Retry initialization after failure
+    func retryInitialization() async {
+        guard hasFailed else { return }
+        
+        // Reset state
+        initializationError = nil
+        progress = 0.0
+        currentStep = "Retrying initialization..."
+        
+        // Start again
+        await startInitialization()
     }
 }

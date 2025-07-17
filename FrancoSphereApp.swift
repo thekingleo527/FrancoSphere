@@ -1,17 +1,16 @@
 //
 //  FrancoSphereApp.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
 //  ✅ UNIFIED: Single initialization path using UnifiedDataInitializer
-//  ✅ SIMPLIFIED: Removed all old system references
-//  ✅ GRDB: Exclusively uses GRDB architecture
+//  ✅ SIMPLIFIED: Clean app entry point
+//  ✅ REAL DASHBOARDS: Uses actual AdminDashboardView and ClientDashboardView
 //
 
 import SwiftUI
 
 @main
 struct FrancoSphereApp: App {
-    // UNIFIED: Single initializer reference
     @StateObject private var unifiedInitializer = UnifiedDataInitializer.shared
     @StateObject private var authManager = NewAuthManager.shared
     
@@ -31,21 +30,17 @@ struct FrancoSphereApp: App {
             .task {
                 await initializeApp()
             }
+            .preferredColorScheme(.dark)
         }
     }
     
     private func initializeApp() async {
         do {
             print("🚀 Starting FrancoSphere v6.0 initialization...")
-            
-            // UNIFIED: Single initialization call
             try await unifiedInitializer.initializeIfNeeded()
-            
             print("✅ FrancoSphere v6.0 initialization complete")
-            
         } catch {
             print("❌ FrancoSphere initialization failed: \(error)")
-            // The error is already stored in unifiedInitializer.error
         }
     }
 }
@@ -65,6 +60,7 @@ struct InitializationProgressView: View {
             Text("FrancoSphere v6.0")
                 .font(.largeTitle)
                 .fontWeight(.bold)
+                .foregroundColor(.white)
             
             Text("Initializing Portfolio Management System...")
                 .font(.subheadline)
@@ -109,7 +105,7 @@ struct InitializationProgressView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        .background(Color.black)
     }
     
     private func retryInitialization() async {
@@ -124,23 +120,3 @@ struct InitializationProgressView: View {
         }
     }
 }
-
-// MARK: - Legacy System Removal Notes
-/*
- ✅ REMOVED REFERENCES TO:
- - DataBootstrapper.runIfNeeded() → Now handled by UnifiedDataInitializer
- - Multiple initialization managers → Single UnifiedDataInitializer
- - Complex initialization flows → Simple .initializeIfNeeded()
- 
- ✅ UNIFIED APPROACH:
- - Single @StateObject for UnifiedDataInitializer
- - Clear initialization → app ready flow
- - Proper error handling with retry capability
- - Development-friendly reset functionality
- 
- ✅ BENEFITS:
- - Zero duplication
- - Single source of truth
- - Clear state management
- - Professional initialization experience
- */

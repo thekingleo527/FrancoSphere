@@ -68,21 +68,7 @@ class WorkerDashboardViewModel: ObservableObject {
     
     // MARK: - Progress Calculation Fix
     
-    private func calculateTaskProgress() async {
-        let totalTasks = todaysTasks.count
-        let completedTasks = todaysTasks.filter { $0.isCompleted }.count
-        
-        let progressPercentage = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) * 100.0 : 0.0
-        
-        // FIXED: Use correct TaskProgress initializer with progressPercentage
-        self.taskProgress = TaskProgress(
-            completedTasks: completedTasks,
-            totalTasks: totalTasks,
-            progressPercentage: progressPercentage
-        )
-        
-        print("✅ Progress calculated: \(completedTasks)/\(totalTasks) tasks (\(Int(progressPercentage))%)")
-    }
+    `cat temp_worker_dashboard_patch.swift`
     
     func refreshData() async {
         do {
