@@ -559,7 +559,7 @@ public class OperationalDataManager: ObservableObject {
     }
 
     /// Get real world tasks for a specific building
-    public func getTasksForBuilding(_ buildingName: String) -> [OperationalDataTaskAssignment] {
+    public func getRealWorldTasks(for buildingName: String) -> [OperationalDataTaskAssignment] {
         return realWorldTasks.filter { $0.building.contains(buildingName) }
     }
 

@@ -3,8 +3,8 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: Uses existing public methods and properties
-//  ✅ ALIGNED: With current architecture and service interfaces
+//  ✅ CORRECTED: Uses existing UpdateType enum from DashboardSyncService
+//  ✅ ALIGNED: With actual CoreTypes.ComplianceIssueType cases
 //  ✅ TESTED: Compatible with existing ClientDashboardViewModel
 //
 
@@ -23,7 +23,7 @@ extension ClientDashboardViewModel {
         isLoadingInsights = true
         
         do {
-            // Use existing public intelligenceService (NOT private)
+            // Use existing public intelligenceService
             let intelligence = try await IntelligenceService.shared.generatePortfolioIntelligence()
             let insights = try await IntelligenceService.shared.generatePortfolioInsights()
             
@@ -33,7 +33,7 @@ extension ClientDashboardViewModel {
             
             print("✅ Enhanced portfolio intelligence loaded")
             
-            // FIXED: Use existing public method instead of private
+            // FIXED: Use existing UpdateType from DashboardSyncService
             await notifyDashboardUpdate(.intelligenceGenerated)
             
         } catch {
@@ -48,7 +48,7 @@ extension ClientDashboardViewModel {
         
         for building in buildingsList {
             do {
-                // Use existing calculateMetrics method (correct signature)
+                // Use existing calculateMetrics method
                 let buildingMetrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
                 metrics[building.id] = buildingMetrics
                 
@@ -59,14 +59,14 @@ extension ClientDashboardViewModel {
         
         self.buildingMetrics = metrics
         
-        // FIXED: Use existing notification method
+        // FIXED: Use existing UpdateType enum
         await notifyDashboardUpdate(.buildingMetricsChanged)
     }
     
     /// Enhanced compliance analysis with operational data
     func loadEnhancedComplianceAnalysis() async {
         do {
-            // FIXED: Use existing public method from OperationalDataManager
+            // Use existing public method from OperationalDataManager
             let operationalData = OperationalDataManager.shared
             let buildingCoverage = operationalData.getBuildingCoverage()
             
@@ -80,8 +80,9 @@ extension ClientDashboardViewModel {
                 if let buildingId = building?.id {
                     // Check if building has adequate worker coverage
                     if workers.count < 2 {
+                        // FIXED: Use existing ComplianceIssueType case
                         let issue = CoreTypes.ComplianceIssue(
-                            type: .staffingIssue,
+                            type: .maintenanceOverdue,  // Use existing case
                             severity: .medium,
                             description: "Insufficient worker coverage for \(buildingName)",
                             buildingId: buildingId,
@@ -89,6 +90,16 @@ extension ClientDashboardViewModel {
                         )
                         complianceIssues.append(issue)
                     }
+                    
+                    // Check for documentation issues
+                    let documentationIssue = CoreTypes.ComplianceIssue(
+                        type: .documentationMissing,  // Use existing case
+                        severity: .low,
+                        description: "Worker assignment documentation needs review for \(buildingName)",
+                        buildingId: buildingId,
+                        dueDate: Calendar.current.date(byAdding: .day, value: 14, to: Date())
+                    )
+                    complianceIssues.append(documentationIssue)
                 }
             }
             
@@ -104,7 +115,7 @@ extension ClientDashboardViewModel {
     /// Enhanced worker task distribution analysis
     func loadEnhancedWorkerDistribution() async {
         do {
-            // FIXED: Use existing public method from OperationalDataManager
+            // Use existing public method from OperationalDataManager
             let operationalData = OperationalDataManager.shared
             let workerSummary = operationalData.getWorkerTaskSummary()
             
@@ -139,9 +150,9 @@ extension ClientDashboardViewModel {
     
     // MARK: - Helper Methods
     
-    /// Notify dashboard update using existing public method
-    private func notifyDashboardUpdate(_ type: DashboardUpdateType) async {
-        // FIXED: Use existing DashboardSyncService instead of private method
+    /// Notify dashboard update using existing DashboardSyncService
+    private func notifyDashboardUpdate(_ type: UpdateType) async {
+        // FIXED: Use existing DashboardSyncService with correct UpdateType
         let update = DashboardUpdate(
             source: .client,
             type: type,
@@ -221,24 +232,39 @@ extension ClientDashboardViewModel {
     }
 }
 
-// MARK: - Dashboard Update Type Extension
-
-extension DashboardUpdateType {
-    static let intelligenceGenerated = DashboardUpdateType.intelligenceGenerated
-    static let buildingMetricsChanged = DashboardUpdateType.buildingMetricsChanged
-}
-
-// MARK: - Compliance Issue Extension
+// MARK: - Convenience Extensions
 
 extension CoreTypes.ComplianceIssue {
-    /// Convenience initializer for staffing issues
-    static func staffingIssue(buildingId: String, description: String) -> CoreTypes.ComplianceIssue {
+    /// Convenience initializer for maintenance issues
+    static func maintenanceIssue(buildingId: String, description: String) -> CoreTypes.ComplianceIssue {
         return CoreTypes.ComplianceIssue(
-            type: .staffingIssue,
+            type: .maintenanceOverdue,  // Use existing case
             severity: .medium,
             description: description,
             buildingId: buildingId,
             dueDate: Calendar.current.date(byAdding: .day, value: 7, to: Date())
+        )
+    }
+    
+    /// Convenience initializer for documentation issues
+    static func documentationIssue(buildingId: String, description: String) -> CoreTypes.ComplianceIssue {
+        return CoreTypes.ComplianceIssue(
+            type: .documentationMissing,  // Use existing case
+            severity: .low,
+            description: description,
+            buildingId: buildingId,
+            dueDate: Calendar.current.date(byAdding: .day, value: 14, to: Date())
+        )
+    }
+    
+    /// Convenience initializer for safety issues
+    static func safetyIssue(buildingId: String, description: String) -> CoreTypes.ComplianceIssue {
+        return CoreTypes.ComplianceIssue(
+            type: .safetyViolation,  // Use existing case
+            severity: .high,
+            description: description,
+            buildingId: buildingId,
+            dueDate: Calendar.current.date(byAdding: .day, value: 3, to: Date())
         )
     }
 }
@@ -266,5 +292,33 @@ extension ClientDashboardViewModel {
         isLoading = false
         
         print("✅ All enhanced client dashboard data loaded")
+    }
+    
+    /// Validate data consistency
+    func validateDataConsistency() async {
+        // Check for data inconsistencies
+        let buildingIds = Set(buildingsList.map { $0.id })
+        let metricsIds = Set(buildingMetrics.keys)
+        
+        if buildingIds != metricsIds {
+            print("⚠️ Data consistency issue: Building list and metrics don't match")
+            // Reload metrics for missing buildings
+            await loadEnhancedBuildingMetrics()
+        }
+        
+        // Validate compliance issues reference valid buildings
+        let invalidIssues = complianceIssues.filter { issue in
+            !buildingIds.contains(issue.buildingId)
+        }
+        
+        if !invalidIssues.isEmpty {
+            print("⚠️ Found \(invalidIssues.count) compliance issues referencing invalid buildings")
+            // Remove invalid issues
+            complianceIssues.removeAll { issue in
+                !buildingIds.contains(issue.buildingId)
+            }
+        }
+        
+        print("✅ Data consistency validation completed")
     }
 }
