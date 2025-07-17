@@ -203,3 +203,31 @@ extension TaskProgress {
         }
     }
 }
+    // MARK: - Progress Calculation Fix
+    
+    private func calculateTaskProgress() async {
+        let totalTasks = todaysTasks.count
+        let completedTasks = todaysTasks.filter { $0.isCompleted }.count
+        
+        let progressPercentage = totalTasks > 0 ? 
+            Double(completedTasks) / Double(totalTasks) * 100.0 : 0.0
+        
+        // ✅ Force create progress object
+        let newProgress = TaskProgress(
+            completedTasks: completedTasks,
+            totalTasks: totalTasks,
+            progressPercentage: progressPercentage
+        )
+        
+        // ✅ Ensure main actor assignment
+        self.taskProgress = newProgress
+        
+        print("✅ Progress calculated: \(completedTasks)/\(totalTasks) = \(Int(progressPercentage))%")
+        
+        // ✅ Verify assignment worked
+        if let progress = taskProgress {
+            print("✅ Progress verified: \(progress.formattedProgress)")
+        } else {
+            print("🚨 Progress is still nil!")
+        }
+    }
