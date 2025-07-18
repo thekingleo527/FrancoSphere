@@ -1,5 +1,13 @@
 //
 //  WorkerContextEngineAdapter.swift
+//  FrancoSphere
+//
+//  Created by Shawn Magloire on 7/17/25.
+//
+
+
+//
+//  WorkerContextEngineAdapter.swift
 //  FrancoSphere v6.0
 //
 //  ✅ MINIMAL WORKING VERSION: Compiles immediately, fixes all scope errors
