@@ -2,7 +2,7 @@
 //  V003_WorkerAssignments.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Uses GRDBManager instead of SQLiteManager
+//  ✅ FIXED: Uses GRDBManager instead of GRDBManager
 //  ✅ FIXED: Added explicit type annotations for query results
 //  ✅ FIXED: Uses correct async/await patterns for GRDB
 //  ✅ V6.0: GRDB Migration - Updated for GRDB-powered database
@@ -18,7 +18,7 @@ struct V003_WorkerAssignments {
     func run() async throws {
         print("🔄 Starting V003_WorkerAssignments migration with GRDB...")
         
-        // ✅ FIXED: Use GRDBManager instead of SQLiteManager
+        // ✅ FIXED: Use GRDBManager instead of GRDBManager
         let manager = GRDBManager.shared
         
         // Create worker_assignments table with enhanced schema
@@ -182,7 +182,7 @@ extension V003_WorkerAssignments {
     
     /// Verify the migration worked correctly
     static func verifyMigration() async throws -> Bool {
-        // ✅ FIXED: Use GRDBManager instead of SQLiteManager
+        // ✅ FIXED: Use GRDBManager instead of GRDBManager
         let manager = GRDBManager.shared
         
         // Check if table exists
@@ -215,7 +215,7 @@ extension V003_WorkerAssignments {
     
     /// Get detailed assignment report
     static func getAssignmentReport() async throws {
-        // ✅ FIXED: Use GRDBManager instead of SQLiteManager
+        // ✅ FIXED: Use GRDBManager instead of GRDBManager
         let manager = GRDBManager.shared
         
         let report: [[String: Any]] = try await manager.query("""

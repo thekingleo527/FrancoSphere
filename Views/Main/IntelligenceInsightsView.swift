@@ -1,9 +1,9 @@
 //
 //  IntelligenceInsightsView.swift
-//  FrancoSphere v6.0 - SYNTAX ERRORS FIXED
+//  FrancoSphere v6.0
 //
-//  🚨 CRITICAL FIX: All syntax errors and top-level expressions resolved
-//  ✅ FIXED: Proper SwiftUI view structure
+//  ✅ FIXED: All syntax errors and top-level expressions resolved
+//  ✅ PROPER: SwiftUI view structure with all code inside appropriate boundaries
 //  ✅ ENHANCED: Complete functionality without breaking changes
 //
 
@@ -189,6 +189,27 @@ struct IntelligenceInsightsView: View {
 
 // MARK: - Supporting Views
 
+struct InsightCard: View {
+    let insight: CoreTypes.IntelligenceInsight
+    let onTap: () -> Void
+    let onAction: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(insight.title)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.leading)
+                        
+                        Text(insight.description)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(3)
+                    }
                     
                     Spacer()
                     
@@ -206,6 +227,7 @@ struct IntelligenceInsightsView: View {
                             .background(insight.priority.color)
                             .cornerRadius(6)
                     }
+                }
                 
                 if insight.actionRequired {
                     Button(action: onAction) {
@@ -225,9 +247,13 @@ struct IntelligenceInsightsView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
+            }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        }
         .buttonStyle(PlainButtonStyle())
+    }
+}
 
 struct InsightDetailSheet: View {
     let insight: CoreTypes.IntelligenceInsight
@@ -282,7 +308,7 @@ struct InsightDetailSheet: View {
 
 // MARK: - Filter Types
 
-enum InsightFilterType: CaseIterable {
+enum InsightFilterType: CaseIterable, Hashable {
     case all
     case priority
     case actionable
@@ -343,6 +369,35 @@ enum InsightFilterType: CaseIterable {
         case .priority: return "No high priority insights require immediate attention."
         case .actionable: return "No insights currently require action."
         case .type(let type): return "No \(type.rawValue.lowercased()) insights are available at this time."
+        }
+    }
+}
+
+// MARK: - Hashable Conformance for InsightFilterType
+
+extension InsightFilterType {
+    func hash(into hasher: inout Hasher) {
+        switch self {
+        case .all:
+            hasher.combine("all")
+        case .priority:
+            hasher.combine("priority")
+        case .actionable:
+            hasher.combine("actionable")
+        case .type(let type):
+            hasher.combine("type")
+            hasher.combine(type)
+        }
+    }
+    
+    static func == (lhs: InsightFilterType, rhs: InsightFilterType) -> Bool {
+        switch (lhs, rhs) {
+        case (.all, .all), (.priority, .priority), (.actionable, .actionable):
+            return true
+        case (.type(let lhsType), .type(let rhsType)):
+            return lhsType == rhsType
+        default:
+            return false
         }
     }
 }

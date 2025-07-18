@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		2304D38B2E29E7C300EE16E7 /* NovaAIContextManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */; };
-		2304D3912E29F6DA00EE16E7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2304D3902E29F6DA00EE16E7 /* GRDB */; };
 		2304D3952E2A082D00EE16E7 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2304D3942E2A082D00EE16E7 /* WorkerContextEngineAdapter.swift */; };
+		2304D5B52E2AB08600EE16E7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2304D5B42E2AB08600EE16E7 /* GRDB */; };
 		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
 		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
 		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
@@ -26,7 +26,6 @@
 		2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */; };
 		23148E6E2E285F7300446441 /* WorkerContextEngine+DataFlow.swift in Resources */ = {isa = PBXBuildFile; fileRef = 23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */; };
 		23148E742E286AA200446441 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23148E732E286AA200446441 /* UnifiedDataService.swift */; };
-		2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */; };
 		2317FED42E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */; };
 		233F94D42DF7A71E00901707 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */; };
 		233F94D62DF7AFEE00901707 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F94D52DF7AFEE00901707 /* NovaAvatar.swift */; };
@@ -168,7 +167,6 @@
 		23EA1E9F2E27EC4F009FFF54 /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */; };
 		23EA1ED92E2809D3009FFF54 /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */; };
 		23EA1F2C2E285103009FFF54 /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1F2B2E285103009FFF54 /* NovaInteractionView.swift */; };
-		23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */; };
 		23EA1F302E285E87009FFF54 /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA1F2F2E285E87009FFF54 /* GlassMorphismStyles.swift */; };
 		23EE824D2E1C334500C298C7 /* ClientDashboardTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */; };
 		23EE824F2E1C34FA00C298C7 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */; };
@@ -216,7 +214,6 @@
 		2312FCC12E1C07FA00B64496 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerContextEngine+DataFlow.swift"; sourceTree = "<group>"; };
 		23148E732E286AA200446441 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
-		2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldDataSeeder.swift; sourceTree = "<group>"; };
 		2317FED32E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OperationalDataManager+DatabaseIntegration.swift"; sourceTree = "<group>"; };
 		233F94D32DF7A71E00901707 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		233F94D52DF7AFEE00901707 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
@@ -363,7 +360,6 @@
 		23EA1E9E2E27EC4F009FFF54 /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
 		23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
 		23EA1F2B2E285103009FFF54 /* NovaInteractionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaInteractionView.swift; sourceTree = "<group>"; };
-		23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataInitializer.swift; sourceTree = "<group>"; };
 		23EA1F2F2E285E87009FFF54 /* GlassMorphismStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassMorphismStyles.swift; sourceTree = "<group>"; };
 		23EE824C2E1C334500C298C7 /* ClientDashboardTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTemplate.swift; sourceTree = "<group>"; };
 		23EE824E2E1C34ED00C298C7 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
@@ -398,7 +394,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2304D3912E29F6DA00EE16E7 /* GRDB in Frameworks */,
+				2304D5B52E2AB08600EE16E7 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -710,8 +706,6 @@
 		2345810D2DF78E3D00355F0A /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				2317FD582E2952ED0013D5A7 /* RealWorldDataSeeder.swift */,
-				23EA1F2D2E285E4A009FFF54 /* UnifiedDataInitializer.swift */,
 				23EA1E7B2E275E9F009FFF54 /* DashboardSyncService.swift */,
 				23DED85A2E1E24F100E5F9F5 /* IntelligenceService.swift */,
 				2374938F2E1D7E9C00D9C70D /* BuildingMetricsService.swift */,
@@ -879,7 +873,7 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				2304D3902E29F6DA00EE16E7 /* GRDB */,
+				2304D5B42E2AB08600EE16E7 /* GRDB */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -958,7 +952,7 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2304D38F2E29F6DA00EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */,
+				2304D5B32E2AB08600EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1141,7 +1135,6 @@
 				2345818D2DF78E3D00355F0A /* ImagePicker.swift in Sources */,
 				2345818E2DF78E3D00355F0A /* WeatherTasksSection.swift in Sources */,
 				236106F32E17AF4500463A59 /* QuickBooksPayrollExporter.swift in Sources */,
-				2317FD592E2952ED0013D5A7 /* RealWorldDataSeeder.swift in Sources */,
 				2345818F2DF78E3D00355F0A /* LocationManager.swift in Sources */,
 				236106EF2E17AD4300463A59 /* QuickBooksOAuthManager.swift in Sources */,
 				234581902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift in Sources */,
@@ -1189,7 +1182,6 @@
 				239956082E11079F00B3F105 /* AIScenarioSheetView.swift in Sources */,
 				234581B02DF78E3D00355F0A /* AIAvatarOverlayView.swift in Sources */,
 				23EA1E7C2E275E9F009FFF54 /* DashboardSyncService.swift in Sources */,
-				23EA1F2E2E285E4A009FFF54 /* UnifiedDataInitializer.swift in Sources */,
 				234581B22DF78E3D00355F0A /* FrancoSphereColors.swift in Sources */,
 				234581B32DF78E3D00355F0A /* SignUpView.swift in Sources */,
 				234581B42DF78E3D00355F0A /* BuildingDetailView.swift in Sources */,
@@ -1521,7 +1513,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2304D38F2E29F6DA00EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */ = {
+		2304D5B32E2AB08600EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -1532,9 +1524,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2304D3902E29F6DA00EE16E7 /* GRDB */ = {
+		2304D5B42E2AB08600EE16E7 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2304D38F2E29F6DA00EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */;
+			package = 2304D5B32E2AB08600EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */

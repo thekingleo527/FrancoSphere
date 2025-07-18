@@ -136,7 +136,7 @@ public final class GRDBManager {
         print("✅ GRDB Tables created successfully")
     }
     
-    // MARK: - Public API (Compatible with existing SQLiteManager calls)
+    // MARK: - Public API (Compatible with existing GRDBManager calls)
     
     public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
         return try await dbPool.read { db in

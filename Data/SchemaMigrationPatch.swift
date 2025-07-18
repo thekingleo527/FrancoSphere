@@ -547,7 +547,7 @@ enum MigrationError: LocalizedError {
  - ✅ Building assignments: All worker-building relationships preserved
  
  🔧 GRDB IMPLEMENTATION:
- - ✅ Replaced SQLiteManager with GRDBManager throughout
+ - ✅ Replaced GRDBManager with GRDBManager throughout
  - ✅ Updated all query/execute methods to GRDB format
  - ✅ Enhanced error handling with GRDB-specific errors
  - ✅ Proper async/await patterns with GRDB

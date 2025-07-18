@@ -2,7 +2,7 @@
 //  RoutinePriority.swift
 //  FrancoSphere v6.0
 //
-//  ✅ GRDB MIGRATION: Updated from SQLiteManager to GRDBManager
+//  ✅ GRDB MIGRATION: Updated from GRDBManager to GRDBManager
 //  ✅ PRESERVED: All real-world building routine data
 //  ✅ ASYNC/AWAIT: Modern concurrency patterns
 //  ✅ KEVIN'S DATA: All sample routines for 6+ buildings preserved
@@ -155,7 +155,7 @@ final class RoutineRepository: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
     
-    // FIXED: Changed from SQLiteManager to GRDBManager
+    // FIXED: Changed from GRDBManager to GRDBManager
     private let grdbManager = GRDBManager.shared
     private var lastRefresh: Date = Date.distantPast
     private let refreshInterval: TimeInterval = 300 // 5 minutes
@@ -431,7 +431,7 @@ final class RoutineRepository: ObservableObject {
  ✅ COMPLETE GRDB MIGRATION:
  
  🔧 FIXED DATABASE MANAGER:
- - ✅ Changed SQLiteManager.shared → GRDBManager.shared
+ - ✅ Changed GRDBManager.shared → GRDBManager.shared
  - ✅ Changed executeAsync() → execute()
  - ✅ Changed queryAsync() → query()
  - ✅ Removed parameters: labels (GRDBManager handles this automatically)

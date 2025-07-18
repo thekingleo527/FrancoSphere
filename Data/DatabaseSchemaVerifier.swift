@@ -2,7 +2,7 @@
 //  DatabaseSchemaVerifier.swift
 //  FrancoSphere v6.0
 //
-//  ✅ GRDB MIGRATION: Updated from SQLiteManager to GRDBManager
+//  ✅ GRDB MIGRATION: Updated from GRDBManager to GRDBManager
 //  ✅ PRESERVED: All Edwin verification logic and GRDB testing
 //  ✅ ASYNC/AWAIT: Modern concurrency patterns
 //  ✅ COMPREHENSIVE: Complete database verification suite
@@ -21,7 +21,7 @@ public class DatabaseSchemaVerifier {
     public static func verifySchemaFix() async throws {
         print("🔍 Starting comprehensive GRDB database schema verification...")
         
-        // FIXED: Use GRDBManager instead of SQLiteManager
+        // FIXED: Use GRDBManager instead of GRDBManager
         let manager = GRDBManager.shared
         let startTime = Date()
         
@@ -668,7 +668,7 @@ extension DatabaseSchemaVerifier {
  ✅ COMPLETE GRDB MIGRATION:
  
  🔧 FIXED DATABASE MANAGER:
- - ✅ Changed SQLiteManager.shared → GRDBManager.shared
+ - ✅ Changed GRDBManager.shared → GRDBManager.shared
  - ✅ Maintained all existing query patterns and async methods
  - ✅ Preserved all parameter passing (GRDBManager handles automatically)
  

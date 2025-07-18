@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: Circular reference resolved
-//  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of SQLiteManager
+//  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of GRDBManager
 //  ✅ REAL DATA: Connects to actual database with preserved building data
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency patterns
 //

@@ -2,7 +2,7 @@
 //  WorkerAssignmentEngine.swift
 //  FrancoSphere v6.0
 //
-//  ✅ GRDB MIGRATION: Complete migration from SQLiteManager to GRDBManager
+//  ✅ GRDB MIGRATION: Complete migration from GRDBManager to GRDBManager
 //  ✅ PRESERVED: All worker assignment logic and functionality
 //  ✅ ENHANCED: Supports three-dashboard worker assignment workflows
 //  ✅ FIXED: All compilation errors resolved
@@ -34,7 +34,7 @@ public struct BuildingWorkerAssignment: Codable, Identifiable {
 actor WorkerAssignmentEngine {
     static let shared = WorkerAssignmentEngine()
     
-    // FIXED: Changed from SQLiteManager to GRDBManager
+    // FIXED: Changed from GRDBManager to GRDBManager
     private let grdbManager = GRDBManager.shared
 
     private init() {}
@@ -271,7 +271,7 @@ enum WorkerAssignmentError: LocalizedError {
  ✅ COMPLETE GRDB MIGRATION:
  
  🔧 FIXED DATABASE MANAGER:
- - ✅ Changed SQLiteManager.shared → GRDBManager.shared
+ - ✅ Changed GRDBManager.shared → GRDBManager.shared
  - ✅ Changed executeAsync() → execute()
  - ✅ Changed queryAsync() → query()
  - ✅ Removed parameters: labels (GRDBManager handles this automatically)

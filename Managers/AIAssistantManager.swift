@@ -1,15 +1,10 @@
-import CoreTypes
-import Foundation
-// Import Nova Types
-// All Nova types (NovaContext, NovaPrompt, etc.) come from NovaTypes.swift
-
 //
 //  AIAssistantManager.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Updated to match actual simple model definitions
-//  ✅ All constructors corrected to use simple parameters
-//  ✅ Properties updated to match actual model structure
+//  ✅ FIXED: Removed incorrect CoreTypes module import
+//  ✅ FIXED: Updated to use proper type references from CoreTypes.swift
+//  ✅ ALIGNED: With actual project structure and type definitions
 //
 
 import Foundation
@@ -72,47 +67,47 @@ class AIAssistantManager: ObservableObject {
         switch scenarioType {
         case "routineIncomplete":
             return [
-                AISuggestion(suggestion: "review"),
-                AISuggestion(suggestion: "update")
+                CoreTypes.AISuggestion(suggestion: "review"),
+                CoreTypes.AISuggestion(suggestion: "update")
             ]
         case "taskCompletion":
             return [
-                AISuggestion(suggestion: "complete"),
-                AISuggestion(suggestion: "notes")
+                CoreTypes.AISuggestion(suggestion: "complete"),
+                CoreTypes.AISuggestion(suggestion: "notes")
             ]
         case "pendingTasks":
             return [
-                AISuggestion(suggestion: "prioritize"),
-                AISuggestion(suggestion: "reschedule")
+                CoreTypes.AISuggestion(suggestion: "prioritize"),
+                CoreTypes.AISuggestion(suggestion: "reschedule")
             ]
         case "buildingArrival":
             return [
-                AISuggestion(suggestion: "checkin"),
-                AISuggestion(suggestion: "schedule")
+                CoreTypes.AISuggestion(suggestion: "checkin"),
+                CoreTypes.AISuggestion(suggestion: "schedule")
             ]
         case "weatherAlert":
             return [
-                AISuggestion(suggestion: "weather"),
-                AISuggestion(suggestion: "adjust")
+                CoreTypes.AISuggestion(suggestion: "weather"),
+                CoreTypes.AISuggestion(suggestion: "adjust")
             ]
         case "maintenanceRequired":
             return [
-                AISuggestion(suggestion: "schedule"),
-                AISuggestion(suggestion: "order")
+                CoreTypes.AISuggestion(suggestion: "schedule"),
+                CoreTypes.AISuggestion(suggestion: "order")
             ]
         case "scheduleConflict":
             return [
-                AISuggestion(suggestion: "resolve"),
-                AISuggestion(suggestion: "notify")
+                CoreTypes.AISuggestion(suggestion: "resolve"),
+                CoreTypes.AISuggestion(suggestion: "notify")
             ]
         case "emergencyResponse":
             return [
-                AISuggestion(suggestion: "emergency"),
-                AISuggestion(suggestion: "contact")
+                CoreTypes.AISuggestion(suggestion: "emergency"),
+                CoreTypes.AISuggestion(suggestion: "contact")
             ]
         default:
             return [
-                AISuggestion(suggestion: "general")
+                CoreTypes.AISuggestion(suggestion: "general")
             ]
         }
     }
@@ -143,22 +138,22 @@ class AIAssistantManager: ObservableObject {
         switch context.lowercased() {
         case let ctx where ctx.contains("weather"):
             return [
-                AISuggestion(suggestion: "weather"),
-                AISuggestion(suggestion: "reschedule")
+                CoreTypes.AISuggestion(suggestion: "weather"),
+                CoreTypes.AISuggestion(suggestion: "reschedule")
             ]
         case let ctx where ctx.contains("maintenance"):
             return [
-                AISuggestion(suggestion: "review"),
-                AISuggestion(suggestion: "check")
+                CoreTypes.AISuggestion(suggestion: "review"),
+                CoreTypes.AISuggestion(suggestion: "check")
             ]
         case let ctx where ctx.contains("task"):
             return [
-                AISuggestion(suggestion: "update"),
-                AISuggestion(suggestion: "complete")
+                CoreTypes.AISuggestion(suggestion: "update"),
+                CoreTypes.AISuggestion(suggestion: "complete")
             ]
         default:
             return [
-                AISuggestion(suggestion: "review")
+                CoreTypes.AISuggestion(suggestion: "review")
             ]
         }
     }

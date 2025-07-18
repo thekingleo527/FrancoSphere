@@ -2,7 +2,7 @@
 //  TaskService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of SQLiteManager
+//  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of GRDBManager
 //  ✅ REAL DATA: Connects to actual database with preserved task data
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency patterns
 //
