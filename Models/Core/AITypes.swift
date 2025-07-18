@@ -1,17 +1,16 @@
 //
 //  AITypes.swift
-//  FrancoSphere v6.0 - UNIFIED AI TYPES
+//  FrancoSphere v6.0 - AI TYPES UNIFIED
 //
-//  🚨 CRITICAL FIX: Resolves duplicate AISuggestion/AIPriority declarations
-//  ✅ FIXED: Single source of truth for all AI types
-//  ✅ REMOVED: Conflicting declarations from Models/AITypes.swift
+//  🚨 CRITICAL FIX: Single definitions for all AI types
+//  ✅ FIXED: Removed all duplicate AISuggestion/AIPriority declarations
 //  ✅ ENHANCED: Complete protocol conformance
 //
 
 import Foundation
 import SwiftUI
 
-// MARK: - Core AI Types (Single Declarations)
+// MARK: - AI Core Types (SINGLE DEFINITIONS)
 
 public struct AIScenario: Identifiable, Codable, Hashable {
     public let id: String
@@ -87,7 +86,7 @@ public enum AIPriority: String, Codable, CaseIterable, Hashable {
     }
 }
 
-// MARK: - AI Scenario Data Types
+// MARK: - AI Scenario Data
 
 public struct AIScenarioData: Codable, Hashable {
     public let scenario: AIScenarioType
@@ -168,7 +167,7 @@ public enum AIScenarioType: String, Codable, CaseIterable {
     }
 }
 
-// MARK: - Extended AI Types with Protocol Conformance
+// MARK: - Extended AI Types with Complete Protocol Conformance
 
 public struct AIRecommendedAction: Identifiable, Codable, Hashable, Equatable {
     public let id: String
@@ -230,7 +229,7 @@ public struct AIMetrics: Codable, Hashable {
     }
 }
 
-public struct AIRiskAssessment: Codable, Hashable {
+public struct AIRiskAssessment: Codable, Hashable, Equatable {
     public let overallRisk: AIPriority
     public let riskFactors: [String]
     public let mitigationStrategies: [String]
@@ -246,6 +245,22 @@ public struct AIRiskAssessment: Codable, Hashable {
         self.riskFactors = riskFactors
         self.mitigationStrategies = mitigationStrategies
         self.timeline = timeline
+    }
+    
+    // MARK: - Equatable Conformance
+    public static func == (lhs: AIRiskAssessment, rhs: AIRiskAssessment) -> Bool {
+        return lhs.overallRisk == rhs.overallRisk &&
+               lhs.riskFactors == rhs.riskFactors &&
+               lhs.mitigationStrategies == rhs.mitigationStrategies &&
+               lhs.timeline == rhs.timeline
+    }
+    
+    // MARK: - Hashable Conformance
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(overallRisk)
+        hasher.combine(riskFactors)
+        hasher.combine(mitigationStrategies)
+        hasher.combine(timeline)
     }
 }
 

@@ -1,11 +1,10 @@
 //
 //  FrancoSphereModels.swift
-//  FrancoSphere v6.0
+//  FrancoSphere v6.0 - PROTOCOL CONFORMANCE FIXED
 //
-//  ✅ FIXED: WeatherCondition.icon property access
-//  ✅ CLEANED: Removed duplicate type definitions
-//  ✅ IMPORTS: All types from CoreTypes.swift
-//  ✅ FOCUSED: Only unique models, no conflicts
+//  🚨 CRITICAL FIX: Complete protocol conformance for all types
+//  ✅ FIXED: All Codable, Hashable, Equatable implementations
+//  ✅ ALIGNED: Uses unified type definitions from CoreTypes
 //
 
 import Foundation
@@ -20,7 +19,7 @@ public struct NamedCoordinate: Identifiable, Codable, Hashable, Equatable {
     public let address: String?
     public let latitude: Double
     public let longitude: Double
-    public let imageAssetName: String?  // ✅ ADDED: Missing property
+    public let imageAssetName: String?
     
     public init(id: String = UUID().uuidString, name: String, address: String? = nil, latitude: Double, longitude: Double, imageAssetName: String? = nil) {
         self.id = id
@@ -33,6 +32,16 @@ public struct NamedCoordinate: Identifiable, Codable, Hashable, Equatable {
     
     public var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+    
+    // MARK: - Equatable Conformance
+    public static func == (lhs: NamedCoordinate, rhs: NamedCoordinate) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    // MARK: - Hashable Conformance
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
@@ -71,9 +80,9 @@ public struct WorkerProfile: Identifiable, Codable, Hashable {
     }
 }
 
-// MARK: - Task Models
+// MARK: - Task Models with Complete Protocol Conformance
 
-public struct ContextualTask: Identifiable, Codable, Hashable {
+public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public let id: String
     public let title: String
     public let description: String?
@@ -86,7 +95,7 @@ public struct ContextualTask: Identifiable, Codable, Hashable {
     public let building: NamedCoordinate?
     public let worker: WorkerProfile?
     
-    // ✅ ADDED: Missing properties for NotificationManager
+    // Additional properties for compatibility
     public let buildingId: String?
     public let buildingName: String?
     public let priority: TaskUrgency?
@@ -97,7 +106,22 @@ public struct ContextualTask: Identifiable, Codable, Hashable {
         return !isCompleted && dueDate < Date()
     }
     
-    public init(id: String = UUID().uuidString, title: String, description: String? = nil, isCompleted: Bool = false, completedDate: Date? = nil, scheduledDate: Date? = nil, dueDate: Date? = nil, category: TaskCategory? = nil, urgency: TaskUrgency? = nil, building: NamedCoordinate? = nil, worker: WorkerProfile? = nil, buildingId: String? = nil, buildingName: String? = nil, priority: TaskUrgency? = nil) {
+    public init(
+        id: String = UUID().uuidString,
+        title: String,
+        description: String? = nil,
+        isCompleted: Bool = false,
+        completedDate: Date? = nil,
+        scheduledDate: Date? = nil,
+        dueDate: Date? = nil,
+        category: TaskCategory? = nil,
+        urgency: TaskUrgency? = nil,
+        building: NamedCoordinate? = nil,
+        worker: WorkerProfile? = nil,
+        buildingId: String? = nil,
+        buildingName: String? = nil,
+        priority: TaskUrgency? = nil
+    ) {
         self.id = id
         self.title = title
         self.description = description
@@ -113,6 +137,16 @@ public struct ContextualTask: Identifiable, Codable, Hashable {
         self.buildingName = buildingName ?? building?.name
         self.priority = priority ?? urgency
     }
+    
+    // MARK: - Equatable Conformance
+    public static func == (lhs: ContextualTask, rhs: ContextualTask) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    // MARK: - Hashable Conformance
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 // MARK: - Weather Models
@@ -123,8 +157,6 @@ public struct WeatherData: Codable {
     public let windSpeed: Double
     public let conditions: String
     public let timestamp: Date
-    
-    // ✅ ADDED: Missing properties for weather components
     public let precipitation: Double
     public let condition: WeatherCondition
     
@@ -142,62 +174,11 @@ public struct WeatherData: Codable {
 // MARK: - WeatherData Extensions
 
 extension WeatherData {
-    /// Formatted temperature string
     public var formattedTemperature: String {
         return "\(Int(temperature.rounded()))°F"
     }
     
-    /// Icon name based on weather condition
     public var iconName: String {
-        return getWeatherIcon(for: condition)
+        return condition.icon
     }
 }
-
-// MARK: - WeatherCondition Extension with Icon Support
-
-extension WeatherCondition {
-    /// Icon name for each weather condition
-    public var icon: String {
-        return getWeatherIcon(for: self)
-    }
-}
-
-// ✅ FIXED: Helper function to get weather icons (avoiding extension conflicts)
-private func getWeatherIcon(for condition: WeatherCondition) -> String {
-    switch condition {
-    case .clear: return "sun.max"
-    case .sunny: return "sun.max.fill"
-    case .cloudy: return "cloud"
-    case .rainy: return "cloud.rain"
-    case .snowy: return "cloud.snow"
-    case .stormy: return "cloud.bolt"
-    case .foggy: return "cloud.fog"
-    case .windy: return "wind"
-    case .partlyCloudy: return "cloud.sun"
-    case .overcast: return "cloud.fill"
-    }
-}
-
-extension TaskCategory {
-    /// Icon name for each task category
-    public var icon: String {
-        switch self {
-        case .maintenance: return "wrench.and.screwdriver"
-        case .cleaning: return "sparkles"
-        case .inspection: return "magnifyingglass"
-        case .repair: return "hammer"
-        case .security: return "lock.shield"
-        case .landscaping: return "leaf"
-        case .utilities: return "bolt"
-        case .emergency: return "exclamationmark.triangle.fill"
-        case .renovation: return "building.2"
-        case .installation: return "plus.square"
-        case .sanitation: return "trash"
-        }
-    }
-}
-
-// MARK: - Type Aliases (Use existing CoreTypes)
-
-// Import core enums and types from CoreTypes.swift
-// Note: TaskCategory, TaskUrgency, WeatherCondition use the existing CoreTypes definitions
