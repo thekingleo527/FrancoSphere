@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2304D38B2E29E7C300EE16E7 /* NovaAIContextManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */; };
-		2304D38E2E29F12900EE16E7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2304D38D2E29F12900EE16E7 /* GRDB */; };
+		2304D3912E29F6DA00EE16E7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2304D3902E29F6DA00EE16E7 /* GRDB */; };
 		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
 		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
 		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
@@ -399,7 +399,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2304D38E2E29F12900EE16E7 /* GRDB in Frameworks */,
+				2304D3912E29F6DA00EE16E7 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -881,7 +881,7 @@
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
-				2304D38D2E29F12900EE16E7 /* GRDB */,
+				2304D3902E29F6DA00EE16E7 /* GRDB */,
 			);
 			productName = FrancoSphere;
 			productReference = 23423DB72D739D6800AACE3E /* FrancoSphere.app */;
@@ -960,7 +960,7 @@
 			mainGroup = 23423DAE2D739D6800AACE3E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2304D38C2E29F12900EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */,
+				2304D38F2E29F6DA00EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 23423DB82D739D6800AACE3E /* Products */;
@@ -1523,7 +1523,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2304D38C2E29F12900EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */ = {
+		2304D38F2E29F6DA00EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -1534,9 +1534,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2304D38D2E29F12900EE16E7 /* GRDB */ = {
+		2304D3902E29F6DA00EE16E7 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2304D38C2E29F12900EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */;
+			package = 2304D38F2E29F6DA00EE16E7 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */
