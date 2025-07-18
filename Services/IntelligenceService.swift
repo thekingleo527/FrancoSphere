@@ -4,7 +4,7 @@
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ ENHANCED: Uses correct TaskService methods and CoreTypes
-//  ✅ FIXED: Proper PortfolioIntelligence constructor with criticalIssues and monthlyTrend
+//  ✅ FIXED: Proper CoreTypes.PortfolioIntelligence constructor with criticalIssues and monthlyTrend
 //  ✅ FALLBACK: Uses OperationalDataManager public methods when database is empty
 //  ✅ COMPREHENSIVE: Generates insights from any available data source
 //
@@ -106,7 +106,7 @@ actor IntelligenceService {
     }
     
     /// Generate portfolio intelligence summary
-    func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligence() async throws -> CoreTypes.CoreTypes.PortfolioIntelligence {
         print("📈 Generating portfolio intelligence summary...")
         
         do {
@@ -147,8 +147,8 @@ actor IntelligenceService {
                 }
             }()
             
-            // ✅ FIXED: Use correct PortfolioIntelligence constructor
-            return CoreTypes.PortfolioIntelligence(
+            // ✅ FIXED: Use correct CoreTypes.PortfolioIntelligence constructor
+            return CoreTypes.CoreTypes.PortfolioIntelligence(
                 totalBuildings: buildings.count,
                 activeWorkers: activeWorkers.count,
                 completionRate: totalCompletionRate,
@@ -163,7 +163,7 @@ actor IntelligenceService {
             print("❌ Error generating portfolio intelligence: \(error)")
             
             // Return fallback intelligence from OperationalDataManager
-            return await generatePortfolioIntelligenceFromOperationalData()
+            return await generateCoreTypes.PortfolioIntelligenceFromOperationalData()
         }
     }
     
@@ -537,12 +537,12 @@ actor IntelligenceService {
     }
     
     /// Generate portfolio intelligence from OperationalDataManager
-    private func generatePortfolioIntelligenceFromOperationalData() async -> CoreTypes.PortfolioIntelligence {
+    private func generateCoreTypes.PortfolioIntelligenceFromOperationalData() async -> CoreTypes.CoreTypes.PortfolioIntelligence {
         let operationalData = OperationalDataManager.shared
         let workerTaskCounts = await operationalData.getWorkerTaskSummary()
         let buildingCoverage = await operationalData.getBuildingCoverage()
         
-        return CoreTypes.PortfolioIntelligence(
+        return CoreTypes.CoreTypes.PortfolioIntelligence(
             totalBuildings: buildingCoverage.keys.count,
             activeWorkers: workerTaskCounts.keys.count,
             completionRate: 0.85, // Estimated

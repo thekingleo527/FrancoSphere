@@ -1,3 +1,4 @@
+import CoreTypes
 //
 //  WeatherAlert.swift
 //  FrancoSphere
@@ -16,7 +17,7 @@ import CoreLocation
 /// Weather data structure for task generation and alerts
 public struct FSWeatherData {
     public let temperature: Double
-    public let condition: FrancoSphere.WeatherCondition
+    public let condition: FrancoSphere.CoreTypes.WeatherCondition
     public let precipitation: Double
     public let windSpeed: Double
     public let humidity: Double
@@ -24,7 +25,7 @@ public struct FSWeatherData {
     public let temperatureHigh: Double
     public let temperatureLow: Double
     
-    public init(temperature: Double, condition: FrancoSphere.WeatherCondition, precipitation: Double, windSpeed: Double, humidity: Double, date: Date, temperatureHigh: Double, temperatureLow: Double) {
+    public init(temperature: Double, condition: FrancoSphere.CoreTypes.WeatherCondition, precipitation: Double, windSpeed: Double, humidity: Double, date: Date, temperatureHigh: Double, temperatureLow: Double) {
         self.temperature = temperature
         self.condition = condition
         self.precipitation = precipitation

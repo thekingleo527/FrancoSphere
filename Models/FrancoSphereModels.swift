@@ -182,3 +182,32 @@ extension WeatherData {
         return condition.icon
     }
 }
+
+// MARK: - WeatherData Codable Conformance (Added by Fix Script)
+extension WeatherData: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        temperature = try container.decode(Double.self, forKey: .temperature)
+        humidity = try container.decode(Double.self, forKey: .humidity)
+        windSpeed = try container.decode(Double.self, forKey: .windSpeed)
+        conditions = try container.decode(String.self, forKey: .conditions)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        precipitation = try container.decodeIfPresent(Double.self, forKey: .precipitation) ?? 0.0
+        condition = try container.decodeIfPresent(CoreTypes.WeatherCondition.self, forKey: .condition) ?? .clear
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(temperature, forKey: .temperature)
+        try container.encode(humidity, forKey: .humidity)
+        try container.encode(windSpeed, forKey: .windSpeed)
+        try container.encode(conditions, forKey: .conditions)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(precipitation, forKey: .precipitation)
+        try container.encode(condition, forKey: .condition)
+    }
+    
+    private enum CodingKeys: CodingKey {
+        case temperature, humidity, windSpeed, conditions, timestamp, precipitation, condition
+    }
+}

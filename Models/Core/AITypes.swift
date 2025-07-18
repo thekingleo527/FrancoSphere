@@ -30,61 +30,7 @@ public struct AIScenario: Identifiable, Codable, Hashable {
     }
 }
 
-public struct AISuggestion: Identifiable, Codable, Hashable {
-    public let id: String
-    public let suggestion: String
-    public let createdAt: Date
-    
-    public init(suggestion: String) {
-        self.id = UUID().uuidString
-        self.suggestion = suggestion
-        self.createdAt = Date()
-    }
-    
-    public init(id: String, suggestion: String, createdAt: Date) {
-        self.id = id
-        self.suggestion = suggestion
-        self.createdAt = createdAt
-    }
-}
 
-public enum AIPriority: String, Codable, CaseIterable, Hashable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case urgent = "Urgent"
-    case critical = "Critical"
-    
-    public var numericValue: Int {
-        switch self {
-        case .critical: return 5
-        case .urgent: return 4
-        case .high: return 3
-        case .medium: return 2
-        case .low: return 1
-        }
-    }
-    
-    public var color: Color {
-        switch self {
-        case .critical: return .purple
-        case .urgent: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-    
-    public var systemImageName: String {
-        switch self {
-        case .critical: return "exclamationmark.triangle.fill"
-        case .urgent: return "exclamationmark.circle.fill"
-        case .high: return "exclamationmark.circle"
-        case .medium: return "info.circle"
-        case .low: return "info.circle"
-        }
-    }
-}
 
 // MARK: - AI Scenario Data
 
@@ -156,7 +102,7 @@ public enum AIScenarioType: String, Codable, CaseIterable {
         }
     }
     
-    public var priority: AIPriority {
+    public var priority: CoreTypes.AIPriority {
         switch self {
         case .emergencyResponse: return .critical
         case .scheduleConflict, .clockOutReminder: return .high
@@ -173,7 +119,7 @@ public struct AIRecommendedAction: Identifiable, Codable, Hashable, Equatable {
     public let id: String
     public let title: String
     public let description: String
-    public let priority: AIPriority
+    public let priority: CoreTypes.AIPriority
     public let estimatedDuration: TimeInterval
     public let requiredSkills: [String]
     public let expectedOutcome: String
@@ -182,7 +128,7 @@ public struct AIRecommendedAction: Identifiable, Codable, Hashable, Equatable {
         id: String = UUID().uuidString,
         title: String,
         description: String,
-        priority: AIPriority,
+        priority: CoreTypes.AIPriority,
         estimatedDuration: TimeInterval,
         requiredSkills: [String] = [],
         expectedOutcome: String
@@ -230,13 +176,13 @@ public struct AIMetrics: Codable, Hashable {
 }
 
 public struct AIRiskAssessment: Codable, Hashable, Equatable {
-    public let overallRisk: AIPriority
+    public let overallRisk: CoreTypes.AIPriority
     public let riskFactors: [String]
     public let mitigationStrategies: [String]
     public let timeline: String
     
     public init(
-        overallRisk: AIPriority,
+        overallRisk: CoreTypes.AIPriority,
         riskFactors: [String],
         mitigationStrategies: [String],
         timeline: String

@@ -1,3 +1,4 @@
+import CoreTypes
 import Foundation
 import SwiftUI
 
@@ -6,7 +7,7 @@ import SwiftUI
 //  FrancoSphere
 //
 //  ✅ FIXED: Complete Client Dashboard compliance component
-//  ✅ CORRECTED: All property access issues with PortfolioIntelligence
+//  ✅ CORRECTED: All property access issues with CoreTypes.PortfolioIntelligence
 //  ✅ ALIGNED: With actual CoreTypes structure
 //  ✅ RESOLVED: All compilation errors
 //
@@ -52,7 +53,7 @@ public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
 // MARK: - ComplianceOverviewView
 
 struct ComplianceOverviewView: View {
-    let intelligence: PortfolioIntelligence?
+    let intelligence: CoreTypes.PortfolioIntelligence?
     let onIssuesTap: ((ComplianceIssue) -> Void)?
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
@@ -63,7 +64,7 @@ struct ComplianceOverviewView: View {
     @State private var showingExportOptions = false
     
     // FIXED: Proper initializer
-    init(intelligence: PortfolioIntelligence?,
+    init(intelligence: CoreTypes.PortfolioIntelligence?,
          onIssuesTap: ((ComplianceIssue) -> Void)? = nil,
          onScheduleAudit: (() -> Void)? = nil,
          onExportReport: (() -> Void)? = nil) {
@@ -133,7 +134,7 @@ struct ComplianceOverviewView: View {
         .background(.ultraThinMaterial)
     }
     
-    private func complianceScoreCard(for compliance: PortfolioIntelligence) -> some View {
+    private func complianceScoreCard(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -176,7 +177,7 @@ struct ComplianceOverviewView: View {
     }
     
     // FIXED: Separated progress bar to avoid complex expression
-    private func progressBarSection(for compliance: PortfolioIntelligence) -> some View {
+    private func progressBarSection(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("Compliant Buildings")
@@ -319,7 +320,7 @@ struct ComplianceOverviewView: View {
         }
     }
     
-    private func quickStatsSection(for compliance: PortfolioIntelligence) -> some View {
+    private func quickStatsSection(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Stats")
                 .font(.headline)
@@ -356,7 +357,7 @@ struct ComplianceOverviewView: View {
         }
     }
     
-    private func criticalIssuesSummary(for compliance: PortfolioIntelligence) -> some View {
+    private func criticalIssuesSummary(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Critical Issues")
@@ -394,7 +395,7 @@ struct ComplianceOverviewView: View {
         )
     }
     
-    private func auditTimelineSection(for compliance: PortfolioIntelligence) -> some View {
+    private func auditTimelineSection(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Audit Timeline")
                 .font(.headline)
@@ -531,7 +532,7 @@ struct ComplianceOverviewView: View {
         }
     }
     
-    private func upcomingAuditsSection(for compliance: PortfolioIntelligence) -> some View {
+    private func upcomingAuditsSection(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Upcoming Audits")
@@ -566,7 +567,7 @@ struct ComplianceOverviewView: View {
         }
     }
     
-    private func auditHistorySection(for compliance: PortfolioIntelligence) -> some View {
+    private func auditHistorySection(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Audit History")
                 .font(.headline)
@@ -672,13 +673,13 @@ struct ComplianceOverviewView: View {
     }
     
     // FIXED: Helper functions for missing data
-    private func calculateCompliantBuildings(_ intelligence: PortfolioIntelligence) -> Int {
+    private func calculateCompliantBuildings(_ intelligence: CoreTypes.PortfolioIntelligence) -> Int {
         // Estimate compliant buildings based on compliance score
         let percentage = Double(intelligence.complianceScore) / 100.0
         return Int(Double(intelligence.totalBuildings) * percentage)
     }
     
-    private func calculateCompliancePercentage(_ intelligence: PortfolioIntelligence) -> Double {
+    private func calculateCompliancePercentage(_ intelligence: CoreTypes.PortfolioIntelligence) -> Double {
         return Double(intelligence.complianceScore)
     }
     
@@ -1242,7 +1243,7 @@ enum ReportType: String, CaseIterable {
 
 struct ComplianceOverviewView_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleIntelligence = PortfolioIntelligence(
+        let sampleIntelligence = CoreTypes.PortfolioIntelligence(
             totalBuildings: 12,
             activeWorkers: 24,
             completionRate: 0.87,

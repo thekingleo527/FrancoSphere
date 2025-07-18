@@ -73,11 +73,11 @@ extension BuildingService {
         return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
-    // MARK: - Fixed generatePortfolioIntelligence Method
+    // MARK: - Fixed generateCoreTypes.PortfolioIntelligence Method
     // Replace the existing method in your BuildingService+Intelligence.swift
 
     /// Generate portfolio-wide intelligence using existing service methods
-    func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligence() async throws -> CoreTypes.CoreTypes.PortfolioIntelligence {
         
         // Use existing getAllBuildings() method
         let allBuildings = try await getAllBuildings()
@@ -117,7 +117,7 @@ extension BuildingService {
             }
         }()
         
-        return CoreTypes.PortfolioIntelligence(
+        return CoreTypes.CoreTypes.PortfolioIntelligence(
             totalBuildings: totalBuildings,
             activeWorkers: activeWorkers,
             completionRate: completionRate,
@@ -130,7 +130,7 @@ extension BuildingService {
     // If you prefer to call calculateMetrics for each building individually:
 
     /// Generate portfolio-wide intelligence using individual building calculations
-    func generatePortfolioIntelligenceIndividual() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligenceIndividual() async throws -> CoreTypes.CoreTypes.PortfolioIntelligence {
         
         // Use existing getAllBuildings() method
         let allBuildings = try await getAllBuildings()
@@ -177,7 +177,7 @@ extension BuildingService {
             }
         }()
         
-        return CoreTypes.PortfolioIntelligence(
+        return CoreTypes.CoreTypes.PortfolioIntelligence(
             totalBuildings: totalBuildings,
             activeWorkers: activeWorkers,
             completionRate: completionRate,
@@ -190,7 +190,7 @@ extension BuildingService {
     // If you want optimal performance with concurrent execution:
 
     /// Generate portfolio-wide intelligence using concurrent building calculations
-    func generatePortfolioIntelligenceConcurrent() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligenceConcurrent() async throws -> CoreTypes.CoreTypes.PortfolioIntelligence {
         
         // Use existing getAllBuildings() method
         let allBuildings = try await getAllBuildings()
@@ -246,7 +246,7 @@ extension BuildingService {
             }
         }()
         
-        return CoreTypes.PortfolioIntelligence(
+        return CoreTypes.CoreTypes.PortfolioIntelligence(
             totalBuildings: totalBuildings,
             activeWorkers: activeWorkers,
             completionRate: completionRate,

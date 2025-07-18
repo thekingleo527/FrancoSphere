@@ -1,3 +1,4 @@
+import CoreTypes
 //
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
@@ -33,14 +34,14 @@ class ClientDashboardViewModel: ObservableObject {
     private let taskService = TaskService.shared
     private let intelligenceService = IntelligenceService.shared
     
-    func loadPortfolioIntelligence() async {
+    func loadCoreTypes.PortfolioIntelligence() async {
         isLoading = true
         
         do {
             // Load portfolio data
             async let buildings = buildingService.getAllBuildings()
             async let tasks = taskService.getAllTasks()
-            async let intelligence = intelligenceService.generatePortfolioIntelligence()
+            async let intelligence = intelligenceService.generateCoreTypes.PortfolioIntelligence()
             
             let loadedBuildings = try await buildings
             let loadedTasks = try await tasks
@@ -64,7 +65,7 @@ class ClientDashboardViewModel: ObservableObject {
         isLoading = false
     }
     
-    private func calculatePortfolioMetrics(tasks: [ContextualTask], intelligence: PortfolioIntelligence) {
+    private func calculatePortfolioMetrics(tasks: [ContextualTask], intelligence: CoreTypes.PortfolioIntelligence) {
         // Task completion metrics
         let completedTasks = tasks.filter { $0.isCompleted }.count
         taskCompletionRate = tasks.count > 0 ? Double(completedTasks) / Double(tasks.count) : 0.0
@@ -117,7 +118,7 @@ class ClientDashboardViewModel: ObservableObject {
         ].prefix(activeIssues).map(String.init)
     }
     
-    private func generateInsights(from intelligence: PortfolioIntelligence) -> [String] {
+    private func generateInsights(from intelligence: CoreTypes.PortfolioIntelligence) -> [String] {
         var insights: [String] = []
         
         if portfolioEfficiency > 0.9 {

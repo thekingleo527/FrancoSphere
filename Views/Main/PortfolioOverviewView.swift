@@ -1,3 +1,4 @@
+import CoreTypes
 //
 //  PortfolioOverviewView.swift
 //  FrancoSphere
@@ -13,7 +14,7 @@
 import SwiftUI
 
 struct PortfolioOverviewView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence
     let onBuildingTap: ((NamedCoordinate) -> Void)?
     let onRefresh: (() async -> Void)?
     
@@ -21,7 +22,7 @@ struct PortfolioOverviewView: View {
     @State private var showingDetailView = false
     @State private var isRefreshing = false
     
-    init(intelligence: CoreTypes.PortfolioIntelligence,
+    init(intelligence: CoreTypes.CoreTypes.PortfolioIntelligence,
          onBuildingTap: ((NamedCoordinate) -> Void)? = nil,
          onRefresh: (() async -> Void)? = nil) {
         self.intelligence = intelligence
@@ -427,7 +428,7 @@ struct StatusRow: View {
 // MARK: - Metric Detail Views
 
 struct EfficiencyDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence
     
     var body: some View {
         VStack(spacing: 12) {
@@ -463,7 +464,7 @@ struct EfficiencyDetailView: View {
 }
 
 struct TasksDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence
     
     var body: some View {
         VStack(spacing: 12) {
@@ -509,7 +510,7 @@ struct TasksDetailView: View {
 }
 
 struct PerformanceDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence
     
     var body: some View {
         VStack(spacing: 12) {
@@ -538,7 +539,7 @@ struct PerformanceDetailView: View {
 }
 
 struct AlertsDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence
     
     var body: some View {
         VStack(spacing: 12) {
@@ -629,7 +630,7 @@ enum MetricType: String, CaseIterable {
 struct PortfolioOverviewView_Previews: PreviewProvider {
     static var previews: some View {
         PortfolioOverviewView(
-            intelligence: CoreTypes.PortfolioIntelligence(
+            intelligence: CoreTypes.CoreTypes.PortfolioIntelligence(
                 totalBuildings: 12,
                 activeWorkers: 24,
                 completionRate: 0.87,

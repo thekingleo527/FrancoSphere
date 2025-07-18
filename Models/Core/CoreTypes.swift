@@ -673,15 +673,2644 @@ public enum ComplianceTab: String, CaseIterable {
 }
 
 // MARK: - Type Aliases for Backward Compatibility
+// MARK: - Missing Types Added by Fix Script
 public typealias MaintenanceTask = CoreTypes.MaintenanceTask
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias TaskCategory = CoreTypes.TaskCategory
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias TaskUrgency = CoreTypes.TaskUrgency
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias TaskRecurrence = CoreTypes.TaskRecurrence
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias BuildingMetrics = CoreTypes.BuildingMetrics
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias TrendDirection = CoreTypes.TrendDirection
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias ComplianceStatus = CoreTypes.ComplianceStatus
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias VerificationStatus = CoreTypes.VerificationStatus
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias InventoryItem = CoreTypes.InventoryItem
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias InventoryCategory = CoreTypes.InventoryCategory
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias RestockStatus = CoreTypes.RestockStatus
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+// MARK: - Missing Types Added by Fix Script
 public typealias PerformanceMetrics = CoreTypes.PerformanceMetrics
+    
+    // MARK: - AI Types (MISSING - Added to fix compilation)
+    public struct AISuggestion: Identifiable, Codable, Hashable {
+        public let id: String
+        public let suggestion: String
+        public let confidence: Double
+        public let actionType: String
+        public let createdAt: Date
+        
+        public init(suggestion: String, confidence: Double = 0.8, actionType: String = "general") {
+            self.id = UUID().uuidString
+            self.suggestion = suggestion
+            self.confidence = confidence
+            self.actionType = actionType
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum AIPriority: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case urgent = "Urgent"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .critical: return .purple
+            case .urgent: return .red
+            case .high: return .orange
+            case .medium: return .yellow
+            case .low: return .green
+            }
+        }
+        
+        public var numericValue: Int {
+            switch self {
+            case .critical: return 5
+            case .urgent: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    public struct AIRecommendedAction: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let priority: AIPriority
+        public let estimatedDuration: TimeInterval
+        public let requiredSkills: [String]
+        public let expectedOutcome: String
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            priority: AIPriority,
+            estimatedDuration: TimeInterval,
+            requiredSkills: [String] = [],
+            expectedOutcome: String
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.priority = priority
+            self.estimatedDuration = estimatedDuration
+            self.requiredSkills = requiredSkills
+            self.expectedOutcome = expectedOutcome
+        }
+    }
+    
+    public struct AIRiskAssessment: Codable, Hashable {
+        public let overallRisk: AIPriority
+        public let riskFactors: [String]
+        public let mitigation: [String]
+        public let confidence: Double
+        
+        public init(
+            overallRisk: AIPriority,
+            riskFactors: [String] = [],
+            mitigation: [String] = [],
+            confidence: Double = 0.8
+        ) {
+            self.overallRisk = overallRisk
+            self.riskFactors = riskFactors
+            self.mitigation = mitigation
+            self.confidence = confidence
+        }
+    }
+    
+    // MARK: - Weather Types (MISSING)
+    public enum WeatherCondition: String, Codable, CaseIterable {
+        case clear = "Clear"
+        case sunny = "Sunny"
+        case cloudy = "Cloudy"
+        case rainy = "Rainy"
+        case snowy = "Snowy"
+        case stormy = "Stormy"
+        case foggy = "Foggy"
+        case windy = "Windy"
+        case partlyCloudy = "Partly Cloudy"
+        case overcast = "Overcast"
+        
+        public var icon: String {
+            switch self {
+            case .clear: return "sun.max"
+            case .sunny: return "sun.max.fill"
+            case .cloudy: return "cloud"
+            case .rainy: return "cloud.rain"
+            case .snowy: return "cloud.snow"
+            case .stormy: return "cloud.bolt"
+            case .foggy: return "cloud.fog"
+            case .windy: return "wind"
+            case .partlyCloudy: return "cloud.sun"
+            case .overcast: return "cloud.fill"
+            }
+        }
+    }
+    
+    // MARK: - Compliance Types (MISSING)
+    public struct ComplianceIssue: Identifiable, Codable, Hashable {
+        public let id: String
+        public let type: ComplianceIssueType
+        public let severity: ComplianceSeverity
+        public let description: String
+        public let buildingId: String
+        public let dueDate: Date?
+        public let createdAt: Date
+        
+        public init(
+            type: ComplianceIssueType,
+            severity: ComplianceSeverity,
+            description: String,
+            buildingId: String,
+            dueDate: Date? = nil
+        ) {
+            self.id = UUID().uuidString
+            self.type = type
+            self.severity = severity
+            self.description = description
+            self.buildingId = buildingId
+            self.dueDate = dueDate
+            self.createdAt = Date()
+        }
+    }
+    
+    public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
+        case maintenanceOverdue = "Maintenance Overdue"
+        case safetyViolation = "Safety Violation"
+        case documentationMissing = "Documentation Missing"
+        case inspectionRequired = "Inspection Required"
+        case certificateExpired = "Certificate Expired"
+        case permitRequired = "Permit Required"
+    }
+    
+    public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
+    
+    // MARK: - Worker Assignment Types (MISSING)
+    public struct WorkerAssignment: Identifiable, Codable, Hashable {
+        public let id: String
+        public let workerId: String
+        public let buildingId: String
+        public let startDate: Date
+        public let endDate: Date?
+        public let isPrimary: Bool
+        public let assignmentType: AssignmentType
+        
+        public init(
+            id: String = UUID().uuidString,
+            workerId: String,
+            buildingId: String,
+            startDate: Date = Date(),
+            endDate: Date? = nil,
+            isPrimary: Bool = false,
+            assignmentType: AssignmentType = .temporary
+        ) {
+            self.id = id
+            self.workerId = workerId
+            self.buildingId = buildingId
+            self.startDate = startDate
+            self.endDate = endDate
+            self.isPrimary = isPrimary
+            self.assignmentType = assignmentType
+        }
+    }
+    
+    public enum AssignmentType: String, Codable, CaseIterable {
+        case permanent = "Permanent"
+        case temporary = "Temporary"
+        case coverage = "Coverage"
+        case emergency = "Emergency"
+    }
+    
+    // MARK: - ComplianceTab (MISSING)
+    public enum ComplianceTab: String, CaseIterable, Hashable {
+        case overview = "Overview"
+        case issues = "Issues"
+        case audits = "Audits"
+        case reports = "Reports"
+    }
+
+// MARK: - Global Type Aliases (Added by Fix Script)
+public typealias AISuggestion = CoreTypes.AISuggestion
+public typealias AIPriority = CoreTypes.AIPriority
+public typealias AIRecommendedAction = CoreTypes.AIRecommendedAction
+public typealias AIRiskAssessment = CoreTypes.AIRiskAssessment
+public typealias WeatherCondition = CoreTypes.WeatherCondition
+public typealias ComplianceIssue = CoreTypes.ComplianceIssue
+public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
+public typealias ComplianceSeverity = CoreTypes.ComplianceSeverity
+public typealias WorkerAssignment = CoreTypes.WorkerAssignment
+public typealias AssignmentType = CoreTypes.AssignmentType
+public typealias ComplianceTab = CoreTypes.ComplianceTab

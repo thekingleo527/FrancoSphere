@@ -1,3 +1,4 @@
+import CoreTypes
 //
 //  ClientDashboardTemplate.swift
 //  FrancoSphere
@@ -56,7 +57,7 @@ struct ClientDashboardTemplate: View {
             }
         }
         .task {
-            await viewModel.loadPortfolioIntelligence()
+            await viewModel.loadCoreTypes.PortfolioIntelligence()
         }
     }
 }
@@ -64,7 +65,7 @@ struct ClientDashboardTemplate: View {
 // MARK: - Supporting Views (Fixed Type Signatures)
 
 struct BuildingIntelligenceListView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence?
+    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence?
     
     var body: some View {
         VStack(spacing: 16) {
@@ -225,8 +226,8 @@ struct ClientDashboardTemplate_Previews: PreviewProvider {
  - ✅ No syntax errors in comments
  
  🔧 ENHANCED DATA FLOW:
- - ✅ PortfolioOverviewView gets PortfolioIntelligence
- - ✅ ComplianceOverviewView gets PortfolioIntelligence
+ - ✅ PortfolioOverviewView gets CoreTypes.PortfolioIntelligence
+ - ✅ ComplianceOverviewView gets CoreTypes.PortfolioIntelligence
  - ✅ IntelligenceInsightsView gets [IntelligenceInsight] array
  - ✅ BuildingIntelligenceListView handles optional intelligence
  

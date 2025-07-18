@@ -1,8 +1,9 @@
+import CoreTypes
 //
 //  WeatherViewModifier.swift
 //  FrancoSphere
 //
-//  ✅ V6.0 FIXED: Exhaustive switch statements with all WeatherCondition cases
+//  ✅ V6.0 FIXED: Exhaustive switch statements with all CoreTypes.WeatherCondition cases
 //  ✅ INTEGRATION: Uses existing WeatherDataAdapter properly
 //  ✅ COMPATIBILITY: Fixed StateObject access patterns
 //
@@ -52,7 +53,7 @@ struct WeatherViewModifier: ViewModifier {
         }
     }
     
-    private func getWeatherIcon(for condition: WeatherCondition) -> String {
+    private func getWeatherIcon(for condition: CoreTypes.WeatherCondition) -> String {
         switch condition {
         case .clear:
             return "sun.max"
@@ -77,7 +78,7 @@ struct WeatherViewModifier: ViewModifier {
         }
     }
     
-    private func getWeatherColor(for condition: WeatherCondition) -> Color {
+    private func getWeatherColor(for condition: CoreTypes.WeatherCondition) -> Color {
         switch condition {
         case .clear:
             return .yellow
