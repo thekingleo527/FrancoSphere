@@ -37,7 +37,7 @@ struct TodaysProgressDetailView: View {
     }
     
     private var allTasks: [ContextualTask] {
-        contextEngine.getTodaysTasks()
+        await await contextEngine.getTodaysTasks()
     }
     
     private var completedTasks: [ContextualTask] {

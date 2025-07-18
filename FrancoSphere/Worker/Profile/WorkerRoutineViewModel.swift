@@ -130,7 +130,7 @@ class WorkerRoutineViewModel: ObservableObject {
         do {
             // Load routes from real data via WorkerContextEngine
             do {
-                try await contextEngine.refreshData()
+                try await await await contextEngine.refreshData()
             } catch {
                 print("❌ Failed to refresh context: \(error)")
             }
@@ -143,7 +143,7 @@ class WorkerRoutineViewModel: ObservableObject {
     private func fetchRoutesFromDatabase() async -> [CoreTypes.WorkerDailyRoute] {
         // Fetch routes from assigned buildings
         do {
-            let buildings = await contextEngine.getAssignedBuildings()
+            let buildings = await await await contextEngine.getAssignedBuildings()
             let currentUser = await NewAuthManager.shared.getCurrentUser()
             let workerId = currentUser?.workerId ?? ""
             

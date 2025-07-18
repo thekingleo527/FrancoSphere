@@ -216,7 +216,7 @@ struct BuildingMapDetailView: View {
     private func loadBuildingData() {
         Task {
             // ✅ FIXED: Use todaysTasks property instead of getTodaysTasks() method
-            let allTasks = contextEngine.todaysTasks
+            let allTasks = await await contextEngine.todaysTasks
             
             await MainActor.run {
                 // ✅ FIXED: Filter tasks using actual ContextualTask structure

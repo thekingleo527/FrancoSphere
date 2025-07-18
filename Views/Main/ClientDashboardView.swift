@@ -50,7 +50,7 @@ struct ClientDashboardView: View {
             }
             .navigationBarHidden(true)
             .task {
-                await viewModel.loadPortfolioIntelligence()
+                await viewModel.loadCoreTypes.PortfolioIntelligence()
             }
         }
         .preferredColorScheme(.dark)
@@ -470,13 +470,4 @@ struct ComplianceIssueCard: View {
     }
 }
 
-struct InsightCard: View {
-    let insight: String
-    
-    var body: some View {
-        Text(insight)
-            .padding()
-            .background(.ultraThinMaterial)
-            .cornerRadius(8)
-    }
 }

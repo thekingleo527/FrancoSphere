@@ -226,7 +226,7 @@ struct SimpleTaskRow: View {
 }
 
 struct SkillsView: View {
-    let skills: [String]  // ✅ FIXED: [String] instead of [WorkerSkill]
+    let skills: [String]  // ✅ FIXED: [String] instead of [CoreTypes.WorkerSkill]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

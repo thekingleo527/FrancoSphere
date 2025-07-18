@@ -73,11 +73,11 @@ extension BuildingService {
         return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
-    // MARK: - Fixed generatePortfolioIntelligence Method
+    // MARK: - Fixed generateCoreTypes.PortfolioIntelligence Method
     // Replace the existing method in your BuildingService+Intelligence.swift
 
     /// Generate portfolio-wide intelligence using existing service methods
-    func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
         
         // Use existing getAllBuildings() method
         let allBuildings = try await getAllBuildings()
@@ -109,7 +109,7 @@ extension BuildingService {
         // Determine trend based on completion rate
         let monthlyTrend: CoreTypes.TrendDirection = {
             if completionRate > 0.85 {
-                return .improving
+                return .up
             } else if completionRate < 0.6 {
                 return .declining
             } else {
@@ -130,7 +130,7 @@ extension BuildingService {
     // If you prefer to call calculateMetrics for each building individually:
 
     /// Generate portfolio-wide intelligence using individual building calculations
-    func generatePortfolioIntelligenceIndividual() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligenceIndividual() async throws -> CoreTypes.PortfolioIntelligence {
         
         // Use existing getAllBuildings() method
         let allBuildings = try await getAllBuildings()
@@ -169,7 +169,7 @@ extension BuildingService {
         // Determine trend based on completion rate
         let monthlyTrend: CoreTypes.TrendDirection = {
             if completionRate > 0.85 {
-                return .improving
+                return .up
             } else if completionRate < 0.6 {
                 return .declining
             } else {
@@ -190,7 +190,7 @@ extension BuildingService {
     // If you want optimal performance with concurrent execution:
 
     /// Generate portfolio-wide intelligence using concurrent building calculations
-    func generatePortfolioIntelligenceConcurrent() async throws -> CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligenceConcurrent() async throws -> CoreTypes.PortfolioIntelligence {
         
         // Use existing getAllBuildings() method
         let allBuildings = try await getAllBuildings()
@@ -238,7 +238,7 @@ extension BuildingService {
         // Determine trend based on completion rate
         let monthlyTrend: CoreTypes.TrendDirection = {
             if completionRate > 0.85 {
-                return .improving
+                return .up
             } else if completionRate < 0.6 {
                 return .declining
             } else {
@@ -262,7 +262,7 @@ extension BuildingService {
         
         // Simple trend analysis based on completion rate
         if metrics.completionRate > 0.85 {
-            return .improving
+            return .up
         } else if metrics.completionRate < 0.6 {
             return .declining
         } else {

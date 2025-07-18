@@ -292,7 +292,7 @@ struct TodaysRoutineSummaryView: View {
         }
         
         // Get today's routine from WorkerRoutineEngine when available
-        let workerId = contextEngine.getWorkerId()
+        let workerId = await await contextEngine.getWorkerId()
 
 #if canImport(WorkerRoutineEngine)
         if let workerId = workerId,
@@ -306,7 +306,7 @@ struct TodaysRoutineSummaryView: View {
 #endif
 
         // Fallback to tasks from the context engine
-        let todaysTasks = contextEngine.getTodaysTasks()
+        let todaysTasks = await await contextEngine.getTodaysTasks()
 
         await MainActor.run {
             routineTasks = todaysTasks
@@ -316,7 +316,7 @@ struct TodaysRoutineSummaryView: View {
     
     private func toggleTaskCompletion(taskId: String, completed: Bool) {
         // Update task completion
-        contextEngine.markTask(taskId, completed: completed)
+        await await contextEngine.markTask(taskId, completed: completed)
         
         // Update local state
         if let index = routineTasks.firstIndex(where: { $0.id == taskId }) {
@@ -327,7 +327,7 @@ struct TodaysRoutineSummaryView: View {
         
         // Refresh context engine
         Task {
-            await contextEngine.refreshContext()
+            await await await contextEngine.refreshContext()
         }
     }
 }
