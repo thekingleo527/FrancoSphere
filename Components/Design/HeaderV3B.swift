@@ -9,7 +9,13 @@
 //
 
 import SwiftUI
+// COMPILATION FIX: Add missing imports
 import Foundation
+
+import Foundation
+// COMPILATION FIX: Add missing imports
+import Foundation
+
 
 struct HeaderV3B: View {
     let workerName: String
@@ -203,7 +209,7 @@ struct HeaderV3B: View {
         guard let worker = contextAdapter.currentWorker else { return .blue.opacity(0.7) }
         
         switch worker.role {
-        case .worker: return .blue.opacity(0.7)
+        case .currentWorker: return .blue.opacity(0.7)
         case .admin: return .green.opacity(0.7)
         case .supervisor: return .orange.opacity(0.7)
         case .client: return .purple.opacity(0.7)
@@ -237,7 +243,7 @@ struct HeaderV3B: View {
         guard let worker = contextAdapter.currentWorker else { return .purple }
         
         switch worker.role {
-        case .worker: return .blue        // Field assistance focus
+        case .currentWorker: return .blue        // Field assistance focus
         case .admin: return .green        // Management oversight
         case .supervisor: return .orange  // Team coordination
         case .client: return .purple      // Service insights
@@ -249,7 +255,7 @@ struct HeaderV3B: View {
         guard let worker = contextAdapter.currentWorker else { return [.purple, .blue, .purple] }
         
         switch worker.role {
-        case .worker: return [.blue, .cyan, .blue]
+        case .currentWorker: return [.blue, .cyan, .blue]
         case .admin: return [.green, .mint, .green]
         case .supervisor: return [.orange, .yellow, .orange]
         case .client: return [.purple, .pink, .purple]
@@ -261,7 +267,7 @@ struct HeaderV3B: View {
         guard let worker = contextAdapter.currentWorker else { return "brain.head.profile" }
         
         switch worker.role {
-        case .worker: return "wrench.and.screwdriver"     // Tools for field work
+        case .currentWorker: return "wrench.and.screwdriver"     // Tools for field work
         case .admin: return "chart.line.uptrend.xyaxis"  // Analytics for management
         case .supervisor: return "person.3"               // Team coordination
         case .client: return "building.2"                 // Building insights
@@ -301,7 +307,7 @@ extension HeaderV3B {
         var context = "Nova AI - "
         
         switch worker.role {
-        case .worker:
+        case .currentWorker:
             if let task = nextTaskName {
                 context += "Task assistance for \(task)"
             } else if contextAdapter.isWorkerClockedIn() {
@@ -328,7 +334,7 @@ extension HeaderV3B {
         guard let worker = contextAdapter.currentWorker else { return [] }
         
         switch worker.role {
-        case .worker:
+        case .currentWorker:
             return [
                 "Building troubleshooting",
                 "Safety protocols",
