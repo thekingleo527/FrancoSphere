@@ -213,6 +213,33 @@ struct BuildingsTab: View {
     }
 }
 
+struct ComplianceTab: View {
+    @ObservedObject var viewModel: ClientDashboardViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Compliance Status")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            ComplianceOverviewCard(
+                overallScore: viewModel.complianceRate,
+                criticalIssues: viewModel.criticalIssues,
+                upcomingInspections: viewModel.upcomingInspections
+            )
+            
+            if !viewModel.complianceIssues.isEmpty {
+                Text("Active Issues")
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                
+                ForEach(viewModel.complianceIssues, id: \.id) { issue in
+                    ComplianceIssueCard(issue: issue)
+                }
+            }
+        }
+    }
+}
 
 struct InsightsTab: View {
     @ObservedObject var viewModel: ClientDashboardViewModel

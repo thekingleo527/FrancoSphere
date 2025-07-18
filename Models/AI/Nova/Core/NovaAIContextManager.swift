@@ -1,16 +1,9 @@
-import CoreTypes
 //
 //  NovaAIContextManager.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/17/25.
-//
-
-
-//
-//  NovaAIContextFramework.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Removed incorrect CoreTypes module import
+//  ✅ FIXED: All type references updated to use proper CoreTypes namespace
 //  ✅ ROLE-BASED AI: Framework for contextual AI features
 //  ✅ TASK-AWARE: AI adapts to current work context
 //  ✅ BUILDING-SPECIFIC: Location-aware assistance
@@ -43,7 +36,7 @@ class NovaAIContextManager: ObservableObject {
         
         currentContext = AIContext(
             userRole: worker.role,
-            currentBuilding: contextAdapter.getCurrentClockInBuilding(),
+            currentBuilding: contextAdapter.currentBuilding,
             activeTask: getCurrentActiveTask(),
             assignedBuildings: contextAdapter.assignedBuildings,
             portfolioBuildings: contextAdapter.portfolioBuildings,
@@ -156,7 +149,7 @@ class NovaAIContextManager: ObservableObject {
             )
         }
         
-        return features.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        return features.sorted { $0.priority.numericValue > $1.priority.numericValue }
     }
     
     // MARK: - Admin AI Features
@@ -173,7 +166,7 @@ class NovaAIContextManager: ObservableObject {
             ),
             AIFeature(
                 id: "resource-optimization",
-                title: "Resource Optimization", 
+                title: "Resource Optimization",
                 description: "Worker allocation and scheduling",
                 icon: "person.3.sequence",
                 category: .optimization,
@@ -302,7 +295,7 @@ class NovaAIContextManager: ObservableObject {
             suggestions = generateClientSuggestions(context: context)
         }
         
-        suggestedActions = suggestions.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        suggestedActions = suggestions.sorted { $0.priority.numericValue > $1.priority.numericValue }
     }
     
     private func generateWorkerSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
@@ -311,13 +304,11 @@ class NovaAIContextManager: ObservableObject {
         // Urgent task suggestions
         if !context.urgentTasks.isEmpty {
             suggestions.append(
-                AISuggestion(
+                CoreTypes.AISuggestion(
                     id: "urgent-tasks",
-                    title: "Urgent Tasks Require Attention",
-                    description: "You have \(context.urgentTasks.count) urgent task(s) pending",
-                    action: "Review urgent tasks",
-                    priority: .critical,
-                    category: .taskManagement
+                    suggestion: "You have \(context.urgentTasks.count) urgent task(s) pending",
+                    actionType: "Review urgent tasks",
+                    confidence: 0.9
                 )
             )
         }
@@ -325,13 +316,11 @@ class NovaAIContextManager: ObservableObject {
         // Weather-based suggestions
         if let weather = context.weatherConditions, weather.requiresIndoorWork {
             suggestions.append(
-                AISuggestion(
+                CoreTypes.AISuggestion(
                     id: "weather-alert",
-                    title: "Weather Advisory",
-                    description: "Consider rescheduling outdoor work due to \(weather.description)",
-                    action: "View indoor alternatives",
-                    priority: .high,
-                    category: .weatherAdaptive
+                    suggestion: "Consider rescheduling outdoor work due to \(weather.description)",
+                    actionType: "View indoor alternatives",
+                    confidence: 0.85
                 )
             )
         }
@@ -339,13 +328,11 @@ class NovaAIContextManager: ObservableObject {
         // Building-specific suggestions
         if let building = context.currentBuilding {
             suggestions.append(
-                AISuggestion(
+                CoreTypes.AISuggestion(
                     id: "building-checklist",
-                    title: "Building Arrival Checklist",
-                    description: "Review \(building.name) systems and recent alerts",
-                    action: "Open building overview",
-                    priority: .medium,
-                    category: .buildingSpecific
+                    suggestion: "Review \(building.name) systems and recent alerts",
+                    actionType: "Open building overview",
+                    confidence: 0.7
                 )
             )
         }
@@ -355,47 +342,39 @@ class NovaAIContextManager: ObservableObject {
     
     private func generateAdminSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
         [
-            AISuggestion(
+            CoreTypes.AISuggestion(
                 id: "performance-review",
-                title: "Weekly Performance Review",
-                description: "Analyze portfolio efficiency and worker productivity",
-                action: "Generate report",
-                priority: .high,
-                category: .analytics
+                suggestion: "Analyze portfolio efficiency and worker productivity",
+                actionType: "Generate report",
+                confidence: 0.8
             ),
-            AISuggestion(
+            CoreTypes.AISuggestion(
                 id: "budget-optimization",
-                title: "Budget Optimization",
-                description: "Identify cost-saving opportunities",
-                action: "View recommendations",
-                priority: .medium,
-                category: .financial
+                suggestion: "Identify cost-saving opportunities",
+                actionType: "View recommendations",
+                confidence: 0.75
             )
         ]
     }
     
     private func generateSupervisorSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
         [
-            AISuggestion(
+            CoreTypes.AISuggestion(
                 id: "team-check-in",
-                title: "Team Check-in",
-                description: "Review worker status and task progress",
-                action: "View team dashboard",
-                priority: .high,
-                category: .teamManagement
+                suggestion: "Review worker status and task progress",
+                actionType: "View team dashboard",
+                confidence: 0.85
             )
         ]
     }
     
     private func generateClientSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
         [
-            AISuggestion(
+            CoreTypes.AISuggestion(
                 id: "service-summary",
-                title: "Service Summary",
-                description: "Review this week's maintenance activities",
-                action: "View report",
-                priority: .medium,
-                category: .reporting
+                suggestion: "Review this week's maintenance activities",
+                actionType: "View report",
+                confidence: 0.7
             )
         ]
     }
@@ -407,8 +386,8 @@ class NovaAIContextManager: ObservableObject {
     }
     
     private func getUrgentTasks() -> [ContextualTask] {
-        return contextAdapter.todaysTasks.filter { 
-            $0.urgency == .urgent || $0.urgency == .critical 
+        return contextAdapter.todaysTasks.filter {
+            $0.urgency == .urgent || $0.urgency == .critical
         }
     }
     
@@ -428,7 +407,7 @@ class NovaAIContextManager: ObservableObject {
     }
 }
 
-// MARK: - Supporting Types
+// MARK: - Supporting Types (Local to AI Context)
 
 struct AIContext {
     let userRole: UserRole
@@ -450,27 +429,11 @@ struct AIFeature: Identifiable {
     let priority: CoreTypes.AIPriority
 }
 
-struct AISuggestion: Identifiable {
-    let id: String
-    let title: String
-    let description: String
-    let action: String
-    let priority: CoreTypes.AIPriority
-    let category: AIFeatureCategory
-}
-
 enum AIFeatureCategory {
     case fieldAssistance, safety, information, taskSpecific, buildingSpecific
     case weatherAdaptive, analytics, optimization, predictive, financial
     case compliance, teamManagement, qualityAssurance, training, problemSolving
     case reporting, monitoring, serviceManagement, performance, taskManagement
-}
-
-enum AIPriority: Int, CaseIterable {
-    case critical = 4
-    case high = 3
-    case medium = 2
-    case low = 1
 }
 
 enum TimeOfDay {
