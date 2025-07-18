@@ -2,10 +2,9 @@
 //  InitializationViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ SIMPLIFIED: Removed complex step simulation
-//  ✅ CLEAN: Just handles UI initialization flow
-//  ✅ FOCUSED: Database initialization handled by DatabaseStartupCoordinator
-//  ✅ ORGANIZED: Clear separation of concerns
+//  ✅ FIXED: Real initialization calls instead of fake delays
+//  ✅ CONSOLIDATED: Single point of truth for app initialization
+//  ✅ PRODUCTION READY: Proper error handling and progress tracking
 //
 
 import Foundation
@@ -24,33 +23,71 @@ class InitializationViewModel: ObservableObject {
         isInitializing = true
         initializationError = nil
         
-        // Simple UI initialization flow
-        await updateStep("Initializing FrancoSphere...", progress: 0.2)
-        await updateStep("Loading components...", progress: 0.6)
-        await updateStep("Finalizing setup...", progress: 0.9)
-        await updateStep("Ready to use!", progress: 1.0)
-        
-        // Brief pause to show completion
-        try? await Task.sleep(nanoseconds: 300_000_000)
-        
+        // Real initialization sequence with actual service calls
+        let steps: [(String, () async throws -> Void)] = [
+            ("Initializing Database...", { 
+                try await DatabaseInitializationCoordinator().initializeDatabase()
+                self.progress = 0.25
+            }),
+            ("Running Schema Migrations...", { 
+                try await SeedDatabase.runMigrations()
+                self.progress = 0.5
+            }),
+            ("Loading Operational Data...", { 
+                try await OperationalDataManager.shared.initializeOperationalData()
+                self.progress = 0.75
+            }),
+            ("Finalizing System...", { 
+                try await self.verifySystemReady()
+                self.progress = 1.0
+            })
+        ]
+
+        for (stepName, stepAction) in steps {
+            currentStep = stepName
+            do {
+                try await stepAction()
+            } catch {
+                initializationError = "Error during '\(stepName)': \(error.localizedDescription)"
+                isInitializing = false
+                return
+            }
+        }
+
+        currentStep = "Initialization Complete"
+        try? await Task.sleep(nanoseconds: 500_000_000)
         isComplete = true
         isInitializing = false
     }
     
-    private func updateStep(_ step: String, progress: Double) async {
-        currentStep = step
-        self.progress = progress
+    private func verifySystemReady() async throws {
+        // Verify the system is properly initialized
+        let operationalManager = OperationalDataManager.shared
+        if !(await operationalManager.isInitialized) {
+            throw InitializationError.systemNotReady
+        }
         
-        // Small delay for smooth UI transition
-        try? await Task.sleep(nanoseconds: 200_000_000)
+        // Verify database has data
+        let seeder = DatabaseSeeder.shared
+        let validation = try await seeder.validateSeededData()
+        if !validation.isValid {
+            throw InitializationError.dataValidationFailed(validation.errors)
+        }
+        
+        print("✅ System verification complete")
     }
+}
+
+enum InitializationError: LocalizedError {
+    case systemNotReady
+    case dataValidationFailed([String])
     
-    /// Reset for development/testing
-    func reset() {
-        progress = 0.0
-        currentStep = "Preparing FrancoSphere..."
-        isInitializing = false
-        isComplete = false
-        initializationError = nil
+    var errorDescription: String? {
+        switch self {
+        case .systemNotReady:
+            return "System initialization incomplete"
+        case .dataValidationFailed(let errors):
+            return "Data validation failed: \(errors.joined(separator: ", "))"
+        }
     }
 }

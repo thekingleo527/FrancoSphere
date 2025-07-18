@@ -1,8 +1,10 @@
 //
 //  BuildingSelectionView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Fixed all syntax errors and ambiguous references
+//  ✅ FIXED: Removed duplicate BuildingCard declaration
+//  ✅ FIXED: All syntax errors and ambiguous references resolved
+//  ✅ CLEAN: Single BuildingCard implementation that works with existing components
 //
 
 import SwiftUI
@@ -83,7 +85,7 @@ struct BuildingSelectionView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(filteredBuildings) { building in
-                    BuildingCard(building: building) {
+                    BuildingSelectionCard(building: building) {
                         onSelect(building)
                     }
                 }
@@ -101,7 +103,9 @@ struct BuildingSelectionView: View {
     }
 }
 
-struct BuildingCard: View {
+// MARK: - ✅ FIXED: Single BuildingCard implementation (renamed to avoid conflicts)
+
+struct BuildingSelectionCard: View {
     let building: NamedCoordinate
     let onTap: () -> Void
     
@@ -111,10 +115,15 @@ struct BuildingCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(building.name)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
                     
                     if let address = building.address {
                         Text(address)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Latitude: \(String(format: "%.4f", building.latitude)), Longitude: \(String(format: "%.4f", building.longitude))")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -122,14 +131,45 @@ struct BuildingCard: View {
                 
                 Spacer()
                 
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
+                VStack {
+                    Image(systemName: "building.2.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                    
+                    Text("Select")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
             }
             .padding()
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(radius: 2)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
+}
+
+// MARK: - Preview
+
+#Preview {
+    BuildingSelectionView(
+        buildings: [
+            NamedCoordinate(
+                id: "1",
+                name: "12 West 18th Street",
+                latitude: 40.7389,
+                longitude: -73.9936
+            ),
+            NamedCoordinate(
+                id: "14",
+                name: "Rubin Museum",
+                latitude: 40.7401,
+                longitude: -73.9978
+            )
+        ],
+        onSelect: { _ in }
+    )
 }

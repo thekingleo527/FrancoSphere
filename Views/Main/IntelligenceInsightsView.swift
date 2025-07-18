@@ -430,23 +430,23 @@ struct FilterButton: View {
 
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                }
+
                 
                 Button(action: onTap) {
                     Image(systemName: "info.circle")
                         .font(.caption)
                         .foregroundColor(.blue)
                 }
-            }
-        }
+
+
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(insight.priority == .high || insight.priority == .critical ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1)
         )
-    }
-}
+
+
 
 struct PriorityBadge: View {
     let priority: CoreTypes.InsightPriority
