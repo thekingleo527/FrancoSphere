@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2304D38B2E29E7C300EE16E7 /* NovaAIContextManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */; };
 		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
 		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
 		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
@@ -197,6 +198,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAIContextManager.swift; sourceTree = "<group>"; };
 		2312FC662E1B66F300B64496 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
 		2312FC682E1B709600B64496 /* DataConsolidationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConsolidationManager.swift; sourceTree = "<group>"; };
 		2312FC6A2E1B77B400B64496 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
@@ -846,6 +848,7 @@
 		23F9FA022E2FFE0000AAAAAA /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */,
 				23EA1F2B2E285103009FFF54 /* NovaInteractionView.swift */,
 				23EA1ED82E2809D3009FFF54 /* NovaAPIService.swift */,
 				23F9FB002E2FFF0000AAAAAA /* NovaCore.swift */,
@@ -1164,6 +1167,7 @@
 				237DE3FF2E182F510002A14D /* TelemetryService.swift in Sources */,
 				2317FED42E2982A10013D5A7 /* OperationalDataManager+DatabaseIntegration.swift in Sources */,
 				23A3169F2E1E37B500469FA3 /* AITypes.swift in Sources */,
+				2304D38B2E29E7C300EE16E7 /* NovaAIContextManager.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
