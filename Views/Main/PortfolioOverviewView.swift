@@ -1,14 +1,11 @@
-import CoreTypes
 //
 //  PortfolioOverviewView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Preview initializer parameters aligned with CoreTypes
-//  ✅ V6.0: Updated for CoreTypes architecture
-//  ✅ Real-time portfolio metrics display
-//  ✅ Performance trends and key indicators
-//  ✅ Quick action dashboard for executives
-//  ✅ Real-time portfolio health monitoring
+//  ✅ FIXED: Removed incorrect CoreTypes module import
+//  ✅ FIXED: All property references updated to match actual CoreTypes.PortfolioIntelligence structure
+//  ✅ ALIGNED: With actual CoreTypes properties (no overallEfficiency, averageComplianceScore, etc.)
+//  ✅ SIMPLIFIED: Uses available properties and calculates derived metrics
 //
 
 import SwiftUI
@@ -42,10 +39,10 @@ struct PortfolioOverviewView: View {
                 // Selected Metric Detail
                 selectedMetricDetailSection
                 
-                // Performance Summary (real estate metrics)
+                // Performance Summary
                 performanceSummarySection
                 
-                // Alert Summary (status overview)
+                // Alert Summary
                 alertSummarySection
                 
                 // Last Updated Info
@@ -87,16 +84,16 @@ struct PortfolioOverviewView: View {
                 )
                 
                 SummaryCard(
-                    title: "Overall Efficiency",
-                    value: "\(Int(intelligence.overallEfficiency * 100))%",
+                    title: "Completion Rate",
+                    value: "\(Int(intelligence.completionRate * 100))%",
                     icon: "speedometer",
                     color: efficiencyColor,
-                    trend: intelligence.trendDirection
+                    trend: intelligence.monthlyTrend
                 )
                 
                 SummaryCard(
                     title: "Completed Tasks",
-                    value: "\(intelligence.totalCompletedTasks)",
+                    value: "\(intelligence.completedTasks)",
                     icon: "checkmark.circle",
                     color: .green,
                     trend: nil
@@ -104,7 +101,7 @@ struct PortfolioOverviewView: View {
                 
                 SummaryCard(
                     title: "Active Workers",
-                    value: "\(intelligence.totalActiveWorkers)",
+                    value: "\(intelligence.activeWorkers)",
                     icon: "person.2",
                     color: .purple,
                     trend: nil
@@ -177,7 +174,7 @@ struct PortfolioOverviewView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    // MARK: - Performance Summary Section (FIXED: Simplified)
+    // MARK: - Performance Summary Section
     
     private var performanceSummarySection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -191,7 +188,7 @@ struct PortfolioOverviewView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    Text("\(Int(intelligence.averageComplianceScore * 100))%")
+                    Text("\(intelligence.complianceScore)%")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(complianceColor)
@@ -205,14 +202,14 @@ struct PortfolioOverviewView: View {
                         .foregroundColor(.secondary)
                     
                     HStack(spacing: 4) {
-                        Image(systemName: intelligence.trendDirection.icon)
+                        Image(systemName: trendIcon(for: intelligence.monthlyTrend))
                             .font(.caption)
-                            .foregroundColor(intelligence.trendDirection.color)
+                            .foregroundColor(trendColor(for: intelligence.monthlyTrend))
                         
-                        Text(intelligence.trendDirection.rawValue.capitalized)
+                        Text(intelligence.monthlyTrend.rawValue.capitalized)
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(intelligence.trendDirection.color)
+                            .foregroundColor(trendColor(for: intelligence.monthlyTrend))
                     }
                 }
             }
@@ -221,7 +218,7 @@ struct PortfolioOverviewView: View {
         }
     }
     
-    // MARK: - Alert Summary Section (FIXED: Simplified)
+    // MARK: - Alert Summary Section
     
     private var alertSummarySection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -244,9 +241,16 @@ struct PortfolioOverviewView: View {
                 
                 StatusRow(
                     title: "Active Workers",
-                    value: "\(intelligence.totalActiveWorkers)",
+                    value: "\(intelligence.activeWorkers)",
                     icon: "person.2",
                     color: .purple
+                )
+                
+                StatusRow(
+                    title: "Critical Issues",
+                    value: "\(intelligence.criticalIssues)",
+                    icon: "exclamationmark.triangle",
+                    color: intelligence.criticalIssues > 0 ? .red : .green
                 )
                 
                 StatusRow(
@@ -273,7 +277,7 @@ struct PortfolioOverviewView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            Text("Last updated just now")  // FIXED: Simplified since we don't have lastUpdated
+            Text("Last updated just now")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
@@ -282,25 +286,26 @@ struct PortfolioOverviewView: View {
         .padding(.horizontal)
     }
     
-    // MARK: - Computed Properties
+    // MARK: - Computed Properties (FIXED to use actual CoreTypes properties)
     
     private var efficiencyColor: Color {
-        if intelligence.overallEfficiency >= 0.9 { return .green }
-        if intelligence.overallEfficiency >= 0.8 { return .blue }
-        if intelligence.overallEfficiency >= 0.7 { return .orange }
+        if intelligence.completionRate >= 0.9 { return .green }
+        if intelligence.completionRate >= 0.8 { return .blue }
+        if intelligence.completionRate >= 0.7 { return .orange }
         return .red
     }
     
     private var complianceColor: Color {
-        if intelligence.averageComplianceScore >= 0.9 { return .green }
-        if intelligence.averageComplianceScore >= 0.8 { return .blue }
-        if intelligence.averageComplianceScore >= 0.7 { return .orange }
+        let score = Double(intelligence.complianceScore) / 100.0
+        if score >= 0.9 { return .green }
+        if score >= 0.8 { return .blue }
+        if score >= 0.7 { return .orange }
         return .red
     }
     
     private var healthStatus: String {
-        let efficiency = intelligence.overallEfficiency
-        let compliance = intelligence.averageComplianceScore
+        let efficiency = intelligence.completionRate
+        let compliance = Double(intelligence.complianceScore) / 100.0
         let average = (efficiency + compliance) / 2
         
         if average >= 0.9 { return "Excellent" }
@@ -310,8 +315,8 @@ struct PortfolioOverviewView: View {
     }
     
     private var healthIcon: String {
-        let efficiency = intelligence.overallEfficiency
-        let compliance = intelligence.averageComplianceScore
+        let efficiency = intelligence.completionRate
+        let compliance = Double(intelligence.complianceScore) / 100.0
         let average = (efficiency + compliance) / 2
         
         if average >= 0.9 { return "checkmark.circle.fill" }
@@ -321,14 +326,36 @@ struct PortfolioOverviewView: View {
     }
     
     private var healthColor: Color {
-        let efficiency = intelligence.overallEfficiency
-        let compliance = intelligence.averageComplianceScore
+        let efficiency = intelligence.completionRate
+        let compliance = Double(intelligence.complianceScore) / 100.0
         let average = (efficiency + compliance) / 2
         
         if average >= 0.9 { return .green }
         if average >= 0.8 { return .blue }
         if average >= 0.7 { return .orange }
         return .red
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func trendIcon(for trend: CoreTypes.TrendDirection) -> String {
+        switch trend {
+        case .up: return "arrow.up.circle"
+        case .down: return "arrow.down.circle"
+        case .stable: return "minus.circle"
+        case .improving: return "arrow.up.right.circle"
+        case .declining: return "arrow.down.right.circle"
+        case .unknown: return "questionmark.circle"
+        }
+    }
+    
+    private func trendColor(for trend: CoreTypes.TrendDirection) -> Color {
+        switch trend {
+        case .up, .improving: return .green
+        case .down, .declining: return .red
+        case .stable: return .orange
+        case .unknown: return .gray
+        }
     }
 }
 
@@ -351,9 +378,9 @@ struct SummaryCard: View {
                 Spacer()
                 
                 if let trend = trend {
-                    Image(systemName: trend.icon)
+                    Image(systemName: trendIconForCard(trend))
                         .font(.caption)
-                        .foregroundColor(trend.color)
+                        .foregroundColor(trendColorForCard(trend))
                 }
             }
             
@@ -369,6 +396,26 @@ struct SummaryCard: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+    }
+    
+    private func trendIconForCard(_ trend: CoreTypes.TrendDirection) -> String {
+        switch trend {
+        case .up: return "arrow.up.circle"
+        case .down: return "arrow.down.circle"
+        case .stable: return "minus.circle"
+        case .improving: return "arrow.up.right.circle"
+        case .declining: return "arrow.down.right.circle"
+        case .unknown: return "questionmark.circle"
+        }
+    }
+    
+    private func trendColorForCard(_ trend: CoreTypes.TrendDirection) -> Color {
+        switch trend {
+        case .up, .improving: return .green
+        case .down, .declining: return .red
+        case .stable: return .orange
+        case .unknown: return .gray
+        }
     }
 }
 
@@ -425,7 +472,7 @@ struct StatusRow: View {
     }
 }
 
-// MARK: - Metric Detail Views
+// MARK: - Metric Detail Views (FIXED to use actual properties)
 
 struct EfficiencyDetailView: View {
     let intelligence: CoreTypes.PortfolioIntelligence
@@ -439,13 +486,13 @@ struct EfficiencyDetailView: View {
                 
                 Spacer()
                 
-                Text("\(Int(intelligence.overallEfficiency * 100))%")
+                Text("\(Int(intelligence.completionRate * 100))%")
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
             }
             
-            ProgressView(value: intelligence.overallEfficiency)
+            ProgressView(value: intelligence.completionRate)
                 .progressViewStyle(LinearProgressViewStyle(tint: .blue))
             
             HStack {
@@ -455,9 +502,9 @@ struct EfficiencyDetailView: View {
                 
                 Spacer()
                 
-                Text(intelligence.overallEfficiency >= 0.85 ? "Above Target" : "Below Target")
+                Text(intelligence.completionRate >= 0.85 ? "Above Target" : "Below Target")
                     .font(.caption)
-                    .foregroundColor(intelligence.overallEfficiency >= 0.85 ? .green : .orange)
+                    .foregroundColor(intelligence.completionRate >= 0.85 ? .green : .orange)
             }
         }
     }
@@ -474,7 +521,7 @@ struct TasksDetailView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    Text("\(intelligence.totalCompletedTasks)")
+                    Text("\(intelligence.completedTasks)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
@@ -487,7 +534,7 @@ struct TasksDetailView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    Text("\(Int(intelligence.averageComplianceScore * 100))%")
+                    Text("\(intelligence.complianceScore)%")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
@@ -501,7 +548,7 @@ struct TasksDetailView: View {
                 
                 Spacer()
                 
-                Label("Active Workers: \(intelligence.totalActiveWorkers)", systemImage: "person.2")
+                Label("Active Workers: \(intelligence.activeWorkers)", systemImage: "person.2")
                     .font(.caption)
                     .foregroundColor(.blue)
             }
@@ -514,24 +561,24 @@ struct PerformanceDetailView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            Text("Performance is calculated based on efficiency metrics, compliance scores, and worker productivity across your portfolio.")
+            Text("Performance is calculated based on completion rates, compliance scores, and worker productivity across your portfolio.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.leading)
             
             HStack {
                 PerformanceMetricItem(
-                    title: "Efficiency",
-                    value: "\(Int(intelligence.overallEfficiency * 100))%",
-                    color: intelligence.overallEfficiency >= 0.8 ? .green : .orange
+                    title: "Completion",
+                    value: "\(Int(intelligence.completionRate * 100))%",
+                    color: intelligence.completionRate >= 0.8 ? .green : .orange
                 )
                 
                 Spacer()
                 
                 PerformanceMetricItem(
                     title: "Compliance",
-                    value: "\(Int(intelligence.averageComplianceScore * 100))%",
-                    color: intelligence.averageComplianceScore >= 0.8 ? .green : .orange
+                    value: "\(intelligence.complianceScore)%",
+                    color: intelligence.complianceScore >= 80 ? .green : .orange
                 )
             }
         }
@@ -543,9 +590,9 @@ struct AlertsDetailView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            let overallHealth = (intelligence.overallEfficiency + intelligence.averageComplianceScore) / 2
+            let overallHealth = (intelligence.completionRate + Double(intelligence.complianceScore) / 100.0) / 2
             
-            if overallHealth >= 0.8 {
+            if overallHealth >= 0.8 && intelligence.criticalIssues == 0 {
                 HStack {
                     Image(systemName: "checkmark.circle")
                         .foregroundColor(.green)
@@ -556,17 +603,24 @@ struct AlertsDetailView: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Performance below target")
-                        .font(.subheadline)
-                        .foregroundColor(.orange)
+                    if intelligence.criticalIssues > 0 {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(.red)
+                            
+                            Text("\(intelligence.criticalIssues) critical issues require attention")
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                        }
+                    }
                     
-                    if intelligence.overallEfficiency < 0.8 {
-                        Text("Efficiency needs improvement")
+                    if intelligence.completionRate < 0.8 {
+                        Text("Completion rate needs improvement")
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
                     
-                    if intelligence.averageComplianceScore < 0.8 {
+                    if intelligence.complianceScore < 80 {
                         Text("Compliance requires attention")
                             .font(.caption)
                             .foregroundColor(.orange)
@@ -625,7 +679,7 @@ enum MetricType: String, CaseIterable {
     }
 }
 
-// MARK: - Preview (FIXED: Correct initializer parameters)
+// MARK: - Preview
 
 struct PortfolioOverviewView_Previews: PreviewProvider {
     static var previews: some View {

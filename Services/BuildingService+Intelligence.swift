@@ -2,8 +2,8 @@
 //  BuildingService+Intelligence.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: All top-level statements moved inside proper function declarations
 //  ✅ SIMPLIFIED: Uses existing BuildingMetricsService instead of reinventing
-//  ✅ FIXED: Uses correct CoreTypes.BuildingAnalytics properties
 //  ✅ ALIGNED: With current actor BuildingService implementation
 //  ✅ REAL DATA: Leverages existing GRDB integration
 //
@@ -73,41 +73,21 @@ extension BuildingService {
         return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
-    // MARK: - Fixed generateCoreTypes.PortfolioIntelligence Method
-    // Replace the existing method in your BuildingService+Intelligence.swift
-
+    // MARK: - Portfolio Intelligence Generation
+    
     /// Generate portfolio-wide intelligence using existing service methods
-        let completionRate = totalBuildings > 0 ? totalCompletionRate / Double(totalBuildings) : 1.0
+    func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
         
-        // Count critical issues (overdue + urgent tasks)
-        let criticalIssues = allMetrics.values.reduce(0) { sum, metrics in
-            sum + metrics.overdueTasks + metrics.urgentTasksCount
+        // Get all buildings and workers
+        let allBuildings = try await getAllBuildings()
+        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
+        
+        // Calculate metrics for all buildings
+        var allMetrics: [String: CoreTypes.BuildingMetrics] = [:]
+        for building in allBuildings {
+            let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
+            allMetrics[building.id] = metrics
         }
-        
-        // Determine trend based on completion rate
-        let monthlyTrend: CoreTypes.TrendDirection = {
-            if completionRate > 0.85 {
-                return .up
-            } else if completionRate < 0.6 {
-                return .declining
-            } else {
-                return .stable
-            }
-        }()
-        
-        return CoreTypes.PortfolioIntelligence(
-            totalBuildings: totalBuildings,
-            activeWorkers: activeWorkers,
-            completionRate: completionRate,
-            criticalIssues: criticalIssues,
-            monthlyTrend: monthlyTrend
-        )
-    }
-
-    // MARK: - Alternative: Loop Through Individual Buildings
-    // If you prefer to call calculateMetrics for each building individually:
-
-    /// Generate portfolio-wide intelligence using individual building calculations
         
         // Calculate portfolio metrics
         let totalBuildings = allBuildings.count
@@ -124,6 +104,15 @@ extension BuildingService {
             sum + metrics.overdueTasks + metrics.urgentTasksCount
         }
         
+        // Calculate total completed tasks
+        let completedTasks = allMetrics.values.reduce(0) { sum, metrics in
+            sum + Int(Double(metrics.pendingTasks) * metrics.completionRate)
+        }
+        
+        // Calculate compliance score
+        let compliantBuildings = allMetrics.values.filter { $0.isCompliant }.count
+        let complianceScore = totalBuildings > 0 ? Int((Double(compliantBuildings) / Double(totalBuildings)) * 100) : 100
+        
         // Determine trend based on completion rate
         let monthlyTrend: CoreTypes.TrendDirection = {
             if completionRate > 0.85 {
@@ -135,18 +124,38 @@ extension BuildingService {
             }
         }()
         
+        // Calculate weekly trend (simple approximation)
+        let weeklyTrend = completionRate > 0.8 ? 0.05 : (completionRate < 0.6 ? -0.05 : 0.0)
+        
         return CoreTypes.PortfolioIntelligence(
             totalBuildings: totalBuildings,
             activeWorkers: activeWorkers,
             completionRate: completionRate,
             criticalIssues: criticalIssues,
-            monthlyTrend: monthlyTrend
+            monthlyTrend: monthlyTrend,
+            completedTasks: completedTasks,
+            complianceScore: complianceScore,
+            weeklyTrend: weeklyTrend
         )
-
-    // MARK: - Concurrent Version for Better Performance
-    // If you want optimal performance with concurrent execution:
-
+    }
+    
     /// Generate portfolio-wide intelligence using concurrent building calculations
+    func generatePortfolioIntelligenceConcurrent() async throws -> CoreTypes.PortfolioIntelligence {
+        
+        // Get all buildings and workers
+        let allBuildings = try await getAllBuildings()
+        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
+        
+        // Calculate metrics for all buildings concurrently
+        let allMetrics = try await withThrowingTaskGroup(of: (String, CoreTypes.BuildingMetrics).self) { group in
+            
+            // Add tasks for each building
+            for building in allBuildings {
+                group.addTask {
+                    let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
+                    return (building.id, metrics)
+                }
+            }
             
             // Collect results
             var results: [String: CoreTypes.BuildingMetrics] = [:]
@@ -154,6 +163,7 @@ extension BuildingService {
                 results[buildingId] = metrics
             }
             return results
+        }
         
         // Calculate portfolio metrics
         let totalBuildings = allBuildings.count
@@ -170,6 +180,15 @@ extension BuildingService {
             sum + metrics.overdueTasks + metrics.urgentTasksCount
         }
         
+        // Calculate total completed tasks
+        let completedTasks = allMetrics.values.reduce(0) { sum, metrics in
+            sum + Int(Double(metrics.pendingTasks) * metrics.completionRate)
+        }
+        
+        // Calculate compliance score
+        let compliantBuildings = allMetrics.values.filter { $0.isCompliant }.count
+        let complianceScore = totalBuildings > 0 ? Int((Double(compliantBuildings) / Double(totalBuildings)) * 100) : 100
+        
         // Determine trend based on completion rate
         let monthlyTrend: CoreTypes.TrendDirection = {
             if completionRate > 0.85 {
@@ -181,13 +200,22 @@ extension BuildingService {
             }
         }()
         
+        // Calculate weekly trend (simple approximation)
+        let weeklyTrend = completionRate > 0.8 ? 0.05 : (completionRate < 0.6 ? -0.05 : 0.0)
+        
         return CoreTypes.PortfolioIntelligence(
             totalBuildings: totalBuildings,
             activeWorkers: activeWorkers,
             completionRate: completionRate,
             criticalIssues: criticalIssues,
-            monthlyTrend: monthlyTrend
+            monthlyTrend: monthlyTrend,
+            completedTasks: completedTasks,
+            complianceScore: complianceScore,
+            weeklyTrend: weeklyTrend
         )
+    }
+    
+    // MARK: - Building Analysis Methods
     
     /// Get building efficiency trend using BuildingMetricsService
     func getBuildingEfficiencyTrend(for buildingId: String) async throws -> CoreTypes.TrendDirection {
@@ -282,6 +310,43 @@ extension BuildingService {
             lastUpdated: Date()
         )
     }
+    
+    // MARK: - Building Intelligence Summary
+    
+    /// Get comprehensive building intelligence summary
+    func getBuildingIntelligenceSummary(for buildingId: String) async throws -> [String: Any] {
+        
+        let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: buildingId)
+        let insights = try await generateBuildingInsights(for: buildingId)
+        let trend = try await getBuildingEfficiencyTrend(for: buildingId)
+        let riskScore = try await getBuildingRiskAssessment(for: buildingId)
+        let complianceStatus = try await getBuildingComplianceStatus(for: buildingId)
+        
+        return [
+            "buildingId": buildingId,
+            "metrics": [
+                "completionRate": metrics.completionRate,
+                "overdueTasks": metrics.overdueTasks,
+                "urgentTasks": metrics.urgentTasksCount,
+                "activeWorkers": metrics.activeWorkers,
+                "overallScore": metrics.overallScore
+            ],
+            "insights": insights.map { insight in
+                [
+                    "title": insight.title,
+                    "description": insight.description,
+                    "type": insight.type.rawValue,
+                    "priority": insight.priority.rawValue,
+                    "actionRequired": insight.actionRequired
+                ]
+            },
+            "trend": trend.rawValue,
+            "riskScore": riskScore,
+            "complianceStatus": complianceStatus.rawValue,
+            "lastUpdated": Date()
+        ]
+    }
+}
 
 // MARK: - BuildingMetrics Helper Extensions
 
