@@ -3,15 +3,16 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: All property access and method issues resolved
-//  ✅ ALIGNED: With current CoreTypes.MaintenanceTask structure
+//  ✅ ALIGNED: With current MaintenanceTask structure (not CoreTypes)
 //  ✅ CORRECTED: Animation typos and building name lookup
+//  ✅ USES: Correct MaintenanceTask type via TypeAliases
 //
 
 import SwiftUI
 
 struct TodaysTasksGlassCard: View {
-    let tasks: [MaintenanceTask]
-    let onTaskTap: (MaintenanceTask) -> Void
+    let tasks: [MaintenanceTask]  // ✅ FIXED: Use MaintenanceTask from TypeAliases
+    let onTaskTap: (MaintenanceTask) -> Void  // ✅ FIXED: Use MaintenanceTask from TypeAliases
     
     @State private var showCompleted = false
     
@@ -72,10 +73,10 @@ struct TodaysTasksGlassCard: View {
                     EmptyTasksView()
                 } else {
                     VStack(spacing: 8) {
-                        // Pending tasks
-                        ForEach(pendingTasks) { task in
-                            TaskGlassRow(task: task) {
-                                onTaskTap(task)
+                        // Pending tasks - ✅ FIXED: Very explicit type to prevent Task confusion
+                        ForEach(pendingTasks, id: \.id) { (maintenanceTask: MaintenanceTask) in
+                            TaskGlassRow(task: maintenanceTask) {
+                                onTaskTap(maintenanceTask)
                             }
                         }
                         
@@ -101,9 +102,10 @@ struct TodaysTasksGlassCard: View {
                             }
                             
                             if showCompleted {
-                                ForEach(completedTasks) { task in
-                                    TaskGlassRow(task: task, isCompleted: true) {
-                                        onTaskTap(task)
+                                // ✅ FIXED: Very explicit type to prevent Task confusion
+                                ForEach(completedTasks, id: \.id) { (maintenanceTask: MaintenanceTask) in
+                                    TaskGlassRow(task: maintenanceTask, isCompleted: true) {
+                                        onTaskTap(maintenanceTask)
                                     }
                                     .opacity(0.6)
                                 }
@@ -116,7 +118,7 @@ struct TodaysTasksGlassCard: View {
     }
 }
 
-// Task urgency extension for sorting
+// Task urgency extension for sorting - ✅ FIXED: Use TaskUrgency from TypeAliases
 extension TaskUrgency {
     var sortOrder: Int {
         switch self {
@@ -131,7 +133,7 @@ extension TaskUrgency {
 }
 
 struct TaskGlassRow: View {
-    let task: MaintenanceTask
+    let task: MaintenanceTask  // ✅ FIXED: Use MaintenanceTask from TypeAliases
     var isCompleted: Bool = false
     let onTap: () -> Void
     
@@ -153,7 +155,7 @@ struct TaskGlassRow: View {
                 
                 // Task info
                 VStack(alignment: .leading, spacing: 4) {
-                    // ✅ FIXED: Use .title instead of .name
+                    // ✅ FIXED: Use .title property from MaintenanceTask
                     Text(task.title)
                         .font(.subheadline)
                         .foregroundColor(.white)
@@ -282,7 +284,7 @@ struct EmptyTasksView: View {
 
 // MARK: - Enhanced Task Row with Priority Indicator
 struct EnhancedTaskGlassRow: View {
-    let task: MaintenanceTask
+    let task: MaintenanceTask  // ✅ FIXED: Use MaintenanceTask from TypeAliases
     var isCompleted: Bool = false
     let onTap: () -> Void
     let onComplete: () -> Void
@@ -317,7 +319,7 @@ struct EnhancedTaskGlassRow: View {
                     // Task info
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            // ✅ FIXED: Use .title instead of .name
+                            // ✅ FIXED: Use .title property from MaintenanceTask
                             Text(task.title)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
@@ -470,7 +472,7 @@ struct TodaysTasksGlassCard_Previews: PreviewProvider {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    // Sample tasks
+                    // Sample tasks - ✅ FIXED: Use MaintenanceTask from TypeAliases
                     let sampleTasks = [
                         MaintenanceTask(
                             title: "HVAC Filter Replacement",
@@ -499,7 +501,7 @@ struct TodaysTasksGlassCard_Previews: PreviewProvider {
                     ]
                     
                     TodaysTasksGlassCard(tasks: sampleTasks) { task in
-                        // ✅ FIXED: Use .title instead of .name
+                        // ✅ FIXED: Use .title property
                         print("Task tapped: \(task.title)")
                     }
                     
