@@ -2,11 +2,11 @@
 //  HeaderV3B.swift
 //  FrancoSphere v6.0 - HYBRID AI APPROACH
 //
+//  ✅ POST-CLEANUP VERSION: Works with single WorkerContextEngineAdapter
 //  ✅ AI FOR EVERYONE: All roles get Nova AI access
 //  ✅ ROLE-AWARE: AI adapts features based on user role and current task
 //  ✅ CONTEXT-INTELLIGENT: AI understands worker location, task, and building
 //  ✅ VISUAL DIFFERENTIATION: AI button appearance reflects role context
-//  ✅ FIXED: Import issues and WorkerContextEngineAdapter access
 //
 
 import SwiftUI
@@ -202,8 +202,6 @@ struct HeaderV3B: View {
     
     private var profileButtonColor: Color {
         guard let worker = contextAdapter.currentWorker else { return .blue.opacity(0.7) }
-        
-        // ✅ FIXED: Use correct worker role property
         return getWorkerRoleColor(worker.role)
     }
     
@@ -218,17 +216,38 @@ struct HeaderV3B: View {
     
     private var enhancedRoleDescription: String {
         guard let worker = contextAdapter.currentWorker else { return "Building Operations" }
-        return worker.role.rawValue.capitalized
+        
+        // Enhanced role descriptions based on worker
+        switch worker.id {
+        case "4": return "Museum & Property Specialist"
+        case "2": return "Park Operations & Maintenance"
+        case "5": return "West Village Buildings"
+        case "6": return "Downtown Maintenance"
+        case "1": return "Building Systems Specialist"
+        case "7": return "Evening Operations"
+        case "8": return "Portfolio Management"
+        default: return worker.role.rawValue.capitalized
+        }
     }
     
     private var clockStatusColor: Color {
-        // Fallback implementation - assume not clocked in for now
-        return .orange
+        // Check if adapter has clock-in info, fallback to showClockPill
+        if let hasClockInProperty = contextAdapter.currentBuilding {
+            return .green
+        } else {
+            return showClockPill ? .green : .orange
+        }
     }
     
     private var clockStatusText: String {
-        // Fallback implementation
-        return "Available"
+        // Check adapter for building info first
+        if let building = contextAdapter.currentBuilding {
+            return "At \(building.name)"
+        } else if showClockPill {
+            return "On Site"
+        } else {
+            return "Available"
+        }
     }
     
     // MARK: - AI Context Properties
@@ -271,19 +290,22 @@ struct HeaderV3B: View {
     
     /// Check if AI has active context (task, location, etc.)
     private var hasActiveContext: Bool {
-        // Active context indicators using available properties
+        // Active context indicators
         let hasCurrentTask = nextTaskName != nil
         let hasBuildings = !contextAdapter.assignedBuildings.isEmpty
+        let hasClockIn = contextAdapter.currentBuilding != nil
         
-        return hasCurrentTask || hasBuildings
+        return hasCurrentTask || hasBuildings || hasClockIn
     }
     
     /// Context indicator color
     private var aiContextColor: Color {
         if nextTaskName != nil {
             return .orange  // Active task
+        } else if contextAdapter.currentBuilding != nil {
+            return .green   // On site
         } else {
-            return .blue    // Available (fallback)
+            return .blue    // Available
         }
     }
 }
@@ -302,6 +324,8 @@ extension HeaderV3B {
         case .worker:
             if let task = nextTaskName {
                 context += "Task assistance for \(task)"
+            } else if contextAdapter.currentBuilding != nil {
+                context += "Field assistance at current location"
             } else {
                 context += "Field assistance & troubleshooting"
             }
@@ -414,31 +438,31 @@ struct HeaderV3B_Previews: PreviewProvider {
     }
 }
 
-// MARK: - AI Integration Notes
+// MARK: - Post-Cleanup Notes
 
 /*
-🎯 HYBRID AI APPROACH IMPLEMENTED:
+🎯 POST-CLEANUP VERSION:
 
-✅ UNIVERSAL ACCESS:
-- All roles get Nova AI button
-- Always visible and accessible
-- No feature restrictions based on role
+✅ SINGLE ADAPTER REFERENCE:
+- Uses WorkerContextEngineAdapter.shared (no duplicates)
+- Proper import statements
+- Clean target membership
 
-🎯 ROLE-BASED CONTEXT:
+✅ DEFENSIVE CODING:
+- Safe property access with nil coalescing
+- Fallback behaviors for missing properties
+- Graceful degradation if adapter isn't fully loaded
+
+✅ ROLE-BASED CONTEXT:
 - Workers: Blue theme, field assistance focus
 - Admins: Green theme, portfolio management
 - Supervisors: Orange theme, team coordination
 - Clients: Purple theme, building insights
 
-🔄 DYNAMIC VISUAL INDICATORS:
-- Context dot shows: Active task (orange), On-site (green), Available (blue)
-- Processing animation colors match role theme
-- Icon adapts to role (tools for workers, charts for admins)
-
-🧠 INTELLIGENT FEATURES:
-- AI context aware of current task, location, building
-- Features adapt to role but everyone gets full access
-- Contextual assistance based on worker's current situation
+🔄 REAL DATA INTEGRATION:
+- Reads from actual WorkerContextEngineAdapter
+- Shows real worker names, roles, buildings
+- Context-aware AI suggestions based on actual data
 
 🚀 FUTURE ENHANCEMENTS:
 - Voice commands for hands-free operation

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		2304D38B2E29E7C300EE16E7 /* NovaAIContextManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */; };
 		2304D3912E29F6DA00EE16E7 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 2304D3902E29F6DA00EE16E7 /* GRDB */; };
-		2304D3932E29FA1D00EE16E7 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2304D3922E29FA1D00EE16E7 /* WorkerContextEngineAdapter.swift */; };
 		2312FC672E1B670800B64496 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC662E1B66F300B64496 /* TypeMigrationService.swift */; };
 		2312FC692E1B70A600B64496 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC682E1B709600B64496 /* DataConsolidationManager.swift */; };
 		2312FC6B2E1B77B400B64496 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2312FC6A2E1B77B400B64496 /* StatCard.swift */; };
@@ -200,7 +199,6 @@
 
 /* Begin PBXFileReference section */
 		2304D38A2E29E7C300EE16E7 /* NovaAIContextManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAIContextManager.swift; sourceTree = "<group>"; };
-		2304D3922E29FA1D00EE16E7 /* WorkerContextEngineAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngineAdapter.swift; sourceTree = "<group>"; };
 		2312FC662E1B66F300B64496 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
 		2312FC682E1B709600B64496 /* DataConsolidationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConsolidationManager.swift; sourceTree = "<group>"; };
 		2312FC6A2E1B77B400B64496 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
@@ -649,7 +647,6 @@
 		234580E92DF78E3D00355F0A /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				2304D3922E29FA1D00EE16E7 /* WorkerContextEngineAdapter.swift */,
 				23148E6D2E285F7300446441 /* WorkerContextEngine+DataFlow.swift */,
 				2374933D2E1C950700D9C70D /* Core */,
 				2312FCC02E1C07E900B64496 /* Enums */,
@@ -1171,7 +1168,6 @@
 				2304D38B2E29E7C300EE16E7 /* NovaAIContextManager.swift in Sources */,
 				234581A12DF78E3D00355F0A /* DatabaseManager.swift in Sources */,
 				23E1E5772E0F51CB0036127D /* DatabaseMigrations.swift in Sources */,
-				2304D3932E29FA1D00EE16E7 /* WorkerContextEngineAdapter.swift in Sources */,
 				23B117A52DFE3A2A0065F39E /* TaskRequestView.swift in Sources */,
 				234581A32DF78E3D00355F0A /* WorkerConstants.swift in Sources */,
 				2312FC882E1BF07700B64496 /* BuildingFeatureConfiguration.swift in Sources */,
