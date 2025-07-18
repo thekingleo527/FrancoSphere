@@ -77,28 +77,6 @@ extension BuildingService {
     // Replace the existing method in your BuildingService+Intelligence.swift
 
     /// Generate portfolio-wide intelligence using existing service methods
-    func generateCoreTypes;.PortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
-        
-        // Use existing getAllBuildings() method
-        let allBuildings = try await getAllBuildings()
-        
-        // Use existing getAllActiveWorkers() method
-        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
-        
-        // Use BuildingMetricsService batch method for multiple buildings
-        let buildingIds = allBuildings.map { $0.id }
-        
-        // FIX: Use calculateBatchMetrics instead of calculateMetrics for array input
-        let allMetrics = try await BuildingMetricsService.shared.calculateBatchMetrics(for: buildingIds)
-        
-        // Calculate portfolio metrics
-        let totalBuildings = allBuildings.count
-        let activeWorkers = allWorkers.count
-        
-        // Calculate overall completion rate
-        let totalCompletionRate = allMetrics.values.reduce(0.0) { sum, metrics in
-            sum + metrics.completionRate
-        }
         let completionRate = totalBuildings > 0 ? totalCompletionRate / Double(totalBuildings) : 1.0
         
         // Count critical issues (overdue + urgent tasks)
@@ -130,25 +108,6 @@ extension BuildingService {
     // If you prefer to call calculateMetrics for each building individually:
 
     /// Generate portfolio-wide intelligence using individual building calculations
-    func generateCoreTypes.PortfolioIntelligenceIndividual() async throws -> CoreTypes.PortfolioIntelligence {
-        
-        // Use existing getAllBuildings() method
-        let allBuildings = try await getAllBuildings()
-        
-        // Use existing getAllActiveWorkers() method
-        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
-        
-        // Calculate metrics for each building individually
-        var allMetrics: [String: CoreTypes.BuildingMetrics] = [:]
-        
-        for building in allBuildings {
-            do {
-                let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
-                allMetrics[building.id] = metrics
-            } catch {
-                print("⚠️ Failed to get metrics for building \(building.id): \(error)")
-                // Continue with other buildings
-            }
         }
         
         // Calculate portfolio metrics
@@ -190,26 +149,6 @@ extension BuildingService {
     // If you want optimal performance with concurrent execution:
 
     /// Generate portfolio-wide intelligence using concurrent building calculations
-    func generateCoreTypes.PortfolioIntelligenceConcurrent() async throws -> CoreTypes.PortfolioIntelligence {
-        
-        // Use existing getAllBuildings() method
-        let allBuildings = try await getAllBuildings()
-        
-        // Use existing getAllActiveWorkers() method
-        let allWorkers = try await WorkerService.shared.getAllActiveWorkers()
-        
-        // Calculate metrics for all buildings concurrently
-        let allMetrics = try await withThrowingTaskGroup(
-            of: (String, CoreTypes.BuildingMetrics).self,
-            returning: [String: CoreTypes.BuildingMetrics].self
-        ) { group in
-            
-            // Add tasks for each building
-            for building in allBuildings {
-                group.addTask {
-                    let metrics = try await BuildingMetricsService.shared.calculateMetrics(for: building.id)
-                    return (building.id, metrics)
-                }
             }
             
             // Collect results

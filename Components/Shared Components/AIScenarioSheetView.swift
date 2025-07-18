@@ -1,3 +1,4 @@
+import CoreTypes
 //
 //  AIScenarioSheetView.swift
 //  FrancoSphere v6.0

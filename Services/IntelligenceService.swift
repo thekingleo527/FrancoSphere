@@ -106,45 +106,6 @@ actor IntelligenceService {
     }
     
     /// Generate portfolio intelligence summary
-    func generateCoreTypes.PortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
-        print("📈 Generating portfolio intelligence summary...")
-        
-        do {
-            let buildingService = BuildingService.shared
-            let taskService = TaskService.shared
-            let workerService = WorkerService.shared
-            
-            let buildings = try await buildingService.getAllBuildings()
-            let allTasks = try await taskService.getAllTasks()
-            let activeWorkers = try await workerService.getAllActiveWorkers()
-            
-            // Calculate portfolio metrics
-            let totalCompletedTasks = allTasks.filter { $0.isCompleted }.count
-            let totalCompletionRate = allTasks.count > 0 ?
-                Double(totalCompletedTasks) / Double(allTasks.count) : 0.85
-            
-            // ✅ FIXED: Calculate criticalIssues (overdue + urgent tasks)
-            let overdueTasks = allTasks.filter { task in
-                guard let dueDate = task.dueDate else { return false }
-                return !task.isCompleted && dueDate < Date()
-            }.count
-            
-            let urgentTasks = allTasks.filter { task in
-                guard let urgency = task.urgency else { return false }
-                return urgency == .critical || urgency == .urgent || urgency == .emergency
-            }.count
-            
-            let criticalIssues = overdueTasks + urgentTasks
-            
-            // ✅ FIXED: Determine monthlyTrend based on completion rate
-            let monthlyTrend: CoreTypes.TrendDirection = {
-                if totalCompletionRate > 0.85 {
-                    return .up
-                } else if totalCompletionRate < 0.6 {
-                    return .declining
-                } else {
-                    return .stable
-                }
             }()
             
             // ✅ FIXED: Use correct CoreTypes.PortfolioIntelligence constructor

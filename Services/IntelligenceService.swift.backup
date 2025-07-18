@@ -537,7 +537,7 @@ actor IntelligenceService {
     }
     
     /// Generate portfolio intelligence from OperationalDataManager
-    private func generateCoreTypes.PortfolioIntelligenceFromOperationalData() async -> CoreTypes.PortfolioIntelligence {
+    private func generateCoreTypes;.PortfolioIntelligenceFromOperationalData() async -> CoreTypes.PortfolioIntelligence {
         let operationalData = OperationalDataManager.shared
         let workerTaskCounts = await operationalData.getWorkerTaskSummary()
         let buildingCoverage = await operationalData.getBuildingCoverage()

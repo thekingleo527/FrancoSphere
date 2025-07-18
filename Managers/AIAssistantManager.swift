@@ -1,3 +1,4 @@
+import CoreTypes
 import Foundation
 // Import Nova Types
 // All Nova types (NovaContext, NovaPrompt, etc.) come from NovaTypes.swift

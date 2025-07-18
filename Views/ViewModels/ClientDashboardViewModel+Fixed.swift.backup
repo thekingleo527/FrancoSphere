@@ -19,7 +19,7 @@ extension ClientDashboardViewModel {
     // MARK: - Enhanced Portfolio Analysis
     
     /// Enhanced portfolio intelligence with operational data integration
-    func loadEnhancedCoreTypes.PortfolioIntelligence() async {
+    func loadEnhancedCoreTypes;.PortfolioIntelligence() async {
         isLoadingInsights = true
         
         do {

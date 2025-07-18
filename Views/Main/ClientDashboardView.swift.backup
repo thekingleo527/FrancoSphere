@@ -469,5 +469,3 @@ struct ComplianceIssueCard: View {
             .cornerRadius(8)
     }
 }
-
-}

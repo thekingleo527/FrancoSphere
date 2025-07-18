@@ -1,3 +1,4 @@
+import CoreTypes
 //
 //  NovaAIContextManager.swift
 //  FrancoSphere
