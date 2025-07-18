@@ -189,27 +189,6 @@ struct IntelligenceInsightsView: View {
 
 // MARK: - Supporting Views
 
-struct InsightCard: View {
-    let insight: CoreTypes.IntelligenceInsight
-    let onTap: () -> Void
-    let onAction: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(insight.title)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .multilineTextAlignment(.leading)
-                        
-                        Text(insight.description)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .lineLimit(3)
-                            .multilineTextAlignment(.leading)
-                    }
                     
                     Spacer()
                     
@@ -227,7 +206,6 @@ struct InsightCard: View {
                             .background(insight.priority.color)
                             .cornerRadius(6)
                     }
-                }
                 
                 if insight.actionRequired {
                     Button(action: onAction) {
@@ -247,13 +225,9 @@ struct InsightCard: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
-            }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        }
         .buttonStyle(PlainButtonStyle())
-    }
-}
 
 struct InsightDetailSheet: View {
     let insight: CoreTypes.IntelligenceInsight

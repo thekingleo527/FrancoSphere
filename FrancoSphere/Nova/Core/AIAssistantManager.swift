@@ -22,7 +22,7 @@ class AIAssistantManager: ObservableObject {
     // MARK: - Published Properties
     @Published var activeScenarios: [AIScenario] = []
     @Published var hasActiveScenarios: Bool = false
-    @Published var suggestions: [AISuggestion] = []
+    @Published var suggestions: [CoreTypes.AISuggestion] = []
     @Published var currentScenario: AIScenario?
     @Published var currentScenarioData: AIScenarioData?
     @Published var isProcessing: Bool = false
@@ -67,7 +67,7 @@ class AIAssistantManager: ObservableObject {
     }
     
     // MARK: - Suggestion Generation
-    private func generateSuggestions(for scenarioType: String) -> [AISuggestion] {
+    private func generateSuggestions(for scenarioType: String) -> [CoreTypes.AISuggestion] {
         switch scenarioType {
         case "routineIncomplete":
             return [
@@ -137,7 +137,7 @@ class AIAssistantManager: ObservableObject {
         }
     }
     
-    private func generateContextualSuggestions(for context: String) -> [AISuggestion] {
+    private func generateContextualSuggestions(for context: String) -> [CoreTypes.AISuggestion] {
         // Simple context-based suggestion generation
         switch context.lowercased() {
         case let ctx where ctx.contains("weather"):

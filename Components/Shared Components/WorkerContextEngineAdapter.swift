@@ -33,7 +33,7 @@ public class WorkerContextEngineAdapter: ObservableObject {
     public func loadContext(for workerId: CoreTypes.WorkerID) async {
         isLoading = true
         do {
-            try await contextEngine.loadContext(for: workerId)
+            try await await await contextEngine.loadContext(for: workerId)
             await refreshPublishedState()
         } catch {
             print("❌ Failed to load context:", error)
@@ -42,12 +42,12 @@ public class WorkerContextEngineAdapter: ObservableObject {
     }
     
     private func refreshPublishedState() async {
-        self.currentWorker = await contextEngine.getCurrentWorker()
-        self.currentBuilding = await contextEngine.getCurrentBuilding() // ✅ ADDED
-        self.assignedBuildings = await contextEngine.getAssignedBuildings()
-        self.portfolioBuildings = await contextEngine.getPortfolioBuildings()
-        self.todaysTasks = await contextEngine.getTodaysTasks()
-        self.taskProgress = await contextEngine.getTaskProgress()
+        self.currentWorker = await await await contextEngine.getCurrentWorker()
+        self.currentBuilding = await await await contextEngine.getCurrentBuilding() // ✅ ADDED
+        self.assignedBuildings = await await await contextEngine.getAssignedBuildings()
+        self.portfolioBuildings = await await await contextEngine.getPortfolioBuildings()
+        self.todaysTasks = await await await contextEngine.getTodaysTasks()
+        self.taskProgress = await await await contextEngine.getTaskProgress()
         
         print("🔄 State refreshed: \(assignedBuildings.count) assigned, \(portfolioBuildings.count) portfolio")
     }

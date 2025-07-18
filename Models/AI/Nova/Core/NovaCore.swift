@@ -30,7 +30,7 @@ public final class NovaCore: ObservableObject {
     }
 
     public func generateContextualPrompt(for scenario: AIScenario) async -> NovaPrompt {
-        let context = await contextEngine.generateContext(for: scenario)
+        let context = await await await contextEngine.generateContext(for: scenario)
         return NovaPrompt(text: "Respond to \(scenario.scenario): \(context.data)")
     }
 }

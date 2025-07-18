@@ -45,13 +45,13 @@ class WorkerDashboardViewModel: ObservableObject {
         
         do {
             // Load context using Actor pattern
-            try await contextEngine.loadContext(for: user.workerId)
+            try await await await contextEngine.loadContext(for: user.workerId)
             
             // Update UI state from Actor
-            self.assignedBuildings = await contextEngine.getAssignedBuildings()
-            self.todaysTasks = await contextEngine.getTodaysTasks()
-            self.isClockedIn = await contextEngine.isWorkerClockedIn()
-            self.currentBuilding = await contextEngine.getCurrentBuilding()
+            self.assignedBuildings = await await await contextEngine.getAssignedBuildings()
+            self.todaysTasks = await await await contextEngine.getTodaysTasks()
+            self.isClockedIn = await await await contextEngine.isWorkerClockedIn()
+            self.currentBuilding = await await await contextEngine.getCurrentBuilding()
             
             // FIXED: Explicit task progress calculation
             await calculateTaskProgress()
@@ -86,13 +86,13 @@ class WorkerDashboardViewModel: ObservableObject {
     
     func refreshData() async {
         do {
-            try await contextEngine.refreshData()
+            try await await await contextEngine.refreshData()
             
             // Update UI state from Actor
-            self.assignedBuildings = await contextEngine.getAssignedBuildings()
-            self.todaysTasks = await contextEngine.getTodaysTasks()
-            self.isClockedIn = await contextEngine.isWorkerClockedIn()
-            self.currentBuilding = await contextEngine.getCurrentBuilding()
+            self.assignedBuildings = await await await contextEngine.getAssignedBuildings()
+            self.todaysTasks = await await await contextEngine.getTodaysTasks()
+            self.isClockedIn = await await await contextEngine.isWorkerClockedIn()
+            self.currentBuilding = await await await contextEngine.getCurrentBuilding()
             
             // Recalculate progress
             await calculateTaskProgress()
@@ -116,7 +116,7 @@ class WorkerDashboardViewModel: ObservableObject {
             
             let buildingId = task.buildingId ?? "unknown"
             
-            try await contextEngine.recordTaskCompletion(
+            try await await await contextEngine.recordTaskCompletion(
                 workerId: user.workerId,
                 buildingId: buildingId,
                 taskId: task.id,
@@ -133,7 +133,7 @@ class WorkerDashboardViewModel: ObservableObject {
     
     func clockIn(at building: NamedCoordinate) async {
         do {
-            try await contextEngine.clockIn(at: building)
+            try await await await contextEngine.clockIn(at: building)
             
             // Update state
             await MainActor.run {
@@ -157,7 +157,7 @@ class WorkerDashboardViewModel: ObservableObject {
     
     func clockOut() async {
         do {
-            try await contextEngine.clockOut()
+            try await await await contextEngine.clockOut()
             
             // Update state
             self.isClockedIn = false

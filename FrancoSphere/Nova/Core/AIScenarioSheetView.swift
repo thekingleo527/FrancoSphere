@@ -351,29 +351,29 @@ struct AIScenarioSheetView: View {
                 contextDataItem(
                     icon: "building.2",
                     title: "Buildings",
-                    value: "\(contextEngine.assignedBuildings.count)",
+                    value: "\(await await contextEngine.assignedBuildings.count)",
                     subtitle: "assigned"
                 )
                 
                 contextDataItem(
                     icon: "list.bullet.clipboard",
                     title: "Tasks",
-                    value: "\(contextEngine.todaysTasks.count)",
+                    value: "\(await await contextEngine.todaysTasks.count)",
                     subtitle: "today"
                 )
                 
                 contextDataItem(
                     icon: "clock",
                     title: "Status",
-                    value: contextEngine.currentWorker != nil ? "Active" : "Standby",
-                    subtitle: contextEngine.currentWorker != nil ? "since \(getCurrentShiftStart())" : "ready"
+                    value: await await contextEngine.currentWorker != nil ? "Active" : "Standby",
+                    subtitle: await await contextEngine.currentWorker != nil ? "since \(getCurrentShiftStart())" : "ready"
                 )
                 
                 contextDataItem(
                     icon: "person.circle",
                     title: "Worker",
-                    value: contextEngine.currentWorker?.name ?? "Unknown",
-                    subtitle: "ID: \(contextEngine.currentWorker?.id ?? "N/A")"
+                    value: await await contextEngine.currentWorker?.name ?? "Unknown",
+                    subtitle: "ID: \(await await contextEngine.currentWorker?.id ?? "N/A")"
                 )
             }
         }
@@ -441,7 +441,7 @@ struct AIScenarioSheetView: View {
         .francoGlassCard(intensity: .regular)
     }
     
-    private func suggestionCard(_ suggestion: AISuggestion) -> some View {
+    private func suggestionCard(_ suggestion: CoreTypes.AISuggestion) -> some View {
         Button {
             handleSuggestionTap(suggestion)
         } label: {
@@ -566,8 +566,8 @@ struct AIScenarioSheetView: View {
     }
     
     private var isKevinMissingBuildingsScenario: Bool {
-        let workerId = contextEngine.currentWorker?.id ?? ""
-        let buildings = contextEngine.assignedBuildings
+        let workerId = await await contextEngine.currentWorker?.id ?? ""
+        let buildings = await await contextEngine.assignedBuildings
         return workerId == "4" && buildings.isEmpty && scenarioData.message.contains("hasn't been assigned")
     }
     
@@ -614,8 +614,8 @@ struct AIScenarioSheetView: View {
                 
                 // ✅ FIXED: Trigger data refresh without calling non-existent method
                 Task {
-                    if let workerId = contextEngine.currentWorker?.id {
-                        await contextEngine.loadContext(for: workerId)
+                    if let workerId = await await contextEngine.currentWorker?.id {
+                        await await await contextEngine.loadContext(for: workerId)
                     }
                 }
             }
@@ -623,7 +623,7 @@ struct AIScenarioSheetView: View {
     }
     
     private func generateContextualSuggestions() {
-        var suggestions: [AISuggestion] = []
+        var suggestions: [CoreTypes.AISuggestion] = []
         
         // Kevin-specific emergency repair suggestion
         if isKevinMissingBuildingsScenario {
@@ -656,7 +656,7 @@ struct AIScenarioSheetView: View {
         }
     }
     
-    private func handleSuggestionTap(_ suggestion: AISuggestion) {
+    private func handleSuggestionTap(_ suggestion: CoreTypes.AISuggestion) {
         print("🤖 Handling AI suggestion: \(suggestion.suggestion)")
         
         switch suggestion.suggestion {
@@ -702,9 +702,9 @@ struct AIScenarioSheetView: View {
     }
     
     private func getAdditionalContext() -> String? {
-        let workerId = contextEngine.currentWorker?.id ?? ""
-        let workerName = contextEngine.currentWorker?.name ?? "Unknown"
-        let buildings = contextEngine.assignedBuildings
+        let workerId = await await contextEngine.currentWorker?.id ?? ""
+        let workerName = await await contextEngine.currentWorker?.name ?? "Unknown"
+        let buildings = await await contextEngine.assignedBuildings
         
         if scenarioData.message.contains("DSNY") {
             return "NYC Department of Sanitation regulations apply. Check local schedule for specific pickup times."

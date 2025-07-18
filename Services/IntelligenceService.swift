@@ -106,7 +106,7 @@ actor IntelligenceService {
     }
     
     /// Generate portfolio intelligence summary
-    func generateCoreTypes.PortfolioIntelligence() async throws -> CoreTypes.CoreTypes.PortfolioIntelligence {
+    func generateCoreTypes.PortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
         print("📈 Generating portfolio intelligence summary...")
         
         do {
@@ -139,7 +139,7 @@ actor IntelligenceService {
             // ✅ FIXED: Determine monthlyTrend based on completion rate
             let monthlyTrend: CoreTypes.TrendDirection = {
                 if totalCompletionRate > 0.85 {
-                    return .improving
+                    return .up
                 } else if totalCompletionRate < 0.6 {
                     return .declining
                 } else {
@@ -148,7 +148,7 @@ actor IntelligenceService {
             }()
             
             // ✅ FIXED: Use correct CoreTypes.PortfolioIntelligence constructor
-            return CoreTypes.CoreTypes.PortfolioIntelligence(
+            return CoreTypes.PortfolioIntelligence(
                 totalBuildings: buildings.count,
                 activeWorkers: activeWorkers.count,
                 completionRate: totalCompletionRate,
@@ -537,12 +537,12 @@ actor IntelligenceService {
     }
     
     /// Generate portfolio intelligence from OperationalDataManager
-    private func generateCoreTypes.PortfolioIntelligenceFromOperationalData() async -> CoreTypes.CoreTypes.PortfolioIntelligence {
+    private func generateCoreTypes;.PortfolioIntelligenceFromOperationalData() async -> CoreTypes.PortfolioIntelligence {
         let operationalData = OperationalDataManager.shared
         let workerTaskCounts = await operationalData.getWorkerTaskSummary()
         let buildingCoverage = await operationalData.getBuildingCoverage()
         
-        return CoreTypes.CoreTypes.PortfolioIntelligence(
+        return CoreTypes.PortfolioIntelligence(
             totalBuildings: buildingCoverage.keys.count,
             activeWorkers: workerTaskCounts.keys.count,
             completionRate: 0.85, // Estimated

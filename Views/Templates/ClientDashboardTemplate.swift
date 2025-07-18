@@ -64,7 +64,7 @@ struct ClientDashboardTemplate: View {
 // MARK: - Supporting Views (Fixed Type Signatures)
 
 struct BuildingIntelligenceListView: View {
-    let intelligence: CoreTypes.CoreTypes.PortfolioIntelligence?
+    let intelligence: CoreTypes.PortfolioIntelligence?
     
     var body: some View {
         VStack(spacing: 16) {
@@ -130,7 +130,7 @@ struct BuildingIntelligenceListView: View {
         case .up: return "arrow.up.circle.fill"
         case .down: return "arrow.down.circle.fill"
         case .stable: return "minus.circle.fill"
-        case .improving: return "arrow.up.right.circle.fill"
+        case .up: return "arrow.up.right.circle.fill"
         case .declining: return "arrow.down.right.circle.fill"
         case .unknown: return "questionmark.circle.fill"
         }
@@ -139,7 +139,7 @@ struct BuildingIntelligenceListView: View {
     // FIXED: Exhaustive switch for TrendDirection
     private func trendColor(for trend: CoreTypes.TrendDirection) -> Color {
         switch trend {
-        case .up, .improving: return .green
+        case .up, .up: return .green
         case .down, .declining: return .red
         case .stable: return .orange
         case .unknown: return .gray

@@ -30,11 +30,11 @@ struct ProfileView: View {
     
     // ✅ FIXED: Proper UserRole enum handling
     private var currentWorkerRole: String {
-        return contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
+        return await await contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
     }
     
     private var currentWorkerEmail: String? {
-        return contextEngine.currentWorker?.email
+        return await await contextEngine.currentWorker?.email
     }
     
     var body: some View {
@@ -197,7 +197,7 @@ struct ProfileView: View {
                 ProfileInfoRow(
                     icon: "building.2.fill",
                     label: "Assigned Buildings",
-                    value: "\(contextEngine.assignedBuildings.count)"
+                    value: "\(await await contextEngine.assignedBuildings.count)"
                 )
                 
                 ProfileInfoRow(
@@ -223,7 +223,7 @@ struct ProfileView: View {
                 HStack(spacing: 16) {
                     ProfileStatCard(
                         title: "Tasks Today",
-                        value: "\(contextEngine.todaysTasks.count)",
+                        value: "\(await await contextEngine.todaysTasks.count)",
                         color: .blue
                     )
                     
@@ -365,25 +365,25 @@ struct ProfileView: View {
     // ✅ FIXED: Proper async refresh method
     private func refreshContextData() async {
         guard let workerId = authManager.workerId else { return }
-        await contextEngine.loadContext(for: workerId)
+        await await await contextEngine.loadContext(for: workerId)
     }
     
     // ✅ FIXED: Helper methods using correct property access
     private func getPendingTasksCount() -> Int {
-        return contextEngine.todaysTasks.filter { task in
+        return await await contextEngine.todaysTasks.filter { task in
             task.status == "pending" || !task.isCompleted
         }.count
     }
     
     private func getCompletedTasksCount() -> Int {
-        return contextEngine.todaysTasks.filter { task in
+        return await await contextEngine.todaysTasks.filter { task in
             task.status == "completed" || task.isCompleted
         }.count
     }
     
     // ✅ FIXED: Proper urgency calculation with nil handling
     private func getUrgentTasksCount() -> Int {
-        return contextEngine.todaysTasks.filter { task in
+        return await await contextEngine.todaysTasks.filter { task in
             guard let urgency = task.urgency else { return false }
             return urgency == .high || urgency == .critical
         }.count

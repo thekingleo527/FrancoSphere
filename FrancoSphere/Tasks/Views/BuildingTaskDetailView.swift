@@ -11,7 +11,7 @@ import SwiftUI
 //
 
 // Add extensions for compatibility
-extension WorkerSkill {
+extension CoreTypes.WorkerSkill {
     var levelStars: String {
         return "★★★" // Default 3 stars
     }
@@ -32,7 +32,7 @@ struct BuildingTaskDetailView: View {
     @State private var selectedWorkers: [String] = []
     @State private var showingCompletionDialog = false
     @State private var isEditingTask = false
-    @State private var requiredSkills: [WorkerSkill] = []
+    @State private var requiredSkills: [CoreTypes.WorkerSkill] = []
     @State private var availableInventory: [InventoryItem] = []
     @State private var selectedInventoryItems: [String: Int] = [:]
     @State private var showInventoryPicker = false
@@ -605,8 +605,8 @@ struct BuildingTaskDetailView: View {
     }
     
     private func loadRequiredSkills() {
-        // ✅ FIXED: Use actual WorkerSkill enum cases from CoreTypes
-        let skillForCategory: WorkerSkill
+        // ✅ FIXED: Use actual CoreTypes.WorkerSkill enum cases from CoreTypes
+        let skillForCategory: CoreTypes.WorkerSkill
         switch task.category {
         case .cleaning: skillForCategory = .cleaning
         case .maintenance: skillForCategory = .plumbing // Generic maintenance skill

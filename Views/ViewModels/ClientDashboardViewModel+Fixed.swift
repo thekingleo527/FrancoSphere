@@ -19,12 +19,12 @@ extension ClientDashboardViewModel {
     // MARK: - Enhanced Portfolio Analysis
     
     /// Enhanced portfolio intelligence with operational data integration
-    func loadEnhancedPortfolioIntelligence() async {
+    func loadEnhancedCoreTypes;.PortfolioIntelligence() async {
         isLoadingInsights = true
         
         do {
             // Use existing public intelligenceService
-            let intelligence = try await IntelligenceService.shared.generatePortfolioIntelligence()
+            let intelligence = try await IntelligenceService.shared.generateCoreTypes.PortfolioIntelligence()
             let insights = try await IntelligenceService.shared.generatePortfolioInsights()
             
             self.portfolioIntelligence = intelligence
@@ -277,7 +277,7 @@ extension ClientDashboardViewModel {
     func loadAllEnhancedData() async {
         isLoading = true
         
-        async let intelligence = loadEnhancedPortfolioIntelligence()
+        async let intelligence = loadEnhancedCoreTypes.PortfolioIntelligence()
         async let metrics = loadEnhancedBuildingMetrics()
         async let compliance = loadEnhancedComplianceAnalysis()
         async let distribution = loadEnhancedWorkerDistribution()
