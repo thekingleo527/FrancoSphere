@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  ClientDashboardTemplate.swift
 //  FrancoSphere

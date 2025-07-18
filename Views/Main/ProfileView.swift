@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  ProfileView.swift
 //  FrancoSphere

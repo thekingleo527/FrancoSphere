@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  WeatherAlert.swift
 //  FrancoSphere

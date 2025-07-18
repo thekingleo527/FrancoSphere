@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  WeatherViewModifier.swift
 //  FrancoSphere

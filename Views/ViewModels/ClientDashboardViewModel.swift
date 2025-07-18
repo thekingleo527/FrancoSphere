@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0

@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  PortfolioOverviewView.swift
 //  FrancoSphere
