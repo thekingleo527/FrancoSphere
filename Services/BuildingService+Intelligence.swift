@@ -108,7 +108,6 @@ extension BuildingService {
     // If you prefer to call calculateMetrics for each building individually:
 
     /// Generate portfolio-wide intelligence using individual building calculations
-        }
         
         // Calculate portfolio metrics
         let totalBuildings = allBuildings.count
@@ -143,13 +142,11 @@ extension BuildingService {
             criticalIssues: criticalIssues,
             monthlyTrend: monthlyTrend
         )
-    }
 
     // MARK: - Concurrent Version for Better Performance
     // If you want optimal performance with concurrent execution:
 
     /// Generate portfolio-wide intelligence using concurrent building calculations
-            }
             
             // Collect results
             var results: [String: CoreTypes.BuildingMetrics] = [:]
@@ -157,7 +154,6 @@ extension BuildingService {
                 results[buildingId] = metrics
             }
             return results
-        }
         
         // Calculate portfolio metrics
         let totalBuildings = allBuildings.count
@@ -192,7 +188,6 @@ extension BuildingService {
             criticalIssues: criticalIssues,
             monthlyTrend: monthlyTrend
         )
-    }
     
     /// Get building efficiency trend using BuildingMetricsService
     func getBuildingEfficiencyTrend(for buildingId: String) async throws -> CoreTypes.TrendDirection {
@@ -287,7 +282,6 @@ extension BuildingService {
             lastUpdated: Date()
         )
     }
-}
 
 // MARK: - BuildingMetrics Helper Extensions
 

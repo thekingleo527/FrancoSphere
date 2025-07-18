@@ -633,3 +633,134 @@ extension CoreTypes.InsightPriority {
     // Note: priorityValue is already implemented in CoreTypes.swift
     // This extension is kept for compatibility but uses the existing implementation
 }
+extension IntelligenceService {
+    
+    // MARK: - Nova AI Integration
+    
+    /// Get AI-powered insights for a building
+    func getAIInsights(for buildingId: String) async throws -> [CoreTypes.IntelligenceInsight] {
+        // Get building context
+        let building = try await buildingService.getBuilding(id: buildingId)
+        let tasks = try await taskService.getActiveTasks(for: buildingId)
+        let workers = try await workerService.getAssignedWorkers(for: buildingId)
+        let metrics = try await buildingMetricsService.getBuildingMetrics(for: buildingId)
+        
+        // Create Nova AI context
+        let context = NovaAIContext(
+            building: building,
+            activeTasks: tasks,
+            assignedWorkers: workers,
+            currentMetrics: metrics,
+            weatherData: try await weatherService.getCurrentWeather(),
+            lastUpdated: Date()
+        )
+        
+        // Get AI analysis
+        let novaInsights = try await NovaAIContextFramework.shared.analyzeContext(context)
+        
+        // Convert to IntelligenceInsight format
+        return novaInsights.recommendations.map { recommendation in
+            CoreTypes.IntelligenceInsight(
+                id: UUID().uuidString,
+                type: mapRecommendationType(recommendation.type),
+                priority: mapPriority(recommendation.priority),
+                title: recommendation.title,
+                description: recommendation.description,
+                affectedArea: recommendation.affectedArea,
+                potentialImpact: recommendation.impact,
+                suggestedAction: recommendation.suggestedAction,
+                estimatedSavings: recommendation.estimatedSavings,
+                dataPoints: recommendation.supportingData,
+                createdAt: Date()
+            )
+        }
+    }
+    
+    /// Generate real-time suggestions
+    func getAISuggestions(for scenario: String, buildingId: String) async throws -> [CoreTypes.AISuggestion] {
+        let context = try await gatherBuildingContext(buildingId)
+        let suggestions = try await NovaAIContextFramework.shared.generateSuggestions(
+            for: scenario,
+            context: context
+        )
+        
+        return suggestions.map { suggestion in
+            CoreTypes.AISuggestion(
+                id: UUID().uuidString,
+                title: suggestion.title,
+                description: suggestion.description,
+                priority: mapAIPriority(suggestion.priority),
+                category: suggestion.category,
+                estimatedImpact: suggestion.estimatedImpact,
+                implementationSteps: suggestion.steps,
+                requiredResources: suggestion.resources
+            )
+        }
+    }
+    
+    private func mapRecommendationType(_ type: NovaAIRecommendationType) -> CoreTypes.InsightType {
+        switch type {
+        case .maintenance: return .maintenance
+        case .efficiency: return .efficiency
+        case .safety: return .safety
+        case .cost: return .costSaving
+        case .compliance: return .compliance
+        default: return .general
+        }
+    }
+    
+    private func mapPriority(_ priority: NovaAIPriority) -> CoreTypes.InsightPriority {
+        switch priority {
+        case .critical: return .critical
+        case .high: return .high
+        case .medium: return .medium
+        case .low: return .low
+        }
+    }
+}
+
+// FILE: Components/Intelligence/BuildingIntelligencePanel.swift
+// FIX: Wire up the AI buttons
+
+extension BuildingIntelligencePanel {
+    
+    private func handleAIAction(_ action: String) {
+        Task {
+            isProcessingAI = true
+            
+            do {
+                let insights = try await IntelligenceService.shared.getAIInsights(
+                    for: building.id
+                )
+                
+                await MainActor.run {
+                    self.aiInsights = insights
+                    self.showAIResults = true
+                }
+                
+            } catch {
+                print("❌ AI action failed: \(error)")
+            }
+            
+            isProcessingAI = false
+        }
+    }
+    
+    private func loadAISuggestions() {
+        Task {
+            do {
+                let suggestions = try await IntelligenceService.shared.getAISuggestions(
+                    for: currentScenario,
+                    buildingId: building.id
+                )
+                
+                await MainActor.run {
+                    self.aiSuggestions = suggestions
+                }
+                
+            } catch {
+                print("❌ Failed to load AI suggestions: \(error)")
+            }
+        }
+    }
+}

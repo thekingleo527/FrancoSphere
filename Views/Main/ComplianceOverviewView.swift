@@ -1,56 +1,14 @@
-import CoreTypes
-import Foundation
-import SwiftUI
-
 //
 //  ComplianceOverviewView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Complete Client Dashboard compliance component
-//  ✅ CORRECTED: All property access issues with CoreTypes.PortfolioIntelligence
-//  ✅ ALIGNED: With actual CoreTypes structure
-//  ✅ RESOLVED: All compilation errors
+//  ✅ FIXED: Removed incorrect CoreTypes module import
+//  ✅ FIXED: All type references updated to use proper CoreTypes namespace
+//  ✅ ALIGNED: With actual CoreTypes structure and project organization
 //
 
-// MARK: - Supporting Data Models (ADDED - Were Missing)
-
-public enum ComplianceIssueType: String, Codable, CaseIterable, Hashable {
-    case maintenanceOverdue = "Maintenance Overdue"
-    case safetyViolation = "Safety Violation"
-    case documentationMissing = "Documentation Missing"
-    case inspectionRequired = "Inspection Required"
-    case certificateExpired = "Certificate Expired"
-    case permitRequired = "Permit Required"
-    
-    public var icon: String {
-        switch self {
-        case .maintenanceOverdue: return "wrench.and.screwdriver"
-        case .safetyViolation: return "exclamationmark.shield"
-        case .documentationMissing: return "doc.badge.exclamationmark"
-        case .inspectionRequired: return "magnifyingglass"
-        case .certificateExpired: return "doc.badge.clock"
-        case .permitRequired: return "doc.badge.plus"
-        }
-    }
-}
-
-public enum ComplianceSeverity: String, Codable, CaseIterable, Hashable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case critical = "Critical"
-    
-    public var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        }
-    }
-}
-
-// MARK: - ComplianceOverviewView
+import Foundation
+import SwiftUI
 
 struct ComplianceOverviewView: View {
     let intelligence: CoreTypes.PortfolioIntelligence?
@@ -58,7 +16,7 @@ struct ComplianceOverviewView: View {
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
     
-    @State private var selectedTab: ComplianceTab = .overview
+    @State private var selectedTab: CoreTypes.ComplianceTab = .overview
     @State private var showingIssueDetail: ComplianceIssue?
     @State private var showingAuditScheduler = false
     @State private var showingExportOptions = false
@@ -142,7 +100,6 @@ struct ComplianceOverviewView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    // FIXED: Use complianceScore instead of overallScore
                     Text("\(compliance.complianceScore)%")
                         .font(.largeTitle)
                         .fontWeight(.bold)
@@ -151,9 +108,7 @@ struct ComplianceOverviewView: View {
                 
                 Spacer()
                 
-                // Compliance Status Icon
                 VStack {
-                    // FIXED: Use complianceScore instead of overallScore
                     Image(systemName: complianceStatusIcon(Double(compliance.complianceScore)))
                         .font(.system(size: 32))
                         .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
@@ -165,7 +120,6 @@ struct ComplianceOverviewView: View {
                 }
             }
             
-            // Progress Bar - FIXED: Simplified to avoid complex expression
             progressBarSection(for: compliance)
         }
         .padding()
@@ -176,7 +130,6 @@ struct ComplianceOverviewView: View {
         )
     }
     
-    // FIXED: Separated progress bar to avoid complex expression
     private func progressBarSection(for compliance: CoreTypes.PortfolioIntelligence) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -186,7 +139,6 @@ struct ComplianceOverviewView: View {
                 
                 Spacer()
                 
-                // FIXED: Calculate compliant buildings from available data
                 let compliantBuildings = calculateCompliantBuildings(compliance)
                 Text("\(compliantBuildings)/\(compliance.totalBuildings)")
                     .font(.caption)
@@ -231,7 +183,7 @@ struct ComplianceOverviewView: View {
     private var tabSelectorSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
-                ForEach(ComplianceTab.allCases, id: \.self) { tab in
+                ForEach(CoreTypes.ComplianceTab.allCases, id: \.self) { tab in
                     Button(action: {
                         withAnimation(Animation.easeInOut(duration: 0.3)) {
                             selectedTab = tab
@@ -242,11 +194,10 @@ struct ComplianceOverviewView: View {
                                 Image(systemName: tab.icon)
                                     .font(.caption)
                                 
-                                Text(tab.title)
+                                Text(tab.displayName)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                 
-                                // FIXED: Use criticalIssues instead of criticalIssues.isEmpty
                                 if tab == .issues, let intelligence = intelligence, intelligence.criticalIssues > 0 {
                                     Text("\(intelligence.criticalIssues)")
                                         .font(.caption2)
@@ -299,18 +250,13 @@ struct ComplianceOverviewView: View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 if let intelligence = intelligence {
-                    // Quick Stats
                     quickStatsSection(for: intelligence)
                     
-                    // Critical Issues Summary
                     if intelligence.criticalIssues > 0 {
                         criticalIssuesSummary(for: intelligence)
                     }
                     
-                    // Audit Timeline
                     auditTimelineSection(for: intelligence)
-                    
-                    // Compliance Trends
                     complianceTrendsSection
                 } else {
                     loadingView
@@ -332,7 +278,6 @@ struct ComplianceOverviewView: View {
             ], spacing: 12) {
                 QuickStatCard(
                     title: "Pending Actions",
-                    // FIXED: Use criticalIssues instead of pendingActions
                     value: "\(compliance.criticalIssues)",
                     icon: "hourglass",
                     color: compliance.criticalIssues > 0 ? .orange : .green
@@ -340,7 +285,6 @@ struct ComplianceOverviewView: View {
                 
                 QuickStatCard(
                     title: "Critical Issues",
-                    // FIXED: Use criticalIssues directly instead of .count
                     value: "\(compliance.criticalIssues)",
                     icon: "exclamationmark.triangle",
                     color: compliance.criticalIssues == 0 ? .green : .red
@@ -348,7 +292,6 @@ struct ComplianceOverviewView: View {
                 
                 QuickStatCard(
                     title: "Compliance Rate",
-                    // FIXED: Use complianceScore instead of compliancePercentage
                     value: "\(compliance.complianceScore)%",
                     icon: "checkmark.shield",
                     color: complianceScoreColor(Double(compliance.complianceScore))
@@ -372,7 +315,6 @@ struct ComplianceOverviewView: View {
                 .foregroundColor(.blue)
             }
             
-            // FIXED: Create mock issues since we don't have actual issue objects
             let mockIssues = createMockIssues(count: compliance.criticalIssues)
             ForEach(Array(mockIssues.prefix(3)), id: \.id) { issue in
                 CriticalIssueRow(
@@ -401,7 +343,6 @@ struct ComplianceOverviewView: View {
                 .font(.headline)
             
             VStack(spacing: 12) {
-                // FIXED: Create mock dates since lastAuditDate doesn't exist
                 let lastAudit = Calendar.current.date(byAdding: .day, value: -30, to: Date())
                 let nextAudit = Calendar.current.date(byAdding: .day, value: 30, to: Date())
                 
@@ -433,7 +374,6 @@ struct ComplianceOverviewView: View {
             Text("Compliance Trends")
                 .font(.headline)
             
-            // Placeholder for trend chart
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.gray.opacity(0.2))
                 .frame(height: 120)
@@ -519,10 +459,7 @@ struct ComplianceOverviewView: View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 if let intelligence = intelligence {
-                    // Upcoming Audits
                     upcomingAuditsSection(for: intelligence)
-                    
-                    // Audit History
                     auditHistorySection(for: intelligence)
                 } else {
                     loadingView
@@ -547,7 +484,6 @@ struct ComplianceOverviewView: View {
                 .foregroundColor(.blue)
             }
             
-            // FIXED: Create mock next audit date
             let nextAudit = Calendar.current.date(byAdding: .day, value: 30, to: Date())
             if let nextAudit = nextAudit {
                 UpcomingAuditCard(
@@ -572,7 +508,6 @@ struct ComplianceOverviewView: View {
             Text("Audit History")
                 .font(.headline)
             
-            // FIXED: Create mock last audit date
             let lastAudit = Calendar.current.date(byAdding: .day, value: -30, to: Date())
             if let lastAudit = lastAudit {
                 AuditHistoryCard(
@@ -596,10 +531,7 @@ struct ComplianceOverviewView: View {
     private var reportsTabContent: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
-                // Available Reports
                 availableReportsSection
-                
-                // Report Templates
                 reportTemplatesSection
             }
             .padding()
@@ -672,9 +604,7 @@ struct ComplianceOverviewView: View {
         Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
     }
     
-    // FIXED: Helper functions for missing data
     private func calculateCompliantBuildings(_ intelligence: CoreTypes.PortfolioIntelligence) -> Int {
-        // Estimate compliant buildings based on compliance score
         let percentage = Double(intelligence.complianceScore) / 100.0
         return Int(Double(intelligence.totalBuildings) * percentage)
     }
@@ -697,7 +627,6 @@ struct ComplianceOverviewView: View {
         let issueTypes: [CoreTypes.ComplianceIssueType] = [.maintenanceOverdue, .safetyViolation, .inspectionRequired]
         
         for i in 0..<count {
-            // FIXED: Use correct ComplianceIssue constructor with ComplianceIssueType
             let issue = ComplianceIssue(
                 type: issueTypes[i % issueTypes.count],
                 severity: .high,
@@ -748,7 +677,6 @@ struct CriticalIssueRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                // FIXED: Use type.icon directly instead of helper function
                 Image(systemName: issue.type.icon)
                     .font(.title3)
                     .foregroundColor(issue.severity.color)
@@ -791,10 +719,60 @@ struct CriticalIssueRow: View {
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
     }
+}
+
+struct ComplianceIssueCard: View {
+    let issue: ComplianceIssue
+    let onTap: () -> Void
     
-    // FIXED: Helper to get icon for ComplianceIssueType instead of ComplianceStatus
-    private func getIssueIcon(_ issueType: CoreTypes.ComplianceIssueType) -> String {
-        return issueType.icon
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: issue.type.icon)
+                        .font(.title3)
+                        .foregroundColor(issue.severity.color)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(issue.type.rawValue)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                        
+                        Text("Building \(issue.buildingId)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    SeverityBadge(severity: issue.severity)
+                }
+                
+                Text(issue.description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                
+                if let dueDate = issue.dueDate {
+                    HStack {
+                        Text("Due:")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        
+                        Text(dueDate.formatted(date: .abbreviated, time: .omitted))
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                    }
+                }
+            }
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -864,7 +842,6 @@ struct AuditTimelineItem: View {
         }
     }
 }
-
 
 struct UpcomingAuditCard: View {
     let date: Date
@@ -1037,10 +1014,8 @@ struct ComplianceIssueDetailSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Issue Header
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            // FIXED: Use type instead of issueType
                             Text(issue.type.rawValue)
                                 .font(.title2)
                                 .fontWeight(.bold)
@@ -1057,7 +1032,6 @@ struct ComplianceIssueDetailSheet: View {
                     
                     Divider()
                     
-                    // Issue Details
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Description")
                             .font(.headline)
@@ -1186,7 +1160,6 @@ struct ComplianceExportSheet: View {
 
 // MARK: - Supporting Enums
 
-
 enum AuditStatus: String, CaseIterable {
     case scheduled = "Scheduled"
     case inProgress = "In Progress"
@@ -1236,6 +1209,25 @@ enum ReportType: String, CaseIterable {
         case .issues: return "doc.badge.exclamationmark"
         case .performance: return "chart.bar.doc.horizontal"
         }
+    }
+}
+
+// MARK: - ComplianceIssue Type Definition
+
+struct ComplianceIssue: Identifiable {
+    let id = UUID()
+    let type: CoreTypes.ComplianceIssueType
+    let severity: CoreTypes.ComplianceSeverity
+    let description: String
+    let buildingId: String
+    let dueDate: Date?
+    
+    init(type: CoreTypes.ComplianceIssueType, severity: CoreTypes.ComplianceSeverity, description: String, buildingId: String, dueDate: Date? = nil) {
+        self.type = type
+        self.severity = severity
+        self.description = description
+        self.buildingId = buildingId
+        self.dueDate = dueDate
     }
 }
 
