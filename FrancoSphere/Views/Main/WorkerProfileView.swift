@@ -98,7 +98,7 @@ struct ProfileHeaderView: View {
     }
 }
 
-struct CoreTypes.PerformanceMetricsView: View {
+struct PerformanceMetricsView: View {
     let metrics: CoreTypes.PerformanceMetrics
     
     var body: some View {

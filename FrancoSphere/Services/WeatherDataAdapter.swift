@@ -55,7 +55,7 @@ enum WeatherError: LocalizedError {
 // MARK: - Weather Data Adapter (Final Version)
 
 @MainActor
-class CoreTypes.WeatherDataAdapter: ObservableObject {
+class WeatherDataAdapter: ObservableObject {
     static let shared = CoreTypes.WeatherDataAdapter()
     
     @Published var currentWeather: CoreTypes.WeatherData?
