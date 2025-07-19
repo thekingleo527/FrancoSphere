@@ -11,7 +11,6 @@ import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 public enum FrancoSphereColors {
     // Primary backgrounds
     static let primaryBackground = Color(red: 0.07, green: 0.07, blue: 0.10)  // #121219

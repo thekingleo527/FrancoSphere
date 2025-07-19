@@ -1,23 +1,6 @@
 import Foundation
 
 // Type aliases for CoreTypes
-typealias MaintenanceTask = CoreTypes.MaintenanceTask
-typealias TaskCategory = CoreTypes.TaskCategory
-typealias TaskUrgency = CoreTypes.TaskUrgency
-typealias BuildingType = CoreTypes.BuildingType
-typealias BuildingTab = CoreTypes.BuildingTab
-typealias WeatherCondition = CoreTypes.WeatherCondition
-typealias BuildingMetrics = CoreTypes.BuildingMetrics
-typealias TaskProgress = CoreTypes.TaskProgress
-typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
-typealias InventoryItem = CoreTypes.InventoryItem
-typealias InventoryCategory = CoreTypes.InventoryCategory
-typealias RestockStatus = CoreTypes.RestockStatus
-typealias ComplianceStatus = CoreTypes.ComplianceStatus
-typealias BuildingStatistics = CoreTypes.BuildingStatistics
-typealias WorkerSkill = CoreTypes.WorkerSkill
-typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
-typealias ComplianceIssue = CoreTypes.ComplianceIssue
 
 // FrancoSphere Types Import
 // (This comment helps identify our import)
@@ -25,23 +8,6 @@ typealias ComplianceIssue = CoreTypes.ComplianceIssue
 import SwiftUI
 
 // Type aliases for CoreTypes
-typealias MaintenanceTask = CoreTypes.MaintenanceTask
-typealias TaskCategory = CoreTypes.TaskCategory
-typealias TaskUrgency = CoreTypes.TaskUrgency
-typealias BuildingType = CoreTypes.BuildingType
-typealias BuildingTab = CoreTypes.BuildingTab
-typealias WeatherCondition = CoreTypes.WeatherCondition
-typealias BuildingMetrics = CoreTypes.BuildingMetrics
-typealias TaskProgress = CoreTypes.TaskProgress
-typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
-typealias InventoryItem = CoreTypes.InventoryItem
-typealias InventoryCategory = CoreTypes.InventoryCategory
-typealias RestockStatus = CoreTypes.RestockStatus
-typealias ComplianceStatus = CoreTypes.ComplianceStatus
-typealias BuildingStatistics = CoreTypes.BuildingStatistics
-typealias WorkerSkill = CoreTypes.WorkerSkill
-typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
-typealias ComplianceIssue = CoreTypes.ComplianceIssue
 
 // FrancoSphere Types Import
 // (This comment helps identify our import)
@@ -49,23 +15,6 @@ typealias ComplianceIssue = CoreTypes.ComplianceIssue
 import Foundation
 
 // Type aliases for CoreTypes
-typealias MaintenanceTask = CoreTypes.MaintenanceTask
-typealias TaskCategory = CoreTypes.TaskCategory
-typealias TaskUrgency = CoreTypes.TaskUrgency
-typealias BuildingType = CoreTypes.BuildingType
-typealias BuildingTab = CoreTypes.BuildingTab
-typealias WeatherCondition = CoreTypes.WeatherCondition
-typealias BuildingMetrics = CoreTypes.BuildingMetrics
-typealias TaskProgress = CoreTypes.TaskProgress
-typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
-typealias InventoryItem = CoreTypes.InventoryItem
-typealias InventoryCategory = CoreTypes.InventoryCategory
-typealias RestockStatus = CoreTypes.RestockStatus
-typealias ComplianceStatus = CoreTypes.ComplianceStatus
-typealias BuildingStatistics = CoreTypes.BuildingStatistics
-typealias WorkerSkill = CoreTypes.WorkerSkill
-typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
-typealias ComplianceIssue = CoreTypes.ComplianceIssue
 
 // FrancoSphere Types Import
 // (This comment helps identify our import)
@@ -77,31 +26,12 @@ typealias ComplianceIssue = CoreTypes.ComplianceIssue
 //  Created by Shawn Magloire on 3/13/25.
 //
 
-
 import SwiftUI
 
 // Type aliases for CoreTypes
-typealias MaintenanceTask = CoreTypes.MaintenanceTask
-typealias TaskCategory = CoreTypes.TaskCategory
-typealias TaskUrgency = CoreTypes.TaskUrgency
-typealias BuildingType = CoreTypes.BuildingType
-typealias BuildingTab = CoreTypes.BuildingTab
-typealias WeatherCondition = CoreTypes.WeatherCondition
-typealias BuildingMetrics = CoreTypes.BuildingMetrics
-typealias TaskProgress = CoreTypes.TaskProgress
-typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
-typealias InventoryItem = CoreTypes.InventoryItem
-typealias InventoryCategory = CoreTypes.InventoryCategory
-typealias RestockStatus = CoreTypes.RestockStatus
-typealias ComplianceStatus = CoreTypes.ComplianceStatus
-typealias BuildingStatistics = CoreTypes.BuildingStatistics
-typealias WorkerSkill = CoreTypes.WorkerSkill
-typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
-typealias ComplianceIssue = CoreTypes.ComplianceIssue
 
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 struct TaskFormView: View {
     let buildingID: String

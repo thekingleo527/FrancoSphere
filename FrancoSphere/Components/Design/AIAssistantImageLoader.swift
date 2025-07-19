@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 6/16/25.
 //
 
-
 //
 //  AIAssistantImageLoader.swift
 //  FrancoSphere
@@ -24,7 +23,6 @@ import SwiftUI
 import UIKit
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 /// Utility for loading the AI Assistant image with multiple fallback options
 struct AIAssistantImageLoader {

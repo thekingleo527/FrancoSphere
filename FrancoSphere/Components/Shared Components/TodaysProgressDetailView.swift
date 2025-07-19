@@ -11,7 +11,6 @@ import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 struct TodaysProgressDetailView: View {
     @EnvironmentObject private var contextEngine: WorkerContextEngine
     @Environment(\.dismiss) private var dismiss

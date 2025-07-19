@@ -6,7 +6,6 @@
 //  Created by Shawn Magloire on 6/8/25.
 //
 
-
 // FrancoSphere/Constants/WorkerConstants.swift
 // Central lookup table with ACTUAL worker schedules from the system
 // Using numeric IDs 1-7, 8-10 as Strings
@@ -14,7 +13,6 @@
 import Foundation
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 struct WorkerConstants {
     

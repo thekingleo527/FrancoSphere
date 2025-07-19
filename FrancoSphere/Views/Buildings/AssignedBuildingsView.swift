@@ -16,8 +16,6 @@ import Foundation
 // COMPILATION FIX: Add missing imports
 import Foundation
 
-
-
 struct AssignedBuildingsView: View {
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     @Environment(\.dismiss) private var dismiss

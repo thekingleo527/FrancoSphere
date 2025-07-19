@@ -1,7 +1,6 @@
 import Foundation
 import SwiftUI
 
-
 //  OperationalDataManager+DatabaseIntegration.swift
 //  FrancoSphere v6.0
 //

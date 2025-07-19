@@ -9,7 +9,6 @@ import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 // MARK: - Glass Button View Modifier
 struct GlassButtonModifier: ViewModifier {
     var style: ButtonGlassStyle

@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 7/4/25.
 //
 
-
 //
 //  SecurityManager.swift
 //  FrancoSphere
@@ -33,7 +32,6 @@ import CryptoKit
 import UIKit
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 // MARK: - SecurityManager Actor
 

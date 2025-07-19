@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 6/8/25.
 //
 
-
 //
 //  LocationManager.swift
 //  FrancoSphere
@@ -24,7 +23,6 @@ import CoreLocation
 import Combine
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 // MARK: - Location Manager
 

@@ -6,16 +6,7 @@
 import Foundation
 
 // MARK: - Type Aliases for Backward Compatibility
-typealias MaintenanceTask = CoreTypes.MaintenanceTask
-typealias TaskCategory = CoreTypes.TaskCategory
-typealias TaskUrgency = CoreTypes.TaskUrgency
-typealias BuildingType = CoreTypes.BuildingType
-typealias WeatherCondition = CoreTypes.WeatherCondition
-typealias InventoryItem = CoreTypes.InventoryItem
-typealias InventoryCategory = CoreTypes.InventoryCategory
-typealias ComplianceStatus = CoreTypes.ComplianceStatus
 typealias OutdoorWorkRisk = CoreTypes.OutdoorWorkRisk
-typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
 
 import Foundation
 import CoreLocation

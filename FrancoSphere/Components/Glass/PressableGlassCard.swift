@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 6/8/25.
 //
 
-
 //
 //  PressableGlassCard.swift
 //  FrancoSphere
@@ -16,7 +15,6 @@
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 // MARK: - Pressable Glass Card
 struct PressableGlassCard<Content: View>: View {

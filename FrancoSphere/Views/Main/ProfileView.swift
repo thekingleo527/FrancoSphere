@@ -17,8 +17,6 @@ import Foundation
 // COMPILATION FIX: Add missing imports
 import Foundation
 
-
-
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var authManager = NewAuthManager.shared

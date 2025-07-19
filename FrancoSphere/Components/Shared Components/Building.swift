@@ -16,7 +16,6 @@ import CoreLocation
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 // MARK: - Building Model Extensions
 
 extension NamedCoordinate {

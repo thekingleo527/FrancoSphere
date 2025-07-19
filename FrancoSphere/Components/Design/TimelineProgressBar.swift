@@ -5,7 +5,6 @@ import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 struct TimelineProgressBar: View {
     @State private var currentTime = Date()
     let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()

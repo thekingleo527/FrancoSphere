@@ -14,7 +14,6 @@ import UIKit
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 struct ImagePicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType
     @State var selectedImage: UIImage?

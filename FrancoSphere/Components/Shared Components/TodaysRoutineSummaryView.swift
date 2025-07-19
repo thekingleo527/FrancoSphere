@@ -14,7 +14,6 @@ import SwiftUI
 import WorkerRoutineEngine
 #endif
 
-
 struct TodaysRoutineSummaryView: View {
     @EnvironmentObject private var contextEngine: WorkerContextEngine
     @Environment(\.dismiss) private var dismiss

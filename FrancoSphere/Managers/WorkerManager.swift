@@ -11,7 +11,6 @@ import Combine
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 @MainActor
 public class WorkerManager: ObservableObject {
     public static let shared = WorkerService.shared

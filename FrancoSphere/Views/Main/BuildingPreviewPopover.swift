@@ -18,7 +18,6 @@ import Foundation
 // COMPILATION FIX: Add missing imports
 import Foundation
 
-
 import MapKit
 // COMPILATION FIX: Add missing imports
 import Foundation
@@ -27,8 +26,6 @@ import Foundation
 import Foundation
 // COMPILATION FIX: Add missing imports
 import Foundation
-
-
 
 struct BuildingPreviewPopover: View {
     let building: NamedCoordinate

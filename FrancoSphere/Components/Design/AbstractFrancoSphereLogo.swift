@@ -5,12 +5,10 @@
 //  Created by Shawn Magloire on 6/7/25.
 //
 
-
 // Components/AbstractFrancoSphereLogo.swift
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 struct AbstractFrancoSphereLogo: View {
     let size: CGFloat

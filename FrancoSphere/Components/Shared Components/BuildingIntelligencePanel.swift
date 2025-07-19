@@ -17,8 +17,6 @@ import Foundation
 // COMPILATION FIX: Add missing imports
 import Foundation
 
-
-
 struct BuildingIntelligencePanel: View {
     let building: NamedCoordinate
     @Binding var selectedTab: IntelligenceTab

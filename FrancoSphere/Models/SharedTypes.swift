@@ -18,7 +18,6 @@ import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
 
-
 // MARK: - WeatherImpact
 
 // MARK: - TaskTrends
@@ -29,7 +28,6 @@ struct TaskTrends {
     let comparisonPeriod: String
     let trend: TrendDirection
 }
-
 
 // MARK: - PerformanceMetrics
 struct PerformanceMetrics {

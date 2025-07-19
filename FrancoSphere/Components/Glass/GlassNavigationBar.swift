@@ -5,14 +5,12 @@
 //  Created by Shawn Magloire on 6/7/25.
 //
 
-
 // GlassNavigationBar.swift
 // Enhanced glass navigation bar with clock state integration
 
 import SwiftUI
 // FrancoSphere Types Import
 // (This comment helps identify our import)
-
 
 struct GlassNavigationBar<Content: View>: View {
     let title: String

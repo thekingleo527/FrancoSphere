@@ -5,7 +5,6 @@
 //  Created by Shawn Magloire on 7/7/25.
 //
 
-
 //
 //  BuildingConfigurationManager.swift
 //  FrancoSphere
