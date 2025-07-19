@@ -85,7 +85,6 @@
 		23273A572E2B8674004A52C6 /* BuildingService+Intelligence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B92E2B8674004A52C6 /* BuildingService+Intelligence.swift */; };
 		23273A582E2B8674004A52C6 /* WorkerContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739842E2B8674004A52C6 /* WorkerContextEngine.swift */; };
 		23273A592E2B8674004A52C6 /* TrackableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D22E2B8674004A52C6 /* TrackableScrollView.swift */; };
-		23273A5A2E2B8674004A52C6 /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739732E2B8674004A52C6 /* ComplianceIssue.swift */; };
 		23273A5B2E2B8674004A52C6 /* AIAssistantImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739002E2B8674004A52C6 /* AIAssistantImageLoader.swift */; };
 		23273A5C2E2B8674004A52C6 /* BuildingStatsGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390B2E2B8674004A52C6 /* BuildingStatsGlassCard.swift */; };
 		23273A5D2E2B8674004A52C6 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390F2E2B8674004A52C6 /* GlassCard.swift */; };
@@ -230,6 +229,7 @@
 		23273AEB2E2B8674004A52C6 /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 2327399F2E2B8674004A52C6 /* AIAssistant.png */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
+		238DBE8D2E2C288A00D6B671 /* ComplianceIssue.swift in Resources */ = {isa = PBXBuildFile; fileRef = 238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 /* End PBXBuildFile section */
 
@@ -347,7 +347,6 @@
 		232739702E2B8674004A52C6 /* BuildingInsight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingInsight.swift; sourceTree = "<group>"; };
 		232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTypes.swift; sourceTree = "<group>"; };
 		232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
-		232739732E2B8674004A52C6 /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
 		232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskExtensions.swift; sourceTree = "<group>"; };
 		232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskIntelligence.swift; sourceTree = "<group>"; };
 		232739772E2B8674004A52C6 /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
@@ -475,6 +474,7 @@
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -734,6 +734,7 @@
 		232739882E2B8674004A52C6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */,
 				232739662E2B8674004A52C6 /* Core */,
 				2327396B2E2B8674004A52C6 /* DTOs */,
 				2327396E2E2B8674004A52C6 /* Enums */,
@@ -741,7 +742,6 @@
 				232739702E2B8674004A52C6 /* BuildingInsight.swift */,
 				232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */,
 				232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */,
-				232739732E2B8674004A52C6 /* ComplianceIssue.swift */,
 				232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */,
 				232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */,
 				232739772E2B8674004A52C6 /* FilteredTaskResult.swift */,
@@ -1168,6 +1168,7 @@
 				23273AE52E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg in Resources */,
 				23273AE62E2B8674004A52C6 /* AppIcon.png in Resources */,
 				23273AE72E2B8674004A52C6 /* Preview Assets.xcassets in Resources */,
+				238DBE8D2E2C288A00D6B671 /* ComplianceIssue.swift in Resources */,
 				23273AE82E2B8674004A52C6 /* 112_West_18th_Street.jpg in Resources */,
 				23273AE92E2B8674004A52C6 /* 133_East_15th_Street.jpg in Resources */,
 				23273AEA2E2B8674004A52C6 /* 138West17thStreet.jpg in Resources */,
@@ -1276,7 +1277,6 @@
 				23273A572E2B8674004A52C6 /* BuildingService+Intelligence.swift in Sources */,
 				23273A582E2B8674004A52C6 /* WorkerContextEngine.swift in Sources */,
 				23273A592E2B8674004A52C6 /* TrackableScrollView.swift in Sources */,
-				23273A5A2E2B8674004A52C6 /* ComplianceIssue.swift in Sources */,
 				23273A5B2E2B8674004A52C6 /* AIAssistantImageLoader.swift in Sources */,
 				23273A5C2E2B8674004A52C6 /* BuildingStatsGlassCard.swift in Sources */,
 				23273A5D2E2B8674004A52C6 /* GlassCard.swift in Sources */,
