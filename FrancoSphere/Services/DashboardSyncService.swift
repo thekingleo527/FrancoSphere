@@ -635,3 +635,36 @@ extension DashboardSyncService {
 // MARK: - ActionEvidence Import
 // ActionEvidence type is used by the integration hooks and should be accessible
 // It's defined in Models/DTOs/ActionEvidence.swift
+extension DashboardSyncService {
+    
+    /// Hook into IntelligenceService portfolio insights
+    public func onPortfolioIntelligenceUpdated(insights: [CoreTypes.IntelligenceInsight]) {
+        let criticalInsights = insights.filter { $0.priority == .critical }
+        
+        let update = DashboardUpdate(
+            source: .admin,
+            type: .intelligenceGenerated,
+            buildingId: nil,
+            workerId: nil,
+            data: [
+                "totalInsights": insights.count,
+                "criticalInsights": criticalInsights.count,
+                "actionableInsights": insights.filter { $0.actionRequired }.count
+            ]
+        )
+        
+        broadcastAdminUpdate(update)
+        
+        // Create alerts for critical insights
+        for insight in criticalInsights {
+            let alert = LiveAdminAlert(
+                title: insight.title,
+                severity: .critical,
+                buildingId: insight.affectedBuildings.first ?? ""
+            )
+            
+            liveAdminAlerts.append(alert)
+            limitLiveUpdates()
+        }
+    }
+}

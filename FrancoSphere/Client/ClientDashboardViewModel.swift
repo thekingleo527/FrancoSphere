@@ -38,7 +38,7 @@ class ClientDashboardViewModel: ObservableObject {
     
     // MARK: - Cross-Dashboard Integration
     @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
-    @Published var crossDashboardUpdates: [CoreTypes.CrossDashboardUpdate] = []
+    @Published var dashboardUpdates: [DashboardUpdate] = []
     
     // MARK: - Executive Summary Data (Using Existing CoreTypes)
     @Published var executiveSummary: CoreTypes.ExecutiveSummary?
@@ -96,7 +96,7 @@ class ClientDashboardViewModel: ObservableObject {
             print("✅ Portfolio intelligence loaded: \(buildings.count) buildings, \(insights.count) insights")
             
             // Broadcast update
-            await broadcastCrossDashboardUpdate(.portfolioUpdated(buildingCount: buildings.count))
+            broadcastDashboardUpdate(.portfolioUpdated, data: ["buildingCount": buildings.count])
             
         } catch {
             print("❌ Failed to load portfolio intelligence: \(error)")
@@ -131,7 +131,7 @@ class ClientDashboardViewModel: ObservableObject {
         }
         
         self.buildingMetrics = metrics
-        await broadcastCrossDashboardUpdate(.metricsUpdated(buildingIds: Array(metrics.keys)))
+        broadcastDashboardUpdate(.buildingMetricsChanged, data: ["buildingIds": Array(metrics.keys)])
     }
     
     // MARK: - Compliance Issues Loading
@@ -224,7 +224,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Improve Task Completion Rate",
                 description: "Current completion rate is \(Int(intelligence.completionRate * 100))%. Consider optimizing worker schedules and task prioritization.",
                 category: .efficiency,
-                priority: .high,
+                priority: CoreTypes.StrategicRecommendation.Priority.high,
                 timeframe: "3-6 months",
                 estimatedImpact: "+15% efficiency"
             ))
@@ -236,7 +236,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Address Critical Issues",
                 description: "\(intelligence.criticalIssues) critical issues require immediate attention. Prioritize resolution to prevent escalation.",
                 category: .operations,
-                priority: .high,
+                priority: CoreTypes.StrategicRecommendation.Priority.critical,
                 timeframe: "Immediate",
                 estimatedImpact: "Risk reduction"
             ))
@@ -248,7 +248,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Enhance Compliance Program",
                 description: "Compliance score of \(intelligence.complianceScore)% indicates room for improvement. Review audit processes.",
                 category: .compliance,
-                priority: .medium,
+                priority: CoreTypes.StrategicRecommendation.Priority.medium,
                 timeframe: "6-12 months",
                 estimatedImpact: "+10% compliance"
             ))
@@ -264,7 +264,7 @@ class ClientDashboardViewModel: ObservableObject {
                     title: "Implement AI-Driven Optimization",
                     description: "Nova AI has identified \(highPriorityInsights.count) high-priority optimization opportunities across your portfolio.",
                     category: .efficiency,
-                    priority: .medium,
+                    priority: CoreTypes.StrategicRecommendation.Priority.medium,
                     timeframe: "2-4 months",
                     estimatedImpact: "+25% operational efficiency"
                 ))
@@ -351,7 +351,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "System Recovery",
                 description: "Portfolio data is temporarily unavailable. Attempting to restore connection...",
                 category: .operations,
-                priority: .medium,
+                priority: CoreTypes.StrategicRecommendation.Priority.medium,
                 timeframe: "Immediate",
                 estimatedImpact: "Service restoration"
             )
@@ -380,7 +380,7 @@ class ClientDashboardViewModel: ObservableObject {
         return complianceIssues
     }
     
-    func getInsights(filtered by, priority: CoreTypes.InsightPriority? = nil) -> [CoreTypes.IntelligenceInsight] {
+    func getInsights(filteredBy priority: CoreTypes.InsightPriority? = nil) -> [CoreTypes.IntelligenceInsight] {
         if let priority = priority {
             return intelligenceInsights.filter { $0.priority == priority }
         }
@@ -389,95 +389,134 @@ class ClientDashboardViewModel: ObservableObject {
     
     // MARK: - Cross-Dashboard Integration
     private func setupSubscriptions() {
-        dashboardSyncService.crossDashboardUpdates
+        dashboardSyncService.clientDashboardUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
-                self?.handleCrossDashboardUpdate(update)
+                self?.handleDashboardUpdate(update)
             }
             .store(in: &cancellables)
     }
     
     private func schedulePeriodicRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            guard let self = self else { return }
+            Task { @MainActor [weak self] in
                 await self?.refreshData()
             }
         }
     }
     
-    private func broadcastCrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) async {
-        crossDashboardUpdates.append(update)
+    private func broadcastDashboardUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
+        let update = DashboardUpdate(
+            source: .client,
+            type: type,
+            buildingId: buildingId,
+            workerId: nil,
+            data: data
+        )
+        
+        dashboardUpdates.append(update)
         
         // Keep only recent updates
-        if crossDashboardUpdates.count > 50 {
-            crossDashboardUpdates = Array(crossDashboardUpdates.suffix(50))
+        if dashboardUpdates.count > 50 {
+            dashboardUpdates = Array(dashboardUpdates.suffix(50))
         }
         
-        Task {
-            await dashboardSyncService.broadcastUpdate(update)
-        }
+        dashboardSyncService.broadcastClientUpdate(update)
     }
     
-    private func handleCrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
-        switch update {
-        case .taskCompleted(let taskId, let workerId, let buildingId):
-            print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
-            // Update building metrics
-            if let existingMetrics = buildingMetrics[buildingId] {
-                let updatedMetrics = CoreTypes.BuildingMetrics(
-                    buildingId: buildingId,
-                    completionRate: min(existingMetrics.completionRate + 0.01, 1.0),
-                    averageTaskTime: existingMetrics.averageTaskTime,
-                    overdueTasks: max(existingMetrics.overdueTasks - 1, 0),
-                    totalTasks: existingMetrics.totalTasks,
-                    activeWorkers: existingMetrics.activeWorkers,
-                    isCompliant: existingMetrics.isCompliant,
-                    overallScore: existingMetrics.overallScore
-                )
-                buildingMetrics[buildingId] = updatedMetrics
-            }
-            
-        case .workerAssigned(let workerId, let buildingId):
-            print("📱 Client Dashboard: Worker \(workerId) assigned to building \(buildingId)")
-            activeWorkers += 1
-            
-        case .buildingMetricsUpdated(let buildingId, let metrics):
-            print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
-            buildingMetrics[buildingId] = metrics
-            
-        case .complianceIssueAdded(let issue):
-            print("📱 Client Dashboard: New compliance issue added")
-            complianceIssues.append(issue)
-            criticalIssues += 1
-            
-        case .portfolioUpdated(let buildingCount):
-            print("📱 Client Dashboard: Portfolio updated with \(buildingCount) buildings")
-            totalBuildings = buildingCount
-            
-        case .metricsUpdated(let buildingIds):
-            print("📱 Client Dashboard: Metrics updated for buildings: \(buildingIds)")
-            Task {
-                for buildingId in buildingIds {
-                    do {
-                        let updatedMetrics = try await buildingMetricsService.calculateMetrics(for: buildingId)
-                        buildingMetrics[buildingId] = updatedMetrics
-                    } catch {
-                        print("⚠️ Failed to refresh metrics for building \(buildingId): \(error)")
-                    }
+    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+        switch update.type {
+        case .taskCompleted:
+            if let taskId = update.data["taskId"] as? String,
+               let workerId = update.workerId,
+               let buildingId = update.buildingId {
+                print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
+                // Update building metrics
+                if let existingMetrics = buildingMetrics[buildingId] {
+                    let updatedMetrics = CoreTypes.BuildingMetrics(
+                        buildingId: buildingId,
+                        completionRate: min(existingMetrics.completionRate + 0.01, 1.0),
+                        averageTaskTime: existingMetrics.averageTaskTime,
+                        overdueTasks: max(existingMetrics.overdueTasks - 1, 0),
+                        totalTasks: existingMetrics.totalTasks,
+                        activeWorkers: existingMetrics.activeWorkers,
+                        isCompliant: existingMetrics.isCompliant,
+                        overallScore: existingMetrics.overallScore
+                    )
+                    buildingMetrics[buildingId] = updatedMetrics
                 }
             }
             
-        case .insightsGenerated(let insights):
-            print("📱 Client Dashboard: \(insights.count) new insights generated")
-            intelligenceInsights.append(contentsOf: insights)
+        case .workerClockedIn:
+            if let workerId = update.workerId,
+               let buildingId = update.buildingId {
+                print("📱 Client Dashboard: Worker \(workerId) clocked in at building \(buildingId)")
+                activeWorkers += 1
+            }
+            
+        case .buildingMetricsChanged:
+            if let buildingId = update.buildingId,
+               let completionRate = update.data["completionRate"] as? Double,
+               let overdueTasks = update.data["overdueTasks"] as? Int,
+               let totalTasks = update.data["totalTasks"] as? Int,
+               let activeWorkers = update.data["activeWorkers"] as? Int,
+               let isCompliant = update.data["isCompliant"] as? Bool,
+               let overallScore = update.data["overallScore"] as? Int {
+                let metrics = CoreTypes.BuildingMetrics(
+                    buildingId: buildingId,
+                    completionRate: completionRate,
+                    averageTaskTime: buildingMetrics[buildingId]?.averageTaskTime ?? 0,
+                    overdueTasks: overdueTasks,
+                    totalTasks: totalTasks,
+                    activeWorkers: activeWorkers,
+                    isCompliant: isCompliant,
+                    overallScore: overallScore
+                )
+                print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
+                buildingMetrics[buildingId] = metrics
+            }
+            
+        case .complianceChanged:
+            if let buildingId = update.buildingId,
+               let severity = update.data["severity"] as? String,
+               let title = update.data["title"] as? String,
+               let description = update.data["description"] as? String {
+                let issue = CoreTypes.ComplianceIssue(
+                    title: title,
+                    description: description,
+                    severity: severity,
+                    buildingId: buildingId,
+                    status: .warning
+                )
+                print("📱 Client Dashboard: New compliance issue added")
+                complianceIssues.append(issue)
+                criticalIssues += 1
+            }
+            
+        case .portfolioUpdated:
+            if let buildingCount = update.data["buildingCount"] as? Int {
+                print("📱 Client Dashboard: Portfolio updated with \(buildingCount) buildings")
+                totalBuildings = buildingCount
+            }
+            
+        case .intelligenceGenerated:
+            print("📱 Client Dashboard: New intelligence insights available")
+            if let totalInsights = update.data["totalInsights"] as? Int,
+               let criticalInsights = update.data["criticalInsights"] as? Int {
+                print("📊 Total: \(totalInsights), Critical: \(criticalInsights)")
+            }
             Task {
                 await generateExecutiveSummary()
             }
+            
+        default:
+            print("📱 Client Dashboard: Received update type: \(update.type.rawValue)")
         }
         
         dashboardSyncStatus = .synced
         lastUpdateTime = Date()
-        crossDashboardUpdates.append(update)
+        dashboardUpdates.append(update)
     }
     
     // MARK: - Nova AI Integration Support
