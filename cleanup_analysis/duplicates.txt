@@ -1,0 +1,584 @@
+
+=== AIAssistantImageLoader.swift (2 copies) ===
+  ./Components/Design/AIAssistantImageLoader.swift
+  ./FrancoSphere/Nova/Core/AIAssistantImageLoader.swift
+
+=== AIAssistantManager.swift (2 copies) ===
+  ./FrancoSphere/Nova/Core/AIAssistantManager.swift
+  ./Managers/AIAssistantManager.swift
+
+=== AIAvatarOverlayView.swift (2 copies) ===
+  ./Components/Shared Components/AIAvatarOverlayView.swift
+  ./FrancoSphere/Nova/Core/AIAvatarOverlayView.swift
+
+=== AIScenarioSheetView.swift (2 copies) ===
+  ./Components/Shared Components/AIScenarioSheetView.swift
+  ./FrancoSphere/Nova/Core/AIScenarioSheetView.swift
+
+=== AITypes.swift (2 copies) ===
+  ./FrancoSphere_Backup_20250717_232548/AITypes.swift
+  ./FrancoSphere/Core/Models/AITypes.swift
+
+=== AbstractFrancoSphereLogo.swift (2 copies) ===
+  ./Components/Design/AbstractFrancoSphereLogo.swift
+  ./FrancoSphere/DesignSystem/Components/AbstractFrancoSphereLogo.swift
+
+=== AdaptiveGlassModifier.swift (2 copies) ===
+  ./Components/Shared Components/AdaptiveGlassModifier.swift
+  ./FrancoSphere/DesignSystem/Glass/AdaptiveGlassModifier.swift
+
+=== AdminDashboardView.swift (2 copies) ===
+  ./FrancoSphere/Admin/Dashboard/AdminDashboardView.swift
+  ./Views/Main/AdminDashboardView.swift
+
+=== AdminDashboardViewModel.swift (2 copies) ===
+  ./FrancoSphere/Admin/Dashboard/AdminDashboardViewModel.swift
+  ./Views/ViewModels/AdminDashboardViewModel.swift
+
+=== AssetImageDebugger.swift (2 copies) ===
+  ./FrancoSphere/Utilities/Managers/AssetImageDebugger.swift
+  ./Managers/AssetImageDebugger.swift
+
+=== AssignedBuildingsView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Views/AssignedBuildingsView.swift
+  ./Views/Buildings/AssignedBuildingsView.swift
+
+=== Building.swift (2 copies) ===
+  ./Components/Shared Components/Building.swift
+  ./FrancoSphere/Core/Models/Building.swift
+
+=== BuildingDetailView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Views/BuildingDetailView.swift
+  ./Views/Buildings/BuildingDetailView.swift
+
+=== BuildingDetailViewModel.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Detail/BuildingDetailViewModel.swift
+  ./Views/ViewModels/BuildingDetailViewModel.swift
+
+=== BuildingIntelligencePanel.swift (3 copies) ===
+  ./Components/Shared Components/BuildingIntelligencePanel.swift
+  ./FrancoSphere/Buildings/Intelligence/BuildingIntelligencePanel.swift
+  ./Views/Buildings/BuildingIntelligencePanel.swift
+
+=== BuildingIntelligenceViewModel.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Intelligence/BuildingIntelligenceViewModel.swift
+  ./Views/ViewModels/BuildingIntelligenceViewModel.swift
+
+=== BuildingMapDetailView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Detail/BuildingMapDetailView.swift
+  ./Views/Buildings/BuildingMapDetailView.swift
+
+=== BuildingMetricsService.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Services/BuildingMetricsService.swift
+  ./Services/BuildingMetricsService.swift
+
+=== BuildingPreviewPopover.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Views/BuildingPreviewPopover.swift
+  ./Views/Main/BuildingPreviewPopover.swift
+
+=== BuildingSelectionView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Views/BuildingSelectionView.swift
+  ./Views/Buildings/BuildingSelectionView.swift
+
+=== BuildingService+Intelligence.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Services/BuildingService+Intelligence.swift
+  ./Services/BuildingService+Intelligence.swift
+
+=== BuildingService.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Services/BuildingService.swift
+  ./Services/BuildingService.swift
+
+=== BuildingStatsGlassCard.swift (2 copies) ===
+  ./Components/Glass/BuildingStatsGlassCard.swift
+  ./FrancoSphere/DesignSystem/Glass/BuildingStatsGlassCard.swift
+
+=== BuildingTaskDetailView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/BuildingTaskDetailView.swift
+  ./Views/Buildings/BuildingTaskDetailView.swift
+
+=== BuildingsView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Views/BuildingsView.swift
+  ./Views/Buildings/BuildingsView.swift
+
+=== ClientDashboardTemplate.swift (2 copies) ===
+  ./FrancoSphere/Client/ClientDashboardTemplate.swift
+  ./Views/Templates/ClientDashboardTemplate.swift
+
+=== ClientDashboardView.swift (2 copies) ===
+  ./FrancoSphere/Client/ClientDashboardView.swift
+  ./Views/Main/ClientDashboardView.swift
+
+=== ClientDashboardViewModel+Fixed.swift (2 copies) ===
+  ./FrancoSphere/Client/ClientDashboardViewModel+Fixed.swift
+  ./Views/ViewModels/ClientDashboardViewModel+Fixed.swift
+
+=== ClientDashboardViewModel.swift (2 copies) ===
+  ./FrancoSphere/Client/ClientDashboardViewModel.swift
+  ./Views/ViewModels/ClientDashboardViewModel.swift
+
+=== ClockInGlassModal.swift (2 copies) ===
+  ./Components/Glass/ClockInGlassModal.swift
+  ./FrancoSphere/DesignSystem/Glass/ClockInGlassModal.swift
+
+=== ClockInManager.swift (2 copies) ===
+  ./FrancoSphere/Worker/Dashboard/ClockInManager.swift
+  ./Managers/ClockInManager.swift
+
+=== ComplianceOverviewView.swift (3 copies) ===
+  ./FrancoSphere_Backup_20250717_232548/ComplianceOverviewView.swift
+  ./FrancoSphere/Admin/Portfolio/ComplianceOverviewView.swift
+  ./Views/Main/ComplianceOverviewView.swift
+
+=== CoreTypes.swift (3 copies) ===
+  ./FrancoSphere/Core/Models/CoreTypes.swift
+  ./Models/Core/CoreTypes.swift
+  ./Models/CoreTypes.swift
+
+=== CoverageInfoCard.swift (2 copies) ===
+  ./Components/Shared Components/CoverageInfoCard.swift
+  ./FrancoSphere/Worker/Components/CoverageInfoCard.swift
+
+=== CrossDashboardTypes.swift (2 copies) ===
+  ./FrancoSphere/Core/Enums/CrossDashboardTypes.swift
+  ./Models/Enums/CrossDashboardTypes.swift
+
+=== CurrentBuildingStatusCard.swift (2 copies) ===
+  ./Components/Design/CurrentBuildingStatusCard.swift
+  ./FrancoSphere/Worker/Components/CurrentBuildingStatusCard.swift
+
+=== DSNYTaskGenerator.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Services/DSNYTaskGenerator.swift
+  ./Services/DSNYTaskGenerator.swift
+
+=== DashboardSyncService.swift (2 copies) ===
+  ./FrancoSphere/Sync/DashboardSyncService.swift
+  ./Services/DashboardSyncService.swift
+
+=== DashboardTaskDetailView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/DashboardTaskDetailView.swift
+  ./Views/Main/DashboardTaskDetailView.swift
+
+=== DashboardView.swift (2 copies) ===
+  ./FrancoSphere/SharedViews/DashboardView.swift
+  ./Views/Main/DashboardView.swift
+
+=== DataConsolidationManager.swift (2 copies) ===
+  ./FrancoSphere/Sync/DataConsolidationManager.swift
+  ./Services/Migration/DataConsolidationManager.swift
+
+=== DataInitializationView.swift (2 copies) ===
+  ./FrancoSphere/Admin/Initialization/DataInitializationView.swift
+  ./Views/Main/DataInitializationView.swift
+
+=== DataSynchronizationService.swift (2 copies) ===
+  ./FrancoSphere/Sync/DataSynchronizationService.swift
+  ./Services/RealTime/DataSynchronizationService.swift
+
+=== DatabaseStartupCoordinator.swift (2 copies) ===
+  ./FrancoSphere/Services/DatabaseStartupCoordinator.swift
+  ./Services/DatabaseStartupCoordinator.swift
+
+=== EnhancedClockInGlassCard.swift (2 copies) ===
+  ./Components/Design/EnhancedClockInGlassCard.swift
+  ./FrancoSphere/Worker/Components/EnhancedClockInGlassCard.swift
+
+=== EnhancedMapOverlay.swift (2 copies) ===
+  ./Components/Maps/EnhancedMapOverlay.swift
+  ./FrancoSphere/Maps/EnhancedMapOverlay.swift
+
+=== FilteredTaskResult.swift (2 copies) ===
+  ./FrancoSphere/Core/Models/FilteredTaskResult.swift
+  ./Models/FilteredTaskResult.swift
+
+=== ForgotPasswordView.swift (2 copies) ===
+  ./FrancoSphere/Authentication/Views/ForgotPasswordView.swift
+  ./Views/Auth/ForgotPasswordView.swift
+
+=== FrancoSphereColors.swift (2 copies) ===
+  ./Components/Shared Components/FrancoSphereColors.swift
+  ./FrancoSphere/Core/Constants/FrancoSphereColors.swift
+
+=== FrancoSphereDesign.swift (2 copies) ===
+  ./Components/Design/FrancoSphereDesign.swift
+  ./FrancoSphere/DesignSystem/Components/FrancoSphereDesign.swift
+
+=== FrancoSphereModels.swift (2 copies) ===
+  ./FrancoSphere/Core/Models/FrancoSphereModels.swift
+  ./Models/FrancoSphereModels.swift
+
+=== GlassButton.swift (2 copies) ===
+  ./Components/Glass/GlassButton.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassButton.swift
+
+=== GlassButtonModifier.swift (2 copies) ===
+  ./Components/Glass/GlassButtonModifier.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassButtonModifier.swift
+
+=== GlassCard.swift (2 copies) ===
+  ./Components/Glass/GlassCard.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassCard.swift
+
+=== GlassDeckContainer.swift (2 copies) ===
+  ./Components/Glass/GlassDeckContainer.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassDeckContainer.swift
+
+=== GlassLoadingView.swift (2 copies) ===
+  ./Components/Glass/GlassLoadingView.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassLoadingView.swift
+
+=== GlassModal.swift (2 copies) ===
+  ./Components/Glass/GlassModal.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassModal.swift
+
+=== GlassMorphismStyles.swift (2 copies) ===
+  ./Components/Glass/GlassMorphismStyles.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassMorphismStyles.swift
+
+=== GlassNavigationBar.swift (2 copies) ===
+  ./Components/Glass/GlassNavigationBar.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassNavigationBar.swift
+
+=== GlassStatusBadge.swift (2 copies) ===
+  ./Components/Glass/GlassStatusBadge.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassStatusBadge.swift
+
+=== GlassTabBar.swift (2 copies) ===
+  ./Components/Glass/GlassTabBar.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassTabBar.swift
+
+=== GlassTransitions.swift (2 copies) ===
+  ./Components/Glass/GlassTransitions.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassTransitions.swift
+
+=== GlassTypes.swift (2 copies) ===
+  ./Components/Glass/GlassTypes.swift
+  ./FrancoSphere/DesignSystem/Glass/GlassTypes.swift
+
+=== HapticManager.swift (2 copies) ===
+  ./FrancoSphere/Utilities/Managers/HapticManager.swift
+  ./Managers/HapticManager.swift
+
+=== HeaderV3B.swift (2 copies) ===
+  ./Components/Design/HeaderV3B.swift
+  ./FrancoSphere/Worker/Components/HeaderV3B.swift
+
+=== HeroStatusCard.swift (2 copies) ===
+  ./Components/Shared Components/HeroStatusCard.swift
+  ./FrancoSphere/DesignSystem/Components/HeroStatusCard.swift
+
+=== ImagePicker.swift (2 copies) ===
+  ./Components/Shared Components/ImagePicker.swift
+  ./FrancoSphere/DesignSystem/Components/ImagePicker.swift
+
+=== InitializationStatus.swift (2 copies) ===
+  ./Components/Shared Components/InitializationStatus.swift
+  ./FrancoSphere/DesignSystem/Components/InitializationStatus.swift
+
+=== InitializationView.swift (2 copies) ===
+  ./FrancoSphere/Admin/Initialization/InitializationView.swift
+  ./Views/Main/InitializationView.swift
+
+=== InitializationViewModel.swift (2 copies) ===
+  ./FrancoSphere/Admin/Initialization/InitializationViewModel.swift
+  ./Views/ViewModels/InitializationViewModel.swift
+
+=== IntelligenceInsightsView.swift (3 copies) ===
+  ./FrancoSphere_Backup_20250717_232548/IntelligenceInsightsView.swift
+  ./FrancoSphere/Buildings/Intelligence/IntelligenceInsightsView.swift
+  ./Views/Main/IntelligenceInsightsView.swift
+
+=== IntelligencePreviewPanel.swift (2 copies) ===
+  ./Components/Intelligence/IntelligencePreviewPanel.swift
+  ./FrancoSphere/Buildings/Intelligence/IntelligencePreviewPanel.swift
+
+=== IntelligenceService.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Intelligence/IntelligenceService.swift
+  ./Services/IntelligenceService.swift
+
+=== InventoryView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Detail/InventoryView.swift
+  ./Views/Buildings/InventoryView.swift
+
+=== LocationManager.swift (2 copies) ===
+  ./FrancoSphere/Utilities/Managers/LocationManager.swift
+  ./Managers/LocationManager.swift
+
+=== LoginView.swift (2 copies) ===
+  ./FrancoSphere/Authentication/Views/LoginView.swift
+  ./Views/Auth/LoginView.swift
+
+=== MaintenanceHistoryView.swift (2 copies) ===
+  ./FrancoSphere/Buildings/Detail/MaintenanceHistoryView.swift
+  ./Views/Buildings/MaintenanceHistoryView.swift
+
+=== MaintenanceTaskView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/MaintenanceTaskView.swift
+  ./Views/Buildings/MaintenanceTaskView.swift
+
+=== MapBackgroundView.swift (2 copies) ===
+  ./Components/Maps/MapBackgroundView.swift
+  ./FrancoSphere/Maps/MapBackgroundView.swift
+
+=== MapInteractionHint.swift (2 copies) ===
+  ./Components/Shared Components/MapInteractionHint.swift
+  ./FrancoSphere/Maps/MapInteractionHint.swift
+
+=== MapRevealContainer.swift (2 copies) ===
+  ./Components/Maps/MapRevealContainer.swift
+  ./FrancoSphere/Maps/MapRevealContainer.swift
+
+=== ModelColorsExtensions.swift (2 copies) ===
+  ./Components/Design/ModelColorsExtensions.swift
+  ./FrancoSphere/DesignSystem/Components/ModelColorsExtensions.swift
+
+=== MyAssignedBuildingsSection.swift (2 copies) ===
+  ./Components/Shared Components/MyAssignedBuildingsSection.swift
+  ./FrancoSphere/Buildings/Components/MyAssignedBuildingsSection.swift
+
+=== MySitesCard.swift (2 copies) ===
+  ./Components/Shared Components/MySitesCard.swift
+  ./FrancoSphere/DesignSystem/Components/MySitesCard.swift
+
+=== NewAuthManager.swift (2 copies) ===
+  ./FrancoSphere/Authentication/Manager/NewAuthManager.swift
+  ./Managers/NewAuthManager.swift
+
+=== NotificationManager.swift (2 copies) ===
+  ./FrancoSphere/Utilities/Managers/NotificationManager.swift
+  ./Managers/NotificationManager.swift
+
+=== NovaAPIService.swift (2 copies) ===
+  ./FrancoSphere/Nova/Core/NovaAPIService.swift
+  ./Models/AI/Nova/Core/NovaAPIService.swift
+
+=== NovaAvatar.swift (2 copies) ===
+  ./Components/Shared Components/NovaAvatar.swift
+  ./FrancoSphere/Nova/Core/NovaAvatar.swift
+
+=== NovaContextEngine.swift (2 copies) ===
+  ./FrancoSphere/Nova/Core/NovaContextEngine.swift
+  ./Models/AI/Nova/Core/NovaContextEngine.swift
+
+=== NovaCore.swift (2 copies) ===
+  ./FrancoSphere/Nova/Core/NovaCore.swift
+  ./Models/AI/Nova/Core/NovaCore.swift
+
+=== NovaInteractionView.swift (2 copies) ===
+  ./FrancoSphere/Nova/Core/NovaInteractionView.swift
+  ./Models/AI/Nova/Core/NovaInteractionView.swift
+
+=== NovaTypes.swift (2 copies) ===
+  ./FrancoSphere/Nova/Core/NovaTypes.swift
+  ./Models/AI/Nova/Core/NovaTypes.swift
+
+=== OperationalDataManager+DatabaseIntegration.swift (2 copies) ===
+  ./FrancoSphere/Sync/OperationalDataManager+DatabaseIntegration.swift
+  ./Services/Migration/OperationalDataManager+DatabaseIntegration.swift
+
+=== OperationalDataManager.swift (2 copies) ===
+  ./FrancoSphere/Sync/OperationalDataManager.swift
+  ./Managers/OperationalDataManager.swift
+
+=== PortfolioOverviewView.swift (2 copies) ===
+  ./FrancoSphere/Admin/Portfolio/PortfolioOverviewView.swift
+  ./Views/Main/PortfolioOverviewView.swift
+
+=== PressableGlassCard.swift (2 copies) ===
+  ./Components/Glass/PressableGlassCard.swift
+  ./FrancoSphere/DesignSystem/Glass/PressableGlassCard.swift
+
+=== ProfileBadge.swift (2 copies) ===
+  ./Components/Shared Components/ProfileBadge.swift
+  ./FrancoSphere/DesignSystem/Components/ProfileBadge.swift
+
+=== ProfileView.swift (2 copies) ===
+  ./FrancoSphere/Worker/Profile/ProfileView.swift
+  ./Views/Main/ProfileView.swift
+
+=== QBConnectionStatus.swift (2 copies) ===
+  ./FrancoSphere/Core/Enums/QBConnectionStatus.swift
+  ./Models/Enums/QBConnectionStatus.swift
+
+=== QuickActionMenu.swift (2 copies) ===
+  ./Components/Shared Components/QuickActionMenu.swift
+  ./FrancoSphere/SharedViews/QuickActionMenu.swift
+
+=== QuickBooksOAuthManager.swift (2 copies) ===
+  ./FrancoSphere/QuickBooks/QuickBooksOAuthManager.swift
+  ./Services/QuickBooksOAuthManager.swift
+
+=== QuickBooksPayrollExporter.swift (2 copies) ===
+  ./FrancoSphere/QuickBooks/QuickBooksPayrollExporter.swift
+  ./Services/QuickBooksPayrollExporter.swift
+
+=== RouteStatItem.swift (2 copies) ===
+  ./Components/Shared Components/RouteStatItem.swift
+  ./FrancoSphere/SharedViews/RouteStatItem.swift
+
+=== RoutinePriority.swift (2 copies) ===
+  ./Components/Shared Components/RoutinePriority.swift
+  ./FrancoSphere/Core/Enums/RoutinePriority.swift
+
+=== SignUpView.swift (2 copies) ===
+  ./FrancoSphere/Authentication/Views/SignUpView.swift
+  ./Views/Auth/SignUpView.swift
+
+=== StatCard.swift (2 copies) ===
+  ./Components/Shared Components/StatCard.swift
+  ./FrancoSphere/DesignSystem/Components/StatCard.swift
+
+=== SyncStatusComponents.swift (2 copies) ===
+  ./Components/Intelligence/SyncStatusComponents.swift
+  ./FrancoSphere/Buildings/Components/SyncStatusComponents.swift
+
+=== TaskCategoryGlassCard.swift (2 copies) ===
+  ./Components/Glass/TaskCategoryGlassCard.swift
+  ./FrancoSphere/Tasks/Components/TaskCategoryGlassCard.swift
+
+=== TaskDetailView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/TaskDetailView.swift
+  ./Views/Main/TaskDetailView.swift
+
+=== TaskDetailViewModel.swift (2 copies) ===
+  ./FrancoSphere/Tasks/ViewModels/TaskDetailViewModel.swift
+  ./Views/ViewModels/TaskDetailViewModel.swift
+
+=== TaskDisplayHelpers.swift (2 copies) ===
+  ./Components/Shared Components/TaskDisplayHelpers.swift
+  ./FrancoSphere/Utilities/Helpers/TaskDisplayHelpers.swift
+
+=== TaskFormView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/TaskFormView.swift
+  ./Views/Buildings/TaskFormView.swift
+
+=== TaskRequestView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/TaskRequestView.swift
+  ./Views/Main/TaskRequestView.swift
+
+=== TaskScheduleView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/TaskScheduleView.swift
+  ./Views/Buildings/TaskScheduleView.swift
+
+=== TaskService.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Services/TaskService.swift
+  ./TaskService.swift
+
+=== TaskTimelineRow.swift (2 copies) ===
+  ./Components/Shared Components/TaskTimelineRow.swift
+  ./FrancoSphere/Tasks/Components/TaskTimelineRow.swift
+
+=== TaskTimelineView.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Views/TaskTimelineView.swift
+  ./Views/Main/TaskTimelineView.swift
+
+=== TelemetryService.swift (2 copies) ===
+  ./FrancoSphere/Utilities/Managers/TelemetryService.swift
+  ./Services/TelemetryService.swift
+
+=== TimeBasedTaskFilter.swift (2 copies) ===
+  ./FrancoSphere/Tasks/Services/TimeBasedTaskFilter.swift
+  ./Services/TimeBasedTaskFilter.swift
+
+=== TimelineProgressBar.swift (2 copies) ===
+  ./Components/Design/TimelineProgressBar.swift
+  ./FrancoSphere/DesignSystem/Components/TimelineProgressBar.swift
+
+=== TodaysTasksGlassCard.swift (2 copies) ===
+  ./Components/Design/TodaysTasksGlassCard.swift
+  ./FrancoSphere/Tasks/Components/TodaysTasksGlassCard.swift
+
+=== TrackableScrollView.swift (2 copies) ===
+  ./FrancoSphere/SharedViews/TrackableScrollView.swift
+  ./Views/Main/TrackableScrollView.swift
+
+=== TypeMigrationService.swift (2 copies) ===
+  ./FrancoSphere/Sync/TypeMigrationService.swift
+  ./Services/Migration/TypeMigrationService.swift
+
+=== VerificationRecord.swift (2 copies) ===
+  ./FrancoSphere/Core/Models/VerificationRecord.swift
+  ./Models/VerificationRecord.swift
+
+=== WeatherAlert.swift (2 copies) ===
+  ./FrancoSphere/Core/Models/WeatherAlert.swift
+  ./Models/WeatherAlert.swift
+
+=== WeatherDashboardComponent.swift (2 copies) ===
+  ./Components/Shared Components/WeatherDashboardComponent.swift
+  ./FrancoSphere/DesignSystem/Weather/WeatherDashboardComponent.swift
+
+=== WeatherDataAdapter.swift (2 copies) ===
+  ./FrancoSphere/DesignSystem/Weather/WeatherDataAdapter.swift
+  ./Services/WeatherDataAdapter.swift
+
+=== WeatherTaskTimelineCard.swift (2 copies) ===
+  ./Components/Design/WeatherTaskTimelineCard.swift
+  ./FrancoSphere/Tasks/Components/WeatherTaskTimelineCard.swift
+
+=== WeatherTasksSection.swift (2 copies) ===
+  ./Components/Shared Components/WeatherTasksSection.swift
+  ./FrancoSphere/DesignSystem/Weather/WeatherTasksSection.swift
+
+=== WeatherViewModifier.swift (2 copies) ===
+  ./Components/Shared Components/WeatherViewModifier.swift
+  ./FrancoSphere/DesignSystem/Weather/WeatherViewModifier.swift
+
+=== WorkerActionType.swift (2 copies) ===
+  ./FrancoSphere/Core/Enums/WorkerActionType.swift
+  ./Models/WorkerActionType.swift
+
+=== WorkerAssignmentEngine.swift (2 copies) ===
+  ./FrancoSphere/Worker/Core/WorkerAssignmentEngine.swift
+  ./Services/Migration/WorkerAssignmentEngine.swift
+
+=== WorkerAssignmentGlassCard.swift (2 copies) ===
+  ./Components/Glass/WorkerAssignmentGlassCard.swift
+  ./FrancoSphere/Worker/Components/WorkerAssignmentGlassCard.swift
+
+=== WorkerConstants.swift (2 copies) ===
+  ./FrancoSphere/Core/Constants/WorkerConstants.swift
+  ./Models/WorkerConstants.swift
+
+=== WorkerContextEngine+DataFlow.swift (2 copies) ===
+  ./FrancoSphere/Worker/Core/WorkerContextEngine+DataFlow.swift
+  ./Models/WorkerContextEngine+DataFlow.swift
+
+=== WorkerContextEngine.swift (2 copies) ===
+  ./FrancoSphere/Worker/Core/WorkerContextEngine.swift
+  ./Models/WorkerContextEngine.swift
+
+=== WorkerDashboardView.swift (2 copies) ===
+  ./FrancoSphere/Worker/Dashboard/WorkerDashboardView.swift
+  ./Views/Main/WorkerDashboardView.swift
+
+=== WorkerDashboardViewModel+Fixed.swift (2 copies) ===
+  ./FrancoSphere/Worker/Dashboard/WorkerDashboardViewModel+Fixed.swift
+  ./Views/ViewModels/WorkerDashboardViewModel+Fixed.swift
+
+=== WorkerDashboardViewModel.swift (2 copies) ===
+  ./FrancoSphere/Worker/Dashboard/WorkerDashboardViewModel.swift
+  ./Views/ViewModels/WorkerDashboardViewModel.swift
+
+=== WorkerEventOutbox.swift (2 copies) ===
+  ./FrancoSphere/Sync/WorkerEventOutbox.swift
+  ./Services/RealTime/OfflineQueue/WorkerEventOutbox.swift
+
+=== WorkerFeedbackManager.swift (2 copies) ===
+  ./FrancoSphere/Worker/Services/WorkerFeedbackManager.swift
+  ./Services/RealTime/WorkerFeedbackManager.swift
+
+=== WorkerProfileView.swift (2 copies) ===
+  ./FrancoSphere/Worker/Profile/WorkerProfileView.swift
+  ./Views/Main/WorkerProfileView.swift
+
+=== WorkerRoutineViewModel.swift (2 copies) ===
+  ./FrancoSphere/Worker/Profile/WorkerRoutineViewModel.swift
+  ./Models/WorkerRoutineViewModel.swift
+
+=== WorkerService.swift (2 copies) ===
+  ./FrancoSphere/Worker/Services/WorkerService.swift
+  ./Services/WorkerService.swift
+
+=== WorkersInlineList.swift (2 copies) ===
+  ./Components/Shared Components/WorkersInlineList.swift
+  ./FrancoSphere/Worker/Components/WorkersInlineList.swift
