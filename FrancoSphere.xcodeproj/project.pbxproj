@@ -136,7 +136,7 @@
 		2399560A2E1107E800B3F105 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239956092E1107E800B3F105 /* WorkerProfileView.swift */; };
 		2399560C2E11082300B3F105 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */; };
 		2399560E2E11086300B3F105 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399560D2E11086300B3F105 /* WorkersInlineList.swift */; };
-		23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A3169A2E1E368500469FA3 /* TaskService.swift */; };
+		23A77D322E2B62B000B70DD0 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A77D312E2B62B000B70DD0 /* TaskService.swift */; };
 		23B1178D2DFDB0310065F39E /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178C2DFDB0310065F39E /* MySitesCard.swift */; };
 		23B1178F2DFDB0570065F39E /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B1178E2DFDB0570065F39E /* HeaderV3B.swift */; };
 		23B117912DFDFC6A0065F39E /* FilteredTaskResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */; };
@@ -329,7 +329,7 @@
 		239956092E1107E800B3F105 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
 		2399560B2E11082300B3F105 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
 		2399560D2E11086300B3F105 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
-		23A3169A2E1E368500469FA3 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TaskService.swift; path = Services/TaskService.swift; sourceTree = "<group>"; };
+		23A77D312E2B62B000B70DD0 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
 		23B1178C2DFDB0310065F39E /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
 		23B1178E2DFDB0570065F39E /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
 		23B117902DFDFC6A0065F39E /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
@@ -469,7 +469,7 @@
 		23423DAE2D739D6800AACE3E = {
 			isa = PBXGroup;
 			children = (
-				23A3169A2E1E368500469FA3 /* TaskService.swift */,
+				23A77D312E2B62B000B70DD0 /* TaskService.swift */,
 				236106EB2E17AD0700463A59 /* Security */,
 				234580B72DF78E3D00355F0A /* Components */,
 				234580BC2DF78E3D00355F0A /* Data */,
@@ -1035,7 +1035,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23A3169B2E1E368500469FA3 /* TaskService.swift in Sources */,
 				2312FCC22E1C07FA00B64496 /* QBConnectionStatus.swift in Sources */,
 				234581452DF78E3D00355F0A /* ClockInGlassModal.swift in Sources */,
 				23BBD76C2E030EA500013D90 /* RoutinePriority.swift in Sources */,
@@ -1166,6 +1165,7 @@
 				23DED85B2E1E24F100E5F9F5 /* IntelligenceService.swift in Sources */,
 				234581AA2DF78E3D00355F0A /* TaskCategoryGlassCard.swift in Sources */,
 				2312FC6F2E1B809F00B64496 /* EnhancedMapOverlay.swift in Sources */,
+				23A77D322E2B62B000B70DD0 /* TaskService.swift in Sources */,
 				23B117932DFE008D0065F39E /* HeroStatusCard.swift in Sources */,
 				234581AC2DF78E3D00355F0A /* WeatherDataAdapter.swift in Sources */,
 				234581AD2DF78E3D00355F0A /* PressableGlassCard.swift in Sources */,

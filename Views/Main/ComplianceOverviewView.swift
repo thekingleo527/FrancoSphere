@@ -1,4 +1,3 @@
-import CoreTypes
 //
 //  ComplianceOverviewView.swift
 //  FrancoSphere v6.0
@@ -6,6 +5,7 @@ import CoreTypes
 //  ✅ FIXED: Removed incorrect CoreTypes module import
 //  ✅ FIXED: All type references updated to use proper CoreTypes namespace
 //  ✅ ALIGNED: With actual CoreTypes structure and project organization
+//  ✅ RETAINED: All pertinent data continuity and functionality
 //
 
 import Foundation
@@ -13,18 +13,18 @@ import SwiftUI
 
 struct ComplianceOverviewView: View {
     let intelligence: CoreTypes.PortfolioIntelligence?
-    let onIssuesTap: ((ComplianceIssue) -> Void)?
+    let onIssuesTap: ((CoreTypes.ComplianceIssue) -> Void)?
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
     
-    @State private var selectedTab: CoreTypes.ComplianceTab = .overview
-    @State private var showingIssueDetail: ComplianceIssue?
+    @State private var selectedTab: ComplianceTab = .overview
+    @State private var showingIssueDetail: CoreTypes.ComplianceIssue?
     @State private var showingAuditScheduler = false
     @State private var showingExportOptions = false
     
-    // FIXED: Proper initializer
+    // FIXED: Proper initializer with CoreTypes namespace
     init(intelligence: CoreTypes.PortfolioIntelligence?,
-         onIssuesTap: ((ComplianceIssue) -> Void)? = nil,
+         onIssuesTap: ((CoreTypes.ComplianceIssue) -> Void)? = nil,
          onScheduleAudit: (() -> Void)? = nil,
          onExportReport: (() -> Void)? = nil) {
         self.intelligence = intelligence
@@ -101,33 +101,33 @@ struct ComplianceOverviewView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    Text("\(compliance.complianceScore)%")
+                    Text("\(Int(compliance.complianceRate * 100))%")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
+                        .foregroundColor(complianceScoreColor(compliance.complianceRate * 100))
                 }
                 
                 Spacer()
                 
                 VStack {
-                    Image(systemName: complianceStatusIcon(Double(compliance.complianceScore)))
+                    Image(systemName: complianceStatusIcon(compliance.complianceRate * 100))
                         .font(.system(size: 32))
-                        .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
+                        .foregroundColor(complianceScoreColor(compliance.complianceRate * 100))
                     
-                    Text(complianceStatusText(Double(compliance.complianceScore)))
+                    Text(complianceStatusText(compliance.complianceRate * 100))
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
+                        .foregroundColor(complianceScoreColor(compliance.complianceRate * 100))
                 }
             }
             
             progressBarSection(for: compliance)
         }
         .padding()
-        .background(complianceScoreColor(Double(compliance.complianceScore)).opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+        .background(complianceScoreColor(compliance.complianceRate * 100).opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(complianceScoreColor(Double(compliance.complianceScore)).opacity(0.3), lineWidth: 1)
+                .stroke(complianceScoreColor(compliance.complianceRate * 100).opacity(0.3), lineWidth: 1)
         )
     }
     
@@ -147,9 +147,9 @@ struct ComplianceOverviewView: View {
                     .foregroundColor(.primary)
             }
             
-            let compliancePercentage = calculateCompliancePercentage(compliance)
+            let compliancePercentage = compliance.complianceRate * 100
             ProgressView(value: compliancePercentage / 100)
-                .progressViewStyle(LinearProgressViewStyle(tint: complianceScoreColor(Double(compliance.complianceScore))))
+                .progressViewStyle(LinearProgressViewStyle(tint: complianceScoreColor(compliancePercentage)))
         }
     }
     
@@ -184,7 +184,7 @@ struct ComplianceOverviewView: View {
     private var tabSelectorSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
-                ForEach(CoreTypes.ComplianceTab.allCases, id: \.self) { tab in
+                ForEach(ComplianceTab.allCases, id: \.self) { tab in
                     Button(action: {
                         withAnimation(Animation.easeInOut(duration: 0.3)) {
                             selectedTab = tab
@@ -278,10 +278,10 @@ struct ComplianceOverviewView: View {
                 GridItem(.flexible())
             ], spacing: 12) {
                 QuickStatCard(
-                    title: "Pending Actions",
-                    value: "\(compliance.criticalIssues)",
+                    title: "Pending Issues",
+                    value: "\(compliance.pendingIssues)",
                     icon: "hourglass",
-                    color: compliance.criticalIssues > 0 ? .orange : .green
+                    color: compliance.pendingIssues > 0 ? .orange : .green
                 )
                 
                 QuickStatCard(
@@ -293,9 +293,9 @@ struct ComplianceOverviewView: View {
                 
                 QuickStatCard(
                     title: "Compliance Rate",
-                    value: "\(compliance.complianceScore)%",
+                    value: "\(Int(compliance.complianceRate * 100))%",
                     icon: "checkmark.shield",
-                    color: complianceScoreColor(Double(compliance.complianceScore))
+                    color: complianceScoreColor(compliance.complianceRate * 100)
                 )
             }
         }
@@ -513,7 +513,7 @@ struct ComplianceOverviewView: View {
             if let lastAudit = lastAudit {
                 AuditHistoryCard(
                     date: lastAudit,
-                    score: Double(compliance.complianceScore),
+                    score: compliance.complianceRate * 100,
                     status: .completed
                 )
             } else {
@@ -606,39 +606,53 @@ struct ComplianceOverviewView: View {
     }
     
     private func calculateCompliantBuildings(_ intelligence: CoreTypes.PortfolioIntelligence) -> Int {
-        let percentage = Double(intelligence.complianceScore) / 100.0
+        let percentage = intelligence.complianceRate
         return Int(Double(intelligence.totalBuildings) * percentage)
     }
     
-    private func calculateCompliancePercentage(_ intelligence: CoreTypes.PortfolioIntelligence) -> Double {
-        return Double(intelligence.complianceScore)
-    }
-    
-    private func createMockIssues(count: Int) -> [ComplianceIssue] {
+    private func createMockIssues(count: Int) -> [CoreTypes.ComplianceIssue] {
         guard count > 0 else { return [] }
         
-        let sampleBuilding = NamedCoordinate(
-            id: "14",
-            name: "Rubin Museum",
-            latitude: 40.7402,
-            longitude: -73.9980
-        )
-        
-        var issues: [ComplianceIssue] = []
-        let issueTypes: [CoreTypes.ComplianceIssueType] = [.maintenanceOverdue, .safetyViolation, .inspectionRequired]
+        var issues: [CoreTypes.ComplianceIssue] = []
+        let issueTypes: [CoreTypes.ComplianceIssueType] = [.safety, .environmental, .accessibility]
+        let severities: [CoreTypes.ComplianceSeverity] = [.high, .critical]
         
         for i in 0..<count {
-            let issue = ComplianceIssue(
+            let issue = CoreTypes.ComplianceIssue(
+                id: UUID().uuidString,
                 type: issueTypes[i % issueTypes.count],
-                severity: .high,
+                severity: severities[i % severities.count],
+                title: "Critical compliance issue \(i + 1)",
                 description: "Critical compliance issue \(i + 1) requiring immediate attention",
-                buildingId: sampleBuilding.id,
-                dueDate: Calendar.current.date(byAdding: .day, value: 7, to: Date())
+                buildingId: "14", // Rubin Museum
+                discoveredAt: Date(),
+                resolvedAt: nil,
+                isResolved: false
             )
             issues.append(issue)
         }
         
         return issues
+    }
+}
+
+// MARK: - Local Supporting Types
+
+enum ComplianceTab: String, CaseIterable {
+    case overview = "Overview"
+    case issues = "Issues"
+    case audits = "Audits"
+    case reports = "Reports"
+    
+    var displayName: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .overview: return "chart.pie"
+        case .issues: return "exclamationmark.triangle"
+        case .audits: return "calendar"
+        case .reports: return "doc.text"
+        }
     }
 }
 
@@ -672,7 +686,7 @@ struct QuickStatCard: View {
 }
 
 struct CriticalIssueRow: View {
-    let issue: ComplianceIssue
+    let issue: CoreTypes.ComplianceIssue
     let onTap: () -> Void
     
     var body: some View {
@@ -684,7 +698,7 @@ struct CriticalIssueRow: View {
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(issue.type.rawValue)
+                    Text(issue.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
@@ -699,11 +713,9 @@ struct CriticalIssueRow: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     SeverityBadge(severity: issue.severity)
                     
-                    if let dueDate = issue.dueDate {
-                        Text(formattedDueDate(dueDate))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    Text(issue.discoveredAt, style: .relative)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
                 
                 Image(systemName: "chevron.right")
@@ -714,16 +726,10 @@ struct CriticalIssueRow: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
-    private func formattedDueDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
 }
 
 struct ComplianceIssueCard: View {
-    let issue: ComplianceIssue
+    let issue: CoreTypes.ComplianceIssue
     let onTap: () -> Void
     
     var body: some View {
@@ -735,7 +741,7 @@ struct ComplianceIssueCard: View {
                         .foregroundColor(issue.severity.color)
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(issue.type.rawValue)
+                        Text(issue.title)
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
@@ -755,19 +761,17 @@ struct ComplianceIssueCard: View {
                     .foregroundColor(.secondary)
                     .lineLimit(2)
                 
-                if let dueDate = issue.dueDate {
-                    HStack {
-                        Text("Due:")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        
-                        Text(dueDate.formatted(date: .abbreviated, time: .omitted))
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                    }
+                HStack {
+                    Text("Discovered:")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    
+                    Text(issue.discoveredAt.formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
                 }
             }
             .padding()
@@ -781,7 +785,7 @@ struct SeverityBadge: View {
     let severity: CoreTypes.ComplianceSeverity
     
     var body: some View {
-        Text(severity.rawValue)
+        Text(severity.displayName)
             .font(.caption2)
             .fontWeight(.medium)
             .foregroundColor(.white)
@@ -1008,7 +1012,7 @@ struct ReportCard: View {
 // MARK: - Sheet Views
 
 struct ComplianceIssueDetailSheet: View {
-    let issue: ComplianceIssue
+    let issue: CoreTypes.ComplianceIssue
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -1017,7 +1021,7 @@ struct ComplianceIssueDetailSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(issue.type.rawValue)
+                            Text(issue.title)
                                 .font(.title2)
                                 .fontWeight(.bold)
                             
@@ -1041,14 +1045,12 @@ struct ComplianceIssueDetailSheet: View {
                             .font(.body)
                     }
                     
-                    if let dueDate = issue.dueDate {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Due Date")
-                                .font(.headline)
-                            
-                            Text(dueDate.formatted(date: .abbreviated, time: .omitted))
-                                .font(.body)
-                        }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Discovered")
+                            .font(.headline)
+                        
+                        Text(issue.discoveredAt.formatted(date: .abbreviated, time: .omitted))
+                            .font(.body)
                     }
                     
                     Spacer()
@@ -1213,22 +1215,18 @@ enum ReportType: String, CaseIterable {
     }
 }
 
-// MARK: - ComplianceIssue Type Definition
+// MARK: - CoreTypes Extensions
 
-struct ComplianceIssue: Identifiable {
-    let id = UUID()
-    let type: CoreTypes.ComplianceIssueType
-    let severity: CoreTypes.ComplianceSeverity
-    let description: String
-    let buildingId: String
-    let dueDate: Date?
-    
-    init(type: CoreTypes.ComplianceIssueType, severity: CoreTypes.ComplianceSeverity, description: String, buildingId: String, dueDate: Date? = nil) {
-        self.type = type
-        self.severity = severity
-        self.description = description
-        self.buildingId = buildingId
-        self.dueDate = dueDate
+extension CoreTypes.ComplianceIssueType {
+    var icon: String {
+        switch self {
+        case .safety: return "exclamationmark.triangle"
+        case .environmental: return "leaf"
+        case .accessibility: return "figure.roll"
+        case .fire: return "flame"
+        case .health: return "cross"
+        case .structural: return "building"
+        }
     }
 }
 
@@ -1238,13 +1236,14 @@ struct ComplianceOverviewView_Previews: PreviewProvider {
     static var previews: some View {
         let sampleIntelligence = CoreTypes.PortfolioIntelligence(
             totalBuildings: 12,
-            activeWorkers: 24,
-            completionRate: 0.87,
+            averageScore: 85.0,
+            totalTasks: 132,
+            completedTasks: 115,
+            pendingIssues: 5,
             criticalIssues: 3,
-            monthlyTrend: .up,
-            completedTasks: 132,
-            complianceScore: 85,
-            weeklyTrend: 0.05
+            complianceRate: 0.85,
+            insights: [],
+            lastUpdated: Date()
         )
         
         ComplianceOverviewView(intelligence: sampleIntelligence)
