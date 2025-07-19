@@ -19,7 +19,7 @@ public class WorkerContextEngineAdapter: ObservableObject {
     @Published public var assignedBuildings: [NamedCoordinate] = []
     @Published public var portfolioBuildings: [NamedCoordinate] = []
     @Published public var todaysTasks: [ContextualTask] = []
-    @Published public var taskProgress: TaskProgress?
+    @Published public var taskProgress: CoreTypes.TaskProgress?
     @Published public var isLoading = false
     @Published public var hasPendingScenario = false
     
@@ -47,7 +47,7 @@ public class WorkerContextEngineAdapter: ObservableObject {
         self.assignedBuildings = await await await contextEngine.getAssignedBuildings()
         self.portfolioBuildings = await await await contextEngine.getPortfolioBuildings()
         self.todaysTasks = await await await contextEngine.getTodaysTasks()
-        self.taskProgress = await await await contextEngine.getTaskProgress()
+        self.taskProgress = await await await contextEngine.getCoreTypes.TaskProgress()
         
         print("🔄 State refreshed: \(assignedBuildings.count) assigned, \(portfolioBuildings.count) portfolio")
     }

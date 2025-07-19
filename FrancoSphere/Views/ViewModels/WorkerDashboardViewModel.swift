@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0 - PROGRESS CALCULATION FIXED
 //
 //  ✅ FIXED: Progress calculation to show real numbers
-//  ✅ FIXED: Use correct TaskProgress properties (progressPercentage, not completionRate)
+//  ✅ FIXED: Use correct CoreTypes.TaskProgress properties (progressPercentage, not completionRate)
 //  ✅ ADDED: Explicit task progress calculation
 //  ✅ ENHANCED: Real-time progress updates
 //
@@ -15,7 +15,7 @@ import Combine
 class WorkerDashboardViewModel: ObservableObject {
     @Published var assignedBuildings: [NamedCoordinate] = []
     @Published var todaysTasks: [ContextualTask] = []
-    @Published var taskProgress: TaskProgress?
+    @Published var taskProgress: CoreTypes.TaskProgress?
     @Published var isLoading = true
     @Published var errorMessage: String?
     @Published var isClockedIn = false
@@ -54,7 +54,7 @@ class WorkerDashboardViewModel: ObservableObject {
             self.currentBuilding = await await await contextEngine.getCurrentBuilding()
             
             // FIXED: Explicit task progress calculation
-            await calculateTaskProgress()
+            await calculateCoreTypes.TaskProgress()
             
             print("✅ Worker dashboard data loaded: \(assignedBuildings.count) buildings, \(todaysTasks.count) tasks")
             
@@ -81,7 +81,7 @@ class WorkerDashboardViewModel: ObservableObject {
             self.currentBuilding = await await await contextEngine.getCurrentBuilding()
             
             // Recalculate progress
-            await calculateTaskProgress()
+            await calculateCoreTypes.TaskProgress()
             
         } catch {
             errorMessage = error.localizedDescription
@@ -171,9 +171,9 @@ class WorkerDashboardViewModel: ObservableObject {
     }
 }
 
-// MARK: - TaskProgress Helper Extensions
+// MARK: - CoreTypes.TaskProgress Helper Extensions
 
-extension TaskProgress {
+extension CoreTypes.TaskProgress {
     /// Get completion rate as a 0.0-1.0 value for progress bars
     var normalizedProgress: Double {
         return progressPercentage / 100.0
@@ -205,7 +205,7 @@ extension TaskProgress {
 }
     // MARK: - Progress Calculation Fix
     
-    private func calculateTaskProgress() async {
+    private func calculateCoreTypes.TaskProgress() async {
         let totalTasks = todaysTasks.count
         let completedTasks = todaysTasks.filter { $0.isCompleted }.count
         
@@ -213,7 +213,7 @@ extension TaskProgress {
             Double(completedTasks) / Double(totalTasks) * 100.0 : 0.0
         
         // ✅ Force create progress object
-        let newProgress = TaskProgress(
+        let newProgress = CoreTypes.TaskProgress(
             completedTasks: completedTasks,
             totalTasks: totalTasks,
             progressPercentage: progressPercentage

@@ -1,11 +1,11 @@
 //
-//  WeatherDataAdapter.swift
+//  CoreTypes.WeatherDataAdapter.swift
 //  FrancoSphere
 //
 //  🚀 PRODUCTION READY - PHASE-2 COMPLETE (FINAL FIXED VERSION)
 //  ✅ Fixed all compilation errors
 //  ✅ Corrected WeatherCondition enum usage (using CoreTypes.WeatherCondition)
-//  ✅ Fixed WeatherData constructor parameter order
+//  ✅ Fixed CoreTypes.WeatherData constructor parameter order
 //  ✅ Fixed MaintenanceTask constructor (using CoreTypes.MaintenanceTask)
 //  ✅ Fixed VerificationStatus enum values
 //  ✅ OpenMeteo API integration fully working
@@ -55,17 +55,17 @@ enum WeatherError: LocalizedError {
 // MARK: - Weather Data Adapter (Final Version)
 
 @MainActor
-class WeatherDataAdapter: ObservableObject {
-    static let shared = WeatherDataAdapter()
+class CoreTypes.WeatherDataAdapter: ObservableObject {
+    static let shared = CoreTypes.WeatherDataAdapter()
     
-    @Published var currentWeather: WeatherData?
-    @Published var forecast: [WeatherData] = []
+    @Published var currentWeather: CoreTypes.WeatherData?
+    @Published var forecast: [CoreTypes.WeatherData] = []
     @Published var isLoading = false
     @Published var error: WeatherError?
     @Published var lastUpdate: Date?
     
     // Enhanced cache with in-memory backing
-    private var weatherCache: [String: (data: [WeatherData], timestamp: Date)] = [:]
+    private var weatherCache: [String: (data: [CoreTypes.WeatherData], timestamp: Date)] = [:]
 
     // Disk cache configuration
     private let cacheFileName = "weatherCache.json"
@@ -74,7 +74,7 @@ class WeatherDataAdapter: ObservableObject {
         enum CodingKeys: String, CodingKey {
             case data, timestamp
         }
-        let data: [WeatherData]
+        let data: [CoreTypes.WeatherData]
         let timestamp: Date
     }
     
@@ -89,7 +89,7 @@ class WeatherDataAdapter: ObservableObject {
     private let openMeteoBaseURL = "https://api.open-meteo.com/v1/forecast"
 
     private init() {
-        print("🌤️ WeatherDataAdapter initialized with unified error handling")
+        print("🌤️ CoreTypes.WeatherDataAdapter initialized with unified error handling")
         loadCacheFromDisk()
     }
     
@@ -184,12 +184,12 @@ class WeatherDataAdapter: ObservableObject {
     
     // MARK: - OpenMeteo API Integration (FIXED)
     
-    private func fetchFromAPI(latitude: Double, longitude: Double) async throws -> [WeatherData] {
+    private func fetchFromAPI(latitude: Double, longitude: Double) async throws -> [CoreTypes.WeatherData] {
         // Always use OpenMeteo API (free, no key needed)
         return try await fetchFromOpenMeteoAPI(latitude: latitude, longitude: longitude)
     }
     
-    private func fetchFromOpenMeteoAPI(latitude: Double, longitude: Double) async throws -> [WeatherData] {
+    private func fetchFromOpenMeteoAPI(latitude: Double, longitude: Double) async throws -> [CoreTypes.WeatherData] {
         // Validate coordinates (round to 4 decimal places for consistency)
         let lat = round(latitude * 10000) / 10000
         let lng = round(longitude * 10000) / 10000
@@ -249,7 +249,7 @@ class WeatherDataAdapter: ObservableObject {
         }
     }
     
-    private func parseOpenMeteoResponse(_ data: Data) throws -> [WeatherData] {
+    private func parseOpenMeteoResponse(_ data: Data) throws -> [CoreTypes.WeatherData] {
         do {
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             guard let json = json else {
@@ -257,10 +257,10 @@ class WeatherDataAdapter: ObservableObject {
             }
             
             // Parse current weather for immediate use
-            var weatherData: [WeatherData] = []
+            var weatherData: [CoreTypes.WeatherData] = []
             
             if let current = json["current"] as? [String: Any] {
-                let currentWeather = try parseCurrentWeatherData(current)
+                let currentWeather = try parseCurrentCoreTypes.WeatherData(current)
                 weatherData.append(currentWeather)
             }
             
@@ -269,18 +269,18 @@ class WeatherDataAdapter: ObservableObject {
                let times = hourly["time"] as? [String],
                let temperatures = hourly["temperature_2m"] as? [Double] {
                 
-                let hourlyData = try parseHourlyWeatherData(hourly, times: times, temperatures: temperatures)
+                let hourlyData = try parseHourlyCoreTypes.WeatherData(hourly, times: times, temperatures: temperatures)
                 weatherData.append(contentsOf: hourlyData.prefix(23)) // Add next 23 hours
             }
             
-            return weatherData.isEmpty ? [createFallbackWeatherData()] : weatherData
+            return weatherData.isEmpty ? [createFallbackCoreTypes.WeatherData()] : weatherData
             
         } catch {
             throw WeatherError.parseError
         }
     }
     
-    private func parseCurrentWeatherData(_ current: [String: Any]) throws -> WeatherData {
+    private func parseCurrentCoreTypes.WeatherData(_ current: [String: Any]) throws -> CoreTypes.WeatherData {
         let temperature = current["temperature_2m"] as? Double ?? 72.0
         let humidity = current["relative_humidity_2m"] as? Int ?? 50
         let precipitation = current["precipitation"] as? Double ?? 0.0
@@ -289,8 +289,8 @@ class WeatherDataAdapter: ObservableObject {
         
         let condition = weatherCodeToCondition(weatherCode)
         
-        // FIXED: Correct WeatherData constructor using FrancoSphereModels.swift definition
-        return WeatherData(
+        // FIXED: Correct CoreTypes.WeatherData constructor using FrancoSphereModels.swift definition
+        return CoreTypes.WeatherData(
             temperature: temperature,
             humidity: Double(humidity),
             windSpeed: windSpeed,
@@ -301,7 +301,7 @@ class WeatherDataAdapter: ObservableObject {
         )
     }
     
-    private func parseHourlyWeatherData(_ hourly: [String: Any], times: [String], temperatures: [Double]) throws -> [WeatherData] {
+    private func parseHourlyCoreTypes.WeatherData(_ hourly: [String: Any], times: [String], temperatures: [Double]) throws -> [CoreTypes.WeatherData] {
         guard let humidities = hourly["relative_humidity_2m"] as? [Int],
               let precipitations = hourly["precipitation"] as? [Double],
               let windSpeeds = hourly["wind_speed_10m"] as? [Double],
@@ -310,7 +310,7 @@ class WeatherDataAdapter: ObservableObject {
             throw WeatherError.parseError
         }
         
-        var weatherData: [WeatherData] = []
+        var weatherData: [CoreTypes.WeatherData] = []
         let dateFormatter = ISO8601DateFormatter()
         
         for i in 1..<min(times.count, 24) { // Skip index 0 (current), take next 23 hours
@@ -325,8 +325,8 @@ class WeatherDataAdapter: ObservableObject {
             
             let condition = weatherCodeToCondition(weatherCode)
             
-            // FIXED: Correct WeatherData constructor using FrancoSphereModels.swift definition
-            weatherData.append(WeatherData(
+            // FIXED: Correct CoreTypes.WeatherData constructor using FrancoSphereModels.swift definition
+            weatherData.append(CoreTypes.WeatherData(
                 temperature: temperature,
                 humidity: Double(humidity),
                 windSpeed: windSpeed,
@@ -340,9 +340,9 @@ class WeatherDataAdapter: ObservableObject {
         return weatherData
     }
     
-    private func createFallbackWeatherData() -> WeatherData {
-        // FIXED: Correct WeatherData constructor using FrancoSphereModels.swift definition
-        return WeatherData(
+    private func createFallbackCoreTypes.WeatherData() -> CoreTypes.WeatherData {
+        // FIXED: Correct CoreTypes.WeatherData constructor using FrancoSphereModels.swift definition
+        return CoreTypes.WeatherData(
             temperature: 72.0,
             humidity: 50.0,
             windSpeed: 5.0,
@@ -627,7 +627,7 @@ class WeatherDataAdapter: ObservableObject {
         }
     }
 
-    private func loadWeatherFromDisk(for id: String) -> (data: [WeatherData], timestamp: Date)? {
+    private func loadWeatherFromDisk(for id: String) -> (data: [CoreTypes.WeatherData], timestamp: Date)? {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
 
@@ -641,15 +641,15 @@ class WeatherDataAdapter: ObservableObject {
     
     // MARK: - Private Helper Methods
     
-    private func getForecastForDate(_ date: Date) -> WeatherData? {
+    private func getForecastForDate(_ date: Date) -> CoreTypes.WeatherData? {
         let calendar = Calendar.current
         return forecast.first { calendar.isDate($0.timestamp, inSameDayAs: date) }
     }
 }
 
-// MARK: - WeatherData Extensions
+// MARK: - CoreTypes.WeatherData Extensions
 
-extension WeatherData {
+extension CoreTypes.WeatherData {
     /// Check if weather is extreme
     var isExtreme: Bool {
         condition == .stormy || temperature < 20 || temperature > 100

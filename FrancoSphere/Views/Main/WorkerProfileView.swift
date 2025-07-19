@@ -23,7 +23,7 @@ struct WorkerProfileView: View {
                 
                 // Performance Section
                 if let metrics = viewModel.performanceMetrics {
-                    PerformanceMetricsView(metrics: metrics)
+                    CoreTypes.PerformanceMetricsView(metrics: metrics)
                 }
                 
                 // Recent Tasks Section
@@ -98,8 +98,8 @@ struct ProfileHeaderView: View {
     }
 }
 
-struct PerformanceMetricsView: View {
-    let metrics: PerformanceMetrics
+struct CoreTypes.PerformanceMetricsView: View {
+    let metrics: CoreTypes.PerformanceMetrics
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -280,7 +280,7 @@ struct SkillsView: View {
 @MainActor
 class WorkerProfileViewModel: ObservableObject {
     @Published var worker: WorkerProfile?
-    @Published var performanceMetrics: PerformanceMetrics?
+    @Published var performanceMetrics: CoreTypes.PerformanceMetrics?
     @Published var recentTasks: [ContextualTask] = []
     @Published var isLoading = false
     
@@ -294,8 +294,8 @@ class WorkerProfileViewModel: ObservableObject {
             // ✅ FIXED: Use correct WorkerService method
             worker = try await workerService.getWorkerProfile(for: workerId)
             
-            // ✅ FIXED: Create PerformanceMetrics with correct constructor
-            performanceMetrics = PerformanceMetrics(
+            // ✅ FIXED: Create CoreTypes.PerformanceMetrics with correct constructor
+            performanceMetrics = CoreTypes.PerformanceMetrics(
                 efficiency: 0.85,  // Default efficiency
                 tasksCompleted: 42,  // Default task count
                 averageTime: 3600.0,  // Default average time
@@ -309,7 +309,7 @@ class WorkerProfileViewModel: ObservableObject {
         } catch {
             print("Error loading worker data: \(error)")
             // Set fallback data if loading fails
-            performanceMetrics = PerformanceMetrics(
+            performanceMetrics = CoreTypes.PerformanceMetrics(
                 efficiency: 0.0,
                 tasksCompleted: 0,
                 averageTime: 0.0,

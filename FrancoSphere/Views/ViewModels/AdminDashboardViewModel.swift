@@ -35,8 +35,8 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var lastUpdateTime: Date?
     
     // MARK: - Cross-Dashboard Integration (Using shared types)
-    @Published var dashboardSyncStatus: DashboardSyncStatus = .synced
-    @Published var crossDashboardUpdates: [CrossDashboardUpdate] = []
+    @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
+    @Published var crossDashboardUpdates: [CoreTypes.CrossDashboardUpdate] = []
     
     // MARK: - Services (Using .shared pattern consistently)
     private let buildingService = BuildingService.shared
@@ -114,7 +114,7 @@ class AdminDashboardViewModel: ObservableObject {
         }
         
         self.buildingMetrics = metrics
-        broadcastCrossDashboardUpdate(.metricsUpdated(buildingIds: Array(metrics.keys)))
+        broadcastCoreTypes.CrossDashboardUpdate(.metricsUpdated(buildingIds: Array(metrics.keys)))
     }
     
     /// Loads portfolio-wide intelligence insights
@@ -127,7 +127,7 @@ class AdminDashboardViewModel: ObservableObject {
             self.isLoadingInsights = false
             
             print("✅ Portfolio insights loaded: \(insights.count) insights")
-            broadcastCrossDashboardUpdate(.insightsUpdated(count: insights.count))
+            broadcastCoreTypes.CrossDashboardUpdate(.insightsUpdated(count: insights.count))
             
         } catch {
             self.portfolioInsights = []
@@ -156,7 +156,7 @@ class AdminDashboardViewModel: ObservableObject {
             self.isLoadingIntelligence = false
             
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
-            broadcastCrossDashboardUpdate(.buildingIntelligenceUpdated(buildingId: buildingId))
+            broadcastCoreTypes.CrossDashboardUpdate(.buildingIntelligenceUpdated(buildingId: buildingId))
             
         } catch {
             self.selectedBuildingInsights = []
@@ -180,7 +180,7 @@ class AdminDashboardViewModel: ObservableObject {
             buildingMetrics[buildingId] = metrics
             
             print("✅ Refreshed metrics for building \(buildingId)")
-            broadcastCrossDashboardUpdate(.metricsUpdated(buildingIds: [buildingId]))
+            broadcastCoreTypes.CrossDashboardUpdate(.metricsUpdated(buildingIds: [buildingId]))
             
         } catch {
             print("❌ Failed to refresh building metrics: \(error)")
@@ -244,7 +244,7 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     /// Broadcast update to other dashboards
-    private func broadcastCrossDashboardUpdate(_ update: CrossDashboardUpdate) {
+    private func broadcastCoreTypes.CrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
         crossDashboardUpdates.append(update)
         // TODO: Send to DashboardSyncService when Phase 1.2 is implemented
         print("📡 Broadcasting update: \(update)")
@@ -260,7 +260,7 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     /// Handle cross-dashboard update received from other dashboards
-    func handleCrossDashboardUpdate(_ update: CrossDashboardUpdate) {
+    func handleCoreTypes.CrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
         switch update {
         case .taskCompleted(let buildingId):
             Task {

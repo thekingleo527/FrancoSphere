@@ -34,7 +34,6 @@
 		23273A222E2B8674004A52C6 /* ActionEvidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739672E2B8674004A52C6 /* ActionEvidence.swift */; };
 		23273A232E2B8674004A52C6 /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DC2E2B8674004A52C6 /* ForgotPasswordView.swift */; };
 		23273A242E2B8674004A52C6 /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E72E2B8674004A52C6 /* MaintenanceHistoryView.swift */; };
-		23273A252E2B8674004A52C6 /* CrossDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327396C2E2B8674004A52C6 /* CrossDashboardTypes.swift */; };
 		23273A262E2B8674004A52C6 /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F82E2B8674004A52C6 /* TaskTimelineView.swift */; };
 		23273A272E2B8674004A52C6 /* BuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E42E2B8674004A52C6 /* BuildingsView.swift */; };
 		23273A282E2B8674004A52C6 /* NovaAIIntegrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C22E2B8674004A52C6 /* NovaAIIntegrationService.swift */; };
@@ -105,7 +104,6 @@
 		23273A6C2E2B8674004A52C6 /* ClientDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */; };
 		23273A6D2E2B8674004A52C6 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739652E2B8674004A52C6 /* UnifiedDataService.swift */; };
 		23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */; };
-		23273A702E2B8674004A52C6 /* MissingEnumValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397B2E2B8674004A52C6 /* MissingEnumValues.swift */; };
 		23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CD2E2B8674004A52C6 /* WorkerService.swift */; };
 		23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739272E2B8674004A52C6 /* HeroStatusCard.swift */; };
 		23273A742E2B8674004A52C6 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CF2E2B8674004A52C6 /* DashboardView.swift */; };
@@ -152,9 +150,7 @@
 		23273A9E2E2B8674004A52C6 /* BuildingMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B72E2B8674004A52C6 /* BuildingMetricsService.swift */; };
 		23273A9F2E2B8674004A52C6 /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F92E2B8674004A52C6 /* WorkerDashboardView.swift */; };
 		23273AA02E2B8674004A52C6 /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D12E2B8674004A52C6 /* RouteStatItem.swift */; };
-		23273AA12E2B8674004A52C6 /* AdditionalTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739632E2B8674004A52C6 /* AdditionalTypes.swift */; };
 		23273AA22E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */; };
-		23273AA32E2B8674004A52C6 /* MissingTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397C2E2B8674004A52C6 /* MissingTypes.swift */; };
 		23273AA42E2B8674004A52C6 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E22E2B8674004A52C6 /* BuildingMapDetailView.swift */; };
 		23273AA52E2B8674004A52C6 /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398A2E2B8674004A52C6 /* NovaAPIService.swift */; };
 		23273AA62E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C12E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift */; };
@@ -334,14 +330,12 @@
 		2327395F2E2B8674004A52C6 /* MapBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapBackgroundView.swift; sourceTree = "<group>"; };
 		232739602E2B8674004A52C6 /* MapInteractionHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapInteractionHint.swift; sourceTree = "<group>"; };
 		232739612E2B8674004A52C6 /* MapRevealContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRevealContainer.swift; sourceTree = "<group>"; };
-		232739632E2B8674004A52C6 /* AdditionalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdditionalTypes.swift; sourceTree = "<group>"; };
 		232739642E2B8674004A52C6 /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
 		232739652E2B8674004A52C6 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		232739672E2B8674004A52C6 /* ActionEvidence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionEvidence.swift; sourceTree = "<group>"; };
 		232739682E2B8674004A52C6 /* BuildingIntelligenceDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceDTO.swift; sourceTree = "<group>"; };
 		232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceDataDTO.swift; sourceTree = "<group>"; };
 		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
-		2327396C2E2B8674004A52C6 /* CrossDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossDashboardTypes.swift; sourceTree = "<group>"; };
 		2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		2327396F2E2B8674004A52C6 /* AIScenarioTypeExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioTypeExtensions.swift; sourceTree = "<group>"; };
 		232739702E2B8674004A52C6 /* BuildingInsight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingInsight.swift; sourceTree = "<group>"; };
@@ -353,8 +347,6 @@
 		232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereExtensions.swift; sourceTree = "<group>"; };
 		232739792E2B8674004A52C6 /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
 		2327397A2E2B8674004A52C6 /* ImportHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportHelper.swift; sourceTree = "<group>"; };
-		2327397B2E2B8674004A52C6 /* MissingEnumValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissingEnumValues.swift; sourceTree = "<group>"; };
-		2327397C2E2B8674004A52C6 /* MissingTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissingTypes.swift; sourceTree = "<group>"; };
 		2327397D2E2B8674004A52C6 /* ModelExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExtensions.swift; sourceTree = "<group>"; };
 		2327397E2E2B8674004A52C6 /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
 		2327397F2E2B8674004A52C6 /* UserExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExtensions.swift; sourceTree = "<group>"; };
@@ -704,7 +696,6 @@
 		232739662E2B8674004A52C6 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				232739632E2B8674004A52C6 /* AdditionalTypes.swift */,
 				232739642E2B8674004A52C6 /* CoreTypes.swift */,
 				232739652E2B8674004A52C6 /* UnifiedDataService.swift */,
 			);
@@ -725,7 +716,6 @@
 		2327396E2E2B8674004A52C6 /* Enums */ = {
 			isa = PBXGroup;
 			children = (
-				2327396C2E2B8674004A52C6 /* CrossDashboardTypes.swift */,
 				2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */,
 			);
 			path = Enums;
@@ -748,8 +738,6 @@
 				232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */,
 				232739792E2B8674004A52C6 /* FrancoSphereModels.swift */,
 				2327397A2E2B8674004A52C6 /* ImportHelper.swift */,
-				2327397B2E2B8674004A52C6 /* MissingEnumValues.swift */,
-				2327397C2E2B8674004A52C6 /* MissingTypes.swift */,
 				2327397D2E2B8674004A52C6 /* ModelExtensions.swift */,
 				2327397E2E2B8674004A52C6 /* SharedTypes.swift */,
 				2327397F2E2B8674004A52C6 /* UserExtensions.swift */,
@@ -1226,7 +1214,6 @@
 				23273A222E2B8674004A52C6 /* ActionEvidence.swift in Sources */,
 				23273A232E2B8674004A52C6 /* ForgotPasswordView.swift in Sources */,
 				23273A242E2B8674004A52C6 /* MaintenanceHistoryView.swift in Sources */,
-				23273A252E2B8674004A52C6 /* CrossDashboardTypes.swift in Sources */,
 				23273A262E2B8674004A52C6 /* TaskTimelineView.swift in Sources */,
 				23273A272E2B8674004A52C6 /* BuildingsView.swift in Sources */,
 				23273A282E2B8674004A52C6 /* NovaAIIntegrationService.swift in Sources */,
@@ -1297,7 +1284,6 @@
 				23273A6C2E2B8674004A52C6 /* ClientDashboardTypes.swift in Sources */,
 				23273A6D2E2B8674004A52C6 /* UnifiedDataService.swift in Sources */,
 				23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */,
-				23273A702E2B8674004A52C6 /* MissingEnumValues.swift in Sources */,
 				23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */,
 				23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */,
 				23273A742E2B8674004A52C6 /* DashboardView.swift in Sources */,
@@ -1344,9 +1330,7 @@
 				23273A9E2E2B8674004A52C6 /* BuildingMetricsService.swift in Sources */,
 				23273A9F2E2B8674004A52C6 /* WorkerDashboardView.swift in Sources */,
 				23273AA02E2B8674004A52C6 /* RouteStatItem.swift in Sources */,
-				23273AA12E2B8674004A52C6 /* AdditionalTypes.swift in Sources */,
 				23273AA22E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift in Sources */,
-				23273AA32E2B8674004A52C6 /* MissingTypes.swift in Sources */,
 				23273AA42E2B8674004A52C6 /* BuildingMapDetailView.swift in Sources */,
 				23273AA52E2B8674004A52C6 /* NovaAPIService.swift in Sources */,
 				23273AA62E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift in Sources */,

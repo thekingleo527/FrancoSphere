@@ -2,74 +2,18 @@
 //  ClientDashboardTypes.swift
 //  FrancoSphere v6.0
 //
-//  ✅ EMERGENCY FIX: Removed CoreTypes redeclaration
-//  ✅ CLEANED: All duplicate type definitions
-//  ✅ ALIGNED: Uses only CoreTypes.* references
+//  ✅ GENERATED: By comprehensive fix script
+//  ✅ CLIENT: Executive dashboard specific types
+//  ✅ SEPARATE: From CoreTypes to avoid conflicts
 //
 
 import Foundation
 import SwiftUI
 
-// ❌ DELETE THIS LINE: extension CoreTypes {
-// ❌ DELETE ANY: struct CoreTypes definition
+// MARK: - Client Dashboard Executive Types
 
-// MARK: - Client-Specific View Types (Non-conflicting)
-
-public enum InsightFilterType: String, CaseIterable, Codable {
-    case all = "All"
-    case performance = "Performance"
-    case maintenance = "Maintenance"
-    case compliance = "Compliance"
-    case efficiency = "Efficiency"
-    case safety = "Safety"
-    case cost = "Cost"
-    
-    public var icon: String {
-        switch self {
-        case .all: return "list.bullet"
-        case .performance: return "chart.line.uptrend.xyaxis"
-        case .maintenance: return "wrench"
-        case .compliance: return "checkmark.shield"
-        case .efficiency: return "speedometer"
-        case .safety: return "shield"
-        case .cost: return "dollarsign.circle"
-        }
-    }
-    
-    public var color: Color {
-        switch self {
-        case .all: return .primary
-        case .performance: return .blue
-        case .maintenance: return .orange
-        case .compliance: return .green
-        case .efficiency: return .purple
-        case .safety: return .red
-        case .cost: return .yellow
-        }
-    }
-}
-
-// MARK: - Client Dashboard View Models (Use CoreTypes.* references)
-
-public struct ClientPortfolioSummary: Codable {
-    public let totalBuildings: Int
-    public let efficiency: String
-    public let compliance: String
-    public let criticalIssues: Int
-    public let actionableInsights: Int
-    public let monthlyTrend: CoreTypes.TrendDirection
-    
-    public init(totalBuildings: Int, efficiency: String, compliance: String, criticalIssues: Int, actionableInsights: Int, monthlyTrend: CoreTypes.TrendDirection) {
-        self.totalBuildings = totalBuildings
-        self.efficiency = efficiency
-        self.compliance = compliance
-        self.criticalIssues = criticalIssues
-        self.actionableInsights = actionableInsights
-        self.monthlyTrend = monthlyTrend
-    }
-}
-
-public struct ClientExecutiveSummary: Codable {
+public struct ClientExecutiveSummary: Codable, Identifiable {
+    public let id: String
     public let totalBuildings: Int
     public let portfolioEfficiency: Double
     public let complianceRate: Double
@@ -78,25 +22,17 @@ public struct ClientExecutiveSummary: Codable {
     public let monthlyTrend: CoreTypes.TrendDirection
     public let lastUpdated: Date
     
-    public var efficiencyGrade: String {
-        switch portfolioEfficiency {
-        case 0.9...: return "A"
-        case 0.8..<0.9: return "B"
-        case 0.7..<0.8: return "C"
-        default: return "D"
-        }
-    }
-    
-    public var complianceGrade: String {
-        switch complianceRate {
-        case 0.95...: return "A+"
-        case 0.9..<0.95: return "A"
-        case 0.8..<0.9: return "B"
-        default: return "C"
-        }
-    }
-    
-    public init(totalBuildings: Int, portfolioEfficiency: Double, complianceRate: Double, criticalIssues: Int, actionableInsights: Int, monthlyTrend: CoreTypes.TrendDirection, lastUpdated: Date) {
+    public init(
+        id: String = UUID().uuidString,
+        totalBuildings: Int,
+        portfolioEfficiency: Double,
+        complianceRate: Double,
+        criticalIssues: Int,
+        actionableInsights: Int,
+        monthlyTrend: CoreTypes.TrendDirection,
+        lastUpdated: Date
+    ) {
+        self.id = id
         self.totalBuildings = totalBuildings
         self.portfolioEfficiency = portfolioEfficiency
         self.complianceRate = complianceRate
@@ -107,14 +43,23 @@ public struct ClientExecutiveSummary: Codable {
     }
 }
 
-public struct ClientPortfolioBenchmark: Codable {
+public struct ClientPortfolioBenchmark: Codable, Identifiable {
+    public let id: String
     public let category: String
     public let currentValue: Double
     public let industryAverage: Double
     public let targetValue: Double
     public let trend: CoreTypes.TrendDirection
     
-    public init(category: String, currentValue: Double, industryAverage: Double, targetValue: Double, trend: CoreTypes.TrendDirection) {
+    public init(
+        id: String = UUID().uuidString,
+        category: String,
+        currentValue: Double,
+        industryAverage: Double,
+        targetValue: Double,
+        trend: CoreTypes.TrendDirection
+    ) {
+        self.id = id
         self.category = category
         self.currentValue = currentValue
         self.industryAverage = industryAverage
@@ -123,21 +68,48 @@ public struct ClientPortfolioBenchmark: Codable {
     }
 }
 
-public struct ClientStrategicRecommendation: Codable {
+public struct ClientStrategicRecommendation: Codable, Identifiable {
+    public let id: String
     public let title: String
     public let description: String
-    public let priority: CoreTypes.InsightPriority
+    public let priority: Priority
     public let estimatedImpact: String
     public let timeframe: String
     
-    public init(title: String, description: String, priority: CoreTypes.InsightPriority, estimatedImpact: String, timeframe: String) {
+    public init(
+        id: String = UUID().uuidString,
+        title: String,
+        description: String,
+        priority: Priority,
+        estimatedImpact: String,
+        timeframe: String
+    ) {
+        self.id = id
         self.title = title
         self.description = description
         self.priority = priority
         self.estimatedImpact = estimatedImpact
         self.timeframe = timeframe
     }
+    
+    public enum Priority: String, Codable, CaseIterable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        public var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+    }
 }
 
-// ❌ DO NOT ADD: Any CoreTypes extensions or duplicate type definitions
-// ✅ USE ONLY: CoreTypes.TypeName references throughout
+// Type aliases for compatibility
+public typealias ExecutiveSummary = ClientExecutiveSummary
+public typealias PortfolioBenchmark = ClientPortfolioBenchmark
+public typealias StrategicRecommendation = ClientStrategicRecommendation

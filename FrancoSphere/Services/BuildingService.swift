@@ -109,7 +109,7 @@ actor BuildingService {
     
     // MARK: - Building Analytics
     
-    func getBuildingAnalytics(_ buildingId: String) async throws -> CoreTypes.BuildingAnalytics {
+    func getCoreTypes.BuildingAnalytics(_ buildingId: String) async throws -> CoreTypes.CoreTypes.BuildingAnalytics {
         // Get task statistics for this building
         let taskRows = try await grdbManager.query("""
             SELECT 
@@ -138,7 +138,7 @@ actor BuildingService {
         let completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 1.0
         let efficiency = max(0.0, min(1.0, completionRate - (Double(overdueTasks) / max(1.0, Double(totalTasks)))))
         
-        return CoreTypes.BuildingAnalytics(
+        return CoreTypes.CoreTypes.BuildingAnalytics(
             buildingId: buildingId,
             totalTasks: Int(totalTasks),
             completedTasks: Int(completedTasks),
@@ -153,7 +153,7 @@ actor BuildingService {
     
     // MARK: - Inventory Management
     
-    func getInventoryItems(for buildingId: String) async throws -> [CoreTypes.InventoryItem] {
+    func getCoreTypes.InventoryItems(for buildingId: String) async throws -> [CoreTypes.CoreTypes.InventoryItem] {
         let query = """
             SELECT * FROM inventory WHERE buildingId = ? ORDER BY name
         """
@@ -169,7 +169,7 @@ actor BuildingService {
                 return nil
             }
             
-            return CoreTypes.InventoryItem(
+            return CoreTypes.CoreTypes.InventoryItem(
                 id: String(row["id"] as? Int64 ?? 0),
                 name: name,
                 category: category,
@@ -184,7 +184,7 @@ actor BuildingService {
         }
     }
     
-    func saveInventoryItem(_ item: CoreTypes.InventoryItem, buildingId: String) async throws {
+    func saveCoreTypes.InventoryItem(_ item: CoreTypes.CoreTypes.InventoryItem, buildingId: String) async throws {
         let query = """
             INSERT OR REPLACE INTO inventory 
             (id, buildingId, name, quantity, unit, minimumQuantity, category, location)
@@ -197,12 +197,12 @@ actor BuildingService {
         ])
     }
     
-    func deleteInventoryItem(id: String) async throws {
+    func deleteCoreTypes.InventoryItem(id: String) async throws {
         let query = "DELETE FROM inventory WHERE id = ?"
         try await grdbManager.execute(query, [id])
     }
     
-    func updateInventoryItemQuantity(id: String, newQuantity: Int) async throws {
+    func updateCoreTypes.InventoryItemQuantity(id: String, newQuantity: Int) async throws {
         let query = "UPDATE inventory SET quantity = ? WHERE id = ?"
         try await grdbManager.execute(query, [newQuantity, id])
     }
@@ -268,7 +268,7 @@ actor BuildingService {
     // MARK: - Building Status and Health
     
     func getBuildingHealthScore(_ buildingId: String) async throws -> Double {
-        let analytics = try await getBuildingAnalytics(buildingId)
+        let analytics = try await getCoreTypes.BuildingAnalytics(buildingId)
         
         // Calculate health score based on completion rate and overdue tasks
         var healthScore = analytics.completionRate * 100.0

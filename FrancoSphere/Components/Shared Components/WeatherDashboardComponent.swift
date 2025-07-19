@@ -13,7 +13,7 @@ import CoreLocation
 
 struct WeatherDashboardComponent: View {
     let building: NamedCoordinate
-    let weather: WeatherData
+    let weather: CoreTypes.WeatherData
     let tasks: [ContextualTask]
     let onTaskTap: (ContextualTask) -> Void
     
@@ -260,8 +260,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
         )
     }
     
-    static var sampleWeather: WeatherData {
-        WeatherData(
+    static var sampleWeather: CoreTypes.WeatherData {
+        CoreTypes.WeatherData(
             temperature: 72,
             humidity: 65,
             windSpeed: 8.5,
@@ -272,8 +272,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
         )
     }
     
-    static var stormyWeather: WeatherData {
-        WeatherData(
+    static var stormyWeather: CoreTypes.WeatherData {
+        CoreTypes.WeatherData(
             temperature: 58,
             humidity: 85,
             windSpeed: 25.0,
@@ -344,7 +344,7 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
  - ✅ Proper constructor: NamedCoordinate(id, name, address, latitude, longitude, imageAssetName)
  
  🔧 FIXED WEATHERDATA CONSTRUCTOR:
- - ✅ Used simpler WeatherData constructor from FrancoSphereModels.swift
+ - ✅ Used simpler CoreTypes.WeatherData constructor from FrancoSphereModels.swift
  - ✅ Proper parameters: temperature, humidity, windSpeed, conditions, timestamp, precipitation, condition
  - ✅ Uses WeatherCondition enum (.sunny, .stormy) instead of strings
  

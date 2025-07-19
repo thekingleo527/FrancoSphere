@@ -49,7 +49,7 @@ actor TaskService {
         }
     }
     
-    func getTaskProgress(for workerId: String) async throws -> TaskProgress? {
+    func getCoreTypes.TaskProgress(for workerId: String) async throws -> CoreTypes.TaskProgress? {
         let rows = try await grdbManager.query("""
             SELECT 
                 COUNT(*) as total_tasks,
@@ -64,7 +64,7 @@ actor TaskService {
             return nil
         }
         
-        return TaskProgress(
+        return CoreTypes.TaskProgress(
             completedTasks: Int(completed),
             totalTasks: Int(total),
             progressPercentage: total > 0 ? Double(completed) / Double(total) * 100 : 0

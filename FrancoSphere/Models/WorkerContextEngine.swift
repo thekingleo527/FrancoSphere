@@ -12,7 +12,7 @@ import Foundation
 import CoreLocation
 
 public actor WorkerContextEngine {
-    public static let shared = WorkerContextEngine()
+    public nonisolated static let shared = WorkerContextEngine()
     
     // MARK: - Private State
     private var currentWorker: WorkerProfile?

@@ -3,8 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECT: Uses proper CoreTypes.TaskProgress properties
-//  ✅ WORKING: Matches actual WeatherData structure
+//  ✅ CORRECT: Uses proper CoreTypes.CoreTypes.TaskProgress properties
+//  ✅ WORKING: Matches actual CoreTypes.WeatherData structure
 //
 
 import SwiftUI
@@ -14,8 +14,8 @@ import CoreLocation
 struct HeroStatusCard: View {
     let workerId: String
     let currentBuilding: String?
-    let weather: WeatherData?
-    let progress: TaskProgress
+    let weather: CoreTypes.WeatherData?
+    let progress: CoreTypes.TaskProgress
     let onClockInTap: () -> Void
     
     var body: some View {
@@ -68,7 +68,7 @@ struct HeroStatusCard: View {
         }
     }
     
-    private func weatherView(_ weather: WeatherData) -> some View {
+    private func weatherView(_ weather: CoreTypes.WeatherData) -> some View {
         HStack {
             Image(systemName: weatherIcon(for: weather.conditions))
                 .font(.title2)
@@ -211,14 +211,14 @@ struct HeroStatusCard: View {
     HeroStatusCard(
         workerId: "kevin",
         currentBuilding: "Rubin Museum",
-        weather: WeatherData(
+        weather: CoreTypes.WeatherData(
             temperature: 72.0,
             humidity: 0.65,
             windSpeed: 5.0,
             conditions: "sunny",
             timestamp: Date()
         ),
-        progress: TaskProgress(
+        progress: CoreTypes.TaskProgress(
             completedTasks: 8,
             totalTasks: 12,
             progressPercentage: 66.7
@@ -229,5 +229,5 @@ struct HeroStatusCard: View {
     )
     .padding()
     .background(Color.black)
-    .preferredColorScheme(.dark)
+    .preferredColorScheme(Environment(.colorScheme) == .dark)
 }
