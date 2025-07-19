@@ -1,5 +1,5 @@
 //
-//  CoreTypes.WeatherDataAdapter.swift
+//  WeatherDataAdapter.swift
 //  FrancoSphere
 //
 //  🚀 PRODUCTION READY - PHASE-2 COMPLETE (FINAL FIXED VERSION)
@@ -56,7 +56,7 @@ enum WeatherError: LocalizedError {
 
 @MainActor
 class WeatherDataAdapter: ObservableObject {
-    static let shared = CoreTypes.WeatherDataAdapter()
+    static let shared = WeatherDataAdapter()
     
     @Published var currentWeather: CoreTypes.WeatherData?
     @Published var forecast: [CoreTypes.WeatherData] = []
@@ -89,7 +89,7 @@ class WeatherDataAdapter: ObservableObject {
     private let openMeteoBaseURL = "https://api.open-meteo.com/v1/forecast"
 
     private init() {
-        print("🌤️ CoreTypes.WeatherDataAdapter initialized with unified error handling")
+        print("🌤️ WeatherDataAdapter initialized with unified error handling")
         loadCacheFromDisk()
     }
     

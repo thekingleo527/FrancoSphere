@@ -704,3 +704,14 @@ struct PerformanceValidationResult {
     let successes: [String]
     let score: Int
 }
+
+// MARK: - Actor Isolation Fix
+extension TelemetryService {
+    nonisolated convenience init() {
+        self.init()
+        Task {
+            await self.setupMemoryWarningMonitoring()
+            await self.startSessionTracking()
+        }
+    }
+}

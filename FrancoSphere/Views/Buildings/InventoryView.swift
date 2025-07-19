@@ -29,8 +29,8 @@ public struct InventoryView: View {
     
     private var categories: [InventoryCategory] = InventoryCategory.allCases
     
-    // ✅ ADDED: Explicit public initializer
-    public init(buildingId: String, buildingName: String) {
+    // ✅ ADDED: Explicit internal initializer
+    internal init(buildingId: String, buildingName: String) {
         self.buildingId = buildingId
         self.buildingName = buildingName
     }
@@ -238,11 +238,11 @@ public struct InventoryView: View {
 // MARK: - Supporting Views
 
 public struct CategoryButton: View {
-    public let category: InventoryCategory
+    internal let category: InventoryCategory
     public let isSelected: Bool
     public let action: () -> Void
     
-    public init(category: InventoryCategory, isSelected: Bool, action: @escaping () -> Void) {
+    internal init(category: InventoryCategory, isSelected: Bool, action: @escaping () -> Void) {
         self.category = category
         self.isSelected = isSelected
         self.action = action
@@ -280,7 +280,7 @@ public struct InventoryItemRow: View {
     
     @State private var showingDetail = false
     
-    public init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
+    internal init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
         self.item = item
         self.onUpdate = onUpdate
     }
@@ -341,7 +341,7 @@ public struct StockIndicator: View {
     public let minimum: Int
     public let status: RestockStatus
     
-    public init(current: Int, minimum: Int, status: RestockStatus) {
+    internal init(current: Int, minimum: Int, status: RestockStatus) {
         self.current = current
         self.minimum = minimum
         self.status = status
@@ -370,9 +370,9 @@ public struct StockIndicator: View {
 }
 
 public struct EmptyStateView: View {
-    public let category: InventoryCategory
+    internal let category: InventoryCategory
     
-    public init(category: InventoryCategory) {
+    internal init(category: InventoryCategory) {
         self.category = category
     }
     
@@ -400,7 +400,7 @@ public struct ErrorView: View {
     public let message: String
     public let onRetry: () -> Void
     
-    public init(message: String, onRetry: @escaping () -> Void) {
+    internal init(message: String, onRetry: @escaping () -> Void) {
         self.message = message
         self.onRetry = onRetry
     }
@@ -446,7 +446,7 @@ public struct AddInventoryItemView: View {
     
     private let commonUnits = ["unit", "box", "bottle", "pack", "case", "piece", "gallon", "liter"]
     
-    public init(buildingId: String, onComplete: @escaping (Bool) -> Void) {
+    internal init(buildingId: String, onComplete: @escaping (Bool) -> Void) {
         self.buildingId = buildingId
         self.onComplete = onComplete
     }
@@ -542,7 +542,7 @@ public struct InventoryItemDetailView: View {
     @State private var currentStock: Int
     @State private var isUpdating = false
     
-    public init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
+    internal init(item: InventoryItem, onUpdate: @escaping (InventoryItem) -> Void) {
         self.item = item
         self.onUpdate = onUpdate
         self._currentStock = State(initialValue: item.currentStock)

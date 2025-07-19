@@ -6,14 +6,14 @@
 //  ✅ FIXED: CoreTypes.MaintenanceRecord.description property instead of taskName
 //  ✅ FIXED: Modern Swift filtering and sorting syntax
 //  ✅ FIXED: TaskService method integration with existing API
-//  ✅ ALIGNED: With current CoreTypes.CoreTypes.MaintenanceRecord structure
+//  ✅ ALIGNED: With current CoreTypes.MaintenanceRecord structure
 //
 
 import SwiftUI
 
 struct MaintenanceHistoryView: View {
     let buildingID: String
-    @State private var maintRecords: [CoreTypes.CoreTypes.MaintenanceRecord] = []
+    @State private var maintRecords: [CoreTypes.MaintenanceRecord] = []
     @State private var allTasks: [ContextualTask] = []
     @State private var isLoading = true
     @State private var filterOption: FilterOption = .all
@@ -229,7 +229,7 @@ struct MaintenanceHistoryView: View {
         }
     }
     
-    private func maintenanceRecordRow(_ record: CoreTypes.CoreTypes.MaintenanceRecord) -> some View {
+    private func maintenanceRecordRow(_ record: CoreTypes.MaintenanceRecord) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 // Task category icon based on description
@@ -276,7 +276,7 @@ struct MaintenanceHistoryView: View {
     
     // MARK: - Helper Methods
     
-    private var filteredRecords: [CoreTypes.CoreTypes.MaintenanceRecord] {
+    private var filteredRecords: [CoreTypes.MaintenanceRecord] {
         // FIXED: Modern Swift filtering syntax
         var records = maintRecords
         
@@ -301,7 +301,7 @@ struct MaintenanceHistoryView: View {
         return records.sorted { $0.completedDate > $1.completedDate }
     }
     
-    private func matchesCategory(record: CoreTypes.CoreTypes.MaintenanceRecord, category: FilterOption) -> Bool {
+    private func matchesCategory(record: CoreTypes.MaintenanceRecord, category: FilterOption) -> Bool {
         let taskName = getTaskName(for: record).lowercased()
         let description = record.description.lowercased()
         
@@ -339,7 +339,7 @@ struct MaintenanceHistoryView: View {
         }
     }
     
-    private func getRecordCategoryIcon(_ record: CoreTypes.CoreTypes.MaintenanceRecord) -> String {
+    private func getRecordCategoryIcon(_ record: CoreTypes.MaintenanceRecord) -> String {
         let content = (getTaskName(for: record) + " " + record.description).lowercased()
         
         if content.contains("clean") || content.contains("wash") || content.contains("sanit") {
@@ -355,7 +355,7 @@ struct MaintenanceHistoryView: View {
         }
     }
     
-    private func getRecordCategoryColor(_ record: CoreTypes.CoreTypes.MaintenanceRecord) -> Color {
+    private func getRecordCategoryColor(_ record: CoreTypes.MaintenanceRecord) -> Color {
         let content = (getTaskName(for: record) + " " + record.description).lowercased()
         
         if content.contains("clean") || content.contains("wash") || content.contains("sanit") {
@@ -372,7 +372,7 @@ struct MaintenanceHistoryView: View {
     }
     
     // FIXED: Helper methods to get task name and worker name from IDs
-    private func getTaskName(for record: CoreTypes.CoreTypes.MaintenanceRecord) -> String {
+    private func getTaskName(for record: CoreTypes.MaintenanceRecord) -> String {
         // Find the task name from allTasks using taskId
         if let task = allTasks.first(where: { $0.id == record.taskId }) {
             // Use title if available, otherwise description, otherwise fallback
@@ -456,13 +456,13 @@ struct MaintenanceHistoryView: View {
                 }
                 
                 // Convert completed tasks to CoreTypes.MaintenanceRecord format
-                let records = buildingTasks.compactMap { task -> CoreTypes.CoreTypes.MaintenanceRecord? in
+                let records = buildingTasks.compactMap { task -> CoreTypes.MaintenanceRecord? in
                     guard let completedDate = task.completedDate else { return nil }
                     
                     // Get worker name from buildingName or use a placeholder
                     let workerName = getWorkerNameFromTask(task)
                     
-                    return CoreTypes.CoreTypes.MaintenanceRecord(
+                    return CoreTypes.MaintenanceRecord(
                         id: UUID().uuidString,
                         buildingId: task.buildingId ?? buildingID,
                         taskId: task.id,
@@ -500,7 +500,7 @@ struct MaintenanceHistoryView: View {
 
 struct ExportOptionsView: View {
     let buildingID: String
-    let records: [CoreTypes.CoreTypes.MaintenanceRecord]
+    let records: [CoreTypes.MaintenanceRecord]
     @State private var exportFormat: ExportFormat = .csv
     @State private var includeNotes = true
     @State private var includeDates = true

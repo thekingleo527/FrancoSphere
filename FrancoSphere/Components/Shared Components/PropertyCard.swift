@@ -1,4 +1,5 @@
 //
+typealias BuildingMetrics = CoreTypes.BuildingMetrics
 //  PropertyCard.swift
 //  FrancoSphere v6.0 - THEME FIXES
 //

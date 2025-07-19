@@ -1,4 +1,5 @@
 //
+typealias TaskProgress = CoreTypes.TaskProgress
 //  TodayTasksViewModel.swift
 //  FrancoSphere v6.0
 //

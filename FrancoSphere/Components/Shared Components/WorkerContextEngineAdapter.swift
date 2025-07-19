@@ -85,6 +85,3 @@ public class WorkerContextEngineAdapter: ObservableObject {
     }
 }
 
-public enum BuildingType {
-    case assigned, coverage, unknown
-}

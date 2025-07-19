@@ -16,7 +16,7 @@ struct ComplianceOverviewView: View {
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
     
-    @State private var selectedTab: CoreTypes.CoreTypes.ComplianceTab = .overview
+    @State private var selectedTab: CoreTypes.ComplianceTab = .overview
     @State private var showingIssueDetail: ComplianceIssue?
     @State private var showingAuditScheduler = false
     @State private var showingExportOptions = false
@@ -183,7 +183,7 @@ struct ComplianceOverviewView: View {
     private var tabSelectorSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
-                ForEach(CoreTypes.CoreTypes.ComplianceTab.allCases, id: \.self) { tab in
+                ForEach(CoreTypes.ComplianceTab.allCases, id: \.self) { tab in
                     Button(action: {
                         withAnimation(Animation.easeInOut(duration: 0.3)) {
                             selectedTab = tab

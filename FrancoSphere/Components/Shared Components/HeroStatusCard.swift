@@ -221,7 +221,7 @@ struct HeroStatusCard: View {
         progress: CoreTypes.TaskProgress(
             completedTasks: 8,
             totalTasks: 12,
-            progressPercentage: 66.7
+             66.7
         ),
         onClockInTap: {
             print("Clock in tapped")

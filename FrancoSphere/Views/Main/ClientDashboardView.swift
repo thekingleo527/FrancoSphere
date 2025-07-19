@@ -432,13 +432,3 @@ struct ComplianceOverviewCard: View {
     }
 }
 
-struct ComplianceIssueCard: View {
-    let issue: String
-    
-    var body: some View {
-        Text(issue)
-            .padding()
-            .background(.ultraThinMaterial)
-            .cornerRadius(8)
-    }
-}

@@ -91,3 +91,13 @@ actor BuildingConfigurationManager {
         }
     }
 }
+
+// MARK: - Actor Isolation Fix
+extension BuildingFeatureConfiguration {
+    nonisolated convenience init() {
+        self.init()
+        Task {
+            await self.loadConfigurations()
+        }
+    }
+}

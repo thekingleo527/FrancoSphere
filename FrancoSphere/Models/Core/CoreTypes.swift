@@ -1315,3 +1315,221 @@ public typealias BuildingID = CoreTypes.BuildingID
 public typealias TaskID = CoreTypes.TaskID
 public typealias AssignmentID = CoreTypes.AssignmentID
 public typealias RoleID = CoreTypes.RoleID
+
+// MARK: - Missing Type Definitions
+
+public enum AIScenarioType: String, CaseIterable, Codable {
+    case clockOutReminder = "clock_out_reminder"
+    case weatherAlert = "weather_alert"
+    case inventoryLow = "inventory_low"
+    case routineIncomplete = "routine_incomplete"
+    case pendingTasks = "pending_tasks"
+    case emergencyRepair = "emergency_repair"
+    case taskOverdue = "task_overdue"
+    case buildingAlert = "building_alert"
+    
+    public var displayTitle: String {
+        switch self {
+        case .clockOutReminder: return "Clock Out Reminder"
+        case .weatherAlert: return "Weather Alert"
+        case .inventoryLow: return "Inventory Low"
+        case .routineIncomplete: return "Routine Incomplete"
+        case .pendingTasks: return "Pending Tasks"
+        case .emergencyRepair: return "Emergency Repair"
+        case .taskOverdue: return "Task Overdue"
+        case .buildingAlert: return "Building Alert"
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .clockOutReminder: return "clock.badge.exclamationmark"
+        case .weatherAlert: return "cloud.rain.fill"
+        case .inventoryLow: return "cube.box"
+        case .routineIncomplete: return "list.bullet.clipboard"
+        case .pendingTasks: return "checklist"
+        case .emergencyRepair: return "wrench.fill"
+        case .taskOverdue: return "exclamationmark.triangle.fill"
+        case .buildingAlert: return "building.2.fill"
+        }
+    }
+}
+
+public struct AIScenario: Codable, Identifiable {
+    public let id = UUID()
+    public let type: AIScenarioType
+    public let title: String
+    public let message: String
+    public let actionRequired: Bool
+    public let createdAt: Date
+    public let buildingId: String?
+    
+    public init(type: AIScenarioType, title: String, message: String, actionRequired: Bool = false, buildingId: String? = nil) {
+        self.type = type
+        self.title = title
+        self.message = message
+        self.actionRequired = actionRequired
+        self.createdAt = Date()
+        self.buildingId = buildingId
+    }
+}
+
+public struct BuildingStatistics: Codable {
+    public let buildingId: String
+    public let totalTasks: Int
+    public let completedTasks: Int
+    public let overdueTasks: Int
+    public let averageCompletionTime: TimeInterval
+    public let lastUpdated: Date
+    
+    public init(buildingId: String, totalTasks: Int, completedTasks: Int, overdueTasks: Int, averageCompletionTime: TimeInterval) {
+        self.buildingId = buildingId
+        self.totalTasks = totalTasks
+        self.completedTasks = completedTasks
+        self.overdueTasks = overdueTasks
+        self.averageCompletionTime = averageCompletionTime
+        self.lastUpdated = Date()
+    }
+}
+
+public enum BuildingTab: String, CaseIterable {
+    case assigned = "assigned"
+    case coverage = "coverage"
+    case all = "all"
+    
+    public var displayName: String {
+        switch self {
+        case .assigned: return "Assigned"
+        case .coverage: return "Coverage"
+        case .all: return "All Buildings"
+        }
+    }
+}
+
+public enum RestockStatus: String, CaseIterable, Codable {
+    case inStock = "in_stock"
+    case lowStock = "low_stock"
+    case outOfStock = "out_of_stock"
+    case onOrder = "on_order"
+    
+    public var displayName: String {
+        switch self {
+        case .inStock: return "In Stock"
+        case .lowStock: return "Low Stock"
+        case .outOfStock: return "Out of Stock"
+        case .onOrder: return "On Order"
+        }
+    }
+}
+
+public enum TrendDirection: String, Codable {
+    case improving = "improving"
+    case declining = "declining"
+    case stable = "stable"
+    
+    public var color: Color {
+        switch self {
+        case .improving: return .green
+        case .declining: return .red
+        case .stable: return .orange
+        }
+    }
+}
+
+public enum SkillLevel: String, CaseIterable, Codable {
+    case basic = "basic"
+    case intermediate = "intermediate"
+    case advanced = "advanced"
+    case expert = "expert"
+    
+    public var displayName: String {
+        switch self {
+        case .basic: return "Basic"
+        case .intermediate: return "Intermediate"
+        case .advanced: return "Advanced"
+        case .expert: return "Expert"
+        }
+    }
+}
+
+public struct RouteStop: Codable, Identifiable {
+    public let id = UUID()
+    public let buildingId: String
+    public let buildingName: String
+    public let estimatedTime: TimeInterval
+    public let tasks: [String] // Task IDs
+    
+    public init(buildingId: String, buildingName: String, estimatedTime: TimeInterval, tasks: [String]) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.estimatedTime = estimatedTime
+        self.tasks = tasks
+    }
+}
+
+public struct WorkerDailyRoute: Codable, Identifiable {
+    public let id = UUID()
+    public let workerId: String
+    public let date: Date
+    public let stops: [RouteStop]
+    public let totalEstimatedTime: TimeInterval
+    public let isOptimized: Bool
+    
+    public init(workerId: String, date: Date, stops: [RouteStop], isOptimized: Bool = false) {
+        self.workerId = workerId
+        self.date = date
+        self.stops = stops
+        self.totalEstimatedTime = stops.reduce(0) { $0 + $1.estimatedTime }
+        self.isOptimized = isOptimized
+    }
+}
+
+public struct WorkerRoutineSummary: Codable {
+    public let workerId: String
+    public let totalRoutes: Int
+    public let averageStops: Double
+    public let averageTime: TimeInterval
+    public let efficiencyScore: Double
+    public let lastUpdated: Date
+    
+    public init(workerId: String, totalRoutes: Int, averageStops: Double, averageTime: TimeInterval, efficiencyScore: Double) {
+        self.workerId = workerId
+        self.totalRoutes = totalRoutes
+        self.averageStops = averageStops
+        self.averageTime = averageTime
+        self.efficiencyScore = efficiencyScore
+        self.lastUpdated = Date()
+    }
+}
+
+public enum CrossDashboardUpdateType: String, Codable {
+    case taskCompleted = "task_completed"
+    case buildingMetricsUpdated = "building_metrics_updated"
+    case complianceIssueAdded = "compliance_issue_added"
+    case intelligenceGenerated = "intelligence_generated"
+    case dataRefresh = "data_refresh"
+    case configurationChange = "configuration_change"
+}
+
+public struct CrossDashboardUpdate: Codable {
+    public let type: CrossDashboardUpdateType
+    public let source: DashboardType
+    public let timestamp: Date
+    public let data: [String: Any]
+    
+    public init(type: CrossDashboardUpdateType, source: DashboardType, timestamp: Date, data: [String: Any]) {
+        self.type = type
+        self.source = source
+        self.timestamp = timestamp
+        self.data = data
+    }
+}
+
+public enum DashboardType: String, Codable {
+    case worker = "worker"
+    case client = "client"
+    case admin = "admin"
+}
+
+// Fix for public/internal issues
+public typealias Models = CoreTypes

@@ -624,3 +624,15 @@ public actor QuickBooksPayrollExporter {
         return ISO8601DateFormatter().date(from: dateString)
     }
 }
+
+// MARK: - Actor Isolation Fix
+extension QuickBooksPayrollExporter {
+    nonisolated convenience init() {
+        self.init()
+        Task {
+            await self.loadEmployeeMapping()
+            await self.loadExportStats()
+            await self.calculateCurrentPayPeriod()
+        }
+    }
+}
