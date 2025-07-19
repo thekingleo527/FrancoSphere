@@ -1,79 +1,22 @@
 //
 //  ClientDashboardTypes.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Missing type definitions for compilation fixes
+//  ✅ EMERGENCY FIX: Removed CoreTypes redeclaration
+//  ✅ CLEANED: All duplicate type definitions
+//  ✅ ALIGNED: Uses only CoreTypes.* references
 //
 
 import Foundation
 import SwiftUI
 
-// MARK: - Portfolio Intelligence Types
+// ❌ DELETE THIS LINE: extension CoreTypes {
+// ❌ DELETE ANY: struct CoreTypes definition
 
-public struct CoreTypes.PortfolioIntelligence: Codable {
-    public let totalBuildings: Int
-    public let totalTasks: Int
-    public let completedTasks: Int
-    public let overdueTasks: Int
-    public let averageEfficiency: Double
-    public let topPerformingBuildings: [NamedCoordinate]
-    public let alertBuildings: [NamedCoordinate]
-    public let lastUpdated: Date
-    
-    public var completionRate: Double {
-        totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
-    }
-    
-    public init(
-        totalBuildings: Int,
-        totalTasks: Int,
-        completedTasks: Int,
-        overdueTasks: Int,
-        averageEfficiency: Double,
-        topPerformingBuildings: [NamedCoordinate] = [],
-        alertBuildings: [NamedCoordinate] = [],
-        lastUpdated: Date = Date()
-    ) {
-        self.totalBuildings = totalBuildings
-        self.totalTasks = totalTasks
-        self.completedTasks = completedTasks
-        self.overdueTasks = overdueTasks
-        self.averageEfficiency = averageEfficiency
-        self.topPerformingBuildings = topPerformingBuildings
-        self.alertBuildings = alertBuildings
-        self.lastUpdated = lastUpdated
-    }
-}
+// MARK: - Client-Specific View Types (Non-conflicting)
 
-// MARK: - Intelligence Insight Types
-
-public struct IntelligenceInsight: Identifiable, Codable {
-    public let id = UUID()
-    public let title: String
-    public let description: String
-    public let type: InsightType
-    public let priority: InsightPriority
-    public let actionable: Bool
-    public let timestamp: Date
-    
-    public init(
-        title: String,
-        description: String,
-        type: InsightType,
-        priority: InsightPriority,
-        actionable: Bool,
-        timestamp: Date = Date()
-    ) {
-        self.title = title
-        self.description = description
-        self.type = type
-        self.priority = priority
-        self.actionable = actionable
-        self.timestamp = timestamp
-    }
-}
-
-public enum InsightType: String, CaseIterable, Codable {
+public enum InsightFilterType: String, CaseIterable, Codable {
+    case all = "All"
     case performance = "Performance"
     case maintenance = "Maintenance"
     case compliance = "Compliance"
@@ -83,17 +26,19 @@ public enum InsightType: String, CaseIterable, Codable {
     
     public var icon: String {
         switch self {
+        case .all: return "list.bullet"
         case .performance: return "chart.line.uptrend.xyaxis"
-        case .maintenance: return "wrench.and.screwdriver"
+        case .maintenance: return "wrench"
         case .compliance: return "checkmark.shield"
         case .efficiency: return "speedometer"
-        case .safety: return "shield.lefthalf.filled"
+        case .safety: return "shield"
         case .cost: return "dollarsign.circle"
         }
     }
     
     public var color: Color {
         switch self {
+        case .all: return .primary
         case .performance: return .blue
         case .maintenance: return .orange
         case .compliance: return .green
@@ -104,122 +49,95 @@ public enum InsightType: String, CaseIterable, Codable {
     }
 }
 
-public enum InsightPriority: String, CaseIterable, Codable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case critical = "Critical"
+// MARK: - Client Dashboard View Models (Use CoreTypes.* references)
+
+public struct ClientPortfolioSummary: Codable {
+    public let totalBuildings: Int
+    public let efficiency: String
+    public let compliance: String
+    public let criticalIssues: Int
+    public let actionableInsights: Int
+    public let monthlyTrend: CoreTypes.TrendDirection
     
-    public var color: Color {
-        switch self {
-        case .low: return .gray
-        case .medium: return .blue
-        case .high: return .orange
-        case .critical: return .red
-        }
+    public init(totalBuildings: Int, efficiency: String, compliance: String, criticalIssues: Int, actionableInsights: Int, monthlyTrend: CoreTypes.TrendDirection) {
+        self.totalBuildings = totalBuildings
+        self.efficiency = efficiency
+        self.compliance = compliance
+        self.criticalIssues = criticalIssues
+        self.actionableInsights = actionableInsights
+        self.monthlyTrend = monthlyTrend
     }
 }
 
-// MARK: - Compliance Types
-
-public struct ComplianceIssue: Identifiable, Codable {
-    public let id = UUID()
-    public let building: NamedCoordinate
-    public let issueType: ComplianceIssueType
-    public let severity: ComplianceSeverity
-    public let description: String
-    public let dueDate: Date?
-    public let resolvedDate: Date?
-    
-    public var isResolved: Bool { resolvedDate != nil }
-    
-    public init(
-        building: NamedCoordinate,
-        issueType: ComplianceIssueType,
-        severity: ComplianceSeverity,
-        description: String,
-        dueDate: Date? = nil,
-        resolvedDate: Date? = nil
-    ) {
-        self.building = building
-        self.issueType = issueType
-        self.severity = severity
-        self.description = description
-        self.dueDate = dueDate
-        self.resolvedDate = resolvedDate
-    }
-}
-
-public enum ComplianceIssueType: String, CaseIterable, Codable {
-    case maintenanceOverdue = "Maintenance Overdue"
-    case safetyViolation = "Safety Violation"
-    case documentationMissing = "Documentation Missing"
-    case inspectionRequired = "Inspection Required"
-    case certificationExpired = "Certification Expired"
-    
-    public var icon: String {
-        switch self {
-        case .maintenanceOverdue: return "wrench.and.screwdriver"
-        case .safetyViolation: return "exclamationmark.triangle"
-        case .documentationMissing: return "doc.text"
-        case .inspectionRequired: return "magnifyingglass"
-        case .certificationExpired: return "calendar.badge.exclamationmark"
-        }
-    }
-}
-
-public enum ComplianceSeverity: String, CaseIterable, Codabe {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case critical = "Critical"
-    
-    public var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        }
-    }
-}
-
-// MARK: - Building Analytics Types
-
-public struct BuildingAnalytics: Codable {
-    public let buildingId: String
-    public let completionRate: Double
-    public let overdueTasks: Int
-    public let efficiency: Double
+public struct ClientExecutiveSummary: Codable {
+    public let totalBuildings: Int
+    public let portfolioEfficiency: Double
+    public let complianceRate: Double
+    public let criticalIssues: Int
+    public let actionableInsights: Int
+    public let monthlyTrend: CoreTypes.TrendDirection
     public let lastUpdated: Date
     
-    public init(
-        buildingId: String,
-        completionRate: Double,
-        overdueTasks: Int,
-        efficiency: Double,
-        lastUpdated: Date = Date()
-    ) {
-        self.buildingId = buildingId
-        self.completionRate = completionRate
-        self.overdueTasks = overdueTasks
-        self.efficiency = efficiency
+    public var efficiencyGrade: String {
+        switch portfolioEfficiency {
+        case 0.9...: return "A"
+        case 0.8..<0.9: return "B"
+        case 0.7..<0.8: return "C"
+        default: return "D"
+        }
+    }
+    
+    public var complianceGrade: String {
+        switch complianceRate {
+        case 0.95...: return "A+"
+        case 0.9..<0.95: return "A"
+        case 0.8..<0.9: return "B"
+        default: return "C"
+        }
+    }
+    
+    public init(totalBuildings: Int, portfolioEfficiency: Double, complianceRate: Double, criticalIssues: Int, actionableInsights: Int, monthlyTrend: CoreTypes.TrendDirection, lastUpdated: Date) {
+        self.totalBuildings = totalBuildings
+        self.portfolioEfficiency = portfolioEfficiency
+        self.complianceRate = complianceRate
+        self.criticalIssues = criticalIssues
+        self.actionableInsights = actionableInsights
+        self.monthlyTrend = monthlyTrend
         self.lastUpdated = lastUpdated
     }
 }
 
-public struct BuildingOperationalInsights: Codable {
-    public let predictiveMaintenanceAlerts: [String]
-    public let efficiencyTrends: [Double]
-    public let costOptimizations: [String]
+public struct ClientPortfolioBenchmark: Codable {
+    public let category: String
+    public let currentValue: Double
+    public let industryAverage: Double
+    public let targetValue: Double
+    public let trend: CoreTypes.TrendDirection
     
-    public init(
-        predictiveMaintenanceAlerts: [String] = [],
-        efficiencyTrends: [Double] = [],
-        costOptimizations: [String] = []
-    ) {
-        self.predictiveMaintenanceAlerts = predictiveMaintenanceAlerts
-        self.efficiencyTrends = efficiencyTrends
-        self.costOptimizations = costOptimizations
+    public init(category: String, currentValue: Double, industryAverage: Double, targetValue: Double, trend: CoreTypes.TrendDirection) {
+        self.category = category
+        self.currentValue = currentValue
+        self.industryAverage = industryAverage
+        self.targetValue = targetValue
+        self.trend = trend
     }
 }
+
+public struct ClientStrategicRecommendation: Codable {
+    public let title: String
+    public let description: String
+    public let priority: CoreTypes.InsightPriority
+    public let estimatedImpact: String
+    public let timeframe: String
+    
+    public init(title: String, description: String, priority: CoreTypes.InsightPriority, estimatedImpact: String, timeframe: String) {
+        self.title = title
+        self.description = description
+        self.priority = priority
+        self.estimatedImpact = estimatedImpact
+        self.timeframe = timeframe
+    }
+}
+
+// ❌ DO NOT ADD: Any CoreTypes extensions or duplicate type definitions
+// ✅ USE ONLY: CoreTypes.TypeName references throughout
