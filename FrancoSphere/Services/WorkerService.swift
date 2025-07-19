@@ -90,3 +90,39 @@ actor WorkerService {
         )
     }
 }
+
+// MARK: - Fixed Method Signatures Extension
+extension WorkerService {
+    func getAllActiveWorkers() async throws -> [WorkerProfile] {
+        return try await grdbManager.read { db in
+            try WorkerProfile
+                .filter(Column("isActive") == true)
+                .fetchAll(db)
+        }
+    }
+    
+    func getWorker(by workerId: String) async throws -> WorkerProfile? {
+        return try await grdbManager.read { db in
+            try WorkerProfile.fetchOne(db, id: workerId)
+        }
+    }
+    
+    func getBuildingWorkers(buildingId: String) async throws -> [WorkerProfile] {
+        return try await grdbManager.read { db in
+            try WorkerProfile
+                .filter(Column("assignedBuildingId") == buildingId)
+                .fetchAll(db)
+        }
+    }
+    
+    func getWorkerProfile(for workerId: String) async throws -> WorkerProfile {
+        guard let profile = try await getWorker(by: workerId) else {
+            throw WorkerServiceError.workerNotFound(workerId)
+        }
+        return profile
+    }
+}
+
+enum WorkerServiceError: Error {
+    case workerNotFound(String)
+}

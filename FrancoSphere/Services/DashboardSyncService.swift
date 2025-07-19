@@ -668,3 +668,22 @@ extension DashboardSyncService {
         }
     }
 }
+
+// MARK: - Fixed Broadcasting Extension
+extension DashboardSyncService {
+    func broadcastUpdate(_ update: CoreTypes.CrossDashboardUpdate) async {
+        await MainActor.run {
+            crossDashboardUpdatesSubject.send(update)
+        }
+    }
+    
+    func syncDashboards() async throws {
+        let update = CoreTypes.CrossDashboardUpdate(
+            type: .dataRefresh,
+            source: .admin,
+            timestamp: Date(),
+            data: ["sync": "complete"]
+        )
+        await broadcastUpdate(update)
+    }
+}

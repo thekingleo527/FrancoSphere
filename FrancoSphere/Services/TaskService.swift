@@ -122,3 +122,26 @@ actor TaskService {
         return ISO8601DateFormatter().date(from: dateString)
     }
 }
+
+// MARK: - Fixed Method Signatures Extension
+extension TaskService {
+    func getCoreTypes() async throws -> [ContextualTask] {
+        return try await getAllTasks()
+    }
+    
+    func getWorkerTasks(workerId: String) async throws -> [ContextualTask] {
+        return try await grdbManager.read { db in
+            try ContextualTask
+                .filter(Column("assignedWorkerId") == workerId)
+                .fetchAll(db)
+        }
+    }
+    
+    func getBuildingTasks(buildingId: String) async throws -> [ContextualTask] {
+        return try await grdbManager.read { db in
+            try ContextualTask
+                .filter(Column("buildingId") == buildingId)
+                .fetchAll(db)
+        }
+    }
+}

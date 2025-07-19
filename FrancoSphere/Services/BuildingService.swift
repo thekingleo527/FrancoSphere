@@ -294,3 +294,26 @@ actor BuildingService {
         }
     }
 }
+
+// MARK: - Fixed Method Signatures Extension
+extension BuildingService {
+    func getCoreTypes() async throws -> [NamedCoordinate] {
+        return try await getAllBuildings()
+    }
+    
+    func updateBuilding(_ building: NamedCoordinate) async throws {
+        try await grdbManager.write { db in
+            try building.save(db)
+        }
+    }
+    
+    func deleteBuildingData(buildingId: String) async throws {
+        try await grdbManager.write { db in
+            try Building.deleteOne(db, id: buildingId)
+        }
+    }
+    
+    func getBuildingMetrics(buildingId: String) async throws -> CoreTypes.BuildingMetrics? {
+        return try await BuildingMetricsService.shared.calculateMetrics(for: buildingId)
+    }
+}

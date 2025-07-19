@@ -2,9 +2,6 @@
 //  WorkerContextEngineAdapter.swift
 //  FrancoSphere v6.0 - FIXED VERSION
 //
-//  ✅ ADDED: Missing currentBuilding property
-//  ✅ FIXED: All dynamic member access issues
-//
 
 import Foundation
 import SwiftUI
@@ -15,7 +12,7 @@ public class WorkerContextEngineAdapter: ObservableObject {
     public static let shared = WorkerContextEngineAdapter()
     
     @Published public var currentWorker: WorkerProfile?
-    @Published public var currentBuilding: NamedCoordinate? // ✅ ADDED: Missing property
+    @Published public var currentBuilding: NamedCoordinate?
     @Published public var assignedBuildings: [NamedCoordinate] = []
     @Published public var portfolioBuildings: [NamedCoordinate] = []
     @Published public var todaysTasks: [ContextualTask] = []
@@ -33,7 +30,7 @@ public class WorkerContextEngineAdapter: ObservableObject {
     public func loadContext(for workerId: CoreTypes.WorkerID) async {
         isLoading = true
         do {
-            try await await await contextEngine.loadContext(for: workerId)
+            try await contextEngine.loadContext(for: workerId)
             await refreshPublishedState()
         } catch {
             print("❌ Failed to load context:", error)
@@ -42,17 +39,13 @@ public class WorkerContextEngineAdapter: ObservableObject {
     }
     
     private func refreshPublishedState() async {
-        self.currentWorker = await await await contextEngine.getCurrentWorker()
-        self.currentBuilding = await await await contextEngine.getCurrentBuilding() // ✅ ADDED
-        self.assignedBuildings = await await await contextEngine.getAssignedBuildings()
-        self.portfolioBuildings = await await await contextEngine.getPortfolioBuildings()
-        self.todaysTasks = await await await contextEngine.getTodaysTasks()
-        self.taskProgress = await await await contextEngine.getCoreTypes.TaskProgress()
-        
-        print("🔄 State refreshed: \(assignedBuildings.count) assigned, \(portfolioBuildings.count) portfolio")
+        self.currentWorker = contextEngine.getCurrentWorker()
+        self.currentBuilding = contextEngine.getCurrentBuilding()
+        self.assignedBuildings = contextEngine.getAssignedBuildings()
+        self.portfolioBuildings = contextEngine.getPortfolioBuildings()
+        self.todaysTasks = contextEngine.getTodaysTasks()
+        self.taskProgress = contextEngine.getTaskProgress()
     }
-    
-    // MARK: - Building Classification Methods
     
     public func isBuildingAssigned(_ buildingId: String) -> Bool {
         return assignedBuildings.contains { $0.id == buildingId }
@@ -67,31 +60,31 @@ public class WorkerContextEngineAdapter: ObservableObject {
         return .unknown
     }
     
-    public func getPrimaryBuilding() -> NamedCoordinate? {
-        return assignedBuildings.first
+    public func updateTaskCompletion(_ taskId: String, isCompleted: Bool) {
+        if let index = todaysTasks.firstIndex(where: { $0.id == taskId }) {
+            todaysTasks[index].isCompleted = isCompleted
+            updateTaskProgress()
+        }
     }
     
-    // MARK: - Periodic Updates
+    private func updateTaskProgress() {
+        let completed = todaysTasks.filter { $0.isCompleted }.count
+        taskProgress = CoreTypes.TaskProgress(
+            totalTasks: todaysTasks.count,
+            completedTasks: completed
+        )
+    }
     
     private func setupPeriodicUpdates() {
-        Timer.publish(every: 30, on: .main, in: .common)
+        Timer.publish(every: 300, on: .main, in: .common)
             .autoconnect()
-            .sink { [weak self] _ in
-                Task {
-                    await self?.refreshFromTimer()
-                }
+            .sink { _ in
+                Task { await self.refreshPublishedState() }
             }
             .store(in: &cancellables)
     }
-    
-    private func refreshFromTimer() async {
-        guard !isLoading else { return }
-        await refreshPublishedState()
-    }
-    
-    // MARK: - Cross-Dashboard Sync Support
-    
-    public func refreshFromSync() async {
-        await refreshPublishedState()
-    }
+}
+
+public enum BuildingType {
+    case assigned, coverage, unknown
 }

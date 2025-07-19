@@ -1,11 +1,21 @@
 //
 //  FrancoSphereModels.swift
-//  FrancoSphere v6.0 - PROTOCOL CONFORMANCE FIXED
+//  FrancoSphere v6.0 - FIXED VERSION
 //
-//  🚨 CRITICAL FIX: Complete protocol conformance for all types
-//  ✅ FIXED: All Codable, Hashable, Equatable implementations
-//  ✅ ALIGNED: Uses unified type definitions from CoreTypes
-//
+
+import Foundation
+
+// MARK: - Type Aliases for Backward Compatibility
+typealias MaintenanceTask = CoreTypes.MaintenanceTask
+typealias TaskCategory = CoreTypes.TaskCategory
+typealias TaskUrgency = CoreTypes.TaskUrgency
+typealias BuildingType = CoreTypes.BuildingType
+typealias WeatherCondition = CoreTypes.WeatherCondition
+typealias InventoryItem = CoreTypes.InventoryItem
+typealias InventoryCategory = CoreTypes.InventoryCategory
+typealias ComplianceStatus = CoreTypes.ComplianceStatus
+typealias OutdoorWorkRisk = CoreTypes.OutdoorWorkRisk
+typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
 
 import Foundation
 import CoreLocation
@@ -209,5 +219,85 @@ extension WeatherData: Codable {
     
     private enum CodingKeys: CodingKey {
         case temperature, humidity, windSpeed, conditions, timestamp, precipitation, condition
+    }
+}
+
+// MARK: - ContextualTask Extensions
+extension ContextualTask {
+    var status: String {
+        if isCompleted {
+            return "completed"
+        } else if let dueDate = dueDate, dueDate < Date() {
+            return "overdue"
+        } else {
+            return "pending"
+        }
+    }
+    
+    var startTime: String? {
+        guard let dueDate = dueDate else { return nil }
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: dueDate)
+    }
+    
+    var name: String {
+        return title ?? description ?? "Untitled Task"
+    }
+    
+    var estimatedDuration: TimeInterval? {
+        switch category {
+        case .cleaning: return 1800.0
+        case .maintenance: return 3600.0
+        case .repair: return 7200.0
+        case .inspection: return 900.0
+        case .landscaping: return 5400.0
+        case .security: return 600.0
+        case .emergency: return 1800.0
+        default: return 3600.0
+        }
+    }
+}
+
+// MARK: - TaskCategory and TaskUrgency Extensions
+extension TaskCategory {
+    public var rawValue: String {
+        switch self {
+        case .cleaning: return "cleaning"
+        case .maintenance: return "maintenance"
+        case .repair: return "repair"
+        case .sanitation: return "sanitation"
+        case .inspection: return "inspection"
+        case .landscaping: return "landscaping"
+        case .security: return "security"
+        case .emergency: return "emergency"
+        case .installation: return "installation"
+        case .utilities: return "utilities"
+        case .renovation: return "renovation"
+        }
+    }
+}
+
+extension TaskUrgency {
+    public var rawValue: String {
+        switch self {
+        case .low: return "low"
+        case .medium: return "medium"
+        case .high: return "high"
+        case .critical: return "critical"
+        case .emergency: return "emergency"
+        case .urgent: return "urgent"
+        }
+    }
+    
+    var numericValue: Int {
+        switch self {
+        case .low: return 1
+        case .medium: return 2
+        case .high: return 3
+        case .critical: return 4
+        case .emergency: return 5
+        case .urgent: return 4
+        }
     }
 }
