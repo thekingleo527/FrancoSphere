@@ -627,7 +627,7 @@ public actor QuickBooksPayrollExporter {
 
 // MARK: - Actor Isolation Fix
 extension QuickBooksPayrollExporter {
-    nonisolated convenience init() {
+    nonisolated init() {
         self.init()
         Task {
             await self.loadEmployeeMapping()

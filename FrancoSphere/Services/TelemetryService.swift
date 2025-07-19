@@ -707,7 +707,7 @@ struct PerformanceValidationResult {
 
 // MARK: - Actor Isolation Fix
 extension TelemetryService {
-    nonisolated convenience init() {
+    nonisolated init() {
         self.init()
         Task {
             await self.setupMemoryWarningMonitoring()

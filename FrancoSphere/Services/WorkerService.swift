@@ -10,8 +10,8 @@
 import Foundation
 import GRDB
 
-actor WorkerService {
-    static let shared = WorkerService()
+public actor WorkerService {
+    public static let shared = WorkerService()
     
     private let grdbManager = GRDBManager.shared
     

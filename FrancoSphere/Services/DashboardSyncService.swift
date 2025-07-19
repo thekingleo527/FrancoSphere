@@ -321,7 +321,7 @@ public class DashboardSyncService: ObservableObject {
     }
     
     /// Hook into IntelligenceService portfolio insights
-    public func onCoreTypes.PortfolioIntelligenceUpdated(insights: [CoreTypes.IntelligenceInsight]) {
+    public func onPortfolioIntelligenceUpdated(insights: [CoreTypes.IntelligenceInsight]) {
         let criticalInsights = insights.filter { $0.priority == .critical }
         
         let update = DashboardUpdate(

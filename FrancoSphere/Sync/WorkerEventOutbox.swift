@@ -311,7 +311,7 @@ extension WorkerEventOutbox {
 
 // MARK: - Actor Isolation Fix
 extension WorkerEventOutbox {
-    nonisolated convenience init() {
+    nonisolated init() {
         self.init()
         Task {
             await self.loadPendingEvents()

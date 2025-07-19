@@ -37,7 +37,7 @@ actor BuildingConfigurationManager {
     private let persistenceKey = "BuildingFeatureConfigurations"
 
     private init() {
-        loadConfigurations()
+        Task { await loadConfigurations() }
         print("⚙️ BuildingConfigurationManager initialized with \(buildingConfigurations.count) custom configs.")
     }
 
@@ -82,7 +82,7 @@ actor BuildingConfigurationManager {
         }
     }
     
-    private func loadConfigurations() {
+    private func Task { await loadConfigurations() } {
         guard let data = UserDefaults.standard.data(forKey: persistenceKey) else { return }
         do {
             buildingConfigurations = try JSONDecoder().decode([CoreTypes.BuildingID: BuildingFeatureConfiguration].self, from: data)
@@ -97,7 +97,7 @@ extension BuildingFeatureConfiguration {
     nonisolated convenience init() {
         self.init()
         Task {
-            await self.loadConfigurations()
+            await self.Task { await loadConfigurations() }
         }
     }
 }
