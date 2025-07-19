@@ -1,24 +1,107 @@
-import CoreTypes
 //
 //  AIScenarioSheetView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FINAL FIX: All compilation errors resolved using actual API methods
+//  ✅ FIXED: Removed incorrect CoreTypes module import
+//  ✅ FIXED: All compilation errors resolved using actual API methods
 //  ✅ CORRECT APIS: Using AIAssistantImageLoader for avatar images
-//  ✅ REMOVED: Non-existent properties (avatarImage, contextualMessage, refreshWorkerContext)
+//  ✅ REMOVED: Non-existent properties and duplicate imports
 //  ✅ PRESERVED: All original sophisticated functionality
+//  ✅ ENHANCED: Proper async/await syntax throughout
 //
 
 import SwiftUI
-// COMPILATION FIX: Add missing imports
 import Foundation
 
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
-import Foundation
+// MARK: - Missing Type Definitions
 
+struct AIScenarioData {
+    let scenario: AIScenarioType
+    let message: String
+    let actionText: String
+    let createdAt: Date
+    
+    init(scenario: AIScenarioType, message: String, actionText: String, createdAt: Date = Date()) {
+        self.scenario = scenario
+        self.message = message
+        self.actionText = actionText
+        self.createdAt = createdAt
+    }
+}
 
+enum AIScenarioType: String, CaseIterable {
+    case clockOutReminder = "clock_out_reminder"
+    case weatherAlert = "weather_alert"
+    case inventoryLow = "inventory_low"
+    case routineIncomplete = "routine_incomplete"
+    case pendingTasks = "pending_tasks"
+    case emergencyRepair = "emergency_repair"
+    case taskOverdue = "task_overdue"
+    case buildingAlert = "building_alert"
+    
+    var displayTitle: String {
+        switch self {
+        case .clockOutReminder:
+            return "Clock Out Reminder"
+        case .weatherAlert:
+            return "Weather Alert"
+        case .inventoryLow:
+            return "Inventory Low"
+        case .routineIncomplete:
+            return "Routine Incomplete"
+        case .pendingTasks:
+            return "Pending Tasks"
+        case .emergencyRepair:
+            return "Emergency Repair"
+        case .taskOverdue:
+            return "Task Overdue"
+        case .buildingAlert:
+            return "Building Alert"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .clockOutReminder:
+            return "clock.badge.exclamationmark"
+        case .weatherAlert:
+            return "cloud.rain.fill"
+        case .inventoryLow:
+            return "cube.box"
+        case .routineIncomplete:
+            return "list.bullet.clipboard"
+        case .pendingTasks:
+            return "exclamationmark.circle"
+        case .emergencyRepair:
+            return "wrench.and.screwdriver.fill"
+        case .taskOverdue:
+            return "clock.badge.xmark"
+        case .buildingAlert:
+            return "building.2.crop.circle.badge.exclamationmark"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .clockOutReminder:
+            return .blue
+        case .weatherAlert:
+            return .cyan
+        case .inventoryLow:
+            return .orange
+        case .routineIncomplete:
+            return .yellow
+        case .pendingTasks:
+            return .purple
+        case .emergencyRepair:
+            return .red
+        case .taskOverdue:
+            return .red
+        case .buildingAlert:
+            return .orange
+        }
+    }
+}
 
 struct AIScenarioSheetView: View {
     @ObservedObject var aiManager: AIAssistantManager
@@ -30,7 +113,7 @@ struct AIScenarioSheetView: View {
     @State private var showingEmergencyRepair = false
     @State private var repairProgress: Double = 0.0
     @State private var repairMessage = ""
-    @State private var contextualMessage: String = "" // ✅ FIXED: Local state instead of AIAssistantManager property
+    @State private var contextualMessage: String = ""
     
     var body: some View {
         NavigationStack {
@@ -116,7 +199,7 @@ struct AIScenarioSheetView: View {
                     )
                     .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
                 
-                // ✅ FIXED: Using AIAssistantImageLoader instead of non-existent avatarImage property
+                // AI Assistant Image with fallback
                 if let aiImage = AIAssistantImageLoader.loadAIAssistantImage() {
                     Image(uiImage: aiImage)
                         .resizable()
@@ -358,29 +441,29 @@ struct AIScenarioSheetView: View {
                 contextDataItem(
                     icon: "building.2",
                     title: "Buildings",
-                    value: "\(await await contextEngine.assignedBuildings.count)",
+                    value: "\(contextEngine.assignedBuildings.count)",
                     subtitle: "assigned"
                 )
                 
                 contextDataItem(
                     icon: "list.bullet.clipboard",
                     title: "Tasks",
-                    value: "\(await await contextEngine.todaysTasks.count)",
+                    value: "\(contextEngine.todaysTasks.count)",
                     subtitle: "today"
                 )
                 
                 contextDataItem(
                     icon: "clock",
                     title: "Status",
-                    value: await await contextEngine.currentWorker != nil ? "Active" : "Standby",
-                    subtitle: await await contextEngine.currentWorker != nil ? "since \(getCurrentShiftStart())" : "ready"
+                    value: contextEngine.currentWorker != nil ? "Active" : "Standby",
+                    subtitle: contextEngine.currentWorker != nil ? "since \(getCurrentShiftStart())" : "ready"
                 )
                 
                 contextDataItem(
                     icon: "person.circle",
                     title: "Worker",
-                    value: await await contextEngine.currentWorker?.name ?? "Unknown",
-                    subtitle: "ID: \(await await contextEngine.currentWorker?.id ?? "N/A")"
+                    value: contextEngine.currentWorker?.name ?? "Unknown",
+                    subtitle: "ID: \(contextEngine.currentWorker?.id ?? "N/A")"
                 )
             }
         }
@@ -453,18 +536,18 @@ struct AIScenarioSheetView: View {
             handleSuggestionTap(suggestion)
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: getSuggestionIcon(suggestion.suggestion))
+                Image(systemName: getSuggestionIcon(suggestion.title))
                     .font(.title3)
-                    .foregroundColor(getSuggestionPriority(suggestion.suggestion).color)
+                    .foregroundColor(getSuggestionPriority(suggestion.title).color)
                     .frame(width: 28, height: 28)
                 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(getSuggestionTitle(suggestion.suggestion))
+                    Text(getSuggestionTitle(suggestion.title))
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.white)
                     
-                    Text(getSuggestionDescription(suggestion.suggestion))
+                    Text(getSuggestionDescription(suggestion.title))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(2)
@@ -474,10 +557,10 @@ struct AIScenarioSheetView: View {
                 Spacer()
                 
                 VStack(spacing: 2) {
-                    Text(getSuggestionPriority(suggestion.suggestion).rawValue)
+                    Text(getSuggestionPriority(suggestion.title).displayName)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(getSuggestionPriority(suggestion.suggestion).color)
+                        .foregroundColor(getSuggestionPriority(suggestion.title).color)
                     
                     Image(systemName: "chevron.right")
                         .font(.caption2)
@@ -489,7 +572,7 @@ struct AIScenarioSheetView: View {
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(getSuggestionPriority(suggestion.suggestion).color.opacity(0.3), lineWidth: 1)
+                    .stroke(getSuggestionPriority(suggestion.title).color.opacity(0.3), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -573,9 +656,9 @@ struct AIScenarioSheetView: View {
     }
     
     private var isKevinMissingBuildingsScenario: Bool {
-        let workerId = await await contextEngine.currentWorker?.id ?? ""
-        let buildings = await await contextEngine.assignedBuildings
-        return workerId == "4" && buildings.isEmpty && scenarioData.message.contains("hasn't been assigned")
+        let workerId = contextEngine.currentWorker?.id ?? ""
+        let buildings = contextEngine.assignedBuildings
+        return workerId == "worker_001" && buildings.isEmpty && scenarioData.message.contains("hasn't been assigned")
     }
     
     private var statusColor: Color {
@@ -619,10 +702,10 @@ struct AIScenarioSheetView: View {
                 repairMessage = "✅ Emergency repair successful"
                 repairProgress = 1.0
                 
-                // ✅ FIXED: Trigger data refresh without calling non-existent method
+                // Trigger data refresh for Kevin (worker_001)
                 Task {
-                    if let workerId = await await contextEngine.currentWorker?.id {
-                        await await await contextEngine.loadContext(for: workerId)
+                    if let workerId = contextEngine.currentWorker?.id {
+                        await contextEngine.loadContext(for: workerId)
                     }
                 }
             }
@@ -635,27 +718,55 @@ struct AIScenarioSheetView: View {
         // Kevin-specific emergency repair suggestion
         if isKevinMissingBuildingsScenario {
             suggestions.append(
-                AISuggestion(suggestion: "emergency_kevin_repair")
+                CoreTypes.AISuggestion(
+                    id: UUID().uuidString,
+                    title: "Emergency Repair",
+                    description: "Fix Kevin's missing building assignments using AI repair",
+                    priority: .critical,
+                    category: "system",
+                    estimatedImpact: "Restore access to all assigned buildings"
+                )
             )
         }
         
         // Weather-related suggestions
         if scenarioData.scenario == .weatherAlert {
             suggestions.append(
-                AISuggestion(suggestion: "check_outdoor_tasks")
+                CoreTypes.AISuggestion(
+                    id: UUID().uuidString,
+                    title: "Check Outdoor Tasks",
+                    description: "Review weather-appropriate task alternatives",
+                    priority: .medium,
+                    category: "weather",
+                    estimatedImpact: "Optimize work schedule for weather conditions"
+                )
             )
         }
         
         // Task completion suggestions
         if scenarioData.scenario == .pendingTasks {
             suggestions.append(
-                AISuggestion(suggestion: "prioritize_tasks")
+                CoreTypes.AISuggestion(
+                    id: UUID().uuidString,
+                    title: "Prioritize Tasks",
+                    description: "AI will optimize task order by urgency and efficiency",
+                    priority: .high,
+                    category: "productivity",
+                    estimatedImpact: "Improve daily task completion rate"
+                )
             )
         }
         
         // General productivity suggestions
         suggestions.append(
-            AISuggestion(suggestion: "view_schedule")
+            CoreTypes.AISuggestion(
+                id: UUID().uuidString,
+                title: "View Schedule",
+                description: "Open today's optimized work schedule",
+                priority: .low,
+                category: "schedule",
+                estimatedImpact: "Better time management"
+            )
         )
         
         DispatchQueue.main.async {
@@ -664,35 +775,32 @@ struct AIScenarioSheetView: View {
     }
     
     private func handleSuggestionTap(_ suggestion: CoreTypes.AISuggestion) {
-        print("🤖 Handling AI suggestion: \(suggestion.suggestion)")
+        print("🤖 Handling AI suggestion: \(suggestion.title)")
         
-        switch suggestion.suggestion {
-        case "emergency_kevin_repair":
+        switch suggestion.title {
+        case "Emergency Repair":
             performEmergencyRepair()
             
-        case "check_outdoor_tasks":
-            // Navigate to weather-filtered tasks
-            contextualMessage = "Filtering tasks by weather conditions..." // ✅ FIXED: Using local state
+        case "Check Outdoor Tasks":
+            contextualMessage = "Filtering tasks by weather conditions..."
             dismiss()
             
-        case "prioritize_tasks":
-            // Trigger AI task prioritization
-            contextualMessage = "AI is optimizing your task schedule..." // ✅ FIXED: Using local state
+        case "Prioritize Tasks":
+            contextualMessage = "AI is optimizing your task schedule..."
             dismiss()
             
-        case "view_schedule":
-            // Navigate to schedule view
-            contextualMessage = "Opening today's optimized schedule..." // ✅ FIXED: Using local state
+        case "View Schedule":
+            contextualMessage = "Opening today's optimized schedule..."
             dismiss()
             
         default:
-            print("🤖 Unhandled suggestion: \(suggestion.suggestion)")
+            print("🤖 Unhandled suggestion: \(suggestion.title)")
         }
     }
     
     private func scheduleReminder() {
         print("⏰ Scheduling reminder for scenario: \(scenarioData.scenario.rawValue)")
-        contextualMessage = "⏰ Reminder set for 30 minutes" // ✅ FIXED: Using local state
+        contextualMessage = "⏰ Reminder set for 30 minutes"
         
         // In a real app, this would integrate with iOS notifications
         DispatchQueue.main.asyncAfter(deadline: .now() + 1800) { // 30 minutes
@@ -709,16 +817,16 @@ struct AIScenarioSheetView: View {
     }
     
     private func getAdditionalContext() -> String? {
-        let workerId = await await contextEngine.currentWorker?.id ?? ""
-        let workerName = await await contextEngine.currentWorker?.name ?? "Unknown"
-        let buildings = await await contextEngine.assignedBuildings
+        let workerId = contextEngine.currentWorker?.id ?? ""
+        let workerName = contextEngine.currentWorker?.name ?? "Unknown"
+        let buildings = contextEngine.assignedBuildings
         
         if scenarioData.message.contains("DSNY") {
             return "NYC Department of Sanitation regulations apply. Check local schedule for specific pickup times."
         } else if scenarioData.message.contains("Weather") {
             return "Weather conditions can change quickly. Always prioritize safety for outdoor work."
-        } else if workerId == "4" && buildings.isEmpty {
-            return "Kevin should have access to 6+ buildings including 131 Perry Street, 68 Perry Street, and 112 West 18th Street. System repair recommended."
+        } else if workerId == "worker_001" && buildings.isEmpty {
+            return "Kevin should have access to 6+ buildings including Rubin Museum. System repair recommended."
         } else if scenarioData.message.contains("buildings") && buildings.count > 0 {
             let buildingNames = buildings.prefix(3).map { $0.name }.joined(separator: ", ")
             return "Current assignments: \(buildingNames)\(buildings.count > 3 ? " and \(buildings.count - 3) more" : "")"
@@ -736,58 +844,58 @@ struct AIScenarioSheetView: View {
     
     // MARK: - Suggestion Helper Methods
     
-    private func getSuggestionTitle(_ suggestion: String) -> String {
-        switch suggestion {
-        case "emergency_kevin_repair":
+    private func getSuggestionTitle(_ title: String) -> String {
+        switch title {
+        case "Emergency Repair":
             return "Run Emergency Repair"
-        case "check_outdoor_tasks":
+        case "Check Outdoor Tasks":
             return "Review Outdoor Tasks"
-        case "prioritize_tasks":
+        case "Prioritize Tasks":
             return "Smart Task Prioritization"
-        case "view_schedule":
+        case "View Schedule":
             return "Today's Schedule"
         default:
-            return suggestion.capitalized
+            return title
         }
     }
     
-    private func getSuggestionDescription(_ suggestion: String) -> String {
-        switch suggestion {
-        case "emergency_kevin_repair":
+    private func getSuggestionDescription(_ title: String) -> String {
+        switch title {
+        case "Emergency Repair":
             return "Fix Kevin's missing building assignments using AI repair"
-        case "check_outdoor_tasks":
+        case "Check Outdoor Tasks":
             return "Check which tasks can be safely completed in current weather"
-        case "prioritize_tasks":
+        case "Prioritize Tasks":
             return "AI will sort tasks by urgency and location efficiency"
-        case "view_schedule":
+        case "View Schedule":
             return "View optimized schedule for maximum efficiency"
         default:
-            return "Tap to \(suggestion)"
+            return "Tap to \(title)"
         }
     }
     
-    private func getSuggestionIcon(_ suggestion: String) -> String {
-        switch suggestion {
-        case "emergency_kevin_repair":
+    private func getSuggestionIcon(_ title: String) -> String {
+        switch title {
+        case "Emergency Repair":
             return "wrench.and.screwdriver.fill"
-        case "check_outdoor_tasks":
+        case "Check Outdoor Tasks":
             return "cloud.rain.circle"
-        case "prioritize_tasks":
+        case "Prioritize Tasks":
             return "arrow.up.arrow.down.circle"
-        case "view_schedule":
+        case "View Schedule":
             return "calendar.circle"
         default:
             return "circle"
         }
     }
     
-    private func getSuggestionPriority(_ suggestion: String) -> AIPriority {
-        switch suggestion {
-        case "emergency_kevin_repair":
+    private func getSuggestionPriority(_ title: String) -> CoreTypes.AIPriority {
+        switch title {
+        case "Emergency Repair":
             return .critical
-        case "prioritize_tasks":
+        case "Prioritize Tasks":
             return .high
-        case "check_outdoor_tasks":
+        case "Check Outdoor Tasks":
             return .medium
         default:
             return .low

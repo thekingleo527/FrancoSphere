@@ -85,7 +85,6 @@
 		2345817B2DF78E3D00355F0A /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345811D2DF78E3D00355F0A /* AdminDashboardView.swift */; };
 		2345817C2DF78E3D00355F0A /* TimelineProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580932DF78E3D00355F0A /* TimelineProgressBar.swift */; };
 		2345817D2DF78E3D00355F0A /* TimeBasedTaskFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345810A2DF78E3D00355F0A /* TimeBasedTaskFilter.swift */; };
-		2345817F2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */; };
 		234581802DF78E3D00355F0A /* InventoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581172DF78E3D00355F0A /* InventoryView.swift */; };
 		234581812DF78E3D00355F0A /* AssignedBuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234581122DF78E3D00355F0A /* AssignedBuildingsView.swift */; };
 		234581822DF78E3D00355F0A /* MapBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 234580A82DF78E3D00355F0A /* MapBackgroundView.swift */; };
@@ -224,7 +223,6 @@
 		23423DC72D739D6900AACE3E /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23423DD12D739D6A00AACE3E /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
-		2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHeaderGlassOverlay.swift; sourceTree = "<group>"; };
 		234580902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentBuildingStatusCard.swift; sourceTree = "<group>"; };
 		234580912DF78E3D00355F0A /* FrancoSphereDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereDesign.swift; sourceTree = "<group>"; };
 		234580922DF78E3D00355F0A /* ModelColorsExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelColorsExtensions.swift; sourceTree = "<group>"; };
@@ -501,7 +499,6 @@
 				23BBD7612E00199B00013D90 /* AIAssistantImageLoader.swift */,
 				23B1178E2DFDB0570065F39E /* HeaderV3B.swift */,
 				2345808C2DF78E3D00355F0A /* AbstractFrancoSphereLogo.swift */,
-				2345808D2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift */,
 				234580902DF78E3D00355F0A /* CurrentBuildingStatusCard.swift */,
 				234580912DF78E3D00355F0A /* FrancoSphereDesign.swift */,
 				234580922DF78E3D00355F0A /* ModelColorsExtensions.swift */,
@@ -1094,7 +1091,6 @@
 				2312FC7E2E1BED3700B64496 /* DataSynchronizationService.swift in Sources */,
 				2345817D2DF78E3D00355F0A /* TimeBasedTaskFilter.swift in Sources */,
 				233F94DA2DF7B0AD00901707 /* QuickActionMenu.swift in Sources */,
-				2345817F2DF78E3D00355F0A /* BuildingHeaderGlassOverlay.swift in Sources */,
 				234581802DF78E3D00355F0A /* InventoryView.swift in Sources */,
 				23BBD75C2DFFF55F00013D90 /* TaskTimelineView.swift in Sources */,
 				23EA1E9B2E27EA23009FFF54 /* BuildingIntelligencePanel.swift in Sources */,
