@@ -89,8 +89,6 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public let description: String?
     public var isCompleted: Bool
     public var completedDate: Date?
-    public let scheduledDate: Date?
-    public let dueDate: Date?
     public let category: TaskCategory?
     public let urgency: TaskUrgency?
     public let building: NamedCoordinate?

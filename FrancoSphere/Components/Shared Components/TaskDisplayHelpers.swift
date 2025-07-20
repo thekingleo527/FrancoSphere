@@ -1,178 +1,148 @@
 //
-//  TaskDisplayHelpers.swift
-//  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ Proper ContextualTask property access
-//  ✅ No redeclarations of existing properties
+//  TaskDisplayHelpers.swift
+//  FrancoSphere v6.0
+//
+//  ✅ FIXED: Invalid redeclaration errors resolved
+//  ✅ CLEANED: Removed duplicate property declarations
+//  ✅ ORGANIZED: Single implementation of each helper function
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
-
 import Foundation
 
-// Type aliases for CoreTypes
+// MARK: - Task Display Helpers
 
-struct TaskDisplayHelpers {
+/// Helper functions for displaying tasks in various UI components
+public struct TaskDisplayHelpers {
     
-    // MARK: - Task Status Helpers
-    static func getStatusColor(for status: String) -> Color {
-        switch status.lowercased() {
-        case "completed":
+    // MARK: - Status Display
+    
+    /// Get appropriate color for task status
+    public static func statusColor(for task: ContextualTask) -> Color {
+        if task.isCompleted {
             return .green
-        case "in_progress", "in progress":
-            return .blue
-        case "pending":
-            return .orange
-        case "overdue":
-            return .red
-        case "cancelled":
-            return .gray
-        default:
-            return .secondary
+        } else if let dueDate = task.dueDate, dueDate < Date() {
+            return .red // Overdue
+        } else {
+            return task.priority.color
         }
     }
     
-    static func getStatusIcon(for status: String) -> String {
-        switch status.lowercased() {
-        case "completed":
+    /// Get status icon for task
+    public static func statusIcon(for task: ContextualTask) -> String {
+        if task.isCompleted {
             return "checkmark.circle.fill"
-        case "in_progress", "in progress":
-            return "clock.circle.fill"
-        case "pending":
-            return "clock.circle"
-        case "overdue":
+        } else if let dueDate = task.dueDate, dueDate < Date() {
             return "exclamationmark.triangle.fill"
-        case "cancelled":
-            return "xmark.circle.fill"
-        default:
+        } else {
             return "circle"
         }
     }
     
-    // MARK: - Category Helpers
-    static func getCategoryColor(for category: String) -> Color {
-        switch category.lowercased() {
-        case "maintenance":
-            return .orange
-        case "cleaning":
-            return .blue
-        case "inspection":
-            return .green
-        case "sanitation":
-            return .purple
-        case "repair":
-            return .red
-        case "security":
-            return .indigo
-        default:
-            return .gray
+    /// Get status text for task
+    public static func statusText(for task: ContextualTask) -> String {
+        if task.isCompleted {
+            return "Completed"
+        } else if let dueDate = task.dueDate, dueDate < Date() {
+            return "Overdue"
+        } else {
+            return "Pending"
         }
     }
     
-    static func getCategoryIcon(for category: String) -> String {
-        switch category.lowercased() {
-        case "maintenance":
-            return "wrench.and.screwdriver"
-        case "cleaning":
-            return "spray.and.wipe"
-        case "inspection":
-            return "checklist"
-        case "sanitation":
-            return "trash"
-        case "repair":
-            return "hammer"
-        case "security":
-            return "shield"
-        default:
-            return "square.grid.2x2"
-        }
-    }
+    // MARK: - Time Display
     
-    // MARK: - Urgency Helpers
-    static func getUrgencyColor(for urgency: String) -> Color {
-        switch urgency.lowercased() {
-        case "urgent":
-            return .red
-        case "high":
-            return .orange
-        case "medium":
-            return .yellow
-        case "low":
-            return .green
-        default:
-            return .gray
-        }
-    }
-    
-    static func getUrgencyPriority(for urgency: String) -> Int {
-        switch urgency.lowercased() {
-        case "urgent":
-            return 4
-        case "high":
-            return 3
-        case "medium":
-            return 2
-        case "low":
-            return 1
-        default:
-            return 2
-        }
-    }
-    
-    // MARK: - Time Helpers
-    static func formatTimeString(_ timeString: String) -> String {
-        // Handle various time formats
-        if timeString.contains(":") {
-            return timeString // Already formatted
-        }
-        
-        // Convert 24-hour to 12-hour format if needed
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        if let date = formatter.date(from: timeString) {
-            formatter.dateFormat = "h:mm a"
-            return formatter.string(from: date)
-        }
-        
-        return timeString
-    }
-    
-    static func parseTimeString(_ timeString: String) -> Date? {
-        let formatter = DateFormatter()
-        
-        // Try different formats
-        let formats = ["HH:mm", "h:mm a", "h:mm:ss a", "HH:mm:ss"]
-        
-        for format in formats {
-            formatter.dateFormat = format
-            if let date = formatter.date(from: timeString) {
-                return date
-            }
-        }
-        
-        return nil
-    }
-    
-    static func timeUntilTask(_ task: ContextualTask) -> String {
+    /// Get formatted start time for task
+    public static func startTimeText(for task: ContextualTask) -> String {
         guard let scheduledDate = task.scheduledDate else {
+            return "No scheduled time"
+        }
+        
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: scheduledDate)
+    }
+    
+    /// Get relative time description
+    public static func relativeTimeText(for task: ContextualTask) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        
+        if let dueDate = task.dueDate {
+            return formatter.localizedString(for: dueDate, relativeTo: Date())
+        } else if let scheduledDate = task.scheduledDate {
+            return formatter.localizedString(for: scheduledDate, relativeTo: Date())
+        } else {
             return "No time set"
         }
-        
-        let timeInterval = scheduledDate.timeIntervalSinceNow
-        return formatTimeInterval(timeInterval)
     }
     
-    private static func formatTimeInterval(_ timeInterval: TimeInterval) -> String {
-        if timeInterval < 0 {
-            return "Overdue"
+    // MARK: - Worker Assignment
+    
+    /// Get assigned worker ID for display
+    public static func assignedWorkerIdText(for task: ContextualTask) -> String {
+        return task.assignedWorkerId ?? task.worker?.id ?? "Unassigned"
+    }
+    
+    /// Get assigned worker name for display
+    public static func assignedWorkerName(for task: ContextualTask) -> String {
+        if let worker = task.worker {
+            return worker.name
+        } else if let workerId = task.assignedWorkerId {
+            return "Worker \(workerId)"
+        } else {
+            return "Unassigned"
+        }
+    }
+    
+    // MARK: - Priority Display
+    
+    /// Get priority badge view
+    public static func priorityBadge(for task: ContextualTask) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(task.priority.color)
+                .frame(width: 8, height: 8)
+            
+            Text(task.priority.rawValue)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+    }
+    
+    // MARK: - Duration Calculations
+    
+    /// Calculate estimated duration for task
+    public static func estimatedDurationText(for task: ContextualTask) -> String {
+        // If task has explicit estimated duration, use it
+        if let duration = task.estimatedDuration {
+            return formatDuration(duration)
         }
         
-        let hours = Int(timeInterval) / 3600
-        let minutes = (Int(timeInterval) % 3600) / 60
+        // Otherwise, estimate based on category and urgency
+        let baseDuration: TimeInterval
+        switch task.priority {
+        case .critical:
+            baseDuration = 3600 // 1 hour
+        case .high:
+            baseDuration = 2700 // 45 minutes
+        case .medium:
+            baseDuration = 1800 // 30 minutes
+        case .low:
+            baseDuration = 900  // 15 minutes
+        }
+        
+        return formatDuration(baseDuration)
+    }
+    
+    private static func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
         
         if hours > 0 {
             return "\(hours)h \(minutes)m"
@@ -181,141 +151,147 @@ struct TaskDisplayHelpers {
         }
     }
     
-    // MARK: - Task Filtering
-    static func filterTasksByStatus(_ tasks: [ContextualTask], status: String) -> [ContextualTask] {
-        return tasks.filter { $0.status.lowercased() == status.lowercased() }
-    }
+    // MARK: - Progress Indicators
     
-    static func filterTasksByCategory(_ tasks: [ContextualTask], category: String) -> [ContextualTask] {
-        return tasks.filter { $0.category?.rawValue.lowercased() ?? "" == category.lowercased() }
-    }
-    
-    static func filterTasksByUrgency(_ tasks: [ContextualTask], urgency: String) -> [ContextualTask] {
-        return tasks.filter { $0.urgency?.rawValue.lowercased() ?? "" == urgency.lowercased() }
-    }
-    
-    // MARK: - Task Sorting
-    static func sortTasksByPriority(_ tasks: [ContextualTask]) -> [ContextualTask] {
-        return tasks.sorted { task1, task2 in
-            let priority1 = getUrgencyPriority(for: task1.urgency?.rawValue ?? "")
-            let priority2 = getUrgencyPriority(for: task2.urgency?.rawValue ?? "")
-            return priority1 > priority2
-        }
-    }
-    
-    static func sortTasksByTime(_ tasks: [ContextualTask]) -> [ContextualTask] {
-        return tasks.sorted { task1, task2 in
-            guard let time1 = task1.startTime, let time2 = task2.startTime,
-                  let date1 = parseTimeString(time1), let date2 = parseTimeString(time2) else {
-                return false
+    /// Get progress indicator for task
+    public static func progressIndicator(for task: ContextualTask) -> some View {
+        Group {
+            if task.isCompleted {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+            } else if let dueDate = task.dueDate, dueDate < Date() {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.red)
+            } else {
+                Image(systemName: "circle")
+                    .foregroundColor(.gray)
             }
-            return date1 < date2
         }
     }
     
-    // MARK: - Progress Calculation
-    static func calculateCompletionPercentage(for tasks: [ContextualTask]) -> Double {
-        guard !tasks.isEmpty else { return 0.0 }
+    // MARK: - Category Display
+    
+    /// Get category badge for task
+    public static func categoryBadge(for task: ContextualTask) -> some View {
+        let categoryText = task.title.lowercased().contains("clean") ? "Cleaning" :
+                          task.title.lowercased().contains("maintenance") ? "Maintenance" :
+                          task.title.lowercased().contains("repair") ? "Repair" : "General"
         
-        let completedTasks = tasks.filter { $0.status.lowercased() == "completed" }
-        return Double(completedTasks.count) / Double(tasks.count) * 100.0
+        let categoryColor: Color = {
+            switch categoryText {
+            case "Cleaning": return .blue
+            case "Maintenance": return .orange
+            case "Repair": return .red
+            default: return .gray
+            }
+        }()
+        
+        return Text(categoryText)
+            .font(.caption2)
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(categoryColor)
+            .cornerRadius(8)
     }
     
-    static func getTaskStats(for tasks: [ContextualTask]) -> TaskStats {
-        let completed = tasks.filter { $0.status.lowercased() == "completed" }.count
-        let pending = tasks.filter { $0.status.lowercased() == "pending" }.count
-        let inProgress = tasks.filter { $0.status.lowercased().contains("progress") }.count
-        let overdue = tasks.filter { $0.isOverdue }.count
-        
-        return TaskStats(
-            total: tasks.count,
-            completed: completed,
-            pending: pending,
-            inProgress: inProgress,
-            overdue: overdue,
-            completionPercentage: calculateCompletionPercentage(for: tasks)
-        )
-    }
-}
-
-// MARK: - Supporting Types
-struct TaskStats {
-    let total: Int
-    let completed: Int
-    let pending: Int
-    let inProgress: Int
-    let overdue: Int
-    let completionPercentage: Double
-}
-
-// MARK: - View Extensions
-extension View {
-    func taskStatusModifier(for task: ContextualTask) -> some View {
-        self.modifier(TaskStatusModifier(task: task))
-    }
-}
-
-struct TaskStatusModifier: ViewModifier {
-    let task: ContextualTask
+    // MARK: - Building Display
     
-    func body(content: Content) -> some View {
-        content
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(TaskDisplayHelpers.getStatusColor(for: task.status), lineWidth: 2)
-            )
-            .background(
-                TaskDisplayHelpers.getStatusColor(for: task.status)
-                    .opacity(0.1)
-                    .cornerRadius(8)
-            )
+    /// Get building name for task
+    public static func buildingName(for task: ContextualTask) -> String {
+        return task.buildingId ?? "Unknown Building"
     }
-}
-
-// MARK: - ContextualTask Extensions for Missing Properties (Safe Implementation)
-extension ContextualTask {
-    /// Computed status based on isCompleted and dueDate
-    var status: String {
-        if isCompleted {
-            return "completed"
-        } else if let dueDate = dueDate, dueDate < Date() {
-            return "overdue"
+    
+    /// Get building short name for compact display
+    public static func buildingShortName(for task: ContextualTask) -> String {
+        guard let buildingId = task.buildingId else { return "N/A" }
+        
+        // Extract short name from building ID or full name
+        if buildingId.contains("Street") {
+            let components = buildingId.components(separatedBy: " ")
+            return components.prefix(2).joined(separator: " ")
         } else {
-            return "pending"
+            return buildingId
         }
     }
     
-    /// Computed start time from scheduledDate or dueDate
-    var startTime: String? {
-        let targetDate = scheduledDate ?? dueDate
-        guard let date = targetDate else { return nil }
-        
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
-    }
+    // MARK: - Completion Display
     
-    /// Safe access to worker ID
-    var assignedWorkerId: String? {
-        // Try multiple potential access patterns for workerId
-        if let worker = worker {
-            return worker.id
-        }
-        
-        // Fallback: check if there's a direct workerId property via reflection
-        let mirror = Mirror(reflecting: self)
-        for (label, value) in mirror.children {
-            if label == "workerId", let workerId = value as? String {
-                return workerId
+    /// Get completion status view
+    public static func completionStatusView(for task: ContextualTask) -> some View {
+        HStack(spacing: 4) {
+            progressIndicator(for: task)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(statusText(for: task))
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(statusColor(for: task))
+                
+                if let completedDate = task.completedDate {
+                    Text("Completed \(RelativeDateTimeFormatter().localizedString(for: completedDate, relativeTo: Date()))")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
         }
-        
-        return nil
-    }
-    
-    /// Safe computed overdue status (only if not already defined)
-    var computedIsOverdue: Bool {
-        guard let dueDate = dueDate else { return false }
-        return !isCompleted && dueDate < Date()
     }
 }
+
+// MARK: - SwiftUI View Extensions
+
+extension View {
+    /// Apply task status styling
+    func taskStatusStyle(for task: ContextualTask) -> some View {
+        self
+            .foregroundColor(TaskDisplayHelpers.statusColor(for: task))
+            .opacity(task.isCompleted ? 0.7 : 1.0)
+    }
+    
+    /// Apply task priority styling
+    func taskPriorityStyle(for task: ContextualTask) -> some View {
+        self
+            .overlay(
+                Rectangle()
+                    .fill(task.priority.color)
+                    .frame(width: 3)
+                    .cornerRadius(1.5),
+                alignment: .leading
+            )
+    }
+}
+
+// MARK: - Preview Support
+
+#if DEBUG
+struct TaskDisplayHelpers_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(spacing: 16) {
+            // Sample task for preview
+            let sampleTask = ContextualTask(
+                id: "preview-task",
+                title: "Clean Lobby",
+                description: "Daily lobby cleaning",
+                buildingId: "123 Main Street",
+                assignedWorkerId: "worker-001",
+                priority: .high,
+                scheduledDate: Date(),
+                dueDate: Date().addingTimeInterval(3600),
+                estimatedDuration: 1800
+            )
+            
+            VStack(alignment: .leading, spacing: 8) {
+                TaskDisplayHelpers.priorityBadge(for: sampleTask)
+                TaskDisplayHelpers.categoryBadge(for: sampleTask)
+                TaskDisplayHelpers.completionStatusView(for: sampleTask)
+            }
+            .padding()
+            .background(.ultraThinMaterial)
+            .cornerRadius(12)
+        }
+        .padding()
+        .background(Color(.systemGroupedBackground))
+        .previewLayout(.sizeThatFits)
+    }
+}
+#endif
