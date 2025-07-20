@@ -225,7 +225,7 @@
 		23273AEB2E2B8674004A52C6 /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 2327399F2E2B8674004A52C6 /* AIAssistant.png */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
-		238DBE8D2E2C288A00D6B671 /* ComplianceIssue.swift in Resources */ = {isa = PBXBuildFile; fileRef = 238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */; };
+		238DBE8E2E2CCC9900D6B671 /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 /* End PBXBuildFile section */
 
@@ -1156,7 +1156,6 @@
 				23273AE52E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg in Resources */,
 				23273AE62E2B8674004A52C6 /* AppIcon.png in Resources */,
 				23273AE72E2B8674004A52C6 /* Preview Assets.xcassets in Resources */,
-				238DBE8D2E2C288A00D6B671 /* ComplianceIssue.swift in Resources */,
 				23273AE82E2B8674004A52C6 /* 112_West_18th_Street.jpg in Resources */,
 				23273AE92E2B8674004A52C6 /* 133_East_15th_Street.jpg in Resources */,
 				23273AEA2E2B8674004A52C6 /* 138West17thStreet.jpg in Resources */,
@@ -1187,6 +1186,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				238DBE8E2E2CCC9900D6B671 /* ComplianceIssue.swift in Sources */,
 				23273A082E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift in Sources */,
 				23273A092E2B8674004A52C6 /* TaskService.swift in Sources */,
 				23273A0B2E2B8674004A52C6 /* SyncStatusComponents.swift in Sources */,

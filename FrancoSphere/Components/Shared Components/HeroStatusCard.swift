@@ -3,8 +3,9 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECT: Uses proper CoreTypes.CoreTypes.TaskProgress properties
+//  ✅ CORRECT: Uses proper CoreTypes.TaskProgress properties
 //  ✅ WORKING: Matches actual CoreTypes.WeatherData structure
+//  ✅ ALIGNED: With exact CoreTypes.WeatherCondition enum cases
 //
 
 import SwiftUI
@@ -70,7 +71,7 @@ struct HeroStatusCard: View {
     
     private func weatherView(_ weather: CoreTypes.WeatherData) -> some View {
         HStack {
-            Image(systemName: weatherIcon(for: weather.conditions))
+            Image(systemName: getWeatherIconName(weather.condition))
                 .font(.title2)
                 .foregroundColor(.blue)
             
@@ -78,7 +79,7 @@ struct HeroStatusCard: View {
                 Text("\(Int(weather.temperature))°F")
                     .font(.headline)
                 
-                Text(weather.conditions)
+                Text(weather.condition.rawValue)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -183,51 +184,59 @@ struct HeroStatusCard: View {
     
     // MARK: - Helper Methods
     
-    private func weatherIcon(for conditions: String) -> String {
-        let condition = conditions.lowercased()
-        
-        if condition.contains("sun") || condition.contains("clear") {
+    private func getWeatherIconName(_ condition: CoreTypes.WeatherCondition) -> String {
+        switch condition {
+        case .clear:
             return "sun.max.fill"
-        } else if condition.contains("cloud") && condition.contains("sun") {
-            return "cloud.sun.fill"
-        } else if condition.contains("cloud") {
+        case .cloudy:
             return "cloud.fill"
-        } else if condition.contains("rain") {
+        case .rainy:
             return "cloud.rain.fill"
-        } else if condition.contains("snow") {
+        case .snowy:
             return "cloud.snow.fill"
-        } else if condition.contains("storm") || condition.contains("thunder") {
+        case .stormy:
             return "cloud.bolt.fill"
-        } else if condition.contains("fog") {
+        case .foggy:
             return "cloud.fog.fill"
-        } else {
-            return "sun.max.fill"
+        case .windy:
+            return "wind"
+        case .hot:
+            return "thermometer.sun.fill"
+        case .cold:
+            return "thermometer.snowflake"
         }
     }
 }
 
 // MARK: - ✅ FIXED: Preview with correct constructors
 #Preview {
-    HeroStatusCard(
+    let sampleWeather = CoreTypes.WeatherData(
+        id: UUID().uuidString,
+        temperature: 72.0,
+        condition: .clear,
+        humidity: 0.65,
+        windSpeed: 5.0,
+        outdoorWorkRisk: .low,
+        timestamp: Date()
+    )
+    
+    let sampleProgress = CoreTypes.TaskProgress(
+        id: UUID().uuidString,
+        totalTasks: 12,
+        completedTasks: 8,
+        lastUpdated: Date()
+    )
+    
+    return HeroStatusCard(
         workerId: "kevin",
         currentBuilding: "Rubin Museum",
-        weather: CoreTypes.WeatherData(
-            temperature: 72.0,
-            humidity: 0.65,
-            windSpeed: 5.0,
-            conditions: "sunny",
-            timestamp: Date()
-        ),
-        progress: CoreTypes.TaskProgress(
-            completedTasks: 8,
-            totalTasks: 12,
-             66.7
-        ),
+        weather: sampleWeather,
+        progress: sampleProgress,
         onClockInTap: {
             print("Clock in tapped")
         }
     )
     .padding()
     .background(Color.black)
-    .preferredColorScheme(Environment(.colorScheme) == .dark)
+    .preferredColorScheme(.dark)
 }
