@@ -1,76 +1,404 @@
 //
 //  ComplianceIssue.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/19/25.
-//
-
-
-//
-//  ComplianceIssue.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CREATED: Missing file to resolve build dependency
-//  ✅ IMPORTS: All types from CoreTypes.swift (no conflicts)
+//  ✅ UNIFIED: Resolves all ComplianceIssue type conflicts
+//  ✅ COMPATIBLE: Works with both string and enum severity patterns
+//  ✅ ALIGNED: With ComplianceOverviewView expectations
+//  ✅ EXTENDS: CoreTypes.ComplianceIssue with convenience methods
 //
 
 import Foundation
 import SwiftUI
 
-// MARK: - Re-export CoreTypes for backward compatibility
-public typealias ComplianceIssue = CoreTypes.ComplianceIssue
-public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
-public typealias ComplianceSeverity = CoreTypes.ComplianceSeverity
+// MARK: - Unified ComplianceIssue Extensions
 
-// MARK: - Helper Extensions
 extension CoreTypes.ComplianceIssue {
     
-    /// Generate a mock compliance issue for testing
-    static func mockIssue(for buildingId: String, buildingName: String) -> CoreTypes.ComplianceIssue {
-        return CoreTypes.ComplianceIssue(
+    // MARK: - Convenience Initializers
+    
+    /// Initializer with ComplianceSeverity enum (for ComplianceOverviewView compatibility)
+    init(
+        id: String = UUID().uuidString,
+        title: String,
+        description: String,
+        severity: CoreTypes.ComplianceSeverity,  // Enum input
+        buildingId: String,
+        status: CoreTypes.ComplianceStatus = .pending,
+        dueDate: Date? = nil,
+        createdAt: Date = Date()
+    ) {
+        self.init(
+            id: id,
+            title: title,
+            description: description,
+            severity: severity.rawValue,  // Convert enum to string for storage
             buildingId: buildingId,
-            buildingName: buildingName,
-            issueType: .maintenanceOverdue,
-            severity: .high,
-            description: "Routine maintenance inspection overdue",
-            dueDate: Calendar.current.date(byAdding: .day, value: 7, to: Date()),
-            assignedTo: "Maintenance Team"
+            status: status,
+            dueDate: dueDate,
+            createdAt: createdAt
         )
     }
     
-    /// Priority sorting helper
-    var sortPriority: Int {
-        switch severity {
+    /// Initializer with issue type and computed severity
+    init(
+        id: String = UUID().uuidString,
+        title: String,
+        description: String,
+        issueType: CoreTypes.ComplianceIssueType,
+        severity: CoreTypes.ComplianceSeverity,
+        buildingId: String,
+        buildingName: String? = nil,
+        assignedTo: String? = nil,
+        dueDate: Date? = nil
+    ) {
+        self.init(
+            id: id,
+            title: title,
+            description: description,
+            severity: severity.rawValue,
+            buildingId: buildingId,
+            status: .pending,
+            dueDate: dueDate,
+            createdAt: Date()
+        )
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Get severity as enum (for UI display)
+    var severityEnum: CoreTypes.ComplianceSeverity {
+        switch severity.lowercased() {
+        case "critical": return .critical
+        case "high": return .high
+        case "medium": return .medium
+        case "low": return .low
+        default: return .medium
+        }
+    }
+    
+    /// Priority value for sorting
+    var priorityValue: Int {
+        severityEnum.priorityValue
+    }
+    
+    /// Color for UI display
+    var severityColor: Color {
+        severityEnum.color
+    }
+    
+    /// Icon for severity level
+    var severityIcon: String {
+        switch severityEnum {
+        case .critical: return "exclamationmark.triangle.fill"
+        case .high: return "exclamationmark.circle.fill"
+        case .medium: return "exclamationmark.circle"
+        case .low: return "info.circle"
+        }
+    }
+    
+    /// Badge text for severity
+    var severityBadge: String {
+        severityEnum.rawValue.uppercased()
+    }
+    
+    /// Days until due date
+    var daysUntilDue: Int? {
+        guard let dueDate = dueDate else { return nil }
+        let calendar = Calendar.current
+        let days = calendar.dateComponents([.day], from: Date(), to: dueDate).day
+        return days
+    }
+    
+    /// Is issue overdue?
+    var isOverdue: Bool {
+        guard let dueDate = dueDate else { return false }
+        return Date() > dueDate && status != .compliant
+    }
+    
+    /// Status color for UI
+    var statusColor: Color {
+        if isOverdue { return .red }
+        return status.color
+    }
+    
+    // MARK: - Factory Methods
+    
+    /// Create a safety compliance issue
+    static func safetyIssue(
+        title: String,
+        description: String,
+        buildingId: String,
+        severity: CoreTypes.ComplianceSeverity = .high,
+        dueDate: Date? = nil
+    ) -> CoreTypes.ComplianceIssue {
+        return CoreTypes.ComplianceIssue(
+            title: title,
+            description: description,
+            severity: severity,
+            buildingId: buildingId,
+            status: .warning,
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 3, to: Date())
+        )
+    }
+    
+    /// Create a maintenance compliance issue
+    static func maintenanceIssue(
+        title: String,
+        description: String,
+        buildingId: String,
+        severity: CoreTypes.ComplianceSeverity = .medium,
+        dueDate: Date? = nil
+    ) -> CoreTypes.ComplianceIssue {
+        return CoreTypes.ComplianceIssue(
+            title: title,
+            description: description,
+            severity: severity,
+            buildingId: buildingId,
+            status: .warning,
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 7, to: Date())
+        )
+    }
+    
+    /// Create a documentation compliance issue
+    static func documentationIssue(
+        title: String,
+        description: String,
+        buildingId: String,
+        severity: CoreTypes.ComplianceSeverity = .low,
+        dueDate: Date? = nil
+    ) -> CoreTypes.ComplianceIssue {
+        return CoreTypes.ComplianceIssue(
+            title: title,
+            description: description,
+            severity: severity,
+            buildingId: buildingId,
+            status: .pending,
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 14, to: Date())
+        )
+    }
+    
+    /// Create an environmental compliance issue
+    static func environmentalIssue(
+        title: String,
+        description: String,
+        buildingId: String,
+        severity: CoreTypes.ComplianceSeverity = .high,
+        dueDate: Date? = nil
+    ) -> CoreTypes.ComplianceIssue {
+        return CoreTypes.ComplianceIssue(
+            title: title,
+            description: description,
+            severity: severity,
+            buildingId: buildingId,
+            status: .violation,
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 5, to: Date())
+        )
+    }
+    
+    // MARK: - Mock Data for Testing
+    
+    /// Generate sample compliance issues for testing
+    static func mockIssues(for buildingId: String, buildingName: String = "Sample Building") -> [CoreTypes.ComplianceIssue] {
+        return [
+            safetyIssue(
+                title: "Fire Exit Blocked",
+                description: "Emergency exit on 2nd floor has storage blocking access",
+                buildingId: buildingId,
+                severity: .critical
+            ),
+            maintenanceIssue(
+                title: "HVAC Filter Overdue",
+                description: "Air filter replacement is 2 weeks overdue",
+                buildingId: buildingId,
+                severity: .medium
+            ),
+            documentationIssue(
+                title: "Missing Safety Inspection Certificate",
+                description: "Annual safety inspection certificate not on file",
+                buildingId: buildingId,
+                severity: .low
+            ),
+            environmentalIssue(
+                title: "Water Leak Detected",
+                description: "Small water leak detected in basement utility room",
+                buildingId: buildingId,
+                severity: .high
+            )
+        ]
+    }
+}
+
+// MARK: - ComplianceSeverity Extensions
+
+extension CoreTypes.ComplianceSeverity {
+    
+    /// Priority value for sorting (highest priority = highest number)
+    var priorityValue: Int {
+        switch self {
         case .critical: return 4
         case .high: return 3
         case .medium: return 2
         case .low: return 1
         }
     }
+    
+    /// SFSymbol icon name
+    var iconName: String {
+        switch self {
+        case .critical: return "exclamationmark.triangle.fill"
+        case .high: return "exclamationmark.circle.fill"
+        case .medium: return "exclamationmark.circle"
+        case .low: return "info.circle"
+        }
+    }
+    
+    /// Display badge text
+    var badgeText: String {
+        return rawValue.uppercased()
+    }
+    
+    /// Default due date offset from creation
+    var defaultDueDateOffset: Int {
+        switch self {
+        case .critical: return 1  // 1 day
+        case .high: return 3      // 3 days
+        case .medium: return 7    // 1 week
+        case .low: return 14      // 2 weeks
+        }
+    }
 }
+
+// MARK: - ComplianceStatus Extensions
+
+extension CoreTypes.ComplianceStatus {
+    
+    /// SFSymbol icon name
+    var iconName: String {
+        switch self {
+        case .compliant: return "checkmark.circle.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .violation: return "xmark.circle.fill"
+        case .pending: return "clock.circle.fill"
+        }
+    }
+    
+    /// Progress value (0.0 to 1.0)
+    var progressValue: Double {
+        switch self {
+        case .compliant: return 1.0
+        case .warning: return 0.7
+        case .violation: return 0.3
+        case .pending: return 0.5
+        }
+    }
+}
+
+// MARK: - ComplianceIssueType Extensions
 
 extension CoreTypes.ComplianceIssueType {
     
-    /// Display name for UI
-    var displayName: String {
-        return rawValue
+    /// SFSymbol icon name
+    var iconName: String {
+        switch self {
+        case .safety: return "shield.fill"
+        case .environmental: return "leaf.fill"
+        case .building: return "building.fill"
+        case .accessibility: return "figure.roll"
+        case .fire: return "flame.fill"
+        case .health: return "heart.fill"
+        case .security: return "lock.fill"
+        }
+    }
+    
+    /// Default severity for this issue type
+    var defaultSeverity: CoreTypes.ComplianceSeverity {
+        switch self {
+        case .safety, .fire: return .critical
+        case .environmental, .health: return .high
+        case .building, .accessibility: return .medium
+        case .security: return .medium
+        }
     }
 }
 
-extension CoreTypes.ComplianceSeverity {
+// MARK: - Sorting and Filtering Helpers
+
+extension Array where Element == CoreTypes.ComplianceIssue {
     
-    /// Display name for UI
-    var displayName: String {
-        return rawValue
+    /// Sort by priority (critical first)
+    func sortedByPriority() -> [CoreTypes.ComplianceIssue] {
+        return sorted { $0.priorityValue > $1.priorityValue }
     }
     
-    /// Badge text for severity
-    var badgeText: String {
-        switch self {
-        case .critical: return "CRITICAL"
-        case .high: return "HIGH"
-        case .medium: return "MEDIUM"
-        case .low: return "LOW"
+    /// Sort by due date (most urgent first)
+    func sortedByDueDate() -> [CoreTypes.ComplianceIssue] {
+        return sorted { issue1, issue2 in
+            guard let date1 = issue1.dueDate, let date2 = issue2.dueDate else {
+                return issue1.dueDate != nil
+            }
+            return date1 < date2
         }
+    }
+    
+    /// Filter by severity level
+    func filtered(by severity: CoreTypes.ComplianceSeverity) -> [CoreTypes.ComplianceIssue] {
+        return filter { $0.severityEnum == severity }
+    }
+    
+    /// Filter by status
+    func filtered(by status: CoreTypes.ComplianceStatus) -> [CoreTypes.ComplianceIssue] {
+        return filter { $0.status == status }
+    }
+    
+    /// Filter overdue issues
+    var overdue: [CoreTypes.ComplianceIssue] {
+        return filter { $0.isOverdue }
+    }
+    
+    /// Filter critical issues
+    var critical: [CoreTypes.ComplianceIssue] {
+        return filter { $0.severityEnum == .critical }
+    }
+    
+    /// Get compliance summary statistics
+    var summary: ComplianceSummary {
+        let total = count
+        let compliant = filter { $0.status == .compliant }.count
+        let overdue = self.overdue.count
+        let critical = self.critical.count
+        
+        return ComplianceSummary(
+            total: total,
+            compliant: compliant,
+            overdue: overdue,
+            critical: critical,
+            complianceRate: total > 0 ? Double(compliant) / Double(total) : 1.0
+        )
+    }
+}
+
+// MARK: - Compliance Summary Helper
+
+struct ComplianceSummary {
+    let total: Int
+    let compliant: Int
+    let overdue: Int
+    let critical: Int
+    let complianceRate: Double
+    
+    var compliancePercentage: Int {
+        Int(complianceRate * 100)
+    }
+    
+    var hasIssues: Bool {
+        return overdue > 0 || critical > 0
+    }
+    
+    var statusColor: Color {
+        if critical > 0 { return .red }
+        if overdue > 0 { return .orange }
+        if complianceRate >= 0.9 { return .green }
+        return .yellow
     }
 }
