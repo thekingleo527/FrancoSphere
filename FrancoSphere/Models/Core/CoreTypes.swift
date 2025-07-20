@@ -4,6 +4,7 @@
 //
 //  ✅ COMPLETE: All missing types implemented
 //  ✅ FIXED: All redeclaration issues resolved
+//  ✅ FIXED: InsightPriority circular reference eliminated
 //  ✅ FIXED: All access control issues (public rawValue)
 //  ✅ ORGANIZED: Logical grouping maintained
 //  ✅ COMPREHENSIVE: Covers all platform requirements
@@ -1421,7 +1422,6 @@ public typealias ComplianceStatus = CoreTypes.ComplianceStatus
 public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
 public typealias DashboardSyncStatus = CoreTypes.DashboardSyncStatus
 public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
-public typealias InsightPriority = CoreTypes.InsightPriority
 public typealias InsightPriority = CoreTypes.AIPriority
 public typealias InsightType = CoreTypes.InsightCategory
 public typealias SkillLevel = CoreTypes.SkillLevel
@@ -1429,6 +1429,7 @@ public typealias RouteStop = CoreTypes.RouteStop
 public typealias WorkerDailyRoute = CoreTypes.WorkerDailyRoute
 public typealias WorkerRoutineSummary = CoreTypes.WorkerRoutineSummary
 public typealias BuildingStatistics = CoreTypes.BuildingStatistics
+public typealias BuildingTab = CoreTypes.BuildingTab
 
 // MARK: - Models Namespace Alias
 public typealias Models = CoreTypes
@@ -1457,4 +1458,14 @@ public class TaskManager {
     public func createTask(_ task: MaintenanceTask) {}
     public func updateTask(_ task: MaintenanceTask) {}
     public func deleteTask(id: String) {}
+}
+
+// MARK: - DatabaseDebugger (Referenced in error logs)
+public class DatabaseDebugger {
+    public static let shared = DatabaseDebugger()
+    private init() {}
+    
+    // Placeholder for DatabaseDebugger functionality
+    public func debugDatabase() {}
+    public func cleanDatabase() {}
 }
