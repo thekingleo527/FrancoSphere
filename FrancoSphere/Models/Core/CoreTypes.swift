@@ -104,10 +104,6 @@ public struct CoreTypes {
             self.skillCategory = skillCategory
         }
         
-        public var levelStars: String {
-            String(repeating: "⭐", count: min(skillLevel, 5))
-        }
-        
         public var displayName: String { skillName }
     }
     
@@ -355,20 +351,20 @@ public struct CoreTypes {
         case landscaping = "Landscaping"
         case sanitation = "Sanitation"
         
-        public var color: Color {
+        public var icon: String {
             switch self {
-            case .cleaning: return .blue
-            case .maintenance: return .orange
-            case .security: return .red
-            case .inspection: return .green
-            case .administrative: return .purple
-            case .repair: return .yellow
-            case .installation: return .cyan
-            case .utilities: return .brown
-            case .emergency: return .red
-            case .renovation: return .pink
-            case .landscaping: return .green
-            case .sanitation: return .blue
+            case .cleaning: return "sparkles"
+            case .maintenance: return "wrench.and.screwdriver"
+            case .security: return "shield"
+            case .inspection: return "magnifyingglass"
+            case .administrative: return "folder"
+            case .repair: return "hammer"
+            case .installation: return "plus.square"
+            case .utilities: return "bolt"
+            case .emergency: return "exclamationmark.triangle.fill"
+            case .renovation: return "building.2"
+            case .landscaping: return "leaf"
+            case .sanitation: return "sparkles"
             }
         }
     }
@@ -381,15 +377,6 @@ public struct CoreTypes {
         case urgent = "Urgent"
         case emergency = "Emergency"
         
-        public var color: Color {
-            switch self {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .critical, .urgent, .emergency: return .red
-            }
-        }
-        
         public var priorityValue: Int {
             switch self {
             case .low: return 1
@@ -400,8 +387,6 @@ public struct CoreTypes {
             case .emergency: return 6
             }
         }
-        
-        public var sortOrder: Int { priorityValue }
     }
     
     public enum TaskStatus: String, Codable, CaseIterable {
@@ -582,6 +567,7 @@ public struct CoreTypes {
     // MARK: - Weather Types
     public enum WeatherCondition: String, Codable, CaseIterable {
         case sunny = "Sunny"
+        case clear = "Clear"
         case cloudy = "Cloudy"
         case partlyCloudy = "Partly Cloudy"
         case rainy = "Rainy"
@@ -591,11 +577,12 @@ public struct CoreTypes {
         case windy = "Windy"
         case hot = "Hot"
         case cold = "Cold"
+        case overcast = "Overcast"
         
         public var icon: String {
             switch self {
-            case .sunny: return "sun.max"
-            case .cloudy: return "cloud"
+            case .sunny, .clear: return "sun.max"
+            case .cloudy, .overcast: return "cloud"
             case .partlyCloudy: return "cloud.sun"
             case .rainy: return "cloud.rain"
             case .stormy: return "cloud.bolt"
@@ -863,19 +850,10 @@ public struct CoreTypes {
         case general = "General"
         case office = "Office"
         case maintenance = "Maintenance"
-        
-        public var color: Color {
-            switch self {
-            case .cleaning: return .blue
-            case .tools: return .orange
-            case .safety: return .red
-            case .electrical: return .yellow
-            case .plumbing: return .cyan
-            case .general: return .gray
-            case .office: return .purple
-            case .maintenance: return .green
-            }
-        }
+        case supplies = "Supplies"
+        case equipment = "Equipment"
+        case materials = "Materials"
+        case other = "Other"
     }
     
     public struct InventoryItem: Codable, Identifiable {
@@ -886,11 +864,16 @@ public struct CoreTypes {
         public let minimumStock: Int
         public let maxStock: Int
         public let unit: String
-        public let costPerUnit: Double
+        public let cost: Double
         public let supplier: String?
         public let location: String?
         public let lastRestocked: Date?
         public let status: RestockStatus
+        
+        // Additional properties for compatibility
+        public var quantity: Int { currentStock }
+        public var minThreshold: Int { minimumStock }
+        public var restockStatus: RestockStatus { status }
         
         public init(
             id: String = UUID().uuidString,
@@ -900,7 +883,7 @@ public struct CoreTypes {
             minimumStock: Int,
             maxStock: Int,
             unit: String,
-            costPerUnit: Double,
+            cost: Double = 0.0,
             supplier: String? = nil,
             location: String? = nil,
             lastRestocked: Date? = nil,
@@ -913,7 +896,7 @@ public struct CoreTypes {
             self.minimumStock = minimumStock
             self.maxStock = maxStock
             self.unit = unit
-            self.costPerUnit = costPerUnit
+            self.cost = cost
             self.supplier = supplier
             self.location = location
             self.lastRestocked = lastRestocked
@@ -941,18 +924,7 @@ public struct CoreTypes {
             case .critical: return .red
             }
         }
-        
-        public var numericValue: Int {
-            switch self {
-            case .low: return 1
-            case .medium: return 2
-            case .high: return 3
-            case .critical: return 4
-            }
-        }
     }
-    
-    public typealias InsightPriority = AIPriority // Alias for backward compatibility
     
     public enum InsightCategory: String, Codable, CaseIterable {
         case efficiency = "Efficiency"
@@ -1042,19 +1014,6 @@ public struct CoreTypes {
         case taskOverdue = "task_overdue"
         case buildingAlert = "building_alert"
         
-        public var displayTitle: String {
-            switch self {
-            case .clockOutReminder: return "Clock Out Reminder"
-            case .weatherAlert: return "Weather Alert"
-            case .inventoryLow: return "Inventory Low"
-            case .routineIncomplete: return "Routine Incomplete"
-            case .pendingTasks: return "Pending Tasks"
-            case .emergencyRepair: return "Emergency Repair"
-            case .taskOverdue: return "Task Overdue"
-            case .buildingAlert: return "Building Alert"
-            }
-        }
-        
         public var priority: AIPriority {
             switch self {
             case .emergencyRepair, .buildingAlert: return .critical
@@ -1118,6 +1077,31 @@ public struct CoreTypes {
             self.priority = priority
             self.actionRequired = actionRequired
             self.affectedBuildings = affectedBuildings
+            self.generatedAt = generatedAt
+        }
+    }
+    
+    public struct BuildingInsight: Codable, Identifiable {
+        public let id: String
+        public let buildingId: String
+        public let insight: IntelligenceInsight
+        public let metrics: BuildingMetrics
+        public let recommendations: [String]
+        public let generatedAt: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            buildingId: String,
+            insight: IntelligenceInsight,
+            metrics: BuildingMetrics,
+            recommendations: [String] = [],
+            generatedAt: Date = Date()
+        ) {
+            self.id = id
+            self.buildingId = buildingId
+            self.insight = insight
+            self.metrics = metrics
+            self.recommendations = recommendations
             self.generatedAt = generatedAt
         }
     }
@@ -1438,6 +1422,8 @@ public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
 public typealias DashboardSyncStatus = CoreTypes.DashboardSyncStatus
 public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
 public typealias InsightPriority = CoreTypes.InsightPriority
+public typealias InsightPriority = CoreTypes.AIPriority
+public typealias InsightType = CoreTypes.InsightCategory
 public typealias SkillLevel = CoreTypes.SkillLevel
 public typealias RouteStop = CoreTypes.RouteStop
 public typealias WorkerDailyRoute = CoreTypes.WorkerDailyRoute
@@ -1454,6 +1440,11 @@ public struct AI {
     public typealias Insight = CoreTypes.IntelligenceInsight
     public typealias Scenario = CoreTypes.AIScenario
     public typealias ScenarioType = CoreTypes.AIScenarioType
+}
+
+// MARK: - Extend Models with AI namespace
+extension CoreTypes {
+    public static let AI = FrancoSphere.AI.self
 }
 
 // MARK: - Task Manager (Referenced in error logs)
