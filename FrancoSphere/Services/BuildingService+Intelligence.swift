@@ -390,7 +390,7 @@ extension CoreTypes.BuildingMetrics {
     }
     
     /// Get priority level for admin attention
-    var adminPriority: CoreTypes.InsightPriority {
+    var adminPriority: CoreTypes.AIPriority {
         if needsImmediateAttention {
             return .critical
         } else if hasPerformanceIssues {

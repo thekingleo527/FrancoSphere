@@ -4,7 +4,7 @@
 //
 //  ✅ COMPLETE: All missing types implemented
 //  ✅ FIXED: All redeclaration issues resolved
-//  ✅ FIXED: InsightPriority circular reference eliminated
+//  ✅ FIXED: AIPriority circular reference eliminated
 //  ✅ FIXED: All access control issues (public rawValue)
 //  ✅ ORGANIZED: Logical grouping maintained
 //  ✅ COMPREHENSIVE: Covers all platform requirements
@@ -1422,7 +1422,7 @@ public typealias ComplianceStatus = CoreTypes.ComplianceStatus
 public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
 public typealias DashboardSyncStatus = CoreTypes.DashboardSyncStatus
 public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
-public typealias InsightPriority = CoreTypes.AIPriority
+public typealias AIPriority = CoreTypes.AIPriority
 public typealias InsightType = CoreTypes.InsightCategory
 public typealias SkillLevel = CoreTypes.SkillLevel
 public typealias RouteStop = CoreTypes.RouteStop

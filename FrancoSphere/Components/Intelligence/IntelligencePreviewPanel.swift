@@ -243,7 +243,7 @@ struct IntelligencePreviewPanel: View {
         insights.filter { $0.actionRequired }.count
     }
     
-    private func priorityColor(for priority: CoreTypes.InsightPriority) -> Color {
+    private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
         switch priority {
         case .low: return .gray
         case .medium: return .blue
@@ -304,7 +304,7 @@ struct InsightRowView: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func priorityColor(for priority: CoreTypes.InsightPriority) -> Color {
+    private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
         switch priority {
         case .low: return .gray
         case .medium: return .blue
@@ -434,7 +434,7 @@ struct InsightDetailView: View {
         }
     }
     
-    private func priorityColor(for priority: CoreTypes.InsightPriority) -> Color {
+    private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
         switch priority {
         case .low: return .gray
         case .medium: return .blue

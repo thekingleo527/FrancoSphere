@@ -747,7 +747,7 @@ enum IntelligenceError: Error, LocalizedError {
 
 // MARK: - Extensions
 
-extension CoreTypes.InsightPriority {
+extension CoreTypes.AIPriority {
     var priorityValue: Int {
         switch self {
         case .critical: return 4

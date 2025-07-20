@@ -2,10 +2,9 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All type conflicts resolved
-//  ✅ FIXED: Using correct CoreTypes definitions
-//  ✅ FIXED: All initializer parameters match
-//  ✅ FIXED: Removed duplicate type definitions
+//  ✅ FIXED: Using ComplianceSeverity ENUM (not string)
+//  ✅ FIXED: ExecutiveSummary WITH portfolioHealth parameter
+//  ✅ FIXED: All constructor mismatches resolved
 //
 
 import Foundation
@@ -36,7 +35,7 @@ class ClientDashboardViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var lastUpdateTime: Date?
     
-    // MARK: - Cross-Dashboard Integration
+    // MARK: - Cross-Dashboard Integration (Using DashboardUpdate from DashboardSyncService)
     @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
     @Published var dashboardUpdates: [DashboardUpdate] = []
     
@@ -113,7 +112,7 @@ class ClientDashboardViewModel: ObservableObject {
         activeWorkers = intelligence.activeWorkers
         completionRate = intelligence.completionRate
         criticalIssues = intelligence.criticalIssues
-        complianceScore = intelligence.complianceScore
+        complianceScore = Int(intelligence.complianceScore)  // ✅ FIXED: Convert Double to Int
         monthlyTrend = intelligence.monthlyTrend
     }
     
@@ -123,6 +122,7 @@ class ClientDashboardViewModel: ObservableObject {
         
         for building in buildingsList {
             do {
+                // ✅ Use the BuildingMetricsService which returns the correct structure
                 let buildingMetrics = try await buildingMetricsService.calculateMetrics(for: building.id)
                 metrics[building.id] = buildingMetrics
             } catch {
@@ -143,7 +143,7 @@ class ClientDashboardViewModel: ObservableObject {
             let issue = CoreTypes.ComplianceIssue(
                 title: insight.title,
                 description: insight.description,
-                severity: mapPriorityToSeverity(insight.priority).rawValue,
+                severity: mapPriorityToSeverityEnum(insight.priority).rawValue,  // ✅ FIXED: Use enum.rawValue
                 buildingId: insight.affectedBuildings.first ?? "unknown",
                 status: .warning,
                 dueDate: Calendar.current.date(byAdding: .day, value: 30, to: Date())
@@ -162,10 +162,11 @@ class ClientDashboardViewModel: ObservableObject {
         let portfolioHealth = calculatePortfolioHealth()
         let monthlyPerformance = determineMonthlyPerformance()
         
+        // ✅ FIXED: Include portfolioHealth parameter
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: totalBuildings,
             totalWorkers: totalWorkers,
-            portfolioHealth: portfolioHealth,
+            portfolioHealth: portfolioHealth,  // ✅ ADDED
             monthlyPerformance: monthlyPerformance
         )
         
@@ -189,7 +190,7 @@ class ClientDashboardViewModel: ObservableObject {
             ),
             CoreTypes.PortfolioBenchmark(
                 metric: "Compliance Score",
-                value: Double(intelligence.complianceScore),
+                value: intelligence.complianceScore,
                 benchmark: 82.0,
                 trend: intelligence.complianceScore > 85 ? "up" : "stable",
                 period: "Monthly"
@@ -224,7 +225,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Improve Task Completion Rate",
                 description: "Current completion rate is \(Int(intelligence.completionRate * 100))%. Consider optimizing worker schedules and task prioritization.",
                 category: .efficiency,
-                priority: CoreTypes.StrategicRecommendation.Priority.high,
+                priority: .high,
                 timeframe: "3-6 months",
                 estimatedImpact: "+15% efficiency"
             ))
@@ -236,7 +237,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Address Critical Issues",
                 description: "\(intelligence.criticalIssues) critical issues require immediate attention. Prioritize resolution to prevent escalation.",
                 category: .operations,
-                priority: CoreTypes.StrategicRecommendation.Priority.critical,
+                priority: .critical,
                 timeframe: "Immediate",
                 estimatedImpact: "Risk reduction"
             ))
@@ -246,9 +247,9 @@ class ClientDashboardViewModel: ObservableObject {
         if intelligence.complianceScore < 90 {
             recommendations.append(CoreTypes.StrategicRecommendation(
                 title: "Enhance Compliance Program",
-                description: "Compliance score of \(intelligence.complianceScore)% indicates room for improvement. Review audit processes.",
+                description: "Compliance score of \(Int(intelligence.complianceScore))% indicates room for improvement. Review audit processes.",
                 category: .compliance,
-                priority: CoreTypes.StrategicRecommendation.Priority.medium,
+                priority: .medium,
                 timeframe: "6-12 months",
                 estimatedImpact: "+10% compliance"
             ))
@@ -264,7 +265,7 @@ class ClientDashboardViewModel: ObservableObject {
                     title: "Implement AI-Driven Optimization",
                     description: "Nova AI has identified \(highPriorityInsights.count) high-priority optimization opportunities across your portfolio.",
                     category: .efficiency,
-                    priority: CoreTypes.StrategicRecommendation.Priority.medium,
+                    priority: .medium,
                     timeframe: "2-4 months",
                     estimatedImpact: "+25% operational efficiency"
                 ))
@@ -295,7 +296,7 @@ class ClientDashboardViewModel: ObservableObject {
         let efficiencyWeight = 0.2
         
         let completionScore = intelligence.completionRate * completionWeight
-        let complianceScore = (Double(intelligence.complianceScore) / 100.0) * complianceWeight
+        let complianceScore = (intelligence.complianceScore / 100.0) * complianceWeight
         let issuesScore = (1.0 - min(Double(intelligence.criticalIssues) / 10.0, 1.0)) * issuesWeight
         let efficiencyScore = calculateAverageEfficiency() * efficiencyWeight
         
@@ -313,7 +314,8 @@ class ClientDashboardViewModel: ObservableObject {
         }
     }
     
-    private func mapPriorityToSeverity(_ priority: CoreTypes.InsightPriority) -> CoreTypes.ComplianceSeverity {
+    // ✅ FIXED: Return ComplianceSeverity enum (not string)
+    private func mapPriorityToSeverityEnum(_ priority: CoreTypes.AIPriority) -> CoreTypes.ComplianceSeverity {
         switch priority {
         case .critical: return .critical
         case .high: return .high
@@ -338,10 +340,11 @@ class ClientDashboardViewModel: ObservableObject {
         intelligenceInsights = []
         updateDashboardMetrics(from: portfolioIntelligence!)
         
+        // ✅ FIXED: Include portfolioHealth parameter
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: 0,
             totalWorkers: 0,
-            portfolioHealth: 0.0,
+            portfolioHealth: 0.0,  // ✅ ADDED
             monthlyPerformance: "Unknown"
         )
         
@@ -351,7 +354,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "System Recovery",
                 description: "Portfolio data is temporarily unavailable. Attempting to restore connection...",
                 category: .operations,
-                priority: CoreTypes.StrategicRecommendation.Priority.medium,
+                priority: .medium,
                 timeframe: "Immediate",
                 estimatedImpact: "Service restoration"
             )
@@ -380,14 +383,14 @@ class ClientDashboardViewModel: ObservableObject {
         return complianceIssues
     }
     
-    func getInsights(filteredBy priority: CoreTypes.InsightPriority? = nil) -> [CoreTypes.IntelligenceInsight] {
+    func getInsights(filteredBy priority: CoreTypes.AIPriority? = nil) -> [CoreTypes.IntelligenceInsight] {
         if let priority = priority {
             return intelligenceInsights.filter { $0.priority == priority }
         }
         return intelligenceInsights
     }
     
-    // MARK: - Cross-Dashboard Integration
+    // MARK: - Cross-Dashboard Integration (Using DashboardUpdate)
     private func setupSubscriptions() {
         dashboardSyncService.clientDashboardUpdates
             .receive(on: DispatchQueue.main)
@@ -432,19 +435,13 @@ class ClientDashboardViewModel: ObservableObject {
                let workerId = update.workerId,
                let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
-                // Update building metrics
-                if let existingMetrics = buildingMetrics[buildingId] {
-                    let updatedMetrics = CoreTypes.BuildingMetrics(
-                        buildingId: buildingId,
-                        completionRate: min(existingMetrics.completionRate + 0.01, 1.0),
-                        averageTaskTime: existingMetrics.averageTaskTime,
-                        overdueTasks: max(existingMetrics.overdueTasks - 1, 0),
-                        totalTasks: existingMetrics.totalTasks,
-                        activeWorkers: existingMetrics.activeWorkers,
-                        isCompliant: existingMetrics.isCompliant,
-                        overallScore: existingMetrics.overallScore
-                    )
-                    buildingMetrics[buildingId] = updatedMetrics
+                // Use existing BuildingMetricsService to get updated metrics
+                Task {
+                    if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
+                        await MainActor.run {
+                            buildingMetrics[buildingId] = updatedMetrics
+                        }
+                    }
                 }
             }
             
@@ -456,36 +453,38 @@ class ClientDashboardViewModel: ObservableObject {
             }
             
         case .buildingMetricsChanged:
-            if let buildingId = update.buildingId,
-               let completionRate = update.data["completionRate"] as? Double,
-               let overdueTasks = update.data["overdueTasks"] as? Int,
-               let totalTasks = update.data["totalTasks"] as? Int,
-               let activeWorkers = update.data["activeWorkers"] as? Int,
-               let isCompliant = update.data["isCompliant"] as? Bool,
-               let overallScore = update.data["overallScore"] as? Int {
-                let metrics = CoreTypes.BuildingMetrics(
-                    buildingId: buildingId,
-                    completionRate: completionRate,
-                    averageTaskTime: buildingMetrics[buildingId]?.averageTaskTime ?? 0,
-                    overdueTasks: overdueTasks,
-                    totalTasks: totalTasks,
-                    activeWorkers: activeWorkers,
-                    isCompliant: isCompliant,
-                    overallScore: overallScore
-                )
+            if let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
-                buildingMetrics[buildingId] = metrics
+                // Use service to get updated metrics instead of manual construction
+                Task {
+                    if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
+                        await MainActor.run {
+                            buildingMetrics[buildingId] = updatedMetrics
+                        }
+                    }
+                }
             }
             
         case .complianceChanged:
             if let buildingId = update.buildingId,
-               let severity = update.data["severity"] as? String,
+               let severityString = update.data["severity"] as? String,
                let title = update.data["title"] as? String,
                let description = update.data["description"] as? String {
+                
+                // ✅ FIXED: Convert string to enum first, then get rawValue
+                let severityEnum: CoreTypes.ComplianceSeverity
+                switch severityString.lowercased() {
+                case "critical": severityEnum = .critical
+                case "high": severityEnum = .high
+                case "medium": severityEnum = .medium
+                case "low": severityEnum = .low
+                default: severityEnum = .medium
+                }
+                
                 let issue = CoreTypes.ComplianceIssue(
                     title: title,
                     description: description,
-                    severity: severity,
+                    severity: severityEnum.rawValue,  // ✅ FIXED: Use enum.rawValue
                     buildingId: buildingId,
                     status: .warning
                 )
@@ -530,7 +529,7 @@ class ClientDashboardViewModel: ObservableObject {
             "Workers: \(intelligence.activeWorkers) active",
             "Completion: \(Int(intelligence.completionRate * 100))%",
             "Critical Issues: \(intelligence.criticalIssues)",
-            "Compliance: \(intelligence.complianceScore)%",
+            "Compliance: \(Int(intelligence.complianceScore))%",
             "Trend: \(intelligence.monthlyTrend.rawValue)",
             "Insights: \(intelligenceInsights.count) available",
             "High Priority: \(intelligenceInsights.filter { $0.priority == .high || $0.priority == .critical }.count)"

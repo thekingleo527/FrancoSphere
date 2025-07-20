@@ -7,13 +7,13 @@ import Foundation
 
 public struct BuildingInsight: Codable, Identifiable {
     public let id: String; public let title: String; public let description: String
-    public let category: InsightCategory; public let priority: InsightPriority
+    public let category: InsightCategory; public let priority: AIPriority
     public let actionable: Bool; public let timestamp: Date
 
     public init(
         id: String = UUID().uuidString,
         title: String, description: String,
-        category: InsightCategory, priority: InsightPriority,
+        category: InsightCategory, priority: AIPriority,
         actionable: Bool = true, timestamp: Date = Date()
     ) {
         self.id = id; self.title = title; self.description = description
@@ -36,7 +36,7 @@ public enum InsightCategory: String, CaseIterable, Codable {
     }
 }
 
-public enum InsightPriority: String, CaseIterable, Codable {
+public enum AIPriority: String, CaseIterable, Codable {
     case low, medium, high, critical
     public var color: Color {
         switch self {
