@@ -142,7 +142,6 @@
 		23273A962E2B8674004A52C6 /* AdminDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FE2E2B8674004A52C6 /* AdminDashboardViewModel.swift */; };
 		23273A972E2B8674004A52C6 /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739162E2B8674004A52C6 /* GlassTabBar.swift */; };
 		23273A982E2B8674004A52C6 /* MaintenanceTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E82E2B8674004A52C6 /* MaintenanceTaskView.swift */; };
-		23273A992E2B8674004A52C6 /* AIScenarioTypeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327396F2E2B8674004A52C6 /* AIScenarioTypeExtensions.swift */; };
 		23273A9A2E2B8674004A52C6 /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739EC2E2B8674004A52C6 /* AdminDashboardView.swift */; };
 		23273A9B2E2B8674004A52C6 /* WorkerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CC2E2B8674004A52C6 /* WorkerMetricsService.swift */; };
 		23273A9C2E2B8674004A52C6 /* ComplianceDataDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */; };
@@ -337,7 +336,6 @@
 		232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceDataDTO.swift; sourceTree = "<group>"; };
 		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
 		2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
-		2327396F2E2B8674004A52C6 /* AIScenarioTypeExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioTypeExtensions.swift; sourceTree = "<group>"; };
 		232739702E2B8674004A52C6 /* BuildingInsight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingInsight.swift; sourceTree = "<group>"; };
 		232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTypes.swift; sourceTree = "<group>"; };
 		232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
@@ -728,7 +726,6 @@
 				232739662E2B8674004A52C6 /* Core */,
 				2327396B2E2B8674004A52C6 /* DTOs */,
 				2327396E2E2B8674004A52C6 /* Enums */,
-				2327396F2E2B8674004A52C6 /* AIScenarioTypeExtensions.swift */,
 				232739702E2B8674004A52C6 /* BuildingInsight.swift */,
 				232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */,
 				232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */,
@@ -1322,7 +1319,6 @@
 				23273A962E2B8674004A52C6 /* AdminDashboardViewModel.swift in Sources */,
 				23273A972E2B8674004A52C6 /* GlassTabBar.swift in Sources */,
 				23273A982E2B8674004A52C6 /* MaintenanceTaskView.swift in Sources */,
-				23273A992E2B8674004A52C6 /* AIScenarioTypeExtensions.swift in Sources */,
 				23273A9A2E2B8674004A52C6 /* AdminDashboardView.swift in Sources */,
 				23273A9B2E2B8674004A52C6 /* WorkerMetricsService.swift in Sources */,
 				23273A9C2E2B8674004A52C6 /* ComplianceDataDTO.swift in Sources */,

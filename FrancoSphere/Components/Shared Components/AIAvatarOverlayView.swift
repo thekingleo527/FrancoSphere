@@ -1,11 +1,10 @@
 //
 //  AIAvatarOverlayView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: All property access issues resolved
-//  ✅ FIXED: Proper AIScenario and AIScenarioData usage
-//  ✅ FIXED: Complete switch statements with all AIScenarioType cases
-//  ✅ SIMPLIFIED: Removed non-existent properties and methods
+//  ✅ FIXED: Updated to use only existing AIScenarioType cases
+//  ✅ ALIGNED: With canonical definition from AIScenarioSheetView.swift
+//  ✅ REMOVED: References to non-existent enum cases
 //
 
 import SwiftUI
@@ -68,168 +67,115 @@ struct AIAvatarOverlayView: View {
                         .stroke(Color.blue.opacity(0.3), lineWidth: 2)
                         .frame(width: 80, height: 80)
                         .scaleEffect(pulseAnimation ? 1.2 : 1.0)
-                        .opacity(pulseAnimation ? 0.0 : 1.0)
+                        .opacity(pulseAnimation ? 0.3 : 0.6)
                         .animation(
-                            Animation.easeInOut(duration: 2.0).repeatForever(autoreverses: false),
+                            Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
                             value: pulseAnimation
                         )
                 }
                 
-                // Main avatar
+                // Main avatar circle
                 Circle()
                     .fill(
                         LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.blue.opacity(0.8),
-                                Color.purple.opacity(0.6)
-                            ]),
+                            colors: [Color.blue, Color.purple],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 60, height: 60)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                    )
-                    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                    .scaleEffect(avatarScale)
                 
-                // Brain icon as fallback
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
-                
-                // Notification badge
-                if aiManager.hasActiveScenarios {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 16, height: 16)
-                                .overlay(
-                                    Text("\(aiManager.activeScenarios.count)")
-                                        .font(.caption2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                )
-                        }
-                        Spacer()
-                    }
-                    .frame(width: 60, height: 60)
+                // AI icon or scenario indicator
+                if let scenarioData = aiManager.currentScenarioData {
+                    Image(systemName: iconForScenarioType(scenarioData.scenario))
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(.white)
+                } else {
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(.white)
                 }
             }
         }
-        .scaleEffect(avatarScale)
         .onAppear {
             pulseAnimation = true
         }
     }
     
     private func speechBubble(for scenarioData: AIScenarioData) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                // ✅ FIXED: Use scenario type icon mapping
-                Image(systemName: iconForScenarioType(scenarioData.scenario))
-                    .font(.title3)
-                    .foregroundColor(colorForScenarioType(scenarioData.scenario))
-                
+        VStack(alignment: .trailing, spacing: 8) {
+            HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Nova AI")
+                    Text(scenarioData.scenario.displayTitle)
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.primary)
                     
                     Text(scenarioData.message)
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.leading)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(3)
                 }
-                
-                Spacer()
-                
-                Button(action: dismissScenario) {
-                    Image(systemName: "xmark")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-            }
-            
-            HStack(spacing: 12) {
-                Button(scenarioData.actionText) {
-                    performScenarioAction()
-                }
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.blue.opacity(0.8))
-                .cornerRadius(8)
+                .padding(.vertical, 8)
                 
                 Spacer()
             }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+            )
+            .frame(maxWidth: 200)
+            
+            // Small triangle pointer
+            Triangle()
                 .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
-        )
-        .frame(width: min(UIScreen.main.bounds.width - 40, 340))
-        .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
-    }
-    
-    private func dismissScenario() {
-        withAnimation(.spring()) {
-            aiManager.currentScenario = nil
-            aiManager.currentScenarioData = nil
-            isExpanded = false
+                .frame(width: 12, height: 8)
+                .offset(x: -8)
         }
     }
     
-    private func performScenarioAction() {
-        // ✅ FIXED: Simple action handling without missing method
-        withAnimation(.spring()) {
-            isExpanded = false
-        }
-    }
-    
-    // ✅ FIXED: Complete switch with all AIScenarioType cases
+    // ✅ FIXED: Updated to use only existing AIScenarioType cases
     private func iconForScenarioType(_ type: AIScenarioType) -> String {
         switch type {
         case .routineIncomplete: return "checklist"
         case .pendingTasks: return "list.bullet.rectangle"
-        case .missingPhoto: return "camera.fill"
         case .clockOutReminder: return "clock.badge.checkmark.fill"
         case .weatherAlert: return "cloud.sun.fill"
-        case .buildingArrival: return "building.2.circle.fill"
-        case .taskCompletion: return "checkmark.circle.fill"
         case .inventoryLow: return "shippingbox.circle.fill"
-        case .emergencyResponse: return "exclamationmark.triangle.fill"
-        case .maintenanceRequired: return "wrench.and.screwdriver.fill"
-        case .scheduleConflict: return "calendar.badge.exclamationmark.fill"
+        case .emergencyRepair: return "exclamationmark.triangle.fill"
+        case .taskOverdue: return "clock.badge.xmark.fill"
+        case .buildingAlert: return "building.2.circle.fill"
         }
     }
     
-    // ✅ FIXED: Complete switch with all AIScenarioType cases
+    // ✅ FIXED: Updated to use only existing AIScenarioType cases
     private func colorForScenarioType(_ type: AIScenarioType) -> Color {
         switch type {
         case .routineIncomplete: return .orange
         case .pendingTasks: return .blue
-        case .missingPhoto: return .purple
         case .clockOutReminder: return .red
         case .weatherAlert: return .yellow
-        case .buildingArrival: return .green
-        case .taskCompletion: return .green
         case .inventoryLow: return .orange
-        case .emergencyResponse: return .red
-        case .maintenanceRequired: return .orange
-        case .scheduleConflict: return .red
+        case .emergencyRepair: return .red
+        case .taskOverdue: return .red
+        case .buildingAlert: return .orange
         }
+    }
+}
+
+// MARK: - Supporting Views
+
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
