@@ -2,28 +2,34 @@
 //  BuildingMetricsService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Resolved method redeclaration and Combine publisher type errors
+//  ✅ FIXED: All compilation errors resolved for cross-dashboard integration
+//  ✅ CORRECTED: CoreTypes.BuildingMetrics constructor parameters
 //  ✅ ALIGNED: With current GRDB implementation and existing CoreTypes
 //  ✅ OPTIMIZED: Actor pattern with proper async/await and Combine integration
-//  ✅ PRESERVED: All Kevin's Rubin Museum data and operational assignments
+//  ✅ INTEGRATION: Ready for Worker, Admin, and Client dashboards
 //
 
 import Foundation
-
-// Type aliases for CoreTypes
-
 import GRDB
-
-// Type aliases for CoreTypes
-
 import Combine
-
-// Type aliases for CoreTypes
 
 // MARK: - BuildingMetricsService Actor
 
 public actor BuildingMetricsService {
     public static let shared = BuildingMetricsService()
+    
+    // MARK: - Cross-Dashboard Integration
+    
+    /// Initialize the service for cross-dashboard integration
+    /// Call this during app startup to ensure proper integration across Worker, Admin, and Client dashboards
+    ///
+    /// Usage across dashboards:
+    /// - Worker Dashboard: Use calculateMetrics(for:) for individual building metrics
+    /// - Admin Dashboard: Use calculateBatchMetrics(for:) for portfolio-wide analytics
+    /// - Client Dashboard: Use observeMetrics(for:) for real-time executive insights
+    public static func initializeForCrossDashboardIntegration() async {
+        await shared.initialize()
+    }
     
     // MARK: - Dependencies
     private let grdbManager = GRDBManager.shared
@@ -46,9 +52,16 @@ public actor BuildingMetricsService {
     }
     
     private init() {
-        Task {
-            await setupRealTimeObservations()
-        }
+        // ✅ FIXED: Use proper actor initialization pattern
+        // Don't call async methods in init - use separate initialize() method
+    }
+    
+    // MARK: - Initialization
+    
+    /// Initialize the service with real-time observations
+    public func initialize() async {
+        await setupRealTimeObservations()
+        print("📊 BuildingMetricsService initialized")
     }
     
     // MARK: - Public Interface
@@ -217,7 +230,7 @@ public actor BuildingMetricsService {
         let completionScore = completionRate * 60  // 60% weight
         let complianceScore = isCompliant ? 30.0 : 0.0  // 30% weight
         let workerScore = activeWorkerCount > 0 ? 10.0 : 0.0  // 10% weight
-        let overallScore = Int(completionScore + complianceScore + workerScore)
+        let overallScore = completionScore + complianceScore + workerScore
         
         // 7. Calculate additional enhanced metrics
         let maintenanceEfficiency = try await calculateMaintenanceEfficiency(buildingId: buildingId)
@@ -225,23 +238,26 @@ public actor BuildingMetricsService {
         let urgentTasksCount = try await getUrgentTasksCount(buildingId: buildingId)
         let weeklyCompletionTrend = try await getWeeklyCompletionTrend(buildingId: buildingId)
         
-        // Create metrics using CoreTypes.BuildingMetrics structure
+        // ✅ FIXED: Use correct CoreTypes.BuildingMetrics constructor with all required parameters
         let metrics = CoreTypes.BuildingMetrics(
+            id: UUID().uuidString,
             buildingId: buildingId,
             completionRate: completionRate,
-            pendingTasks: pendingTasks,
+            averageTaskTime: 3600, // 1 hour default
             overdueTasks: overdueTasks,
+            totalTasks: totalTasks, // ✅ FIXED: Added missing totalTasks parameter
             activeWorkers: activeWorkerCount,
-            urgentTasksCount: urgentTasksCount,
-            overallScore: overallScore,
             isCompliant: isCompliant,
+            overallScore: overallScore, // ✅ FIXED: Already Double, no conversion needed
+            lastUpdated: lastActivityTime ?? Date(), // ✅ FIXED: Changed from lastActivityDate to lastUpdated
+            pendingTasks: pendingTasks,
+            urgentTasksCount: urgentTasksCount,
             hasWorkerOnSite: hasWorkerOnSite,
             maintenanceEfficiency: maintenanceEfficiency,
-            weeklyCompletionTrend: weeklyCompletionTrend,
-            lastActivityDate: lastActivityTime
+            weeklyCompletionTrend: weeklyCompletionTrend
         )
         
-        print("✅ GRDB Metrics calculated - Building: \(buildingId), Score: \(overallScore), Completion: \(Int(completionRate * 100))%")
+        print("✅ GRDB Metrics calculated - Building: \(buildingId), Score: \(Int(overallScore)), Completion: \(Int(completionRate * 100))%")
         
         return metrics
     }
@@ -317,7 +333,16 @@ public actor BuildingMetricsService {
     private func setupRealTimeObservations() {
         print("🔄 Setting up GRDB real-time observations for building metrics")
         
-        // Use existing GRDBManager observation capabilities
+        // ✅ FIXED: Use correct Timer pattern from ClientDashboardViewModel.swift
+        Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor [weak self] in
+                await self?.invalidateAllCaches()
+                print("🔄 Periodic cache invalidation completed")
+            }
+        }
+        
+        // ✅ FIXED: Proper sink syntax following DashboardSyncService patterns
         grdbManager.observeBuildings()
             .sink(
                 receiveCompletion: { completion in
@@ -325,9 +350,9 @@ public actor BuildingMetricsService {
                         print("❌ Building observation error: \(error)")
                     }
                 },
-                receiveValue: { [weak self] _ in
-                    Task {
-                        await self?.invalidateAllCaches()
+                receiveValue: { buildings in
+                    Task { @MainActor in
+                        await BuildingMetricsService.shared.invalidateAllCaches()
                         print("🔄 Invalidated all caches due to building updates")
                     }
                 }
@@ -337,7 +362,7 @@ public actor BuildingMetricsService {
     
     // MARK: - Helper Methods
     
-    // ✅ FIXED: Made this method synchronous and nonisolated to work with Combine publishers
+    // ✅ FIXED: Made this method synchronous and nonisolated to work with Combine publishers across all dashboards
     nonisolated private func convertTasksToMetricsSync(_ tasks: [ContextualTask], buildingId: String) -> CoreTypes.BuildingMetrics {
         // Convert ContextualTask array to metrics (for real-time observation)
         let totalTasks = tasks.count
@@ -362,16 +387,20 @@ public actor BuildingMetricsService {
             task.worker?.id
         }).count
         
-        // Simplified metrics for real-time updates (performance optimized)
+        // ✅ FIXED: Use correct CoreTypes.BuildingMetrics constructor with proper parameter order
         return CoreTypes.BuildingMetrics(
+            id: UUID().uuidString,
             buildingId: buildingId,
             completionRate: completionRate,
-            pendingTasks: totalTasks - completedTasks,
+            averageTaskTime: 3600, // 1 hour default
             overdueTasks: overdueTasks,
+            totalTasks: totalTasks, // ✅ FIXED: Added missing totalTasks parameter
             activeWorkers: uniqueWorkers,
-            urgentTasksCount: urgentTasks,
-            overallScore: Int(completionRate * 100),
             isCompliant: overdueTasks == 0,
+            overallScore: completionRate * 100, // ✅ FIXED: Convert Int to Double
+            lastUpdated: Date(),
+            pendingTasks: totalTasks - completedTasks,
+            urgentTasksCount: urgentTasks,
             hasWorkerOnSite: uniqueWorkers > 0,
             maintenanceEfficiency: 0.85,
             weeklyCompletionTrend: completionRate
@@ -439,4 +468,20 @@ extension BuildingMetricsService {
     }
 }
 
+// MARK: - Usage Instructions for Cross-Dashboard Integration
+//
+// To ensure proper integration across all three dashboards, call this in FrancoSphereApp.swift:
+//
+// @main
+// struct FrancoSphereApp: App {
+//     var body: some Scene {
+//         WindowGroup {
+//             ContentView()
+//                 .task {
+//                     await BuildingMetricsService.initializeForCrossDashboardIntegration()
+//                 }
+//         }
+//     }
+// }
+//
 // MARK: - End of BuildingMetricsService

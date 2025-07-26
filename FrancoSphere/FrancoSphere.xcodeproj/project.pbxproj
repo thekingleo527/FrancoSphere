@@ -92,7 +92,6 @@
 		23273A602E2B8674004A52C6 /* BuildingIntelligenceDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739682E2B8674004A52C6 /* BuildingIntelligenceDTO.swift */; };
 		23273A612E2B8674004A52C6 /* GlassTransitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739172E2B8674004A52C6 /* GlassTransitions.swift */; };
 		23273A622E2B8674004A52C6 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C72E2B8674004A52C6 /* TelemetryService.swift */; };
-		23273A632E2B8674004A52C6 /* WorkerDashboardViewModel+Fixed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A052E2B8674004A52C6 /* WorkerDashboardViewModel+Fixed.swift */; };
 		23273A642E2B8674004A52C6 /* MyAssignedBuildingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392B2E2B8674004A52C6 /* MyAssignedBuildingsSection.swift */; };
 		23273A652E2B8674004A52C6 /* TodaysTasksGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739072E2B8674004A52C6 /* TodaysTasksGlassCard.swift */; };
 		23273A662E2B8674004A52C6 /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739252E2B8674004A52C6 /* CoverageInfoCard.swift */; };
@@ -101,7 +100,6 @@
 		23273A692E2B8674004A52C6 /* TodaysProgressDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739362E2B8674004A52C6 /* TodaysProgressDetailView.swift */; };
 		23273A6A2E2B8674004A52C6 /* AdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */; };
 		23273A6B2E2B8674004A52C6 /* SchemaMigrationPatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739422E2B8674004A52C6 /* SchemaMigrationPatch.swift */; };
-		23273A6C2E2B8674004A52C6 /* ClientDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */; };
 		23273A6D2E2B8674004A52C6 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739652E2B8674004A52C6 /* UnifiedDataService.swift */; };
 		23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */; };
 		23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CD2E2B8674004A52C6 /* WorkerService.swift */; };
@@ -182,7 +180,6 @@
 		23273AC12E2B8674004A52C6 /* ClientDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232738FC2E2B8674004A52C6 /* ClientDashboardViewModel.swift */; };
 		23273AC22E2B8674004A52C6 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BB2E2B8674004A52C6 /* DashboardSyncService.swift */; };
 		23273AC32E2B8674004A52C6 /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BA2E2B8674004A52C6 /* DailyOpsReset.swift */; };
-		23273AC42E2B8674004A52C6 /* ClientDashboardViewModel+Fixed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232738FD2E2B8674004A52C6 /* ClientDashboardViewModel+Fixed.swift */; };
 		23273AC52E2B8674004A52C6 /* TodayTasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */; };
 		23273AC62E2B8674004A52C6 /* MapBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395F2E2B8674004A52C6 /* MapBackgroundView.swift */; };
 		23273AC72E2B8674004A52C6 /* UserExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397F2E2B8674004A52C6 /* UserExtensions.swift */; };
@@ -200,7 +197,6 @@
 		23273AD32E2B8674004A52C6 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739282E2B8674004A52C6 /* ImagePicker.swift */; };
 		23273AD42E2B8674004A52C6 /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739042E2B8674004A52C6 /* HeaderV3B.swift */; };
 		23273AD52E2B8674004A52C6 /* WeatherViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393A2E2B8674004A52C6 /* WeatherViewModifier.swift */; };
-		23273AD62E2B8674004A52C6 /* BuildingInsight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739702E2B8674004A52C6 /* BuildingInsight.swift */; };
 		23273AD72E2B8674004A52C6 /* FilteredTaskResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739772E2B8674004A52C6 /* FilteredTaskResult.swift */; };
 		23273AD82E2B8674004A52C6 /* 29_31_East_20th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739922E2B8674004A52C6 /* 29_31_East_20th_Street.jpg */; };
 		23273AD92E2B8674004A52C6 /* 135West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2327399C2E2B8674004A52C6 /* 135West17thStreet.jpg */; };
@@ -247,7 +243,6 @@
 
 /* Begin PBXFileReference section */
 		232738FC2E2B8674004A52C6 /* ClientDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardViewModel.swift; sourceTree = "<group>"; };
-		232738FD2E2B8674004A52C6 /* ClientDashboardViewModel+Fixed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClientDashboardViewModel+Fixed.swift"; sourceTree = "<group>"; };
 		232738FF2E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
 		232739002E2B8674004A52C6 /* AIAssistantImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantImageLoader.swift; sourceTree = "<group>"; };
 		232739012E2B8674004A52C6 /* CurrentBuildingStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentBuildingStatusCard.swift; sourceTree = "<group>"; };
@@ -336,8 +331,6 @@
 		232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceDataDTO.swift; sourceTree = "<group>"; };
 		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
 		2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
-		232739702E2B8674004A52C6 /* BuildingInsight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingInsight.swift; sourceTree = "<group>"; };
-		232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardTypes.swift; sourceTree = "<group>"; };
 		232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
 		232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskExtensions.swift; sourceTree = "<group>"; };
 		232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskIntelligence.swift; sourceTree = "<group>"; };
@@ -460,7 +453,6 @@
 		23273A022E2B8674004A52C6 /* TaskDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewModel.swift; sourceTree = "<group>"; };
 		23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
 		23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardViewModel.swift; sourceTree = "<group>"; };
-		23273A052E2B8674004A52C6 /* WorkerDashboardViewModel+Fixed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerDashboardViewModel+Fixed.swift"; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -522,7 +514,6 @@
 			isa = PBXGroup;
 			children = (
 				232738FC2E2B8674004A52C6 /* ClientDashboardViewModel.swift */,
-				232738FD2E2B8674004A52C6 /* ClientDashboardViewModel+Fixed.swift */,
 			);
 			path = Client;
 			sourceTree = "<group>";
@@ -726,8 +717,6 @@
 				232739662E2B8674004A52C6 /* Core */,
 				2327396B2E2B8674004A52C6 /* DTOs */,
 				2327396E2E2B8674004A52C6 /* Enums */,
-				232739702E2B8674004A52C6 /* BuildingInsight.swift */,
-				232739712E2B8674004A52C6 /* ClientDashboardTypes.swift */,
 				232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */,
 				232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */,
 				232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */,
@@ -1005,7 +994,6 @@
 				23273A022E2B8674004A52C6 /* TaskDetailViewModel.swift */,
 				23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */,
 				23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */,
-				23273A052E2B8674004A52C6 /* WorkerDashboardViewModel+Fixed.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -1269,7 +1257,6 @@
 				23273A602E2B8674004A52C6 /* BuildingIntelligenceDTO.swift in Sources */,
 				23273A612E2B8674004A52C6 /* GlassTransitions.swift in Sources */,
 				23273A622E2B8674004A52C6 /* TelemetryService.swift in Sources */,
-				23273A632E2B8674004A52C6 /* WorkerDashboardViewModel+Fixed.swift in Sources */,
 				23273A642E2B8674004A52C6 /* MyAssignedBuildingsSection.swift in Sources */,
 				23273A652E2B8674004A52C6 /* TodaysTasksGlassCard.swift in Sources */,
 				23273A662E2B8674004A52C6 /* CoverageInfoCard.swift in Sources */,
@@ -1278,7 +1265,6 @@
 				23273A692E2B8674004A52C6 /* TodaysProgressDetailView.swift in Sources */,
 				23273A6A2E2B8674004A52C6 /* AdaptiveGlassModifier.swift in Sources */,
 				23273A6B2E2B8674004A52C6 /* SchemaMigrationPatch.swift in Sources */,
-				23273A6C2E2B8674004A52C6 /* ClientDashboardTypes.swift in Sources */,
 				23273A6D2E2B8674004A52C6 /* UnifiedDataService.swift in Sources */,
 				23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */,
 				23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */,
@@ -1359,7 +1345,6 @@
 				23273AC12E2B8674004A52C6 /* ClientDashboardViewModel.swift in Sources */,
 				23273AC22E2B8674004A52C6 /* DashboardSyncService.swift in Sources */,
 				23273AC32E2B8674004A52C6 /* DailyOpsReset.swift in Sources */,
-				23273AC42E2B8674004A52C6 /* ClientDashboardViewModel+Fixed.swift in Sources */,
 				23273AC52E2B8674004A52C6 /* TodayTasksViewModel.swift in Sources */,
 				23273AC62E2B8674004A52C6 /* MapBackgroundView.swift in Sources */,
 				23273AC72E2B8674004A52C6 /* UserExtensions.swift in Sources */,
@@ -1377,7 +1362,6 @@
 				23273AD32E2B8674004A52C6 /* ImagePicker.swift in Sources */,
 				23273AD42E2B8674004A52C6 /* HeaderV3B.swift in Sources */,
 				23273AD52E2B8674004A52C6 /* WeatherViewModifier.swift in Sources */,
-				23273AD62E2B8674004A52C6 /* BuildingInsight.swift in Sources */,
 				23273AD72E2B8674004A52C6 /* FilteredTaskResult.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
