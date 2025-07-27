@@ -33,10 +33,13 @@ actor BuildingConfigurationManager {
 
     // ✅ FIXED: Proper async initialization
     private init() {
+        // Don't access buildingConfigurations in init
+        print("⚙️ BuildingConfigurationManager initialized")
+        
         Task {
             await loadConfigurations()
+            print("⚙️ Loaded \(buildingConfigurations.count) custom configs")
         }
-        print("⚙️ BuildingConfigurationManager initialized with \(buildingConfigurations.count) custom configs.")
     }
 
     /// Enables a specific feature configuration for a given building.

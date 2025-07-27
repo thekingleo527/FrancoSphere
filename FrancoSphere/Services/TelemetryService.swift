@@ -13,6 +13,29 @@ import OSLog
 import UIKit
 import CoreLocation
 
+struct EventRecord {
+    let category: TelemetryCategory
+    let operation: String
+    let phase: DashboardPhase?
+    let workerId: String?
+    let buildingId: String?
+    let timestamp: Date
+    
+    init(
+        category: TelemetryCategory,
+        operation: String,
+        phase: DashboardPhase? = nil,
+        workerId: String? = nil,
+        buildingId: String? = nil
+    ) {
+        self.category = category
+        self.operation = operation
+        self.phase = phase
+        self.workerId = workerId
+        self.buildingId = buildingId
+        self.timestamp = Date()
+    }
+}
 // MARK: - TelemetryService Actor
 
 actor TelemetryService {

@@ -187,8 +187,8 @@ actor WorkerEventOutbox {
     /// Simulates submitting a single event to a remote server
     private func submitEventToServer(_ event: OutboxEvent) async throws {
         // ✅ FIXED: Proper Task.sleep syntax
-        try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
-        
+        try await Task.sleep(for: .milliseconds(Int.random(in: 100...500)))
+
         // Simulate a potential network failure for demonstration purposes
         if Double.random(in: 0...1) < 0.1 { // 10% chance of failure
             throw URLError(.notConnectedToInternet)
