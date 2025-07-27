@@ -2,19 +2,13 @@
 //  ProfileView.swift
 //  FrancoSphere
 //
-//  ✅ PHASE 2: All compilation errors fixed
-//  ✅ Actor-compatible async patterns
-//  ✅ Correct method signatures and property access
-//  ✅ Real data integration with operational continuity
+//  ✅ ALL COMPILATION ERRORS FIXED
+//  ✅ Proper async/await patterns
+//  ✅ Correct ContextualTask property access
+//  ✅ Cross-dashboard integration ready
 //
 
 import SwiftUI
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
 import Foundation
 
 struct ProfileView: View {
@@ -26,13 +20,13 @@ struct ProfileView: View {
     @State private var showLogoutConfirmation = false
     @State private var profileImage: UIImage?
     
-    // ✅ FIXED: Proper UserRole enum handling
+    // ✅ FIXED: Remove async from computed properties
     private var currentWorkerRole: String {
-        return await await contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
+        return contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
     }
     
     private var currentWorkerEmail: String? {
-        return await await contextEngine.currentWorker?.email
+        return contextEngine.currentWorker?.email
     }
     
     var body: some View {
@@ -195,7 +189,7 @@ struct ProfileView: View {
                 ProfileInfoRow(
                     icon: "building.2.fill",
                     label: "Assigned Buildings",
-                    value: "\(await await contextEngine.assignedBuildings.count)"
+                    value: "\(contextEngine.assignedBuildings.count)"
                 )
                 
                 ProfileInfoRow(
@@ -221,7 +215,7 @@ struct ProfileView: View {
                 HStack(spacing: 16) {
                     ProfileStatCard(
                         title: "Tasks Today",
-                        value: "\(await await contextEngine.todaysTasks.count)",
+                        value: "\(contextEngine.todaysTasks.count)",
                         color: .blue
                     )
                     
@@ -298,8 +292,8 @@ struct ProfileView: View {
         VStack(spacing: 12) {
             Button(action: {
                 HapticManager.impact(.medium)
-                Task { @MainActor in
-                    // ✅ FIXED: Proper async refresh using underlying actor
+                Task {
+                    // ✅ FIXED: Proper async refresh pattern
                     await refreshContextData()
                 }
             }) {
@@ -354,7 +348,7 @@ struct ProfileView: View {
     private func handleLogout() {
         HapticManager.impact(.heavy)
         Task {
-            // ✅ FIXED: Use proper logout method instead of setting isAuthenticated
+            // ✅ FIXED: Use proper logout method
             await authManager.logout()
             dismiss()
         }
@@ -363,27 +357,27 @@ struct ProfileView: View {
     // ✅ FIXED: Proper async refresh method
     private func refreshContextData() async {
         guard let workerId = authManager.workerId else { return }
-        await await await contextEngine.loadContext(for: workerId)
+        await contextEngine.loadContext(for: workerId)
     }
     
     // ✅ FIXED: Helper methods using correct property access
     private func getPendingTasksCount() -> Int {
-        return await await contextEngine.todaysTasks.filter { task in
-            task.status == "pending" || !task.isCompleted
+        return contextEngine.todaysTasks.filter { task in
+            !task.isCompleted
         }.count
     }
     
     private func getCompletedTasksCount() -> Int {
-        return await await contextEngine.todaysTasks.filter { task in
-            task.status == "completed" || task.isCompleted
+        return contextEngine.todaysTasks.filter { task in
+            task.isCompleted
         }.count
     }
     
     // ✅ FIXED: Proper urgency calculation with nil handling
     private func getUrgentTasksCount() -> Int {
-        return await await contextEngine.todaysTasks.filter { task in
+        return contextEngine.todaysTasks.filter { task in
             guard let urgency = task.urgency else { return false }
-            return urgency == .high || urgency == .critical
+            return urgency == .high || urgency == .critical || urgency == .urgent
         }.count
     }
 }
@@ -521,12 +515,6 @@ struct SettingsRow: View {
 struct FrancoSphereImagePicker: UIViewControllerRepresentable {
     @Binding var isPresented: Bool
     @Binding var selectedImage: UIImage?
-    
-    // ✅ FIXED: Explicit init to avoid ambiguity
-    init(isPresented: Binding<Bool>, selectedImage: Binding<UIImage?>) {
-        self._isPresented = isPresented
-        self._selectedImage = selectedImage
-    }
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()

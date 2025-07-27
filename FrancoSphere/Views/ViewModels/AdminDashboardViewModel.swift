@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: DashboardSyncService integration
+//  ✅ CORRECTED: DashboardSyncService integration with proper types
 //  ✅ ALIGNED: With actual project API structure
 //  ✅ ENHANCED: Cross-dashboard integration ready
 //  ✅ VIEWMODEL ONLY: No View definitions in this file
@@ -116,10 +116,10 @@ class AdminDashboardViewModel: ObservableObject {
         
         self.buildingMetrics = metrics
         
-        // ✅ FIXED: Use proper DashboardSyncService API
+        // ✅ FIXED: Use proper data type [String: Any] instead of [String: String]
         broadcastAdminUpdate(.buildingMetricsChanged, data: [
             "buildingIds": Array(metrics.keys).joined(separator: ","),
-            "totalBuildings": String(metrics.count)
+            "totalBuildings": metrics.count
         ])
     }
     
@@ -134,10 +134,10 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Portfolio insights loaded: \(insights.count) insights")
             
-            // ✅ FIXED: Use proper DashboardSyncService API
+            // ✅ FIXED: Use proper data type [String: Any]
             broadcastAdminUpdate(.intelligenceGenerated, data: [
-                "insightCount": String(insights.count),
-                "criticalInsights": String(insights.filter { $0.priority == .critical }.count)
+                "insightCount": insights.count,
+                "criticalInsights": insights.filter { $0.priority == .critical }.count
             ])
             
         } catch {
@@ -168,9 +168,9 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
             
-            // ✅ FIXED: Use proper DashboardSyncService API
+            // ✅ FIXED: Use proper data type [String: Any]
             broadcastAdminUpdate(.intelligenceGenerated, buildingId: buildingId, data: [
-                "buildingInsights": String(insights.count),
+                "buildingInsights": insights.count,
                 "buildingId": buildingId
             ])
             
@@ -197,11 +197,11 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Refreshed metrics for building \(buildingId)")
             
-            // ✅ FIXED: Use proper DashboardSyncService API
+            // ✅ FIXED: Use proper data type [String: Any] and proper numeric types
             broadcastAdminUpdate(.buildingMetricsChanged, buildingId: buildingId, data: [
                 "buildingId": buildingId,
-                "completionRate": String(metrics.completionRate),
-                "overdueTasks": String(metrics.overdueTasks)
+                "completionRate": metrics.completionRate,
+                "overdueTasks": metrics.overdueTasks
             ])
             
         } catch {
@@ -328,8 +328,14 @@ class AdminDashboardViewModel: ObservableObject {
     
     /// Setup auto-refresh timer
     private func setupAutoRefresh() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
-            Task {
+        // ✅ FIXED: Simplified Timer syntax to avoid compiler confusion
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
+            
+            Task { @MainActor in
                 await self.refreshDashboardData()
             }
         }

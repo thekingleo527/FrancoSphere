@@ -369,6 +369,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     }
     
     /// Create a fallback task with correct ContextualTask initializer
+    /// Create a fallback task with correct ContextualTask initializer
     private func createFallbackTask(
         title: String,
         building: NamedCoordinate,
@@ -384,30 +385,24 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             scheduledDate = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: today) ?? today
         }
         
-        // ✅ FIXED: Use correct ContextualTask initializer with all proper parameters
+        // ✅ FIXED: Remove buildingName and estimatedDuration parameters
         return ContextualTask(
             id: UUID().uuidString,
             title: title,
             description: "\(title) at \(building.name)",
             isCompleted: false,
-            completedDate: nil,
             dueDate: calendar.date(byAdding: .hour, value: 2, to: scheduledDate),
             category: category,
             urgency: .medium,
             building: building,
-            worker: nil,
-            buildingId: building.id,
-            priority: .medium,
-            buildingName: building.name,
-            assignedWorkerId: nil,
-            assignedWorkerName: nil,
-            estimatedDuration: 3600  // 1 hour default
+            worker: nil as WorkerProfile?,
+            buildingId: building.id
         )
     }
     
     /// Create fallback history data when service fails
     private func createFallbackHistoryData(_ building: NamedCoordinate) async {
-        // ✅ FIXED: Use correct ContextualTask initializer
+        // ✅ FIXED: Remove buildingName and estimatedDuration parameters
         let fallbackHistoryTask = ContextualTask(
             id: "fallback-history",
             title: "Previous Maintenance",
@@ -418,13 +413,8 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             category: .maintenance,
             urgency: .medium,
             building: building,
-            worker: nil,
-            buildingId: building.id,
-            priority: .medium,
-            buildingName: building.name,
-            assignedWorkerId: nil,
-            assignedWorkerName: nil,
-            estimatedDuration: 3600
+            worker: nil as WorkerProfile?,
+            buildingId: building.id
         )
         
         self.buildingHistory = [fallbackHistoryTask]
