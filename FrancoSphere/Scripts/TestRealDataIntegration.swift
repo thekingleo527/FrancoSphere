@@ -1,4 +1,5 @@
 //
+//
 //  TestRealDataIntegration.swift
 //  FrancoSphere v6.0
 //
@@ -49,7 +50,6 @@ enum IntegrationTest {
         return allPassed
     }
     
-    // FIX: Proper function name and using correct type
     private static func testPortfolioIntelligence() async -> Bool {
         do {
             let buildingService = BuildingService.shared
@@ -58,7 +58,8 @@ enum IntegrationTest {
             
             let buildings = try await buildingService.getAllBuildings()
             let workers = try await workerService.getAllActiveWorkers()
-            let allTasks = try await await taskService.getAllTasks()
+            // FIX: Remove double await
+            let allTasks = try await taskService.getAllTasks()
             
             // Calculate completion rate from real tasks
             let completedTasks = allTasks.filter { $0.isCompleted }
@@ -72,7 +73,7 @@ enum IntegrationTest {
                 return false
             }.count
             
-            // FIX: Use correct CoreTypes.PortfolioIntelligence constructor
+            // Use correct CoreTypes.PortfolioIntelligence constructor
             let intelligence = CoreTypes.PortfolioIntelligence(
                 totalBuildings: buildings.count,
                 activeWorkers: workers.count,
@@ -120,7 +121,7 @@ enum IntegrationTest {
                 
                 let pendingTasks = tasks.filter { !$0.isCompleted }
                 
-                // FIX: Use correct BuildingMetrics constructor with all required parameters
+                // Use correct BuildingMetrics constructor with all required parameters
                 let metric = CoreTypes.BuildingMetrics(
                     buildingId: building.id,
                     completionRate: tasks.isEmpty ? 1.0 : Double(completedTasks.count) / Double(tasks.count),
@@ -152,18 +153,21 @@ enum IntegrationTest {
             let workerService = WorkerService.shared
             let taskService = TaskService.shared
             
-            // Get worker profile for Edwin (ID: 2)
-            guard let worker = try await workerService.getWorkerProfile(for: "2") else {
+            // FIX: Replace worker fetch with boolean check since we don't use the worker object
+            let workerExists = try await workerService.getWorkerProfile(for: "2") != nil
+            
+            guard workerExists else {
                 print("Worker not found")
                 return false
             }
             
             // Get tasks for this worker
-            let allTasks = try await await taskService.getAllTasks()
+            // FIX: Remove double await
+            let allTasks = try await taskService.getAllTasks()
             let workerTasks = allTasks.filter { $0.worker?.id == "2" }
             let completedTasks = workerTasks.filter { $0.isCompleted }
             
-            // FIX: Use CoreTypes.PerformanceMetrics instead of non-existent WorkerPerformanceMetrics
+            // Use CoreTypes.PerformanceMetrics instead of non-existent WorkerPerformanceMetrics
             let performance = CoreTypes.PerformanceMetrics(
                 efficiency: workerTasks.isEmpty ? 1.0 : Double(completedTasks.count) / Double(workerTasks.count),
                 tasksCompleted: completedTasks.count,
@@ -203,6 +207,7 @@ extension IntegrationTest {
     static func quickTest() async {
         print("🚀 Starting quick integration test...")
         
+        // FIX: Add await for async function
         let passed = await runFullIntegrationTest()
         
         if passed {

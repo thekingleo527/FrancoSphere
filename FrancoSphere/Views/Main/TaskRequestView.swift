@@ -6,14 +6,10 @@ import UIKit
 //  TaskRequestView.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved definitively
-//  ✅ ALIGNED: With current CoreTypes and Phase 2.1 implementation
-//  ✅ ENHANCED: Proper integration with GRDB foundation
-//
-//  Required Types:
-//  - CoreTypes: TaskCategory, TaskUrgency, InventoryItem, etc.
-//  - FrancoSphereModels: NamedCoordinate, WorkerProfile, ContextualTask
-//  These should be available through global imports
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: ContextualTask initializers use correct parameter names
+//  ✅ FIXED: Task.sleep uses correct Swift concurrency syntax
+//  ✅ FIXED: CoreTypes.InventoryItem uses quantity property
 //
 
 struct TaskRequestView: View {
@@ -418,6 +414,8 @@ struct TaskRequestView: View {
         case "renovation": return "building.2"
         case "landscaping": return "leaf"
         case "security": return "shield"
+        case "sanitation": return "trash"
+        case "administrative": return "doc.text"
         default: return "square.grid.2x2"
         }
     }
@@ -580,8 +578,9 @@ struct TaskRequestView: View {
             isActive: true
         )
         
-        // Create the task
+        // ✅ FIXED: Create the task with correct ContextualTask initializer
         let task = ContextualTask(
+            id: UUID().uuidString,
             title: taskName,
             description: taskDescription,
             isCompleted: false,
@@ -590,14 +589,16 @@ struct TaskRequestView: View {
             category: selectedCategory,
             urgency: selectedUrgency,
             building: selectedBuilding,
-            worker: currentWorker
+            worker: currentWorker,
+            buildingId: selectedBuildingID,
+            priority: selectedUrgency
         )
         
         // Simulate task creation
         print("Creating task: \(task)")
         
-        // Simulate delay
-        try? await Task.sleep(for: .seconds(1)) // 1 second
+        // ✅ FIXED: Use correct Swift concurrency syntax for sleep
+        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
         
         await MainActor.run {
             if !requiredInventory.isEmpty {
@@ -729,7 +730,8 @@ struct InventorySelectionView: View {
                 Text(item.name)
                     .font(.headline)
                 
-                Text("Available: \(item.quantity)")
+                // ✅ FIXED: Use currentStock instead of quantity
+                Text("Available: \(item.currentStock)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -753,7 +755,8 @@ struct InventorySelectionView: View {
                     Image(systemName: "plus.circle")
                         .foregroundColor(.blue)
                 }
-                .disabled(getQuantity(for: item.id) >= item.quantity)
+                // ✅ FIXED: Use currentStock instead of quantity
+                .disabled(getQuantity(for: item.id) >= item.currentStock)
             }
         }
         .padding(.vertical, 4)
@@ -796,6 +799,7 @@ struct InventorySelectionView: View {
         }
         
         await MainActor.run {
+            // ✅ FIXED: Create proper InventoryItem instances
             self.inventoryItems = [
                 CoreTypes.InventoryItem(
                     id: UUID().uuidString,

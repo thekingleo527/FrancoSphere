@@ -2,6 +2,8 @@
 //  TimeBasedTaskFilter.swift
 //  FrancoSphere
 //
+//  ✅ FIXED: Corrected Bool comparison (removed .lowercased() from Bool property)
+//
 
 import Foundation
 
@@ -28,7 +30,8 @@ public struct TimeBasedTaskFilter {
         case .overdue:
             return tasks.filter { task in
                 guard let dueDate = task.scheduledDate else { return false }
-                return dueDate < now && task.isCompleted.lowercased() != "completed"
+                // ✅ FIXED: isCompleted is a Bool, not a String
+                return dueDate < now && !task.isCompleted
             }
         }
     }
