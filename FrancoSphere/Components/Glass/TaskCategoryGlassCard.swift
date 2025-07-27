@@ -1,10 +1,5 @@
 import Foundation
-
-// Type aliases for CoreTypes
-
 import SwiftUI
-
-// Type aliases for CoreTypes
 
 //
 //  TaskCategoryGlassCard.swift
@@ -28,8 +23,9 @@ struct TaskCategoryGlassCard: View {
     @State private var expandedTasks: Set<String> = []
     
     var pendingTasks: [MaintenanceTask] {
-        // FIXED: Use .isCompleted instead of .isComplete
-        tasks.filter { !$0.isCompleted }
+        tasks.filter { task in
+            task.status != .completed
+        }
     }
     
     var body: some View {
@@ -219,7 +215,6 @@ struct TaskCategoryGlassCard: View {
     }
     
     private func isScheduledForToday(_ task: MaintenanceTask) -> Bool {
-        // FIXED: Handle optional dueDate properly
         guard let dueDate = task.dueDate else { return false }
         return Calendar.current.isDateInToday(dueDate)
     }
@@ -235,48 +230,20 @@ struct TaskCategoryGlassCard: View {
             return dueDate < today
         }.count
     }
-}
-// MARK: - Helper Methods
-
-private func toggleTaskExpanded(_ task: MaintenanceTask) {
-    withAnimation(Animation.easeInOut(duration: 0.2)) {
-        if expandedTasks.contains(task.id) {
-            expandedTasks.remove(task.id)
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
         } else {
-            expandedTasks.insert(task.id)
+            return "\(minutes)m"
         }
     }
 }
 
-private func isScheduledForToday(_ task: MaintenanceTask) -> Bool {
-    // FIXED: Handle optional dueDate properly
-    guard let dueDate = task.dueDate else { return false }
-    return Calendar.current.isDateInToday(dueDate)
-}
-
-private func getTodayTasksCount() -> Int {
-    pendingTasks.filter { isScheduledForToday($0) }.count
-}
-
-private func getOverdueTasksCount() -> Int {
-    let today = Calendar.current.startOfDay(for: Date())
-    return pendingTasks.filter {
-        guard let dueDate = $0.dueDate else { return false }
-        return dueDate < today
-    }.count
-}
-
-// ADD THIS METHOD HERE:
-private func formatDuration(_ duration: TimeInterval) -> String {
-    let hours = Int(duration) / 3600
-    let minutes = Int(duration) % 3600 / 60
-    
-    if hours > 0 {
-        return "\(hours)h \(minutes)m"
-    } else {
-        return "\(minutes)m"
-    }
-}// MARK: - TaskRowGlassView
+// MARK: - TaskRowGlassView
 
 struct TaskRowGlassView: View {
     let task: MaintenanceTask
@@ -296,7 +263,7 @@ struct TaskRowGlassView: View {
                     // Task status indicator
                     taskStatusIndicator
                     
-                    // Task content - FIXED: Simplified to avoid complex expression
+                    // Task content
                     taskContent
                     
                     Spacer()
@@ -334,7 +301,6 @@ struct TaskRowGlassView: View {
     
     // MARK: - Sub-components
     
-    // FIXED: Separated task content to avoid complex expression
     private var taskContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(task.title)
@@ -344,7 +310,7 @@ struct TaskRowGlassView: View {
                 .multilineTextAlignment(.leading)
             
             HStack(spacing: 8) {
-                // Time or recurrence
+                // Time or duration
                 if let dueDate = task.dueDate {
                     Text(formatTime(dueDate))
                         .font(.caption)
@@ -382,8 +348,7 @@ struct TaskRowGlassView: View {
                 .stroke(urgencyColor, lineWidth: 2)
                 .frame(width: 20, height: 20)
             
-            // FIXED: Use .isCompleted instead of .isComplete
-            if task.isCompleted {
+            if task.status == .completed {
                 Circle()
                     .fill(Color.green)
                     .frame(width: 12, height: 12)
@@ -465,7 +430,6 @@ struct TaskRowGlassView: View {
     // MARK: - Computed Properties
     
     private var urgencyColor: Color {
-        // FIXED: Complete switch with all TaskUrgency cases
         switch task.urgency {
         case .low: return .green
         case .medium: return .yellow
@@ -483,6 +447,17 @@ struct TaskRowGlassView: View {
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
     }
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
+    }
 }
 
 // MARK: - Preview
@@ -490,7 +465,6 @@ struct TaskRowGlassView: View {
 struct TaskCategoryGlassCard_Previews: PreviewProvider {
     static var sampleTasks: [MaintenanceTask] {
         [
-            // ✅ FIXED: Use correct properties only
             MaintenanceTask(
                 title: "Clean Lobby Windows",
                 description: "Clean all glass surfaces in the main lobby area",
@@ -499,7 +473,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "2",
                 dueDate: Date(),
-                isRecurring: true  // Instead of recurrence property
+                isRecurring: true
             ),
             MaintenanceTask(
                 title: "Vacuum Common Areas",
@@ -509,7 +483,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "2",
                 dueDate: Date(),
-                isRecurring: true  // Daily tasks are recurring
+                isRecurring: true
             ),
             MaintenanceTask(
                 title: "Emergency Light Check",
@@ -519,7 +493,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "1",
                 dueDate: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
-                isRecurring: true  // Monthly tasks are recurring
+                isRecurring: true
             )
         ]
     }
