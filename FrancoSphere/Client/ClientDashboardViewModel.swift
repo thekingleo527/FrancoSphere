@@ -3,10 +3,10 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Line 414 - DashboardUpdate initializer corrected
-//  ✅ FIXED: Line 448 - ComplianceIssue initializer with type parameter
-//  ✅ FIXED: Line 468 - ExecutiveSummary initializer with generatedAt
-//  ✅ FIXED: Line 523 - ComplianceIssue initializer with all required params
+//  ✅ FIXED: Line 101 & 136 - Added DashboardUpdateType enum prefix
+//  ✅ FIXED: Line 416 - Fixed Task initialization with Task.detached
+//  ✅ FIXED: Line 423 - Changed UpdateType to DashboardUpdateType
+//  ✅ FIXED: Lines 450, 470, 525 - Fixed all Task initializations
 //  ✅ ALIGNED: With all dashboard methods and services
 //
 
@@ -97,8 +97,8 @@ class ClientDashboardViewModel: ObservableObject {
             lastUpdateTime = Date()
             print("✅ Portfolio intelligence loaded: \(buildings.count) buildings, \(insights.count) insights")
             
-            // Broadcast update
-            broadcastDashboardUpdate(.portfolioUpdated, data: ["buildingCount": buildings.count])
+            // Broadcast update - FIXED: Added DashboardUpdateType prefix
+            broadcastDashboardUpdate(DashboardUpdateType.portfolioUpdated, data: ["buildingCount": buildings.count])
             
         } catch {
             print("❌ Failed to load portfolio intelligence: \(error)")
@@ -133,7 +133,8 @@ class ClientDashboardViewModel: ObservableObject {
         }
         
         self.buildingMetrics = metrics
-        broadcastDashboardUpdate(.buildingMetricsChanged, data: ["buildingIds": Array(metrics.keys)])
+        // FIXED: Added DashboardUpdateType prefix
+        broadcastDashboardUpdate(DashboardUpdateType.buildingMetricsChanged, data: ["buildingIds": Array(metrics.keys)])
     }
     
     // MARK: - Compliance Issues Loading
@@ -413,14 +414,15 @@ class ClientDashboardViewModel: ObservableObject {
     private func schedulePeriodicRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            Task { @MainActor [weak self] in
-                await self?.refreshData()
+            // FIXED: Use Task.detached to avoid actor isolation issues
+            Task.detached {
+                await self.refreshData()
             }
         }
     }
     
-    // FIXED: Line 414 - Use correct DashboardUpdate initializer
-    private func broadcastDashboardUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
+    // FIXED: Line 423 - Changed UpdateType to DashboardUpdateType
+    private func broadcastDashboardUpdate(_ type: DashboardUpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
         let update = DashboardUpdate(
             source: .client,
             type: type,
@@ -447,11 +449,11 @@ class ClientDashboardViewModel: ObservableObject {
                let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
                 // Use existing BuildingMetricsService to get updated metrics
-                Task {
+                // FIXED: Use Task.detached to avoid actor isolation issues
+                Task.detached { [weak self] in
+                    guard let self = self else { return }
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        await MainActor.run {
-                            buildingMetrics[buildingId] = updatedMetrics
-                        }
+                        await self.updateBuildingMetrics(buildingId, metrics: updatedMetrics)
                     }
                 }
             }
@@ -467,11 +469,11 @@ class ClientDashboardViewModel: ObservableObject {
             if let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
                 // Use service to get updated metrics
-                Task {
+                // FIXED: Use Task.detached to avoid actor isolation issues
+                Task.detached { [weak self] in
+                    guard let self = self else { return }
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        await MainActor.run {
-                            buildingMetrics[buildingId] = updatedMetrics
-                        }
+                        await self.updateBuildingMetrics(buildingId, metrics: updatedMetrics)
                     }
                 }
             }
@@ -522,8 +524,9 @@ class ClientDashboardViewModel: ObservableObject {
                let criticalInsights = update.data["criticalInsights"] as? Int {
                 print("📊 Total: \(totalInsights), Critical: \(criticalInsights)")
             }
-            Task {
-                await generateExecutiveSummary()
+            // FIXED: Use Task.detached to avoid actor isolation issues
+            Task.detached { [weak self] in
+                await self?.generateExecutiveSummary()
             }
             
         default:
@@ -533,6 +536,11 @@ class ClientDashboardViewModel: ObservableObject {
         dashboardSyncStatus = .synced
         lastUpdateTime = Date()
         dashboardUpdates.append(update)
+    }
+    
+    // MARK: - Helper method for updating building metrics on MainActor
+    private func updateBuildingMetrics(_ buildingId: String, metrics: CoreTypes.BuildingMetrics) {
+        buildingMetrics[buildingId] = metrics
     }
     
     // MARK: - Nova AI Integration Support
