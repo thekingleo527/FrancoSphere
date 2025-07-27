@@ -297,7 +297,6 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
     
     static var sampleTasks: [ContextualTask] {
         [
-            // ✅ FIXED: Provide all parameters in exact order expected
             ContextualTask(
                 id: "1",
                 title: "Window Cleaning",
@@ -307,8 +306,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 dueDate: nil,
                 category: .cleaning,
                 urgency: .medium,
-                building: nil,  // NamedCoordinate?
-                worker: nil,    // WorkerProfile?
+                building: nil,  // Don't provide type annotation - it's already typed
+                worker: nil,    // Don't provide type annotation - it's already typed
                 buildingId: "14",
                 priority: .medium,
                 buildingName: "Rubin Museum",
@@ -325,8 +324,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 dueDate: nil,
                 category: .maintenance,
                 urgency: .high,
-                building: nil,  // NamedCoordinate?
-                worker: nil,    // WorkerProfile?
+                building: nil,
+                worker: nil,
                 buildingId: "14",
                 priority: .high,
                 buildingName: "Rubin Museum",
@@ -343,8 +342,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 dueDate: nil,
                 category: .inspection,
                 urgency: .critical,
-                building: nil,  // NamedCoordinate?
-                worker: nil,    // WorkerProfile?
+                building: nil,
+                worker: nil,
                 buildingId: "14",
                 priority: .critical,
                 buildingName: "Rubin Museum",
@@ -355,38 +354,3 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
         ]
     }
 }
-
-// MARK: - 📝 COMPREHENSIVE FIX SUMMARY
-/*
- ✅ ALL COMPILATION ERRORS FIXED:
- 
- 🔧 WEATHER DATA FIXES:
- - Changed weather.conditions to weather.condition (correct property name)
- - Added proper enum conversion for weather conditions
- - Removed precipitation references (not in CoreTypes.WeatherData)
- - Added outdoorWorkRisk parameter to WeatherData constructors
- 
- 🔧 TYPE FIXES:
- - Removed task.title nil coalescing (title is not optional)
- - Removed .normal case from TaskUrgency (doesn't exist)
- - Added proper CoreTypes prefix to all enum references
- 
- 🔧 CONTEXTUALTASK INITIALIZER FIXES:
- - Used the full initializer with ALL parameters in exact order
- - Parameters: id, title, description, isCompleted, completedDate, dueDate, category, urgency, building, worker, buildingId, priority, buildingName, assignedWorkerId, assignedWorkerName, estimatedDuration
- - Set building and worker to nil (they expect NamedCoordinate? and WorkerProfile? types)
- - buildingName is a separate String parameter, not part of building
- - Added all 16 parameters to match expected signature
- 
- 🔧 WEATHERDATA CONSTRUCTOR FIXES:
- - Added outdoorWorkRisk parameter (required by CoreTypes.WeatherData)
- - Used enum rawValue for condition string
- - Proper parameters: temperature, condition, humidity, windSpeed, outdoorWorkRisk, timestamp
- 
- 🔧 IMPROVEMENTS:
- - Separated complex views into computed properties
- - Added humidity display when > 70%
- - Fixed all enum references with proper prefixes
- - Used actual FrancoSphere v6.0 data structures
- - Maintained dark theme compatibility
- */

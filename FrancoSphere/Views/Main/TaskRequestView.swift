@@ -10,9 +10,13 @@ import UIKit
 //  ✅ ALIGNED: With current CoreTypes and Phase 2.1 implementation
 //  ✅ ENHANCED: Proper integration with GRDB foundation
 //
-
-// ✅ REMOVED: Type aliases that were causing redeclaration errors
-// These types are already available from CoreTypes
+//  NOTES:
+//  - Removed type aliases to avoid redeclaration errors
+//  - Using CoreTypes namespace explicitly where needed
+//  - Fixed all Section syntax to use new SwiftUI format
+//  - Fixed all InventoryItem initializers with convenience initializer
+//  - TODO: Replace mock services with actual implementations
+//
 
 struct TaskRequestView: View {
     // ✅ TODO: Replace with actual AuthManager implementation
@@ -47,30 +51,32 @@ struct TaskRequestView: View {
     var body: some View {
         NavigationView {
             Form {
-                if isLoadingBuildings {
-                    Section {
-                        HStack {
-                            ProgressView()
-                                .padding(.trailing, 10)
-                            Text("Loading buildings...")
+                Group {
+                    if isLoadingBuildings {
+                        Section {
+                            HStack {
+                                ProgressView()
+                                    .padding(.trailing, 10)
+                                Text("Loading buildings...")
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding()
-                    }
-                } else {
-                    basicTaskSection
-                    buildingAndCategorySection
-                    timingSection
-                    
-                    if !requiredInventory.isEmpty {
-                        inventorySection
-                    }
-                    
-                    photoSection
-                    submitSection
-                    
-                    if !suggestions.isEmpty {
-                        suggestionsSection
+                    } else {
+                        basicTaskSection
+                        buildingAndCategorySection
+                        timingSection
+                        
+                        if !requiredInventory.isEmpty {
+                            inventorySection
+                        }
+                        
+                        photoSection
+                        submitSection
+                        
+                        if !suggestions.isEmpty {
+                            suggestionsSection
+                        }
                     }
                 }
             }
@@ -515,47 +521,29 @@ struct TaskRequestView: View {
         }
     }
     
-    // ✅ FIXED: Use correct InventoryItem initializer
+    // ✅ FIXED: Use convenience initializer if needed
     private func createSampleInventory() -> [CoreTypes.InventoryItem] {
         return [
             CoreTypes.InventoryItem(
                 name: "All-Purpose Cleaner",
                 category: .supplies,
-                currentStock: 10,
-                minimumStock: 5,
-                maxStock: 50,
-                unit: "bottles",
-                cost: 0.0,
-                supplier: nil,
-                location: "Storage Room A",
-                lastRestocked: nil,
-                status: .inStock
+                quantity: 10,
+                minThreshold: 5,
+                location: "Storage Room A"
             ),
             CoreTypes.InventoryItem(
                 name: "Paint Brushes",
                 category: .tools,
-                currentStock: 5,
-                minimumStock: 2,
-                maxStock: 20,
-                unit: "pieces",
-                cost: 0.0,
-                supplier: nil,
-                location: "Maintenance Workshop",
-                lastRestocked: nil,
-                status: .inStock
+                quantity: 5,
+                minThreshold: 2,
+                location: "Maintenance Workshop"
             ),
             CoreTypes.InventoryItem(
                 name: "Safety Gloves",
                 category: .safety,
-                currentStock: 20,
-                minimumStock: 10,
-                maxStock: 100,
-                unit: "pairs",
-                cost: 0.0,
-                supplier: nil,
-                location: "Safety Cabinet",
-                lastRestocked: nil,
-                status: .inStock
+                quantity: 20,
+                minThreshold: 10,
+                location: "Safety Cabinet"
             )
         ]
     }
@@ -620,28 +608,62 @@ struct TaskRequestView: View {
             worker: worker
         )
         
-        do {
-            // ✅ TODO: Replace with actual TaskService implementation
-            // try await TaskService.shared.createTask(task)
-            print("Creating task: \(task)")
+        // ✅ FIXED: No need for do-catch when not throwing
+        // Simulate task creation
+        await MainActor.run {
+            isSubmitting = true
+            errorMessage = nil
+        }
+        
+        // Calculate dates with timing information if specified
+        let calendar = Calendar.current
+        let dueDate = selectedDate
+        
+        // Get building and worker information
+        let building = buildingOptions.first(where: { $0.id == selectedBuildingID })
+        let worker = WorkerProfile(
+            id: UUID().uuidString, // ✅ FIXED: Use generated ID
+            name: "Current Worker",  // ✅ FIXED: Use placeholder name
+            email: "worker@example.com", // ✅ FIXED: Use placeholder email
+            phoneNumber: "",
+            role: .worker,
+            skills: [],
+            certifications: [],
+            hireDate: Date(),
+            isActive: true
+        )
+        
+        // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
+        let task = ContextualTask(
+            title: taskName,
+            description: taskDescription,
+            isCompleted: false,
+            completedDate: nil,
+            // ✅ REMOVED: scheduledDate parameter doesn't exist
+            dueDate: dueDate,
+            category: selectedCategory,
+            urgency: selectedUrgency,
+            building: building,
+            worker: worker
+        )
+        
+        // ✅ TODO: Replace with actual TaskService implementation
+        print("Creating task: \(task)")
+        
+        // Simulate task creation delay
+        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+        
+        await MainActor.run {
+            if !requiredInventory.isEmpty {
+                recordInventoryRequirements(for: task.id)
+            }
             
-            await MainActor.run {
-                if !requiredInventory.isEmpty {
-                    recordInventoryRequirements(for: task.id)
-                }
-                
-                if attachPhoto, let photo = photo {
-                    saveTaskPhoto(photo, for: task.id)
-                }
-                
-                showCompletionAlert = true
-                isSubmitting = false
+            if attachPhoto, let photo = photo {
+                saveTaskPhoto(photo, for: task.id)
             }
-        } catch {
-            await MainActor.run {
-                errorMessage = "Failed to create task: \(error.localizedDescription)"
-                isSubmitting = false
-            }
+            
+            showCompletionAlert = true
+            isSubmitting = false
         }
     }
     
@@ -822,7 +844,7 @@ struct InventorySelectionView: View {
         }
     }
     
-    // ✅ FIXED: Use correct InventoryItem initializer
+    // ✅ FIXED: Use convenience initializer
     private func loadInventory() async {
         await MainActor.run {
             isLoading = true
@@ -833,54 +855,30 @@ struct InventorySelectionView: View {
                 CoreTypes.InventoryItem(
                     name: "All-Purpose Cleaner",
                     category: .supplies,
-                    currentStock: 10,
-                    minimumStock: 5,
-                    maxStock: 50,
-                    unit: "bottles",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Storage Room A",
-                    lastRestocked: nil,
-                    status: .inStock
+                    quantity: 10,
+                    minThreshold: 5,
+                    location: "Storage Room A"
                 ),
                 CoreTypes.InventoryItem(
                     name: "Paint Brushes",
                     category: .tools,
-                    currentStock: 5,
-                    minimumStock: 2,
-                    maxStock: 20,
-                    unit: "pieces",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Maintenance Workshop",
-                    lastRestocked: nil,
-                    status: .inStock
+                    quantity: 5,
+                    minThreshold: 2,
+                    location: "Maintenance Workshop"
                 ),
                 CoreTypes.InventoryItem(
                     name: "Safety Gloves",
                     category: .safety,
-                    currentStock: 20,
-                    minimumStock: 10,
-                    maxStock: 100,
-                    unit: "pairs",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Safety Cabinet",
-                    lastRestocked: nil,
-                    status: .inStock
+                    quantity: 20,
+                    minThreshold: 10,
+                    location: "Safety Cabinet"
                 ),
                 CoreTypes.InventoryItem(
                     name: "LED Light Bulbs",
                     category: .materials,
-                    currentStock: 15,
-                    minimumStock: 8,
-                    maxStock: 50,
-                    unit: "pieces",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Electrical Storage",
-                    lastRestocked: nil,
-                    status: .inStock
+                    quantity: 15,
+                    minThreshold: 8,
+                    location: "Electrical Storage"
                 )
             ]
             self.isLoading = false
@@ -1011,8 +1009,32 @@ struct TaskSuggestion: Identifiable, Equatable {
     }
 }
 
-// ✅ FIXED: Extension for InventoryItem display unit - added exhaustive switch
+// Add convenience initializer for InventoryItem
 extension CoreTypes.InventoryItem {
+    // Convenience initializer that matches the usage pattern in the app
+    init(
+        name: String,
+        category: CoreTypes.InventoryCategory,
+        quantity: Int,
+        minThreshold: Int,
+        location: String
+    ) {
+        self.init(
+            id: UUID().uuidString,
+            name: name,
+            category: category,
+            currentStock: quantity,
+            minimumStock: minThreshold,
+            maxStock: quantity * 5, // Default max to 5x current
+            unit: "units",
+            cost: 0.0,
+            supplier: nil,
+            location: location,
+            lastRestocked: nil,
+            status: quantity <= minThreshold ? (quantity == 0 ? .outOfStock : .lowStock) : .inStock
+        )
+    }
+    
     var displayUnit: String {
         switch category {
         case .tools: return "pcs"
@@ -1029,6 +1051,7 @@ extension CoreTypes.InventoryItem {
         case .other: return "items"
         }
     }
+    // ✅ NOTE: quantity property already exists in CoreTypes.InventoryItem
 }
 
 // MARK: - Preview Support

@@ -207,19 +207,28 @@ public struct TaskDisplayHelpers {
     
     /// Get building name for task
     public static func buildingName(for task: ContextualTask) -> String {
-        return task.buildingName ?? task.buildingId ?? "Unknown Building"
+        // buildingName is a computed property that returns String (non-optional)
+        // It's defined in ContextualTaskIntelligence.swift extension
+        if !task.buildingName.isEmpty && task.buildingName != "Building nil" {
+            return task.buildingName
+        } else if let buildingId = task.buildingId, !buildingId.isEmpty {
+            return buildingId
+        } else {
+            return "Unknown Building"
+        }
     }
     
     /// Get building short name for compact display
     public static func buildingShortName(for task: ContextualTask) -> String {
-        guard let buildingName = task.buildingName ?? task.buildingId else { return "N/A" }
+        // Get the full name first
+        let name = buildingName(for: task)
         
         // Extract short name from building name
-        if buildingName.contains("Street") {
-            let components = buildingName.components(separatedBy: " ")
+        if name.contains("Street") {
+            let components = name.components(separatedBy: " ")
             return components.prefix(2).joined(separator: " ")
         } else {
-            return buildingName
+            return name
         }
     }
     
@@ -275,7 +284,7 @@ extension View {
 struct TaskDisplayHelpers_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 16) {
-            // ✅ FIXED: Use correct ContextualTask initializer
+            // ✅ FIXED: Use correct ContextualTask initializer with only needed parameters
             let sampleTask = ContextualTask(
                 id: "preview-task",
                 title: "Clean Lobby",
@@ -288,11 +297,7 @@ struct TaskDisplayHelpers_Previews: PreviewProvider {
                 building: nil,
                 worker: nil,
                 buildingId: "123 Main Street",
-                priority: .high,
-                buildingName: "123 Main Street",
-                assignedWorkerId: "worker-001",
-                assignedWorkerName: "John Doe",
-                estimatedDuration: 1800
+                priority: .high
             )
             
             VStack(alignment: .leading, spacing: 8) {
@@ -310,20 +315,3 @@ struct TaskDisplayHelpers_Previews: PreviewProvider {
     }
 }
 #endif
-
-// MARK: - TaskUrgency Color Extension
-
-extension TaskUrgency {
-    var color: Color {
-        switch self {
-        case .critical, .emergency:
-            return .red
-        case .high, .urgent:
-            return .orange
-        case .medium:
-            return .yellow
-        case .low:
-            return .green
-        }
-    }
-}
