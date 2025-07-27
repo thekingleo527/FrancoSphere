@@ -25,7 +25,7 @@ struct WorkerProfileView: View {
                 
                 // Performance Section
                 if let metrics = viewModel.performanceMetrics {
-                    CoreTypes.PerformanceMetricsView(metrics: metrics)
+                    PerformanceMetricsView(metrics: metrics)  // ✅ FIXED: Removed CoreTypes prefix
                 }
                 
                 // Recent Tasks Section

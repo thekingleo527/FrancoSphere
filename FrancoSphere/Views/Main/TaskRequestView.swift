@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 //
 //  TaskRequestView.swift
@@ -9,6 +10,14 @@ import SwiftUI
 //  ✅ ALIGNED: With current CoreTypes and Phase 2.1 implementation
 //  ✅ ENHANCED: Proper integration with GRDB foundation
 //
+
+// Type aliases for CoreTypes
+typealias TaskCategory = CoreTypes.TaskCategory
+typealias TaskUrgency = CoreTypes.TaskUrgency
+typealias MaintenanceTask = CoreTypes.MaintenanceTask
+typealias InventoryItem = CoreTypes.InventoryItem
+typealias InventoryCategory = CoreTypes.InventoryCategory
+typealias RestockStatus = CoreTypes.RestockStatus
 
 struct TaskRequestView: View {
     @StateObject private var authManager = NewAuthManager.shared
@@ -74,17 +83,14 @@ struct TaskRequestView: View {
                 leading: Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
                 },
-                trailing: Button("Submit") {
-                    // ✅ FIXED: Proper Task syntax
-                    Task {
-                        await submitTaskRequest()
-                    }
-                }
+                trailing: Button("Submit", action: submitTaskWrapper)
                 .disabled(!isFormValid || isSubmitting)
             )
             .task {
                 await loadBuildings()
-                loadSuggestions()
+                await MainActor.run {
+                    loadSuggestions()
+                }
             }
             .alert(isPresented: $showCompletionAlert) {
                 Alert(
@@ -126,7 +132,7 @@ struct TaskRequestView: View {
     // MARK: - Form Sections
     
     private var basicTaskSection: some View {
-        Section(header: Text("Task Details")) {
+        Section {
             TextField("Task Name", text: $taskName)
                 .autocapitalization(.words)
             
@@ -155,12 +161,14 @@ struct TaskRequestView: View {
                     .tag(urgency)
                 }
             }
+        } header: {
+            Text("Task Details")
         }
     }
     
     // ✅ FIXED: Proper Section syntax
     private var buildingAndCategorySection: some View {
-        Section(header: Text("Location & Category")) {
+        Section {
             Picker("Building", selection: $selectedBuildingID) {
                 Text("Select a building").tag("")
                 
@@ -178,9 +186,7 @@ struct TaskRequestView: View {
                 }
                 
                 Button(action: {
-                    Task {
-                        await loadInventory()
-                    }
+                    loadInventoryWrapper()
                     showInventorySelector = true
                 }) {
                     HStack {
@@ -202,11 +208,13 @@ struct TaskRequestView: View {
                     }
                 }
             }
+        } header: {
+            Text("Location & Category")
         }
     }
     
     private var timingSection: some View {
-        Section(header: Text("Timing")) {
+        Section {
             DatePicker("Due Date", selection: $selectedDate, displayedComponents: .date)
             
             Toggle("Add Start Time", isOn: $addStartTime)
@@ -226,11 +234,13 @@ struct TaskRequestView: View {
                         }
                     }
             }
+        } header: {
+            Text("Timing")
         }
     }
     
     private var inventorySection: some View {
-        Section(header: Text("Required Materials")) {
+        Section {
             ForEach(Array(requiredInventory.keys.sorted()), id: \.self) { itemId in
                 if let item = getInventoryItem(itemId),
                    let quantity = requiredInventory[itemId], quantity > 0 {
@@ -258,11 +268,13 @@ struct TaskRequestView: View {
             }) {
                 Label("Edit Materials", systemImage: "pencil")
             }
+        } header: {
+            Text("Required Materials")
         }
     }
     
     private var photoSection: some View {
-        Section(header: Text("Attachment")) {
+        Section {
             Toggle("Attach Photo", isOn: $attachPhoto)
             
             if attachPhoto {
@@ -297,6 +309,8 @@ struct TaskRequestView: View {
                     }
                 }
             }
+        } header: {
+            Text("Attachment")
         }
     }
     
@@ -309,11 +323,9 @@ struct TaskRequestView: View {
                     .font(.caption)
             }
             
-            Button(action: {
-                Task {
-                    await submitTaskRequest()
-                }
-            }) {
+                            Button(action: {
+                                Task { await submitTaskRequest() }
+                            }) {
                 if isSubmitting {
                     HStack {
                         ProgressView()
@@ -333,7 +345,7 @@ struct TaskRequestView: View {
     }
     
     private var suggestionsSection: some View {
-        Section(header: Text("Suggestions")) {
+        Section {
             DisclosureGroup(
                 isExpanded: $showSuggestions,
                 content: {
@@ -384,10 +396,20 @@ struct TaskRequestView: View {
                     .foregroundColor(.orange)
                 }
             )
+        } header: {
+            Text("Suggestions")
         }
     }
     
     // MARK: - Helper Methods
+    
+    private func submitTaskWrapper() {
+        Task { await submitTaskRequest() }
+    }
+    
+    private func loadInventoryWrapper() {
+        Task { await loadInventory() }
+    }
     
     private var isFormValid: Bool {
         return !taskName.isEmpty &&
@@ -456,7 +478,7 @@ struct TaskRequestView: View {
     }
     
     private func loadSuggestions() {
-        // ✅ FIXED: Removed async Task wrapper - not needed in synchronous function
+        // ✅ FIXED: Synchronous function - no async needed
         suggestions = [
             TaskSuggestion(
                 id: "1",
@@ -555,29 +577,16 @@ struct TaskRequestView: View {
         
         // Calculate dates with timing information if specified
         let calendar = Calendar.current
-        var dueDate = selectedDate
-        var startTimeValue: Date? = nil
-        var endTimeValue: Date? = nil
+        let dueDate = selectedDate
         
-        if addStartTime {
-            let startHour = calendar.component(.hour, from: startTime)
-            let startMinute = calendar.component(.minute, from: startTime)
-            
-            startTimeValue = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: dueDate)
-            
-            if addEndTime {
-                let endHour = calendar.component(.hour, from: endTime)
-                let endMinute = calendar.component(.minute, from: endTime)
-                
-                endTimeValue = calendar.date(bySettingHour: endHour, minute: endMinute, second: 0, of: dueDate)
-            }
-        }
+        // ✅ FIXED: Removed unused variables startTimeValue and endTimeValue
+        // These were being calculated but never used in the ContextualTask creation
         
         // Get building and worker information
         let building = buildingOptions.first(where: { $0.id == selectedBuildingID })
         let worker = WorkerProfile(
             id: authManager.workerId ?? "unknown",
-            name: authManager.currentWorkerName,  // ✅ FIXED: Removed unnecessary nil coalescing - currentWorkerName is non-optional
+            name: authManager.currentWorkerName ?? "Unknown Worker",  // ✅ Handle optional properly
             email: authManager.currentUser?.email ?? "",
             phoneNumber: "",
             role: .worker,
@@ -728,11 +737,7 @@ struct InventorySelectionView: View {
                 }
             )
             .onAppear {
-                // ✅ FIXED: Proper Task syntax
-                Task {
-                    await loadInventory()
-                }
-                
+                loadInventoryWrapper()
                 tempQuantities = selectedItems
             }
         }
@@ -787,6 +792,10 @@ struct InventorySelectionView: View {
     
     private func getQuantity(for itemId: String) -> Int {
         return tempQuantities[itemId] ?? 0
+    }
+    
+    private func loadInventoryWrapper() {
+        Task { await loadInventory() }
     }
     
     private func incrementQuantity(for itemId: String) {

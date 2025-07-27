@@ -297,34 +297,60 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
     
     static var sampleTasks: [ContextualTask] {
         [
-            // ✅ FIXED: Use the same pattern as in other parts of the codebase
+            // ✅ FIXED: Provide all parameters in exact order expected
             ContextualTask(
                 id: "1",
                 title: "Window Cleaning",
                 description: "Clean exterior windows",
+                isCompleted: false,
+                completedDate: nil,
+                dueDate: nil,
                 category: .cleaning,
                 urgency: .medium,
+                building: nil,  // NamedCoordinate?
+                worker: nil,    // WorkerProfile?
                 buildingId: "14",
-                buildingName: "Rubin Museum"
+                priority: .medium,
+                buildingName: "Rubin Museum",
+                assignedWorkerId: nil,
+                assignedWorkerName: nil,
+                estimatedDuration: 3600
             ),
             ContextualTask(
                 id: "2",
                 title: "HVAC Inspection",
                 description: "Check HVAC system",
                 isCompleted: true,
+                completedDate: Date(),
+                dueDate: nil,
                 category: .maintenance,
                 urgency: .high,
+                building: nil,  // NamedCoordinate?
+                worker: nil,    // WorkerProfile?
                 buildingId: "14",
-                buildingName: "Rubin Museum"
+                priority: .high,
+                buildingName: "Rubin Museum",
+                assignedWorkerId: nil,
+                assignedWorkerName: nil,
+                estimatedDuration: 3600
             ),
             ContextualTask(
                 id: "3",
                 title: "Emergency Exit Check",
                 description: "Verify emergency exit accessibility",
+                isCompleted: false,
+                completedDate: nil,
+                dueDate: nil,
                 category: .inspection,
                 urgency: .critical,
+                building: nil,  // NamedCoordinate?
+                worker: nil,    // WorkerProfile?
                 buildingId: "14",
-                buildingName: "Rubin Museum"
+                priority: .critical,
+                buildingName: "Rubin Museum",
+                assignedWorkerId: nil,
+                assignedWorkerName: nil,
+                estimatedDuration: 3600
             )
         ]
     }
@@ -335,7 +361,7 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
  ✅ ALL COMPILATION ERRORS FIXED:
  
  🔧 WEATHER DATA FIXES:
- - Line 80: Changed weather.conditions to weather.condition (correct property name)
+ - Changed weather.conditions to weather.condition (correct property name)
  - Added proper enum conversion for weather conditions
  - Removed precipitation references (not in CoreTypes.WeatherData)
  - Added outdoorWorkRisk parameter to WeatherData constructors
@@ -346,10 +372,11 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
  - Added proper CoreTypes prefix to all enum references
  
  🔧 CONTEXTUALTASK INITIALIZER FIXES:
- - Used the correct simplified initializer pattern from the codebase
- - Parameters: id, title, description, isCompleted (optional), category, urgency, buildingId, buildingName
- - This matches usage patterns in WorkerContextEngine.swift and other files
- - Avoids the "extra arguments" error by using only necessary parameters
+ - Used the full initializer with ALL parameters in exact order
+ - Parameters: id, title, description, isCompleted, completedDate, dueDate, category, urgency, building, worker, buildingId, priority, buildingName, assignedWorkerId, assignedWorkerName, estimatedDuration
+ - Set building and worker to nil (they expect NamedCoordinate? and WorkerProfile? types)
+ - buildingName is a separate String parameter, not part of building
+ - Added all 16 parameters to match expected signature
  
  🔧 WEATHERDATA CONSTRUCTOR FIXES:
  - Added outdoorWorkRisk parameter (required by CoreTypes.WeatherData)
