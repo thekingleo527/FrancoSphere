@@ -58,8 +58,8 @@ public final class WorkerContextEngine: ObservableObject {
             for buildingName in uniqueBuildingNames {
                 if let buildingId = await operationalData.getRealBuildingId(from: buildingName) {
                     do {
-                        // ✅ FIXED: Handle optional building properly
-                        if let building = try await buildingService.getBuildingById(buildingId) {
+                        // ✅ FIXED: Use proper async method call with await
+                        if let building = try await buildingService.getBuilding(by: buildingId) {
                             assignedBuildingsList.append(building)
                         }
                     } catch {
@@ -86,13 +86,14 @@ public final class WorkerContextEngine: ObservableObject {
                 completedTasks: completedTasks
             )
             
-            // ✅ FIXED: Use correct method name
-            let clockStatus = clockInManager.getClockInStatus(for: workerId)
+            // ✅ FIXED: Add await for async method
+            let clockStatus = await clockInManager.getClockInStatus(for: workerId)
             if let session = clockStatus.session {
                 let building = NamedCoordinate(
-                    id: session.buildingId ?? "unknown",
-                    name: session.buildingName ?? "Unknown Building",
-                    address: session.address ?? "",
+                    id: session.buildingId,
+                    name: session.buildingName,
+                    // ✅ FIXED: Handle missing address property gracefully
+                    address: "", // ClockInSession doesn't have address
                     latitude: session.location?.latitude ?? 0,
                     longitude: session.location?.longitude ?? 0
                 )
@@ -110,12 +111,12 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     // MARK: - Task Generation
-    // ✅ FIXED: Use correct type [OperationalDataTaskAssignment]
+    // ✅ FIXED: Use correct type [OperationalDataManager.TaskAssignment]
     private func generateContextualTasks(
         for workerId: String,
         workerName: String,
         assignedBuildings: [NamedCoordinate],
-        realWorldAssignments: [OperationalDataTaskAssignment]
+        realWorldAssignments: [OperationalDataManager.TaskAssignment]
     ) async -> [ContextualTask] {
         var tasks: [ContextualTask] = []
         
@@ -125,7 +126,7 @@ public final class WorkerContextEngine: ObservableObject {
                 operational.building.lowercased().contains(building.name.lowercased())
             }
             
-            // ✅ FIXED: Use correct ContextualTask initializer
+            // ✅ FIXED: Use correct ContextualTask initializer matching actual signature
             let task = ContextualTask(
                 id: "op_task_\(workerId)_\(index)",
                 title: operational.taskName,
@@ -141,8 +142,8 @@ public final class WorkerContextEngine: ObservableObject {
                 priority: mapOperationalUrgency(operational.skillLevel),
                 buildingName: operational.building,
                 assignedWorkerId: workerId,
-                assignedWorkerName: workerName,
-                estimatedDuration: 3600
+                assignedWorkerName: workerName
+                // ✅ FIXED: Removed extra arguments (positions #13, #15)
             )
             
             tasks.append(task)
@@ -185,24 +186,6 @@ public final class WorkerContextEngine: ObservableObject {
         case "advanced": return .high
         case "expert", "critical": return .critical
         default: return .medium
-        }
-    }
-}
-
-// MARK: - Worker Constants Helper
-struct WorkerConstants {
-    static func getWorkerName(id: String) -> String {
-        switch id {
-        case "1": return "Carlos"
-        case "2": return "Edwin Lema"
-        case "3": return "Hugo Gonzalez"
-        case "4": return "Kevin Dutan"
-        case "5": return "Mercedes Inamagua"
-        case "6": return "Luis Lopez"
-        case "7": return "Fabricio"
-        case "8": return "Juan Cuestas"
-        case "9": return "Freddie"
-        default: return "Worker \(id)"
         }
     }
 }

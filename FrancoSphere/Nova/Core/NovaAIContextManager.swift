@@ -2,8 +2,8 @@
 //  NovaAIContextManager.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed incorrect CoreTypes module import
-//  ✅ FIXED: All type references updated to use proper CoreTypes namespace
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With Nova/Core/NovaTypes.swift types
 //  ✅ ROLE-BASED AI: Framework for contextual AI features
 //  ✅ TASK-AWARE: AI adapts to current work context
 //  ✅ BUILDING-SPECIFIC: Location-aware assistance
@@ -148,10 +148,10 @@ class NovaAIContextManager: ObservableObject {
                 )
             )
         }
-        return features.sorted { $0.priority.numericValue > $1.priority.numericValue }
-
-        })
-        }
+        
+        // Sort features by priority
+        return features.sorted(by: { $0.priority.numericValue > $1.priority.numericValue })
+    }
     
     // MARK: - Admin AI Features
     
@@ -345,7 +345,7 @@ class NovaAIContextManager: ObservableObject {
                 title: "Performance Review",
                 description: "Analyze portfolio efficiency and worker productivity",
                 priority: .medium,
-                category: .efficiency  // Changed from .performance
+                category: .efficiency
             ),
             CoreTypes.AISuggestion(
                 title: "Budget Optimization",
@@ -404,6 +404,7 @@ class NovaAIContextManager: ObservableObject {
         // This would integrate with weather service
         return nil
     }
+}
 
 // MARK: - Supporting Types (Local to AI Context)
 
@@ -443,6 +444,19 @@ struct WeatherConditions {
     let requiresIndoorWork: Bool
     let temperature: Double
     let precipitation: Bool
+}
+
+// MARK: - Extensions
+
+extension CoreTypes.AIPriority {
+    var numericValue: Int {
+        switch self {
+        case .low: return 1
+        case .medium: return 2
+        case .high: return 3
+        case .critical: return 4
+        }
+    }
 }
 
 // MARK: - Usage Examples

@@ -83,16 +83,10 @@ public actor WeatherAlertSystem {
                     title: "Weather Alert: \(weather.outdoorWorkRisk.rawValue)",
                     description: "Weather conditions require special precautions",
                     isCompleted: false,
-                    completedDate: nil,
                     scheduledDate: Date(),
                     dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date()),
                     category: .emergency,
-                    urgency: .high,
-                    building: building,
-                    worker: nil,
-                    buildingId: building.id,
-                    buildingName: building.name,
-                    priority: .high
+                    urgency: .high
                 )
                 alerts.append(alert)
             }
