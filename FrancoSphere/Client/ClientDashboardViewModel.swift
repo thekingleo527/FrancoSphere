@@ -2,9 +2,10 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Using ComplianceSeverity ENUM (not string)
-//  ✅ FIXED: ExecutiveSummary WITH portfolioHealth parameter
-//  ✅ FIXED: All constructor mismatches resolved
+//  ✅ FIXED: ComplianceSeverity enum usage (not string)
+//  ✅ FIXED: ExecutiveSummary constructor parameters
+//  ✅ FIXED: StrategicRecommendation.Priority usage
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -112,7 +113,7 @@ class ClientDashboardViewModel: ObservableObject {
         activeWorkers = intelligence.activeWorkers
         completionRate = intelligence.completionRate
         criticalIssues = intelligence.criticalIssues
-        complianceScore = Int(intelligence.complianceScore)  // ✅ FIXED: Convert Double to Int
+        complianceScore = Int(intelligence.complianceScore)
         monthlyTrend = intelligence.monthlyTrend
     }
     
@@ -122,7 +123,6 @@ class ClientDashboardViewModel: ObservableObject {
         
         for building in buildingsList {
             do {
-                // ✅ Use the BuildingMetricsService which returns the correct structure
                 let buildingMetrics = try await buildingMetricsService.calculateMetrics(for: building.id)
                 metrics[building.id] = buildingMetrics
             } catch {
@@ -138,13 +138,13 @@ class ClientDashboardViewModel: ObservableObject {
     private func loadComplianceIssues() async {
         var allIssues: [CoreTypes.ComplianceIssue] = []
         
-        // Generate sample compliance issues based on insights
+        // Generate compliance issues based on insights
         for insight in intelligenceInsights where insight.type == .compliance {
             let issue = CoreTypes.ComplianceIssue(
                 title: insight.title,
                 description: insight.description,
-                severity: mapPriorityToSeverityEnum(insight.priority).rawValue,  // ✅ FIXED: Use enum.rawValue
-                buildingId: insight.affectedBuildings.first ?? "unknown",
+                severity: mapPriorityToSeverity(insight.priority),  // ✅ FIXED: Pass enum directly
+                buildingId: insight.affectedBuildings.first,
                 status: .warning,
                 dueDate: Calendar.current.date(byAdding: .day, value: 30, to: Date())
             )
@@ -162,11 +162,11 @@ class ClientDashboardViewModel: ObservableObject {
         let portfolioHealth = calculatePortfolioHealth()
         let monthlyPerformance = determineMonthlyPerformance()
         
-        // ✅ FIXED: Include portfolioHealth parameter
+        // ✅ FIXED: Check actual ExecutiveSummary parameters in CoreTypes
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: totalBuildings,
             totalWorkers: totalWorkers,
-            portfolioHealth: portfolioHealth,  // ✅ ADDED
+            portfolioHealth: portfolioHealth,
             monthlyPerformance: monthlyPerformance
         )
         
@@ -225,7 +225,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Improve Task Completion Rate",
                 description: "Current completion rate is \(Int(intelligence.completionRate * 100))%. Consider optimizing worker schedules and task prioritization.",
                 category: .efficiency,
-                priority: .high,
+                priority: CoreTypes.StrategicRecommendation.Priority.high,  // ✅ FIXED: Fully qualified enum
                 timeframe: "3-6 months",
                 estimatedImpact: "+15% efficiency"
             ))
@@ -237,7 +237,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Address Critical Issues",
                 description: "\(intelligence.criticalIssues) critical issues require immediate attention. Prioritize resolution to prevent escalation.",
                 category: .operations,
-                priority: .critical,
+                priority: CoreTypes.StrategicRecommendation.Priority.critical,  // ✅ FIXED: Fully qualified enum
                 timeframe: "Immediate",
                 estimatedImpact: "Risk reduction"
             ))
@@ -249,7 +249,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Enhance Compliance Program",
                 description: "Compliance score of \(Int(intelligence.complianceScore))% indicates room for improvement. Review audit processes.",
                 category: .compliance,
-                priority: .medium,
+                priority: CoreTypes.StrategicRecommendation.Priority.medium,  // ✅ FIXED: Fully qualified enum
                 timeframe: "6-12 months",
                 estimatedImpact: "+10% compliance"
             ))
@@ -265,7 +265,7 @@ class ClientDashboardViewModel: ObservableObject {
                     title: "Implement AI-Driven Optimization",
                     description: "Nova AI has identified \(highPriorityInsights.count) high-priority optimization opportunities across your portfolio.",
                     category: .efficiency,
-                    priority: .medium,
+                    priority: CoreTypes.StrategicRecommendation.Priority.medium,  // ✅ FIXED: Fully qualified enum
                     timeframe: "2-4 months",
                     estimatedImpact: "+25% operational efficiency"
                 ))
@@ -314,8 +314,8 @@ class ClientDashboardViewModel: ObservableObject {
         }
     }
     
-    // ✅ FIXED: Return ComplianceSeverity enum (not string)
-    private func mapPriorityToSeverityEnum(_ priority: CoreTypes.AIPriority) -> CoreTypes.ComplianceSeverity {
+    // ✅ FIXED: Return ComplianceSeverity enum directly
+    private func mapPriorityToSeverity(_ priority: CoreTypes.AIPriority) -> CoreTypes.ComplianceSeverity {
         switch priority {
         case .critical: return .critical
         case .high: return .high
@@ -330,9 +330,8 @@ class ClientDashboardViewModel: ObservableObject {
             activeWorkers: 0,
             completionRate: 0.0,
             criticalIssues: 0,
-            complianceScore: 0,
-            portfolioHealth: 0.0,
-            monthlyTrend: .unknown
+            monthlyTrend: .unknown,
+            complianceScore: 0.0
         )
         
         buildingsList = []
@@ -340,11 +339,10 @@ class ClientDashboardViewModel: ObservableObject {
         intelligenceInsights = []
         updateDashboardMetrics(from: portfolioIntelligence!)
         
-        // ✅ FIXED: Include portfolioHealth parameter
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: 0,
             totalWorkers: 0,
-            portfolioHealth: 0.0,  // ✅ ADDED
+            portfolioHealth: 0.0,
             monthlyPerformance: "Unknown"
         )
         
@@ -354,7 +352,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "System Recovery",
                 description: "Portfolio data is temporarily unavailable. Attempting to restore connection...",
                 category: .operations,
-                priority: .medium,
+                priority: CoreTypes.StrategicRecommendation.Priority.medium,  // ✅ FIXED: Fully qualified enum
                 timeframe: "Immediate",
                 estimatedImpact: "Service restoration"
             )
@@ -471,20 +469,20 @@ class ClientDashboardViewModel: ObservableObject {
                let title = update.data["title"] as? String,
                let description = update.data["description"] as? String {
                 
-                // ✅ FIXED: Convert string to enum first, then get rawValue
-                let severityEnum: CoreTypes.ComplianceSeverity
+                // ✅ FIXED: Create ComplianceSeverity enum from string
+                let severity: CoreTypes.ComplianceSeverity
                 switch severityString.lowercased() {
-                case "critical": severityEnum = .critical
-                case "high": severityEnum = .high
-                case "medium": severityEnum = .medium
-                case "low": severityEnum = .low
-                default: severityEnum = .medium
+                case "critical": severity = .critical
+                case "high": severity = .high
+                case "medium": severity = .medium
+                case "low": severity = .low
+                default: severity = .medium
                 }
                 
                 let issue = CoreTypes.ComplianceIssue(
                     title: title,
                     description: description,
-                    severity: severityEnum.rawValue,  // ✅ FIXED: Use enum.rawValue
+                    severity: severity,  // ✅ FIXED: Pass enum directly
                     buildingId: buildingId,
                     status: .warning
                 )

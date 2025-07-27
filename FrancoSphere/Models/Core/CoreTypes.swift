@@ -53,6 +53,15 @@ public struct CoreTypes {
         case failed = "Failed"
         case offline = "Offline"
         
+        public var rawValue: String {
+            switch self {
+            case .syncing: return "Syncing"
+            case .synced: return "Synced"
+            case .failed: return "Failed"
+            case .offline: return "Offline"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .synced: return .green
@@ -81,6 +90,15 @@ public struct CoreTypes {
         case clockedIn = "Clocked In"
         case onBreak = "On Break"
         case offline = "Offline"
+        
+        public var rawValue: String {
+            switch self {
+            case .available: return "Available"
+            case .clockedIn: return "Clocked In"
+            case .onBreak: return "On Break"
+            case .offline: return "Offline"
+            }
+        }
         
         public var color: Color {
             switch self {
@@ -168,6 +186,16 @@ public struct CoreTypes {
         case analytics = "analytics"
         case maintenance = "maintenance"
         
+        public var rawValue: String {
+            switch self {
+            case .overview: return "overview"
+            case .tasks: return "tasks"
+            case .workers: return "workers"
+            case .analytics: return "analytics"
+            case .maintenance: return "maintenance"
+            }
+        }
+        
         public var displayName: String {
             switch self {
             case .overview: return "Overview"
@@ -198,6 +226,19 @@ public struct CoreTypes {
         case medical = "Medical"
         case educational = "Educational"
         case mixed = "Mixed Use"
+        
+        public var rawValue: String {
+            switch self {
+            case .office: return "Office"
+            case .residential: return "Residential"
+            case .retail: return "Retail"
+            case .industrial: return "Industrial"
+            case .warehouse: return "Warehouse"
+            case .medical: return "Medical"
+            case .educational: return "Educational"
+            case .mixed: return "Mixed Use"
+            }
+        }
         
         public var color: Color {
             switch self {
@@ -347,21 +388,36 @@ public struct CoreTypes {
     }
     
     // MARK: - Task Types - FIXED RAW VALUES
-
-    // ✅ FIXED: Use lowercase raw values to match codebase usage
     public enum TaskCategory: String, Codable, CaseIterable {
-        case cleaning = "cleaning"                    // ← Changed from "Cleaning"
-        case maintenance = "maintenance"              // ← Changed from "Maintenance"
-        case security = "security"                    // ← Changed from "Security"
-        case inspection = "inspection"                // ← Changed from "Inspection"
-        case administrative = "administrative"        // ← Changed from "Administrative"
-        case repair = "repair"                        // ← Changed from "Repair"
-        case installation = "installation"            // ← Changed from "Installation"
-        case utilities = "utilities"                  // ← Changed from "Utilities"
-        case emergency = "emergency"                  // ← Changed from "Emergency"
-        case renovation = "renovation"                // ← Changed from "Renovation"
-        case landscaping = "landscaping"              // ← Changed from "Landscaping"
-        case sanitation = "sanitation"                // ← Changed from "Sanitation"
+        case cleaning = "cleaning"
+        case maintenance = "maintenance"
+        case security = "security"
+        case inspection = "inspection"
+        case administrative = "administrative"
+        case repair = "repair"
+        case installation = "installation"
+        case utilities = "utilities"
+        case emergency = "emergency"
+        case renovation = "renovation"
+        case landscaping = "landscaping"
+        case sanitation = "sanitation"
+        
+        public var rawValue: String {
+            switch self {
+            case .cleaning: return "cleaning"
+            case .maintenance: return "maintenance"
+            case .security: return "security"
+            case .inspection: return "inspection"
+            case .administrative: return "administrative"
+            case .repair: return "repair"
+            case .installation: return "installation"
+            case .utilities: return "utilities"
+            case .emergency: return "emergency"
+            case .renovation: return "renovation"
+            case .landscaping: return "landscaping"
+            case .sanitation: return "sanitation"
+            }
+        }
         
         public var icon: String {
             switch self {
@@ -381,14 +437,24 @@ public struct CoreTypes {
         }
     }
 
-    // ✅ FIXED: Use lowercase raw values to match codebase usage
     public enum TaskUrgency: String, Codable, CaseIterable {
-        case low = "low"                              // ← Changed from "Low"
-        case medium = "medium"                        // ← Changed from "Medium"
-        case high = "high"                            // ← Changed from "High"
-        case critical = "critical"                    // ← Changed from "Critical"
-        case urgent = "urgent"                        // ← Changed from "Urgent"
-        case emergency = "emergency"                  // ← Changed from "Emergency"
+        case low = "low"
+        case medium = "medium"
+        case high = "high"
+        case critical = "critical"
+        case urgent = "urgent"
+        case emergency = "emergency"
+        
+        public var rawValue: String {
+            switch self {
+            case .low: return "low"
+            case .medium: return "medium"
+            case .high: return "high"
+            case .critical: return "critical"
+            case .urgent: return "urgent"
+            case .emergency: return "emergency"
+            }
+        }
         
         public var priorityValue: Int {
             switch self {
@@ -410,6 +476,18 @@ public struct CoreTypes {
         case cancelled = "Cancelled"
         case paused = "Paused"
         case waiting = "Waiting"
+        
+        public var rawValue: String {
+            switch self {
+            case .pending: return "Pending"
+            case .inProgress: return "In Progress"
+            case .completed: return "Completed"
+            case .overdue: return "Overdue"
+            case .cancelled: return "Cancelled"
+            case .paused: return "Paused"
+            case .waiting: return "Waiting"
+            }
+        }
         
         public var color: Color {
             switch self {
@@ -538,6 +616,15 @@ public struct CoreTypes {
         case rejected = "Rejected"
         case notRequired = "Not Required"
         
+        public var rawValue: String {
+            switch self {
+            case .pending: return "Pending"
+            case .verified: return "Verified"
+            case .rejected: return "Rejected"
+            case .notRequired: return "Not Required"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .pending: return .orange
@@ -592,6 +679,23 @@ public struct CoreTypes {
         case cold = "Cold"
         case overcast = "Overcast"
         
+        public var rawValue: String {
+            switch self {
+            case .sunny: return "Sunny"
+            case .clear: return "Clear"
+            case .cloudy: return "Cloudy"
+            case .partlyCloudy: return "Partly Cloudy"
+            case .rainy: return "Rainy"
+            case .stormy: return "Stormy"
+            case .snowy: return "Snowy"
+            case .foggy: return "Foggy"
+            case .windy: return "Windy"
+            case .hot: return "Hot"
+            case .cold: return "Cold"
+            case .overcast: return "Overcast"
+            }
+        }
+        
         public var icon: String {
             switch self {
             case .sunny, .clear: return "sun.max"
@@ -641,6 +745,15 @@ public struct CoreTypes {
         case medium = "Medium"
         case high = "High"
         case extreme = "Extreme"
+        
+        public var rawValue: String {
+            switch self {
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            case .extreme: return "Extreme"
+            }
+        }
         
         public var color: Color {
             switch self {
@@ -790,6 +903,17 @@ public struct CoreTypes {
         case declining = "Declining"
         case unknown = "Unknown"
         
+        public var rawValue: String {
+            switch self {
+            case .up: return "Up"
+            case .down: return "Down"
+            case .stable: return "Stable"
+            case .improving: return "Improving"
+            case .declining: return "Declining"
+            case .unknown: return "Unknown"
+            }
+        }
+        
         public var icon: String {
             switch self {
             case .up: return "arrow.up"
@@ -818,6 +942,15 @@ public struct CoreTypes {
         case advanced = "Advanced"
         case expert = "Expert"
         
+        public var rawValue: String {
+            switch self {
+            case .beginner: return "Beginner"
+            case .intermediate: return "Intermediate"
+            case .advanced: return "Advanced"
+            case .expert: return "Expert"
+            }
+        }
+        
         public var numericValue: Int {
             switch self {
             case .beginner: return 1
@@ -844,6 +977,15 @@ public struct CoreTypes {
         case outOfStock = "Out of Stock"
         case ordered = "Ordered"
         
+        public var rawValue: String {
+            switch self {
+            case .inStock: return "In Stock"
+            case .lowStock: return "Low Stock"
+            case .outOfStock: return "Out of Stock"
+            case .ordered: return "Ordered"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .inStock: return .green
@@ -867,6 +1009,23 @@ public struct CoreTypes {
         case equipment = "Equipment"
         case materials = "Materials"
         case other = "Other"
+        
+        public var rawValue: String {
+            switch self {
+            case .cleaning: return "Cleaning"
+            case .tools: return "Tools"
+            case .safety: return "Safety"
+            case .electrical: return "Electrical"
+            case .plumbing: return "Plumbing"
+            case .general: return "General"
+            case .office: return "Office"
+            case .maintenance: return "Maintenance"
+            case .supplies: return "Supplies"
+            case .equipment: return "Equipment"
+            case .materials: return "Materials"
+            case .other: return "Other"
+            }
+        }
     }
     
     public struct InventoryItem: Codable, Identifiable {
@@ -929,6 +1088,15 @@ public struct CoreTypes {
         case high = "High"
         case critical = "Critical"
         
+        public var rawValue: String {
+            switch self {
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            case .critical: return "Critical"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .low: return .green
@@ -947,6 +1115,18 @@ public struct CoreTypes {
         case quality = "Quality"
         case operations = "Operations"
         case maintenance = "Maintenance"
+        
+        public var rawValue: String {
+            switch self {
+            case .efficiency: return "Efficiency"
+            case .cost: return "Cost"
+            case .safety: return "Safety"
+            case .compliance: return "Compliance"
+            case .quality: return "Quality"
+            case .operations: return "Operations"
+            case .maintenance: return "Maintenance"
+            }
+        }
         
         public var icon: String {
             switch self {
@@ -1027,6 +1207,19 @@ public struct CoreTypes {
         case taskOverdue = "task_overdue"
         case buildingAlert = "building_alert"
         
+        public var rawValue: String {
+            switch self {
+            case .clockOutReminder: return "clock_out_reminder"
+            case .weatherAlert: return "weather_alert"
+            case .inventoryLow: return "inventory_low"
+            case .routineIncomplete: return "routine_incomplete"
+            case .pendingTasks: return "pending_tasks"
+            case .emergencyRepair: return "emergency_repair"
+            case .taskOverdue: return "task_overdue"
+            case .buildingAlert: return "building_alert"
+            }
+        }
+        
         public var priority: AIPriority {
             switch self {
             case .emergencyRepair, .buildingAlert: return .critical
@@ -1037,7 +1230,6 @@ public struct CoreTypes {
         }
     }
     
-    // ✅ FIXED: Removed duplicate priority property - now uses computed property from type
     public struct AIScenario: Codable, Identifiable {
         public let id: String
         public let type: AIScenarioType
@@ -1059,7 +1251,6 @@ public struct CoreTypes {
             self.timestamp = timestamp
         }
         
-        // ✅ COMPUTED: Access priority through type to avoid redeclaration
         public var priority: AIPriority {
             return type.priority
         }
@@ -1188,6 +1379,15 @@ public struct CoreTypes {
             case high = "High"
             case critical = "Critical"
             
+            public var rawValue: String {
+                switch self {
+                case .low: return "Low"
+                case .medium: return "Medium"
+                case .high: return "High"
+                case .critical: return "Critical"
+                }
+            }
+            
             public var color: Color {
                 switch self {
                 case .low: return .green
@@ -1255,6 +1455,15 @@ public struct CoreTypes {
         case reports = "reports"
         case audit = "audit"
         
+        public var rawValue: String {
+            switch self {
+            case .overview: return "overview"
+            case .issues: return "issues"
+            case .reports: return "reports"
+            case .audit: return "audit"
+            }
+        }
+        
         public var displayName: String {
             switch self {
             case .overview: return "Overview"
@@ -1277,6 +1486,21 @@ public struct CoreTypes {
         case atRisk = "At Risk"
         case needsReview = "Needs Review"
         
+        public var rawValue: String {
+            switch self {
+            case .open: return "Open"
+            case .inProgress: return "In Progress"
+            case .resolved: return "Resolved"
+            case .compliant: return "Compliant"
+            case .warning: return "Warning"
+            case .violation: return "Violation"
+            case .pending: return "Pending"
+            case .nonCompliant: return "Non-Compliant"
+            case .atRisk: return "At Risk"
+            case .needsReview: return "Needs Review"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .compliant: return .green
@@ -1297,6 +1521,15 @@ public struct CoreTypes {
         case high = "High"
         case critical = "Critical"
         
+        public var rawValue: String {
+            switch self {
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            case .critical: return "Critical"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .low: return .green
@@ -1314,6 +1547,17 @@ public struct CoreTypes {
         case financial = "Financial"
         case operational = "Operational"
         case documentation = "Documentation"
+        
+        public var rawValue: String {
+            switch self {
+            case .safety: return "Safety"
+            case .environmental: return "Environmental"
+            case .regulatory: return "Regulatory"
+            case .financial: return "Financial"
+            case .operational: return "Operational"
+            case .documentation: return "Documentation"
+            }
+        }
         
         public var color: Color {
             switch self {
@@ -1371,6 +1615,15 @@ public struct CoreTypes {
         case error = "Error"
         case unknown = "Unknown"
         
+        public var rawValue: String {
+            switch self {
+            case .healthy: return "Healthy"
+            case .warning: return "Warning"
+            case .error: return "Error"
+            case .unknown: return "Unknown"
+            }
+        }
+        
         public var color: Color {
             switch self {
             case .healthy: return .green
@@ -1407,6 +1660,43 @@ public struct CoreTypes {
             self.friday = friday
             self.saturday = saturday
             self.sunday = sunday
+        }
+    }
+}
+
+// MARK: - AI Namespace Extension (CRITICAL FOR COMPILATION)
+extension CoreTypes {
+    public struct AI {
+        public static func generateInsight() -> IntelligenceInsight {
+            return IntelligenceInsight(
+                id: UUID().uuidString,
+                title: "AI Generated Insight",
+                description: "Nova AI has generated this insight based on current data patterns",
+                type: .operations,
+                priority: .medium,
+                actionRequired: false,
+                affectedBuildings: [],
+                generatedAt: Date()
+            )
+        }
+        
+        public static func createSuggestion(title: String, description: String, priority: AIPriority = .medium) -> AISuggestion {
+            return AISuggestion(
+                title: title,
+                description: description,
+                priority: priority,
+                category: .operations,
+                actionRequired: false,
+                estimatedImpact: "Medium"
+            )
+        }
+        
+        public static func analyzeScenario(type: AIScenarioType, title: String, description: String) -> AIScenario {
+            return AIScenario(
+                type: type,
+                title: title,
+                description: description
+            )
         }
     }
 }
@@ -1456,11 +1746,6 @@ public struct AI {
     public typealias Insight = CoreTypes.IntelligenceInsight
     public typealias Scenario = CoreTypes.AIScenario
     public typealias ScenarioType = CoreTypes.AIScenarioType
-}
-
-// MARK: - Extend Models with AI namespace
-extension CoreTypes {
-    public static let AI = FrancoSphere.AI.self
 }
 
 // MARK: - Task Manager (Referenced in error logs)
