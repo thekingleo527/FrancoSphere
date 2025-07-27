@@ -281,7 +281,7 @@ class AdminDashboardViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
                 guard let self = self else { return }
-                Task.init {  // ✅ FIXED: Use Task.init
+                _Concurrency.Task {
                     await self.handleCrossDashboardUpdate(update)
                 }
             }
@@ -292,7 +292,7 @@ class AdminDashboardViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
                 guard let self = self else { return }
-                Task.init {  // ✅ FIXED: Use Task.init
+                _Concurrency.Task {
                     await self.handleWorkerDashboardUpdate(update)
                 }
             }
@@ -303,7 +303,7 @@ class AdminDashboardViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
                 guard let self = self else { return }
-                Task.init {  // ✅ FIXED: Use Task.init
+                _Concurrency.Task {
                     await self.handleClientDashboardUpdate(update)
                 }
             }
@@ -333,10 +333,10 @@ class AdminDashboardViewModel: ObservableObject {
         print("📡 Admin update broadcast: \(type.displayName)")
     }
     
-    /// Setup auto-refresh timer - FIXED
+    /// Setup auto-refresh timer
     private func setupAutoRefresh() {
         let timer = Timer(timeInterval: 30.0, repeats: true) { _ in
-            Task.init { [weak self] in  // ✅ FIXED: Use Task.init
+            _Concurrency.Task { [weak self] in
                 await self?.refreshDashboardData()
             }
         }
