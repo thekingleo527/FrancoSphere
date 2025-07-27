@@ -241,7 +241,7 @@ public final class GRDBManager {
             .tracking { db in
                 // ✅ FIXED: Use StatementArguments with proper type conversion
                 try Row.fetchAll(db, sql: """
-// DUPLICATE: SELECT t.*, b.name as buildingName, w.name as workerName 
+                    SELECT t.*, b.name as buildingName, w.name as workerName 
                     FROM routine_tasks t
                     LEFT JOIN buildings b ON t.buildingId = b.id
                     LEFT JOIN workers w ON t.workerId = w.id
@@ -308,11 +308,11 @@ public final class GRDBManager {
         
         // ✅ FIXED: Create NamedCoordinate for building (if we have building data)
         let building: NamedCoordinate? = {
-// DUPLICATE: if let buildingName = row["buildingName"] as? String,
+            if let buildingName = row["buildingName"] as? String,
                let buildingId = row["buildingId"] as? Int64 {
                 return NamedCoordinate(
                     id: String(buildingId),
-// DUPLICATE: name: buildingName,
+                    name: buildingName,
                     latitude: 0,
                     longitude: 0
                 )
@@ -432,10 +432,10 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
         
         // Create building object if we have building data
         let building: NamedCoordinate? = {
-// DUPLICATE: if let buildingName = row["buildingName"] as? String {
+            if let buildingName = row["buildingName"] as? String {
                 return NamedCoordinate(
                     id: buildingId,
-// DUPLICATE: name: buildingName,
+                    name: buildingName,
                     latitude: 0,
                     longitude: 0
                 )

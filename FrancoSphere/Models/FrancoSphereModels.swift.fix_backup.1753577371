@@ -98,9 +98,9 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public let priority: CoreTypes.TaskUrgency?
     
     // ✅ STORED PROPERTIES: Used in initializers throughout codebase
-// DUPLICATE: public let buildingName: String?  // Used in WorkerContextEngine, OperationalDataManager
+    public let buildingName: String?  // Used in WorkerContextEngine, OperationalDataManager
     public let assignedWorkerId: String?  // Used in OperationalDataManager, TaskTimelineView
-// DUPLICATE: public let assignedWorkerName: String?  // Referenced in GRDBManager, extensions
+    public let assignedWorkerName: String?  // Referenced in GRDBManager, extensions
     public let estimatedDuration: TimeInterval  // Used in WorkerContextEngine+DataFlow
     
     // ✅ ONLY ONE COMPUTED PROPERTY: For overdue status (simple, no conflicts)
@@ -122,9 +122,9 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
         worker: WorkerProfile? = nil,
         buildingId: String? = nil,
         priority: CoreTypes.TaskUrgency? = nil,
-// DUPLICATE: buildingName: String? = nil,  // ✅ STORED: Used in initializers
+        buildingName: String? = nil,  // ✅ STORED: Used in initializers
         assignedWorkerId: String? = nil,  // ✅ STORED: Used in initializers
-// DUPLICATE: assignedWorkerName: String? = nil,  // ✅ STORED: Used in initializers
+        assignedWorkerName: String? = nil,  // ✅ STORED: Used in initializers
         estimatedDuration: TimeInterval = 3600  // ✅ STORED: Used in initializers
     ) {
         self.id = id
@@ -139,9 +139,9 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
         self.worker = worker
         self.buildingId = buildingId ?? building?.id
         self.priority = priority ?? urgency
-// DUPLICATE: self.buildingName = buildingName ?? building?.name
+        self.buildingName = buildingName ?? building?.name
         self.assignedWorkerId = assignedWorkerId ?? worker?.id
-// DUPLICATE: self.assignedWorkerName = assignedWorkerName ?? worker?.name
+        self.assignedWorkerName = assignedWorkerName ?? worker?.name
         self.estimatedDuration = estimatedDuration
     }
     

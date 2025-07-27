@@ -132,7 +132,7 @@ extension TaskService {
             title: opTask.taskName,
             description: "Operational task: \(opTask.taskName) at \(opTask.building)",
             buildingId: buildingId,
-// DUPLICATE: buildingName: opTask.building,
+            buildingName: opTask.building,
             category: category,
             urgency: urgency,
             isCompleted: false,

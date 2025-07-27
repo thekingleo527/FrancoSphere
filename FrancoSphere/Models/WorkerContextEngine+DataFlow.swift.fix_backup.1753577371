@@ -48,13 +48,13 @@ extension WorkerContextEngine {
             
             // Convert building names to NamedCoordinate objects
             var buildings: [NamedCoordinate] = []
-// DUPLICATE: for buildingName in uniqueBuildingNames {
-// DUPLICATE: if let buildingId = await operationalData.getRealBuildingId(from: buildingName) {
+            for buildingName in uniqueBuildingNames {
+                if let buildingId = await operationalData.getRealBuildingId(from: buildingName) {
                     do {
                         let building = try await buildingService.getBuilding(buildingId: buildingId)
                         buildings.append(building)
                     } catch {
-// DUPLICATE: print("⚠️ Could not load building \(buildingName): \(error)")
+                        print("⚠️ Could not load building \(buildingName): \(error)")
                     }
                 }
             }
@@ -75,7 +75,7 @@ extension WorkerContextEngine {
                     title: opTask.taskName,
                     description: "Recurring: \(opTask.recurrence)",
                     buildingId: building?.id,
-// DUPLICATE: buildingName: opTask.building,
+                    buildingName: opTask.building,
                     category: mapToTaskCategory(opTask.category),
                     urgency: mapToUrgency(opTask.skillLevel),
                     skillLevel: mapToSkillLevel(opTask.skillLevel),
@@ -104,7 +104,7 @@ extension WorkerContextEngine {
             if let session = status.session {
                 let building = buildings.first { $0.id == session.buildingId } ?? NamedCoordinate(
                     id: session.buildingId,
-// DUPLICATE: name: session.buildingName,
+                    name: session.buildingName,
                     latitude: session.location?.latitude ?? 0,
                     longitude: session.location?.longitude ?? 0
                 )
