@@ -10,10 +10,7 @@
 import SwiftUI
 import Combine
 import Foundation
-// Nova types are imported from Nova/Core/NovaTypes.swift
-
-struct NovaInteractionView: View {
-    // MARK: - State Management
+   // MARK: - State Management
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     @StateObject private var novaAI = NovaAIIntegrationService.shared
     @Environment(\.dismiss) private var dismiss
@@ -235,15 +232,14 @@ struct NovaInteractionView: View {
         // Clear input
         userQuery = ""
         
-        // Debug: Check types
-        let priority: NovaPriority = determinePriority(for: query)
-        let context: NovaContext? = currentContext
+        // Get the priority
+        let priority = determinePriority(for: query)
         
-        // Create prompt
+        // Create prompt with explicit parameters
         let prompt = NovaPrompt(
             text: query,
             priority: priority,
-            context: context
+            context: currentContext
         )
         
         novaPrompts.append(prompt)

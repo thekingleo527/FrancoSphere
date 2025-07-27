@@ -339,9 +339,9 @@ public class OperationalDataManager: ObservableObject {
                 currentStatus = "Importing routine schedules..."
             }
             
-            let result = try await self.importRoutinesAndDSNY()
+            let (routineCount, dsnyCount) = try await self.importRoutinesAndDSNY()
             print("✅ Imported \(routineCount) routines and \(dsnyCount) DSNY schedules")
-            
+
             // Step 4: Validate data integrity (90%)
             await MainActor.run {
                 importProgress = 0.9
@@ -728,7 +728,7 @@ public class OperationalDataManager: ObservableObject {
                     
                     // Allow UI to update periodically - FIXED: Use proper Task.sleep syntax
                     if index % 5 == 0 {
-                        try await Task.sleep(for: .milliseconds(500))
+                        try await Task.sleep(nanoseconds: 500_000_000)
                     }
                     
                 } catch {

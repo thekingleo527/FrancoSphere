@@ -86,8 +86,8 @@ public final class WorkerContextEngine: ObservableObject {
                 completedTasks: completedTasks
             )
             
-            // ✅ FIXED: getClockInStatus is NOT async - removed await
-            let clockStatus = clockInManager.getClockInStatus(for: workerId)
+            // ✅ FIXED: getClockInStatus requires await because ClockInManager is an actor
+            let clockStatus = await clockInManager.getClockInStatus(for: workerId)
             if let session = clockStatus.session {
                 let building = NamedCoordinate(
                     id: session.buildingId,
@@ -139,11 +139,8 @@ public final class WorkerContextEngine: ObservableObject {
                 building: building,
                 worker: currentWorker,
                 buildingId: building?.id,
-                priority: mapOperationalUrgency(operational.skillLevel),
-                buildingName: operational.building,
-                assignedWorkerId: workerId,
-                assignedWorkerName: workerName
-                // ✅ FIXED: Removed extra arguments (positions #13, #15)
+                priority: mapOperationalUrgency(operational.skillLevel)
+                // ✅ FIXED: Removed extra arguments (buildingName, assignedWorkerId, assignedWorkerName)
             )
             
             tasks.append(task)
