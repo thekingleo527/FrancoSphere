@@ -3,10 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Added missing 'id' parameter to all CoreTypes.WeatherData initializers
 //  ✅ ALIGNED: With actual CoreTypes.WeatherData structure
-//  ✅ CORRECTED: Function declarations and enum usage
-//  ✅ INTEGRATED: With existing dashboard and service architecture
-//  🚀 PRODUCTION READY - Complete weather integration
 //
 
 import Foundation
@@ -273,7 +271,7 @@ class WeatherDataAdapter: ObservableObject {
         }
     }
     
-    // ✅ FIXED: Proper function declaration syntax
+    // ✅ FIXED: Added missing 'id' parameter to CoreTypes.WeatherData initializer
     private func parseCurrentWeatherData(_ current: [String: Any]) throws -> CoreTypes.WeatherData {
         let temperature = current["temperature_2m"] as? Double ?? 72.0
         let humidity = current["relative_humidity_2m"] as? Int ?? 50
@@ -284,8 +282,9 @@ class WeatherDataAdapter: ObservableObject {
         let conditionString = conditionEnum.rawValue
         let outdoorRisk = calculateOutdoorWorkRisk(temperature: temperature, windSpeed: windSpeed, condition: conditionEnum)
         
-        // ✅ FIXED: Use actual CoreTypes.WeatherData constructor (NO precipitation property)
+        // ✅ FIXED: Added id parameter as first argument
         return CoreTypes.WeatherData(
+            id: UUID().uuidString,
             temperature: temperature,
             condition: conditionString,
             humidity: Double(humidity),
@@ -295,7 +294,7 @@ class WeatherDataAdapter: ObservableObject {
         )
     }
     
-    // ✅ FIXED: Proper function declaration syntax
+    // ✅ FIXED: Added missing 'id' parameter to all WeatherData initializers
     private func parseHourlyWeatherData(_ hourly: [String: Any], times: [String], temperatures: [Double]) throws -> [CoreTypes.WeatherData] {
         guard let humidities = hourly["relative_humidity_2m"] as? [Int],
               let windSpeeds = hourly["wind_speed_10m"] as? [Double],
@@ -319,8 +318,9 @@ class WeatherDataAdapter: ObservableObject {
             let conditionString = conditionEnum.rawValue
             let outdoorRisk = calculateOutdoorWorkRisk(temperature: temperature, windSpeed: windSpeed, condition: conditionEnum)
             
-            // ✅ FIXED: Use actual CoreTypes.WeatherData constructor (NO precipitation property)
+            // ✅ FIXED: Added id parameter as first argument
             weatherData.append(CoreTypes.WeatherData(
+                id: UUID().uuidString,
                 temperature: temperature,
                 condition: conditionString,
                 humidity: Double(humidity),
@@ -333,9 +333,10 @@ class WeatherDataAdapter: ObservableObject {
         return weatherData
     }
     
-    // ✅ FIXED: Proper function declaration syntax
+    // ✅ FIXED: Added missing 'id' parameter
     private func createFallbackWeatherData() -> CoreTypes.WeatherData {
         return CoreTypes.WeatherData(
+            id: UUID().uuidString,
             temperature: 72.0,
             condition: "Clear",
             humidity: 50.0,

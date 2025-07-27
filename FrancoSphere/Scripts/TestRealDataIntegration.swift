@@ -1,9 +1,9 @@
 //
-//
 //  TestRealDataIntegration.swift
 //  FrancoSphere v6.0
 //
 //  Integration test for real data implementation
+//  ✅ FIXED: Added missing 'await' keywords for MainActor-isolated properties
 //
 
 import Foundation
@@ -58,7 +58,6 @@ enum IntegrationTest {
             
             let buildings = try await buildingService.getAllBuildings()
             let workers = try await workerService.getAllActiveWorkers()
-            // FIX: Remove double await
             let allTasks = try await taskService.getAllTasks()
             
             // Calculate completion rate from real tasks
@@ -153,7 +152,6 @@ enum IntegrationTest {
             let workerService = WorkerService.shared
             let taskService = TaskService.shared
             
-            // FIX: Replace worker fetch with boolean check since we don't use the worker object
             let workerExists = try await workerService.getWorkerProfile(for: "2") != nil
             
             guard workerExists else {
@@ -162,7 +160,6 @@ enum IntegrationTest {
             }
             
             // Get tasks for this worker
-            // FIX: Remove double await
             let allTasks = try await taskService.getAllTasks()
             let workerTasks = allTasks.filter { $0.worker?.id == "2" }
             let completedTasks = workerTasks.filter { $0.isCompleted }
@@ -183,6 +180,8 @@ enum IntegrationTest {
         }
     }
     
+    // ✅ FIXED: Added @MainActor to handle WeatherDataAdapter's MainActor isolation
+    @MainActor
     private static func testWeatherIntegration() async -> Bool {
         let adapter = WeatherDataAdapter.shared
         let building = NamedCoordinate(
@@ -192,7 +191,6 @@ enum IntegrationTest {
             longitude: -73.9980
         )
         
-        // FIX: Add await for async function
         await adapter.fetchWeatherForBuildingAsync(building)
         
         // Check if weather was fetched
@@ -207,7 +205,6 @@ extension IntegrationTest {
     static func quickTest() async {
         print("🚀 Starting quick integration test...")
         
-        // FIX: Add await for async function
         let passed = await runFullIntegrationTest()
         if passed {
             print("✅ All integration tests passed!")
