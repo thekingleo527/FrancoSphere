@@ -254,13 +254,15 @@ public class OperationalDataManager: ObservableObject {
     private init() {
         setupRealTimeSync()
     }
-    
     // MARK: - Real-Time Synchronization (GRDB)
-    
+
     private func setupRealTimeSync() {
         // Subscribe to building metrics updates
-        Task {
-            await buildingMetrics.subscribeToMultipleMetrics(for: [])
+        Task { @MainActor in
+            // ✅ FIXED: Keep Task wrapper but handle the publisher correctly
+            let publisher = await buildingMetrics.subscribeToMultipleMetrics(for: [])
+            
+            publisher
                 .receive(on: DispatchQueue.main)
                 .sink { completion in
                     if case .failure(let error) = completion {
@@ -781,21 +783,21 @@ public class OperationalDataManager: ObservableObject {
             let buildingName = operationalTask.building
             let buildingId = getBuildingIdFromName(operationalTask.building)
             
-            // FIXED: Use CoreTypes.NamedCoordinate instead of just NamedCoordinate
-            let buildingCoordinate = CoreTypes.NamedCoordinate(
+            // FIXED: Use NamedCoordinate directly (it's not in CoreTypes)
+            let buildingCoordinate = NamedCoordinate(
                 id: buildingId,
                 name: buildingName,
                 latitude: 0.0,
                 longitude: 0.0
             )
             
-            // FIXED: Use CoreTypes.WorkerProfile
-            let workerProfile = CoreTypes.WorkerProfile(
+            // FIXED: Use WorkerProfile directly (it's not in CoreTypes)
+            let workerProfile = WorkerProfile(
                 id: workerId,
                 name: operationalTask.assignedWorker,
                 email: "",
                 phoneNumber: "",
-                role: .worker,
+                role: .worker,  // FIXED: Use the UserRole enum directly
                 skills: [],
                 certifications: [],
                 hireDate: Date(),
@@ -822,7 +824,7 @@ public class OperationalDataManager: ObservableObject {
             default: taskUrgency = .medium
             }
             
-            // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
+            // ✅ FIXED: Use correct ContextualTask initializer with all required parameters
             let task = ContextualTask(
                 id: generateExternalId(for: operationalTask, index: 0),
                 title: operationalTask.taskName,
@@ -833,7 +835,13 @@ public class OperationalDataManager: ObservableObject {
                 category: taskCategory,
                 urgency: taskUrgency,
                 building: buildingCoordinate,
-                worker: workerProfile
+                worker: workerProfile,
+                buildingId: buildingId,
+                priority: taskUrgency,
+                buildingName: buildingName,
+                assignedWorkerId: workerId,
+                assignedWorkerName: operationalTask.assignedWorker,
+                estimatedDuration: 3600
             )
             contextualTasks.append(task)
         }
@@ -1688,7 +1696,7 @@ private func calculateFixedScore(for recurrence: String) -> Int {
 extension OperationalDataManager {
     
     /// Get building coordinate for a building name
-    private func getBuildingCoordinate(for buildingName: String) async -> CoreTypes.NamedCoordinate? {
+    private func getBuildingCoordinate(for buildingName: String) async -> NamedCoordinate? {
         do {
             let buildings = try await BuildingService.shared.getAllBuildings()
             return buildings.first { building in
