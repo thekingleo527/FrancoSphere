@@ -2,10 +2,10 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: ComplianceSeverity enum usage (not string)
-//  ✅ FIXED: ExecutiveSummary constructor parameters
+//  ✅ FIXED: All initializers aligned with CoreTypes
+//  ✅ FIXED: ComplianceSeverity enum usage
 //  ✅ FIXED: StrategicRecommendation.Priority usage
-//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With all dashboard methods and services
 //
 
 import Foundation
@@ -143,7 +143,7 @@ class ClientDashboardViewModel: ObservableObject {
             let issue = CoreTypes.ComplianceIssue(
                 title: insight.title,
                 description: insight.description,
-                severity: mapPriorityToSeverity(insight.priority),  // ✅ FIXED: Pass enum directly
+                severity: mapPriorityToSeverity(insight.priority),
                 buildingId: insight.affectedBuildings.first,
                 status: .warning,
                 dueDate: Calendar.current.date(byAdding: .day, value: 30, to: Date())
@@ -162,7 +162,7 @@ class ClientDashboardViewModel: ObservableObject {
         let portfolioHealth = calculatePortfolioHealth()
         let monthlyPerformance = determineMonthlyPerformance()
         
-        // ✅ FIXED: Check actual ExecutiveSummary parameters in CoreTypes
+        // ✅ FIXED: Using correct ExecutiveSummary initializer from CoreTypes
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: totalBuildings,
             totalWorkers: totalWorkers,
@@ -225,7 +225,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Improve Task Completion Rate",
                 description: "Current completion rate is \(Int(intelligence.completionRate * 100))%. Consider optimizing worker schedules and task prioritization.",
                 category: .efficiency,
-                priority: CoreTypes.StrategicRecommendation.Priority.high,  // ✅ FIXED: Fully qualified enum
+                priority: CoreTypes.StrategicRecommendation.Priority.high,
                 timeframe: "3-6 months",
                 estimatedImpact: "+15% efficiency"
             ))
@@ -237,7 +237,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Address Critical Issues",
                 description: "\(intelligence.criticalIssues) critical issues require immediate attention. Prioritize resolution to prevent escalation.",
                 category: .operations,
-                priority: CoreTypes.StrategicRecommendation.Priority.critical,  // ✅ FIXED: Fully qualified enum
+                priority: CoreTypes.StrategicRecommendation.Priority.critical,
                 timeframe: "Immediate",
                 estimatedImpact: "Risk reduction"
             ))
@@ -249,7 +249,7 @@ class ClientDashboardViewModel: ObservableObject {
                 title: "Enhance Compliance Program",
                 description: "Compliance score of \(Int(intelligence.complianceScore))% indicates room for improvement. Review audit processes.",
                 category: .compliance,
-                priority: CoreTypes.StrategicRecommendation.Priority.medium,  // ✅ FIXED: Fully qualified enum
+                priority: CoreTypes.StrategicRecommendation.Priority.medium,
                 timeframe: "6-12 months",
                 estimatedImpact: "+10% compliance"
             ))
@@ -265,7 +265,7 @@ class ClientDashboardViewModel: ObservableObject {
                     title: "Implement AI-Driven Optimization",
                     description: "Nova AI has identified \(highPriorityInsights.count) high-priority optimization opportunities across your portfolio.",
                     category: .efficiency,
-                    priority: CoreTypes.StrategicRecommendation.Priority.medium,  // ✅ FIXED: Fully qualified enum
+                    priority: CoreTypes.StrategicRecommendation.Priority.medium,
                     timeframe: "2-4 months",
                     estimatedImpact: "+25% operational efficiency"
                 ))
@@ -325,6 +325,7 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     private func setFallbackData() {
+        // ✅ FIXED: Using correct PortfolioIntelligence initializer
         portfolioIntelligence = CoreTypes.PortfolioIntelligence(
             totalBuildings: 0,
             activeWorkers: 0,
@@ -339,6 +340,7 @@ class ClientDashboardViewModel: ObservableObject {
         intelligenceInsights = []
         updateDashboardMetrics(from: portfolioIntelligence!)
         
+        // ✅ FIXED: Using correct ExecutiveSummary initializer
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: 0,
             totalWorkers: 0,
@@ -347,12 +349,14 @@ class ClientDashboardViewModel: ObservableObject {
         )
         
         portfolioBenchmarks = []
+        
+        // ✅ FIXED: Using correct StrategicRecommendation initializer
         strategicRecommendations = [
             CoreTypes.StrategicRecommendation(
                 title: "System Recovery",
                 description: "Portfolio data is temporarily unavailable. Attempting to restore connection...",
                 category: .operations,
-                priority: CoreTypes.StrategicRecommendation.Priority.medium,  // ✅ FIXED: Fully qualified enum
+                priority: CoreTypes.StrategicRecommendation.Priority.medium,
                 timeframe: "Immediate",
                 estimatedImpact: "Service restoration"
             )
@@ -453,7 +457,7 @@ class ClientDashboardViewModel: ObservableObject {
         case .buildingMetricsChanged:
             if let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
-                // Use service to get updated metrics instead of manual construction
+                // Use service to get updated metrics
                 Task {
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
                         await MainActor.run {
@@ -469,7 +473,7 @@ class ClientDashboardViewModel: ObservableObject {
                let title = update.data["title"] as? String,
                let description = update.data["description"] as? String {
                 
-                // ✅ FIXED: Create ComplianceSeverity enum from string
+                // Convert string to enum
                 let severity: CoreTypes.ComplianceSeverity
                 switch severityString.lowercased() {
                 case "critical": severity = .critical
@@ -482,7 +486,7 @@ class ClientDashboardViewModel: ObservableObject {
                 let issue = CoreTypes.ComplianceIssue(
                     title: title,
                     description: description,
-                    severity: severity,  // ✅ FIXED: Pass enum directly
+                    severity: severity,
                     buildingId: buildingId,
                     status: .warning
                 )
