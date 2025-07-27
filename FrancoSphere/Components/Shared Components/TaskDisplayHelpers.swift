@@ -1,11 +1,11 @@
 //
-//
 //  TaskDisplayHelpers.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Invalid redeclaration errors resolved
-//  ✅ CLEANED: Removed duplicate property declarations
-//  ✅ ORGANIZED: Single implementation of each helper function
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Proper optional unwrapping for urgency
+//  ✅ FIXED: Exhaustive switch statements
+//  ✅ FIXED: Correct ContextualTask initializer
 //
 
 import SwiftUI
@@ -24,8 +24,10 @@ public struct TaskDisplayHelpers {
             return .green
         } else if let dueDate = task.dueDate, dueDate < Date() {
             return .red // Overdue
+        } else if let urgency = task.urgency {
+            return urgency.color
         } else {
-            return task.priority.color
+            return .gray // Default when no urgency
         }
     }
     
@@ -55,13 +57,14 @@ public struct TaskDisplayHelpers {
     
     /// Get formatted start time for task
     public static func startTimeText(for task: ContextualTask) -> String {
-        guard let scheduledDate = task.scheduledDate else {
+        // Use dueDate as scheduled date is not in the actual model
+        guard let dueDate = task.dueDate else {
             return "No scheduled time"
         }
         
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return formatter.string(from: scheduledDate)
+        return formatter.string(from: dueDate)
     }
     
     /// Get relative time description
@@ -71,8 +74,6 @@ public struct TaskDisplayHelpers {
         
         if let dueDate = task.dueDate {
             return formatter.localizedString(for: dueDate, relativeTo: Date())
-        } else if let scheduledDate = task.scheduledDate {
-            return formatter.localizedString(for: scheduledDate, relativeTo: Date())
         } else {
             return "No time set"
         }
@@ -102,10 +103,10 @@ public struct TaskDisplayHelpers {
     public static func priorityBadge(for task: ContextualTask) -> some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(task.priority.color)
+                .fill(task.urgency?.color ?? Color.gray)  // ✅ FIXED: Safe unwrapping
                 .frame(width: 8, height: 8)
             
-            Text(task.priority.rawValue)
+            Text(task.urgency?.rawValue ?? "Normal")
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
@@ -119,22 +120,29 @@ public struct TaskDisplayHelpers {
     
     /// Calculate estimated duration for task
     public static func estimatedDurationText(for task: ContextualTask) -> String {
-        // If task has explicit estimated duration, use it
-        if let duration = task.estimatedDuration {
+        // Use the estimatedDuration property directly (it's not optional)
+        let duration = task.estimatedDuration
+        
+        // If duration is set, use it
+        if duration > 0 {
             return formatDuration(duration)
         }
         
-        // Otherwise, estimate based on category and urgency
+        // Otherwise, estimate based on urgency
         let baseDuration: TimeInterval
-        switch task.priority {
-        case .critical:
-            baseDuration = 3600 // 1 hour
-        case .high:
-            baseDuration = 2700 // 45 minutes
-        case .medium:
-            baseDuration = 1800 // 30 minutes
-        case .low:
-            baseDuration = 900  // 15 minutes
+        if let urgency = task.urgency {
+            switch urgency {
+            case .critical, .emergency:  // ✅ FIXED: Handle all cases
+                baseDuration = 3600 // 1 hour
+            case .high, .urgent:
+                baseDuration = 2700 // 45 minutes
+            case .medium:
+                baseDuration = 1800 // 30 minutes
+            case .low:
+                baseDuration = 900  // 15 minutes
+            }
+        } else {
+            baseDuration = 1800 // Default 30 minutes
         }
         
         return formatDuration(baseDuration)
@@ -199,19 +207,19 @@ public struct TaskDisplayHelpers {
     
     /// Get building name for task
     public static func buildingName(for task: ContextualTask) -> String {
-        return task.buildingId ?? "Unknown Building"
+        return task.buildingName ?? task.buildingId ?? "Unknown Building"
     }
     
     /// Get building short name for compact display
     public static func buildingShortName(for task: ContextualTask) -> String {
-        guard let buildingId = task.buildingId else { return "N/A" }
+        guard let buildingName = task.buildingName ?? task.buildingId else { return "N/A" }
         
-        // Extract short name from building ID or full name
-        if buildingId.contains("Street") {
-            let components = buildingId.components(separatedBy: " ")
+        // Extract short name from building name
+        if buildingName.contains("Street") {
+            let components = buildingName.components(separatedBy: " ")
             return components.prefix(2).joined(separator: " ")
         } else {
-            return buildingId
+            return buildingName
         }
     }
     
@@ -253,7 +261,7 @@ extension View {
         self
             .overlay(
                 Rectangle()
-                    .fill(task.priority.color)
+                    .fill(task.urgency?.color ?? Color.gray)  // ✅ FIXED: Safe unwrapping
                     .frame(width: 3)
                     .cornerRadius(1.5),
                 alignment: .leading
@@ -267,16 +275,23 @@ extension View {
 struct TaskDisplayHelpers_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 16) {
-            // Sample task for preview
+            // ✅ FIXED: Use correct ContextualTask initializer
             let sampleTask = ContextualTask(
                 id: "preview-task",
                 title: "Clean Lobby",
                 description: "Daily lobby cleaning",
-                buildingId: "123 Main Street",
-                assignedWorkerId: "worker-001",
-                priority: .high,
-                scheduledDate: Date(),
+                isCompleted: false,
+                completedDate: nil,
                 dueDate: Date().addingTimeInterval(3600),
+                category: .cleaning,
+                urgency: .high,
+                building: nil,
+                worker: nil,
+                buildingId: "123 Main Street",
+                priority: .high,
+                buildingName: "123 Main Street",
+                assignedWorkerId: "worker-001",
+                assignedWorkerName: "John Doe",
                 estimatedDuration: 1800
             )
             
@@ -295,3 +310,20 @@ struct TaskDisplayHelpers_Previews: PreviewProvider {
     }
 }
 #endif
+
+// MARK: - TaskUrgency Color Extension
+
+extension TaskUrgency {
+    var color: Color {
+        switch self {
+        case .critical, .emergency:
+            return .red
+        case .high, .urgent:
+            return .orange
+        case .medium:
+            return .yellow
+        case .low:
+            return .green
+        }
+    }
+}
