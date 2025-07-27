@@ -334,9 +334,8 @@ public actor BuildingMetricsService {
     private func setupRealTimeObservations() {
         print("🔄 Setting up GRDB real-time observations for building metrics")
         
-        // ✅ FIXED: Use proper actor-compatible periodic refresh
-        // Launch a detached task for periodic cache invalidation
-        Task.detached { [weak self] in
+        // ✅ FIXED: Use standard Task syntax for periodic refresh
+        Task { [weak self] in
             while true {
                 do {
                     try await Task.sleep(nanoseconds: 30_000_000_000) // 30 seconds
@@ -349,20 +348,16 @@ public actor BuildingMetricsService {
             }
         }
         
-        // ✅ FIXED: Set up building observation if available
-        // Try to observe buildings, but don't fail if the method doesn't exist
-        if grdbManager.responds(to: #selector(GRDBManager.observeBuildings)) {
-            // If observeBuildings exists and returns a publisher, use it
-            Task.detached { [weak self] in
-                while true {
-                    do {
-                        try await Task.sleep(nanoseconds: 60_000_000_000) // 60 seconds
-                        guard let self = self else { break }
-                        await self.invalidateAllCaches()
-                        print("🔄 Periodic building metrics refresh")
-                    } catch {
-                        break // Exit if task is cancelled
-                    }
+        // ✅ FIXED: Set up additional periodic refresh for building metrics
+        Task { [weak self] in
+            while true {
+                do {
+                    try await Task.sleep(nanoseconds: 60_000_000_000) // 60 seconds
+                    guard let self = self else { break }
+                    await self.invalidateAllCaches()
+                    print("🔄 Periodic building metrics refresh")
+                } catch {
+                    break // Exit if task is cancelled
                 }
             }
         }

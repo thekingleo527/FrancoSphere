@@ -48,22 +48,21 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     public func loadCompleteIntelligence(for building: NamedCoordinate) async {
         isLoading = true
         
-        do {
-            async let metrics = loadBuildingMetrics(building)
-            async let workers = loadAllWorkers(building)
-            async let schedule = loadCompleteSchedule(building)
-            async let history = loadBuildingHistory(building)
-            async let emergency = loadEmergencyInfo(building)
+        // Run all loading tasks concurrently
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadBuildingMetrics(building) }
+            group.addTask { await self.loadAllWorkers(building) }
+            group.addTask { await self.loadCompleteSchedule(building) }
+            group.addTask { await self.loadBuildingHistory(building) }
+            group.addTask { await self.loadEmergencyInfo(building) }
             
-            // Wait for all data to load
-            await (metrics, workers, schedule, history, emergency)
-            
-            print("✅ Complete intelligence loaded for building: \(building.name)")
-            
-        } catch {
-            print("❌ Failed to load building intelligence: \(error)")
+            // Wait for all tasks to complete
+            for await _ in group {
+                // Tasks complete one by one
+            }
         }
         
+        print("✅ Complete intelligence loaded for building: \(building.name)")
         isLoading = false
     }
     
@@ -78,20 +77,20 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         } catch {
             print("⚠️ Failed to load building metrics: \(error)")
             
-            // ✅ FIXED: Use correct CoreTypes.BuildingMetrics constructor with all parameters
+            // ✅ FIXED: Use correct CoreTypes.BuildingMetrics constructor with all required parameters
             self.metrics = CoreTypes.BuildingMetrics(
                 buildingId: building.id,
                 completionRate: 0.85,
-                pendingTasks: 5,
                 overdueTasks: 1,
+                totalTasks: 20,  // ✅ FIXED: Added missing totalTasks parameter
                 activeWorkers: 2,
-                urgentTasksCount: 1,
                 overallScore: 85,
-                isCompliant: true,
+                pendingTasks: 5,
+                urgentTasksCount: 1,
                 hasWorkerOnSite: true,
                 maintenanceEfficiency: 0.85,
-                weeklyCompletionTrend: 0.85,
-                lastActivityDate: Date()
+                weeklyCompletionTrend: 0.85
+                // ✅ FIXED: Removed lastActivityDate which doesn't exist
             )
         }
     }
@@ -150,7 +149,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             self.buildingHistory = Array(sortedTasks.prefix(50))
             
             // Generate patterns from history
-            self.patterns = await generatePatterns(from: self.buildingHistory)
+            self.patterns = generatePatterns(from: self.buildingHistory)  // ✅ FIXED: Removed unnecessary await
             
             print("✅ Loaded \(self.buildingHistory.count) history items, \(patterns.count) patterns")
             
@@ -165,10 +164,10 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     /// Load emergency information
     private func loadEmergencyInfo(_ building: NamedCoordinate) async {
         // Get emergency contacts for building
-        self.emergencyContacts = await getEmergencyContacts(for: building)
+        self.emergencyContacts = getEmergencyContacts(for: building)  // ✅ FIXED: Removed await on non-async method
         
         // Get emergency procedures
-        self.emergencyProcedures = await getEmergencyProcedures(for: building)
+        self.emergencyProcedures = getEmergencyProcedures(for: building)  // ✅ FIXED: Removed await on non-async method
         
         print("✅ Loaded \(emergencyContacts.count) contacts, \(emergencyProcedures.count) procedures")
     }
@@ -242,7 +241,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     }
     
     /// Get emergency contacts for building
-    private func getEmergencyContacts(for building: NamedCoordinate) async -> [String] {
+    private func getEmergencyContacts(for building: NamedCoordinate) -> [String] {  // ✅ FIXED: Not async
         // Standard emergency contacts
         var contacts = [
             "Building Management: (555) 123-4567",
@@ -265,7 +264,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     }
     
     /// Get emergency procedures for building
-    private func getEmergencyProcedures(for building: NamedCoordinate) async -> [String] {
+    private func getEmergencyProcedures(for building: NamedCoordinate) -> [String] {  // ✅ FIXED: Not async
         var procedures = [
             "Fire Emergency: Evacuate immediately via nearest exit",
             "Medical Emergency: Call 911 and building security",
@@ -332,7 +331,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     private func createFallbackScheduleData(_ building: NamedCoordinate) async {
         print("📝 Creating fallback schedule for: \(building.name)")
         
-        let now = Date()
+        // ✅ FIXED: Removed unused 'now' variable
         var schedule: [ContextualTask] = []
         
         // Morning tasks (8 AM - 12 PM)
@@ -376,41 +375,56 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         startTime: String,
         category: CoreTypes.TaskCategory
     ) -> ContextualTask {
-        // ✅ FIXED: Use correct parameter order for ContextualTask
+        let calendar = Calendar.current
+        let today = Date()
+        
+        // Parse start time to create scheduled date
+        var scheduledDate = today
+        if let hour = Int(startTime.prefix(2)) {
+            scheduledDate = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: today) ?? today
+        }
+        
+        // ✅ FIXED: Use correct ContextualTask initializer with all proper parameters
         return ContextualTask(
             id: UUID().uuidString,
             title: title,
             description: "\(title) at \(building.name)",
             isCompleted: false,
             completedDate: nil,
-            scheduledDate: Date(),
-            dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date()),
+            dueDate: calendar.date(byAdding: .hour, value: 2, to: scheduledDate),
             category: category,
-            urgency: .medium, // ✅ FIXED: Use .medium instead of .normal
+            urgency: .medium,
             building: building,
             worker: nil,
             buildingId: building.id,
-            buildingName: building.name
+            priority: .medium,
+            buildingName: building.name,
+            assignedWorkerId: nil,
+            assignedWorkerName: nil,
+            estimatedDuration: 3600  // 1 hour default
         )
     }
     
     /// Create fallback history data when service fails
     private func createFallbackHistoryData(_ building: NamedCoordinate) async {
-        // Create basic history data when service fails
+        // ✅ FIXED: Use correct ContextualTask initializer
         let fallbackHistoryTask = ContextualTask(
             id: "fallback-history",
             title: "Previous Maintenance",
             description: "Recently completed maintenance task",
             isCompleted: true,
             completedDate: Date().addingTimeInterval(-3600),
-            scheduledDate: Date().addingTimeInterval(-7200),
             dueDate: Date().addingTimeInterval(-3600),
             category: .maintenance,
             urgency: .medium,
             building: building,
             worker: nil,
             buildingId: building.id,
-            buildingName: building.name
+            priority: .medium,
+            buildingName: building.name,
+            assignedWorkerId: nil,
+            assignedWorkerName: nil,
+            estimatedDuration: 3600
         )
         
         self.buildingHistory = [fallbackHistoryTask]
