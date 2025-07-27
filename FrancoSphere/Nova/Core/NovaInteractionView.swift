@@ -268,15 +268,10 @@ struct NovaInteractionView: View {
             await processResponseActions(response)
             
         } catch {
-            // Create error response with all required parameters
+            // Create error response
             let errorResponse = NovaResponse(
-                id: UUID().uuidString,
                 success: false,
-                message: "I encountered an error processing your request. Please try again.",
-                actions: [],
-                insights: [],
-                context: currentContext,
-                timestamp: Date()
+                message: "I encountered an error processing your request. Please try again."
             )
             novaResponses.append(errorResponse)
             processingState = .error
@@ -327,15 +322,10 @@ struct NovaInteractionView: View {
         
         processingState = .idle
         
-        // Send welcome message with all required parameters
+        // Send welcome message
         let welcomeResponse = NovaResponse(
-            id: UUID().uuidString,
             success: true,
-            message: await generateWelcomeMessage(),
-            actions: [],
-            insights: [],
-            context: currentContext,
-            timestamp: Date()
+            message: await generateWelcomeMessage()
         )
         novaResponses.append(welcomeResponse)
     }
