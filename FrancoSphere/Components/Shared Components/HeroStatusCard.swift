@@ -3,9 +3,11 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECT: Uses proper CoreTypes.TaskProgress properties
-//  ✅ WORKING: Matches actual CoreTypes.WeatherData structure
-//  ✅ ALIGNED: With exact CoreTypes.WeatherCondition enum cases
+//  ✅ FIXED: weather.condition is String, not enum
+//  ✅ FIXED: Exhaustive switch statement
+//  ✅ FIXED: Removed duplicate functions
+//  ✅ FIXED: Functions moved outside of Preview
+//  ✅ ALIGNED: With CoreTypes.WeatherData structure
 //
 
 import SwiftUI
@@ -64,7 +66,7 @@ struct HeroStatusCard: View {
             
             // Status indicator - green if good progress, orange if low
             Circle()
-                .fill(progress.progressPercentage >= 50 ? Color.green : Color.orange)
+                .fill(progressColor)
                 .frame(width: 12, height: 12)
         }
     }
@@ -79,7 +81,7 @@ struct HeroStatusCard: View {
                 Text("\(Int(weather.temperature))°F")
                     .font(.headline)
                 
-                Text(weather.condition.rawValue)
+                Text(weather.condition)  // Fixed: weather.condition is already a String
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -139,8 +141,8 @@ struct HeroStatusCard: View {
                         .frame(height: 6)
                     
                     Rectangle()
-                        .fill(progress.progressPercentage >= 50 ? Color.green : Color.orange)
-                        .frame(width: geometry.size.width * (progress.progressPercentage / 100), height: 6)
+                        .fill(progressColor)
+                        .frame(width: geometry.size.width * (progressPercentage / 100), height: 6)
                 }
                 .cornerRadius(3)
             }
@@ -148,7 +150,7 @@ struct HeroStatusCard: View {
             
             // Status details
             HStack {
-                if progress.progressPercentage < 50 {
+                if progressPercentage < 50 {
                     Label("Behind schedule", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundColor(.orange)
@@ -184,18 +186,34 @@ struct HeroStatusCard: View {
     
     // MARK: - Helper Methods
     
-    private func getWeatherIconName(_ condition: CoreTypes.WeatherCondition) -> String {
+    private var progressPercentage: Double {
+        guard progress.totalTasks > 0 else { return 0 }
+        return (Double(progress.completedTasks) / Double(progress.totalTasks)) * 100
+    }
+    
+    private var progressColor: Color {
+        progressPercentage >= 50 ? Color.green : Color.orange
+    }
+    
+    private func getWeatherIconName(_ conditionString: String) -> String {
+        let condition = stringToWeatherCondition(conditionString)
+        
+        // Fixed: Exhaustive switch with all cases
         switch condition {
-        case .clear:
+        case .sunny:
             return "sun.max.fill"
+        case .clear:
+            return "sun.max"
         case .cloudy:
             return "cloud.fill"
+        case .partlyCloudy:
+            return "cloud.sun.fill"
         case .rainy:
             return "cloud.rain.fill"
-        case .snowy:
-            return "cloud.snow.fill"
         case .stormy:
             return "cloud.bolt.fill"
+        case .snowy:
+            return "cloud.snow.fill"
         case .foggy:
             return "cloud.fog.fill"
         case .windy:
@@ -204,16 +222,36 @@ struct HeroStatusCard: View {
             return "thermometer.sun.fill"
         case .cold:
             return "thermometer.snowflake"
+        case .overcast:
+            return "cloud.fill"
+        }
+    }
+    
+    private func stringToWeatherCondition(_ condition: String) -> CoreTypes.WeatherCondition {
+        switch condition.lowercased() {
+        case "sunny": return .sunny
+        case "clear": return .clear
+        case "cloudy": return .cloudy
+        case "partly cloudy", "partlycloudy": return .partlyCloudy
+        case "rainy": return .rainy
+        case "stormy": return .stormy
+        case "snowy": return .snowy
+        case "foggy": return .foggy
+        case "windy": return .windy
+        case "hot": return .hot
+        case "cold": return .cold
+        case "overcast": return .overcast
+        default: return .clear
         }
     }
 }
 
-// MARK: - ✅ FIXED: Preview with correct constructors
+// MARK: - Preview
 #Preview {
     let sampleWeather = CoreTypes.WeatherData(
         id: UUID().uuidString,
         temperature: 72.0,
-        condition: .clear,
+        condition: "Clear",  // Fixed: Using String for condition
         humidity: 0.65,
         windSpeed: 5.0,
         outdoorWorkRisk: .low,
@@ -227,7 +265,7 @@ struct HeroStatusCard: View {
         lastUpdated: Date()
     )
     
-    return HeroStatusCard(
+    HeroStatusCard(
         workerId: "kevin",
         currentBuilding: "Rubin Museum",
         weather: sampleWeather,

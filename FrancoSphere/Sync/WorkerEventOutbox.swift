@@ -2,11 +2,11 @@
 //  WorkerEventOutbox.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Correctly aligned with DataSynchronizationService WorkerEvent structure
-//  ✅ FIXED: WorkerEvent is standalone struct, not nested in DataSynchronizationService
+//  ✅ FIXED: Actor isolation issues resolved
+//  ✅ FIXED: Proper Task.sleep syntax
+//  ✅ FIXED: Removed duplicate init() method
+//  ✅ FIXED: Cross-actor communication handled properly
 //  ✅ V6.0: Phase 2.2 - Enhanced Offline Queue
-//  ✅ Safely stores worker actions for reliable synchronization
-//  ✅ Triggers the DataSynchronizationService upon successful sync
 //
 
 import Foundation
@@ -85,11 +85,14 @@ actor WorkerEventOutbox {
     // In-memory queue for pending events. This would be backed by a persistent store in a full implementation
     private var pendingEvents: [OutboxEvent] = []
     
-    private let dataSyncService = DataSynchronizationService.shared
-
+    // ✅ FIXED: Removed direct reference to MainActor-isolated service
+    // We'll access it through Task when needed
+    
     private init() {
-        // Load pending events from persistent storage on startup
-        loadPendingEvents()
+        // ✅ FIXED: Load events asynchronously after init
+        Task {
+            await loadPendingEvents()
+        }
     }
 
     /// Adds a new event to the outbox to be synced
@@ -130,92 +133,95 @@ actor WorkerEventOutbox {
         addEvent(event)
     }
 
-    // COMPLETE FIX for WorkerEventOutbox.swift
-    // Replace the problematic section around lines 170-190 with this:
+    /// Attempts to send all pending events to the server
+    func attemptFlush() async {
+        guard !pendingEvents.isEmpty else { return }
+        
+        print("📤 Attempting to flush \(pendingEvents.count) events...")
+        
+        var successfullySyncedEvents: [String] = []
 
-        /// Attempts to send all pending events to the server
-        func attemptFlush() async {
-            guard !pendingEvents.isEmpty else { return }
-            
-            print("📤 Attempting to flush \(pendingEvents.count) events...")
-            
-            var successfullySyncedEvents: [String] = []
-
-            for var event in pendingEvents {
-                do {
-                    // Simulate a network request
-                    try await submitEventToServer(event)
-                    
-                    // If successful, mark for removal and broadcast completion
-                    successfullySyncedEvents.append(event.id)
-                    
-                    // ✅ FIXED: Convert to standalone WorkerEvent and broadcast
-                    await dataSyncService.broadcastSyncCompletion(for: event.toSyncEvent())
-                    
-                } catch {
-                    // Handle retry logic
-                    event.retryCount += 1
-                    print("⚠️ Failed to sync event \(event.id), retry \(event.retryCount). Error: \(error)")
-                    
-                    // Update the event in the queue with the new retry count
-                    if let index = pendingEvents.firstIndex(where: { $0.id == event.id }) {
-                        pendingEvents[index] = event
-                    }
-                    
-                    // If retry count exceeds threshold, log and possibly remove
-                    if event.retryCount >= 5 {
-                        print("🚨 Event \(event.id) has exceeded retry limit, removing from queue")
-                        successfullySyncedEvents.append(event.id)
+        for var event in pendingEvents {
+            do {
+                // Simulate a network request
+                try await submitEventToServer(event)
+                
+                // If successful, mark for removal and broadcast completion
+                successfullySyncedEvents.append(event.id)
+                
+                // ✅ FIXED: Properly handle cross-actor communication
+                let syncEvent = event.toSyncEvent()
+                await MainActor.run {
+                    // Access the MainActor-isolated DataSynchronizationService
+                    Task {
+                        await DataSynchronizationService.shared.broadcastSyncCompletion(for: syncEvent)
                     }
                 }
+                
+            } catch {
+                // Handle retry logic
+                event.retryCount += 1
+                print("⚠️ Failed to sync event \(event.id), retry \(event.retryCount). Error: \(error)")
+                
+                // Update the event in the queue with the new retry count
+                if let index = pendingEvents.firstIndex(where: { $0.id == event.id }) {
+                    pendingEvents[index] = event
+                }
+                
+                // If retry count exceeds threshold, log and possibly remove
+                if event.retryCount >= 5 {
+                    print("🚨 Event \(event.id) has exceeded retry limit, removing from queue")
+                    successfullySyncedEvents.append(event.id)
+                }
             }
-            
-            // Remove successfully synced events from the queue
-            if !successfullySyncedEvents.isEmpty {
-                pendingEvents.removeAll { successfullySyncedEvents.contains($0.id) }
-                savePendingEvents()
-                print("✅ Flushed \(successfullySyncedEvents.count) events successfully.")
-            }
         }
         
-        /// Simulates submitting a single event to a remote server
-        private func submitEventToServer(_ event: OutboxEvent) async throws {
-            // Simulate network latency
-            try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
-            
-            // ✅ FIXED: Simulate a potential network failure for demonstration purposes
-            if Double.random(in: 0...1) < 0.1 { // 10% chance of failure
-                throw URLError(.notConnectedToInternet)
-            }
-            
-            // If we reach here, the sync is considered successful
-            print("   -> Successfully synced event \(event.id) to server.")
-        }
-        
-        // MARK: - Queue Management
-        
-        /// Get the current number of pending events
-        func getPendingEventCount() -> Int {
-            return pendingEvents.count
-        }
-        
-        /// Get all pending events (for debugging)
-        func getPendingEvents() -> [OutboxEvent] {
-            return pendingEvents
-        }
-        
-        /// Clear all pending events (use with caution)
-        func clearAllEvents() {
-            pendingEvents.removeAll()
+        // Remove successfully synced events from the queue
+        if !successfullySyncedEvents.isEmpty {
+            pendingEvents.removeAll { successfullySyncedEvents.contains($0.id) }
             savePendingEvents()
-            print("🧹 Cleared all pending events from outbox")
+            print("✅ Flushed \(successfullySyncedEvents.count) events successfully.")
+        }
+    }
+    
+    /// Simulates submitting a single event to a remote server
+    private func submitEventToServer(_ event: OutboxEvent) async throws {
+        // ✅ FIXED: Proper Task.sleep syntax
+        try await Task.sleep(nanoseconds: UInt64.random(in: 100_000_000...500_000_000))
+        
+        // Simulate a potential network failure for demonstration purposes
+        if Double.random(in: 0...1) < 0.1 { // 10% chance of failure
+            throw URLError(.notConnectedToInternet)
         }
         
-        /// Force retry all failed events
-        func retryAllEvents() async {
-            print("🔄 Forcing retry of all pending events...")
-            await attemptFlush()
-        }
+        // If we reach here, the sync is considered successful
+        print("   -> Successfully synced event \(event.id) to server.")
+    }
+    
+    // MARK: - Queue Management
+    
+    /// Get the current number of pending events
+    func getPendingEventCount() -> Int {
+        return pendingEvents.count
+    }
+    
+    /// Get all pending events (for debugging)
+    func getPendingEvents() -> [OutboxEvent] {
+        return pendingEvents
+    }
+    
+    /// Clear all pending events (use with caution)
+    func clearAllEvents() {
+        pendingEvents.removeAll()
+        savePendingEvents()
+        print("🧹 Cleared all pending events from outbox")
+    }
+    
+    /// Force retry all failed events
+    func retryAllEvents() async {
+        print("🔄 Forcing retry of all pending events...")
+        await attemptFlush()
+    }
     
     // MARK: - Persistence (Simplified using UserDefaults)
     
@@ -306,15 +312,5 @@ extension WorkerEventOutbox {
     func recordEmergencyReportEvent(workerId: String, buildingId: String) {
         let event = OutboxEvent(type: .emergencyReport, workerId: workerId, buildingId: buildingId)
         addEvent(event)
-    }
-}
-
-// MARK: - Actor Isolation Fix
-extension WorkerEventOutbox {
-    nonisolated init() {
-        self.init()
-        Task {
-            await self.loadPendingEvents()
-        }
     }
 }
