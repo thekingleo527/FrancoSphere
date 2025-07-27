@@ -10,7 +10,8 @@ import UIKit
 //  ✅ FIXED: NamedCoordinate initializer with correct parameters
 //  ✅ FIXED: WorkerProfile initializer with all required parameters
 //  ✅ FIXED: Task.sleep uses correct nanoseconds syntax
-//  ✅ FIXED: CoreTypes.InventoryItem initializer with all required parameters
+//  ✅ FIXED: CoreTypes.InventoryItem initializer with ALL parameters
+//  ✅ FIXED: Removed unnecessary await expressions
 //  ✅ ALIGNED: With ContextualTask creation patterns from TaskService
 //
 
@@ -81,11 +82,9 @@ struct TaskRequestView: View {
                 .disabled(!isFormValid || isSubmitting)
             )
             .task {
-                await loadBuildings()
-                await loadWorkers()
-                await MainActor.run {
-                    loadSuggestions()
-                }
+                loadBuildings()
+                loadWorkers()
+                loadSuggestions()
             }
             .alert(isPresented: $showCompletionAlert) {
                 Alert(
@@ -395,9 +394,7 @@ struct TaskRequestView: View {
     }
     
     private func loadInventoryWrapper() {
-        Task { @MainActor in
-            await loadInventory()
-        }
+        loadInventory()
     }
     
     private var isFormValid: Bool {
@@ -464,18 +461,17 @@ struct TaskRequestView: View {
     
     // MARK: - Data Loading
     
-    private func loadBuildings() async {
-        await MainActor.run {
-            // ✅ FIXED: Using REAL building data from OperationalDataManager
-            self.buildingOptions = [
-                NamedCoordinate(
-                    id: "14",
-                    name: "Rubin Museum",
-                    address: "142-148 West 17th Street, New York, NY",
-                    latitude: 40.7402,
-                    longitude: -73.9980,
-                    imageAssetName: nil
-                ),
+    private func loadBuildings() {
+        // ✅ FIXED: Using REAL building data from OperationalDataManager
+        self.buildingOptions = [
+            NamedCoordinate(
+                id: "14",
+                name: "Rubin Museum",
+                address: "142-148 West 17th Street, New York, NY",
+                latitude: 40.7402,
+                longitude: -73.9980,
+                imageAssetName: nil
+            ),
                 NamedCoordinate(
                     id: "1",
                     name: "117 West 17th Street",
@@ -590,7 +586,7 @@ struct TaskRequestView: View {
     }
     
     private func loadSuggestions() {
-        // ✅ FIXED: Using REAL task patterns from OperationalDataManager
+        // ✅ FIXED: Removed unnecessary await
         suggestions = [
             TaskSuggestion(
                 id: "1",
@@ -637,36 +633,72 @@ struct TaskRequestView: View {
         showSuggestions = suggestions.count > 0
     }
     
-    private func loadInventory() async {
+    private func loadInventory() {
         guard !selectedBuildingID.isEmpty else { return }
         
-        await MainActor.run {
-            self.availableInventory = createSampleInventory()
-        }
+        self.availableInventory = createSampleInventory()
     }
     
     private func createSampleInventory() -> [CoreTypes.InventoryItem] {
-        // Match the pattern from InventoryView - we need all parameters
-        let items: [(name: String, category: CoreTypes.InventoryCategory, stock: Int, min: Int, location: String)] = [
-            ("All-Purpose Cleaner", .supplies, 10, 5, "Storage Room A"),
-            ("Paint Brushes", .tools, 5, 2, "Maintenance Workshop"),
-            ("Safety Gloves", .safety, 20, 10, "Safety Cabinet")
-        ]
-        
-        return items.map { item in
-            // ✅ FIXED: Use convenience initializer
-            return CoreTypes.InventoryItem(
-                name: item.name,
-                category: item.category,
-                currentStock: item.stock,
-                minimumStock: item.min,
-                maxStock: item.stock * 5,
-                unit: "units",
-                cost: 0.0,
-                supplier: nil,
-                location: item.location
+        // ✅ FIXED: Use the EXACT initializer from CoreTypes.InventoryItem
+        return [
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
+                name: "All-Purpose Cleaner",
+                category: .supplies,
+                currentStock: 10,
+                minimumStock: 5,
+                maxStock: 50,
+                unit: "bottles",
+                cost: 5.99,
+                supplier: "CleanCo Supplies",
+                location: "Storage Room A",
+                lastRestocked: nil,
+                status: .inStock
+            ),
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
+                name: "Paint Brushes",
+                category: .tools,
+                currentStock: 5,
+                minimumStock: 2,
+                maxStock: 20,
+                unit: "pieces",
+                cost: 3.50,
+                supplier: "Tool Depot",
+                location: "Maintenance Workshop",
+                lastRestocked: nil,
+                status: .inStock
+            ),
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
+                name: "Safety Gloves",
+                category: .safety,
+                currentStock: 20,
+                minimumStock: 10,
+                maxStock: 100,
+                unit: "pairs",
+                cost: 2.25,
+                supplier: "SafetyFirst Inc",
+                location: "Safety Cabinet",
+                lastRestocked: nil,
+                status: .inStock
+            ),
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
+                name: "LED Light Bulbs",
+                category: .materials,
+                currentStock: 15,
+                minimumStock: 8,
+                maxStock: 50,
+                unit: "pieces",
+                cost: 4.75,
+                supplier: "Electrical Supply Co",
+                location: "Electrical Storage",
+                lastRestocked: nil,
+                status: .inStock
             )
-        }
+        ]
     }
     
     // MARK: - Actions
@@ -727,10 +759,10 @@ struct TaskRequestView: View {
             // ✅ INTEGRATED: Use TaskService to create task (this will handle DB and sync)
             try await TaskService.shared.createTask(task)
             
-            // ✅ INTEGRATED: Broadcast task creation to all dashboards
+            // ✅ FIXED: Use UpdateType.taskStarted instead of non-existent taskAssigned
             let dashboardUpdate = DashboardUpdate(
                 source: .admin, // Task creation comes from admin-level
-                type: .taskAssigned,
+                type: .taskStarted,
                 buildingId: selectedBuildingID,
                 workerId: currentWorker.id,
                 data: [
@@ -964,17 +996,14 @@ struct InventorySelectionView: View {
     }
     
     private func loadInventory() async {
-        await MainActor.run {
-            isLoading = true
-        }
+        isLoading = true
         
-        // Simulate loading delay
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        // Removed Task.sleep for compatibility - instant load
         
-        await MainActor.run {
-            // ✅ FIXED: Use convenience initializer matching InventoryView.swift pattern
-            self.inventoryItems = [
+        // ✅ FIXED: Use EXACT initializer from CoreTypes
+        self.inventoryItems = [
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "All-Purpose Cleaner",
                     category: .supplies,
                     currentStock: 10,
@@ -983,9 +1012,12 @@ struct InventorySelectionView: View {
                     unit: "bottles",
                     cost: 5.99,
                     supplier: "CleanCo Supplies",
-                    location: "Storage Room A"
+                    location: "Storage Room A",
+                    lastRestocked: nil,
+                    status: .inStock
                 ),
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "Paint Brushes",
                     category: .tools,
                     currentStock: 5,
@@ -994,9 +1026,12 @@ struct InventorySelectionView: View {
                     unit: "pieces",
                     cost: 3.50,
                     supplier: "Tool Depot",
-                    location: "Maintenance Workshop"
+                    location: "Maintenance Workshop",
+                    lastRestocked: nil,
+                    status: .inStock
                 ),
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "Safety Gloves",
                     category: .safety,
                     currentStock: 20,
@@ -1005,9 +1040,12 @@ struct InventorySelectionView: View {
                     unit: "pairs",
                     cost: 2.25,
                     supplier: "SafetyFirst Inc",
-                    location: "Safety Cabinet"
+                    location: "Safety Cabinet",
+                    lastRestocked: nil,
+                    status: .inStock
                 ),
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "LED Light Bulbs",
                     category: .materials,
                     currentStock: 15,
@@ -1016,13 +1054,13 @@ struct InventorySelectionView: View {
                     unit: "pieces",
                     cost: 4.75,
                     supplier: "Electrical Supply Co",
-                    location: "Electrical Storage"
+                    location: "Electrical Storage",
+                    lastRestocked: nil,
+                    status: .inStock
                 )
             ]
             self.isLoading = false
-        }
     }
-}
 
 // ✅ FIXED: Corrected PhotoPickerView with proper binding
 struct PhotoPickerView: View {
@@ -1164,34 +1202,6 @@ extension CoreTypes.InventoryItem {
         case .maintenance: return "items"
         case .other: return "items"
         }
-    }
-    
-    // ✅ ADDED: Convenience initializer matching InventoryView.swift pattern
-    init(
-        name: String,
-        category: InventoryCategory,
-        currentStock: Int,
-        minimumStock: Int,
-        maxStock: Int,
-        unit: String,
-        cost: Double = 0.0,
-        supplier: String? = nil,
-        location: String? = nil
-    ) {
-        self.init(
-            id: UUID().uuidString,
-            name: name,
-            category: category,
-            currentStock: currentStock,
-            minimumStock: minimumStock,
-            maxStock: maxStock,
-            unit: unit,
-            cost: cost,
-            supplier: supplier,
-            location: location,
-            lastRestocked: nil,
-            status: currentStock <= 0 ? .outOfStock : (currentStock <= minimumStock ? .lowStock : .inStock)
-        )
     }
 }
 
