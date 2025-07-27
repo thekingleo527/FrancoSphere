@@ -866,3 +866,37 @@ enum AdminTab: String, CaseIterable {
         }
     }
 }
+// MARK: - DashboardUpdate Extension for UI Display
+
+extension DashboardUpdate {
+    /// Generate display description for UI
+    var description: String {
+        let sourcePrefix = "[\(source.displayName)]"
+        let typeDescription = type.displayName
+        
+        if let buildingId = buildingId {
+            return "\(sourcePrefix) \(typeDescription) - Building \(buildingId)"
+        } else if let workerId = workerId {
+            return "\(sourcePrefix) \(typeDescription) - Worker \(workerId)"
+        } else {
+            return "\(sourcePrefix) \(typeDescription)"
+        }
+    }
+    
+    /// Generate detailed description with timestamp
+    var detailedDescription: String {
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .short
+        let timeString = timeFormatter.string(from: timestamp)
+        
+        return "\(description) at \(timeString)"
+    }
+}
+
+// MARK: - CoreTypes.DashboardSyncStatus Extension (if missing)
+
+extension CoreTypes.DashboardSyncStatus {
+    var description: String {
+        return self.rawValue
+    }
+}

@@ -3,8 +3,8 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: Ambiguous method calls, nil coalescing, constructor mismatches
-//  ✅ ALIGNED: With actual interfaces from project codebase
+//  ✅ CORRECTED: Nil coalescing operators, duplicate methods, constructor mismatches
+//  ✅ ALIGNED: With actual project interfaces and type system
 //
 
 import Foundation
@@ -91,14 +91,14 @@ public class WorkerDashboardViewModel: ObservableObject {
             
             // Calculate derived metrics
             await calculateDerivedMetrics()
-            await loadBuildingMetrics()
+            await loadBuildingMetricsData()
             
             // Broadcast dashboard activation
-            await broadcastWorkerDashboardUpdate(UpdateType.taskStarted, data: [
+            await broadcastWorkerDashboardUpdate(.taskStarted, data: [
                 "workerId": user.workerId,
                 "buildingCount": String(assignedBuildings.count),
                 "taskCount": String(todaysTasks.count)
-            ] as [String: Any])
+            ])
             
             await setLoadingState(false)
             print("✅ Worker dashboard loaded: \(assignedBuildings.count) buildings, \(todaysTasks.count) tasks")
@@ -117,7 +117,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         
         // Create evidence if not provided
         let taskEvidence = evidence ?? ActionEvidence(
-            description: "Task completed via Worker Dashboard: \(task.title ?? "Unknown")",
+            description: "Task completed via Worker Dashboard: \(task.title)",
             photoURLs: [],
             timestamp: Date()
         )
@@ -144,7 +144,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         )
         
         // ✅ FIXED: Remove nil coalescing for non-optional String
-        print("✅ Task completed: \(task.title ?? task.id)")
+        print("✅ Task completed: \(task.title)")
     }
     
     /// Start a task with location tracking
@@ -154,17 +154,17 @@ public class WorkerDashboardViewModel: ObservableObject {
         // Update local state
         if let taskIndex = todaysTasks.firstIndex(where: { $0.id == task.id }) {
             // ✅ FIXED: Remove nil coalescing for non-optional String
-            print("✅ Task started: \(task.title ?? task.id)")
+            print("✅ Task started: \(task.title)")
         }
         
         // Broadcast to other dashboards
-        await broadcastWorkerDashboardUpdate(UpdateType.taskStarted, buildingId: task.buildingId, data: [
+        await broadcastWorkerDashboardUpdate(.taskStarted, buildingId: task.buildingId, data: [
             "taskId": task.id,
             // ✅ FIXED: Remove nil coalescing for non-optional String
-            "taskTitle": task.title ?? "Unknown",
+            "taskTitle": task.title,
             "startedAt": ISO8601DateFormatter().string(from: Date()),
             "workerId": workerId
-        ] as [String: Any])
+        ])
     }
     
     // MARK: - Clock In/Out Management
@@ -251,7 +251,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             
             // Recalculate derived metrics
             await calculateDerivedMetrics()
-            await loadBuildingMetrics()
+            await loadBuildingMetricsData()
             
             dashboardSyncStatus = .synced
             print("✅ Worker dashboard data refreshed")
@@ -284,8 +284,8 @@ public class WorkerDashboardViewModel: ObservableObject {
         print("✅ Loaded \(todaysTasks.count) tasks for today")
     }
     
-    private func loadBuildingMetrics() async {
-        // ✅ FIXED: Implement the actual method using BuildingMetricsService
+    // ✅ FIXED: Renamed method to avoid duplicate declaration
+    private func loadBuildingMetricsData() async {
         await refreshBuildingMetricsForAllBuildings()
     }
     
@@ -313,7 +313,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         let totalTasks = todaysTasks.count
         let completedTasks = todaysTasks.filter { $0.isCompleted }.count
         
-        // Update TaskProgress using correct constructor
+        // ✅ FIXED: Use correct TaskProgress constructor
         taskProgress = CoreTypes.TaskProgress(
             totalTasks: totalTasks,
             completedTasks: completedTasks
@@ -333,17 +333,6 @@ public class WorkerDashboardViewModel: ObservableObject {
         
         // Simple efficiency calculation based on completion ratio
         return min(1.0, completionRate * 1.2) // Boost for early completion
-    }
-    
-    private func loadBuildingMetrics() async {
-        for building in assignedBuildings {
-            do {
-                let metrics = try await metricsService.calculateMetrics(for: building.id)
-                buildingMetrics[building.id] = metrics
-            } catch {
-                print("⚠️ Failed to load metrics for building \(building.id): \(error)")
-            }
-        }
     }
     
     private func updateBuildingMetrics(buildingId: String) async {
@@ -409,11 +398,11 @@ public class WorkerDashboardViewModel: ObservableObject {
         
         // Handle specific update types
         switch update.type {
-        case UpdateType.performanceChanged:
+        case .performanceChanged:
             if update.workerId == currentWorkerId {
                 Task { await refreshData() }
             }
-        case UpdateType.portfolioUpdated:
+        case .portfolioUpdated:
             Task { await refreshBuildingMetricsForAllBuildings() }
         default:
             break
@@ -422,7 +411,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     private func handleAdminDashboardUpdate(_ update: DashboardUpdate) {
         switch update.type {
-        case UpdateType.buildingMetricsChanged:
+        case .buildingMetricsChanged:
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
                 Task { await refreshSingleBuildingMetrics(buildingId: buildingId) }
@@ -434,7 +423,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     private func handleClientDashboardUpdate(_ update: DashboardUpdate) {
         switch update.type {
-        case UpdateType.complianceChanged:
+        case .complianceChanged:
             // Refresh all data to get updated compliance requirements
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
@@ -450,7 +439,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         guard let workerId = currentWorkerId else { return }
         
         let update = DashboardUpdate(
-            source: DashboardSource.worker,
+            source: .worker,
             type: type,
             buildingId: buildingId,
             workerId: workerId,
@@ -463,14 +452,14 @@ public class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Auto-refresh Setup
     
     private func setupAutoRefresh() {
-        // ✅ FIXED: Most explicit Timer syntax possible to avoid any conflicts
-        refreshTimer = Foundation.Timer.scheduledTimer(withTimeInterval: TimeInterval(60.0), repeats: true, block: { [weak self] (timer: Foundation.Timer) in
-            guard let strongSelf = self, !strongSelf.isLoading else { return }
+        // ✅ FIXED: Simplified Timer syntax to avoid conflicts
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            guard let self = self, !self.isLoading else { return }
             
             Task {
-                await strongSelf.refreshData()
+                await self.refreshData()
             }
-        })
+        }
     }
 }
 
@@ -546,7 +535,7 @@ extension WorkerDashboardViewModel {
             imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
         )
         
-        // ✅ FIXED: Use correct ContextualTask constructor with all required parameters
+        // ✅ FIXED: Use correct ContextualTask constructor with proper parameters
         viewModel.todaysTasks = [
             ContextualTask(
                 id: "task1",
@@ -556,12 +545,12 @@ extension WorkerDashboardViewModel {
                 completedDate: nil,
                 scheduledDate: Date(),
                 dueDate: Date().addingTimeInterval(3600),
-                category: CoreTypes.TaskCategory.maintenance,
-                urgency: CoreTypes.TaskUrgency.high,
+                category: .maintenance,
+                urgency: .high,
                 building: rubinMuseum,
                 worker: nil,
                 buildingId: "14",
-                priority: CoreTypes.TaskUrgency.high
+                priority: .high
             )
         ]
         

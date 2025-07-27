@@ -3,9 +3,9 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With forensic developer's punchlist requirements
+//  ✅ CORRECTED: DashboardSyncService integration
+//  ✅ ALIGNED: With actual project API structure
 //  ✅ ENHANCED: Cross-dashboard integration ready
-//  ✅ INTEGRATED: Real-time synchronization compatible
 //  ✅ VIEWMODEL ONLY: No View definitions in this file
 //
 
@@ -34,9 +34,9 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var lastUpdateTime: Date?
     
-    // MARK: - Cross-Dashboard Integration (Using shared types)
+    // MARK: - Cross-Dashboard Integration (Using proper DashboardSyncService)
     @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
-    @Published var crossDashboardUpdates: [CoreTypes.CrossDashboardUpdate] = []
+    @Published var crossDashboardUpdates: [DashboardUpdate] = []
     
     // MARK: - Services (Using .shared pattern consistently)
     private let buildingService = BuildingService.shared
@@ -44,6 +44,7 @@ class AdminDashboardViewModel: ObservableObject {
     private let workerService = WorkerService.shared
     private let buildingMetricsService = BuildingMetricsService.shared
     private let intelligenceService = IntelligenceService.shared
+    private let dashboardSyncService = DashboardSyncService.shared
     
     // MARK: - Real-time Subscriptions
     private var cancellables = Set<AnyCancellable>()
@@ -69,14 +70,14 @@ class AdminDashboardViewModel: ObservableObject {
         
         do {
             async let buildingsLoad = buildingService.getAllBuildings()
-            async let workersLoad = workerService.getAllActiveWorkers() // ✅ FIXED: Use correct method name
+            async let workersLoad = workerService.getAllActiveWorkers()
             async let tasksLoad = taskService.getAllTasks()
             
             let (buildings, workers, tasks) = try await (buildingsLoad, workersLoad, tasksLoad)
             
             self.buildings = buildings
-            self.activeWorkers = workers.filter { $0.isActive } // ✅ FIXED: No conversion needed
-            self.ongoingTasks = tasks.filter { !$0.isCompleted } // ✅ FIXED: No conversion needed
+            self.activeWorkers = workers.filter { $0.isActive }
+            self.ongoingTasks = tasks.filter { !$0.isCompleted }
             
             // Load building metrics
             await loadBuildingMetrics()
@@ -114,7 +115,12 @@ class AdminDashboardViewModel: ObservableObject {
         }
         
         self.buildingMetrics = metrics
-        broadcastCoreTypes.CrossDashboardUpdate(.metricsUpdated(buildingIds: Array(metrics.keys)))
+        
+        // ✅ FIXED: Use proper DashboardSyncService API
+        broadcastAdminUpdate(.buildingMetricsChanged, data: [
+            "buildingIds": Array(metrics.keys).joined(separator: ","),
+            "totalBuildings": String(metrics.count)
+        ])
     }
     
     /// Loads portfolio-wide intelligence insights
@@ -127,7 +133,12 @@ class AdminDashboardViewModel: ObservableObject {
             self.isLoadingInsights = false
             
             print("✅ Portfolio insights loaded: \(insights.count) insights")
-            broadcastCoreTypes.CrossDashboardUpdate(.insightsUpdated(count: insights.count))
+            
+            // ✅ FIXED: Use proper DashboardSyncService API
+            broadcastAdminUpdate(.intelligenceGenerated, data: [
+                "insightCount": String(insights.count),
+                "criticalInsights": String(insights.filter { $0.priority == .critical }.count)
+            ])
             
         } catch {
             self.portfolioInsights = []
@@ -156,7 +167,12 @@ class AdminDashboardViewModel: ObservableObject {
             self.isLoadingIntelligence = false
             
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
-            broadcastCoreTypes.CrossDashboardUpdate(.buildingIntelligenceUpdated(buildingId: buildingId))
+            
+            // ✅ FIXED: Use proper DashboardSyncService API
+            broadcastAdminUpdate(.intelligenceGenerated, buildingId: buildingId, data: [
+                "buildingInsights": String(insights.count),
+                "buildingId": buildingId
+            ])
             
         } catch {
             self.selectedBuildingInsights = []
@@ -180,11 +196,34 @@ class AdminDashboardViewModel: ObservableObject {
             buildingMetrics[buildingId] = metrics
             
             print("✅ Refreshed metrics for building \(buildingId)")
-            broadcastCoreTypes.CrossDashboardUpdate(.metricsUpdated(buildingIds: [buildingId]))
+            
+            // ✅ FIXED: Use proper DashboardSyncService API
+            broadcastAdminUpdate(.buildingMetricsChanged, buildingId: buildingId, data: [
+                "buildingId": buildingId,
+                "completionRate": String(metrics.completionRate),
+                "overdueTasks": String(metrics.overdueTasks)
+            ])
             
         } catch {
             print("❌ Failed to refresh building metrics: \(error)")
         }
+    }
+    
+    // MARK: - Admin-specific Methods (Fixed function declarations)
+    
+    /// ✅ FIXED: Added parentheses around parameter
+    func loadAdminMetrics(building: String) async {
+        await refreshBuildingMetrics(for: building)
+    }
+    
+    /// ✅ FIXED: Added parentheses around parameter
+    func updateStatus(status: String) async {
+        dashboardSyncStatus = CoreTypes.DashboardSyncStatus(rawValue: status) ?? .synced
+        
+        broadcastAdminUpdate(.performanceChanged, data: [
+            "adminStatus": status,
+            "timestamp": ISO8601DateFormatter().string(from: Date())
+        ])
     }
     
     // MARK: - Helper Methods
@@ -201,7 +240,7 @@ class AdminDashboardViewModel: ObservableObject {
         }
     }
     
-    /// ✅ FIXED: Calculate portfolio summary metrics (using AdminPortfolioSummary type)
+    /// Calculate portfolio summary metrics (using AdminPortfolioSummary type)
     func getAdminPortfolioSummary() -> AdminPortfolioSummary {
         let totalBuildings = buildings.count
         let totalWorkers = activeWorkers.count
@@ -239,15 +278,52 @@ class AdminDashboardViewModel: ObservableObject {
     
     /// Setup cross-dashboard synchronization
     private func setupCrossDashboardSync() {
-        // TODO: Integrate with DashboardSyncService when Phase 1.2 is implemented
-        print("🔗 Admin dashboard prepared for cross-dashboard sync")
+        // Subscribe to cross-dashboard updates
+        dashboardSyncService.crossDashboardUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] update in
+                self?.handleCrossDashboardUpdate(update)
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to worker dashboard updates
+        dashboardSyncService.workerDashboardUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] update in
+                self?.handleWorkerDashboardUpdate(update)
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to client dashboard updates
+        dashboardSyncService.clientDashboardUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] update in
+                self?.handleClientDashboardUpdate(update)
+            }
+            .store(in: &cancellables)
+        
+        print("🔗 Admin dashboard cross-dashboard sync configured")
     }
     
-    /// Broadcast update to other dashboards
-    private func broadcastCoreTypes.CrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
+    /// ✅ FIXED: Use proper DashboardSyncService API for broadcasting
+    private func broadcastAdminUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
+        let update = DashboardUpdate(
+            source: .admin,
+            type: type,
+            buildingId: buildingId,
+            workerId: nil,
+            data: data
+        )
+        
         crossDashboardUpdates.append(update)
-        // TODO: Send to DashboardSyncService when Phase 1.2 is implemented
-        print("📡 Broadcasting update: \(update)")
+        
+        // Keep only recent updates (last 50)
+        if crossDashboardUpdates.count > 50 {
+            crossDashboardUpdates = Array(crossDashboardUpdates.suffix(50))
+        }
+        
+        dashboardSyncService.broadcastAdminUpdate(update)
+        print("📡 Admin update broadcast: \(type.displayName)")
     }
     
     /// Setup auto-refresh timer
@@ -259,22 +335,72 @@ class AdminDashboardViewModel: ObservableObject {
         }
     }
     
-    /// Handle cross-dashboard update received from other dashboards
-    func handleCoreTypes.CrossDashboardUpdate(_ update: CoreTypes.CrossDashboardUpdate) {
-        switch update {
-        case .taskCompleted(let buildingId):
-            Task {
-                await refreshBuildingMetrics(for: buildingId)
-            }
-        case .workerClockedIn(let buildingId):
-            Task {
-                await refreshBuildingMetrics(for: buildingId)
-            }
-        case .complianceUpdated(let buildingIds):
-            Task {
-                for buildingId in buildingIds {
+    /// ✅ FIXED: Handle cross-dashboard updates with proper type and enum cases
+    private func handleCrossDashboardUpdate(_ update: DashboardUpdate) {
+        crossDashboardUpdates.append(update)
+        
+        // Keep only recent updates
+        if crossDashboardUpdates.count > 50 {
+            crossDashboardUpdates = Array(crossDashboardUpdates.suffix(50))
+        }
+        
+        // Handle specific update types using correct enum cases
+        switch update.type {
+        case .taskCompleted:
+            if let buildingId = update.buildingId {
+                Task {
                     await refreshBuildingMetrics(for: buildingId)
                 }
+            }
+        case .workerClockedIn:
+            if let buildingId = update.buildingId {
+                Task {
+                    await refreshBuildingMetrics(for: buildingId)
+                }
+            }
+        case .complianceChanged:
+            // Refresh all affected buildings
+            Task {
+                await loadBuildingMetrics()
+            }
+        case .portfolioUpdated:
+            Task {
+                await loadPortfolioInsights()
+            }
+        default:
+            break
+        }
+    }
+    
+    /// Handle worker dashboard updates
+    private func handleWorkerDashboardUpdate(_ update: DashboardUpdate) {
+        switch update.type {
+        case .taskCompleted, .taskStarted:
+            if let buildingId = update.buildingId {
+                Task {
+                    await refreshBuildingMetrics(for: buildingId)
+                }
+            }
+        case .workerClockedIn, .workerClockedOut:
+            // Update worker status tracking
+            Task {
+                await loadDashboardData()
+            }
+        default:
+            break
+        }
+    }
+    
+    /// Handle client dashboard updates
+    private func handleClientDashboardUpdate(_ update: DashboardUpdate) {
+        switch update.type {
+        case .portfolioUpdated:
+            Task {
+                await loadPortfolioInsights()
+            }
+        case .complianceChanged:
+            Task {
+                await loadBuildingMetrics()
             }
         default:
             break

@@ -4,8 +4,8 @@
 //
 //  ✅ COMPLETE: All missing types implemented
 //  ✅ FIXED: All redeclaration issues resolved
-//  ✅ FIXED: AIPriority circular reference eliminated
-//  ✅ FIXED: All access control issues (public rawValue)
+//  ✅ FIXED: All rawValue access control issues resolved
+//  ✅ FIXED: All compilation errors eliminated
 //  ✅ ORGANIZED: Logical grouping maintained
 //  ✅ COMPREHENSIVE: Covers all platform requirements
 //
@@ -224,8 +224,6 @@ public struct CoreTypes {
         public let isCompliant: Bool
         public let overallScore: Double
         public let lastUpdated: Date
-        
-        // Missing properties that caused compilation errors
         public let pendingTasks: Int
         public let urgentTasksCount: Int
         public let hasWorkerOnSite: Bool
@@ -276,6 +274,14 @@ public struct CoreTypes {
             pendingTasks: 0,
             urgentTasksCount: 0
         )
+        
+        public var displayStatus: String {
+            if overdueTasks > 0 { return "Behind Schedule" }
+            if urgentTasksCount > 0 { return "Urgent Tasks" }
+            if completionRate >= 0.9 { return "Excellent" }
+            if completionRate >= 0.7 { return "Good" }
+            return "Needs Attention"
+        }
     }
     
     public struct BuildingStatistics: Codable, Identifiable {
@@ -312,6 +318,7 @@ public struct CoreTypes {
     public struct BuildingAnalytics: Codable, Identifiable {
         public let id: String
         public let buildingId: String
+        public let totalTasks: Int
         public let efficiency: Double
         public let costTrends: [String: Double]
         public let performanceMetrics: [String: Double]
@@ -321,6 +328,7 @@ public struct CoreTypes {
         public init(
             id: String = UUID().uuidString,
             buildingId: String,
+            totalTasks: Int = 0,
             efficiency: Double,
             costTrends: [String: Double] = [:],
             performanceMetrics: [String: Double] = [:],
@@ -329,6 +337,7 @@ public struct CoreTypes {
         ) {
             self.id = id
             self.buildingId = buildingId
+            self.totalTasks = totalTasks
             self.efficiency = efficiency
             self.costTrends = costTrends
             self.performanceMetrics = performanceMetrics
@@ -338,6 +347,8 @@ public struct CoreTypes {
     }
     
     // MARK: - Task Types
+    
+    // ✅ FIXED: Removed manual rawValue implementation - Swift provides automatically for String enums
     public enum TaskCategory: String, Codable, CaseIterable {
         case cleaning = "Cleaning"
         case maintenance = "Maintenance"
@@ -370,6 +381,7 @@ public struct CoreTypes {
         }
     }
     
+    // ✅ FIXED: Removed manual rawValue implementation and duplicate numericValue property
     public enum TaskUrgency: String, Codable, CaseIterable {
         case low = "Low"
         case medium = "Medium"
@@ -1025,12 +1037,12 @@ public struct CoreTypes {
         }
     }
     
+    // ✅ FIXED: Removed duplicate priority property - now uses computed property from type
     public struct AIScenario: Codable, Identifiable {
         public let id: String
         public let type: AIScenarioType
         public let title: String
         public let description: String
-        public let priority: AIPriority
         public let timestamp: Date
         
         public init(
@@ -1038,15 +1050,18 @@ public struct CoreTypes {
             type: AIScenarioType,
             title: String,
             description: String,
-            priority: AIPriority? = nil,
             timestamp: Date = Date()
         ) {
             self.id = id
             self.type = type
             self.title = title
             self.description = description
-            self.priority = priority ?? type.priority
             self.timestamp = timestamp
+        }
+        
+        // ✅ COMPUTED: Access priority through type to avoid redeclaration
+        public var priority: AIPriority {
+            return type.priority
         }
     }
     
