@@ -2,29 +2,11 @@
 //  TodayTasksViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Using proper types and avoiding conflicts
+//  ✅ FIXED: Using correct types from SharedTypes.swift and CoreTypes
 //
 
 import SwiftUI
 import Combine
-
-// MARK: - Local Types for View Model
-
-struct TaskStreakData {
-    let currentStreak: Int
-    let longestStreak: Int
-    let lastUpdate: Date
-}
-
-struct TaskTrendsData {
-    let weeklyCompletion: [Double]
-    let categoryBreakdown: [String: Int]
-    let comparisonPeriod: String
-    let changePercentage: Double
-    let trend: CoreTypes.TrendDirection
-}
-
-// MARK: - TodayTasksViewModel
 
 @MainActor
 class TodayTasksViewModel: ObservableObject {
@@ -34,10 +16,11 @@ class TodayTasksViewModel: ObservableObject {
     @Published var overdueTasks: [ContextualTask] = []
     @Published var isLoading = false
     
-    @Published var progress: CoreTypes.TaskProgress?
-    @Published var taskTrends: TaskTrendsData?
-    @Published var performanceMetrics: CoreTypes.PerformanceMetrics?
-    @Published var streakData: TaskStreakData?
+    // Using correct types - TaskProgress from CoreTypes, others from SharedTypes
+    @Published var progress: TaskProgress?  // This is CoreTypes.TaskProgress (via TypeAlias)
+    @Published var taskTrends: TaskTrends?  // This is from SharedTypes.swift
+    @Published var performanceMetrics: PerformanceMetrics?  // This is from SharedTypes.swift
+    @Published var streakData: StreakData?  // This is from SharedTypes.swift
     
     private let taskService = TaskService.shared
     private let contextEngine = WorkerContextEngine.shared
@@ -88,34 +71,35 @@ class TodayTasksViewModel: ObservableObject {
         let completed = completedTasks.count
         let percentage = totalTasks > 0 ? Double(completed) / Double(totalTasks) * 100 : 0
         
-        // ✅ FIXED: Use correct TaskProgress constructor from CoreTypes
-        self.progress = CoreTypes.TaskProgress(
+        // ✅ FIXED: Use TaskProgress from CoreTypes (via TypeAlias)
+        self.progress = TaskProgress(
             totalTasks: totalTasks,
             completedTasks: completed
         )
         
-        // ✅ FIXED: Use correct PerformanceMetrics constructor from CoreTypes
-        self.performanceMetrics = CoreTypes.PerformanceMetrics(
+        // ✅ FIXED: Use PerformanceMetrics from SharedTypes.swift
+        self.performanceMetrics = PerformanceMetrics(
             efficiency: percentage / 100.0,  // Convert percentage to decimal
             tasksCompleted: completed,
             averageTime: 3600, // 1 hour default
-            qualityScore: 0.85 // 85% quality score
+            qualityScore: 0.85, // 85% quality score
+            lastUpdate: Date()
         )
         
-        // ✅ FIXED: Use correct StreakData constructor with existing type
-        self.streakData = CoreTypes.StreakData(
+        // ✅ FIXED: Use StreakData from SharedTypes.swift
+        self.streakData = StreakData(
             currentStreak: calculateCurrentStreak(),
             longestStreak: calculateLongestStreak(),
             lastUpdate: Date()
         )
         
-        // ✅ FIXED: Use correct TaskTrends constructor with array of doubles and changePercentage
-        self.taskTrends = CoreTypes.TaskTrends(
+        // ✅ FIXED: Use TaskTrends from SharedTypes.swift
+        self.taskTrends = TaskTrends(
             weeklyCompletion: calculateWeeklyCompletionArray(),
             categoryBreakdown: getCategoryBreakdown(),
-            comparisonPeriod: "week",
             changePercentage: calculateChangePercentage(),
-            trend: determineTrend()
+            comparisonPeriod: "week",
+            trend: determineTrend()  // This uses TrendDirection from CoreTypes
         )
     }
     
@@ -164,8 +148,8 @@ class TodayTasksViewModel: ObservableObject {
         return breakdown
     }
     
-    private func determineTrend() -> CoreTypes.TrendDirection {
-        // Determine trend based on completion rate
+    private func determineTrend() -> TrendDirection {
+        // Determine trend based on completion rate using CoreTypes.TrendDirection
         let completionRate = Double(completedTasks.count) / Double(max(tasks.count, 1))
         
         if completionRate >= 0.9 {

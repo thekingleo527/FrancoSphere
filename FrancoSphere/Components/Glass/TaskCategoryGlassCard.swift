@@ -236,8 +236,47 @@ struct TaskCategoryGlassCard: View {
         }.count
     }
 }
+// MARK: - Helper Methods
 
-// MARK: - TaskRowGlassView
+private func toggleTaskExpanded(_ task: MaintenanceTask) {
+    withAnimation(Animation.easeInOut(duration: 0.2)) {
+        if expandedTasks.contains(task.id) {
+            expandedTasks.remove(task.id)
+        } else {
+            expandedTasks.insert(task.id)
+        }
+    }
+}
+
+private func isScheduledForToday(_ task: MaintenanceTask) -> Bool {
+    // FIXED: Handle optional dueDate properly
+    guard let dueDate = task.dueDate else { return false }
+    return Calendar.current.isDateInToday(dueDate)
+}
+
+private func getTodayTasksCount() -> Int {
+    pendingTasks.filter { isScheduledForToday($0) }.count
+}
+
+private func getOverdueTasksCount() -> Int {
+    let today = Calendar.current.startOfDay(for: Date())
+    return pendingTasks.filter {
+        guard let dueDate = $0.dueDate else { return false }
+        return dueDate < today
+    }.count
+}
+
+// ADD THIS METHOD HERE:
+private func formatDuration(_ duration: TimeInterval) -> String {
+    let hours = Int(duration) / 3600
+    let minutes = Int(duration) % 3600 / 60
+    
+    if hours > 0 {
+        return "\(hours)h \(minutes)m"
+    } else {
+        return "\(minutes)m"
+    }
+}// MARK: - TaskRowGlassView
 
 struct TaskRowGlassView: View {
     let task: MaintenanceTask
