@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0 - FIXED VERSION
 //
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Removed non-existent getRealBuildingId method
 //  ✅ ALIGNED: With actual service methods and types
 //  ✅ MAINTAINED: @MainActor class with ObservableObject pattern
 //
@@ -51,25 +52,28 @@ public final class WorkerContextEngine: ObservableObject {
             let workerName = WorkerConstants.getWorkerName(id: workerId)
             let workerAssignments = operationalData.getRealWorldTasks(for: workerName)
             
-            // Build assigned buildings list
+            // First, get all buildings from the portfolio
+            self.portfolioBuildings = try await buildingService.getAllBuildings()
+            
+            // Build assigned buildings list by matching names
             var assignedBuildingsList: [NamedCoordinate] = []
             let uniqueBuildingNames = Set(workerAssignments.map { $0.building })
             
             for buildingName in uniqueBuildingNames {
-                if let buildingId = await operationalData.getRealBuildingId(from: buildingName) {
-                    do {
-                        // ✅ FIXED: Use correct parameter label 'buildingId:' not 'by:'
-                        if let building = try await buildingService.getBuilding(buildingId: buildingId) {
-                            assignedBuildingsList.append(building)
-                        }
-                    } catch {
-                        print("⚠️ Could not load building \(buildingName): \(error)")
+                // ✅ FIXED: Match building names from portfolio instead of using non-existent getRealBuildingId
+                if let matchedBuilding = findBuildingByName(buildingName, in: portfolioBuildings) {
+                    assignedBuildingsList.append(matchedBuilding)
+                } else {
+                    // Try to find partial matches
+                    if let partialMatch = findBuildingByPartialName(buildingName, in: portfolioBuildings) {
+                        assignedBuildingsList.append(partialMatch)
+                    } else {
+                        print("⚠️ Could not find building matching: \(buildingName)")
                     }
                 }
             }
             
             self.assignedBuildings = assignedBuildingsList
-            self.portfolioBuildings = try await buildingService.getAllBuildings()
             
             // Generate tasks with correct type
             self.todaysTasks = await generateContextualTasks(
@@ -86,17 +90,18 @@ public final class WorkerContextEngine: ObservableObject {
                 completedTasks: completedTasks
             )
             
-            // ✅ FIXED: getClockInStatus requires await because ClockInManager is an actor
+            // Get clock-in status
             let clockStatus = await clockInManager.getClockInStatus(for: workerId)
             if let session = clockStatus.session {
-                let building = NamedCoordinate(
-                    id: session.buildingId,
-                    name: session.buildingName,
-                    // ✅ FIXED: Handle missing address property gracefully
-                    address: "", // ClockInSession doesn't have address
-                    latitude: session.location?.latitude ?? 0,
-                    longitude: session.location?.longitude ?? 0
-                )
+                // Try to find the building from our portfolio
+                let building = portfolioBuildings.first { $0.id == session.buildingId } ??
+                    NamedCoordinate(
+                        id: session.buildingId,
+                        name: session.buildingName,
+                        address: "", // ClockInSession doesn't have address
+                        latitude: session.location?.latitude ?? 0,
+                        longitude: session.location?.longitude ?? 0
+                    )
                 self.clockInStatus = (clockStatus.isClockedIn, building)
             } else {
                 self.clockInStatus = (clockStatus.isClockedIn, nil)
@@ -110,8 +115,25 @@ public final class WorkerContextEngine: ObservableObject {
         isLoading = false
     }
     
+    // MARK: - Building Matching Helpers
+    private func findBuildingByName(_ name: String, in buildings: [NamedCoordinate]) -> NamedCoordinate? {
+        // First try exact match (case insensitive)
+        let lowercaseName = name.lowercased()
+        return buildings.first { $0.name.lowercased() == lowercaseName }
+    }
+    
+    private func findBuildingByPartialName(_ name: String, in buildings: [NamedCoordinate]) -> NamedCoordinate? {
+        let lowercaseName = name.lowercased()
+        
+        // Try to find building where either name contains the other
+        return buildings.first { building in
+            let buildingNameLower = building.name.lowercased()
+            return buildingNameLower.contains(lowercaseName) ||
+                   lowercaseName.contains(buildingNameLower)
+        }
+    }
+    
     // MARK: - Task Generation
-    // ✅ FIXED: Use correct type OperationalDataTaskAssignment (standalone type, not nested)
     private func generateContextualTasks(
         for workerId: String,
         workerName: String,
@@ -126,7 +148,6 @@ public final class WorkerContextEngine: ObservableObject {
                 operational.building.lowercased().contains(building.name.lowercased())
             }
             
-            // ✅ FIXED: Use correct ContextualTask initializer matching actual signature
             let task = ContextualTask(
                 id: "op_task_\(workerId)_\(index)",
                 title: operational.taskName,
@@ -140,7 +161,6 @@ public final class WorkerContextEngine: ObservableObject {
                 worker: currentWorker,
                 buildingId: building?.id,
                 priority: mapOperationalUrgency(operational.skillLevel)
-                // ✅ FIXED: Removed extra arguments (buildingName, assignedWorkerId, assignedWorkerName)
             )
             
             tasks.append(task)
@@ -215,3 +235,13 @@ extension TaskUrgency {
         }
     }
 }
+
+// MARK: - 🔧 FIXES APPLIED:
+/*
+ ✅ Removed call to non-existent getRealBuildingId method
+ ✅ Implemented building matching by name from portfolio buildings
+ ✅ Added helper methods for finding buildings by exact and partial name matches
+ ✅ Improved error handling for missing buildings
+ ✅ Reordered operations to load portfolio buildings first
+ ✅ Enhanced clock-in building lookup from portfolio
+ */
