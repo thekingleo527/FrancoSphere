@@ -415,11 +415,12 @@ struct AdminDashboardView: View {
     private var portfolioInsightsSheet: some View {
         NavigationView {
             IntelligenceInsightsView(
-                insights: viewModel.portfolioInsights,
-                onRefreshInsights: {
+                insights: viewModel.portfolioInsights
+            ) {
+                Task {
                     await viewModel.loadPortfolioInsights()
                 }
-            )
+            }
             .navigationTitle("Portfolio Insights")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -733,7 +734,7 @@ struct IntelligenceInsightCard: View {
                         .fill(insight.priority.color)
                         .frame(width: 6, height: 6)
                     
-                    Text(insight.priority.displayName)
+                    Text(insight.priority.rawValue)
                         .font(.caption2)
                         .foregroundColor(insight.priority.color)
                 }
@@ -761,43 +762,51 @@ struct BuildingIntelligencePanelContent: View {
     let isLoading: Bool
     
     var body: some View {
-        if isLoading {
-            ProgressView("Loading insights...")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if insights.isEmpty {
-            VStack(spacing: 16) {
-                Image(systemName: "checkmark.circle")
-                    .font(.largeTitle)
-                    .foregroundColor(.green)
-                
-                Text("No issues found")
-                    .font(.headline)
-                
-                Text("This building is operating optimally")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(insights, id: \.id) { insight in
-                        IntelligenceInsightCard(insight: insight)
-                    }
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            if isLoading {
+                ProgressView("Loading insights...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if insights.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "checkmark.circle")
+                        .font(.largeTitle)
+                        .foregroundColor(.green)
+                    
+                    Text("No issues found")
+                        .font(.headline)
+                    
+                    Text("This building is operating optimally")
+                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
-                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(insights, id: \.id) { insight in
+                            IntelligenceInsightCard(insight: insight)
+                        }
+                    }
+                    .padding()
+                }
             }
         }
-        .background(Color.black.ignoresSafeArea())
     }
 }
 
 // Add this helper view for IntelligenceInsightsView
 struct IntelligenceInsightsView: View {
     let insights: [CoreTypes.IntelligenceInsight]
-    let onRefreshInsights: () async -> Void
+    let onRefreshInsights: () -> Void
     
     @State private var isRefreshing = false
+    
+    init(insights: [CoreTypes.IntelligenceInsight], onRefreshInsights: @escaping () -> Void) {
+        self.insights = insights
+        self.onRefreshInsights = onRefreshInsights
+    }
     
     var body: some View {
         ScrollView {
@@ -809,7 +818,7 @@ struct IntelligenceInsightsView: View {
             .padding()
         }
         .refreshable {
-            await onRefreshInsights()
+            onRefreshInsights()
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -843,28 +852,6 @@ enum AdminTab: String, CaseIterable {
 }
 
 // MARK: - Extensions
-
-extension CoreTypes.IntelligencePriority {
-    var color: Color {
-        switch self {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        case .info: return .blue
-        }
-    }
-    
-    var displayName: String {
-        switch self {
-        case .critical: return "Critical"
-        case .high: return "High"
-        case .medium: return "Medium"
-        case .low: return "Low"
-        case .info: return "Info"
-        }
-    }
-}
 
 extension CoreTypes.DashboardSyncStatus {
     var description: String {
