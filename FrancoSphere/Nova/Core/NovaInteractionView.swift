@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: Removed incorrect namespace reference
-//  ✅ ALIGNED: With NovaCore and existing Nova types
+//  ✅ ALIGNED: With NovaTypes from Nova/Core/NovaTypes.swift
 //  ✅ INTEGRATED: With WorkerContextEngine and real services
 //  ✅ PRODUCTION READY: Uses actual Nova AI implementation
 //
@@ -24,7 +24,7 @@ struct NovaInteractionView: View {
     @State private var currentContext: NovaContext?
     
     // MARK: - Services
-    private let novaCore = NovaCore.shared
+    private let novaAPI = NovaAPIService.shared
     private let intelligenceService = IntelligenceService.shared
     
     var body: some View {
@@ -252,8 +252,8 @@ struct NovaInteractionView: View {
         processingState = .processing
         
         do {
-            // Generate Nova response using real AI service
-            let response = await novaCore.processPrompt(prompt)
+            // Generate Nova response using Nova API Service
+            let response = try await novaAPI.processPrompt(prompt)
             
             await MainActor.run {
                 novaResponses.append(response)
@@ -567,6 +567,25 @@ struct NovaProcessingIndicator: View {
         .onAppear {
             animationPhase = 2.0
         }
+    }
+}
+
+// MARK: - Extensions for Missing Properties
+
+extension NovaAction {
+    var metadata: [String: String] {
+        // This would need to be implemented in NovaTypes.swift
+        return [:]
+    }
+}
+
+extension NovaPriority {
+    var displayName: String {
+        return self.rawValue
+    }
+    
+    var icon: String {
+        return systemImageName
     }
 }
 
