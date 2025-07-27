@@ -26,12 +26,16 @@ public class DatabaseManager {
     private var currentUser: AuthenticatedUser?
     
     private init() {
-        Task {
-            await initializeDatabase()
-        }
+        // ✅ FIXED: Remove Task from init - will initialize on first use
     }
     
     // MARK: - Database Initialization (GRDB Implementation)
+    
+    /// Ensure database is initialized before use
+    private func ensureInitialized() async {
+        guard !isInitialized else { return }
+        await initializeDatabase()
+    }
     
     private func initializeDatabase() async {
         guard !isInitialized else { return }
@@ -225,6 +229,8 @@ public class DatabaseManager {
     
     /// Add a new user to the system
     public func addUser(name userName: String, email userEmail: String, password userPassword: String, role: String = "worker") async throws {
+        await ensureInitialized()
+        
         // Check if user already exists
         let existingUsers = try await grdbManager.query("""
             SELECT id FROM users WHERE email = ?
@@ -246,6 +252,8 @@ public class DatabaseManager {
     
     /// Fetch user by email
     public func fetchUser(byEmail userEmail: String) async throws -> AuthenticatedUser? {
+        await ensureInitialized()
+        
         let rows = try await grdbManager.query("""
             SELECT 
                 u.id, u.name, u.email, u.password, u.role, u.isActive,
@@ -277,6 +285,8 @@ public class DatabaseManager {
     
     /// Authenticate user with enhanced security
     public func authenticateUser(email userEmail: String, password userPassword: String) async -> AuthenticationResult {
+        await ensureInitialized()
+        
         do {
             print("🔐 Attempting authentication with GRDB: \(userEmail)")
             
@@ -340,6 +350,8 @@ public class DatabaseManager {
     
     /// Get all users for admin purposes
     public func getAllUsers(includeInactive: Bool = false) async throws -> [AuthenticatedUser] {
+        await ensureInitialized()
+        
         let condition = includeInactive ? "" : "WHERE u.isActive = 1"
         
         let rows = try await grdbManager.query("""
@@ -416,7 +428,7 @@ public class DatabaseManager {
             UPDATE users 
             SET loginAttempts = ?, lockedUntil = ?, updated_at = datetime('now')
             WHERE email = ?
-        """, [newAttempts, lockedUntil, email])
+        """, [newAttempts, lockedUntil as Any, email])  // ✅ FIXED: Explicit cast to Any
     }
     
     /// Reset login attempts after successful login
@@ -450,7 +462,7 @@ public class DatabaseManager {
                 INSERT INTO login_history 
                 (user_id, email, login_time, success, failure_reason, ip_address, device_info)
                 VALUES (?, ?, datetime('now'), ?, ?, ?, ?)
-            """, [userId, email, success ? 1 : 0, reason, "127.0.0.1", "iOS App"])
+            """, [userId as Any, email, success ? 1 : 0, reason as Any, "127.0.0.1", "iOS App"])  // ✅ FIXED: Explicit cast to Any
             
         } catch {
             print("⚠️ Failed to record login attempt: \(error)")
@@ -461,6 +473,8 @@ public class DatabaseManager {
     
     /// Create a new user session
     public func createSession(for user: AuthenticatedUser, deviceInfo: String = "iOS App") async throws -> String {
+        await ensureInitialized()
+        
         let sessionId = UUID().uuidString
         let expiresAt = Date().addingTimeInterval(24 * 60 * 60) // 24 hours
         
@@ -475,6 +489,8 @@ public class DatabaseManager {
     
     /// Validate and refresh session
     public func validateSession(_ sessionId: String) async throws -> AuthenticatedUser? {
+        await ensureInitialized()
+        
         let rows = try await grdbManager.query("""
             SELECT 
                 s.user_id, s.expires_at,
@@ -522,6 +538,8 @@ public class DatabaseManager {
     
     /// Test real worker email authentication
     public func testRealWorkerAuthentication() async {
+        await ensureInitialized()
+        
         print("🔐 TESTING REAL WORKER EMAIL AUTHENTICATION WITH GRDB")
         print("═══════════════════════════════════════════════════════")
         
@@ -556,6 +574,8 @@ public class DatabaseManager {
     
     /// Get authentication summary statistics
     public func getAuthenticationStats() async throws -> [String: Any] {
+        await ensureInitialized()
+        
         var stats: [String: Any] = [:]
         
         // Total users
@@ -586,6 +606,8 @@ public class DatabaseManager {
     
     /// Print all authentication data for debugging
     public func debugPrintAuthenticationData() async {
+        await ensureInitialized()
+        
         do {
             print("🔍 DEBUG: AUTHENTICATION DATA WITH GRDB")
             print("═════════════════════════════════════════")
@@ -685,6 +707,11 @@ public enum AuthenticationResult {
 // MARK: - 📝 GRDB MIGRATION NOTES
 /*
  ✅ COMPLETE GRDB MIGRATION WITH FOCUSED RESPONSIBILITIES:
+ 
+ 🔧 COMPILATION FIXES:
+ - ✅ Removed Task from init() - database initializes on first use
+ - ✅ Added ensureInitialized() to all public methods
+ - ✅ Fixed implicit coercion warnings with explicit 'as Any' casts
  
  🔧 FOCUSED SCOPE:
  - ✅ Authentication and user management only
