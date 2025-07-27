@@ -2,7 +2,7 @@
 //  WorkerService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of GRDBManager
+//  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of SQLiteManager
 //  ✅ REAL DATA: Connects to actual database with preserved worker data
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency patterns
 //
@@ -45,7 +45,7 @@ public actor WorkerService {
         let rows = try await grdbManager.query("""
             SELECT DISTINCT w.*
             FROM workers w
-            INNER JOIN worker_assignments wa ON w.id = wa.worker_id
+            INNER JOIN worker_building_assignments wa ON w.id = wa.worker_id
             WHERE wa.building_id = ? AND wa.is_active = 1 AND w.isActive = 1
             ORDER BY w.name
         """, [buildingId])
@@ -93,23 +93,37 @@ public actor WorkerService {
 
 // MARK: - Fixed Method Signatures Extension
 extension WorkerService {
-    }
+    // FIX: Removed extra closing brace that was causing scope issues
     
     func getWorker(by workerId: String) async throws -> WorkerProfile? {
-        return try await grdbManager.read { db in
-            try WorkerProfile.fetchOne(db, id: workerId)
-        }
+        // FIX: Use SQL query instead of ORM methods
+        let rows = try await grdbManager.query("""
+            SELECT * FROM workers 
+            WHERE id = ? AND isActive = 1
+        """, [workerId])
+        
+        guard let row = rows.first else { return nil }
+        return convertRowToWorkerProfile(row)
     }
     
     func getBuildingWorkers(buildingId: String) async throws -> [WorkerProfile] {
-        return try await grdbManager.read { db in
-            try WorkerProfile
-                .filter(Column("assignedBuildingId") == buildingId)
-                .fetchAll(db)
+        // FIX: Use SQL query with proper join table
+        let rows = try await grdbManager.query("""
+            SELECT DISTINCT w.*
+            FROM workers w
+            INNER JOIN worker_building_assignments wa ON w.id = wa.worker_id
+            WHERE wa.building_id = ? AND wa.is_active = 1 AND w.isActive = 1
+            ORDER BY w.name
+        """, [buildingId])
+        
+        return rows.compactMap { row in
+            convertRowToWorkerProfile(row)
         }
     }
     
-    func getWorkerProfile(for workerId: String) async throws -> WorkerProfile {
+    // Note: This method name duplicates the one at line 34
+    // Consider renaming to avoid confusion or removing if duplicate
+    func getWorkerProfileById(workerId: String) async throws -> WorkerProfile {
         guard let profile = try await getWorker(by: workerId) else {
             throw WorkerServiceError.workerNotFound(workerId)
         }

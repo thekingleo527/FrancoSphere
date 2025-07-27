@@ -5,6 +5,7 @@
 //  ✅ NOVA AI: Core AI service implementation
 //  ✅ SINGLETON: Shared instance for app-wide access
 //  ✅ INTEGRATED: Works with existing services
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -22,15 +23,15 @@ public class NovaCore: ObservableObject {
     @Published public var isInitialized = false
     @Published public var currentContext: NovaContext?
     
-    private var buildings: [Building] = []
-    private var tasks: [MaintenanceTask] = []
+    private var buildings: [NamedCoordinate] = []
+    private var tasks: [CoreTypes.MaintenanceTask] = []
     
     private init() {}
     
     // MARK: - Public Interface
     
     /// Initialize Nova AI context with portfolio data
-    public func initializeContext(buildings: [Building], tasks: [MaintenanceTask]) async {
+    public func initializeContext(buildings: [NamedCoordinate], tasks: [CoreTypes.MaintenanceTask]) async {
         self.buildings = buildings
         self.tasks = tasks
         
@@ -62,7 +63,7 @@ public class NovaCore: ObservableObject {
         var insights: [NovaInsight] = []
         
         // Task completion insights
-        let completedTasks = tasks.filter { $0.isCompleted }.count
+        let completedTasks = tasks.filter { $0.status == .completed }.count
         let totalTasks = tasks.count
         
         if totalTasks > 0 {
@@ -90,7 +91,7 @@ public class NovaCore: ObservableObject {
             tasks.contains { task in
                 task.buildingId == building.id &&
                 task.urgency == .critical &&
-                !task.isCompleted
+                task.status != .completed
             }
         }
         
@@ -112,23 +113,40 @@ public class NovaCore: ObservableObject {
             ))
         }
         
-        // Add buildingIds to insights
-        return insights.map { insight in
-            var modifiedInsight = insight
-            // Note: This would need proper implementation in NovaInsight
-            // to support buildingIds and estimatedImpact properties
-            return modifiedInsight
-        }
+        return insights
     }
     
     /// Update task context when a task is completed
     public func updateTaskContext(taskId: String, buildingId: String, completed: Bool) async {
-        // Update local task state
+        // Find task index
         if let index = tasks.firstIndex(where: { $0.id == taskId }) {
-            tasks[index].isCompleted = completed
+            // Since isCompleted is read-only, we need to update the status
+            let oldTask = tasks[index]
+            
+            // Create updated task with new status
+            let updatedTask = CoreTypes.MaintenanceTask(
+                id: oldTask.id,
+                title: oldTask.title,
+                description: oldTask.description,
+                category: oldTask.category,
+                urgency: oldTask.urgency,
+                status: completed ? .completed : oldTask.status,
+                buildingId: oldTask.buildingId,
+                assignedWorkerId: oldTask.assignedWorkerId,
+                estimatedDuration: oldTask.estimatedDuration,
+                createdDate: oldTask.createdDate,
+                dueDate: oldTask.dueDate,
+                completedDate: completed ? Date() : oldTask.completedDate,
+                instructions: oldTask.instructions,
+                requiredSkills: oldTask.requiredSkills,
+                isRecurring: oldTask.isRecurring,
+                parentTaskId: oldTask.parentTaskId
+            )
+            
+            tasks[index] = updatedTask
         }
         
-        // Update context
+        // Update context metadata
         if let context = currentContext {
             let updatedMetadata = context.metadata.merging([
                 "last_task_update": ISO8601DateFormatter().string(from: Date()),
@@ -169,10 +187,8 @@ public class NovaCore: ObservableObject {
             ))
         }
         
-        // Maintenance schedule recommendation
-        let overdueTasks = buildingTasks.filter { task in
-            !task.isCompleted && task.scheduledDate < Date()
-        }
+        // Check for overdue tasks using the isOverdue computed property
+        let overdueTasks = buildingTasks.filter { $0.isOverdue }
         
         if !overdueTasks.isEmpty {
             recommendations.append(NovaRecommendation(
@@ -209,7 +225,7 @@ public class NovaCore: ObservableObject {
     // MARK: - Private Helpers
     
     private func getUniqueWorkerCount() -> Int {
-        // This would need actual implementation based on task assignments
+        // Count unique assigned worker IDs
         return Set(tasks.compactMap { $0.assignedWorkerId }).count
     }
 }
@@ -239,38 +255,5 @@ public struct NovaRecommendation {
         self.category = category
         self.estimatedImpact = estimatedImpact
         self.buildingId = buildingId
-    }
-}
-
-// MARK: - Extensions for Missing Properties
-
-extension NovaInsight {
-    // These properties need to be added to NovaInsight in NovaTypes.swift
-    var buildingIds: [String] {
-        // Placeholder - should be implemented in NovaTypes.swift
-        return []
-    }
-    
-    var estimatedImpact: String {
-        // Placeholder - should be implemented in NovaTypes.swift
-        return confidence > 0.8 ? "High" : "Medium"
-    }
-}
-
-extension MaintenanceTask {
-    // Assuming these properties exist or need to be added
-    var isCompleted: Bool {
-        get {
-            // This would need proper implementation
-            return false
-        }
-        set {
-            // This would need proper implementation
-        }
-    }
-    
-    var assignedWorkerId: String? {
-        // This would need proper implementation
-        return nil
     }
 }
