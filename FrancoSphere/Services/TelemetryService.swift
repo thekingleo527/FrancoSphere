@@ -87,7 +87,6 @@ struct EventRecord {
 }
 
 // MARK: - Memory Warning Observer (Handles notification bridging)
-
 private class MemoryWarningObserver {
     init() {
         NotificationCenter.default.addObserver(
@@ -99,6 +98,10 @@ private class MemoryWarningObserver {
     }
     
     @objc private func handleMemoryWarning() {
+        performAsyncWarning()
+    }
+    
+    private func performAsyncWarning() {
         Task {
             await TelemetryService.shared.handleMemoryWarning()
         }
