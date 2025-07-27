@@ -81,14 +81,6 @@ public actor BuildingMetricsService {
         // Update cache
         metricsCache[buildingId] = CachedMetrics(metrics: metrics, timestamp: Date())
         
-        
-        // Notify other dashboards
-        await MainActor.run {
-            DashboardSyncService.shared.onBuildingMetricsChanged(
-                buildingId: buildingId,
-                metrics: metrics
-            )
-        }
         return metrics
     }
     
@@ -268,14 +260,6 @@ public actor BuildingMetricsService {
         
         print("✅ GRDB Metrics calculated - Building: \(buildingId), Score: \(Int(overallScore)), Completion: \(Int(completionRate * 100))%")
         
-        
-        // Notify other dashboards
-        await MainActor.run {
-            DashboardSyncService.shared.onBuildingMetricsChanged(
-                buildingId: buildingId,
-                metrics: metrics
-            )
-        }
         return metrics
     }
     

@@ -40,6 +40,11 @@ public struct OperationalDataTaskAssignment: Codable, Hashable {
 // ✅ ALL building mappings preserved: Rubin Museum, Perry Street, 17th Street corridor
 // ✅ ALL routine schedules preserved: DSNY, maintenance, cleaning circuits
 // ✅ Kevin's Rubin Museum duties preserved: Building ID 14 assignments
+//
+// USAGE:
+// 1. Get shared instance: let manager = OperationalDataManager.shared
+// 2. Initialize data: try await manager.initializeOperationalData()
+// 3. (Optional) Setup real-time sync: await manager.setupRealTimeSync()
 
 @MainActor
 public class OperationalDataManager: ObservableObject {
@@ -259,29 +264,30 @@ public class OperationalDataManager: ObservableObject {
     ]
     
     private init() {
-        setupRealTimeSync()
+        // Initialize without real-time sync - it can be set up separately if needed
     }
     
     // MARK: - Real-Time Synchronization (GRDB)
     
-    private func setupRealTimeSync() {
+    /// Setup real-time sync with BuildingMetricsService
+    /// Call this method after creating the OperationalDataManager instance
+    /// Example: await OperationalDataManager.shared.setupRealTimeSync()
+    public func setupRealTimeSync() async {
         // Subscribe to building metrics updates
-        Task { @MainActor in
-            // ✅ FIXED: Keep Task wrapper but handle the publisher correctly
-            let publisher = await buildingMetrics.subscribeToMultipleMetrics(for: [])
-            
-            publisher
-                .receive(on: DispatchQueue.main)
-                .sink { completion in
-                    if case .failure(let error) = completion {
-                        print("⚠️ Real-time sync error: \(error)")
-                    }
-                } receiveValue: { [weak self] metrics in
-                    // Update operational status based on real-time metrics
-                    self?.updateOperationalStatus(with: metrics)
+        let publisher = await buildingMetrics.subscribeToMultipleMetrics(for: [])
+        
+        // Store the subscription on MainActor
+        publisher
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case .failure(let error) = completion {
+                    print("⚠️ Real-time sync error: \(error)")
                 }
-                .store(in: &cancellables)
-        }
+            } receiveValue: { [weak self] metrics in
+                // Update operational status based on real-time metrics
+                self?.updateOperationalStatus(with: metrics)
+            }
+            .store(in: &cancellables)
     }
     
     private func updateOperationalStatus(with metrics: [String: BuildingMetrics]) {
@@ -300,12 +306,12 @@ public class OperationalDataManager: ObservableObject {
         }
     }
     
-    /// Async version of importRoutinesAndDSNY for UnifiedDataService
+    // MARK: - Public API (GRDB Implementation)
+    
+    /// Async wrapper for importRoutinesAndDSNY (for UnifiedDataService compatibility)
     public func importRoutinesAndDSNYAsync() async throws -> (routines: Int, dsny: Int) {
         return try await importRoutinesAndDSNY()
     }
-    
-    // MARK: - Public API (GRDB Implementation)
     
     /// Initialize operational data using GRDB database as source of truth
     public func initializeOperationalData() async throws {
@@ -347,8 +353,10 @@ public class OperationalDataManager: ObservableObject {
                 currentStatus = "Importing routine schedules..."
             }
             
-            // ✅ FIXED: Call importRoutinesAndDSNY correctly
-            let (routineCount, dsnyCount) = try await importRoutinesAndDSNY()
+            // ✅ FIXED: Use the public async wrapper to avoid ambiguity
+            let routineResult = try await importRoutinesAndDSNYAsync()
+            let routineCount = routineResult.routines
+            let dsnyCount = routineResult.dsny
             
             // Step 4: Validate data integrity (90%)
             await MainActor.run {
@@ -734,11 +742,6 @@ public class OperationalDataManager: ObservableObject {
                         print("📈 Imported \(index + 1)/\(realWorldTasks.count) tasks with GRDB")
                     }
                     
-                    // Allow UI to update periodically - ✅ FIXED: Use proper Task.sleep syntax
-                    if index % 5 == 0 {
-                        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-                    }
-                    
                 } catch {
                     let errorMsg = "Error processing task \(operationalTask.taskName) with GRDB: \(error.localizedDescription)"
                     importErrors.append(errorMsg)
@@ -832,7 +835,7 @@ public class OperationalDataManager: ObservableObject {
             default: taskUrgency = .medium
             }
             
-            // ✅ FIXED: Use correct ContextualTask initializer with all required parameters
+            // ✅ FIXED: Use correct ContextualTask initializer with only the required parameters
             let task = ContextualTask(
                 id: generateExternalId(for: operationalTask, index: 0),
                 title: operationalTask.taskName,
@@ -845,11 +848,8 @@ public class OperationalDataManager: ObservableObject {
                 building: buildingCoordinate,
                 worker: workerProfile,
                 buildingId: buildingId,
-                priority: taskUrgency,
-                buildingName: buildingName,
-                assignedWorkerId: workerId,
-                assignedWorkerName: operationalTask.assignedWorker,
-                estimatedDuration: 3600
+                priority: taskUrgency
+                // REMOVED: buildingName, assignedWorkerId, assignedWorkerName, estimatedDuration
             )
             contextualTasks.append(task)
         }
@@ -857,7 +857,11 @@ public class OperationalDataManager: ObservableObject {
         // Special logging for Kevin's Rubin Museum tasks
         if workerId == "4" {
             let rubinTasks = contextualTasks.filter { task in
-                task.buildingName.contains("Rubin") ?? false
+                // ✅ FIXED: Check if building contains Rubin using building object or buildingId
+                if let building = task.building {
+                    return building.name.contains("Rubin")
+                }
+                return false
             }
             print("✅ PRESERVED: Kevin has \(rubinTasks.count) Rubin Museum tasks with building ID 14 (GRDB)")
         }
@@ -933,7 +937,7 @@ public class OperationalDataManager: ObservableObject {
     }
     
     /// Enhanced import method for operational schedules using GRDB
-    func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
+    private func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
         var routineCount = 0, dsnyCount = 0
         
         print("🔧 Creating routine scheduling tables with GRDB...")

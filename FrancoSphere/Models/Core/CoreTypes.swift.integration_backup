@@ -1769,30 +1769,3 @@ public class DatabaseDebugger {
     public func debugDatabase() {}
     public func cleanDatabase() {}
 }
-
-// MARK: - Portfolio State (Added by Integration Script)
-
-public struct PortfolioState: Codable {
-    public let totalBuildings: Int
-    public let activeWorkers: Int
-    public let overallCompletion: Double
-    public let criticalIssues: Int
-    public let complianceScore: Double
-    public let lastUpdated: Date
-    
-    public init(
-        totalBuildings: Int,
-        activeWorkers: Int,
-        overallCompletion: Double,
-        criticalIssues: Int,
-        complianceScore: Double,
-        lastUpdated: Date = Date()
-    ) {
-        self.totalBuildings = totalBuildings
-        self.activeWorkers = activeWorkers
-        self.overallCompletion = overallCompletion
-        self.criticalIssues = criticalIssues
-        self.complianceScore = complianceScore
-        self.lastUpdated = lastUpdated
-    }
-}

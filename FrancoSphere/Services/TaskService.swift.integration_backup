@@ -318,24 +318,6 @@ actor TaskService {
         )
         return rows?.first?["buildingId"] as? String
     }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getWorkerIdForTask(_ taskId: String) async -> String? {
-        let result = try? await grdbManager.query(
-            "SELECT workerId FROM routine_tasks WHERE id = ?", 
-            [taskId]
-        )
-        return result?.first?["workerId"] as? String
-    }
-    
-    private func getBuildingIdForTask(_ taskId: String) async -> String {
-        let result = try? await grdbManager.query(
-            "SELECT buildingId FROM routine_tasks WHERE id = ?", 
-            [taskId]
-        )
-        return result?.first?["buildingId"] as? String ?? "unknown"
-    }
 }
 
 // MARK: - Template Management Extension
@@ -403,24 +385,6 @@ extension TaskService {
         
         try await createTask(task)
     }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getWorkerIdForTask(_ taskId: String) async -> String? {
-        let result = try? await grdbManager.query(
-            "SELECT workerId FROM routine_tasks WHERE id = ?", 
-            [taskId]
-        )
-        return result?.first?["workerId"] as? String
-    }
-    
-    private func getBuildingIdForTask(_ taskId: String) async -> String {
-        let result = try? await grdbManager.query(
-            "SELECT buildingId FROM routine_tasks WHERE id = ?", 
-            [taskId]
-        )
-        return result?.first?["buildingId"] as? String ?? "unknown"
-    }
 }
 
 // MARK: - Error Types
@@ -438,24 +402,6 @@ enum TaskServiceError: LocalizedError {
         case .taskNotFound:
             return "Task not found"
         }
-    }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getWorkerIdForTask(_ taskId: String) async -> String? {
-        let result = try? await grdbManager.query(
-            "SELECT workerId FROM routine_tasks WHERE id = ?", 
-            [taskId]
-        )
-        return result?.first?["workerId"] as? String
-    }
-    
-    private func getBuildingIdForTask(_ taskId: String) async -> String {
-        let result = try? await grdbManager.query(
-            "SELECT buildingId FROM routine_tasks WHERE id = ?", 
-            [taskId]
-        )
-        return result?.first?["buildingId"] as? String ?? "unknown"
     }
 }
 
