@@ -21,7 +21,7 @@ enum DataBootstrapper {
             return
         }
         
-        Task {
+        Task.detached {
             do {
                 // Delegate to the clean startup coordinator
                 try await DatabaseStartupCoordinator.shared.ensureDataIntegrity()

@@ -264,6 +264,18 @@ public class DatabaseStartupCoordinator {
         
         print("✅ Integrity checks passed")
     }
+    
+    // MARK: - Data Integrity (Added by Fix Script)
+    
+    func ensureDataIntegrity() async throws {
+        print("🔍 Checking data integrity...")
+        // Placeholder for data integrity checks
+    }
+    
+    func quickHealthCheck() async throws {
+        print("💓 Performing quick health check...")
+        // Placeholder for health check
+    }
 }
 
 // MARK: - Database Models
@@ -276,6 +288,18 @@ struct Worker: Codable, FetchableRecord, PersistableRecord {
     let email: String
     let role: String
     var isActive: Bool = true
+    
+    // MARK: - Data Integrity (Added by Fix Script)
+    
+    func ensureDataIntegrity() async throws {
+        print("🔍 Checking data integrity...")
+        // Placeholder for data integrity checks
+    }
+    
+    func quickHealthCheck() async throws {
+        print("💓 Performing quick health check...")
+        // Placeholder for health check
+    }
 }
 
 struct Building: Codable, FetchableRecord, PersistableRecord {
@@ -288,6 +312,18 @@ struct Building: Codable, FetchableRecord, PersistableRecord {
     let longitude: Double
     var type: String?
     var imageUrl: String?
+    
+    // MARK: - Data Integrity (Added by Fix Script)
+    
+    func ensureDataIntegrity() async throws {
+        print("🔍 Checking data integrity...")
+        // Placeholder for data integrity checks
+    }
+    
+    func quickHealthCheck() async throws {
+        print("💓 Performing quick health check...")
+        // Placeholder for health check
+    }
 }
 
 struct WorkerAssignment: Codable, FetchableRecord, PersistableRecord {
@@ -298,6 +334,18 @@ struct WorkerAssignment: Codable, FetchableRecord, PersistableRecord {
     let buildingId: String
     let isPrimary: Bool
     var createdAt: Date = Date()
+    
+    // MARK: - Data Integrity (Added by Fix Script)
+    
+    func ensureDataIntegrity() async throws {
+        print("🔍 Checking data integrity...")
+        // Placeholder for data integrity checks
+    }
+    
+    func quickHealthCheck() async throws {
+        print("💓 Performing quick health check...")
+        // Placeholder for health check
+    }
 }
 
 struct Task: Codable, FetchableRecord, PersistableRecord {
@@ -314,8 +362,32 @@ struct Task: Codable, FetchableRecord, PersistableRecord {
     var dueDate: Date?
     var completedAt: Date?
     var createdAt: Date = Date()
+    
+    // MARK: - Data Integrity (Added by Fix Script)
+    
+    func ensureDataIntegrity() async throws {
+        print("🔍 Checking data integrity...")
+        // Placeholder for data integrity checks
+    }
+    
+    func quickHealthCheck() async throws {
+        print("💓 Performing quick health check...")
+        // Placeholder for health check
+    }
 }
 
 enum DatabaseError: Error {
     case integrityCheckFailed(String)
+    
+    // MARK: - Data Integrity (Added by Fix Script)
+    
+    func ensureDataIntegrity() async throws {
+        print("🔍 Checking data integrity...")
+        // Placeholder for data integrity checks
+    }
+    
+    func quickHealthCheck() async throws {
+        print("💓 Performing quick health check...")
+        // Placeholder for health check
+    }
 }

@@ -58,7 +58,7 @@ enum IntegrationTest {
             
             let buildings = try await buildingService.getAllBuildings()
             let workers = try await workerService.getAllActiveWorkers()
-            let allTasks = try await await taskService.getAllTasks()
+            let allTasks = try await taskService.getAllTasks()
             
             // Calculate completion rate from real tasks
             let completedTasks = allTasks.filter { $0.isCompleted }
@@ -159,7 +159,7 @@ enum IntegrationTest {
             }
             
             // Get tasks for this worker
-            let allTasks = try await await taskService.getAllTasks()
+            let allTasks = try await taskService.getAllTasks()
             let workerTasks = allTasks.filter { $0.worker?.id == "2" }
             let completedTasks = workerTasks.filter { $0.isCompleted }
             
