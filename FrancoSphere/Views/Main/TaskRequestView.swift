@@ -514,29 +514,32 @@ struct TaskRequestView: View {
     }
     
     private func createSampleInventory() -> [CoreTypes.InventoryItem] {
-        return [
-            CoreTypes.InventoryItem(
-                name: "All-Purpose Cleaner",
-                category: .supplies,
-                quantity: 10,
-                minThreshold: 5,
-                location: "Storage Room A"
-            ),
-            CoreTypes.InventoryItem(
-                name: "Paint Brushes",
-                category: .tools,
-                quantity: 5,
-                minThreshold: 2,
-                location: "Maintenance Workshop"
-            ),
-            CoreTypes.InventoryItem(
-                name: "Safety Gloves",
-                category: .safety,
-                quantity: 20,
-                minThreshold: 10,
-                location: "Safety Cabinet"
-            )
+        // Match the pattern from InventoryView - we need all parameters
+        let items: [(name: String, category: CoreTypes.InventoryCategory, stock: Int, min: Int, location: String)] = [
+            ("All-Purpose Cleaner", .supplies, 10, 5, "Storage Room A"),
+            ("Paint Brushes", .tools, 5, 2, "Maintenance Workshop"),
+            ("Safety Gloves", .safety, 20, 10, "Safety Cabinet")
         ]
+        
+        return items.map { item in
+            let status: CoreTypes.RestockStatus = item.stock <= item.min ?
+                (item.stock == 0 ? .outOfStock : .lowStock) : .inStock
+            
+            return CoreTypes.InventoryItem(
+                id: UUID().uuidString,
+                name: item.name,
+                category: item.category,
+                currentStock: item.stock,
+                minimumStock: item.min,
+                maxStock: item.stock * 5,
+                unit: "units",
+                cost: 0.0,
+                supplier: nil,
+                location: item.location,
+                lastRestocked: nil,
+                status: status
+            )
+        }
     }
     
     // MARK: - Actions
@@ -795,32 +798,60 @@ struct InventorySelectionView: View {
         await MainActor.run {
             self.inventoryItems = [
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "All-Purpose Cleaner",
                     category: .supplies,
-                    quantity: 10,
-                    minThreshold: 5,
-                    location: "Storage Room A"
+                    currentStock: 10,
+                    minimumStock: 5,
+                    maxStock: 50,
+                    unit: "bottles",
+                    cost: 0.0,
+                    supplier: nil,
+                    location: "Storage Room A",
+                    lastRestocked: nil,
+                    status: .inStock
                 ),
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "Paint Brushes",
                     category: .tools,
-                    quantity: 5,
-                    minThreshold: 2,
-                    location: "Maintenance Workshop"
+                    currentStock: 5,
+                    minimumStock: 2,
+                    maxStock: 20,
+                    unit: "pieces",
+                    cost: 0.0,
+                    supplier: nil,
+                    location: "Maintenance Workshop",
+                    lastRestocked: nil,
+                    status: .inStock
                 ),
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "Safety Gloves",
                     category: .safety,
-                    quantity: 20,
-                    minThreshold: 10,
-                    location: "Safety Cabinet"
+                    currentStock: 20,
+                    minimumStock: 10,
+                    maxStock: 100,
+                    unit: "pairs",
+                    cost: 0.0,
+                    supplier: nil,
+                    location: "Safety Cabinet",
+                    lastRestocked: nil,
+                    status: .inStock
                 ),
                 CoreTypes.InventoryItem(
+                    id: UUID().uuidString,
                     name: "LED Light Bulbs",
                     category: .materials,
-                    quantity: 15,
-                    minThreshold: 8,
-                    location: "Electrical Storage"
+                    currentStock: 15,
+                    minimumStock: 8,
+                    maxStock: 50,
+                    unit: "pieces",
+                    cost: 0.0,
+                    supplier: nil,
+                    location: "Electrical Storage",
+                    lastRestocked: nil,
+                    status: .inStock
                 )
             ]
             self.isLoading = false
@@ -951,26 +982,6 @@ struct TaskSuggestion: Identifiable, Equatable {
 }
 
 // MARK: - Extensions
-
-// Convenience initializer for InventoryItem to match usage in app
-extension CoreTypes.InventoryItem {
-    init(name: String, category: CoreTypes.InventoryCategory, quantity: Int, minThreshold: Int, location: String) {
-        self.init(
-            id: UUID().uuidString,
-            name: name,
-            category: category,
-            currentStock: quantity,
-            minimumStock: minThreshold,
-            maxStock: quantity * 5, // Default max to 5x current
-            unit: "units",
-            cost: 0.0,
-            supplier: nil,
-            location: location,
-            lastRestocked: nil,
-            status: quantity <= minThreshold ? (quantity == 0 ? .outOfStock : .lowStock) : .inStock
-        )
-    }
-}
 
 extension CoreTypes.InventoryItem {
     var displayUnit: String {

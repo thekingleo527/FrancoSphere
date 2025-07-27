@@ -188,3 +188,17 @@ struct AIAvatarOverlayView_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
+extension AIScenarioType {
+    public var displayTitle: String {
+        switch self {
+        case .routineIncomplete: return "Routine Incomplete"
+        case .pendingTasks: return "Pending Tasks"
+        case .weatherAlert: return "Weather Alert"
+        case .clockOutReminder: return "Clock Out Reminder"
+        case .inventoryLow: return "Inventory Low"
+        case .emergencyRepair: return "Emergency Repair"
+        case .taskOverdue: return "Task Overdue"
+        case .buildingAlert: return "Building Alert"
+        }
+    }
+}

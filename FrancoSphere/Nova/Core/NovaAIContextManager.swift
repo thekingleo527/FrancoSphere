@@ -148,11 +148,10 @@ class NovaAIContextManager: ObservableObject {
                 )
             )
         }
-        
-        return features.sorted { (first, second) in
-            first.priority.numericValue > second.priority.numericValue
+        return features.sorted { $0.priority.numericValue > $1.priority.numericValue }
+
+        })
         }
-    }
     
     // MARK: - Admin AI Features
     
@@ -405,7 +404,6 @@ class NovaAIContextManager: ObservableObject {
         // This would integrate with weather service
         return nil
     }
-}
 
 // MARK: - Supporting Types (Local to AI Context)
 
