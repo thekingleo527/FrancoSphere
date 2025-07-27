@@ -7,6 +7,7 @@
 //  ✅ SECURITY: Full SecurityManager integration for credential storage
 //  ✅ REAL-TIME: ASWebAuthenticationSession for proper OAuth flow
 //  ✅ INTEGRATION: Seamless PayrollExporter compatibility
+//  ✅ COMPANY: Hardcoded for Franco Management Enterprises (FME) only
 //  ✅ DEPENDS ON: QBConnectionStatus.swift for connection status enum
 //
 
@@ -25,7 +26,7 @@ public actor QuickBooksOAuthManager {
     
     // MARK: - Internal State (Actor-Protected)
     private(set) var connectionStatus: QBConnectionStatus = QBConnectionStatus.disconnected
-    private(set) var companyId: String?
+    private let companyId: String = "FME_QB_COMPANY_ID" // TODO: Replace with actual FME QuickBooks Company ID
     private(set) var currentCredentials: QuickBooksCredentials?
     private(set) var lastTokenRefresh: Date?
     private(set) var authenticationInProgress = false
@@ -70,8 +71,8 @@ public actor QuickBooksOAuthManager {
         return connectionStatus
     }
     
-    /// Get current company ID if connected
-    public func getCompanyId() -> String? {
+    /// Get current company ID (always returns FME company ID)
+    public func getCompanyId() -> String {
         return companyId
     }
     
@@ -152,9 +153,8 @@ public actor QuickBooksOAuthManager {
         // Clear stored credentials
         try await securityManager.clearQuickBooksCredentials()
         
-        // Reset state
+        // Reset state (except company ID which is constant)
         currentCredentials = nil
-        companyId = nil
         connectionStatus = QBConnectionStatus.disconnected
         lastTokenRefresh = nil
         
@@ -204,7 +204,7 @@ public actor QuickBooksOAuthManager {
         do {
             if let credentials = try await securityManager.getQuickBooksCredentials() {
                 currentCredentials = credentials
-                companyId = credentials.companyId
+                // companyId is fixed for FME, don't override
                 connectionStatus = QBConnectionStatus.connected
                 print("✅ Loaded stored QuickBooks credentials")
             } else {
@@ -261,7 +261,7 @@ public actor QuickBooksOAuthManager {
                     return
                 }
                 
-                // Extract auth code and company ID synchronously
+                // Extract auth code synchronously (no need for company ID - FME only)
                 do {
                     guard let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
                           let queryItems = components.queryItems else {
@@ -284,13 +284,6 @@ public actor QuickBooksOAuthManager {
                         throw QuickBooksOAuthError.invalidCallback("No authorization code")
                     }
                     
-                    // Extract and store company ID if present
-                    Task { [weak self] in
-                        if let realmId = queryItems.first(where: { $0.name == "realmId" })?.value {
-                            await self?.setCompanyId(realmId)
-                        }
-                    }
-                    
                     continuation.resume(returning: code)
                 } catch {
                     continuation.resume(throwing: error)
@@ -307,11 +300,6 @@ public actor QuickBooksOAuthManager {
                 continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed("Failed to start authentication session"))
             }
         }
-    }
-    
-    /// Helper method to set company ID from main actor context
-    private func setCompanyId(_ id: String) {
-        self.companyId = id
     }
     
     /// Exchange authorization code for access tokens
@@ -362,8 +350,8 @@ public actor QuickBooksOAuthManager {
         return QuickBooksCredentials(
             accessToken: accessToken,
             refreshToken: refreshToken,
-            companyId: companyId ?? "",
-            realmId: companyId ?? "",
+            companyId: companyId, // Always use FME company ID
+            realmId: companyId,
             expiresIn: expiresIn,
             tokenType: "Bearer",
             scope: scope
@@ -418,8 +406,8 @@ public actor QuickBooksOAuthManager {
         return QuickBooksCredentials(
             accessToken: accessToken,
             refreshToken: newRefreshToken,
-            companyId: companyId ?? "",
-            realmId: companyId ?? "",
+            companyId: companyId, // Always use FME company ID
+            realmId: companyId,
             expiresIn: expiresIn,
             tokenType: "Bearer",
             scope: scope
@@ -429,7 +417,7 @@ public actor QuickBooksOAuthManager {
     /// Store credentials securely via SecurityManager
     private func storeCredentials(_ credentials: QuickBooksCredentials) async throws {
         currentCredentials = credentials
-        companyId = credentials.companyId
+        // companyId is fixed for FME, don't override
         try await securityManager.storeQuickBooksCredentials(credentials)
         try await securityManager.storeQuickBooksRefreshToken(credentials.refreshToken)
     }
@@ -472,7 +460,7 @@ public actor QuickBooksOAuthManager {
                 Date().timeIntervalSince1970,
                 success,
                 error?.localizedDescription as Any,
-                companyId as Any
+                companyId
             ])
         } catch {
             print("⚠️ Failed to record QuickBooks connection: \(error)")
@@ -542,7 +530,7 @@ public enum QuickBooksOAuthError: LocalizedError {
  - ✅ Made performOAuthSession a @MainActor method to avoid dispatch issues
  - ✅ Removed DispatchQueue.main.async wrapper
  - ✅ Simplified continuation handling without nested closures
- - ✅ Added separate setCompanyId helper for actor isolation
+ - ✅ Removed unnecessary company ID extraction (FME is the only company)
  
  🔧 QBCONNECTIONSTATUS FIX:
  - ✅ Removed duplicate QBConnectionStatus enum definition
@@ -550,6 +538,11 @@ public enum QuickBooksOAuthError: LocalizedError {
  - ✅ Added UIKit import for UIWindow usage
  - ✅ Added SwiftUI import since QBConnectionStatus uses Color
  - ✅ All enum references use full type name to avoid ambiguity
+ 
+ 🔧 FME-SPECIFIC SIMPLIFICATIONS:
+ - ✅ Hardcoded company ID for Franco Management Enterprises (FME)
+ - ✅ Removed dynamic company ID extraction from OAuth callback
+ - ✅ All contractors are FME employees, no multi-company support needed
  
  🔧 INTEGRATION IMPROVEMENTS:
  - ✅ Uses existing QBConnectionStatus enum from QBConnectionStatus.swift
@@ -563,5 +556,5 @@ public enum QuickBooksOAuthError: LocalizedError {
  - ✅ No synchronous calls to actor-isolated methods
  - ✅ @MainActor annotation for UI-related OAuth session
  
- 🎯 STATUS: All compilation errors resolved, uses existing types, seamlessly integrated
+ 🎯 STATUS: All compilation errors resolved, simplified for FME-only use
  */
