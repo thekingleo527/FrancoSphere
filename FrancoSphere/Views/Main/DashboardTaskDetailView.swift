@@ -237,8 +237,6 @@ struct DashboardTaskDetailView: View {
         case .utilities: return .yellow
         case .renovation: return .pink
         case .installation: return .cyan
-        case .inventory: return .teal
-        case .other: return .gray
         }
     }
     
