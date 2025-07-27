@@ -11,6 +11,8 @@ import UIKit
 //  ✅ FIXED: All scope issues resolved
 //  ✅ FIXED: PhotoPickerView defined in same file
 //  ✅ ALIGNED: With ContextualTask creation patterns from TaskService
+//  ✅ FIXED: InventoryItem initializer matches InventoryView pattern
+//  ✅ FIXED: Removed unnecessary await in loadInventoryWrapper
 //
 
 // MARK: - Supporting Models (Must be defined before use)
@@ -49,7 +51,7 @@ struct TaskRequestView: View {
     @State private var showPhotoSelector = false
     @State private var requiredInventory: [String: Int] = [:]
     @State private var showInventorySelector = false
-    @State private var availableInventory: [InventoryItem] = []
+    @State private var availableInventory: [CoreTypes.InventoryItem] = []
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var suggestions: [TaskSuggestion] = []
@@ -420,7 +422,7 @@ struct TaskRequestView: View {
                (!attachPhoto || photo != nil)
     }
     
-    private func getInventoryItem(_ itemId: String) -> InventoryItem? {
+    private func getInventoryItem(_ itemId: String) -> CoreTypes.InventoryItem? {
         return availableInventory.first { $0.id == itemId }
     }
     
@@ -484,48 +486,42 @@ struct TaskRequestView: View {
                 name: "Rubin Museum",
                 address: "142-148 West 17th Street, New York, NY",
                 latitude: 40.7402,
-                longitude: -73.9980,
-                imageAssetName: nil
+                longitude: -73.9980
             ),
             NamedCoordinate(
                 id: "1",
                 name: "117 West 17th Street",
                 address: "117 West 17th Street, New York, NY",
                 latitude: 40.7410,
-                longitude: -73.9958,
-                imageAssetName: nil
+                longitude: -73.9958
             ),
             NamedCoordinate(
                 id: "3",
                 name: "131 Perry Street",
                 address: "131 Perry Street, New York, NY",
                 latitude: 40.7350,
-                longitude: -74.0045,
-                imageAssetName: nil
+                longitude: -74.0045
             ),
             NamedCoordinate(
                 id: "5",
                 name: "135-139 West 17th Street",
                 address: "135-139 West 17th Street, New York, NY",
                 latitude: 40.7404,
-                longitude: -73.9975,
-                imageAssetName: nil
+                longitude: -73.9975
             ),
             NamedCoordinate(
                 id: "6",
                 name: "136 West 17th Street",
                 address: "136 West 17th Street, New York, NY",
                 latitude: 40.7403,
-                longitude: -73.9976,
-                imageAssetName: nil
+                longitude: -73.9976
             ),
             NamedCoordinate(
                 id: "13",
                 name: "68 Perry Street",
                 address: "68 Perry Street, New York, NY",
                 latitude: 40.7355,
-                longitude: -74.0032,
-                imageAssetName: nil
+                longitude: -74.0032
             )
         ]
         self.isLoadingBuildings = false
@@ -651,10 +647,10 @@ struct TaskRequestView: View {
         self.availableInventory = createSampleInventory()
     }
     
-    private func createSampleInventory() -> [InventoryItem] {
-        // ✅ FIXED: Use type alias instead of CoreTypes.InventoryItem
+    private func createSampleInventory() -> [CoreTypes.InventoryItem] {
+        // ✅ FIXED: Use CoreTypes.InventoryItem matching InventoryView pattern
         return [
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "All-Purpose Cleaner",
                 category: .supplies,
                 currentStock: 10,
@@ -665,7 +661,7 @@ struct TaskRequestView: View {
                 supplier: "CleanCo Supplies",
                 location: "Storage Room A"
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "Paint Brushes",
                 category: .tools,
                 currentStock: 5,
@@ -676,7 +672,7 @@ struct TaskRequestView: View {
                 supplier: "Tool Depot",
                 location: "Maintenance Workshop"
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "Safety Gloves",
                 category: .safety,
                 currentStock: 20,
@@ -687,7 +683,7 @@ struct TaskRequestView: View {
                 supplier: "SafetyFirst Inc",
                 location: "Safety Cabinet"
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "LED Light Bulbs",
                 category: .materials,
                 currentStock: 15,
@@ -838,7 +834,7 @@ struct InventorySelectionView: View {
     @Binding var selectedItems: [String: Int]
     var onDismiss: (() -> Void)? = nil
     
-    @State private var inventoryItems: [InventoryItem] = []
+    @State private var inventoryItems: [CoreTypes.InventoryItem] = []
     @State private var isLoading = true
     @State private var searchText = ""
     @State private var tempQuantities: [String: Int] = [:]
@@ -926,7 +922,7 @@ struct InventorySelectionView: View {
         }
     }
     
-    private func inventoryItemRow(_ item: InventoryItem) -> some View {
+    private func inventoryItemRow(_ item: CoreTypes.InventoryItem) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -964,7 +960,7 @@ struct InventorySelectionView: View {
         .padding(.vertical, 4)
     }
     
-    private var filteredItems: [InventoryItem] {
+    private var filteredItems: [CoreTypes.InventoryItem] {
         if searchText.isEmpty {
             return inventoryItems
         } else {
@@ -980,7 +976,8 @@ struct InventorySelectionView: View {
     }
     
     private func loadInventoryWrapper() {
-        Task { await loadInventory() }
+        // ✅ FIXED: Remove await since loadInventory is not async
+        loadInventory()
     }
     
     private func incrementQuantity(for itemId: String) {
@@ -1000,9 +997,9 @@ struct InventorySelectionView: View {
         
         // Removed Task.sleep for compatibility - instant load
         
-        // ✅ FIXED: Use type alias InventoryItem
+        // ✅ FIXED: Use CoreTypes.InventoryItem matching InventoryView pattern
         self.inventoryItems = [
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "All-Purpose Cleaner",
                 category: .supplies,
                 currentStock: 10,
@@ -1013,7 +1010,7 @@ struct InventorySelectionView: View {
                 supplier: "CleanCo Supplies",
                 location: "Storage Room A"
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "Paint Brushes",
                 category: .tools,
                 currentStock: 5,
@@ -1024,7 +1021,7 @@ struct InventorySelectionView: View {
                 supplier: "Tool Depot",
                 location: "Maintenance Workshop"
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "Safety Gloves",
                 category: .safety,
                 currentStock: 20,
@@ -1035,7 +1032,7 @@ struct InventorySelectionView: View {
                 supplier: "SafetyFirst Inc",
                 location: "Safety Cabinet"
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 name: "LED Light Bulbs",
                 category: .materials,
                 currentStock: 15,
@@ -1160,7 +1157,7 @@ struct ImagePickerWrapper: UIViewControllerRepresentable {
 
 // MARK: - Extensions
 
-extension InventoryItem {
+extension CoreTypes.InventoryItem {
     var displayUnit: String {
         switch category {
         case .tools: return "pcs"
