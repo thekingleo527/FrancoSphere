@@ -208,7 +208,8 @@ public actor QuickBooksPayrollExporter {
     
     private init() {
         // ✅ FIXED: Setup happens after init in Swift 6 actor pattern
-        Task {
+        Task { [weak self] in
+            guard let self = self else { return }
             await self.loadEmployeeMapping()
             await self.loadExportStats()
             await self.calculateCurrentPayPeriod()
@@ -421,7 +422,7 @@ public actor QuickBooksPayrollExporter {
         
         self.exportProgress.processedEntries += entries.count
     }
-
+    
     private func syncEmployeesIfNeeded() async throws {
         if employeeMapping.isEmpty {
             let workers = try await grdbManager.query("SELECT id, name, email FROM workers WHERE isActive = 1")
@@ -510,38 +511,37 @@ public actor QuickBooksPayrollExporter {
         let dateFormatter = ISO8601DateFormatter()
         let exportId = UUID().uuidString
         
-        // ✅ FIXED: Explicit type conversion to avoid implicit coercion warnings
+        // ✅ FIXED: Use NSNull() instead of nil as Any
         try await grdbManager.execute("""
             INSERT OR REPLACE INTO payroll_export_history 
             (export_id, pay_period_start, pay_period_end, export_date, total_entries, total_workers, export_status, error_message)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, [
-            exportId as Any,
-            dateFormatter.string(from: payPeriod.startDate) as Any,
-            dateFormatter.string(from: payPeriod.endDate) as Any,
-            dateFormatter.string(from: Date()) as Any,
-            exportProgress.totalEntries as Any,
-            exportProgress.totalWorkers as Any,
-            "completed" as Any,
-            nil as Any
+            exportId,
+            dateFormatter.string(from: payPeriod.startDate),
+            dateFormatter.string(from: payPeriod.endDate),
+            dateFormatter.string(from: Date()),
+            exportProgress.totalEntries,
+            exportProgress.totalWorkers,
+            "completed",
+            NSNull()  // FIX: Use NSNull() instead of nil as Any
         ])
     }
     
     private func recordTimeEntryExport(workerId: String, entries: [TimeClockEntry], qbTimeEntry: QBTimeEntry) async throws {
         for entry in entries {
-            // ✅ FIXED: Explicit type conversion to avoid implicit coercion warnings
             try await grdbManager.execute("""
                 INSERT OR REPLACE INTO payroll_export_entries 
                 (time_entry_id, worker_id, qb_employee_id, export_date, regular_hours, overtime_hours, export_status)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, [
-                entry.id as Any,
-                workerId as Any,
-                qbTimeEntry.employeeId as Any,
-                ISO8601DateFormatter().string(from: Date()) as Any,
-                qbTimeEntry.regularHours as Any,
-                qbTimeEntry.overtimeHours as Any,
-                "exported" as Any
+                entry.id,
+                workerId,
+                qbTimeEntry.employeeId,
+                ISO8601DateFormatter().string(from: Date()),
+                qbTimeEntry.regularHours,
+                qbTimeEntry.overtimeHours,
+                "exported"
             ])
         }
     }
@@ -625,8 +625,8 @@ public actor QuickBooksPayrollExporter {
             throw PayrollExportError.notAuthenticated
         }
         
-        // ✅ FIXED: Use proper async sleep method
-        try await Task.sleep(nanoseconds: UInt64(200 * 1_000_000))
+        // ✅ FIXED: Use proper Task.sleep syntax
+        try await Task.sleep(for: .milliseconds(200))
     }
     
     private func parseDate(_ dateString: String?) -> Date? {
@@ -634,5 +634,3 @@ public actor QuickBooksPayrollExporter {
         return ISO8601DateFormatter().date(from: dateString)
     }
 }
-
-// ✅ REMOVED: Invalid actor extension that was causing redeclaration errors
