@@ -303,16 +303,14 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 description: "Clean exterior windows",
                 isCompleted: false,
                 completedDate: nil,
-                dueDate: nil,
+                dueDate: Date(),  // Use dueDate, not scheduledDate
                 category: .cleaning,
                 urgency: .medium,
-                building: nil,  // Don't provide type annotation - it's already typed
-                worker: nil,    // Don't provide type annotation - it's already typed
+                building: nil,
+                worker: nil,
                 buildingId: "14",
                 priority: .medium,
-                buildingName: "Rubin Museum",
                 assignedWorkerId: nil,
-                assignedWorkerName: nil,
                 estimatedDuration: 3600
             ),
             ContextualTask(
@@ -321,16 +319,14 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 description: "Check HVAC system",
                 isCompleted: true,
                 completedDate: Date(),
-                dueDate: nil,
+                dueDate: Date(),
                 category: .maintenance,
                 urgency: .high,
                 building: nil,
                 worker: nil,
                 buildingId: "14",
                 priority: .high,
-                buildingName: "Rubin Museum",
                 assignedWorkerId: nil,
-                assignedWorkerName: nil,
                 estimatedDuration: 3600
             ),
             ContextualTask(
@@ -339,16 +335,14 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 description: "Verify emergency exit accessibility",
                 isCompleted: false,
                 completedDate: nil,
-                dueDate: nil,
+                dueDate: Date(),
                 category: .inspection,
                 urgency: .critical,
                 building: nil,
                 worker: nil,
                 buildingId: "14",
                 priority: .critical,
-                buildingName: "Rubin Museum",
                 assignedWorkerId: nil,
-                assignedWorkerName: nil,
                 estimatedDuration: 3600
             )
         ]
