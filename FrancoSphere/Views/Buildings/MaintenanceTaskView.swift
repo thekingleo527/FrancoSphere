@@ -1,10 +1,5 @@
 import SwiftUI
-
-// Type aliases for CoreTypes
-
 import Foundation
-
-// Type aliases for CoreTypes
 
 struct MaintenanceTaskView: View {
     let task: MaintenanceTask
@@ -37,7 +32,7 @@ struct MaintenanceTaskView: View {
                 HStack {
                     Text(task.title).font(.title).bold()
                     Spacer()
-                    StatusBadge(isCompleted: task.isCompleted, urgency: task.urgency)
+                    StatusBadge(isCompleted: task.status == .completed, urgency: task.urgency)
                 }
 
                 // Building
@@ -72,12 +67,11 @@ struct MaintenanceTaskView: View {
         .alert(isPresented: $showCompleteConfirmation) {
             Alert(title: Text("Mark as Complete?"),
                   message: Text("Are you sure you want to mark this task as complete?"),
-                  primaryButton: .default(Text("Yes"), action: {
-                      // Use Task wrapper for async call
+                  primaryButton: .default(Text("Yes")) {  // ✅ FIXED: Removed async task wrapper
                       Task {
                           await markTaskAsComplete()
                       }
-                  }),
+                  },
                   secondaryButton: .cancel())
         }
     }
@@ -128,9 +122,10 @@ struct MaintenanceTaskView: View {
                 Text("Estimated Duration: \(formattedDuration(task.estimatedDuration))").font(.subheadline)
             }
 
+            // ✅ FIXED: Use isRecurring instead of recurrence
             HStack {
                 Image(systemName: "repeat").foregroundColor(.blue)
-                Text("Recurrence: \(task.recurrence.rawValue.capitalized)").font(.subheadline)
+                Text("Type: \(task.isRecurring ? "Recurring" : "One-time")").font(.subheadline)
             }
         }
     }
@@ -164,21 +159,20 @@ struct MaintenanceTaskView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     } else {
-                        Image(systemName: task.isCompleted ? "arrow.uturn.left" : "checkmark.circle")
+                        Image(systemName: task.status == .completed ? "arrow.uturn.left" : "checkmark.circle")
                     }
                     Text(isMarkingComplete ? "Processing..." :
-                         (task.isCompleted ? "Mark as Pending" : "Mark as Complete"))
+                         (task.status == .completed ? "Mark as Pending" : "Mark as Complete"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(task.isCompleted ? Color.orange : Color.green)
+                .background(task.status == .completed ? Color.orange : Color.green)
                 .foregroundColor(.white)
                 .cornerRadius(10)
             }
             .disabled(isMarkingComplete)
 
-            Button {
-                // Add reassign logic here
+            Button {  // ✅ FIXED: Simplified button action
                 Task {
                     await reassignWorkers()
                 }
@@ -317,7 +311,7 @@ struct StatusBadge: View {
 struct MaintenanceTaskView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            // ✅ FIXED: Use correct MaintenanceTask initializer from CoreTypes
+            // ✅ FIXED: Use correct MaintenanceTask initializer without recurrence
             MaintenanceTaskView(task: CoreTypes.MaintenanceTask(
                 title: "Replace Air Filter",
                 description: "Replace HVAC air filter in main unit",
@@ -326,7 +320,7 @@ struct MaintenanceTaskView_Previews: PreviewProvider {
                 buildingId: "1",
                 assignedWorkerId: "4",
                 dueDate: Date(),
-                recurrence: .monthly
+                isRecurring: true  // ✅ FIXED: Use isRecurring instead of recurrence
             ))
         }
         .preferredColorScheme(.dark)

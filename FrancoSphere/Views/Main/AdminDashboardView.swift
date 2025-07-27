@@ -2,20 +2,15 @@
 //  AdminDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPLETE: Production-ready admin dashboard
-//  ✅ ALIGNED: With fixed AdminDashboardViewModel
+//  ✅ COMPLETE: Production-ready admin dashboard view
+//  ✅ ALIGNED: With AdminDashboardViewModel (no duplicate definitions)
 //  ✅ REAL-TIME: Cross-dashboard synchronization ready
 //  ✅ DESIGN: FrancoSphere glass morphism and dark theme
-//  ✅ FIXED: No compilation errors or complex expressions
+//  ✅ FIXED: No compilation errors or duplicate types
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
-
 import MapKit
-
-// Type aliases for CoreTypes
 
 struct AdminDashboardView: View {
     @StateObject private var viewModel = AdminDashboardViewModel()
@@ -76,8 +71,8 @@ struct AdminDashboardView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     
-                    Text("Welcome, \(authManager.currentUser?.name ?? "Administrator")")
-                        .font(.headline)
+                    Text("Welcome, \(authManager.currentUser?.name ?? "Admin")")
+                        .font(.subheadline)
                         .foregroundColor(.gray)
                 }
                 
@@ -86,7 +81,7 @@ struct AdminDashboardView: View {
                 // Sync status indicator
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(viewModel.dashboardSyncStatus.color)
+                        .fill(viewModel.dashboardSyncStatus == .synced ? Color.green : Color.orange)
                         .frame(width: 8, height: 8)
                     
                     Text(viewModel.dashboardSyncStatus.description)
@@ -96,20 +91,20 @@ struct AdminDashboardView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(.ultraThinMaterial)
-                .cornerRadius(12)
+                .cornerRadius(20)
             }
+            .padding(.horizontal)
             
             // Portfolio summary cards
-            portfolioSummaryCards
-            
-            // Last update time
-            if let lastUpdate = viewModel.lastUpdateTime {
-                Text("Last updated: \(lastUpdate.formatted(date: .omitted, time: .shortened))")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            if !viewModel.isLoading {
+                portfolioSummaryCards
+            } else {
+                ProgressView()
+                    .tint(.white)
+                    .frame(height: 100)
             }
         }
-        .padding()
+        .padding(.vertical)
         .background(.ultraThinMaterial)
     }
 
@@ -118,42 +113,49 @@ struct AdminDashboardView: View {
     private var portfolioSummaryCards: some View {
         let summary = viewModel.getAdminPortfolioSummary()
         
-        return HStack(spacing: 12) {
-            // Buildings card
-            AdminSummaryCard(
-                title: "Buildings",
-                value: "\(summary.totalBuildings)",
-                subtitle: summary.completionPercentage,
-                icon: "building.2.fill",
-                color: .blue
-            )
-            
-            // Workers card
-            AdminSummaryCard(
-                title: "Workers",
-                value: "\(summary.totalWorkers)",
-                subtitle: "Active",
-                icon: "person.3.fill",
-                color: .green
-            )
-            
-            // Tasks card
-            AdminSummaryCard(
-                title: "Tasks",
-                value: "\(summary.completedTasks)/\(summary.totalTasks)",
-                subtitle: "Completed",
-                icon: "checkmark.circle.fill",
-                color: .orange
-            )
-            
-            // Insights card
-            AdminSummaryCard(
-                title: "Critical",
-                value: "\(summary.criticalInsights)",
-                subtitle: "Issues",
-                icon: "exclamationmark.triangle.fill",
-                color: summary.criticalInsights > 0 ? .red : .gray
-            )
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                AdminSummaryCard(
+                    title: "Buildings",
+                    value: "\(summary.totalBuildings)",
+                    subtitle: "Active properties",
+                    icon: "building.2.fill",
+                    color: .blue
+                )
+                
+                AdminSummaryCard(
+                    title: "Workers",
+                    value: "\(summary.totalWorkers)",
+                    subtitle: "Active workers",
+                    icon: "person.3.fill",
+                    color: .green
+                )
+                
+                AdminSummaryCard(
+                    title: "Tasks",
+                    value: "\(summary.completedTasks)/\(summary.totalTasks)",
+                    subtitle: "Completed today",
+                    icon: "checkmark.circle.fill",
+                    color: .orange
+                )
+                
+                AdminSummaryCard(
+                    title: "Efficiency",
+                    value: summary.completionPercentage,
+                    subtitle: summary.efficiencyDescription,
+                    icon: summary.efficiencyStatus.icon,
+                    color: summary.efficiencyStatus.color
+                )
+                
+                AdminSummaryCard(
+                    title: "Insights",
+                    value: "\(summary.criticalInsights)",
+                    subtitle: "Critical alerts",
+                    icon: "exclamationmark.triangle.fill",
+                    color: .red
+                )
+            }
+            .padding(.horizontal)
         }
     }
 
@@ -162,28 +164,24 @@ struct AdminDashboardView: View {
     private var adminTabBar: some View {
         HStack(spacing: 0) {
             ForEach(AdminTab.allCases, id: \.self) { tab in
-                Button(action: {
-                    selectedTab = tab
-                }) {
+                Button(action: { selectedTab = tab }) {
                     VStack(spacing: 4) {
                         Image(systemName: tab.icon)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.title3)
                         
                         Text(tab.title)
                             .font(.caption)
                     }
                     .foregroundColor(selectedTab == tab ? .white : .gray)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 8)
                     .background(
-                        selectedTab == tab ?
-                        Color.blue.opacity(0.3) : Color.clear
+                        selectedTab == tab ? Color.blue.opacity(0.3) : Color.clear
                     )
                 }
             }
         }
         .background(.ultraThinMaterial)
-        .animation(.easeInOut(duration: 0.2), value: selectedTab)
     }
 
     // MARK: - Tab Content
@@ -192,60 +190,133 @@ struct AdminDashboardView: View {
     private var tabContent: some View {
         switch selectedTab {
         case .overview:
-            overviewTab
+            overviewContent
         case .buildings:
-            buildingsTab
+            buildingsContent
         case .workers:
-            workersTab
+            workersContent
         case .intelligence:
-            intelligenceTab
+            intelligenceContent
         }
     }
 
-    private var overviewTab: some View {
+    // MARK: - Overview Tab
+
+    private var overviewContent: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
-                // Real-time metrics grid
-                buildingMetricsGrid
+            VStack(spacing: 20) {
+                // Recent updates section
+                recentUpdatesSection
                 
-                // Recent cross-dashboard updates
-                crossDashboardUpdatesSection
+                // Building metrics overview
+                buildingMetricsOverview
                 
-                // Quick actions
-                quickActionsSection
+                // Worker status overview
+                workerStatusOverview
             }
             .padding()
         }
-        .refreshable {
-            await viewModel.refreshDashboardData()
-        }
     }
 
-    private var buildingsTab: some View {
-        VStack(spacing: 0) {
-            // Buildings map
-            buildingMap
+    private var recentUpdatesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Recent Updates")
+                .font(.headline)
+                .foregroundColor(.white)
             
-            // Buildings list
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(viewModel.buildings, id: \.id) { building in
-                        BuildingAdminCard(
-                            building: building,
-                            metrics: viewModel.getBuildingMetrics(for: building.id),
-                            onIntelligenceAction: {
-                                selectedBuildingId = building.id
-                                showingBuildingIntelligence = true
-                            }
-                        )
+            if viewModel.crossDashboardUpdates.isEmpty {
+                Text("No recent updates")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(viewModel.crossDashboardUpdates.prefix(5)) { update in
+                        UpdateRow(update: update)
                     }
                 }
-                .padding()
             }
         }
     }
 
-    private var workersTab: some View {
+    private var buildingMetricsOverview: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Building Performance")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Button("View All") {
+                    selectedTab = .buildings
+                }
+                .font(.caption)
+                .foregroundColor(.blue)
+            }
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(viewModel.buildings.prefix(5), id: \.id) { building in
+                        BuildingMetricCard(
+                            building: building,
+                            metrics: viewModel.getBuildingMetrics(for: building.id)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private var workerStatusOverview: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Active Workers")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Text("\(viewModel.activeWorkers.count) online")
+                    .font(.caption)
+                    .foregroundColor(.green)
+            }
+            
+            LazyVStack(spacing: 8) {
+                ForEach(viewModel.activeWorkers.prefix(5), id: \.id) { worker in
+                    WorkerStatusRow(worker: worker)
+                }
+            }
+        }
+    }
+
+    // MARK: - Buildings Tab
+
+    private var buildingsContent: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(viewModel.buildings, id: \.id) { building in
+                    BuildingAdminCard(
+                        building: building,
+                        metrics: viewModel.getBuildingMetrics(for: building.id),
+                        insights: viewModel.getIntelligenceInsights(for: building.id),
+                        onTap: {
+                            selectedBuildingId = building.id
+                            showingBuildingIntelligence = true
+                        }
+                    )
+                }
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Workers Tab
+
+    private var workersContent: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(viewModel.activeWorkers, id: \.id) { worker in
@@ -254,150 +325,58 @@ struct AdminDashboardView: View {
             }
             .padding()
         }
-        .refreshable {
-            await viewModel.loadDashboardData()
-        }
     }
 
-    private var intelligenceTab: some View {
+    // MARK: - Intelligence Tab
+
+    private var intelligenceContent: some View {
         VStack(spacing: 16) {
-            // Portfolio insights header
+            // Intelligence header
             HStack {
-                Text("Portfolio Intelligence")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Portfolio Intelligence")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text("\(viewModel.portfolioInsights.count) insights available")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
                 
                 Spacer()
                 
-                if viewModel.isLoadingInsights {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                        .tint(.white)
-                } else {
-                    Button("Refresh") {
-                        Task {
-                            await viewModel.loadPortfolioInsights()
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundColor(.blue)
+                Button(action: {
+                    showingPortfolioInsights = true
+                }) {
+                    Text("View All")
+                        .font(.caption)
+                        .foregroundColor(.blue)
                 }
             }
             .padding(.horizontal)
             
-            // Intelligence insights
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(viewModel.portfolioInsights, id: \.id) { insight in
-                        IntelligenceInsightCard(insight: insight)
-                    }
-                }
-                .padding()
-            }
-        }
-    }
-
-    // MARK: - Building Map
-
-    private var buildingMap: some View {
-        Map(coordinateRegion: $region, annotationItems: viewModel.buildings) { building in
-            MapAnnotation(coordinate: CLLocationCoordinate2D(
-                latitude: building.latitude,
-                longitude: building.longitude
-            )) {
-                BuildingMapAnnotation(
-                    building: building,
-                    metrics: viewModel.getBuildingMetrics(for: building.id),
-                    onTap: {
-                        selectedBuildingId = building.id
-                        showingBuildingIntelligence = true
-                    }
-                )
-            }
-        }
-        .frame(height: 300)
-        .cornerRadius(12)
-        .padding()
-    }
-
-    // MARK: - Building Metrics Grid
-
-    private var buildingMetricsGrid: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Building Performance")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                ForEach(Array(viewModel.buildingMetrics.prefix(6)), id: \.key) { buildingId, metrics in
-                    BuildingMetricsCard(
-                        buildingId: buildingId,
-                        buildingName: viewModel.buildings.first { $0.id == buildingId }?.name ?? "Building \(buildingId)",
-                        metrics: metrics,
-                        onTap: {
-                            selectedBuildingId = buildingId
-                            showingBuildingIntelligence = true
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-    // MARK: - Cross-Dashboard Updates Section
-
-    private var crossDashboardUpdatesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Live Updates")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            if viewModel.crossDashboardUpdates.isEmpty {
-                Text("No recent updates")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
-            } else {
-                ForEach(viewModel.crossDashboardUpdates.prefix(5), id: \.description) { update in
-                    CrossDashboardUpdateRow(update: update)
-                }
-            }
-        }
-    }
-
-    // MARK: - Quick Actions Section
-
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Actions")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            HStack(spacing: 12) {
-                AdminQuickActionButton(
-                    title: "Portfolio Insights",
-                    icon: "brain.head.profile",
-                    color: .purple
-                ) {
-                    showingPortfolioInsights = true
+            // Insights list
+            if viewModel.portfolioInsights.isEmpty {
+                Spacer()
+                
+                VStack(spacing: 12) {
+                    Image(systemName: "lightbulb.slash")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                    
+                    Text("No insights available")
+                        .foregroundColor(.gray)
                 }
                 
-                AdminQuickActionButton(
-                    title: "Refresh Data",
-                    icon: "arrow.clockwise",
-                    color: .blue,
-                    isLoading: viewModel.isLoading
-                ) {
-                    Task {
-                        await viewModel.refreshDashboardData()
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.portfolioInsights.prefix(10), id: \.id) { insight in
+                            IntelligenceInsightCard(insight: insight)
+                        }
                     }
+                    .padding(.horizontal)
                 }
             }
         }
@@ -407,8 +386,9 @@ struct AdminDashboardView: View {
 
     private var buildingIntelligenceSheet: some View {
         NavigationView {
-            BuildingIntelligenceDetailView(
+            BuildingIntelligencePanelContent(
                 buildingId: selectedBuildingId ?? "",
+                buildingName: viewModel.buildings.first { $0.id == selectedBuildingId }?.name ?? "",
                 insights: viewModel.selectedBuildingInsights,
                 isLoading: viewModel.isLoadingIntelligence
             )
@@ -488,115 +468,182 @@ struct AdminSummaryCard: View {
     }
 }
 
-struct BuildingMapAnnotation: View {
-    let building: NamedCoordinate
-    let metrics: CoreTypes.BuildingMetrics?
-    let onTap: () -> Void
+struct UpdateRow: View {
+    let update: DashboardUpdate
     
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 2) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 20, height: 20)
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white)
-                    )
+        HStack(spacing: 12) {
+            Image(systemName: update.source.icon)
+                .font(.caption)
+                .foregroundColor(update.source.color)
+                .frame(width: 24, height: 24)
+                .background(update.source.color.opacity(0.2))
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(update.description)
+                    .font(.caption)
+                    .foregroundColor(.white)
                 
-                Text(building.name)
+                Text(update.timestamp, style: .relative)
                     .font(.caption2)
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(.white.opacity(0.9))
-                    .cornerRadius(4)
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+        }
+        .padding(8)
+        .background(.ultraThinMaterial)
+        .cornerRadius(8)
+    }
+}
+
+struct BuildingMetricCard: View {
+    let building: NamedCoordinate
+    let metrics: CoreTypes.BuildingMetrics?
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(building.name)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .lineLimit(1)
+            
+            if let metrics = metrics {
+                HStack(spacing: 4) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.caption2)
+                    Text("\(Int(metrics.completionRate * 100))%")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                }
+                .foregroundColor(metrics.completionRate > 0.8 ? .green : .orange)
+                
+                Text("\(metrics.overdueTasks) overdue")
+                    .font(.caption2)
+                    .foregroundColor(metrics.overdueTasks > 0 ? .red : .gray)
+            } else {
+                Text("Loading...")
+                    .font(.caption2)
+                    .foregroundColor(.gray)
             }
         }
-        .buttonStyle(PlainButtonStyle())
+        .frame(width: 120)
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(8)
     }
+}
+
+struct WorkerStatusRow: View {
+    let worker: WorkerProfile
     
-    private var statusColor: Color {
-        guard let metrics = metrics else { return .gray }
-        
-        if metrics.overdueTasks > 0 { return .red }
-        if metrics.urgentTasksCount > 0 { return .orange }
-        if metrics.completionRate >= 0.8 { return .green }
-        return .blue
+    var body: some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(worker.isActive ? Color.green : Color.gray)
+                .frame(width: 8, height: 8)
+            
+            Text(worker.name)
+                .font(.caption)
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            Text(worker.role.rawValue.capitalized)
+                .font(.caption2)
+                .foregroundColor(.gray)
+        }
+        .padding(8)
+        .background(.ultraThinMaterial)
+        .cornerRadius(8)
     }
 }
 
 struct BuildingAdminCard: View {
     let building: NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
-    let onIntelligenceAction: () -> Void
+    let insights: [CoreTypes.IntelligenceInsight]
+    let onTap: () -> Void
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Building icon and status
-            VStack {
-                Image(systemName: "building.2.fill")
-                    .font(.title2)
-                    .foregroundColor(statusColor)
-                
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 8, height: 8)
-            }
-            
-            // Building info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(building.name)
-                    .font(.headline)
-                    .foregroundColor(.white)
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(building.name)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        if let address = building.address {
+                            Text(address)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .lineLimit(1)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    if !insights.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                            Text("\(insights.count)")
+                                .font(.caption)
+                        }
+                        .foregroundColor(.orange)
+                    }
+                }
                 
                 if let metrics = metrics {
-                    Text(metrics.displayStatus)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(metrics.pendingTasks) pending • \(metrics.activeWorkers) workers")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 16) {
+                        MetricItem(
+                            label: "Completion",
+                            value: "\(Int(metrics.completionRate * 100))%",
+                            color: metrics.completionRate > 0.8 ? .green : .orange
+                        )
+                        
+                        MetricItem(
+                            label: "Overdue",
+                            value: "\(metrics.overdueTasks)",
+                            color: metrics.overdueTasks > 0 ? .red : .green
+                        )
+                        
+                        MetricItem(
+                            label: "Score",
+                            value: "\(Int(metrics.overallScore))",
+                            color: .blue
+                        )
+                    }
                 }
             }
-            
-            Spacer()
-            
-            // Metrics summary
-            if let metrics = metrics {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(Int(metrics.completionRate * 100))%")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    Text("Complete")
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                }
-            }
-            
-            // Intelligence button
-            Button(action: onIntelligenceAction) {
-                Image(systemName: "brain.head.profile")
-                    .font(.title3)
-                    .foregroundColor(.purple)
-            }
+            .padding()
+            .background(.ultraThinMaterial)
+            .cornerRadius(12)
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .buttonStyle(PlainButtonStyle())
     }
+}
+
+struct MetricItem: View {
+    let label: String
+    let value: String
+    let color: Color
     
-    private var statusColor: Color {
-        guard let metrics = metrics else { return .gray }
-        
-        if metrics.overdueTasks > 0 { return .red }
-        if metrics.urgentTasksCount > 0 { return .orange }
-        if metrics.completionRate >= 0.8 { return .green }
-        return .blue
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.gray)
+            
+            Text(value)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(color)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -605,150 +652,52 @@ struct WorkerAdminCard: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Worker avatar
+            // Avatar
             Circle()
-                .fill(.blue.opacity(0.3))
+                .fill(Color.blue.opacity(0.3))
                 .frame(width: 40, height: 40)
                 .overlay(
-                    Text(worker.name.prefix(1))
-                        .font(.headline)
-                        .fontWeight(.bold)
+                    Text(worker.name.prefix(2).uppercased())
+                        .font(.caption)
+                        .fontWeight(.medium)
                         .foregroundColor(.white)
                 )
             
-            // Worker info
             VStack(alignment: .leading, spacing: 4) {
                 Text(worker.name)
-                    .font(.headline)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
                 
-                Text(worker.role.rawValue.capitalized)
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                HStack(spacing: 8) {
+                    Text(worker.role.rawValue.capitalized)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    if !worker.skills.isEmpty {
+                        Text("• \(worker.skills.count) skills")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                }
             }
             
             Spacer()
             
-            // Status indicator
+            // Status
             HStack(spacing: 4) {
                 Circle()
-                    .fill(.green)
-                    .frame(width: 6, height: 6)
+                    .fill(worker.isActive ? Color.green : Color.gray)
+                    .frame(width: 8, height: 8)
                 
-                Text("Active")
+                Text(worker.isActive ? "Active" : "Inactive")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(worker.isActive ? .green : .gray)
             }
         }
         .padding()
         .background(.ultraThinMaterial)
         .cornerRadius(12)
-    }
-}
-
-struct BuildingMetricsCard: View {
-    let buildingId: String
-    let buildingName: String
-    let metrics: CoreTypes.BuildingMetrics
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(buildingName)
-                        .font(.caption)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    
-                    Spacer()
-                    
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 8, height: 8)
-                }
-                
-                Text("\(Int(metrics.completionRate * 100))%")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("\(metrics.pendingTasks) pending")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-            }
-            .padding()
-            .frame(height: 80)
-            .background(.ultraThinMaterial)
-            .cornerRadius(8)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    private var statusColor: Color {
-        if metrics.overdueTasks > 0 { return .red }
-        if metrics.urgentTasksCount > 0 { return .orange }
-        if metrics.completionRate >= 0.8 { return .green }
-        return .blue
-    }
-}
-
-struct CrossDashboardUpdateRow: View {
-    let update: CrossDashboardUpdate
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(.blue.opacity(0.3))
-                .frame(width: 8, height: 8)
-            
-            Text(update.description)
-                .font(.caption)
-                .foregroundColor(.white)
-            
-            Spacer()
-            
-            Text("Now")
-                .font(.caption2)
-                .foregroundColor(.gray)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
-        .cornerRadius(8)
-    }
-}
-
-struct AdminQuickActionButton: View {
-    let title: String
-    let icon: String
-    let color: Color
-    var isLoading: Bool = false
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                if isLoading {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                        .tint(.white)
-                } else {
-                    Image(systemName: icon)
-                        .font(.headline)
-                }
-                
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(color.opacity(0.3))
-            .cornerRadius(8)
-        }
-        .disabled(isLoading)
     }
 }
 
@@ -759,33 +708,42 @@ struct IntelligenceInsightCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(insight.title)
-                    .font(.headline)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
+                    .lineLimit(2)
                 
                 Spacer()
                 
-                Text(insight.priority.rawValue.uppercased())
-                    .font(.caption2)
-                    .fontWeight(.bold)
-                    .foregroundColor(priorityColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(priorityColor.opacity(0.2))
-                    .cornerRadius(4)
+                if insight.actionRequired {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
             }
             
             Text(insight.description)
-                .font(.body)
+                .font(.caption)
                 .foregroundColor(.gray)
+                .lineLimit(3)
             
-            if insight.actionRequired {
-                HStack {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.orange)
+            HStack {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(insight.priority.color)
+                        .frame(width: 6, height: 6)
                     
-                    Text("Action Required")
-                        .font(.caption)
-                        .foregroundColor(.orange)
+                    Text(insight.priority.displayName)
+                        .font(.caption2)
+                        .foregroundColor(insight.priority.color)
+                }
+                
+                Spacer()
+                
+                if !insight.affectedBuildings.isEmpty {
+                    Text("\(insight.affectedBuildings.count) buildings")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
                 }
             }
         }
@@ -793,48 +751,65 @@ struct IntelligenceInsightCard: View {
         .background(.ultraThinMaterial)
         .cornerRadius(12)
     }
-    
-    private var priorityColor: Color {
-        switch insight.priority {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
 }
 
-struct BuildingIntelligenceDetailView: View {
+// Add this helper view
+struct BuildingIntelligencePanelContent: View {
     let buildingId: String
+    let buildingName: String
     let insights: [CoreTypes.IntelligenceInsight]
     let isLoading: Bool
     
     var body: some View {
-        VStack {
-            if isLoading {
-                ProgressView("Analyzing building data...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if insights.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "brain.head.profile")
-                        .font(.system(size: 50))
-                        .foregroundColor(.gray)
-                    
-                    Text("No intelligence data available")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                }
+        if isLoading {
+            ProgressView("Loading insights...")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(insights, id: \.id) { insight in
-                            IntelligenceInsightCard(insight: insight)
-                        }
+        } else if insights.isEmpty {
+            VStack(spacing: 16) {
+                Image(systemName: "checkmark.circle")
+                    .font(.largeTitle)
+                    .foregroundColor(.green)
+                
+                Text("No issues found")
+                    .font(.headline)
+                
+                Text("This building is operating optimally")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(insights, id: \.id) { insight in
+                        IntelligenceInsightCard(insight: insight)
                     }
-                    .padding()
+                }
+                .padding()
+            }
+        }
+        .background(Color.black.ignoresSafeArea())
+    }
+}
+
+// Add this helper view for IntelligenceInsightsView
+struct IntelligenceInsightsView: View {
+    let insights: [CoreTypes.IntelligenceInsight]
+    let onRefreshInsights: () async -> Void
+    
+    @State private var isRefreshing = false
+    
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(insights, id: \.id) { insight in
+                    IntelligenceInsightCard(insight: insight)
                 }
             }
+            .padding()
+        }
+        .refreshable {
+            await onRefreshInsights()
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -866,10 +841,43 @@ enum AdminTab: String, CaseIterable {
         }
     }
 }
-// MARK: - DashboardUpdate Extension for UI Display
+
+// MARK: - Extensions
+
+extension CoreTypes.IntelligencePriority {
+    var color: Color {
+        switch self {
+        case .critical: return .red
+        case .high: return .orange
+        case .medium: return .yellow
+        case .low: return .green
+        case .info: return .blue
+        }
+    }
+    
+    var displayName: String {
+        switch self {
+        case .critical: return "Critical"
+        case .high: return "High"
+        case .medium: return "Medium"
+        case .low: return "Low"
+        case .info: return "Info"
+        }
+    }
+}
+
+extension CoreTypes.DashboardSyncStatus {
+    var description: String {
+        switch self {
+        case .synced: return "Synced"
+        case .syncing: return "Syncing..."
+        case .failed: return "Sync Failed"
+        case .offline: return "Offline"
+        }
+    }
+}
 
 extension DashboardUpdate {
-    /// Generate display description for UI
     var description: String {
         let sourcePrefix = "[\(source.displayName)]"
         let typeDescription = type.displayName
@@ -881,22 +889,5 @@ extension DashboardUpdate {
         } else {
             return "\(sourcePrefix) \(typeDescription)"
         }
-    }
-    
-    /// Generate detailed description with timestamp
-    var detailedDescription: String {
-        let timeFormatter = DateFormatter()
-        timeFormatter.timeStyle = .short
-        let timeString = timeFormatter.string(from: timestamp)
-        
-        return "\(description) at \(timeString)"
-    }
-}
-
-// MARK: - CoreTypes.DashboardSyncStatus Extension (if missing)
-
-extension CoreTypes.DashboardSyncStatus {
-    var description: String {
-        return self.rawValue
     }
 }

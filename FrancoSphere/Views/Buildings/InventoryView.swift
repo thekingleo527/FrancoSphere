@@ -66,8 +66,8 @@ public struct InventoryView: View {
                 }
             }
             .searchable(text: $searchText, prompt: "Search inventory...")
-            .onChange(of: searchText) { _ in filterItems() }
-            .onChange(of: selectedCategory) { _ in filterItems() }
+            .onChange(of: searchText) { _, _ in filterItems() }  // ✅ FIXED: iOS 17 syntax
+            .onChange(of: selectedCategory) { _, _ in filterItems() }  // ✅ FIXED: iOS 17 syntax
             .sheet(isPresented: $showingAddItem) {
                 AddInventoryItemView(buildingId: buildingId) { success in
                     showingAddItem = false
@@ -139,54 +139,72 @@ public struct InventoryView: View {
         errorMessage = nil
         
         // Simulate data loading with sample data
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {  // ✅ FIXED: Proper syntax
             // ✅ FIXED: Use correct InventoryItem initializer with all required parameters
             inventoryItems = [
                 InventoryItem(
                     name: "All-Purpose Cleaner",
                     category: .supplies,
-                    quantity: 5,
-                    minThreshold: 10,
+                    currentStock: 5,
+                    minimumStock: 10,
+                    maxStock: 50,
+                    unit: "bottle",
+                    cost: 4.99,
                     location: "Storage Room A"
                 ),
                 
                 InventoryItem(
                     name: "Vacuum Cleaner",
                     category: .equipment,
-                    quantity: 2,
-                    minThreshold: 1,
+                    currentStock: 2,
+                    minimumStock: 1,
+                    maxStock: 5,
+                    unit: "unit",
+                    cost: 199.99,
                     location: "Equipment Closet"
                 ),
                 
                 InventoryItem(
                     name: "Safety Goggles",
                     category: .safety,
-                    quantity: 8,
-                    minThreshold: 5,
+                    currentStock: 8,
+                    minimumStock: 5,
+                    maxStock: 20,
+                    unit: "pair",
+                    cost: 12.50,
                     location: "Safety Cabinet"
                 ),
                 
                 InventoryItem(
                     name: "Screwdriver Set",
                     category: .tools,
-                    quantity: 3,
-                    minThreshold: 2,
+                    currentStock: 3,
+                    minimumStock: 2,
+                    maxStock: 10,
+                    unit: "set",
+                    cost: 45.00,
                     location: "Tool Storage"
                 ),
                 
                 InventoryItem(
                     name: "Light Bulbs (LED)",
                     category: .supplies,
-                    quantity: 15,
-                    minThreshold: 20,
+                    currentStock: 15,
+                    minimumStock: 20,
+                    maxStock: 100,
+                    unit: "piece",
+                    cost: 8.00,
                     location: "Electrical Supply"
                 ),
                 
                 InventoryItem(
                     name: "Concrete Patch",
                     category: .materials,
-                    quantity: 6,
-                    minThreshold: 3,
+                    currentStock: 6,
+                    minimumStock: 3,
+                    maxStock: 20,
+                    unit: "bag",
+                    cost: 25.00,
                     location: "Materials Storage"
                 )
             ]
@@ -215,7 +233,7 @@ public struct InventoryView: View {
         if !searchText.isEmpty {
             filtered = filtered.filter { item in
                 item.name.localizedCaseInsensitiveContains(searchText) ||
-                item.location.localizedCaseInsensitiveContains(searchText)
+                (item.location ?? "").localizedCaseInsensitiveContains(searchText)  // ✅ FIXED: Unwrap optional
             }
         }
         
@@ -232,7 +250,7 @@ public struct InventoryView: View {
     // ✅ FIXED: Corrected reduce syntax with proper type and 'into:' parameter
     private var totalInventoryValue: Double {
         return inventoryItems.reduce(into: 0.0) { total, item in
-            total += Double(item.currentStock) * (item.costPerUnit ?? 0.0)
+            total += Double(item.currentStock) * item.cost
         }
     }
 }
@@ -302,7 +320,7 @@ public struct InventoryItemRow: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    Text(item.location)
+                    Text(item.location ?? "No location")  // ✅ FIXED: Unwrap optional
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
@@ -310,7 +328,7 @@ public struct InventoryItemRow: View {
                         StockIndicator(
                             current: item.currentStock,
                             minimum: item.minimumStock,
-                            status: item.restockStatus
+                            status: item.status
                         )
                         
                         Spacer()
@@ -366,7 +384,7 @@ public struct StockIndicator: View {
         case .inStock: return .green
         case .lowStock: return .orange
         case .outOfStock: return .red
-        case .onOrder: return .blue
+        case .ordered: return .blue  // ✅ FIXED: Use .ordered instead of .onOrder
         }
     }
 }
@@ -441,6 +459,7 @@ public struct AddInventoryItemView: View {
     @State private var selectedCategory: InventoryCategory = .supplies
     @State private var quantity = 1
     @State private var minimumStock = 5
+    @State private var maxStock = 50
     @State private var unit = "unit"
     @State private var supplier = ""
     @State private var costPerUnit: Double = 0.0
@@ -465,6 +484,7 @@ public struct AddInventoryItemView: View {
                 Section("Quantity & Stock") {
                     Stepper("Initial Quantity: \(quantity)", value: $quantity, in: 0...1000)
                     Stepper("Minimum Stock: \(minimumStock)", value: $minimumStock, in: 1...100)
+                    Stepper("Maximum Stock: \(maxStock)", value: $maxStock, in: minimumStock...1000)
                     
                     Picker("Unit", selection: $unit) {
                         ForEach(commonUnits, id: \.self) { unitOption in
@@ -510,18 +530,17 @@ public struct AddInventoryItemView: View {
     private func addItem() {
         isSubmitting = true
         
-        // ✅ FIXED: Use correct initializer for InventoryItem with all required fields
+        // ✅ FIXED: Use correct initializer for InventoryItem with proper parameters
         let newItem = InventoryItem(
             name: itemName,
             category: selectedCategory,
-            quantity: quantity,
-            minThreshold: minimumStock,
-            location: "Storage", // Default location
             currentStock: quantity,
             minimumStock: minimumStock,
+            maxStock: maxStock,  // ✅ FIXED: Added missing maxStock
             unit: unit,
-            restockStatus: quantity <= minimumStock ?
-                (quantity <= 0 ? .outOfStock : .lowStock) : .inStock
+            cost: costPerUnit,
+            supplier: supplier.isEmpty ? nil : supplier,
+            location: "Storage"  // Default location
         )
         
         // TODO: Save item to database
@@ -556,7 +575,7 @@ public struct InventoryItemDetailView: View {
                 Section("Item Information") {
                     LabeledContent("Name", value: item.name)
                     LabeledContent("Category", value: item.category.rawValue)
-                    LabeledContent("Location", value: item.location)
+                    LabeledContent("Location", value: item.location ?? "Unknown")  // ✅ FIXED: Unwrap optional
                     LabeledContent("Unit", value: item.unit)
                 }
                 
@@ -564,18 +583,17 @@ public struct InventoryItemDetailView: View {
                     HStack {
                         Text("Current Stock")
                         Spacer()
-                        Stepper("\(currentStock)", value: $currentStock, in: 0...1000)
+                        Stepper("\(currentStock)", value: $currentStock, in: 0...item.maxStock)
                     }
                     
                     LabeledContent("Minimum Stock", value: "\(item.minimumStock)")
+                    LabeledContent("Maximum Stock", value: "\(item.maxStock)")
                     LabeledContent("Status", value: stockStatus.rawValue)
                 }
                 
-                if let costPerUnit = item.costPerUnit {
-                    Section("Cost Information") {
-                        LabeledContent("Cost per Unit", value: costPerUnit.formatted(.currency(code: "USD")))
-                        LabeledContent("Total Value", value: totalValue.formatted(.currency(code: "USD")))
-                    }
+                Section("Cost Information") {
+                    LabeledContent("Cost per Unit", value: item.cost.formatted(.currency(code: "USD")))
+                    LabeledContent("Total Value", value: totalValue.formatted(.currency(code: "USD")))
                 }
                 
                 Section {
@@ -604,24 +622,26 @@ public struct InventoryItemDetailView: View {
     }
     
     private var totalValue: Double {
-        return Double(currentStock) * (item.costPerUnit ?? 0.0)
+        return Double(currentStock) * item.cost
     }
     
     private func updateStock() {
         isUpdating = true
         
-        // ✅ FIXED: Create updated item with correct structure
+        // ✅ FIXED: Create updated item with all correct parameters
         let updatedItem = InventoryItem(
             id: item.id,
             name: item.name,
             category: item.category,
-            quantity: item.quantity,
-            minThreshold: item.minThreshold,
-            location: item.location,
             currentStock: currentStock,
             minimumStock: item.minimumStock,
+            maxStock: item.maxStock,  // ✅ FIXED: Added maxStock
             unit: item.unit,
-            restockStatus: stockStatus
+            cost: item.cost,
+            supplier: item.supplier,
+            location: item.location,
+            lastRestocked: currentStock > item.currentStock ? Date() : item.lastRestocked,
+            status: stockStatus
         )
         
         // TODO: Update in database
@@ -637,7 +657,7 @@ public struct InventoryItemDetailView: View {
 
 // MARK: - Extensions
 
-// ✅ FIXED: Added missing InventoryCategory icon extension
+// ✅ FIXED: Added missing InventoryCategory icon extension with all cases
 extension InventoryCategory {
     var icon: String {
         switch self {
@@ -646,6 +666,12 @@ extension InventoryCategory {
         case .equipment: return "gear"
         case .materials: return "cube.box"
         case .safety: return "shield"
+        case .cleaning: return "sparkles"
+        case .electrical: return "bolt.circle"
+        case .plumbing: return "drop.circle"
+        case .general: return "square.grid.2x2"
+        case .office: return "paperclip"
+        case .maintenance: return "hammer"
         case .other: return "folder"
         }
     }
@@ -657,16 +683,14 @@ extension InventoryCategory {
         case .equipment: return .purple
         case .materials: return .brown
         case .safety: return .red
+        case .cleaning: return .green
+        case .electrical: return .yellow
+        case .plumbing: return .cyan
+        case .general: return .gray
+        case .office: return .indigo
+        case .maintenance: return .mint
         case .other: return .gray
         }
-    }
-}
-
-// ✅ FIXED: Added missing InventoryItem extension for costPerUnit property
-extension InventoryItem {
-    var costPerUnit: Double? {
-        // This would be stored in the database, returning nil for now
-        return nil
     }
 }
 

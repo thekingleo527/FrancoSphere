@@ -116,7 +116,7 @@ class AdminDashboardViewModel: ObservableObject {
         
         self.buildingMetrics = metrics
         
-        // ✅ FIXED: Use proper data type [String: Any] instead of [String: String]
+        // Use proper data type [String: Any] instead of [String: String]
         broadcastAdminUpdate(.buildingMetricsChanged, data: [
             "buildingIds": Array(metrics.keys).joined(separator: ","),
             "totalBuildings": metrics.count
@@ -134,7 +134,7 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Portfolio insights loaded: \(insights.count) insights")
             
-            // ✅ FIXED: Use proper data type [String: Any]
+            // Use proper data type [String: Any]
             broadcastAdminUpdate(.intelligenceGenerated, data: [
                 "insightCount": insights.count,
                 "criticalInsights": insights.filter { $0.priority == .critical }.count
@@ -168,7 +168,7 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
             
-            // ✅ FIXED: Use proper data type [String: Any]
+            // Use proper data type [String: Any]
             broadcastAdminUpdate(.intelligenceGenerated, buildingId: buildingId, data: [
                 "buildingInsights": insights.count,
                 "buildingId": buildingId
@@ -197,7 +197,7 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Refreshed metrics for building \(buildingId)")
             
-            // ✅ FIXED: Use proper data type [String: Any] and proper numeric types
+            // Use proper data type [String: Any] and proper numeric types
             broadcastAdminUpdate(.buildingMetricsChanged, buildingId: buildingId, data: [
                 "buildingId": buildingId,
                 "completionRate": metrics.completionRate,
@@ -209,14 +209,12 @@ class AdminDashboardViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Admin-specific Methods (Fixed function declarations)
+    // MARK: - Admin-specific Methods
     
-    /// ✅ FIXED: Added parentheses around parameter
     func loadAdminMetrics(building: String) async {
         await refreshBuildingMetrics(for: building)
     }
     
-    /// ✅ FIXED: Added parentheses around parameter
     func updateStatus(status: String) async {
         dashboardSyncStatus = CoreTypes.DashboardSyncStatus(rawValue: status) ?? .synced
         
@@ -240,8 +238,8 @@ class AdminDashboardViewModel: ObservableObject {
         }
     }
     
-    /// Calculate portfolio summary metrics (using AdminPortfolioSummary type)
-    func getAdminPortfolioSummary() -> AdminPortfolioSummary {
+    /// Calculate portfolio summary metrics
+    func getAdminPortfolioSummary() -> AdminDashboardViewModel.PortfolioSummary {
         let totalBuildings = buildings.count
         let totalWorkers = activeWorkers.count
         let totalTasks = ongoingTasks.count
@@ -253,7 +251,7 @@ class AdminDashboardViewModel: ObservableObject {
         let criticalInsights = portfolioInsights.filter { $0.priority == .critical }.count
         let actionableInsights = portfolioInsights.filter { $0.actionRequired }.count
         
-        return AdminPortfolioSummary(
+        return PortfolioSummary(
             totalBuildings: totalBuildings,
             totalWorkers: totalWorkers,
             totalTasks: totalTasks,
@@ -266,7 +264,7 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     /// Calculate efficiency status based on completion rate
-    private func calculateEfficiencyStatus(_ completion: Double) -> EfficiencyStatus {
+    private func calculateEfficiencyStatus(_ completion: Double) -> AdminDashboardViewModel.Status {
         switch completion {
         case 0.9...: return .excellent
         case 0.7..<0.9: return .good
@@ -282,7 +280,10 @@ class AdminDashboardViewModel: ObservableObject {
         dashboardSyncService.crossDashboardUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
-                self?.handleCrossDashboardUpdate(update)
+                guard let self = self else { return }
+                Task.init {  // ✅ FIXED: Use Task.init
+                    await self.handleCrossDashboardUpdate(update)
+                }
             }
             .store(in: &cancellables)
         
@@ -290,7 +291,10 @@ class AdminDashboardViewModel: ObservableObject {
         dashboardSyncService.workerDashboardUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
-                self?.handleWorkerDashboardUpdate(update)
+                guard let self = self else { return }
+                Task.init {  // ✅ FIXED: Use Task.init
+                    await self.handleWorkerDashboardUpdate(update)
+                }
             }
             .store(in: &cancellables)
         
@@ -298,14 +302,17 @@ class AdminDashboardViewModel: ObservableObject {
         dashboardSyncService.clientDashboardUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
-                self?.handleClientDashboardUpdate(update)
+                guard let self = self else { return }
+                Task.init {  // ✅ FIXED: Use Task.init
+                    await self.handleClientDashboardUpdate(update)
+                }
             }
             .store(in: &cancellables)
         
         print("🔗 Admin dashboard cross-dashboard sync configured")
     }
     
-    /// ✅ FIXED: Use proper DashboardSyncService API for broadcasting
+    /// Use proper DashboardSyncService API for broadcasting
     private func broadcastAdminUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
         let update = DashboardUpdate(
             source: .admin,
@@ -326,23 +333,19 @@ class AdminDashboardViewModel: ObservableObject {
         print("📡 Admin update broadcast: \(type.displayName)")
     }
     
-    /// Setup auto-refresh timer
+    /// Setup auto-refresh timer - FIXED
     private func setupAutoRefresh() {
-        // ✅ FIXED: Simplified Timer syntax to avoid compiler confusion
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] timer in
-            guard let self = self else {
-                timer.invalidate()
-                return
-            }
-            
-            Task { @MainActor in
-                await self.refreshDashboardData()
+        let timer = Timer(timeInterval: 30.0, repeats: true) { _ in
+            Task.init { [weak self] in  // ✅ FIXED: Use Task.init
+                await self?.refreshDashboardData()
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        self.refreshTimer = timer
     }
     
-    /// ✅ FIXED: Handle cross-dashboard updates with proper type and enum cases
-    private func handleCrossDashboardUpdate(_ update: DashboardUpdate) {
+    /// Handle cross-dashboard updates with proper type and enum cases
+    private func handleCrossDashboardUpdate(_ update: DashboardUpdate) async {
         crossDashboardUpdates.append(update)
         
         // Keep only recent updates
@@ -354,110 +357,98 @@ class AdminDashboardViewModel: ObservableObject {
         switch update.type {
         case .taskCompleted:
             if let buildingId = update.buildingId {
-                Task {
-                    await refreshBuildingMetrics(for: buildingId)
-                }
+                await refreshBuildingMetrics(for: buildingId)
             }
         case .workerClockedIn:
             if let buildingId = update.buildingId {
-                Task {
-                    await refreshBuildingMetrics(for: buildingId)
-                }
+                await refreshBuildingMetrics(for: buildingId)
             }
         case .complianceChanged:
             // Refresh all affected buildings
-            Task {
-                await loadBuildingMetrics()
-            }
+            await loadBuildingMetrics()
         case .portfolioUpdated:
-            Task {
-                await loadPortfolioInsights()
-            }
+            await loadPortfolioInsights()
         default:
             break
         }
     }
     
     /// Handle worker dashboard updates
-    private func handleWorkerDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleWorkerDashboardUpdate(_ update: DashboardUpdate) async {
         switch update.type {
         case .taskCompleted, .taskStarted:
             if let buildingId = update.buildingId {
-                Task {
-                    await refreshBuildingMetrics(for: buildingId)
-                }
+                await refreshBuildingMetrics(for: buildingId)
             }
         case .workerClockedIn, .workerClockedOut:
             // Update worker status tracking
-            Task {
-                await loadDashboardData()
-            }
+            await loadDashboardData()
         default:
             break
         }
     }
     
     /// Handle client dashboard updates
-    private func handleClientDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleClientDashboardUpdate(_ update: DashboardUpdate) async {
         switch update.type {
         case .portfolioUpdated:
-            Task {
-                await loadPortfolioInsights()
-            }
+            await loadPortfolioInsights()
         case .complianceChanged:
-            Task {
-                await loadBuildingMetrics()
-            }
+            await loadBuildingMetrics()
         default:
             break
         }
     }
 }
 
-// MARK: - Supporting Types (Admin-specific, no conflicts)
+// MARK: - Nested Types (To avoid global conflicts)
 
-/// Admin-specific portfolio summary to avoid type conflicts
-struct AdminPortfolioSummary {
-    let totalBuildings: Int
-    let totalWorkers: Int
-    let totalTasks: Int
-    let completedTasks: Int
-    let averageCompletion: Double
-    let criticalInsights: Int
-    let actionableInsights: Int
-    let efficiencyStatus: EfficiencyStatus
+extension AdminDashboardViewModel {
     
-    var completionPercentage: String {
-        return "\(Int(averageCompletion * 100))%"
-    }
-    
-    var efficiencyDescription: String {
-        switch efficiencyStatus {
-        case .excellent: return "Excellent Performance"
-        case .good: return "Good Performance"
-        case .needsImprovement: return "Needs Improvement"
+    /// Portfolio summary nested in AdminDashboardViewModel to avoid conflicts
+    struct PortfolioSummary {
+        let totalBuildings: Int
+        let totalWorkers: Int
+        let totalTasks: Int
+        let completedTasks: Int
+        let averageCompletion: Double
+        let criticalInsights: Int
+        let actionableInsights: Int
+        let efficiencyStatus: Status
+        
+        var completionPercentage: String {
+            return "\(Int(averageCompletion * 100))%"
         }
-    }
-}
-
-enum EfficiencyStatus {
-    case excellent
-    case good
-    case needsImprovement
-    
-    var color: Color {
-        switch self {
-        case .excellent: return .green
-        case .good: return .blue
-        case .needsImprovement: return .orange
+        
+        var efficiencyDescription: String {
+            switch efficiencyStatus {
+            case .excellent: return "Excellent Performance"
+            case .good: return "Good Performance"
+            case .needsImprovement: return "Needs Improvement"
+            }
         }
     }
     
-    var icon: String {
-        switch self {
-        case .excellent: return "checkmark.circle.fill"
-        case .good: return "hand.thumbsup.fill"
-        case .needsImprovement: return "exclamationmark.triangle.fill"
+    /// Status nested in AdminDashboardViewModel to avoid conflicts
+    enum Status {
+        case excellent
+        case good
+        case needsImprovement
+        
+        var color: Color {
+            switch self {
+            case .excellent: return .green
+            case .good: return .blue
+            case .needsImprovement: return .orange
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .excellent: return "checkmark.circle.fill"
+            case .good: return "hand.thumbsup.fill"
+            case .needsImprovement: return "exclamationmark.triangle.fill"
+            }
         }
     }
 }

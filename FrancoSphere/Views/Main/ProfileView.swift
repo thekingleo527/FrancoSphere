@@ -3,8 +3,8 @@
 //  FrancoSphere
 //
 //  ✅ ALL COMPILATION ERRORS FIXED
-//  ✅ Proper async/await patterns
-//  ✅ Correct ContextualTask property access
+//  ✅ No async operations in computed properties or view builders
+//  ✅ Proper ViewBuilder usage
 //  ✅ Cross-dashboard integration ready
 //
 
@@ -20,13 +20,13 @@ struct ProfileView: View {
     @State private var showLogoutConfirmation = false
     @State private var profileImage: UIImage?
     
-    // ✅ FIXED: Remove async from computed properties
+    // ✅ FIXED: No async in computed properties
     private var currentWorkerRole: String {
-        return contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
+        contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
     }
     
     private var currentWorkerEmail: String? {
-        return contextEngine.currentWorker?.email
+        contextEngine.currentWorker?.email
     }
     
     var body: some View {
@@ -177,12 +177,16 @@ struct ProfileView: View {
     // MARK: - Worker Information
     
     private var workerInfoSection: some View {
-        GlassProfileCard(title: "Worker Information") {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Worker Information")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+            
             VStack(spacing: 16) {
                 ProfileInfoRow(
                     icon: "person.badge.key.fill",
                     label: "Worker ID",
-                    // ✅ FIXED: Safe unwrapping of optional workerId
                     value: authManager.workerId ?? "Unknown"
                 )
                 
@@ -205,12 +209,26 @@ struct ProfileView: View {
                 )
             }
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        )
     }
     
     // MARK: - Statistics Section
     
     private var statisticsSection: some View {
-        GlassProfileCard(title: "Performance Stats") {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Performance Stats")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+            
             VStack(spacing: 16) {
                 HStack(spacing: 16) {
                     ProfileStatCard(
@@ -241,12 +259,26 @@ struct ProfileView: View {
                 }
             }
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        )
     }
     
     // MARK: - Settings Section
     
     private var settingsSection: some View {
-        GlassProfileCard(title: "Settings") {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Settings")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+            
             VStack(spacing: 0) {
                 SettingsRow(
                     icon: "bell.fill",
@@ -284,19 +316,27 @@ struct ProfileView: View {
                 }
             }
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        )
     }
     
     // MARK: - Actions Section
     
     private var actionsSection: some View {
         VStack(spacing: 12) {
-            Button(action: {
+            Button {
                 HapticManager.impact(.medium)
                 Task {
-                    // ✅ FIXED: Proper async refresh pattern
                     await refreshContextData()
                 }
-            }) {
+            } label: {
                 HStack {
                     Image(systemName: "arrow.clockwise")
                         .font(.subheadline)
@@ -315,12 +355,11 @@ struct ProfileView: View {
                         )
                 )
             }
-            .buttonStyle(PlainButtonStyle())
             
-            Button(action: {
+            Button {
                 HapticManager.impact(.medium)
                 showLogoutConfirmation = true
-            }) {
+            } label: {
                 HStack {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .font(.subheadline)
@@ -339,7 +378,6 @@ struct ProfileView: View {
                         )
                 )
             }
-            .buttonStyle(PlainButtonStyle())
         }
     }
     
@@ -348,71 +386,38 @@ struct ProfileView: View {
     private func handleLogout() {
         HapticManager.impact(.heavy)
         Task {
-            // ✅ FIXED: Use proper logout method
             await authManager.logout()
             dismiss()
         }
     }
     
-    // ✅ FIXED: Proper async refresh method
     private func refreshContextData() async {
         guard let workerId = authManager.workerId else { return }
         await contextEngine.loadContext(for: workerId)
     }
     
-    // ✅ FIXED: Helper methods using correct property access
     private func getPendingTasksCount() -> Int {
-        return contextEngine.todaysTasks.filter { task in
+        contextEngine.todaysTasks.filter { task in
             !task.isCompleted
         }.count
     }
     
     private func getCompletedTasksCount() -> Int {
-        return contextEngine.todaysTasks.filter { task in
+        contextEngine.todaysTasks.filter { task in
             task.isCompleted
         }.count
     }
     
-    // ✅ FIXED: Proper urgency calculation with nil handling
     private func getUrgentTasksCount() -> Int {
-        return contextEngine.todaysTasks.filter { task in
+        contextEngine.todaysTasks.filter { task in
             guard let urgency = task.urgency else { return false }
-            return urgency == .high || urgency == .critical || urgency == .urgent
+            let urgencyValue = urgency.rawValue.lowercased()
+            return urgencyValue == "high" || urgencyValue == "critical" || urgencyValue == "urgent"
         }.count
     }
 }
 
 // MARK: - Supporting Components
-
-struct GlassProfileCard<Content: View>: View {
-    let title: String
-    let content: Content
-    
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(title)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-            
-            content
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
-    }
-}
 
 struct ProfileInfoRow: View {
     let icon: String
@@ -510,7 +515,7 @@ struct SettingsRow: View {
     }
 }
 
-// MARK: - Local ImagePicker Component
+// MARK: - Image Picker
 
 struct FrancoSphereImagePicker: UIViewControllerRepresentable {
     @Binding var isPresented: Bool
@@ -524,9 +529,7 @@ struct FrancoSphereImagePicker: UIViewControllerRepresentable {
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {
-        // No updates needed
-    }
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
