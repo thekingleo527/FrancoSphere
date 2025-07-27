@@ -9,8 +9,8 @@ public struct ActionEvidence: Codable, Hashable {
     public let photoData: [Data]?
     
     public init(
-        description: String, 
-        photoURLs: [URL] = [], 
+        description: String,
+        photoURLs: [URL] = [],
         timestamp: Date = Date(),
         photoData: [Data]? = nil
     ) {
@@ -19,3 +19,4 @@ public struct ActionEvidence: Codable, Hashable {
         self.timestamp = timestamp
         self.photoData = photoData
     }
+}

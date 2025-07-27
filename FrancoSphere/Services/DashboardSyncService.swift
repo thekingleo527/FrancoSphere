@@ -1,559 +1,152 @@
 //
 //  DashboardSyncService.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ CROSS-DASHBOARD COORDINATION: Real-time synchronization between Worker/Admin/Client
-//  ✅ INTEGRATION: Hooks into existing services and ViewModels
-//  ✅ ACTOR-SAFE: Compatible with existing actor-based architecture
-//  ✅ REAL-TIME: Live updates with intelligent broadcasting
+//  Cross-dashboard synchronization service for real-time updates
+//  Manages communication between Worker, Admin, and Client dashboards
+//
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ADDED: Missing properties (unifiedBuildingMetrics, unifiedPortfolioState)
+//  ✅ FIXED: PortfolioState definition with all required properties
+//  ✅ REMOVED: Duplicate method definitions
+//  ✅ FIXED: Constructor parameter mismatches
 //
 
 import Foundation
-import Combine
 import SwiftUI
+import Combine
 
-// MARK: - Cross-Dashboard Update Types
+// MARK: - Dashboard Update Types
 
-public struct DashboardUpdate: Identifiable {
+public enum DashboardSource: String, CaseIterable {
+    case worker = "Worker"
+    case admin = "Admin"
+    case client = "Client"
+    
+    var displayName: String { rawValue }
+}
+
+public enum DashboardUpdateType: String, CaseIterable {
+    case taskCompleted = "Task Completed"
+    case taskStarted = "Task Started"
+    case workerClockedIn = "Worker Clocked In"
+    case workerClockedOut = "Worker Clocked Out"
+    case buildingMetricsChanged = "Building Metrics Changed"
+    case intelligenceGenerated = "Intelligence Generated"
+    case complianceChanged = "Compliance Changed"
+    case portfolioUpdated = "Portfolio Updated"
+    case performanceChanged = "Performance Changed"
+    
+    var displayName: String { rawValue }
+}
+
+public struct DashboardUpdate {
     public let id = UUID()
     public let source: DashboardSource
-    public let type: UpdateType
+    public let type: DashboardUpdateType
+    public let timestamp = Date()
     public let buildingId: String?
     public let workerId: String?
     public let data: [String: Any]
-    public let timestamp = Date()
     
-    public init(source: DashboardSource, type: UpdateType, buildingId: String?, workerId: String?, data: [String: Any]) {
+    public init(source: DashboardSource, type: DashboardUpdateType, buildingId: String? = nil, workerId: String? = nil, data: [String: Any] = [:]) {
         self.source = source
         self.type = type
         self.buildingId = buildingId
         self.workerId = workerId
         self.data = data
     }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
-    }
 }
 
-public enum DashboardSource: String, CaseIterable {
-    case worker = "worker"
-    case admin = "admin"
-    case client = "client"
-    
-    public var displayName: String {
-        switch self {
-        case .worker: return "Worker"
-        case .admin: return "Admin"
-        case .client: return "Client"
-        }
-    }
-    
-    public var color: Color {
-        switch self {
-        case .worker: return .blue
-        case .admin: return .orange
-        case .client: return .purple
-        }
-    }
-    
-    public var icon: String {
-        switch self {
-        case .worker: return "person.fill.checkmark"
-        case .admin: return "chart.line.uptrend.xyaxis"
-        case .client: return "building.2.fill"
-        }
-    }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
-    }
-}
+// MARK: - Live Update Types
 
-public enum UpdateType: String, CaseIterable {
-    case taskCompleted = "task_completed"
-    case taskStarted = "task_started"
-    case workerClockedIn = "worker_clocked_in"
-    case workerClockedOut = "worker_clocked_out"
-    case buildingMetricsChanged = "building_metrics_changed"
-    case portfolioUpdated = "portfolio_updated"
-    case complianceChanged = "compliance_changed"
-    case intelligenceGenerated = "intelligence_generated"
-    case performanceChanged = "performance_changed"
-    
-    public var displayName: String {
-        switch self {
-        case .taskCompleted: return "Task Completed"
-        case .taskStarted: return "Task Started"
-        case .workerClockedIn: return "Worker Clocked In"
-        case .workerClockedOut: return "Worker Clocked Out"
-        case .buildingMetricsChanged: return "Metrics Updated"
-        case .portfolioUpdated: return "Portfolio Updated"
-        case .complianceChanged: return "Compliance Changed"
-        case .intelligenceGenerated: return "New Insights"
-        case .performanceChanged: return "Performance Update"
-        }
-    }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
-    }
-}
-
-// MARK: - Live Update Feed Types
-
-public struct LiveWorkerUpdate: Identifiable {
+public struct LiveWorkerUpdate {
     public let id = UUID()
-    public let workerName: String
+    public let workerId: String
+    public let workerName: String?
     public let action: String
-    public let buildingName: String
+    public let buildingId: String?
+    public let buildingName: String?
     public let timestamp = Date()
     
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
+    public init(workerId: String, workerName: String? = nil, action: String, buildingId: String? = nil, buildingName: String? = nil) {
+        self.workerId = workerId
+        self.workerName = workerName
+        self.action = action
+        self.buildingId = buildingId
+        self.buildingName = buildingName
     }
 }
 
-public struct LiveAdminAlert: Identifiable {
+public struct LiveAdminAlert {
     public let id = UUID()
     public let title: String
-    public let severity: DashboardAlertSeverity
+    public let severity: Severity
     public let buildingId: String
     public let timestamp = Date()
     
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
+    public enum Severity: String, CaseIterable {
+        case low = "Low"
+        case medium = "Medium"
+        case high = "High"
+        case critical = "Critical"
+        
+        var color: Color {
+            switch self {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
             }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
         }
+    }
+    
+    public init(title: String, severity: Severity, buildingId: String) {
+        self.title = title
+        self.severity = severity
+        self.buildingId = buildingId
     }
 }
 
-public struct LiveClientMetric: Identifiable {
+public struct LiveClientMetric {
     public let id = UUID()
     public let name: String
     public let value: String
     public let trend: CoreTypes.TrendDirection
     public let timestamp = Date()
     
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
+    public init(name: String, value: String, trend: CoreTypes.TrendDirection) {
+        self.name = name
+        self.value = value
+        self.trend = trend
     }
 }
 
-public enum DashboardAlertSeverity: String, CaseIterable {
-    case low = "low"
-    case medium = "medium"
-    case high = "high"
-    case critical = "critical"
+// Note: PortfolioState is defined in this file below
+// MARK: - PortfolioState Type (for DashboardSyncService)
+
+public struct PortfolioState: Codable {
+    public let totalBuildings: Int
+    public let activeWorkers: Int
+    public let overallCompletion: Double
+    public let criticalIssues: Int
+    public let complianceScore: Double
+    public let lastUpdated: Date
     
-    public var color: Color {
-        switch self {
-        case .low: return .blue
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        }
-    }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
+    public init(
+        totalBuildings: Int,
+        activeWorkers: Int,
+        overallCompletion: Double,
+        criticalIssues: Int,
+        complianceScore: Double,
+        lastUpdated: Date = Date()
+    ) {
+        self.totalBuildings = totalBuildings
+        self.activeWorkers = activeWorkers
+        self.overallCompletion = overallCompletion
+        self.criticalIssues = criticalIssues
+        self.complianceScore = complianceScore
+        self.lastUpdated = lastUpdated
     }
 }
 
@@ -593,7 +186,7 @@ public class DashboardSyncService: ObservableObject {
     @Published public var liveAdminAlerts: [LiveAdminAlert] = []
     @Published public var liveClientMetrics: [LiveClientMetric] = []
     
-    // MARK: - Unified Dashboard State
+    // MARK: - Unified Dashboard State (FIXED: Added missing properties)
     
     @Published public var unifiedBuildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
     @Published public var unifiedPortfolioState: PortfolioState?
@@ -624,59 +217,99 @@ public class DashboardSyncService: ObservableObject {
     
     /// Broadcast update from Worker Dashboard (task completion, clock-in, etc.)
     public func broadcastWorkerUpdate(_ update: DashboardUpdate) {
+        guard isLive else { return }
+        
+        // Broadcast to all dashboards
         crossDashboardSubject.send(update)
+        
+        // Send to specific dashboard streams
         workerUpdatesSubject.send(update)
-        
-        // Create live update for other dashboards
-        createLiveWorkerUpdate(from: update)
-        
-        // Update unified state
-        updateUnifiedState(from: update)
-        
-        // Trigger dependent updates
-        triggerDependentUpdates(from: update)
-        
-        lastSyncTime = Date()
-        print("📡 Worker update broadcast: \(update.type.displayName)")
-    }
-    
-    /// Broadcast update from Admin Dashboard (portfolio changes, analytics, etc.)
-    public func broadcastAdminUpdate(_ update: DashboardUpdate) {
-        crossDashboardSubject.send(update)
         adminUpdatesSubject.send(update)
-        
-        // Create live alert for other dashboards
-        createLiveAdminAlert(from: update)
-        
-        // Update unified state
-        updateUnifiedState(from: update)
-        
-        // Trigger dependent updates
-        triggerDependentUpdates(from: update)
-        
-        lastSyncTime = Date()
-        print("📡 Admin update broadcast: \(update.type.displayName)")
-    }
-    
-    /// Broadcast update from Client Dashboard (portfolio review, strategic changes, etc.)
-    public func broadcastClientUpdate(_ update: DashboardUpdate) {
-        crossDashboardSubject.send(update)
         clientUpdatesSubject.send(update)
         
-        // Create live metric for other dashboards
+        // Create live updates for real-time feeds
+        createLiveWorkerUpdate(from: update)
+        createLiveAdminAlert(from: update)
         createLiveClientMetric(from: update)
         
         // Update unified state
         updateUnifiedState(from: update)
-        
-        lastSyncTime = Date()
-        print("📡 Client update broadcast: \(update.type.displayName)")
     }
     
-    // MARK: - Integration Hooks for Existing Services
+    /// Broadcast update from Admin Dashboard (building metrics, intelligence, etc.)
+    public func broadcastAdminUpdate(_ update: DashboardUpdate) {
+        guard isLive else { return }
+        
+        // Broadcast to all dashboards
+        crossDashboardSubject.send(update)
+        
+        // Send to specific dashboard streams
+        adminUpdatesSubject.send(update)
+        workerUpdatesSubject.send(update)
+        clientUpdatesSubject.send(update)
+        
+        // Create live updates
+        createLiveAdminAlert(from: update)
+        createLiveClientMetric(from: update)
+        
+        // Update unified state
+        updateUnifiedState(from: update)
+    }
     
-    /// Hook into WorkerContextEngine task completion
-    public func onTaskCompleted(taskId: String, workerId: String, buildingId: String, evidence: ActionEvidence) {
+    /// Broadcast update from Client Dashboard (portfolio changes, etc.)
+    public func broadcastClientUpdate(_ update: DashboardUpdate) {
+        guard isLive else { return }
+        
+        // Broadcast to all dashboards
+        crossDashboardSubject.send(update)
+        
+        // Send to specific dashboard streams
+        clientUpdatesSubject.send(update)
+        adminUpdatesSubject.send(update)
+        workerUpdatesSubject.send(update)
+        
+        // Create live updates
+        createLiveClientMetric(from: update)
+        createLiveAdminAlert(from: update)
+        
+        // Update unified state
+        updateUnifiedState(from: update)
+    }
+    
+    // MARK: - Convenience Broadcasting Methods
+    
+    /// Worker clocked in
+    public func onWorkerClockedIn(workerId: String, buildingId: String, buildingName: String? = nil) {
+        let update = DashboardUpdate(
+            source: .worker,
+            type: .workerClockedIn,
+            buildingId: buildingId,
+            workerId: workerId,
+            data: [
+                "buildingName": buildingName ?? getBuildingName(buildingId) ?? "Unknown Building",
+                "workerName": getWorkerName(workerId) ?? "Worker \(workerId)"
+            ]
+        )
+        broadcastWorkerUpdate(update)
+    }
+    
+    /// Worker clocked out
+    public func onWorkerClockedOut(workerId: String, buildingId: String) {
+        let update = DashboardUpdate(
+            source: .worker,
+            type: .workerClockedOut,
+            buildingId: buildingId,
+            workerId: workerId,
+            data: [
+                "buildingName": getBuildingName(buildingId) ?? "Unknown Building",
+                "workerName": getWorkerName(workerId) ?? "Worker \(workerId)"
+            ]
+        )
+        broadcastWorkerUpdate(update)
+    }
+    
+    /// Task completed
+    public func onTaskCompleted(taskId: String, workerId: String, buildingId: String) {
         let update = DashboardUpdate(
             source: .worker,
             type: .taskCompleted,
@@ -684,125 +317,81 @@ public class DashboardSyncService: ObservableObject {
             workerId: workerId,
             data: [
                 "taskId": taskId,
-                "completionTime": Date(),
-                "evidence": evidence.description,
-                "photoCount": evidence.photoURLs.count
+                "buildingName": getBuildingName(buildingId) ?? "Unknown Building",
+                "workerName": getWorkerName(workerId) ?? "Worker \(workerId)"
             ]
         )
-        
         broadcastWorkerUpdate(update)
     }
     
-    /// Hook into ClockInManager clock-in events
-    public func onWorkerClockedIn(workerId: String, buildingId: String, buildingName: String) {
-        let update = DashboardUpdate(
-            source: .worker,
-            type: .workerClockedIn,
-            buildingId: buildingId,
-            workerId: workerId,
-            data: [
-                "buildingName": buildingName,
-                "clockInTime": Date()
-            ]
-        )
-        
-        broadcastWorkerUpdate(update)
-    }
-    
-    /// Hook into ClockInManager clock-out events
-    public func onWorkerClockedOut(workerId: String, buildingId: String?) {
-        let update = DashboardUpdate(
-            source: .worker,
-            type: .workerClockedOut,
-            buildingId: buildingId,
-            workerId: workerId,
-            data: [
-                "clockOutTime": Date()
-            ]
-        )
-        
-        broadcastWorkerUpdate(update)
-    }
-    
-    /// Hook into BuildingMetricsService metrics updates
+    /// Building metrics changed
     public func onBuildingMetricsChanged(buildingId: String, metrics: CoreTypes.BuildingMetrics) {
-        // Update unified state first
-        unifiedBuildingMetrics[buildingId] = metrics
-        
         let update = DashboardUpdate(
             source: .admin,
             type: .buildingMetricsChanged,
             buildingId: buildingId,
-            workerId: nil,
             data: [
                 "completionRate": metrics.completionRate,
-                "pendingTasks": metrics.pendingTasks,
                 "overdueTasks": metrics.overdueTasks,
-                "activeWorkers": metrics.activeWorkers,
-                "isCompliant": metrics.isCompliant,
-                "overallScore": metrics.overallScore
+                "urgentTasks": metrics.urgentTasksCount,
+                "activeWorkers": metrics.activeWorkers
             ]
         )
-        
         broadcastAdminUpdate(update)
     }
     
-    /// Hook into IntelligenceService portfolio insights
-    public func onPortfolioIntelligenceUpdated(insights: [CoreTypes.IntelligenceInsight]) {
-        let criticalInsights = insights.filter { $0.priority == .critical }
-        
+    /// Intelligence insights generated
+    public func onIntelligenceGenerated(insights: [CoreTypes.IntelligenceInsight]) {
         let update = DashboardUpdate(
             source: .admin,
             type: .intelligenceGenerated,
-            buildingId: nil,
-            workerId: nil,
             data: [
-                "totalInsights": insights.count,
-                "criticalInsights": criticalInsights.count,
-                "actionableInsights": insights.filter { $0.actionRequired }.count
+                "insightCount": insights.count,
+                "highPriorityCount": insights.filter { $0.priority == .high || $0.priority == .critical }.count
             ]
         )
-        
         broadcastAdminUpdate(update)
-        
-        // Create alerts for critical insights
-        for insight in criticalInsights {
-            let alert = LiveAdminAlert(
-                title: insight.title,
-                severity: .critical,
-                buildingId: insight.affectedBuildings.first ?? ""
-            )
-            
-            liveAdminAlerts.append(alert)
-            limitLiveUpdates()
-        }
     }
     
-    // MARK: - Live Update Management
+    /// Portfolio state updated
+    public func onPortfolioUpdated(portfolio: CoreTypes.PortfolioIntelligence) {
+        let update = DashboardUpdate(
+            source: .client,
+            type: .portfolioUpdated,
+            data: [
+                "totalBuildings": portfolio.totalBuildings,
+                "activeWorkers": portfolio.activeWorkers,
+                "completionRate": portfolio.completionRate,
+                "criticalIssues": portfolio.criticalIssues
+            ]
+        )
+        broadcastClientUpdate(update)
+    }
+    
+    // MARK: - Live Update Creation
     
     private func createLiveWorkerUpdate(from update: DashboardUpdate) {
-        guard let workerId = update.workerId else { return }
+        guard let workerId = update.workerId,
+              update.source == .worker else { return }
         
-        let buildingName = update.data["buildingName"] as? String ?? getBuildingName(update.buildingId)
-        let workerName = getWorkerName(workerId) ?? "Unknown Worker"
-        let action = generateActionDescription(for: update)
-        
-        let liveUpdate = LiveWorkerUpdate(
-            workerName: workerName,
-            action: action,
-            buildingName: buildingName ?? "Unknown Building"
+        let workerUpdate = LiveWorkerUpdate(
+            workerId: workerId,
+            workerName: update.data["workerName"] as? String,
+            action: generateActionDescription(for: update),
+            buildingId: update.buildingId,
+            buildingName: update.data["buildingName"] as? String
         )
         
-        liveWorkerUpdates.append(liveUpdate)
+        liveWorkerUpdates.append(workerUpdate)
         limitLiveUpdates()
     }
     
     private func createLiveAdminAlert(from update: DashboardUpdate) {
-        guard update.type == .buildingMetricsChanged || update.type == .intelligenceGenerated else {
-            return
-        }
+        guard update.type == .buildingMetricsChanged ||
+              update.type == .complianceChanged ||
+              update.type == .performanceChanged else { return }
         
-        let severity: DashboardAlertSeverity = {
+        let severity: LiveAdminAlert.Severity = {
             if let overdueTasks = update.data["overdueTasks"] as? Int, overdueTasks > 10 {
                 return .critical
             } else if let completionRate = update.data["completionRate"] as? Double, completionRate < 0.5 {
@@ -870,66 +459,26 @@ public class DashboardSyncService: ObservableObject {
         }
         
         // Update portfolio state for client-level changes
-        if update.type == .portfolioUpdated || update.type == .intelligenceGenerated {
-            Task {
-                await refreshPortfolioState()
-            }
+        if update.type == .portfolioUpdated || update.type == .performanceChanged {
+            refreshPortfolioState()
         }
     }
     
-    private func triggerDependentUpdates(from update: DashboardUpdate) {
-        // Worker task completion triggers admin metrics refresh
-        if update.source == .worker && update.type == .taskCompleted {
-            Task {
-                try await refreshAdminMetrics()
-            }
-        }
+    private func refreshPortfolioState() {
+        let totalBuildings = unifiedBuildingMetrics.count
+        let activeWorkers = unifiedBuildingMetrics.values.reduce(0) { $0 + $1.activeWorkers }
+        let totalCompletion = unifiedBuildingMetrics.values.reduce(0.0) { $0 + $1.completionRate }
+        let overallCompletion = totalBuildings > 0 ? totalCompletion / Double(totalBuildings) : 0.0
+        let criticalIssues = unifiedBuildingMetrics.values.reduce(0) { $0 + $1.urgentTasksCount }
+        let compliantBuildings = unifiedBuildingMetrics.values.filter { $0.isCompliant }.count
+        let complianceScore = totalBuildings > 0 ? Double(compliantBuildings) / Double(totalBuildings) : 0.0
         
-        // Admin metrics changes trigger client portfolio refresh
-        if update.source == .admin && (update.type == .buildingMetricsChanged || update.type == .intelligenceGenerated) {
-            Task {
-                await refreshClientPortfolio()
-            }
-        }
-    }
-    
-    // MARK: - Cross-Dashboard Refresh Triggers
-    
-    private func refreshAdminMetrics() async throws {
-        // Trigger admin dashboard to refresh its metrics
-        let update = DashboardUpdate(
-            source: .admin,
-            type: .performanceChanged,
-            buildingId: nil,
-            workerId: nil,
-            data: ["triggeredBy": "worker_task_completion"]
-        )
-        
-        await MainActor.run {
-            self.adminUpdatesSubject.send(update)
-        }
-    }
-    
-    private func refreshClientPortfolio() async {
-        // Trigger client dashboard to refresh portfolio
-        let update = DashboardUpdate(
-            source: .client,
-            type: .portfolioUpdated,
-            buildingId: nil,
-            workerId: nil,
-            data: ["triggeredBy": "admin_metrics_change"]
-        )
-        
-        await MainActor.run {
-            self.clientUpdatesSubject.send(update)
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        // Update unified portfolio state
         unifiedPortfolioState = PortfolioState(
-            totalBuildings: unifiedBuildingMetrics.count,
-            averageScore: calculateAverageScore(),
+            totalBuildings: totalBuildings,
+            activeWorkers: activeWorkers,
+            overallCompletion: overallCompletion,
+            criticalIssues: criticalIssues,
+            complianceScore: complianceScore,
             lastUpdated: Date()
         )
     }
@@ -982,17 +531,20 @@ public class DashboardSyncService: ObservableObject {
     // MARK: - Helper Methods
     
     private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let buildingId = buildingId else { return nil }
-        
-        // This would be enhanced to use a building name cache
-        // For now, return a placeholder
-        return "Building \(buildingId)"
+        guard let id = buildingId else { return nil }
+        if let metrics = unifiedBuildingMetrics[id] {
+            return "Building \(id)"
+        }
+        return nil
     }
     
     private func getWorkerName(_ workerId: String) -> String? {
-        // This would be enhanced to use a worker name cache
-        // For now, return a placeholder
-        return "Worker \(workerId)"
+        switch workerId {
+        case "worker_001", "4": return "Kevin Dutan"
+        case "worker_002": return "Maria Rodriguez"
+        case "worker_003": return "James Wilson"
+        default: return "Worker \(workerId)"
+        }
     }
     
     private func generateActionDescription(for update: DashboardUpdate) -> String {
@@ -1007,143 +559,6 @@ public class DashboardSyncService: ObservableObject {
             return "Started task"
         default:
             return update.type.displayName
-        }
-    }
-    
-    private func calculateAverageScore() -> Double {
-        guard !unifiedBuildingMetrics.isEmpty else { return 0.0 }
-        
-        let totalScore = unifiedBuildingMetrics.values.reduce(0) { $0 + $1.overallScore }
-        return Double(totalScore) / Double(unifiedBuildingMetrics.count)
-    }
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
-    }
-}
-
-// MARK: - Portfolio State Type
-
-public struct PortfolioState {
-    public let totalBuildings: Int
-    public let averageScore: Double
-    public let lastUpdated: Date
-    
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
-    }
-    
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
-    }
-    
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
         }
     }
 }
@@ -1176,65 +591,30 @@ extension DashboardSyncService {
         liveAdminAlerts.removeAll()
         liveClientMetrics.removeAll()
     }
+}
+
+// MARK: - Convenience Publishers
+
+extension DashboardSyncService {
     
-    // MARK: - Helper Methods (Added by Integration Script)
-    
-    private func getBuildingName(_ buildingId: String?) -> String? {
-        guard let id = buildingId else { return nil }
-        if let metrics = unifiedBuildingMetrics[id] {
-            return "Building (id)"
-        }
-        return nil
+    /// Publisher for worker-specific updates
+    public var workerUpdates: AnyPublisher<DashboardUpdate, Never> {
+        workerDashboardUpdates
+            .filter { $0.source == .worker || $0.type == .taskCompleted || $0.type == .workerClockedIn || $0.type == .workerClockedOut }
+            .eraseToAnyPublisher()
     }
     
-    private func getWorkerName(_ workerId: String) -> String? {
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker (workerId)"
-        }
+    /// Publisher for admin-specific updates
+    public var adminUpdates: AnyPublisher<DashboardUpdate, Never> {
+        adminDashboardUpdates
+            .filter { $0.source == .admin || $0.type == .buildingMetricsChanged || $0.type == .intelligenceGenerated }
+            .eraseToAnyPublisher()
     }
     
-    private func generateActionDescription(for update: DashboardUpdate) -> String {
-        switch update.type {
-        case .taskCompleted: return "completed a task"
-        case .taskStarted: return "started a task"
-        case .workerClockedIn: return "clocked in"
-        case .workerClockedOut: return "clocked out"
-        default: return update.type.displayName
-        }
-    }
-    
-    private func refreshPortfolioState() async {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let activeWorkerCount = workers.filter { $0.isActive }.count
-            
-            var totalCompletion = 0.0
-            var criticalIssues = 0
-            
-            for (_, metrics) in unifiedBuildingMetrics {
-                totalCompletion += metrics.completionRate
-                if metrics.overdueTasks > 5 {
-                    criticalIssues += 1
-                }
-            }
-            
-            let avgCompletion = unifiedBuildingMetrics.isEmpty ? 0.0 : 
-                totalCompletion / Double(unifiedBuildingMetrics.count)
-            
-            unifiedPortfolioState = PortfolioState(
-                totalBuildings: buildings.count,
-                activeWorkers: activeWorkerCount,
-                overallCompletion: avgCompletion,
-                criticalIssues: criticalIssues,
-                complianceScore: 0.85,
-                lastUpdated: Date()
-            )
-        } catch {
-            print("❌ Failed to refresh portfolio state: (error)")
-        }
+    /// Publisher for client-specific updates
+    public var clientUpdates: AnyPublisher<DashboardUpdate, Never> {
+        clientDashboardUpdates
+            .filter { $0.source == .client || $0.type == .portfolioUpdated || $0.type == .performanceChanged }
+            .eraseToAnyPublisher()
     }
 }
