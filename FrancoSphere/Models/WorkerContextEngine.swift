@@ -58,8 +58,8 @@ public final class WorkerContextEngine: ObservableObject {
             for buildingName in uniqueBuildingNames {
                 if let buildingId = await operationalData.getRealBuildingId(from: buildingName) {
                     do {
-                        // ✅ FIXED: Use proper async method call with await
-                        if let building = try await buildingService.getBuilding(by: buildingId) {
+                        // ✅ FIXED: Use correct parameter label 'buildingId:' not 'by:'
+                        if let building = try await buildingService.getBuilding(buildingId: buildingId) {
                             assignedBuildingsList.append(building)
                         }
                     } catch {
@@ -86,8 +86,8 @@ public final class WorkerContextEngine: ObservableObject {
                 completedTasks: completedTasks
             )
             
-            // ✅ FIXED: Add await for async method
-            let clockStatus = await clockInManager.getClockInStatus(for: workerId)
+            // ✅ FIXED: getClockInStatus is NOT async - removed await
+            let clockStatus = clockInManager.getClockInStatus(for: workerId)
             if let session = clockStatus.session {
                 let building = NamedCoordinate(
                     id: session.buildingId,
@@ -111,12 +111,12 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     // MARK: - Task Generation
-    // ✅ FIXED: Use correct type [OperationalDataManager.TaskAssignment]
+    // ✅ FIXED: Use correct type OperationalDataTaskAssignment (standalone type, not nested)
     private func generateContextualTasks(
         for workerId: String,
         workerName: String,
         assignedBuildings: [NamedCoordinate],
-        realWorldAssignments: [OperationalDataManager.TaskAssignment]
+        realWorldAssignments: [OperationalDataTaskAssignment]
     ) async -> [ContextualTask] {
         var tasks: [ContextualTask] = []
         

@@ -7,11 +7,9 @@
 //  ✅ ALIGNED: With NovaTypes from Nova/Core/NovaTypes.swift
 //  ✅ INTEGRATED: With WorkerContextEngine and real services
 //  ✅ PRODUCTION READY: Uses actual Nova AI implementation
-//
-
 import SwiftUI
 import Combine
-
+import Foundation
 // Nova types are imported from Nova/Core/NovaTypes.swift
 
 struct NovaInteractionView: View {
@@ -237,14 +235,15 @@ struct NovaInteractionView: View {
         // Clear input
         userQuery = ""
         
-        // ✅ FIXED: Create NovaPrompt with all parameter labels explicitly
+        // Debug: Check types
+        let priority: NovaPriority = determinePriority(for: query)
+        let context: NovaContext? = currentContext
+        
+        // Create prompt
         let prompt = NovaPrompt(
-            id: UUID(),
             text: query,
-            priority: determinePriority(for: query),
-            context: currentContext,
-            createdAt: Date(),
-            expiresAt: nil
+            priority: priority,
+            context: context
         )
         
         novaPrompts.append(prompt)
