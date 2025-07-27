@@ -37,7 +37,6 @@
 		23273A262E2B8674004A52C6 /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F82E2B8674004A52C6 /* TaskTimelineView.swift */; };
 		23273A272E2B8674004A52C6 /* BuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E42E2B8674004A52C6 /* BuildingsView.swift */; };
 		23273A282E2B8674004A52C6 /* NovaAIIntegrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C22E2B8674004A52C6 /* NovaAIIntegrationService.swift */; };
-		23273A292E2B8674004A52C6 /* DataConsolidationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D42E2B8674004A52C6 /* DataConsolidationManager.swift */; };
 		23273A2A2E2B8674004A52C6 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393C2E2B8674004A52C6 /* WorkersInlineList.swift */; };
 		23273A2B2E2B8674004A52C6 /* UpdatedDataLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CA2E2B8674004A52C6 /* UpdatedDataLoading.swift */; };
 		23273A2C2E2B8674004A52C6 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D72E2B8674004A52C6 /* TypeMigrationService.swift */; };
@@ -406,7 +405,6 @@
 		232739D02E2B8674004A52C6 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
 		232739D12E2B8674004A52C6 /* RouteStatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStatItem.swift; sourceTree = "<group>"; };
 		232739D22E2B8674004A52C6 /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
-		232739D42E2B8674004A52C6 /* DataConsolidationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConsolidationManager.swift; sourceTree = "<group>"; };
 		232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
 		232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OperationalDataManager+DatabaseIntegration.swift"; sourceTree = "<group>"; };
 		232739D72E2B8674004A52C6 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
@@ -903,7 +901,6 @@
 		232739D92E2B8674004A52C6 /* Sync */ = {
 			isa = PBXGroup;
 			children = (
-				232739D42E2B8674004A52C6 /* DataConsolidationManager.swift */,
 				232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */,
 				232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */,
 				232739D72E2B8674004A52C6 /* TypeMigrationService.swift */,
@@ -1196,7 +1193,6 @@
 				23273A262E2B8674004A52C6 /* TaskTimelineView.swift in Sources */,
 				23273A272E2B8674004A52C6 /* BuildingsView.swift in Sources */,
 				23273A282E2B8674004A52C6 /* NovaAIIntegrationService.swift in Sources */,
-				23273A292E2B8674004A52C6 /* DataConsolidationManager.swift in Sources */,
 				23273A2A2E2B8674004A52C6 /* WorkersInlineList.swift in Sources */,
 				23273A2B2E2B8674004A52C6 /* UpdatedDataLoading.swift in Sources */,
 				23273A2C2E2B8674004A52C6 /* TypeMigrationService.swift in Sources */,
