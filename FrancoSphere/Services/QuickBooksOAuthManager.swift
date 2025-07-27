@@ -15,6 +15,7 @@ import AuthenticationServices
 import CryptoKit
 import GRDB
 import UIKit  // For UIWindow, UIApplication
+import SwiftUI  // For QBConnectionStatus which uses Color
 
 // MARK: - QuickBooks OAuth Manager Actor (GRDB Integration)
 
@@ -243,84 +244,74 @@ public actor QuickBooksOAuthManager {
     }
     
     /// Perform OAuth session with ASWebAuthenticationSession
+    @MainActor
     private func performOAuthSession(url: URL, state: String) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.main.async { [weak self] in
-                let session = ASWebAuthenticationSession(
-                    url: url,
-                    callbackURLScheme: "francosphere"
-                ) { callbackURL, error in
-                    Task { [weak self] in
-                        guard let self = self else {
-                            continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed("Manager deallocated"))
-                            return
-                        }
-                        
-                        if let error = error {
-                            continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed(error.localizedDescription))
-                            return
-                        }
-                        
-                        guard let callbackURL = callbackURL else {
-                            continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed("No callback URL"))
-                            return
-                        }
-                        
-                        do {
-                            // ✅ FIXED: Properly handle actor isolation
-                            let authCode = try await self.extractAuthCode(from: callbackURL, expectedState: state)
-                            continuation.resume(returning: authCode)
-                        } catch {
-                            continuation.resume(throwing: error)
+            let session = ASWebAuthenticationSession(
+                url: url,
+                callbackURLScheme: "francosphere"
+            ) { callbackURL, error in
+                if let error = error {
+                    continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed(error.localizedDescription))
+                    return
+                }
+                
+                guard let callbackURL = callbackURL else {
+                    continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed("No callback URL"))
+                    return
+                }
+                
+                // Extract auth code and company ID synchronously
+                do {
+                    guard let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
+                          let queryItems = components.queryItems else {
+                        throw QuickBooksOAuthError.invalidCallback("Invalid callback URL")
+                    }
+                    
+                    // Verify state parameter
+                    if let callbackState = queryItems.first(where: { $0.name == "state" })?.value {
+                        guard callbackState == state else {
+                            throw QuickBooksOAuthError.stateMismatch
                         }
                     }
+                    
+                    // Extract authorization code
+                    guard let code = queryItems.first(where: { $0.name == "code" })?.value else {
+                        // Check for error
+                        if let error = queryItems.first(where: { $0.name == "error" })?.value {
+                            throw QuickBooksOAuthError.authorizationDenied(error)
+                        }
+                        throw QuickBooksOAuthError.invalidCallback("No authorization code")
+                    }
+                    
+                    // Extract and store company ID if present
+                    Task { [weak self] in
+                        if let realmId = queryItems.first(where: { $0.name == "realmId" })?.value {
+                            await self?.setCompanyId(realmId)
+                        }
+                    }
+                    
+                    continuation.resume(returning: code)
+                } catch {
+                    continuation.resume(throwing: error)
                 }
-                
-                // Create and configure presentation context provider
-                let presenter = AuthenticationPresentationContextProvider()
-                session.presentationContextProvider = presenter
-                session.prefersEphemeralWebBrowserSession = false
-                
-                // Start the session
-                if !session.start() {
-                    continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed("Failed to start authentication session"))
-                }
-                
-                // Keep presenter alive during session
-                _ = presenter
+            }
+            
+            // Create and configure presentation context provider
+            let presenter = AuthenticationPresentationContextProvider()
+            session.presentationContextProvider = presenter
+            session.prefersEphemeralWebBrowserSession = false
+            
+            // Start the session
+            if !session.start() {
+                continuation.resume(throwing: QuickBooksOAuthError.authenticationFailed("Failed to start authentication session"))
             }
         }
     }
     
-    /// Extract authorization code from callback URL
-    private func extractAuthCode(from url: URL, expectedState: String) async throws -> String {
-        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let queryItems = components.queryItems else {
-            throw QuickBooksOAuthError.invalidCallback("Invalid callback URL")
-        }
-        
-        // Verify state parameter
-        if let state = queryItems.first(where: { $0.name == "state" })?.value {
-            guard state == expectedState else {
-                throw QuickBooksOAuthError.stateMismatch
-            }
-        }
-        
-        // Extract authorization code
-        guard let code = queryItems.first(where: { $0.name == "code" })?.value else {
-            // Check for error
-            if let error = queryItems.first(where: { $0.name == "error" })?.value {
-                throw QuickBooksOAuthError.authorizationDenied(error)
-            }
-            throw QuickBooksOAuthError.invalidCallback("No authorization code")
-        }
-        
-        // Extract company ID
-        if let realmId = queryItems.first(where: { $0.name == "realmId" })?.value {
-            companyId = realmId
-        }
-        
-        return code
+    /// Helper method to set company ID from main actor context
+    private func setCompanyId(_ id: String) {
+        self.companyId = id
     }
     
     /// Exchange authorization code for access tokens
@@ -547,20 +538,18 @@ public enum QuickBooksOAuthError: LocalizedError {
  - ✅ Added initialize() method for async setup (matching PayrollExporter pattern)
  - ✅ Simple init() without any Task or async operations
  
- 🔧 LINE 253 ACTOR ISOLATION FIX:
- - ✅ Wrapped callback handler in Task for proper actor isolation
- - ✅ Used weak self to prevent retain cycles
- - ✅ Made extractAuthCode an actor-isolated async method
- - ✅ Properly await the actor method call
+ 🔧 LINE 248 DISPATCH WORKITEM FIX:
+ - ✅ Made performOAuthSession a @MainActor method to avoid dispatch issues
+ - ✅ Removed DispatchQueue.main.async wrapper
+ - ✅ Simplified continuation handling without nested closures
+ - ✅ Added separate setCompanyId helper for actor isolation
  
  🔧 QBCONNECTIONSTATUS FIX:
  - ✅ Removed duplicate QBConnectionStatus enum definition
  - ✅ Now uses the existing enum from QBConnectionStatus.swift
  - ✅ Added UIKit import for UIWindow usage
- 
- 🔧 DISPATCH QUEUE FIX:
- - ✅ Fixed withExtendedLifetime usage
- - ✅ Simplified to just keep presenter reference
+ - ✅ Added SwiftUI import since QBConnectionStatus uses Color
+ - ✅ All enum references use full type name to avoid ambiguity
  
  🔧 INTEGRATION IMPROVEMENTS:
  - ✅ Uses existing QBConnectionStatus enum from QBConnectionStatus.swift
@@ -572,6 +561,7 @@ public enum QuickBooksOAuthError: LocalizedError {
  - ✅ All actor isolation issues resolved
  - ✅ Proper async/await handling throughout
  - ✅ No synchronous calls to actor-isolated methods
+ - ✅ @MainActor annotation for UI-related OAuth session
  
  🎯 STATUS: All compilation errors resolved, uses existing types, seamlessly integrated
  */
