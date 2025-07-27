@@ -36,6 +36,29 @@ struct EventRecord {
         self.timestamp = Date()
     }
 }
+
+// MARK: - Memory Warning Observer (Handles notification bridging)
+
+private class MemoryWarningObserver {
+    init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleMemoryWarning),
+            name: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func handleMemoryWarning() {
+        // Simple async call without Task wrapper
+        TelemetryService.shared.handleMemoryWarningSync()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+}
+
 // MARK: - TelemetryService Actor
 
 actor TelemetryService {
@@ -62,12 +85,25 @@ actor TelemetryService {
     private var isMonitoringActive = false
     private var memoryWarningCount = 0
     private var performanceAlerts: [PerformanceAlert] = []
+    private var isInitialized = false
+    private var memoryObserver: MemoryWarningObserver?
     
     private init() {
-        // Setup happens after init in Swift 6 actor pattern
+        // Synchronous init - setup happens in initialize()
+    }
+    
+    // Initialize the service
+    func initialize() async {
+        guard !isInitialized else { return }
+        await setupMemoryWarningMonitoring()
+        await startSessionTracking()
+        isInitialized = true
+    }
+    
+    // Add the missing handleMemoryWarningSync method
+    nonisolated func handleMemoryWarningSync() {
         Task {
-            await self.setupMemoryWarningMonitoring()
-            await self.startSessionTracking()
+            await self.handleMemoryWarning()
         }
     }
     
@@ -75,77 +111,121 @@ actor TelemetryService {
     
     /// Track any operation with performance metrics
     func trackOperation<T>(_ operation: String, category: TelemetryCategory = .general, body: () async throws -> T) async rethrows -> T {
+        await initialize() // Ensure initialized
+        
         let startTime = CFAbsoluteTimeGetCurrent()
         let startMemory = getCurrentMemoryUsage()
         let operationId = UUID().uuidString
         
         performanceLogger.info("🚀 Starting operation: \(operation) [ID: \(operationId)]")
         
-        // Fixed: Capture values before defer, use Task without weak self capture
-        defer {
+        do {
+            let result = try await body()
+            
+            // Record completion after operation
             let duration = CFAbsoluteTimeGetCurrent() - startTime
             let endMemory = getCurrentMemoryUsage()
             let memoryDelta = endMemory - startMemory
             
-            Task {
-                await self.recordOperationCompletion(
-                    operation: operation,
-                    category: category,
-                    duration: duration,
-                    memoryDelta: memoryDelta,
-                    operationId: operationId
-                )
-            }
+            await recordOperationCompletion(
+                operation: operation,
+                category: category,
+                duration: duration,
+                memoryDelta: memoryDelta,
+                operationId: operationId
+            )
+            
+            return result
+        } catch {
+            // Still record completion even on error
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
+            let endMemory = getCurrentMemoryUsage()
+            let memoryDelta = endMemory - startMemory
+            
+            await recordOperationCompletion(
+                operation: operation,
+                category: category,
+                duration: duration,
+                memoryDelta: memoryDelta,
+                operationId: operationId
+            )
+            
+            throw error
         }
-        
-        return try await body()
     }
     
     /// Track dashboard load performance (critical for <2s target)
     func trackDashboardLoad<T>(_ phase: DashboardPhase, workerId: String, body: () async throws -> T) async rethrows -> T {
+        await initialize() // Ensure initialized
+        
         let startTime = CFAbsoluteTimeGetCurrent()
         let startMemory = getCurrentMemoryUsage()
         
-        // Fixed: Same pattern without weak self
-        defer {
+        do {
+            let result = try await body()
+            
             let duration = CFAbsoluteTimeGetCurrent() - startTime
             let endMemory = getCurrentMemoryUsage()
             let memoryDelta = endMemory - startMemory
             
-            Task {
-                await self.recordDashboardPhase(
-                    phase: phase,
-                    workerId: workerId,
-                    duration: duration,
-                    memoryDelta: memoryDelta
-                )
-            }
+            await recordDashboardPhase(
+                phase: phase,
+                workerId: workerId,
+                duration: duration,
+                memoryDelta: memoryDelta
+            )
+            
+            return result
+        } catch {
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
+            let endMemory = getCurrentMemoryUsage()
+            let memoryDelta = endMemory - startMemory
+            
+            await recordDashboardPhase(
+                phase: phase,
+                workerId: workerId,
+                duration: duration,
+                memoryDelta: memoryDelta
+            )
+            
+            throw error
         }
-        
-        return try await body()
     }
     
     /// Track Kevin's specific workflow performance
     func trackKevinWorkflow<T>(_ action: KevinWorkflowAction, body: () async throws -> T) async rethrows -> T {
+        await initialize() // Ensure initialized
+        
         let startTime = CFAbsoluteTimeGetCurrent()
         let startMemory = getCurrentMemoryUsage()
         
-        // Fixed: Same pattern without weak self
-        defer {
+        do {
+            let result = try await body()
+            
             let duration = CFAbsoluteTimeGetCurrent() - startTime
             let endMemory = getCurrentMemoryUsage()
             let memoryDelta = endMemory - startMemory
             
-            Task {
-                await self.recordKevinWorkflowAction(
-                    action: action,
-                    duration: duration,
-                    memoryDelta: memoryDelta
-                )
-            }
+            await recordKevinWorkflowAction(
+                action: action,
+                duration: duration,
+                memoryDelta: memoryDelta
+            )
+            
+            return result
+        } catch {
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
+            let endMemory = getCurrentMemoryUsage()
+            let memoryDelta = endMemory - startMemory
+            
+            await recordKevinWorkflowAction(
+                action: action,
+                duration: duration,
+                memoryDelta: memoryDelta
+            )
+            
+            throw error
         }
-        
-        return try await body()
     }
     
     // MARK: - Performance Recording & Analysis
@@ -156,7 +236,7 @@ actor TelemetryService {
         duration: TimeInterval,
         memoryDelta: Int,
         operationId: String
-    ) {
+    ) async {
         // Update operation metrics
         if var metrics = operationMetrics[operation] {
             metrics.totalCalls += 1
@@ -193,7 +273,7 @@ actor TelemetryService {
         """)
         
         // Check performance budgets
-        checkPerformanceBudgets(operation: operation, duration: duration, memoryDelta: memoryDelta)
+        await checkPerformanceBudgets(operation: operation, duration: duration, memoryDelta: memoryDelta)
         
         // Update session metrics
         sessionMetrics.totalOperations += 1
@@ -206,7 +286,7 @@ actor TelemetryService {
         workerId: String,
         duration: TimeInterval,
         memoryDelta: Int
-    ) {
+    ) async {
         // Update dashboard metrics
         dashboardMetrics.phaseMetrics[phase, default: PhaseMetrics()].addMeasurement(duration: duration, memoryDelta: memoryDelta)
         
@@ -247,7 +327,7 @@ actor TelemetryService {
         action: KevinWorkflowAction,
         duration: TimeInterval,
         memoryDelta: Int
-    ) {
+    ) async {
         // Update Kevin workflow metrics
         self.kevinWorkflowMetrics.actionMetrics[action, default: ActionMetrics()].addMeasurement(duration: duration, memoryDelta: memoryDelta)
         self.kevinWorkflowMetrics.totalActions += 1
@@ -276,7 +356,7 @@ actor TelemetryService {
     
     // MARK: - Performance Budget Monitoring
     
-    private func checkPerformanceBudgets(operation: String, duration: TimeInterval, memoryDelta: Int) {
+    private func checkPerformanceBudgets(operation: String, duration: TimeInterval, memoryDelta: Int) async {
         // Check duration budgets
         let isDashboardOperation = operation.lowercased().contains("dashboard") || operation.lowercased().contains("load")
         let isSlowOperation = isDashboardOperation ? duration > maxDashboardLoadTime : duration > 1.0
@@ -344,22 +424,13 @@ actor TelemetryService {
         return String(format: "%.2f MB", memoryMB)
     }
     
-    // Fixed: Remove @MainActor and handle cross-actor communication properly
-    private func setupMemoryWarningMonitoring() {
-        Task { @MainActor in
-            NotificationCenter.default.addObserver(
-                forName: UIApplication.didReceiveMemoryWarningNotification,
-                object: nil,
-                queue: .main
-            ) { _ in
-                Task {
-                    await self.handleMemoryWarning()
-                }
-            }
-        }
+    private func setupMemoryWarningMonitoring() async {
+        // Create the observer directly without MainActor
+        let observer = MemoryWarningObserver()
+        self.memoryObserver = observer
     }
     
-    private func handleMemoryWarning() {
+    func handleMemoryWarning() async {
         self.memoryWarningCount += 1
         let currentMemory = getCurrentMemoryUsage()
         let memoryMB = Double(currentMemory) / (1024 * 1024)
@@ -376,11 +447,11 @@ actor TelemetryService {
         
         // Trigger cleanup if too many warnings
         if memoryWarningCount > 2 {
-            performMemoryCleanup()
+            await performMemoryCleanup()
         }
     }
     
-    private func performMemoryCleanup() {
+    private func performMemoryCleanup() async {
         // Clear old metrics to free memory
         let cutoffDate = Date().addingTimeInterval(-3600) // 1 hour ago
         performanceAlerts.removeAll { $0.timestamp < cutoffDate }
@@ -393,8 +464,7 @@ actor TelemetryService {
     
     // MARK: - Session Tracking
     
-    // Fixed: Access actor-isolated properties within the actor
-    private func startSessionTracking() {
+    private func startSessionTracking() async {
         sessionMetrics.sessionStart = Date()
         sessionMetrics.initialMemoryUsage = getCurrentMemoryUsage()
         
@@ -566,6 +636,7 @@ actor TelemetryService {
     // MARK: - Public Monitoring Control
     
     public func startMonitoring() async {
+        await initialize()
         isMonitoringActive = true
         logger.info("📊 Telemetry monitoring started")
     }
