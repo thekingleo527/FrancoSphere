@@ -209,7 +209,6 @@ extension IntegrationTest {
         
         // FIX: Add await for async function
         let passed = await runFullIntegrationTest()
-        
         if passed {
             print("✅ All integration tests passed!")
         } else {

@@ -5,6 +5,7 @@
 //  ✅ FIXED: ContextualTask initializer calls
 //  ✅ FIXED: Switch statement exhaustiveness
 //  ✅ FIXED: Type inference issues
+//  ✅ FIXED: Removed extra 'scheduledDate' parameter
 //
 
 import Foundation
@@ -78,12 +79,13 @@ public actor WeatherAlertSystem {
         for building in buildings {
             // Generate building-specific weather alerts
             if weather.outdoorWorkRisk == .high || weather.outdoorWorkRisk == .extreme {
+                // ✅ FIXED: Removed 'scheduledDate' parameter as it's not part of ContextualTask initializer
+                // Note: ContextualTask likely uses dueDate as its scheduled date
                 let alert = ContextualTask(
                     id: UUID().uuidString,
                     title: "Weather Alert: \(weather.outdoorWorkRisk.rawValue)",
                     description: "Weather conditions require special precautions",
                     isCompleted: false,
-                    scheduledDate: Date(),
                     dueDate: Calendar.current.date(byAdding: .hour, value: 2, to: Date()),
                     category: .emergency,
                     urgency: .high
