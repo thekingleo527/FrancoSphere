@@ -2,31 +2,17 @@
 //  TelemetryService.swift
 //  FrancoSphere
 //
-//  🔧 COMPLETE PERFORMANCE MONITORING & TELEMETRY SYSTEM - FIXED
-//  ✅ Dashboard load time monitoring (<2s target)
-//  ✅ Memory usage tracking (<200MB budget)
-//  ✅ Kevin workflow performance validation
-//  ✅ Service operation profiling
-//  ✅ Real-time performance alerts
-//  ✅ Analytics for operational insights
-//  ✅ ALL SYNTAX ERRORS RESOLVED
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ SWIFT 6: Actor isolation compliance
+//  ✅ CONCURRENCY: Proper Task usage patterns
+//  ✅ PERFORMANCE: Complete monitoring system
+//  🔧 COMPLETE PERFORMANCE MONITORING & TELEMETRY SYSTEM
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import OSLog
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import UIKit
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import CoreLocation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 // MARK: - TelemetryService Actor
 
@@ -56,8 +42,11 @@ actor TelemetryService {
     private var performanceAlerts: [PerformanceAlert] = []
     
     private init() {
-        setupMemoryWarningMonitoring()
-        startSessionTracking()
+        // ✅ FIXED: Setup happens after init in Swift 6 actor pattern
+        Task {
+            await self.setupMemoryWarningMonitoring()
+            await self.startSessionTracking()
+        }
     }
     
     // MARK: - Core Operation Tracking
@@ -70,13 +59,14 @@ actor TelemetryService {
         
         performanceLogger.info("🚀 Starting operation: \(operation) [ID: \(operationId)]")
         
+        // ✅ FIXED: Proper Task usage in defer
         defer {
             let duration = CFAbsoluteTimeGetCurrent() - startTime
             let endMemory = getCurrentMemoryUsage()
             let memoryDelta = endMemory - startMemory
             
-            Task {
-                await self.recordOperationCompletion(
+            Task { [weak self] in
+                await self?.recordOperationCompletion(
                     operation: operation,
                     category: category,
                     duration: duration,
@@ -94,13 +84,14 @@ actor TelemetryService {
         let startTime = CFAbsoluteTimeGetCurrent()
         let startMemory = getCurrentMemoryUsage()
         
+        // ✅ FIXED: Proper Task usage in defer
         defer {
             let duration = CFAbsoluteTimeGetCurrent() - startTime
             let endMemory = getCurrentMemoryUsage()
             let memoryDelta = endMemory - startMemory
             
-            Task {
-                await self.recordDashboardPhase(
+            Task { [weak self] in
+                await self?.recordDashboardPhase(
                     phase: phase,
                     workerId: workerId,
                     duration: duration,
@@ -117,13 +108,14 @@ actor TelemetryService {
         let startTime = CFAbsoluteTimeGetCurrent()
         let startMemory = getCurrentMemoryUsage()
         
+        // ✅ FIXED: Proper Task usage in defer
         defer {
             let duration = CFAbsoluteTimeGetCurrent() - startTime
             let endMemory = getCurrentMemoryUsage()
             let memoryDelta = endMemory - startMemory
             
-            Task {
-                await self.recordKevinWorkflowAction(
+            Task { [weak self] in
+                await self?.recordKevinWorkflowAction(
                     action: action,
                     duration: duration,
                     memoryDelta: memoryDelta
@@ -330,6 +322,7 @@ actor TelemetryService {
         return String(format: "%.2f MB", memoryMB)
     }
     
+    // ✅ FIXED: Proper actor-isolated method for Swift 6
     private func setupMemoryWarningMonitoring() {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
@@ -704,13 +697,4 @@ struct PerformanceValidationResult {
     let score: Int
 }
 
-// MARK: - Actor Isolation Fix
-extension TelemetryService {
-    nonisolated init() {
-        self.init()
-        Task {
-            await self.setupMemoryWarningMonitoring()
-            await self.startSessionTracking()
-        }
-    }
-}
+// ✅ REMOVED: Invalid actor extension that was causing redeclaration errors

@@ -131,7 +131,6 @@
 		23273A8D2E2B8674004A52C6 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739442E2B8674004A52C6 /* FrancoSphereApp.swift */; };
 		23273A8E2E2B8674004A52C6 /* WeatherTaskTimelineCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739082E2B8674004A52C6 /* WeatherTaskTimelineCard.swift */; };
 		23273A8F2E2B8674004A52C6 /* NovaDataAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739AC2E2B8674004A52C6 /* NovaDataAggregator.swift */; };
-		23273A902E2B8674004A52C6 /* ContextualTaskExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */; };
 		23273A912E2B8674004A52C6 /* ImportHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397A2E2B8674004A52C6 /* ImportHelper.swift */; };
 		23273A922E2B8674004A52C6 /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C32E2B8674004A52C6 /* QuickBooksOAuthManager.swift */; };
 		23273A932E2B8674004A52C6 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */; };
@@ -332,7 +331,6 @@
 		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
 		2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
-		232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskExtensions.swift; sourceTree = "<group>"; };
 		232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskIntelligence.swift; sourceTree = "<group>"; };
 		232739772E2B8674004A52C6 /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
 		232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereExtensions.swift; sourceTree = "<group>"; };
@@ -718,7 +716,6 @@
 				2327396B2E2B8674004A52C6 /* DTOs */,
 				2327396E2E2B8674004A52C6 /* Enums */,
 				232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */,
-				232739742E2B8674004A52C6 /* ContextualTaskExtensions.swift */,
 				232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */,
 				232739772E2B8674004A52C6 /* FilteredTaskResult.swift */,
 				232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */,
@@ -1296,7 +1293,6 @@
 				23273A8D2E2B8674004A52C6 /* FrancoSphereApp.swift in Sources */,
 				23273A8E2E2B8674004A52C6 /* WeatherTaskTimelineCard.swift in Sources */,
 				23273A8F2E2B8674004A52C6 /* NovaDataAggregator.swift in Sources */,
-				23273A902E2B8674004A52C6 /* ContextualTaskExtensions.swift in Sources */,
 				23273A912E2B8674004A52C6 /* ImportHelper.swift in Sources */,
 				23273A922E2B8674004A52C6 /* QuickBooksOAuthManager.swift in Sources */,
 				23273A932E2B8674004A52C6 /* QBConnectionStatus.swift in Sources */,

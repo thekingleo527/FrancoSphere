@@ -2,28 +2,18 @@
 //  WeatherDataAdapter.swift
 //  FrancoSphere
 //
-//  🚀 PRODUCTION READY - PHASE-2 COMPLETE (FINAL FIXED VERSION)
-//  ✅ Fixed all compilation errors
-//  ✅ Corrected WeatherCondition enum usage (using CoreTypes.WeatherCondition)
-//  ✅ Fixed CoreTypes.WeatherData constructor parameter order
-//  ✅ Fixed MaintenanceTask constructor (using CoreTypes.MaintenanceTask)
-//  ✅ Fixed VerificationStatus enum values
-//  ✅ OpenMeteo API integration fully working
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With actual CoreTypes.WeatherData structure
+//  ✅ CORRECTED: Function declarations and enum usage
+//  ✅ INTEGRATED: With existing dashboard and service architecture
+//  🚀 PRODUCTION READY - Complete weather integration
 //
 
 import Foundation
-
-// Type aliases for CoreTypes
-
 import SwiftUI
-
-// Type aliases for CoreTypes
-
 import Combine
 
-// Type aliases for CoreTypes
-
-// MARK: - Weather Error Enum (Standalone - Final Version)
+// MARK: - Weather Error Enum
 
 enum WeatherError: LocalizedError {
     case invalidURL
@@ -60,7 +50,7 @@ enum WeatherError: LocalizedError {
     }
 }
 
-// MARK: - Weather Data Adapter (Final Version)
+// MARK: - Weather Data Adapter
 
 @MainActor
 class WeatherDataAdapter: ObservableObject {
@@ -79,9 +69,6 @@ class WeatherDataAdapter: ObservableObject {
     private let cacheFileName = "weatherCache.json"
 
     private struct DiskCacheEntry: Codable {
-        enum CodingKeys: String, CodingKey {
-            case data, timestamp
-        }
         let data: [CoreTypes.WeatherData]
         let timestamp: Date
     }
@@ -190,15 +177,14 @@ class WeatherDataAdapter: ObservableObject {
         isLoading = false
     }
     
-    // MARK: - OpenMeteo API Integration (FIXED)
+    // MARK: - OpenMeteo API Integration
     
     private func fetchFromAPI(latitude: Double, longitude: Double) async throws -> [CoreTypes.WeatherData] {
-        // Always use OpenMeteo API (free, no key needed)
         return try await fetchFromOpenMeteoAPI(latitude: latitude, longitude: longitude)
     }
     
     private func fetchFromOpenMeteoAPI(latitude: Double, longitude: Double) async throws -> [CoreTypes.WeatherData] {
-        // Validate coordinates (round to 4 decimal places for consistency)
+        // Validate coordinates
         let lat = round(latitude * 10000) / 10000
         let lng = round(longitude * 10000) / 10000
         
@@ -211,7 +197,7 @@ class WeatherDataAdapter: ObservableObject {
             URLQueryItem(name: "latitude", value: String(format: "%.4f", lat)),
             URLQueryItem(name: "longitude", value: String(format: "%.4f", lng)),
             URLQueryItem(name: "current", value: "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code"),
-            URLQueryItem(name: "hourly", value: "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,weather_code"),
+            URLQueryItem(name: "hourly", value: "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code"),
             URLQueryItem(name: "temperature_unit", value: "fahrenheit"),
             URLQueryItem(name: "wind_speed_unit", value: "mph"),
             URLQueryItem(name: "precipitation_unit", value: "inch"),
@@ -223,7 +209,6 @@ class WeatherDataAdapter: ObservableObject {
             throw WeatherError.invalidURL
         }
         
-        // Extended timeout for production reliability
         var request = URLRequest(url: url)
         request.timeoutInterval = 15.0
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -264,11 +249,11 @@ class WeatherDataAdapter: ObservableObject {
                 throw WeatherError.parseError
             }
             
-            // Parse current weather for immediate use
             var weatherData: [CoreTypes.WeatherData] = []
             
+            // Parse current weather for immediate use
             if let current = json["current"] as? [String: Any] {
-                let currentWeather = try parseCurrentCoreTypes.WeatherData(current)
+                let currentWeather = try parseCurrentWeatherData(current)
                 weatherData.append(currentWeather)
             }
             
@@ -277,43 +262,43 @@ class WeatherDataAdapter: ObservableObject {
                let times = hourly["time"] as? [String],
                let temperatures = hourly["temperature_2m"] as? [Double] {
                 
-                let hourlyData = try parseHourlyCoreTypes.WeatherData(hourly, times: times, temperatures: temperatures)
+                let hourlyData = try parseHourlyWeatherData(hourly, times: times, temperatures: temperatures)
                 weatherData.append(contentsOf: hourlyData.prefix(23)) // Add next 23 hours
             }
             
-            return weatherData.isEmpty ? [createFallbackCoreTypes.WeatherData()] : weatherData
+            return weatherData.isEmpty ? [createFallbackWeatherData()] : weatherData
             
         } catch {
             throw WeatherError.parseError
         }
     }
     
-    private func parseCurrentCoreTypes.WeatherData(_ current: [String: Any]) throws -> CoreTypes.WeatherData {
+    // ✅ FIXED: Proper function declaration syntax
+    private func parseCurrentWeatherData(_ current: [String: Any]) throws -> CoreTypes.WeatherData {
         let temperature = current["temperature_2m"] as? Double ?? 72.0
         let humidity = current["relative_humidity_2m"] as? Int ?? 50
-        let precipitation = current["precipitation"] as? Double ?? 0.0
         let windSpeed = current["wind_speed_10m"] as? Double ?? 5.0
         let weatherCode = current["weather_code"] as? Int ?? 0
         
-        let condition = weatherCodeToCondition(weatherCode)
+        let conditionEnum = weatherCodeToCondition(weatherCode)
+        let conditionString = conditionEnum.rawValue
+        let outdoorRisk = calculateOutdoorWorkRisk(temperature: temperature, windSpeed: windSpeed, condition: conditionEnum)
         
-        // FIXED: Correct CoreTypes.WeatherData constructor using FrancoSphereModels.swift definition
+        // ✅ FIXED: Use actual CoreTypes.WeatherData constructor (NO precipitation property)
         return CoreTypes.WeatherData(
             temperature: temperature,
+            condition: conditionString,
             humidity: Double(humidity),
             windSpeed: windSpeed,
-            conditions: condition.rawValue,
-            timestamp: Date(),
-            precipitation: precipitation,
-            condition: condition
+            outdoorWorkRisk: outdoorRisk,
+            timestamp: Date()
         )
     }
     
-    private func parseHourlyCoreTypes.WeatherData(_ hourly: [String: Any], times: [String], temperatures: [Double]) throws -> [CoreTypes.WeatherData] {
+    // ✅ FIXED: Proper function declaration syntax
+    private func parseHourlyWeatherData(_ hourly: [String: Any], times: [String], temperatures: [Double]) throws -> [CoreTypes.WeatherData] {
         guard let humidities = hourly["relative_humidity_2m"] as? [Int],
-              let precipitations = hourly["precipitation"] as? [Double],
               let windSpeeds = hourly["wind_speed_10m"] as? [Double],
-              let windDirections = hourly["wind_direction_10m"] as? [Double],
               let weatherCodes = hourly["weather_code"] as? [Int] else {
             throw WeatherError.parseError
         }
@@ -327,41 +312,40 @@ class WeatherDataAdapter: ObservableObject {
             let date = dateFormatter.date(from: times[i]) ?? Date().addingTimeInterval(TimeInterval(i * 3600))
             let temperature = temperatures[i]
             let humidity = i < humidities.count ? humidities[i] : 50
-            let precipitation = i < precipitations.count ? precipitations[i] : 0.0
             let windSpeed = i < windSpeeds.count ? windSpeeds[i] : 5.0
             let weatherCode = i < weatherCodes.count ? weatherCodes[i] : 0
             
-            let condition = weatherCodeToCondition(weatherCode)
+            let conditionEnum = weatherCodeToCondition(weatherCode)
+            let conditionString = conditionEnum.rawValue
+            let outdoorRisk = calculateOutdoorWorkRisk(temperature: temperature, windSpeed: windSpeed, condition: conditionEnum)
             
-            // FIXED: Correct CoreTypes.WeatherData constructor using FrancoSphereModels.swift definition
+            // ✅ FIXED: Use actual CoreTypes.WeatherData constructor (NO precipitation property)
             weatherData.append(CoreTypes.WeatherData(
                 temperature: temperature,
+                condition: conditionString,
                 humidity: Double(humidity),
                 windSpeed: windSpeed,
-                conditions: condition.rawValue,
-                timestamp: date,
-                precipitation: precipitation,
-                condition: condition
+                outdoorWorkRisk: outdoorRisk,
+                timestamp: date
             ))
         }
         
         return weatherData
     }
     
-    private func createFallbackCoreTypes.WeatherData() -> CoreTypes.WeatherData {
-        // FIXED: Correct CoreTypes.WeatherData constructor using FrancoSphereModels.swift definition
+    // ✅ FIXED: Proper function declaration syntax
+    private func createFallbackWeatherData() -> CoreTypes.WeatherData {
         return CoreTypes.WeatherData(
             temperature: 72.0,
+            condition: "Clear",
             humidity: 50.0,
             windSpeed: 5.0,
-            conditions: "Clear",
-            timestamp: Date(),
-            precipitation: 0.0,
-            condition: .clear
+            outdoorWorkRisk: .low,
+            timestamp: Date()
         )
     }
     
-    private func weatherCodeToCondition(_ code: Int) -> WeatherCondition {
+    private func weatherCodeToCondition(_ code: Int) -> CoreTypes.WeatherCondition {
         switch code {
         case 0: return .clear
         case 1, 2, 3: return .cloudy
@@ -373,11 +357,23 @@ class WeatherDataAdapter: ObservableObject {
         }
     }
     
-    // MARK: - Task Integration Methods (Required by TaskSchedulerService)
+    private func calculateOutdoorWorkRisk(temperature: Double, windSpeed: Double, condition: CoreTypes.WeatherCondition) -> CoreTypes.OutdoorWorkRisk {
+        if temperature > 95 || temperature < 20 || windSpeed > 35 || condition == .stormy {
+            return .extreme
+        } else if temperature > 85 || temperature < 32 || windSpeed > 25 || condition == .rainy {
+            return .high
+        } else if windSpeed > 15 || condition == .snowy {
+            return .medium
+        } else {
+            return .low
+        }
+    }
     
-    /// Generate weather-related TaskCategory.maintenance tasks based on forecast
-    func generateWeatherTasks(for building: NamedCoordinate) -> [MaintenanceTask] {
-        var tasks: [MaintenanceTask] = []
+    // MARK: - Task Integration Methods
+    
+    /// Generate weather-related maintenance tasks based on forecast
+    func generateWeatherTasks(for building: NamedCoordinate) -> [CoreTypes.MaintenanceTask] {
+        var tasks: [CoreTypes.MaintenanceTask] = []
         let calendar = Calendar.current
         
         // Check next 3 days for weather-based tasks
@@ -385,11 +381,11 @@ class WeatherDataAdapter: ObservableObject {
             guard day.isHazardous else { continue }
             
             let dueDate = calendar.date(byAdding: .day, value: index, to: Date()) ?? Date()
+            let conditionEnum = CoreTypes.WeatherCondition(rawValue: day.condition) ?? .clear
             
             // Snow preparation
-            if day.condition == .snowy && day.precipitation > 0 {
-                // FIXED: Correct MaintenanceTask constructor using CoreTypes.MaintenanceTask definition
-                tasks.append(MaintenanceTask(
+            if conditionEnum == .snowy {
+                tasks.append(CoreTypes.MaintenanceTask(
                     title: "Snow Removal Preparation",
                     description: "Prepare snow removal equipment, stock salt/sand, clear drainage areas",
                     category: .maintenance,
@@ -400,9 +396,8 @@ class WeatherDataAdapter: ObservableObject {
             }
             
             // Storm preparation
-            if day.condition == .stormy || (day.windSpeed > 30) {
-                // FIXED: Correct MaintenanceTask constructor using CoreTypes.MaintenanceTask definition
-                tasks.append(MaintenanceTask(
+            if conditionEnum == .stormy || day.windSpeed > 30 {
+                tasks.append(CoreTypes.MaintenanceTask(
                     title: "Storm Preparation",
                     description: "Secure outdoor items, check drainage, inspect roof/windows",
                     category: .inspection,
@@ -414,8 +409,7 @@ class WeatherDataAdapter: ObservableObject {
             
             // Freeze prevention
             if day.temperature < 32 && index == 0 { // Only for today
-                // FIXED: Correct MaintenanceTask constructor using CoreTypes.MaintenanceTask definition
-                tasks.append(MaintenanceTask(
+                tasks.append(CoreTypes.MaintenanceTask(
                     title: "Freeze Prevention Check",
                     description: "Check exposed pipes, ensure heating in critical areas, winterize outdoor faucets",
                     category: .maintenance,
@@ -427,8 +421,7 @@ class WeatherDataAdapter: ObservableObject {
             
             // Heat management
             if day.temperature > 90 {
-                // FIXED: Correct MaintenanceTask constructor using CoreTypes.MaintenanceTask definition
-                tasks.append(MaintenanceTask(
+                tasks.append(CoreTypes.MaintenanceTask(
                     title: "Cooling System Check",
                     description: "Verify AC operation, check refrigeration units, ensure proper ventilation",
                     category: .maintenance,
@@ -439,12 +432,11 @@ class WeatherDataAdapter: ObservableObject {
             }
         }
         
-        // FIXED: Simple deduplication with proper Date handling
-        var uniqueTasks: [MaintenanceTask] = []
+        // Simple deduplication
+        var uniqueTasks: [CoreTypes.MaintenanceTask] = []
         for task in tasks {
             let isDuplicate = uniqueTasks.contains { existing in
                 existing.title == task.title &&
-                // FIXED: Handle optional dates properly
                 Calendar.current.isDate(existing.dueDate ?? Date(), inSameDayAs: task.dueDate ?? Date())
             }
             if !isDuplicate {
@@ -455,22 +447,23 @@ class WeatherDataAdapter: ObservableObject {
     }
     
     /// Creates an emergency task for current adverse weather conditions
-    func createEmergencyWeatherTask(for building: NamedCoordinate) -> MaintenanceTask? {
+    func createEmergencyWeatherTask(for building: NamedCoordinate) -> CoreTypes.MaintenanceTask? {
         guard let weather = currentWeather, weather.isHazardous else {
             return nil
         }
         
         let now = Date()
+        let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
         
         let taskTitle: String
         let taskDescription: String
-        let taskCategory: TaskCategory
+        let taskCategory: CoreTypes.TaskCategory
         
-        if weather.condition == .rainy || weather.condition == .stormy {
+        if conditionEnum == .rainy || conditionEnum == .stormy {
             taskTitle = "Emergency Rain Inspection"
             taskDescription = "Check for leaks, proper drainage, and clear any blockages from gutters due to heavy rain."
             taskCategory = .inspection
-        } else if weather.condition == .snowy {
+        } else if conditionEnum == .snowy {
             taskTitle = "Snow Removal"
             taskDescription = "Clear snow from walkways, entrances, and emergency exits. Apply salt as needed."
             taskCategory = .maintenance
@@ -492,8 +485,7 @@ class WeatherDataAdapter: ObservableObject {
             taskCategory = .maintenance
         }
         
-        // FIXED: Correct MaintenanceTask constructor using CoreTypes.MaintenanceTask definition
-        return MaintenanceTask(
+        return CoreTypes.MaintenanceTask(
             title: taskTitle,
             description: taskDescription,
             category: taskCategory,
@@ -504,7 +496,7 @@ class WeatherDataAdapter: ObservableObject {
     }
     
     /// Determines if a task should be rescheduled due to weather conditions
-    func shouldRescheduleTask(_ task: MaintenanceTask) -> Bool {
+    func shouldRescheduleTask(_ task: CoreTypes.MaintenanceTask) -> Bool {
         let isOutdoorTask = task.category == .maintenance ||
                             task.category == .cleaning ||
                             task.description.lowercased().contains("outdoor") ||
@@ -513,13 +505,12 @@ class WeatherDataAdapter: ObservableObject {
                             task.title.lowercased().contains("window") ||
                             task.title.lowercased().contains("gutter")
         
-        // FIXED: Use VerificationStatus.verified instead of .approved (correct VerificationStatus enum value)
-        let isComplete = task.status == .verified
+        // ✅ FIXED: Use .completed instead of .verified
+        let isComplete = task.status == .completed
         if !isOutdoorTask || isComplete || task.urgency == .critical {
             return false
         }
         
-        // FIXED: Handle optional dueDate properly
         guard let taskDueDate = task.dueDate else { return false }
         if let weatherForDay = getForecastForDate(taskDueDate),
            weatherForDay.isHazardous {
@@ -530,13 +521,12 @@ class WeatherDataAdapter: ObservableObject {
     }
     
     /// Recommends a new date for a task that needs to be rescheduled
-    func recommendedRescheduleDateForTask(_ task: MaintenanceTask) -> Date? {
+    func recommendedRescheduleDateForTask(_ task: CoreTypes.MaintenanceTask) -> Date? {
         if !shouldRescheduleTask(task) {
             return nil
         }
         
         let calendar = Calendar.current
-        // FIXED: Handle optional dueDate properly
         guard let taskDueDate = task.dueDate else { return nil }
         
         for i in 1...7 {
@@ -547,7 +537,6 @@ class WeatherDataAdapter: ObservableObject {
             }
         }
         
-        // FIXED: Handle optional dueDate properly
         return calendar.date(byAdding: .day, value: 7, to: taskDueDate)
     }
     
@@ -556,13 +545,13 @@ class WeatherDataAdapter: ObservableObject {
     func createWeatherNotification(for building: NamedCoordinate) -> String? {
         guard let weatherData = currentWeather else { return nil }
         
-        if weatherData.condition == .stormy {
+        let conditionEnum = CoreTypes.WeatherCondition(rawValue: weatherData.condition) ?? .clear
+        
+        if conditionEnum == .stormy {
             return "⚠️ Severe weather alert for \(building.name). Consider rescheduling outdoor tasks."
-        } else if weatherData.condition == .rainy && weatherData.precipitation > 0.5 {
-            return "Heavy rain expected at \(building.name). Check drainage systems."
-        } else if weatherData.condition == .rainy {
+        } else if conditionEnum == .rainy {
             return "Rain expected at \(building.name). Some outdoor tasks may be affected."
-        } else if weatherData.condition == .snowy {
+        } else if conditionEnum == .snowy {
             return "Snow expected at \(building.name). Prepare walkways for clearing."
         } else if weatherData.windSpeed > 25 {
             return "High winds expected at \(building.name). Secure loose outdoor items."
@@ -660,13 +649,15 @@ class WeatherDataAdapter: ObservableObject {
 extension CoreTypes.WeatherData {
     /// Check if weather is extreme
     var isExtreme: Bool {
-        condition == .stormy || temperature < 20 || temperature > 100
+        let conditionEnum = CoreTypes.WeatherCondition(rawValue: condition) ?? .clear
+        return conditionEnum == .stormy || temperature < 20 || temperature > 100
     }
     
     /// Check if weather is hazardous for outdoor work
     var isHazardous: Bool {
-        temperature <= 32 || temperature >= 95 ||
-        windSpeed >= 35 || precipitation >= 0.5 ||
-        condition == .stormy || isExtreme
+        let conditionEnum = CoreTypes.WeatherCondition(rawValue: condition) ?? .clear
+        return temperature <= 32 || temperature >= 95 ||
+               windSpeed >= 35 ||
+               conditionEnum == .stormy || isExtreme
     }
 }

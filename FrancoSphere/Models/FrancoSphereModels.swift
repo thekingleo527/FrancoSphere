@@ -2,10 +2,10 @@
 //  FrancoSphereModels.swift
 //  FrancoSphere v6.0
 //
-//  ✅ MINIMAL: Only core definitions without conflicts
-//  ✅ NO DUPLICATES: Avoids all redeclarations
-//  ✅ CODABLE: Proper protocol conformance
-//  ✅ CLEAN: No extensions that exist elsewhere
+//  ✅ MINIMAL: Only core stored properties, no computed properties
+//  ✅ NO DUPLICATES: Avoids all redeclarations with extensions
+//  ✅ CODABLE: Clean protocol conformance
+//  ✅ FOCUSED: Only properties used in initializers throughout codebase
 //
 
 import Foundation
@@ -81,7 +81,7 @@ public struct WorkerProfile: Identifiable, Codable, Hashable {
     }
 }
 
-// MARK: - ✅ MINIMAL: ContextualTask - Core properties only
+// MARK: - ✅ MINIMAL ContextualTask - Only stored properties used in initializers
 
 public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public let id: String
@@ -89,7 +89,6 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public let description: String?
     public var isCompleted: Bool
     public var completedDate: Date?
-    public let scheduledDate: Date?
     public let dueDate: Date?
     public let category: CoreTypes.TaskCategory?
     public let urgency: CoreTypes.TaskUrgency?
@@ -98,7 +97,13 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public let buildingId: String?
     public let priority: CoreTypes.TaskUrgency?
     
-    // ✅ COMPUTED: Only properties that don't exist elsewhere
+    // ✅ STORED PROPERTIES: Used in initializers throughout codebase
+    public let buildingName: String?  // Used in WorkerContextEngine, OperationalDataManager
+    public let assignedWorkerId: String?  // Used in OperationalDataManager, TaskTimelineView
+    public let assignedWorkerName: String?  // Referenced in GRDBManager, extensions
+    public let estimatedDuration: TimeInterval  // Used in WorkerContextEngine+DataFlow
+    
+    // ✅ ONLY ONE COMPUTED PROPERTY: For overdue status (simple, no conflicts)
     public var isOverdue: Bool {
         guard let dueDate = dueDate else { return false }
         return !isCompleted && dueDate < Date()
@@ -110,21 +115,23 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
         description: String? = nil,
         isCompleted: Bool = false,
         completedDate: Date? = nil,
-        scheduledDate: Date? = nil,
         dueDate: Date? = nil,
         category: CoreTypes.TaskCategory? = nil,
         urgency: CoreTypes.TaskUrgency? = nil,
         building: NamedCoordinate? = nil,
         worker: WorkerProfile? = nil,
         buildingId: String? = nil,
-        priority: CoreTypes.TaskUrgency? = nil
+        priority: CoreTypes.TaskUrgency? = nil,
+        buildingName: String? = nil,  // ✅ STORED: Used in initializers
+        assignedWorkerId: String? = nil,  // ✅ STORED: Used in initializers
+        assignedWorkerName: String? = nil,  // ✅ STORED: Used in initializers
+        estimatedDuration: TimeInterval = 3600  // ✅ STORED: Used in initializers
     ) {
         self.id = id
         self.title = title
         self.description = description
         self.isCompleted = isCompleted
         self.completedDate = completedDate
-        self.scheduledDate = scheduledDate
         self.dueDate = dueDate
         self.category = category
         self.urgency = urgency
@@ -132,6 +139,10 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
         self.worker = worker
         self.buildingId = buildingId ?? building?.id
         self.priority = priority ?? urgency
+        self.buildingName = buildingName ?? building?.name
+        self.assignedWorkerId = assignedWorkerId ?? worker?.id
+        self.assignedWorkerName = assignedWorkerName ?? worker?.name
+        self.estimatedDuration = estimatedDuration
     }
     
     // MARK: - Protocol Conformance
@@ -144,10 +155,6 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     }
 }
 
-// MARK: - ✅ NO EXTENSIONS: All extensions are defined in other files
-// Extensions for ContextualTask (status, startTime, name, etc.) are in:
-// - ContextualTaskExtensions.swift
-// - ContextualTaskIntelligence.swift
-// - TaskDisplayHelpers.swift
-
-// MARK: - ✅ NO WEATHER MODELS: Use CoreTypes.WeatherData instead
+// MARK: - ✅ NO COMPUTED PROPERTIES HERE
+// Extensions handle: status, name, workerId, startTime, scheduledDate
+// This avoids all redeclaration conflicts while maintaining Codable conformance

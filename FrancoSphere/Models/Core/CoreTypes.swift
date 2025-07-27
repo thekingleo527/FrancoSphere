@@ -346,22 +346,22 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Task Types
-    
-    // ✅ FIXED: Removed manual rawValue implementation - Swift provides automatically for String enums
+    // MARK: - Task Types - FIXED RAW VALUES
+
+    // ✅ FIXED: Use lowercase raw values to match codebase usage
     public enum TaskCategory: String, Codable, CaseIterable {
-        case cleaning = "Cleaning"
-        case maintenance = "Maintenance"
-        case security = "Security"
-        case inspection = "Inspection"
-        case administrative = "Administrative"
-        case repair = "Repair"
-        case installation = "Installation"
-        case utilities = "Utilities"
-        case emergency = "Emergency"
-        case renovation = "Renovation"
-        case landscaping = "Landscaping"
-        case sanitation = "Sanitation"
+        case cleaning = "cleaning"                    // ← Changed from "Cleaning"
+        case maintenance = "maintenance"              // ← Changed from "Maintenance"
+        case security = "security"                    // ← Changed from "Security"
+        case inspection = "inspection"                // ← Changed from "Inspection"
+        case administrative = "administrative"        // ← Changed from "Administrative"
+        case repair = "repair"                        // ← Changed from "Repair"
+        case installation = "installation"            // ← Changed from "Installation"
+        case utilities = "utilities"                  // ← Changed from "Utilities"
+        case emergency = "emergency"                  // ← Changed from "Emergency"
+        case renovation = "renovation"                // ← Changed from "Renovation"
+        case landscaping = "landscaping"              // ← Changed from "Landscaping"
+        case sanitation = "sanitation"                // ← Changed from "Sanitation"
         
         public var icon: String {
             switch self {
@@ -380,15 +380,15 @@ public struct CoreTypes {
             }
         }
     }
-    
-    // ✅ FIXED: Removed manual rawValue implementation and duplicate numericValue property
+
+    // ✅ FIXED: Use lowercase raw values to match codebase usage
     public enum TaskUrgency: String, Codable, CaseIterable {
-        case low = "Low"
-        case medium = "Medium"
-        case high = "High"
-        case critical = "Critical"
-        case urgent = "Urgent"
-        case emergency = "Emergency"
+        case low = "low"                              // ← Changed from "Low"
+        case medium = "medium"                        // ← Changed from "Medium"
+        case high = "high"                            // ← Changed from "High"
+        case critical = "critical"                    // ← Changed from "Critical"
+        case urgent = "urgent"                        // ← Changed from "Urgent"
+        case emergency = "emergency"                  // ← Changed from "Emergency"
         
         public var priorityValue: Int {
             switch self {
