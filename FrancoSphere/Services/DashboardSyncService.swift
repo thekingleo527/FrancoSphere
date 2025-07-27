@@ -94,7 +94,7 @@ public struct LiveWorkerUpdate: Identifiable {
     public let id = UUID()
     public let workerName: String
     public let action: String
-// DUPLICATE: public let buildingName: String
+    public let buildingName: String
     public let timestamp = Date()
 }
 
@@ -267,14 +267,14 @@ public class DashboardSyncService: ObservableObject {
     }
     
     /// Hook into ClockInManager clock-in events
-// DUPLICATE: public func onWorkerClockedIn(workerId: String, buildingId: String, buildingName: String) {
+    public func onWorkerClockedIn(workerId: String, buildingId: String, buildingName: String) {
         let update = DashboardUpdate(
             source: .worker,
             type: .workerClockedIn,
             buildingId: buildingId,
             workerId: workerId,
             data: [
-// DUPLICATE: "buildingName": buildingName,
+                "buildingName": buildingName,
                 "clockInTime": Date()
             ]
         )
@@ -355,7 +355,7 @@ public class DashboardSyncService: ObservableObject {
     
     private func createLiveWorkerUpdate(from update: DashboardUpdate) {
         guard let workerId = update.workerId,
-// DUPLICATE: let buildingName = update.data["buildingName"] as? String ?? getBuildingName(update.buildingId) else {
+              let buildingName = update.data["buildingName"] as? String ?? getBuildingName(update.buildingId) else {
             return
         }
         
@@ -365,7 +365,7 @@ public class DashboardSyncService: ObservableObject {
         let liveUpdate = LiveWorkerUpdate(
             workerName: workerName,
             action: action,
-// DUPLICATE: buildingName: buildingName
+            buildingName: buildingName
         )
         
         liveWorkerUpdates.append(liveUpdate)

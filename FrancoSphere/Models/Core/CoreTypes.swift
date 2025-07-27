@@ -1484,12 +1484,3 @@ public class DatabaseDebugger {
     public func debugDatabase() {}
     public func cleanDatabase() {}
 }
-
-// MARK: - Nova AI Namespace Extension
-extension CoreTypes {
-    public struct AI {
-        public static func generateInsight(for context: String = "") -> IntelligenceInsight {
-            return IntelligenceInsight(title: "AI Generated Insight", description: "Nova AI analysis: \(context)", type: .operations, priority: .medium)
-        }
-    }
-}

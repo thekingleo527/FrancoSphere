@@ -206,37 +206,6 @@ struct HeroStatusCard: View {
             return "thermometer.snowflake"
         }
     }
-
-    private func stringToWeatherCondition(_ condition: String) -> CoreTypes.WeatherCondition {
-        switch condition.lowercased() {
-        case "sunny": return .sunny
-        case "clear": return .clear
-        case "cloudy": return .cloudy
-        case "rainy": return .rainy
-        case "stormy": return .stormy
-        case "snowy": return .snowy
-        case "foggy": return .foggy
-        case "windy": return .windy
-        default: return .clear
-        }
-    }
-
-    private func getWeatherIconName(_ condition: CoreTypes.WeatherCondition) -> String {
-        switch condition {
-        case .sunny: return "sun.max.fill"
-        case .clear: return "sun.max"
-        case .cloudy: return "cloud.fill"
-        case .partlyCloudy: return "cloud.sun.fill"
-        case .rainy: return "cloud.rain.fill"
-        case .stormy: return "cloud.bolt.fill"
-        case .snowy: return "cloud.snow.fill"
-        case .foggy: return "cloud.fog.fill"
-        case .windy: return "wind"
-        case .overcast: return "cloud.fill"
-        case .hot: return "thermometer.sun.fill"
-        case .cold: return "thermometer.snowflake"
-        }
-    }
 }
 
 // MARK: - ✅ FIXED: Preview with correct constructors
@@ -270,35 +239,4 @@ struct HeroStatusCard: View {
     .padding()
     .background(Color.black)
     .preferredColorScheme(.dark)
-
-    private func stringToWeatherCondition(_ condition: String) -> CoreTypes.WeatherCondition {
-        switch condition.lowercased() {
-        case "sunny": return .sunny
-        case "clear": return .clear
-        case "cloudy": return .cloudy
-        case "rainy": return .rainy
-        case "stormy": return .stormy
-        case "snowy": return .snowy
-        case "foggy": return .foggy
-        case "windy": return .windy
-        default: return .clear
-        }
-    }
-
-    private func getWeatherIconName(_ condition: CoreTypes.WeatherCondition) -> String {
-        switch condition {
-        case .sunny: return "sun.max.fill"
-        case .clear: return "sun.max"
-        case .cloudy: return "cloud.fill"
-        case .partlyCloudy: return "cloud.sun.fill"
-        case .rainy: return "cloud.rain.fill"
-        case .stormy: return "cloud.bolt.fill"
-        case .snowy: return "cloud.snow.fill"
-        case .foggy: return "cloud.fog.fill"
-        case .windy: return "wind"
-        case .overcast: return "cloud.fill"
-        case .hot: return "thermometer.sun.fill"
-        case .cold: return "thermometer.snowflake"
-        }
-    }
 }

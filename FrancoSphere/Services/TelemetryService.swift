@@ -323,8 +323,7 @@ actor TelemetryService {
     }
     
     // ✅ FIXED: Proper actor-isolated method for Swift 6
-    private @MainActor
-    func setupMemoryWarningMonitoring() {
+    private func setupMemoryWarningMonitoring() {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
@@ -370,8 +369,7 @@ actor TelemetryService {
     
     // MARK: - Session Tracking
     
-    private @MainActor
-    func startSessionTracking() {
+    private func startSessionTracking() {
         sessionMetrics.sessionStart = Date()
         sessionMetrics.initialMemoryUsage = getCurrentMemoryUsage()
         
