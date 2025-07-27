@@ -137,12 +137,6 @@ public final class WorkerContextEngine: ObservableObject {
             
             tasks.append(task)
         }
-        
-        return tasks.sorted { task1, task2 in
-            let urgency1 = task1.urgency?.numericValue ?? 0
-            let urgency2 = task2.urgency?.numericValue ?? 0
-            return urgency1 > urgency2
-        }
     }
     
     // MARK: - Access Methods

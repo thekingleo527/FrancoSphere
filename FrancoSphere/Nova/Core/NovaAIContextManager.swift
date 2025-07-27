@@ -294,8 +294,6 @@ class NovaAIContextManager: ObservableObject {
         case .client:
             suggestions = generateClientSuggestions(context: context)
         }
-        
-        suggestedActions = suggestions.sorted { $0.priority.numericValue > $1.priority.numericValue }
     }
     
     private func generateWorkerSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
