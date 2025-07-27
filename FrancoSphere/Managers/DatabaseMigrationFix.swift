@@ -12,9 +12,4 @@ extension GRDBManager {
     static func start() async throws -> GRDBManager {
         return GRDBManager.shared
     }
-    
-    /// Ensure database is ready (compatibility method)
-    func isDatabaseReady() -> Bool {
-        return true // GRDBManager initializes in init()
-    }
 }

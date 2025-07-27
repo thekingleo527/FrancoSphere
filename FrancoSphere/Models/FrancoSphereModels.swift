@@ -80,7 +80,6 @@ public struct WorkerProfile: Identifiable, Codable, Hashable {
         self.profileImageUrl = profileImageUrl
     }
 }
-
 // MARK: - ✅ MINIMAL ContextualTask - Only stored properties used in initializers
 
 public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
@@ -90,17 +89,15 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
     public var isCompleted: Bool
     public var completedDate: Date?
     public let dueDate: Date?
-    public let category: CoreTypes.TaskCategory?
-    public let urgency: CoreTypes.TaskUrgency?
+    public let category: TaskCategory?
+    public let urgency: TaskUrgency?
     public let building: NamedCoordinate?
     public let worker: WorkerProfile?
     public let buildingId: String?
-    public let priority: CoreTypes.TaskUrgency?
+    public let priority: TaskUrgency?
     
-    // ✅ STORED PROPERTIES: Used in initializers throughout codebase
-    public let buildingName: String?  // Used in WorkerContextEngine, OperationalDataManager
+    // ✅ STORED PROPERTIES: Only properties NOT defined in extensions
     public let assignedWorkerId: String?  // Used in OperationalDataManager, TaskTimelineView
-    public let assignedWorkerName: String?  // Referenced in GRDBManager, extensions
     public let estimatedDuration: TimeInterval  // Used in WorkerContextEngine+DataFlow
     
     // ✅ ONLY ONE COMPUTED PROPERTY: For overdue status (simple, no conflicts)
@@ -116,15 +113,13 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
         isCompleted: Bool = false,
         completedDate: Date? = nil,
         dueDate: Date? = nil,
-        category: CoreTypes.TaskCategory? = nil,
-        urgency: CoreTypes.TaskUrgency? = nil,
+        category: TaskCategory? = nil,
+        urgency: TaskUrgency? = nil,
         building: NamedCoordinate? = nil,
         worker: WorkerProfile? = nil,
         buildingId: String? = nil,
-        priority: CoreTypes.TaskUrgency? = nil,
-        buildingName: String? = nil,  // ✅ STORED: Used in initializers
+        priority: TaskUrgency? = nil,
         assignedWorkerId: String? = nil,  // ✅ STORED: Used in initializers
-        assignedWorkerName: String? = nil,  // ✅ STORED: Used in initializers
         estimatedDuration: TimeInterval = 3600  // ✅ STORED: Used in initializers
     ) {
         self.id = id
@@ -139,9 +134,7 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
         self.worker = worker
         self.buildingId = buildingId ?? building?.id
         self.priority = priority ?? urgency
-        self.buildingName = buildingName ?? building?.name
         self.assignedWorkerId = assignedWorkerId ?? worker?.id
-        self.assignedWorkerName = assignedWorkerName ?? worker?.name
         self.estimatedDuration = estimatedDuration
     }
     
@@ -156,5 +149,5 @@ public struct ContextualTask: Identifiable, Codable, Hashable, Equatable {
 }
 
 // MARK: - ✅ NO COMPUTED PROPERTIES HERE
-// Extensions handle: status, name, workerId, startTime, scheduledDate
+// Extensions handle: status, name, workerId, startTime, scheduledDate, buildingName, assignedWorkerName
 // This avoids all redeclaration conflicts while maintaining Codable conformance

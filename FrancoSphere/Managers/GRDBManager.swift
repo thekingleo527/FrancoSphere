@@ -290,7 +290,6 @@ public final class GRDBManager {
         
         // Convert dates
         let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
-        let scheduledDate = (row["scheduledDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         
         // ✅ FIXED: Create NamedCoordinate for building (if we have building data)
@@ -307,14 +306,13 @@ public final class GRDBManager {
             return nil
         }()
         
-        // ✅ FIXED: Use correct ContextualTask initializer
+        // ✅ FIXED: Removed scheduledDate from ContextualTask initializer (not in actual signature)
         return ContextualTask(
             id: String(row["id"] as? Int64 ?? 0),
             title: title,
             description: row["description"] as? String,
             isCompleted: (row["isCompleted"] as? Int64 ?? 0) > 0,
             completedDate: completedDate,
-            scheduledDate: scheduledDate,
             dueDate: dueDate,
             category: category,
             urgency: urgency,
@@ -327,6 +325,8 @@ public final class GRDBManager {
     
     // MARK: - Helper Methods
     
+    // NOTE: isDatabaseReady() is also declared in DatabaseMigrationFix.swift extension
+    // Keep this public version as it's being used by other services
     public func isDatabaseReady() -> Bool {
         return dbPool != nil
     }
@@ -413,7 +413,6 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
         // Convert dates
         let dateFormatter = GRDBManager.shared.dateFormatter
         let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
-        let scheduledDate = (row["scheduledDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         
         // Create building object if we have building data
@@ -429,14 +428,13 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
             return nil
         }()
         
-        // ✅ FIXED: Use correct ContextualTask initializer
+        // ✅ FIXED: Removed scheduledDate from ContextualTask initializer
         self.init(
             id: String(row["id"] as? Int64 ?? 0),
             title: title,
             description: description,
             isCompleted: isCompleted,
             completedDate: completedDate,
-            scheduledDate: scheduledDate,
             dueDate: dueDate,
             category: category,
             urgency: urgency,
@@ -493,9 +491,10 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
         if let completedDate = completedDate {
             container["completedDate"] = GRDBManager.shared.dateFormatter.string(from: completedDate)
         }
-        if let scheduledDate = scheduledDate {
-            container["scheduledDate"] = GRDBManager.shared.dateFormatter.string(from: scheduledDate)
-        }
+        
+        // Note: scheduledDate is stored in the database but not part of ContextualTask
+        // It can be retrieved from the row if needed for other purposes
+        
         if let dueDate = dueDate {
             container["dueDate"] = GRDBManager.shared.dateFormatter.string(from: dueDate)
         }
