@@ -86,32 +86,6 @@ struct EventRecord {
     }
 }
 
-// MARK: - Memory Warning Observer (Handles notification bridging)
-private class MemoryWarningObserver {
-    init() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleMemoryWarning),
-            name: UIApplication.didReceiveMemoryWarningNotification,
-            object: nil
-        )
-    }
-    
-    @objc private func handleMemoryWarning() {
-        performAsyncWarning()
-    }
-    
-    private func performAsyncWarning() {
-        Task {
-            await TelemetryService.shared.handleMemoryWarning()
-        }
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-}
-
 // MARK: - TelemetryService Actor
 
 actor TelemetryService {
@@ -139,7 +113,6 @@ actor TelemetryService {
     private var memoryWarningCount = 0
     private var performanceAlerts: [PerformanceAlert] = []
     private var isInitialized = false
-    private var memoryObserver: MemoryWarningObserver?
     
     private init() {
         // Synchronous init - setup happens in initialize()
@@ -149,11 +122,11 @@ actor TelemetryService {
     func initialize() async {
         guard !isInitialized else { return }
         
-        // Create the memory observer (it sets up its own notifications)
-        self.memoryObserver = MemoryWarningObserver()
-        
         await startSessionTracking()
         isInitialized = true
+        
+        // Note: Memory warning monitoring can be set up separately if needed
+        // by calling setupMemoryWarningMonitoring() from outside the actor
     }
     
     // MARK: - Core Operation Tracking
@@ -473,12 +446,6 @@ actor TelemetryService {
         return String(format: "%.2f MB", memoryMB)
     }
     
-    private func setupMemoryWarningMonitoring() async {
-        // Create the observer directly without MainActor
-        let observer = MemoryWarningObserver()
-        self.memoryObserver = observer
-    }
-    
     func handleMemoryWarning() async {
         self.memoryWarningCount += 1
         let currentMemory = getCurrentMemoryUsage()
@@ -693,6 +660,22 @@ actor TelemetryService {
     public func stopMonitoring() async {
         isMonitoringActive = false
         logger.info("📊 Telemetry monitoring stopped")
+    }
+}
+
+// MARK: - Global function for memory warning setup
+// Call this from your AppDelegate or main app initialization
+public func setupTelemetryMemoryWarningMonitoring() {
+    NotificationCenter.default.addObserver(
+        forName: UIApplication.didReceiveMemoryWarningNotification,
+        object: nil,
+        queue: .main
+    ) { _ in
+        DispatchQueue.main.async {
+            Task.init {
+                await TelemetryService.shared.handleMemoryWarning()
+            }
+        }
     }
 }
 
