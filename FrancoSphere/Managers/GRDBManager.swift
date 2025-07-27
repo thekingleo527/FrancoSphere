@@ -158,7 +158,7 @@ public final class GRDBManager {
                 rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(grdbParams))
             }
             
-            // ✅ FIXED: Proper Row to Dictionary conversion
+            // ✅ FIXED: Process rows within the closure to avoid Sendable issues
             return rows.map { row in
                 var dict: [String: Any] = [:]
                 for (column, value) in row {
@@ -211,17 +211,10 @@ public final class GRDBManager {
     // MARK: - Real-time Observation (FIXED for Swift 6)
     
     public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
-        // ✅ FIXED: Wrap in Task for Swift 6 Sendable compliance
-        let publisher = ValueObservation
-            .tracking { db in
-                try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
-            }
-            .publisher(in: dbPool)
-        
-        return publisher
-            .map { rows in
-                // ✅ FIXED: Process rows inside map to avoid Sendable issues
-                return rows.compactMap { row in
+        // ✅ FIXED: Process rows within ValueObservation to avoid Sendable issues
+        let observation = ValueObservation.tracking { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
+                .map { row in
                     NamedCoordinate(
                         id: String(row["id"] as? Int64 ?? 0),
                         name: row["name"] as? String ?? "",
@@ -231,34 +224,30 @@ public final class GRDBManager {
                         imageAssetName: row["imageAssetName"] as? String
                     )
                 }
-            }
-            .eraseToAnyPublisher()
+        }
+        
+        return observation.publisher(in: dbPool).eraseToAnyPublisher()
     }
     
     public func observeTasks(for buildingId: String) -> AnyPublisher<[ContextualTask], Error> {
-        // ✅ FIXED: Wrap in Task for Swift 6 Sendable compliance
-        let publisher = ValueObservation
-            .tracking { db in
-                // ✅ FIXED: Use StatementArguments with proper type conversion
-                try Row.fetchAll(db, sql: """
-                    SELECT t.*, b.name as buildingName, w.name as workerName 
-                    FROM routine_tasks t
-                    LEFT JOIN buildings b ON t.buildingId = b.id
-                    LEFT JOIN workers w ON t.workerId = w.id
-                    WHERE t.buildingId = ?
-                    ORDER BY t.scheduledDate
+        // ✅ FIXED: Process rows within ValueObservation to avoid Sendable issues
+        let observation = ValueObservation.tracking { db in
+            // ✅ FIXED: Multi-line string literal indentation
+            try Row.fetchAll(db, sql: """
+                SELECT t.*, b.name as buildingName, w.name as workerName 
+                FROM routine_tasks t
+                LEFT JOIN buildings b ON t.buildingId = b.id
+                LEFT JOIN workers w ON t.workerId = w.id
+                WHERE t.buildingId = ?
+                ORDER BY t.scheduledDate
                 """, arguments: StatementArguments([buildingId]))
-            }
-            .publisher(in: dbPool)
-        
-        return publisher
-            .map { rows in
-                // ✅ FIXED: Process rows inside map to avoid Sendable issues
-                return rows.compactMap { row in
+                .map { row in
                     self.contextualTaskFromRow(row)
                 }
-            }
-            .eraseToAnyPublisher()
+                .compactMap { $0 }
+        }
+        
+        return observation.publisher(in: dbPool).eraseToAnyPublisher()
     }
     
     // ✅ FIXED: Helper method aligned with actual ContextualTask initializer
@@ -268,7 +257,6 @@ public final class GRDBManager {
         // Convert category string to enum with safe fallback
         let categoryString = row["category"] as? String ?? "maintenance"
         let category: TaskCategory? = {
-            // ✅ FIXED: Exhaustive switch statement
             switch categoryString.lowercased() {
             case "maintenance": return .maintenance
             case "cleaning": return .cleaning
@@ -289,7 +277,6 @@ public final class GRDBManager {
         // Convert urgency string to enum with safe fallback
         let urgencyString = row["urgency"] as? String ?? "medium"
         let urgency: TaskUrgency? = {
-            // ✅ FIXED: Exhaustive switch statement
             switch urgencyString.lowercased() {
             case "low": return .low
             case "medium": return .medium
@@ -320,7 +307,7 @@ public final class GRDBManager {
             return nil
         }()
         
-        // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
+        // ✅ FIXED: Use correct ContextualTask initializer
         return ContextualTask(
             id: String(row["id"] as? Int64 ?? 0),
             title: title,
@@ -340,7 +327,6 @@ public final class GRDBManager {
     
     // MARK: - Helper Methods
     
-    // ✅ FIXED: Removed duplicate isDatabaseReady() method
     public func isDatabaseReady() -> Bool {
         return dbPool != nil
     }

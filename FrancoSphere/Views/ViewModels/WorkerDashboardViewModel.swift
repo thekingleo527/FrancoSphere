@@ -398,15 +398,15 @@ public class WorkerDashboardViewModel: ObservableObject {
         switch update.type {
         case .performanceChanged:
             if update.workerId == currentWorkerId {
-                // ✅ FIXED: Use Task.init with explicit closure
-                Task.init {
-                    await self.refreshData()
+                // ✅ FIXED: Use Task { } syntax instead of Task.init
+                Task {
+                    await refreshData()
                 }
             }
         case .portfolioUpdated:
-            // ✅ FIXED: Use Task.init with explicit closure
-            Task.init {
-                await self.refreshBuildingMetricsForAllBuildings()
+            // ✅ FIXED: Use Task { } syntax instead of Task.init
+            Task {
+                await refreshBuildingMetricsForAllBuildings()
             }
         default:
             break
@@ -418,9 +418,9 @@ public class WorkerDashboardViewModel: ObservableObject {
         case .buildingMetricsChanged:
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
-                // ✅ FIXED: Use Task.init with explicit closure
-                Task.init {
-                    await self.refreshSingleBuildingMetrics(buildingId: buildingId)
+                // ✅ FIXED: Use Task { } syntax instead of Task.init
+                Task {
+                    await refreshSingleBuildingMetrics(buildingId: buildingId)
                 }
             }
         default:
@@ -434,9 +434,9 @@ public class WorkerDashboardViewModel: ObservableObject {
             // Refresh all data to get updated compliance requirements
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
-                // ✅ FIXED: Use Task.init with explicit closure
-                Task.init {
-                    await self.refreshData()
+                // ✅ FIXED: Use Task { } syntax instead of Task.init
+                Task {
+                    await refreshData()
                 }
             }
         default:
@@ -461,11 +461,11 @@ public class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Auto-refresh Setup
     
     private func setupAutoRefresh() {
-        // ✅ FIXED: Use proper Timer.scheduledTimer syntax without trailing closure issue
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { _ in
-            guard !self.isLoading else { return }
+        // ✅ FIXED: Use proper Timer.scheduledTimer syntax without trailing closure
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            guard let self = self, !self.isLoading else { return }
             
-            Task.init {
+            Task {
                 await self.refreshData()
             }
         }
@@ -544,7 +544,7 @@ extension WorkerDashboardViewModel {
             imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
         )
         
-        // ✅ FIXED: Use correct ContextualTask constructor without 'scheduledDate'
+        // Use correct ContextualTask constructor
         viewModel.todaysTasks = [
             ContextualTask(
                 id: "task1",
