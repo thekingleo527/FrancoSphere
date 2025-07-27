@@ -194,7 +194,7 @@ class InitializationViewModel: ObservableObject {
         }
         
         // Initialize Nova AI Context Engine (non-blocking)
-        Task { @MainActor in
+        Task {
             await NovaContextEngine.shared.initialize()
         }
     }
