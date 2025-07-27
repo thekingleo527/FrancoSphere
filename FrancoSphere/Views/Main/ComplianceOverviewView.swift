@@ -2,18 +2,15 @@
 //  ComplianceOverviewView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed incorrect CoreTypes module import
-//  ✅ FIXED: All type references updated to use proper CoreTypes namespace
-//  ✅ ALIGNED: With actual CoreTypes structure and project organization
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Proper ComplianceIssueType cases
+//  ✅ FIXED: Added icon computation for issue types
+//  ✅ FIXED: Correct PortfolioIntelligence initializer
+//  ✅ FIXED: Broke up complex expressions
+//  ✅ ALIGNED: With CoreTypes definitions and dashboard architecture
 //
 
-import Foundation
-
-// Type aliases for CoreTypes
-
 import SwiftUI
-
-// Type aliases for CoreTypes
 
 struct ComplianceOverviewView: View {
     let intelligence: CoreTypes.PortfolioIntelligence?
@@ -26,7 +23,6 @@ struct ComplianceOverviewView: View {
     @State private var showingAuditScheduler = false
     @State private var showingExportOptions = false
     
-    // FIXED: Proper initializer
     init(intelligence: CoreTypes.PortfolioIntelligence?,
          onIssuesTap: ((ComplianceIssue) -> Void)? = nil,
          onScheduleAudit: (() -> Void)? = nil,
@@ -105,33 +101,33 @@ struct ComplianceOverviewView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    Text("\(compliance.complianceScore)%")
+                    Text("\(Int(compliance.complianceScore))%")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
+                        .foregroundColor(complianceScoreColor(compliance.complianceScore))
                 }
                 
                 Spacer()
                 
                 VStack {
-                    Image(systemName: complianceStatusIcon(Double(compliance.complianceScore)))
+                    Image(systemName: complianceStatusIcon(compliance.complianceScore))
                         .font(.system(size: 32))
-                        .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
+                        .foregroundColor(complianceScoreColor(compliance.complianceScore))
                     
-                    Text(complianceStatusText(Double(compliance.complianceScore)))
+                    Text(complianceStatusText(compliance.complianceScore))
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(complianceScoreColor(Double(compliance.complianceScore)))
+                        .foregroundColor(complianceScoreColor(compliance.complianceScore))
                 }
             }
             
             progressBarSection(for: compliance)
         }
         .padding()
-        .background(complianceScoreColor(Double(compliance.complianceScore)).opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+        .background(complianceScoreColor(compliance.complianceScore).opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(complianceScoreColor(Double(compliance.complianceScore)).opacity(0.3), lineWidth: 1)
+                .stroke(complianceScoreColor(compliance.complianceScore).opacity(0.3), lineWidth: 1)
         )
     }
     
@@ -153,7 +149,7 @@ struct ComplianceOverviewView: View {
             
             let compliancePercentage = calculateCompliancePercentage(compliance)
             ProgressView(value: compliancePercentage / 100)
-                .progressViewStyle(LinearProgressViewStyle(tint: complianceScoreColor(Double(compliance.complianceScore))))
+                .progressViewStyle(LinearProgressViewStyle(tint: complianceScoreColor(compliance.complianceScore)))
         }
     }
     
@@ -188,44 +184,49 @@ struct ComplianceOverviewView: View {
     private var tabSelectorSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
+                // Fixed: Using proper computed tabIcon
                 ForEach(CoreTypes.ComplianceTab.allCases, id: \.self) { tab in
-                    Button(action: {
-                        withAnimation(Animation.easeInOut(duration: 0.3)) {
-                            selectedTab = tab
-                        }
-                    }) {
-                        VStack(spacing: 4) {
-                            HStack(spacing: 6) {
-                                Image(systemName: tab.icon)
-                                    .font(.caption)
-                                
-                                Text(tab.displayName)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                
-                                if tab == .issues, let intelligence = intelligence, intelligence.criticalIssues > 0 {
-                                    Text("\(intelligence.criticalIssues)")
-                                        .font(.caption2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(.red, in: Capsule())
-                                }
-                            }
-                            .foregroundColor(selectedTab == tab ? .blue : .secondary)
-                            
-                            Rectangle()
-                                .fill(selectedTab == tab ? Color.blue : Color.clear)
-                                .frame(height: 2)
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .frame(maxWidth: .infinity)
+                    tabButton(for: tab)
                 }
             }
         }
         .padding(.horizontal)
+    }
+    
+    private func tabButton(for tab: CoreTypes.ComplianceTab) -> some View {
+        Button(action: {
+            withAnimation(Animation.easeInOut(duration: 0.3)) {
+                selectedTab = tab
+            }
+        }) {
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: tabIcon(for: tab))
+                        .font(.caption)
+                    
+                    Text(tab.displayName)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    if tab == .issues, let intelligence = intelligence, intelligence.criticalIssues > 0 {
+                        Text("\(intelligence.criticalIssues)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.red, in: Capsule())
+                    }
+                }
+                .foregroundColor(selectedTab == tab ? .blue : .secondary)
+                
+                Rectangle()
+                    .fill(selectedTab == tab ? Color.blue : Color.clear)
+                    .frame(height: 2)
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Tab Content Section
@@ -237,7 +238,7 @@ struct ComplianceOverviewView: View {
                 overviewTabContent
             case .issues:
                 issuesTabContent
-            case .audits:
+            case .audit:  // Fixed: Changed from .audits to .audit
                 auditsTabContent
             case .reports:
                 reportsTabContent
@@ -297,9 +298,9 @@ struct ComplianceOverviewView: View {
                 
                 QuickStatCard(
                     title: "Compliance Rate",
-                    value: "\(compliance.complianceScore)%",
+                    value: "\(Int(compliance.complianceScore))%",
                     icon: "checkmark.shield",
-                    color: complianceScoreColor(Double(compliance.complianceScore))
+                    color: complianceScoreColor(compliance.complianceScore)
                 )
             }
         }
@@ -320,8 +321,8 @@ struct ComplianceOverviewView: View {
                 .foregroundColor(.blue)
             }
             
-            let mockIssues = createMockIssues(count: compliance.criticalIssues)
-            ForEach(Array(mockIssues.prefix(3)), id: \.id) { issue in
+            let mockIssues = createMockIssues(count: min(compliance.criticalIssues, 3))
+            ForEach(mockIssues, id: \.id) { issue in
                 CriticalIssueRow(
                     issue: issue,
                     onTap: {
@@ -517,7 +518,7 @@ struct ComplianceOverviewView: View {
             if let lastAudit = lastAudit {
                 AuditHistoryCard(
                     date: lastAudit,
-                    score: Double(compliance.complianceScore),
+                    score: compliance.complianceScore,
                     status: .completed
                 )
             } else {
@@ -610,14 +611,15 @@ struct ComplianceOverviewView: View {
     }
     
     private func calculateCompliantBuildings(_ intelligence: CoreTypes.PortfolioIntelligence) -> Int {
-        let percentage = Double(intelligence.complianceScore) / 100.0
+        let percentage = intelligence.complianceScore / 100.0
         return Int(Double(intelligence.totalBuildings) * percentage)
     }
     
     private func calculateCompliancePercentage(_ intelligence: CoreTypes.PortfolioIntelligence) -> Double {
-        return Double(intelligence.complianceScore)
+        return intelligence.complianceScore
     }
     
+    // Fixed: Using proper ComplianceIssueType cases
     private func createMockIssues(count: Int) -> [ComplianceIssue] {
         guard count > 0 else { return [] }
         
@@ -625,11 +627,12 @@ struct ComplianceOverviewView: View {
             id: "14",
             name: "Rubin Museum",
             latitude: 40.7402,
-            longitude: -73.9980
+            longitude: -73.9980,
+            imageAssetName: "rubin_museum"
         )
         
         var issues: [ComplianceIssue] = []
-        let issueTypes: [CoreTypes.ComplianceIssueType] = [.maintenanceOverdue, .safetyViolation, .inspectionRequired]
+        let issueTypes: [CoreTypes.ComplianceIssueType] = [.safety, .environmental, .regulatory]
         
         for i in 0..<count {
             let issue = ComplianceIssue(
@@ -643,6 +646,28 @@ struct ComplianceOverviewView: View {
         }
         
         return issues
+    }
+    
+    // Helper function to get icon for ComplianceTab
+    private func tabIcon(for tab: CoreTypes.ComplianceTab) -> String {
+        switch tab {
+        case .overview: return "chart.pie.fill"
+        case .issues: return "exclamationmark.triangle.fill"
+        case .reports: return "doc.text.fill"
+        case .audit: return "checkmark.shield.fill"
+        }
+    }
+    
+    // Helper function to get icon for ComplianceIssueType
+    private func issueTypeIcon(_ type: CoreTypes.ComplianceIssueType) -> String {
+        switch type {
+        case .safety: return "shield.fill"
+        case .environmental: return "leaf.fill"
+        case .regulatory: return "doc.badge.gearshape"
+        case .financial: return "dollarsign.circle.fill"
+        case .operational: return "gearshape.fill"
+        case .documentation: return "doc.text.fill"
+        }
     }
 }
 
@@ -682,7 +707,7 @@ struct CriticalIssueRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                Image(systemName: issue.type.icon)
+                Image(systemName: issueTypeIcon(issue.type))
                     .font(.title3)
                     .foregroundColor(issue.severity.color)
                     .frame(width: 24)
@@ -724,6 +749,18 @@ struct CriticalIssueRow: View {
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
     }
+    
+    // Helper function to get icon for ComplianceIssueType
+    private func issueTypeIcon(_ type: CoreTypes.ComplianceIssueType) -> String {
+        switch type {
+        case .safety: return "shield.fill"
+        case .environmental: return "leaf.fill"
+        case .regulatory: return "doc.badge.gearshape"
+        case .financial: return "dollarsign.circle.fill"
+        case .operational: return "gearshape.fill"
+        case .documentation: return "doc.text.fill"
+        }
+    }
 }
 
 struct ComplianceIssueCard: View {
@@ -734,7 +771,7 @@ struct ComplianceIssueCard: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: issue.type.icon)
+                    Image(systemName: issueTypeIcon(issue.type))
                         .font(.title3)
                         .foregroundColor(issue.severity.color)
                     
@@ -778,6 +815,18 @@ struct ComplianceIssueCard: View {
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    // Helper function to get icon for ComplianceIssueType
+    private func issueTypeIcon(_ type: CoreTypes.ComplianceIssueType) -> String {
+        switch type {
+        case .safety: return "shield.fill"
+        case .environmental: return "leaf.fill"
+        case .regulatory: return "doc.badge.gearshape"
+        case .financial: return "dollarsign.circle.fill"
+        case .operational: return "gearshape.fill"
+        case .documentation: return "doc.text.fill"
+        }
     }
 }
 
@@ -1240,15 +1289,14 @@ struct ComplianceIssue: Identifiable {
 
 struct ComplianceOverviewView_Previews: PreviewProvider {
     static var previews: some View {
+        // Fixed: Using correct PortfolioIntelligence initializer
         let sampleIntelligence = CoreTypes.PortfolioIntelligence(
             totalBuildings: 12,
             activeWorkers: 24,
             completionRate: 0.87,
             criticalIssues: 3,
             monthlyTrend: .up,
-            completedTasks: 132,
-            complianceScore: 85,
-            weeklyTrend: 0.05
+            complianceScore: 85
         )
         
         ComplianceOverviewView(intelligence: sampleIntelligence)
