@@ -9,8 +9,6 @@
 
 import SwiftUI
 
-// Type aliases for CoreTypes
-
 struct DashboardTaskDetailView: View {
     let task: ContextualTask
     
@@ -222,10 +220,26 @@ struct DashboardTaskDetailView: View {
         .cornerRadius(12)
     }
     
-    // Helper function for category colors
-    private func getCategoryColor(_ category: TaskCategory?) -> Color {
+    // ✅ FIXED: Added local helper function for category colors
+    private func getCategoryColor(_ category: CoreTypes.TaskCategory?) -> Color {
         guard let category = category else { return .gray }
-        return TaskDisplayHelpers.getCategoryColor(for: category.rawValue)
+        
+        switch category {
+        case .cleaning: return .blue
+        case .maintenance: return .orange
+        case .repair: return .red
+        case .inspection: return .purple
+        case .security: return .indigo
+        case .administrative: return .gray
+        case .emergency: return .red
+        case .sanitation: return .green
+        case .landscaping: return .brown
+        case .utilities: return .yellow
+        case .renovation: return .pink
+        case .installation: return .cyan
+        case .inventory: return .teal
+        case .other: return .gray
+        }
     }
     
     // Helper function to get estimated duration safely
@@ -326,11 +340,11 @@ struct DashboardTaskDetailView_Previews: PreviewProvider {
             hireDate: Date()
         )
         
+        // ✅ FIXED: Removed scheduledDate parameter
         let sampleTask = ContextualTask(
             title: "Clean Windows",
             description: "Clean all exterior windows on the east side",
             isCompleted: false,
-            scheduledDate: Date(),
             dueDate: Date().addingTimeInterval(86400),
             category: .cleaning,
             urgency: .medium,
