@@ -48,6 +48,8 @@ struct TaskRequestView: View {
     @State private var selectedWorkerId: String = "4" // Default to Kevin Dutan
     @State private var workerOptions: [WorkerProfile] = []
     
+    // Services are accessed as singletons, not @StateObject since they're actors
+    
     var body: some View {
         NavigationView {
             Form {
@@ -387,14 +389,14 @@ struct TaskRequestView: View {
     // MARK: - Helper Methods
     
     private func submitTaskWrapper() {
-        Task { [weak self] in
-            await self?.submitTaskRequest()
+        Task { @MainActor in
+            await submitTaskRequest()
         }
     }
     
     private func loadInventoryWrapper() {
-        Task { [weak self] in
-            await self?.loadInventory()
+        Task { @MainActor in
+            await loadInventory()
         }
     }
     
@@ -716,51 +718,84 @@ struct TaskRequestView: View {
             building: selectedBuilding,
             worker: currentWorker,
             buildingId: selectedBuildingID,
-            priority: selectedUrgency
-            // Note: Not passing assignedWorkerId or estimatedDuration as they have defaults
+            priority: selectedUrgency,
+            assignedWorkerId: currentWorker.id,
+            estimatedDuration: 3600 // Default 1 hour
         )
         
-        // Simulate task creation
-        print("Creating task:")
-        print("  Title: \(task.title)")
-        print("  Building: \(selectedBuilding?.name ?? "Unknown") (ID: \(task.buildingId ?? "none"))")
-        print("  Worker: \(currentWorker.name) (ID: \(currentWorker.id))")
-        print("  Category: \(task.category?.rawValue ?? "none")")
-        print("  Urgency: \(task.urgency?.rawValue ?? "none")")
-        
-        // ✅ FIXED: Use Timer-based delay for older Swift versions
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
-                continuation.resume()
-            }
-        }
-        
-        await MainActor.run {
+        do {
+            // ✅ INTEGRATED: Use TaskService to create task (this will handle DB and sync)
+            try await TaskService.shared.createTask(task)
+            
+            // ✅ INTEGRATED: Broadcast task creation to all dashboards
+            let dashboardUpdate = DashboardUpdate(
+                source: .admin, // Task creation comes from admin-level
+                type: .taskAssigned,
+                buildingId: selectedBuildingID,
+                workerId: currentWorker.id,
+                data: [
+                    "taskId": task.id,
+                    "taskTitle": task.title,
+                    "taskCategory": task.category?.rawValue ?? "maintenance",
+                    "taskUrgency": task.urgency?.rawValue ?? "medium",
+                    "dueDate": task.dueDate ?? Date()
+                ]
+            )
+            
+            await DashboardSyncService.shared.broadcastAdminUpdate(dashboardUpdate)
+            
+            // Record inventory requirements if any
             if !requiredInventory.isEmpty {
-                recordInventoryRequirements(for: task.id)
+                await recordInventoryRequirements(for: task.id)
             }
             
+            // Save photo if attached
             if attachPhoto, let photo = photo {
-                saveTaskPhoto(photo, for: task.id)
+                await saveTaskPhoto(photo, for: task.id)
             }
             
-            showCompletionAlert = true
-            isSubmitting = false
+            await MainActor.run {
+                showCompletionAlert = true
+                isSubmitting = false
+            }
+            
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to create task: \(error.localizedDescription)"
+                isSubmitting = false
+            }
         }
     }
     
-    private func recordInventoryRequirements(for taskId: String) {
+    private func recordInventoryRequirements(for taskId: String) async {
         print("Recording inventory requirements for task \(taskId)")
         
+        // TODO: In production, save to database via service
         for (itemId, quantity) in requiredInventory {
             if let item = getInventoryItem(itemId) {
                 print("  - \(quantity) of \(item.name)")
+                
+                // Example of how to save to database:
+                // try? await inventoryService.recordTaskRequirement(
+                //     taskId: taskId,
+                //     itemId: itemId,
+                //     quantity: quantity
+                // )
             }
         }
     }
     
-    private func saveTaskPhoto(_ image: UIImage, for taskId: String) {
+    private func saveTaskPhoto(_ image: UIImage, for taskId: String) async {
         print("Saving photo for task \(taskId)")
+        
+        // TODO: In production, save to storage service
+        // Example:
+        // if let imageData = image.jpegData(compressionQuality: 0.8) {
+        //     try? await storageService.saveTaskPhoto(
+        //         taskId: taskId,
+        //         imageData: imageData
+        //     )
+        // }
     }
 }
 
@@ -929,12 +964,14 @@ struct InventorySelectionView: View {
     }
     
     private func loadInventory() async {
-        await MainActor.run { [weak self] in
-            self?.isLoading = true
+        await MainActor.run {
+            isLoading = true
         }
         
-        await MainActor.run { [weak self] in
-            guard let self = self else { return }
+        // Simulate loading delay
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        await MainActor.run {
             // ✅ FIXED: Use convenience initializer matching InventoryView.swift pattern
             self.inventoryItems = [
                 CoreTypes.InventoryItem(
