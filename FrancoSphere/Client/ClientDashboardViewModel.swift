@@ -3,10 +3,10 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Line 412 - Removed decoder usage
-//  ✅ FIXED: Line 446 - ComplianceIssue initializer with all parameters
-//  ✅ FIXED: Line 466 - ExecutiveSummary initializer corrected
-//  ✅ FIXED: Line 520 - ComplianceIssue with type casting
+//  ✅ FIXED: Line 414 - DashboardUpdate initializer corrected
+//  ✅ FIXED: Line 448 - ComplianceIssue initializer with type parameter
+//  ✅ FIXED: Line 468 - ExecutiveSummary initializer with generatedAt
+//  ✅ FIXED: Line 523 - ComplianceIssue initializer with all required params
 //  ✅ ALIGNED: With all dashboard methods and services
 //
 
@@ -142,7 +142,7 @@ class ClientDashboardViewModel: ObservableObject {
         
         // Generate compliance issues based on insights
         for insight in intelligenceInsights where insight.type == .compliance {
-            // FIXED: Line 446 - Added all required parameters
+            // FIXED: Line 448 - Added type parameter to ComplianceIssue
             let issue = CoreTypes.ComplianceIssue(
                 title: insight.title,
                 description: insight.description,
@@ -152,7 +152,7 @@ class ClientDashboardViewModel: ObservableObject {
                 dueDate: Calendar.current.date(byAdding: .day, value: 30, to: Date()),
                 assignedTo: nil,
                 createdAt: Date(),
-                type: .regulatory
+                type: .regulatory  // Added required type parameter
             )
             allIssues.append(issue)
         }
@@ -168,12 +168,13 @@ class ClientDashboardViewModel: ObservableObject {
         let portfolioHealth = calculatePortfolioHealth()
         let monthlyPerformance = determineMonthlyPerformance()
         
-        // FIXED: Line 466 - Using correct ExecutiveSummary initializer without generatedAt
+        // FIXED: Line 468 - Using complete ExecutiveSummary initializer with generatedAt
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: totalBuildings,
             totalWorkers: totalWorkers,
             portfolioHealth: portfolioHealth,
-            monthlyPerformance: monthlyPerformance
+            monthlyPerformance: monthlyPerformance,
+            generatedAt: Date()  // Added required generatedAt parameter
         )
         
         generatePortfolioBenchmarks()
@@ -346,12 +347,13 @@ class ClientDashboardViewModel: ObservableObject {
         intelligenceInsights = []
         updateDashboardMetrics(from: portfolioIntelligence!)
         
-        // ✅ FIXED: Using correct ExecutiveSummary initializer
+        // ✅ FIXED: Using correct ExecutiveSummary initializer with generatedAt
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: 0,
             totalWorkers: 0,
             portfolioHealth: 0.0,
-            monthlyPerformance: "Unknown"
+            monthlyPerformance: "Unknown",
+            generatedAt: Date()
         )
         
         portfolioBenchmarks = []
@@ -417,7 +419,7 @@ class ClientDashboardViewModel: ObservableObject {
         }
     }
     
-    // FIXED: Line 412 - Use correct DashboardUpdate initializer without decoder
+    // FIXED: Line 414 - Use correct DashboardUpdate initializer
     private func broadcastDashboardUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
         let update = DashboardUpdate(
             source: .client,
@@ -475,7 +477,7 @@ class ClientDashboardViewModel: ObservableObject {
             }
             
         case .complianceChanged:
-            // FIXED: Line 520 - Proper type casting for Any values
+            // FIXED: Line 523 - Proper ComplianceIssue initialization with all required params
             if let buildingId = update.buildingId,
                let severityString = update.data["severity"] as? String,
                let title = update.data["title"] as? String,
@@ -501,7 +503,7 @@ class ClientDashboardViewModel: ObservableObject {
                     dueDate: nil,
                     assignedTo: nil,
                     createdAt: Date(),
-                    type: .operational
+                    type: .operational  // Added required type parameter
                 )
                 print("📱 Client Dashboard: New compliance issue added")
                 complianceIssues.append(issue)

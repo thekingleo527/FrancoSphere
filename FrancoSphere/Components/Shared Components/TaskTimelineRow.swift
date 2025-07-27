@@ -94,7 +94,7 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                 description: "A sample task for preview",
                 isCompleted: false,
                 completedDate: nil,
-                scheduledDate: Date(),
+                // ✅ REMOVED: scheduledDate parameter doesn't exist in ContextualTask
                 dueDate: Date(),
                 category: .maintenance,
                 urgency: .medium,

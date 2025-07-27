@@ -1,10 +1,5 @@
 import Foundation
-
-// Type aliases for CoreTypes
-
 import SwiftUI
-
-// Type aliases for CoreTypes
 
 //
 //  TaskRequestView.swift
@@ -80,6 +75,7 @@ struct TaskRequestView: View {
                     presentationMode.wrappedValue.dismiss()
                 },
                 trailing: Button("Submit") {
+                    // ✅ FIXED: Proper Task syntax
                     Task {
                         await submitTaskRequest()
                     }
@@ -162,6 +158,7 @@ struct TaskRequestView: View {
         }
     }
     
+    // ✅ FIXED: Proper Section syntax
     private var buildingAndCategorySection: some View {
         Section(header: Text("Location & Category")) {
             Picker("Building", selection: $selectedBuildingID) {
@@ -303,6 +300,7 @@ struct TaskRequestView: View {
         }
     }
     
+    // ✅ FIXED: Proper Section syntax
     private var submitSection: some View {
         Section {
             if let errorMessage = errorMessage {
@@ -458,38 +456,35 @@ struct TaskRequestView: View {
     }
     
     private func loadSuggestions() {
-        Task {
-            await MainActor.run {
-                suggestions = [
-                    TaskSuggestion(
-                        id: "1",
-                        title: "HVAC Filter Replacement",
-                        description: "Regular maintenance to replace HVAC filters throughout the building.",
-                        category: TaskCategory.maintenance.rawValue,
-                        urgency: TaskUrgency.medium.rawValue,
-                        buildingId: buildingOptions.first?.id ?? ""
-                    ),
-                    TaskSuggestion(
-                        id: "2",
-                        title: "Lobby Floor Cleaning",
-                        description: "Deep cleaning of lobby floor and entrance mats.",
-                        category: TaskCategory.cleaning.rawValue,
-                        urgency: TaskUrgency.low.rawValue,
-                        buildingId: buildingOptions.first?.id ?? ""
-                    ),
-                    TaskSuggestion(
-                        id: "3",
-                        title: "Security Camera Inspection",
-                        description: "Check all security cameras for proper functioning and positioning.",
-                        category: TaskCategory.inspection.rawValue,
-                        urgency: TaskUrgency.medium.rawValue,
-                        buildingId: buildingOptions.first?.id ?? ""
-                    )
-                ]
-                
-                showSuggestions = suggestions.count > 0
-            }
-        }
+        // ✅ FIXED: Removed async Task wrapper - not needed in synchronous function
+        suggestions = [
+            TaskSuggestion(
+                id: "1",
+                title: "HVAC Filter Replacement",
+                description: "Regular maintenance to replace HVAC filters throughout the building.",
+                category: TaskCategory.maintenance.rawValue,
+                urgency: TaskUrgency.medium.rawValue,
+                buildingId: buildingOptions.first?.id ?? ""
+            ),
+            TaskSuggestion(
+                id: "2",
+                title: "Lobby Floor Cleaning",
+                description: "Deep cleaning of lobby floor and entrance mats.",
+                category: TaskCategory.cleaning.rawValue,
+                urgency: TaskUrgency.low.rawValue,
+                buildingId: buildingOptions.first?.id ?? ""
+            ),
+            TaskSuggestion(
+                id: "3",
+                title: "Security Camera Inspection",
+                description: "Check all security cameras for proper functioning and positioning.",
+                category: TaskCategory.inspection.rawValue,
+                urgency: TaskUrgency.medium.rawValue,
+                buildingId: buildingOptions.first?.id ?? ""
+            )
+        ]
+        
+        showSuggestions = suggestions.count > 0
     }
     
     private func loadInventory() async {
@@ -500,27 +495,34 @@ struct TaskRequestView: View {
         }
     }
     
+    // ✅ FIXED: Use correct InventoryItem initializer
     private func createSampleInventory() -> [InventoryItem] {
         return [
             InventoryItem(
                 name: "All-Purpose Cleaner",
                 category: .supplies,
-                quantity: 10,
-                minThreshold: 5,
+                currentStock: 10,
+                minimumStock: 5,
+                maxStock: 50,
+                unit: "bottles",
                 location: "Storage Room A"
             ),
             InventoryItem(
                 name: "Paint Brushes",
                 category: .tools,
-                quantity: 5,
-                minThreshold: 2,
+                currentStock: 5,
+                minimumStock: 2,
+                maxStock: 20,
+                unit: "pieces",
                 location: "Maintenance Workshop"
             ),
             InventoryItem(
                 name: "Safety Gloves",
                 category: .safety,
-                quantity: 20,
-                minThreshold: 10,
+                currentStock: 20,
+                minimumStock: 10,
+                maxStock: 100,
+                unit: "pairs",
                 location: "Safety Cabinet"
             )
         ]
@@ -575,7 +577,7 @@ struct TaskRequestView: View {
         let building = buildingOptions.first(where: { $0.id == selectedBuildingID })
         let worker = WorkerProfile(
             id: authManager.workerId ?? "unknown",
-            name: authManager.currentWorkerName ?? "Unknown Worker",
+            name: authManager.currentWorkerName,  // ✅ FIXED: Removed unnecessary nil coalescing - currentWorkerName is non-optional
             email: authManager.currentUser?.email ?? "",
             phoneNumber: "",
             role: .worker,
@@ -591,7 +593,7 @@ struct TaskRequestView: View {
             description: taskDescription,
             isCompleted: false,
             completedDate: nil,
-            scheduledDate: startTimeValue,
+            // ✅ REMOVED: scheduledDate parameter doesn't exist
             dueDate: dueDate,
             category: selectedCategory,
             urgency: selectedUrgency,
@@ -726,6 +728,7 @@ struct InventorySelectionView: View {
                 }
             )
             .onAppear {
+                // ✅ FIXED: Proper Task syntax
                 Task {
                     await loadInventory()
                 }
@@ -798,7 +801,7 @@ struct InventorySelectionView: View {
         }
     }
     
-    // ✅ FIXED: Use sample inventory data that matches CoreTypes.InventoryItem
+    // ✅ FIXED: Use correct InventoryItem initializer
     private func loadInventory() async {
         await MainActor.run {
             isLoading = true
@@ -809,29 +812,37 @@ struct InventorySelectionView: View {
                 InventoryItem(
                     name: "All-Purpose Cleaner",
                     category: .supplies,
-                    quantity: 10,
-                    minThreshold: 5,
+                    currentStock: 10,
+                    minimumStock: 5,
+                    maxStock: 50,
+                    unit: "bottles",
                     location: "Storage Room A"
                 ),
                 InventoryItem(
                     name: "Paint Brushes",
                     category: .tools,
-                    quantity: 5,
-                    minThreshold: 2,
+                    currentStock: 5,
+                    minimumStock: 2,
+                    maxStock: 20,
+                    unit: "pieces",
                     location: "Maintenance Workshop"
                 ),
                 InventoryItem(
                     name: "Safety Gloves",
                     category: .safety,
-                    quantity: 20,
-                    minThreshold: 10,
+                    currentStock: 20,
+                    minimumStock: 10,
+                    maxStock: 100,
+                    unit: "pairs",
                     location: "Safety Cabinet"
                 ),
                 InventoryItem(
                     name: "LED Light Bulbs",
                     category: .materials,
-                    quantity: 15,
-                    minThreshold: 8,
+                    currentStock: 15,
+                    minimumStock: 8,
+                    maxStock: 50,
+                    unit: "pieces",
                     location: "Electrical Storage"
                 )
             ]
@@ -963,7 +974,7 @@ struct TaskSuggestion: Identifiable, Equatable {
     }
 }
 
-// ✅ FIXED: Extension for InventoryItem display unit
+// ✅ FIXED: Extension for InventoryItem display unit - added exhaustive switch
 extension InventoryItem {
     var displayUnit: String {
         switch category {
@@ -972,6 +983,12 @@ extension InventoryItem {
         case .equipment: return "units"
         case .materials: return "pcs"
         case .safety: return "pairs"
+        case .cleaning: return "items"
+        case .electrical: return "pcs"
+        case .plumbing: return "pcs"
+        case .general: return "items"
+        case .office: return "items"
+        case .maintenance: return "items"
         case .other: return "items"
         }
     }

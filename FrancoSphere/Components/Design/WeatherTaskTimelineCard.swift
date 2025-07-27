@@ -9,9 +9,6 @@
 //
 
 import Foundation
-
-// Type aliases for CoreTypes
-
 import SwiftUI
 
 // Type aliases for CoreTypes
@@ -121,8 +118,8 @@ struct WeatherTaskTimelineCard_Previews: PreviewProvider {
                         category: .maintenance, // ✅ FIXED: Use .maintenance instead of .hvac
                         urgency: .medium,
                         buildingId: "1",
-                        dueDate: Date().addingTimeInterval(3600),
-                        notes: "Weather-dependent task"
+                        dueDate: Date().addingTimeInterval(3600)
+                        // ✅ FIXED: Removed 'notes' parameter - doesn't exist in MaintenanceTask
                     ),
                     MaintenanceTask(
                         title: "Window Cleaning",
@@ -130,8 +127,8 @@ struct WeatherTaskTimelineCard_Previews: PreviewProvider {
                         category: .cleaning, // ✅ CORRECT: .cleaning exists
                         urgency: .low,
                         buildingId: "1",
-                        dueDate: Date().addingTimeInterval(7200),
-                        notes: "Complete before weather changes"
+                        dueDate: Date().addingTimeInterval(7200)
+                        // ✅ FIXED: Removed 'notes' parameter - doesn't exist in MaintenanceTask
                     )
                 ]
             )
