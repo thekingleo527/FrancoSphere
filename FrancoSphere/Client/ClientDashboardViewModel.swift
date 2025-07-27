@@ -97,8 +97,8 @@ class ClientDashboardViewModel: ObservableObject {
             lastUpdateTime = Date()
             print("✅ Portfolio intelligence loaded: \(buildings.count) buildings, \(insights.count) insights")
             
-            // Broadcast update - FIXED: Use UpdateType
-            broadcastDashboardUpdate(.portfolioUpdated, data: ["buildingCount": buildings.count])
+            // Broadcast update - FIXED: Use UpdateType with explicit enum type
+            broadcastDashboardUpdate(UpdateType.portfolioUpdated, data: ["buildingCount": buildings.count])
             
         } catch {
             print("❌ Failed to load portfolio intelligence: \(error)")
@@ -133,8 +133,8 @@ class ClientDashboardViewModel: ObservableObject {
         }
         
         self.buildingMetrics = metrics
-        // FIXED: Use UpdateType
-        broadcastDashboardUpdate(.buildingMetricsChanged, data: ["buildingIds": Array(metrics.keys)])
+        // FIXED: Use UpdateType with explicit enum type
+        broadcastDashboardUpdate(UpdateType.buildingMetricsChanged, data: ["buildingIds": Array(metrics.keys)])
     }
     
     // MARK: - Compliance Issues Loading
@@ -413,8 +413,8 @@ class ClientDashboardViewModel: ObservableObject {
     
     private func schedulePeriodicRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { _ in
-            // FIXED: Use _Concurrency.Task pattern from AdminDashboardViewModel
-            _Concurrency.Task { [weak self] in
+            // FIXED: Use Task with @MainActor pattern from TimeStatus.swift
+            Task { @MainActor [weak self] in
                 await self?.refreshData()
             }
         }
@@ -448,10 +448,10 @@ class ClientDashboardViewModel: ObservableObject {
                let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
                 // Use existing BuildingMetricsService to get updated metrics
-                // FIXED: Use simple Task syntax
-                Task {
+                // FIXED: Use Task with closure pattern
+                Task { [weak self] in
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        buildingMetrics[buildingId] = updatedMetrics
+                        self?.buildingMetrics[buildingId] = updatedMetrics
                     }
                 }
             }
@@ -467,10 +467,10 @@ class ClientDashboardViewModel: ObservableObject {
             if let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
                 // Use service to get updated metrics
-                // FIXED: Use simple Task syntax
-                Task {
+                // FIXED: Use Task with closure pattern
+                Task { [weak self] in
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        buildingMetrics[buildingId] = updatedMetrics
+                        self?.buildingMetrics[buildingId] = updatedMetrics
                     }
                 }
             }
@@ -521,9 +521,9 @@ class ClientDashboardViewModel: ObservableObject {
                let criticalInsights = update.data["criticalInsights"] as? Int {
                 print("📊 Total: \(totalInsights), Critical: \(criticalInsights)")
             }
-            // FIXED: Use simple Task syntax
-            Task {
-                await generateExecutiveSummary()
+            // FIXED: Use Task with closure pattern
+            Task { [weak self] in
+                await self?.generateExecutiveSummary()
             }
             
         default:

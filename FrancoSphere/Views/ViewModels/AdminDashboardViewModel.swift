@@ -116,11 +116,18 @@ class AdminDashboardViewModel: ObservableObject {
         
         self.buildingMetrics = metrics
         
-        // Use proper data type [String: Any] instead of [String: String]
-        broadcastAdminUpdate(UpdateType.buildingMetricsChanged, data: [
-            "buildingIds": Array(metrics.keys).joined(separator: ","),
-            "totalBuildings": metrics.count
-        ])
+        // Create and broadcast update
+        let update = DashboardUpdate(
+            source: .admin,
+            type: .buildingMetricsChanged,
+            buildingId: nil,
+            workerId: nil,
+            data: [
+                "buildingIds": Array(metrics.keys).joined(separator: ","),
+                "totalBuildings": metrics.count
+            ]
+        )
+        broadcastAdminUpdate(update)
     }
     
     /// Loads portfolio-wide intelligence insights
@@ -134,11 +141,18 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Portfolio insights loaded: \(insights.count) insights")
             
-            // Use proper data type [String: Any]
-            broadcastAdminUpdate(UpdateType.intelligenceGenerated, data: [
-                "insightCount": insights.count,
-                "criticalInsights": insights.filter { $0.priority == .critical }.count
-            ])
+            // Create and broadcast update
+            let update = DashboardUpdate(
+                source: .admin,
+                type: .intelligenceGenerated,
+                buildingId: nil,
+                workerId: nil,
+                data: [
+                    "insightCount": insights.count,
+                    "criticalInsights": insights.filter { $0.priority == .critical }.count
+                ]
+            )
+            broadcastAdminUpdate(update)
             
         } catch {
             self.portfolioInsights = []
@@ -168,11 +182,18 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
             
-            // Use proper data type [String: Any]
-            broadcastAdminUpdate(UpdateType.intelligenceGenerated, buildingId: buildingId, data: [
-                "buildingInsights": insights.count,
-                "buildingId": buildingId
-            ])
+            // Create and broadcast update
+            let update = DashboardUpdate(
+                source: .admin,
+                type: .intelligenceGenerated,
+                buildingId: buildingId,
+                workerId: nil,
+                data: [
+                    "buildingInsights": insights.count,
+                    "buildingId": buildingId
+                ]
+            )
+            broadcastAdminUpdate(update)
             
         } catch {
             self.selectedBuildingInsights = []
@@ -197,12 +218,19 @@ class AdminDashboardViewModel: ObservableObject {
             
             print("✅ Refreshed metrics for building \(buildingId)")
             
-            // Use proper data type [String: Any] and proper numeric types
-            broadcastAdminUpdate(UpdateType.buildingMetricsChanged, buildingId: buildingId, data: [
-                "buildingId": buildingId,
-                "completionRate": metrics.completionRate,
-                "overdueTasks": metrics.overdueTasks
-            ])
+            // Create and broadcast update
+            let update = DashboardUpdate(
+                source: .admin,
+                type: .buildingMetricsChanged,
+                buildingId: buildingId,
+                workerId: nil,
+                data: [
+                    "buildingId": buildingId,
+                    "completionRate": metrics.completionRate,
+                    "overdueTasks": metrics.overdueTasks
+                ]
+            )
+            broadcastAdminUpdate(update)
             
         } catch {
             print("❌ Failed to refresh building metrics: \(error)")
@@ -218,10 +246,18 @@ class AdminDashboardViewModel: ObservableObject {
     func updateStatus(status: String) async {
         dashboardSyncStatus = CoreTypes.DashboardSyncStatus(rawValue: status) ?? .synced
         
-        broadcastAdminUpdate(UpdateType.performanceChanged, data: [
-            "adminStatus": status,
-            "timestamp": ISO8601DateFormatter().string(from: Date())
-        ])
+        // Create and broadcast update
+        let update = DashboardUpdate(
+            source: .admin,
+            type: .performanceChanged,
+            buildingId: nil,
+            workerId: nil,
+            data: [
+                "adminStatus": status,
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ]
+        )
+        broadcastAdminUpdate(update)
     }
     
     // MARK: - Helper Methods
@@ -312,16 +348,8 @@ class AdminDashboardViewModel: ObservableObject {
         print("🔗 Admin dashboard cross-dashboard sync configured")
     }
     
-    /// Use proper DashboardSyncService API for broadcasting
-    private func broadcastAdminUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
-        let update = DashboardUpdate(
-            source: .admin,
-            type: type,
-            buildingId: buildingId,
-            workerId: nil,
-            data: data
-        )
-        
+    /// Broadcast admin update using DashboardUpdate directly
+    private func broadcastAdminUpdate(_ update: DashboardUpdate) {
         crossDashboardUpdates.append(update)
         
         // Keep only recent updates (last 50)
@@ -330,7 +358,7 @@ class AdminDashboardViewModel: ObservableObject {
         }
         
         dashboardSyncService.broadcastAdminUpdate(update)
-        print("📡 Admin update broadcast: \(type.displayName)")
+        print("📡 Admin update broadcast: \(update.type)")
     }
     
     /// Setup auto-refresh timer

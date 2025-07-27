@@ -6,6 +6,8 @@
 //  ✅ FIXED: Task initializer syntax corrected
 //  ✅ FIXED: Timer syntax corrected
 //  ✅ FIXED: ContextualTask parameter corrected
+//  ✅ FIXED: DashboardUpdate creation pattern
+//  ✅ FIXED: UpdateType references removed
 //
 
 import Foundation
@@ -94,12 +96,19 @@ public class WorkerDashboardViewModel: ObservableObject {
             await calculateDerivedMetrics()
             await loadBuildingMetricsData()
             
-            // Broadcast dashboard activation
-            await broadcastWorkerDashboardUpdate(.taskStarted, data: [
-                "workerId": user.workerId,
-                "buildingCount": String(assignedBuildings.count),
-                "taskCount": String(todaysTasks.count)
-            ])
+            // Broadcast dashboard activation with DashboardUpdate
+            let update = DashboardUpdate(
+                source: .worker,
+                type: .taskStarted,
+                buildingId: nil,
+                workerId: user.workerId,
+                data: [
+                    "workerId": user.workerId,
+                    "buildingCount": String(assignedBuildings.count),
+                    "taskCount": String(todaysTasks.count)
+                ]
+            )
+            await broadcastWorkerDashboardUpdate(update)
             
             await setLoadingState(false)
             print("✅ Worker dashboard loaded: \(assignedBuildings.count) buildings, \(todaysTasks.count) tasks")
@@ -136,13 +145,20 @@ public class WorkerDashboardViewModel: ObservableObject {
             await updateBuildingMetrics(buildingId: buildingId)
         }
         
-        // Broadcast to other dashboards using DashboardSyncService integration hook
-        dashboardSyncService.onTaskCompleted(
-            taskId: task.id,
+        // Broadcast to other dashboards using DashboardUpdate directly
+        let completionUpdate = DashboardUpdate(
+            source: .worker,
+            type: .taskCompleted,
+            buildingId: task.buildingId,
             workerId: workerId,
-            buildingId: task.buildingId ?? "unknown",
-            evidence: taskEvidence
+            data: [
+                "taskId": task.id,
+                "completionTime": Date(),
+                "evidence": taskEvidence.description,
+                "photoCount": taskEvidence.photoURLs.count
+            ]
         )
+        dashboardSyncService.broadcastWorkerUpdate(completionUpdate)
         
         print("✅ Task completed: \(task.title)")
     }
@@ -156,13 +172,20 @@ public class WorkerDashboardViewModel: ObservableObject {
             print("✅ Task started: \(task.title)")
         }
         
-        // Broadcast to other dashboards
-        await broadcastWorkerDashboardUpdate(.taskStarted, buildingId: task.buildingId, data: [
-            "taskId": task.id,
-            "taskTitle": task.title,
-            "startedAt": ISO8601DateFormatter().string(from: Date()),
-            "workerId": workerId
-        ])
+        // Create and broadcast update
+        let update = DashboardUpdate(
+            source: .worker,
+            type: .taskStarted,
+            buildingId: task.buildingId,
+            workerId: workerId,
+            data: [
+                "taskId": task.id,
+                "taskTitle": task.title,
+                "startedAt": ISO8601DateFormatter().string(from: Date()),
+                "workerId": workerId
+            ]
+        )
+        await broadcastWorkerDashboardUpdate(update)
     }
     
     // MARK: - Clock In/Out Management
@@ -186,12 +209,18 @@ public class WorkerDashboardViewModel: ObservableObject {
             // Refresh tasks for this building
             await loadTodaysTasks(workerId: workerId, buildingId: building.id)
             
-            // Broadcast using DashboardSyncService integration hook
-            dashboardSyncService.onWorkerClockedIn(
-                workerId: workerId,
+            // Broadcast using DashboardUpdate directly
+            let clockInUpdate = DashboardUpdate(
+                source: .worker,
+                type: .workerClockedIn,
                 buildingId: building.id,
-                buildingName: building.name
+                workerId: workerId,
+                data: [
+                    "buildingName": building.name,
+                    "clockInTime": Date()
+                ]
             )
+            dashboardSyncService.broadcastWorkerUpdate(clockInUpdate)
             
             print("✅ Clocked in at \(building.name)")
             
@@ -217,11 +246,19 @@ public class WorkerDashboardViewModel: ObservableObject {
             isClockedIn = false
             currentBuilding = nil
             
-            // Broadcast session summary using DashboardSyncService integration hook
-            dashboardSyncService.onWorkerClockedOut(
+            // Broadcast session summary using DashboardUpdate directly
+            let clockOutUpdate = DashboardUpdate(
+                source: .worker,
+                type: .workerClockedOut,
+                buildingId: building.id,
                 workerId: workerId,
-                buildingId: building.id
+                data: [
+                    "buildingName": building.name,
+                    "completedTaskCount": completedTasks.count,
+                    "clockOutTime": Date()
+                ]
             )
+            dashboardSyncService.broadcastWorkerUpdate(clockOutUpdate)
             
             print("✅ Clocked out from \(building.name) - \(completedTasks.count) tasks completed")
             
@@ -338,8 +375,19 @@ public class WorkerDashboardViewModel: ObservableObject {
             let metrics = try await metricsService.calculateMetrics(for: buildingId)
             buildingMetrics[buildingId] = metrics
             
-            // Broadcast metrics update using DashboardSyncService integration hook
-            dashboardSyncService.onBuildingMetricsChanged(buildingId: buildingId, metrics: metrics)
+            // Broadcast metrics update using DashboardUpdate directly
+            let metricsUpdate = DashboardUpdate(
+                source: .worker,
+                type: .buildingMetricsChanged,
+                buildingId: buildingId,
+                workerId: currentWorkerId,
+                data: [
+                    "buildingId": buildingId,
+                    "completionRate": metrics.completionRate,
+                    "overdueTasks": metrics.overdueTasks
+                ]
+            )
+            dashboardSyncService.broadcastWorkerUpdate(metricsUpdate)
         } catch {
             print("⚠️ Failed to update building metrics: \(error)")
         }
@@ -398,14 +446,12 @@ public class WorkerDashboardViewModel: ObservableObject {
         switch update.type {
         case .performanceChanged:
             if update.workerId == currentWorkerId {
-                // ✅ FIXED: Use Task { } syntax instead of Task.init
-                Task {
+                Task { @MainActor in
                     await refreshData()
                 }
             }
         case .portfolioUpdated:
-            // ✅ FIXED: Use Task { } syntax instead of Task.init
-            Task {
+            Task { @MainActor in
                 await refreshBuildingMetricsForAllBuildings()
             }
         default:
@@ -418,8 +464,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         case .buildingMetricsChanged:
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
-                // ✅ FIXED: Use Task { } syntax instead of Task.init
-                Task {
+                Task { @MainActor in
                     await refreshSingleBuildingMetrics(buildingId: buildingId)
                 }
             }
@@ -434,8 +479,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             // Refresh all data to get updated compliance requirements
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
-                // ✅ FIXED: Use Task { } syntax instead of Task.init
-                Task {
+                Task { @MainActor in
                     await refreshData()
                 }
             }
@@ -444,28 +488,18 @@ public class WorkerDashboardViewModel: ObservableObject {
         }
     }
     
-    private func broadcastWorkerDashboardUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) async {
-        guard let workerId = currentWorkerId else { return }
-        
-        let update = DashboardUpdate(
-            source: .worker,
-            type: type,
-            buildingId: buildingId,
-            workerId: workerId,
-            data: data
-        )
-        
+    /// Broadcast a worker dashboard update using DashboardUpdate directly
+    private func broadcastWorkerDashboardUpdate(_ update: DashboardUpdate) async {
         dashboardSyncService.broadcastWorkerUpdate(update)
     }
     
     // MARK: - Auto-refresh Setup
     
     private func setupAutoRefresh() {
-        // ✅ FIXED: Use proper Timer.scheduledTimer syntax without trailing closure
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
             guard let self = self, !self.isLoading else { return }
             
-            Task {
+            Task { @MainActor in
                 await self.refreshData()
             }
         }
