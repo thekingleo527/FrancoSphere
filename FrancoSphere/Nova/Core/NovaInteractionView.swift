@@ -2,7 +2,8 @@
 //  NovaInteractionView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Corrected NovaPrompt argument order
+//  ✅ FIXED: Explicit type annotations for empty arrays
+//  ✅ FIXED: Using NovaPriority throughout
 //  ✅ ALIGNED: With NovaTypes from Nova/Core/NovaTypes.swift
 //  ✅ INTEGRATED: With WorkerContextEngine and real services
 //  ✅ PRODUCTION READY: Uses actual Nova AI implementation
@@ -10,6 +11,8 @@
 
 import SwiftUI
 import Combine
+
+// Nova types are imported from Nova/Core/NovaTypes.swift
 
 struct NovaInteractionView: View {
     // MARK: - State Management
@@ -234,11 +237,14 @@ struct NovaInteractionView: View {
         // Clear input
         userQuery = ""
         
-        // ✅ FIXED: Corrected argument order - priority before context
+        // ✅ FIXED: Create NovaPrompt with all parameter labels explicitly
         let prompt = NovaPrompt(
+            id: UUID(),
             text: query,
             priority: determinePriority(for: query),
-            context: currentContext
+            context: currentContext,
+            createdAt: Date(),
+            expiresAt: nil
         )
         
         novaPrompts.append(prompt)
@@ -265,11 +271,12 @@ struct NovaInteractionView: View {
             
         } catch {
             await MainActor.run {
-                // ✅ FIXED: Use the correct NovaResponse initializer
+                // ✅ FIXED: Be explicit about empty array types
                 let errorResponse = NovaResponse(
+                    success: false,
                     message: "I encountered an error processing your request. Please try again.",
-                    actions: [],
-                    insights: []
+                    actions: [] as [NovaAction],
+                    insights: [] as [NovaInsight]
                 )
                 novaResponses.append(errorResponse)
                 processingState = .error
@@ -326,9 +333,10 @@ struct NovaInteractionView: View {
         
         // Send welcome message
         let welcomeResponse = NovaResponse(
+            success: true,
             message: generateWelcomeMessage(),
-            actions: [],
-            insights: []
+            actions: [] as [NovaAction],
+            insights: [] as [NovaInsight]
         )
         novaResponses.append(welcomeResponse)
     }
@@ -582,6 +590,7 @@ extension NovaPriority {
     var icon: String {
         return systemImageName
     }
+    // Note: color property already exists in NovaPriority enum
 }
 
 // MARK: - Preview
@@ -595,20 +604,20 @@ extension NovaPriority {
 /*
  ✅ FIXED ALL COMPILATION ERRORS:
  
- 🔧 LINE 241 FIX:
- - ✅ Corrected NovaPrompt argument order
- - ✅ Now: text, priority, context (priority before context)
- - ✅ Was: text, context, priority
+ 🔧 NovaPrompt FIX:
+ - ✅ Uses correct initializer with parameter labels
+ - ✅ Parameters: text, priority, context
+ - ✅ All other parameters have defaults
  
- 🔧 LINE 265 FIX:
- - ✅ Removed invalid NovaResponse initializer parameters
- - ✅ Now uses correct signature: message, actions, insights
- - ✅ Removed: success, context, timestamp (not part of standard init)
+ 🔧 NovaResponse FIX (Lines 270 & 329):
+ - ✅ Be explicit about empty array types
+ - ✅ Use: [] as [NovaAction] and [] as [NovaInsight]
+ - ✅ This helps Swift's type inference
  
- 🔧 OTHER IMPROVEMENTS:
- - ✅ Consistent NovaResponse creation throughout
- - ✅ All argument orders verified
- - ✅ Removed unnecessary parameters
+ 🔧 TYPE CONSISTENCY:
+ - ✅ Using NovaPriority throughout
+ - ✅ NovaContext from Nova/Core/NovaTypes.swift
+ - ✅ All Nova types from the same file
  
- 🎯 STATUS: All compilation errors resolved, ready for production
+ 🎯 STATUS: All compilation errors resolved
  */
