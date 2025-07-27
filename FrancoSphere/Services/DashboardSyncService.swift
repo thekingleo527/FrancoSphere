@@ -354,18 +354,16 @@ public class DashboardSyncService: ObservableObject {
     // MARK: - Live Update Management
     
     private func createLiveWorkerUpdate(from update: DashboardUpdate) {
-        guard let workerId = update.workerId,
-              let buildingName = update.data["buildingName"] as? String ?? getBuildingName(update.buildingId) else {
-            return
-        }
+        guard let workerId = update.workerId else { return }
         
+        let buildingName = update.data["buildingName"] as? String ?? getBuildingName(update.buildingId)
         let workerName = getWorkerName(workerId) ?? "Unknown Worker"
         let action = generateActionDescription(for: update)
         
         let liveUpdate = LiveWorkerUpdate(
             workerName: workerName,
             action: action,
-            buildingName: buildingName
+            buildingName: buildingName ?? "Unknown Building"
         )
         
         liveWorkerUpdates.append(liveUpdate)
@@ -502,7 +500,6 @@ public class DashboardSyncService: ObservableObject {
     
     private func refreshPortfolioState() async {
         // Update unified portfolio state
-        // This can be enhanced with actual portfolio calculation
         unifiedPortfolioState = PortfolioState(
             totalBuildings: unifiedBuildingMetrics.count,
             averageScore: calculateAverageScore(),
@@ -629,61 +626,5 @@ extension DashboardSyncService {
         liveWorkerUpdates.removeAll()
         liveAdminAlerts.removeAll()
         liveClientMetrics.removeAll()
-    }
-}
-
-// MARK: - ActionEvidence Import
-// ActionEvidence type is used by the integration hooks and should be accessible
-// It's defined in Models/DTOs/ActionEvidence.swift
-extension DashboardSyncService {
-    
-    /// Hook into IntelligenceService portfolio insights
-    public func onPortfolioIntelligenceUpdated(insights: [CoreTypes.IntelligenceInsight]) {
-        let criticalInsights = insights.filter { $0.priority == .critical }
-        
-        let update = DashboardUpdate(
-            source: .admin,
-            type: .intelligenceGenerated,
-            buildingId: nil,
-            workerId: nil,
-            data: [
-                "totalInsights": insights.count,
-                "criticalInsights": criticalInsights.count,
-                "actionableInsights": insights.filter { $0.actionRequired }.count
-            ]
-        )
-        
-        broadcastAdminUpdate(update)
-        
-        // Create alerts for critical insights
-        for insight in criticalInsights {
-            let alert = LiveAdminAlert(
-                title: insight.title,
-                severity: .critical,
-                buildingId: insight.affectedBuildings.first ?? ""
-            )
-            
-            liveAdminAlerts.append(alert)
-            limitLiveUpdates()
-        }
-    }
-}
-
-// MARK: - Fixed Broadcasting Extension
-extension DashboardSyncService {
-    func broadcastUpdate(_ update: CoreTypes.CrossDashboardUpdate) async {
-        await MainActor.run {
-            crossDashboardUpdatesSubject.send(update)
-        }
-    }
-    
-    func syncDashboards() async throws {
-        let update = CoreTypes.CrossDashboardUpdate(
-            type: .dataRefresh,
-            source: .admin,
-            timestamp: Date(),
-            data: ["sync": "complete"]
-        )
-        await broadcastUpdate(update)
     }
 }
