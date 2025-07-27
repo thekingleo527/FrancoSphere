@@ -405,7 +405,7 @@ struct AdminDashboardView: View {
         }
         .onAppear {
             if let buildingId = selectedBuildingId {
-                Task {
+                _Concurrency.Task {
                     await viewModel.fetchBuildingIntelligence(for: buildingId)
                 }
             }
@@ -417,7 +417,7 @@ struct AdminDashboardView: View {
             IntelligenceInsightsView(
                 insights: viewModel.portfolioInsights
             ) {
-                Task {
+                _Concurrency.Task {
                     await viewModel.loadPortfolioInsights()
                 }
             }
