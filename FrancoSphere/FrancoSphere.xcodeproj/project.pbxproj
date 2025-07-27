@@ -104,7 +104,6 @@
 		23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */; };
 		23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CD2E2B8674004A52C6 /* WorkerService.swift */; };
 		23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739272E2B8674004A52C6 /* HeroStatusCard.swift */; };
-		23273A742E2B8674004A52C6 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CF2E2B8674004A52C6 /* DashboardView.swift */; };
 		23273A752E2B8674004A52C6 /* FrancoSphereModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739792E2B8674004A52C6 /* FrancoSphereModels.swift */; };
 		23273A762E2B8674004A52C6 /* IntelligencePreviewPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391D2E2B8674004A52C6 /* IntelligencePreviewPanel.swift */; };
 		23273A772E2B8674004A52C6 /* V012.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394B2E2B8674004A52C6 /* V012.swift */; };
@@ -404,7 +403,6 @@
 		232739CB2E2B8674004A52C6 /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
 		232739CC2E2B8674004A52C6 /* WorkerMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsService.swift; sourceTree = "<group>"; };
 		232739CD2E2B8674004A52C6 /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
-		232739CF2E2B8674004A52C6 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		232739D02E2B8674004A52C6 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
 		232739D12E2B8674004A52C6 /* RouteStatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStatItem.swift; sourceTree = "<group>"; };
 		232739D22E2B8674004A52C6 /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
@@ -895,7 +893,6 @@
 		232739D32E2B8674004A52C6 /* SharedViews */ = {
 			isa = PBXGroup;
 			children = (
-				232739CF2E2B8674004A52C6 /* DashboardView.swift */,
 				232739D02E2B8674004A52C6 /* QuickActionMenu.swift */,
 				232739D12E2B8674004A52C6 /* RouteStatItem.swift */,
 				232739D22E2B8674004A52C6 /* TrackableScrollView.swift */,
@@ -1266,7 +1263,6 @@
 				23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */,
 				23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */,
 				23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */,
-				23273A742E2B8674004A52C6 /* DashboardView.swift in Sources */,
 				23273A752E2B8674004A52C6 /* FrancoSphereModels.swift in Sources */,
 				23273A762E2B8674004A52C6 /* IntelligencePreviewPanel.swift in Sources */,
 				23273A772E2B8674004A52C6 /* V012.swift in Sources */,
