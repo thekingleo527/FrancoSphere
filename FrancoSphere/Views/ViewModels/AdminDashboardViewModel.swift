@@ -117,7 +117,7 @@ class AdminDashboardViewModel: ObservableObject {
         self.buildingMetrics = metrics
         
         // Use proper data type [String: Any] instead of [String: String]
-        broadcastAdminUpdate(.buildingMetricsChanged, data: [
+        broadcastAdminUpdate(UpdateType.buildingMetricsChanged, data: [
             "buildingIds": Array(metrics.keys).joined(separator: ","),
             "totalBuildings": metrics.count
         ])
@@ -135,7 +135,7 @@ class AdminDashboardViewModel: ObservableObject {
             print("✅ Portfolio insights loaded: \(insights.count) insights")
             
             // Use proper data type [String: Any]
-            broadcastAdminUpdate(.intelligenceGenerated, data: [
+            broadcastAdminUpdate(UpdateType.intelligenceGenerated, data: [
                 "insightCount": insights.count,
                 "criticalInsights": insights.filter { $0.priority == .critical }.count
             ])
@@ -169,7 +169,7 @@ class AdminDashboardViewModel: ObservableObject {
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
             
             // Use proper data type [String: Any]
-            broadcastAdminUpdate(.intelligenceGenerated, buildingId: buildingId, data: [
+            broadcastAdminUpdate(UpdateType.intelligenceGenerated, buildingId: buildingId, data: [
                 "buildingInsights": insights.count,
                 "buildingId": buildingId
             ])
@@ -198,7 +198,7 @@ class AdminDashboardViewModel: ObservableObject {
             print("✅ Refreshed metrics for building \(buildingId)")
             
             // Use proper data type [String: Any] and proper numeric types
-            broadcastAdminUpdate(.buildingMetricsChanged, buildingId: buildingId, data: [
+            broadcastAdminUpdate(UpdateType.buildingMetricsChanged, buildingId: buildingId, data: [
                 "buildingId": buildingId,
                 "completionRate": metrics.completionRate,
                 "overdueTasks": metrics.overdueTasks
@@ -218,7 +218,7 @@ class AdminDashboardViewModel: ObservableObject {
     func updateStatus(status: String) async {
         dashboardSyncStatus = CoreTypes.DashboardSyncStatus(rawValue: status) ?? .synced
         
-        broadcastAdminUpdate(.performanceChanged, data: [
+        broadcastAdminUpdate(UpdateType.performanceChanged, data: [
             "adminStatus": status,
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ])

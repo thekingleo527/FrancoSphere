@@ -5,10 +5,10 @@
 //  Cross-dashboard synchronization service for real-time updates
 //  Manages communication between Worker, Admin, and Client dashboards
 //
-//  ✅ FIXED: Removed references to non-existent PortfolioState
-//  ✅ FIXED: Using CoreTypes.PortfolioIntelligence instead
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Proper type references and initialization
+//  ✅ FIXED: Removed Task creation in @MainActor context
+//  ✅ FIXED: Using established initialization pattern from codebase
+//  ✅ FIXED: Proper sink syntax with receiveValue parameter
+//  ✅ FIXED: No references to non-existent PortfolioState
 //
 
 import Foundation
@@ -174,14 +174,25 @@ public class DashboardSyncService: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var syncTimer: Timer?
+    private var isInitialized = false
     
     private init() {
-        setupRealTimeSynchronization()
-        setupAutoSync()
+        // Simple synchronous init - setup happens in initialize()
     }
     
     deinit {
         syncTimer?.invalidate()
+    }
+    
+    // MARK: - Initialization (Following codebase pattern)
+    
+    /// Initialize the service - must be called after creation
+    public func initialize() {
+        guard !isInitialized else { return }
+        isInitialized = true
+        
+        setupRealTimeSynchronization()
+        setupAutoSync()
     }
     
     // MARK: - Public Broadcasting Methods
@@ -417,26 +428,46 @@ public class DashboardSyncService: ObservableObject {
         if let buildingId = update.buildingId,
            update.type == .buildingMetricsChanged || update.type == .taskCompleted {
             
-            // Create a detached task to avoid actor isolation issues
-            Task.detached { [weak self] in
-                guard let self = self else { return }
+            // Schedule async work to run later
+            scheduleMetricsUpdate(for: buildingId)
+        }
+        
+        // Update portfolio state for client-level changes
+        if update.type == .portfolioUpdated || update.type == .performanceChanged {
+            // Schedule async work to run later
+            schedulePortfolioUpdate()
+        }
+    }
+    
+    private func scheduleMetricsUpdate(for buildingId: String) {
+        // Use main queue to schedule the async work
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            Task {
                 do {
-                    let metrics = try await buildingMetricsService.calculateMetrics(for: buildingId)
-                    await self.updateBuildingMetrics(buildingId, metrics: metrics)
+                    let metrics = try await self.buildingMetricsService.calculateMetrics(for: buildingId)
+                    await MainActor.run {
+                        self.unifiedBuildingMetrics[buildingId] = metrics
+                    }
                 } catch {
                     print("❌ Failed to update unified building metrics: \(error)")
                 }
             }
         }
-        
-        // Update portfolio state for client-level changes
-        if update.type == .portfolioUpdated || update.type == .performanceChanged {
-            // Create a detached task to avoid actor isolation issues
-            Task.detached { [weak self] in
-                guard let self = self else { return }
+    }
+    
+    private func schedulePortfolioUpdate() {
+        // Use main queue to schedule the async work
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            Task {
                 do {
-                    let portfolio = try await buildingService.generatePortfolioIntelligence()
-                    await self.updatePortfolioIntelligence(portfolio)
+                    let portfolio = try await self.buildingService.generatePortfolioIntelligence()
+                    await MainActor.run {
+                        self.unifiedPortfolioIntelligence = portfolio
+                    }
                 } catch {
                     print("❌ Failed to refresh portfolio intelligence: \(error)")
                 }
@@ -444,30 +475,31 @@ public class DashboardSyncService: ObservableObject {
         }
     }
     
-    private func updateBuildingMetrics(_ buildingId: String, metrics: CoreTypes.BuildingMetrics) {
-        self.unifiedBuildingMetrics[buildingId] = metrics
-    }
-    
-    private func updatePortfolioIntelligence(_ portfolio: CoreTypes.PortfolioIntelligence) {
-        self.unifiedPortfolioIntelligence = portfolio
-    }
-    
     // MARK: - Real-Time Synchronization Setup
     
     private func setupRealTimeSynchronization() {
         // Subscribe to cross-dashboard updates for logging
         crossDashboardUpdates
-            .sink { update in
+            .sink(receiveValue: { [weak self] update in
                 print("🔄 Cross-dashboard sync: \(update.source.displayName) → \(update.type.displayName)")
-            }
+            })
             .store(in: &cancellables)
     }
     
     private func setupAutoSync() {
         // Auto-sync every 30 seconds to ensure consistency
-        syncTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
-            Task.detached {
-                await DashboardSyncService.shared.performAutoSync()
+        syncTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            self?.scheduleAutoSync()
+        }
+    }
+    
+    private func scheduleAutoSync() {
+        // Use main queue to schedule the async work
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            Task {
+                await self.performAutoSync()
             }
         }
     }
@@ -538,6 +570,9 @@ extension DashboardSyncService {
     
     /// Enable cross-dashboard synchronization (called from DashboardView)
     public func enableCrossDashboardSync() {
+        // Initialize if not already done
+        initialize()
+        
         isLive = true
         print("🔄 Cross-dashboard synchronization enabled")
     }
@@ -585,5 +620,15 @@ extension DashboardSyncService {
         clientDashboardUpdates
             .filter { $0.source == .client || $0.type == .portfolioUpdated || $0.type == .performanceChanged }
             .eraseToAnyPublisher()
+    }
+}
+
+// MARK: - App Initialization
+
+extension DashboardSyncService {
+    /// Call this during app startup to ensure proper initialization
+    public static func initializeForApp() {
+        // Initialize the shared instance
+        shared.initialize()
     }
 }

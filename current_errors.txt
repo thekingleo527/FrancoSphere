@@ -1,1 +1,0 @@
-xcodebuild: error: The directory /Volumes/FastSSD/Xcode does not contain an Xcode project, workspace or package.
