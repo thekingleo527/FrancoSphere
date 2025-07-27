@@ -358,3 +358,11 @@ extension NovaInsight {
         return !suggestedActions.isEmpty
     }
 }
+
+// MARK: - Nova Processing State
+public enum NovaProcessingState: String, Codable {
+    case idle = "idle"
+    case processing = "processing"
+    case completed = "completed"
+    case error = "error"
+}

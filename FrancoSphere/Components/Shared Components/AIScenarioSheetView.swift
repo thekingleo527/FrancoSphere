@@ -621,7 +621,7 @@ struct AIScenarioSheetView: View {
                     repairProgress = Double(index) / Double(steps.count - 1)
                 }
                 
-                try? await Task.sleep(for: .milliseconds(500))
+                try? await Task.sleep(nanoseconds: UInt64(500 * 1_000_000))
             }
             
             // Trigger actual data refresh

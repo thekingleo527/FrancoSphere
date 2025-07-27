@@ -93,12 +93,6 @@ public actor WorkerService {
 
 // MARK: - Fixed Method Signatures Extension
 extension WorkerService {
-    func getAllActiveWorkers() async throws -> [WorkerProfile] {
-        return try await grdbManager.read { db in
-            try WorkerProfile
-                .filter(Column("isActive") == true)
-                .fetchAll(db)
-        }
     }
     
     func getWorker(by workerId: String) async throws -> WorkerProfile? {

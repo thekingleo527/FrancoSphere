@@ -358,7 +358,7 @@ class DailyOpsReset: ObservableObject {
             
             for worker in activeWorkers {
                 do {
-                    try await WorkerContextEngine.shared.loadContext(for: worker.id)
+                    try await WorkerContextEngine.shared.loadContext(for: for: worker.id)
                     print("✅ Refreshed context for worker: \(worker.name)")
                 } catch {
                     print("⚠️ Failed to refresh context for worker \(worker.name): \(error)")

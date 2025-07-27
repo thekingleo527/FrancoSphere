@@ -626,7 +626,7 @@ public actor QuickBooksPayrollExporter {
         }
         
         // ✅ FIXED: Use proper async sleep method
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(nanoseconds: UInt64(200 * 1_000_000))
     }
     
     private func parseDate(_ dateString: String?) -> Date? {

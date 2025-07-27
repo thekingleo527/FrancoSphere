@@ -160,7 +160,7 @@ extension WorkerContextEngine {
 
 extension WorkerContextEngine {
     /// Override existing loadContext to use operational data
-    public func loadContext(for workerId: CoreTypes.WorkerID) async throws {
+    // Duplicate removed: public func loadContext(for workerId: CoreTypes.WorkerID) async throws {
         // Use the new operational data method
         try await loadContextWithOperationalData(for: workerId)
     }
