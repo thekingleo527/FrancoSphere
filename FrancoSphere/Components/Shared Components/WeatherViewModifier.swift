@@ -32,9 +32,12 @@ struct WeatherViewModifier: ViewModifier {
     @ViewBuilder
     private var weatherOverlay: some View {
         if let weather = weatherAdapter.currentWeather {
+            // FIX: Convert String condition to enum
+            let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
+            
             HStack(spacing: 8) {
-                Image(systemName: getWeatherIcon(for: weather.condition))
-                    .foregroundColor(getWeatherColor(for: weather.condition))
+                Image(systemName: getWeatherIcon(for: conditionEnum))
+                    .foregroundColor(getWeatherColor(for: conditionEnum))
                 
                 Text(weather.formattedTemperature)
                     .font(.caption)
@@ -74,6 +77,10 @@ struct WeatherViewModifier: ViewModifier {
             return "cloud.sun.fill"
         case .overcast:
             return "cloud.fill"
+        case .hot:
+            return "thermometer.sun"
+        case .cold:
+            return "thermometer.snowflake"
         }
     }
     
@@ -96,9 +103,13 @@ struct WeatherViewModifier: ViewModifier {
         case .windy:
             return .mint
         case .partlyCloudy:
-            return .gray
+            return .yellow.opacity(0.8)
         case .overcast:
-            return .gray
+            return .gray.opacity(0.9)
+        case .hot:
+            return .red
+        case .cold:
+            return .indigo
         }
     }
     
@@ -107,11 +118,15 @@ struct WeatherViewModifier: ViewModifier {
             return "No weather data available"
         }
         
-        switch weather.condition {
+        // FIX: Convert String condition to enum
+        let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
+        
+        switch conditionEnum {
         case .stormy:
             return "Severe weather alert: Storm conditions detected"
         case .rainy:
-            if weather.precipitation > 0.5 {
+            // FIX: Use windSpeed as proxy for rain intensity since no precipitation property
+            if weather.windSpeed > 15 {
                 return "Heavy rain alert: Consider indoor tasks"
             } else {
                 return "Rain detected: Monitor outdoor conditions"
@@ -130,6 +145,10 @@ struct WeatherViewModifier: ViewModifier {
             return "Current weather conditions are favorable"
         case .cloudy, .partlyCloudy, .overcast:
             return "Cloudy conditions - good for most outdoor work"
+        case .hot:
+            return "Heat alert: Stay hydrated and take frequent breaks"
+        case .cold:
+            return "Cold weather alert: Dress warmly and check for ice"
         }
     }
     
@@ -143,8 +162,13 @@ struct WeatherViewModifier: ViewModifier {
     private func checkWeatherAlerts() {
         guard let weather = weatherAdapter.currentWeather else { return }
         
-        if weather.condition == .stormy ||
-           weather.precipitation > 0.3 ||
+        // FIX: Convert String condition to enum
+        let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
+        
+        // FIX: Use outdoor work risk and wind speed instead of precipitation
+        if conditionEnum == .stormy ||
+           weather.outdoorWorkRisk == .extreme ||
+           weather.outdoorWorkRisk == .high ||
            weather.windSpeed > 20 {
             showWeatherAlert = true
         }
@@ -154,5 +178,12 @@ struct WeatherViewModifier: ViewModifier {
 extension View {
     func weatherAware() -> some View {
         self.modifier(WeatherViewModifier())
+    }
+}
+
+// Add extension for WeatherData if formattedTemperature is missing
+extension CoreTypes.WeatherData {
+    var formattedTemperature: String {
+        return "\(Int(temperature))°F"
     }
 }

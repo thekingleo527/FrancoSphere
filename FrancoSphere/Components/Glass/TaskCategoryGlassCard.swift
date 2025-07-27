@@ -306,12 +306,16 @@ struct TaskRowGlassView: View {
             
             HStack(spacing: 8) {
                 // Time or recurrence
-                if let startTime = task.startTime {
-                    Text(formatTime(startTime))
+                if let dueDate = task.dueDate {
+                    Text(formatTime(dueDate))
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                } else if task.isRecurring {
+                    Text("Recurring")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                 } else {
-                    Text(task.recurrence.rawValue)
+                    Text(formatDuration(task.estimatedDuration))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -447,7 +451,7 @@ struct TaskRowGlassView: View {
 struct TaskCategoryGlassCard_Previews: PreviewProvider {
     static var sampleTasks: [MaintenanceTask] {
         [
-            // ✅ FIXED: Correct parameter order - recurrence before startTime
+            // ✅ FIXED: Use correct properties only
             MaintenanceTask(
                 title: "Clean Lobby Windows",
                 description: "Clean all glass surfaces in the main lobby area",
@@ -456,9 +460,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "2",
                 dueDate: Date(),
-                recurrence: .weekly,
-                startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()),
-                endTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Date())
+                isRecurring: true  // Instead of recurrence property
             ),
             MaintenanceTask(
                 title: "Vacuum Common Areas",
@@ -468,7 +470,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "2",
                 dueDate: Date(),
-                recurrence: .daily
+                isRecurring: true  // Daily tasks are recurring
             ),
             MaintenanceTask(
                 title: "Emergency Light Check",
@@ -478,7 +480,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 buildingId: "15",
                 assignedWorkerId: "1",
                 dueDate: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
-                recurrence: .monthly
+                isRecurring: true  // Monthly tasks are recurring
             )
         ]
     }

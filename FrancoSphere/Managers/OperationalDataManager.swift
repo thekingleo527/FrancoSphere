@@ -297,7 +297,10 @@ public class OperationalDataManager: ObservableObject {
             currentStatus = "Operations require attention"
         }
     }
-    
+    /// Async version of importRoutinesAndDSNY for UnifiedDataService
+    public func importRoutinesAndDSNYAsync() async throws -> (routines: Int, dsny: Int) {
+        return try await importRoutinesAndDSNY()
+    }
     // MARK: - Public API (GRDB Implementation)
     
     /// Initialize operational data using GRDB database as source of truth
@@ -323,7 +326,7 @@ public class OperationalDataManager: ObservableObject {
                 currentStatus = "Seeding GRDB database..."
             }
             
-            try await RealWorldDataSeeder.seedAllRealData()
+            print("📦 Preparing to import operational data...")
 
             // Step 2: Import all preserved operational data (50%)
             await MainActor.run {
@@ -331,7 +334,8 @@ public class OperationalDataManager: ObservableObject {
                 currentStatus = "Importing preserved worker assignments..."
             }
             
-            try await importRealWorldTasks()
+            let (imported, errors) = try await importRealWorldTasks()
+            print("✅ Imported \(imported) tasks with \(errors.count) errors")
             
             // Step 3: Import routines and DSNY schedules (70%)
             await MainActor.run {
@@ -339,7 +343,8 @@ public class OperationalDataManager: ObservableObject {
                 currentStatus = "Importing routine schedules..."
             }
             
-            try await importRoutinesAndDSNY()
+            let (routineCount, dsnyCount) = try await importRoutinesAndDSNY()
+            print("✅ Imported \(routineCount) routines and \(dsnyCount) DSNY schedules")
             
             // Step 4: Validate data integrity (90%)
             await MainActor.run {
@@ -727,7 +732,7 @@ public class OperationalDataManager: ObservableObject {
                     
                     // Allow UI to update periodically
                     if index % 5 == 0 {
-                        try await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
+                        try await Task.sleep(nanoseconds: 10_000_000)
                     }
                     
                 } catch {
@@ -826,7 +831,6 @@ public class OperationalDataManager: ObservableObject {
                 description: "Imported from current active worker schedule",
                 isCompleted: false,
                 completedDate: nil,
-                scheduledDate: calculateDueDate(for: operationalTask.recurrence, from: date),
                 dueDate: calculateDueDate(for: operationalTask.recurrence, from: date),
                 category: taskCategory,
                 urgency: taskUrgency,
@@ -1835,17 +1839,3 @@ extension OperationalDataManager {
         }
     }
 }
-
-    // MARK: - Development Reset (DEBUG ONLY)
-    
-    #if DEBUG
-    func reset() async {
-        await MainActor.run {
-            hasImported = false
-            isInitialized = false
-            importProgress = 0.0
-            currentStatus = "Reset complete"
-        }
-        print("🔄 OperationalDataManager reset for development")
-    }
-    #endif
