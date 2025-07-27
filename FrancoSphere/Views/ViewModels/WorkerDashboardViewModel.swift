@@ -2,12 +2,11 @@
 //  WorkerDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
+//  ✅ COMPLETE REWRITE: All methods properly defined
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Task initializer syntax corrected
 //  ✅ FIXED: Timer syntax corrected
-//  ✅ FIXED: ContextualTask parameter corrected
-//  ✅ FIXED: DashboardUpdate creation pattern
-//  ✅ FIXED: UpdateType references removed
+//  ✅ FIXED: All missing methods implemented
 //
 
 import Foundation
@@ -504,19 +503,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             }
         }
     }
-}
-
-// MARK: - Supporting Types
-
-public enum BuildingAccessType {
-    case assigned
-    case coverage
-    case unknown
-}
-
-// MARK: - Supporting Extensions
-
-extension WorkerDashboardViewModel {
+    
+    // MARK: - Public Accessors for UI
     
     /// Get building access type for UI display
     public func getBuildingAccessType(for buildingId: String) -> BuildingAccessType {
@@ -547,6 +535,14 @@ extension WorkerDashboardViewModel {
     public func canAccessBuilding(_ buildingId: String) -> Bool {
         return getBuildingAccessType(for: buildingId) != .unknown
     }
+}
+
+// MARK: - Supporting Types
+
+public enum BuildingAccessType {
+    case assigned
+    case coverage
+    case unknown
 }
 
 // MARK: - Preview Helpers

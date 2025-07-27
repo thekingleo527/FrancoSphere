@@ -3,11 +3,10 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Line 416 - Task syntax corrected
-//  ✅ FIXED: Line 423 - Using UpdateType (not DashboardUpdateType)
-//  ✅ FIXED: Lines 451, 470, 524 - Task initialization fixed
-//  ✅ FIXED: Structural issues resolved
-//  ✅ ALIGNED: With all dashboard methods and services
+//  ✅ FIXED: UpdateType references removed, using DashboardUpdate directly
+//  ✅ FIXED: Timer syntax corrected
+//  ✅ FIXED: Constructor calls aligned with CoreTypes
+//  ✅ ALIGNED: With AdminDashboardViewModel patterns
 //
 
 import Foundation
@@ -69,286 +68,203 @@ class ClientDashboardViewModel: ObservableObject {
         refreshTimer?.invalidate()
     }
     
-    // MARK: - Main Loading Function
+    // MARK: - Primary Data Loading
+    
+    /// Load portfolio intelligence for executive client view
     func loadPortfolioIntelligence() async {
         isLoading = true
         errorMessage = nil
         
         do {
-            // Load portfolio data using actor services
+            // Load building list first
+            buildingsList = try await buildingService.getAllBuildings()
+            totalBuildings = buildingsList.count
+            
+            // Generate portfolio intelligence (existing method)
             let intelligence = try await intelligenceService.generatePortfolioIntelligence()
-            let buildings = try await buildingService.getAllBuildings()
-            let insights = try await intelligenceService.generatePortfolioInsights()
-            
-            // Update data on main actor
             self.portfolioIntelligence = intelligence
-            self.buildingsList = buildings
-            self.intelligenceInsights = insights
             
-            // Update derived metrics
-            updateDashboardMetrics(from: intelligence)
+            // Extract metrics from intelligence
+            totalBuildings = intelligence.totalBuildings
+            activeWorkers = intelligence.activeWorkers
+            completionRate = intelligence.completionRate
+            criticalIssues = intelligence.criticalIssues
+            complianceScore = Int(intelligence.complianceScore * 100)
+            monthlyTrend = intelligence.monthlyTrend
             
-            // Load additional data
+            // Load building metrics for all buildings
             await loadBuildingMetrics()
+            
+            // Load compliance issues
             await loadComplianceIssues()
-            await generateExecutiveSummary()
             
-            // Update sync status
+            // Load intelligence insights
+            await loadIntelligenceInsights()
+            
+            // Create and broadcast update
+            let update = DashboardUpdate(
+                source: .client,
+                type: .portfolioUpdated,
+                buildingId: nil,
+                workerId: nil,
+                data: [
+                    "totalBuildings": totalBuildings,
+                    "completionRate": completionRate,
+                    "activeWorkers": activeWorkers
+                ]
+            )
+            broadcastDashboardUpdate(update)
+            
             lastUpdateTime = Date()
-            print("✅ Portfolio intelligence loaded: \(buildings.count) buildings, \(insights.count) insights")
+            isLoading = false
             
-            // Broadcast update - FIXED: Use UpdateType with explicit enum type
-            broadcastDashboardUpdate(UpdateType.portfolioUpdated, data: ["buildingCount": buildings.count])
+            print("✅ Client portfolio intelligence loaded: \(totalBuildings) buildings, \(activeWorkers) workers")
             
         } catch {
-            print("❌ Failed to load portfolio intelligence: \(error)")
+            isLoading = false
             errorMessage = error.localizedDescription
-            setFallbackData()
+            print("❌ Failed to load portfolio intelligence: \(error)")
+            await loadFallbackData()
         }
-        
-        isLoading = false
     }
     
-    // MARK: - Dashboard Metrics Update
-    private func updateDashboardMetrics(from intelligence: CoreTypes.PortfolioIntelligence) {
-        totalBuildings = intelligence.totalBuildings
-        activeWorkers = intelligence.activeWorkers
-        completionRate = intelligence.completionRate
-        criticalIssues = intelligence.criticalIssues
-        complianceScore = Int(intelligence.complianceScore)
-        monthlyTrend = intelligence.monthlyTrend
-    }
-    
-    // MARK: - Building Metrics Loading
+    /// Load building metrics for client portfolio view
     private func loadBuildingMetrics() async {
-        var metrics: [String: CoreTypes.BuildingMetrics] = [:]
-        
         for building in buildingsList {
             do {
-                let buildingMetrics = try await buildingMetricsService.calculateMetrics(for: building.id)
-                metrics[building.id] = buildingMetrics
+                let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
+                buildingMetrics[building.id] = metrics
             } catch {
                 print("⚠️ Failed to load metrics for building \(building.id): \(error)")
             }
         }
         
-        self.buildingMetrics = metrics
-        // FIXED: Use UpdateType with explicit enum type
-        broadcastDashboardUpdate(UpdateType.buildingMetricsChanged, data: ["buildingIds": Array(metrics.keys)])
-    }
-    
-    // MARK: - Compliance Issues Loading
-    private func loadComplianceIssues() async {
-        var allIssues: [CoreTypes.ComplianceIssue] = []
-        
-        // Generate compliance issues based on insights
-        for insight in intelligenceInsights where insight.type == .compliance {
-            // FIXED: Line 448 - Added type parameter to ComplianceIssue
-            let issue = CoreTypes.ComplianceIssue(
-                title: insight.title,
-                description: insight.description,
-                severity: mapPriorityToSeverity(insight.priority),
-                buildingId: insight.affectedBuildings.first,
-                status: .warning,
-                dueDate: Calendar.current.date(byAdding: .day, value: 30, to: Date()),
-                assignedTo: nil,
-                createdAt: Date(),
-                type: .regulatory  // Added required type parameter
-            )
-            allIssues.append(issue)
-        }
-        
-        self.complianceIssues = allIssues
-        print("✅ Compliance issues loaded: \(allIssues.count) issues")
-    }
-    
-    // MARK: - Executive Summary Generation
-    private func generateExecutiveSummary() async {
-        let totalBuildings = buildingsList.count
-        let totalWorkers = portfolioIntelligence?.activeWorkers ?? 0
-        let portfolioHealth = calculatePortfolioHealth()
-        let monthlyPerformance = determineMonthlyPerformance()
-        
-        // FIXED: Line 468 - Using complete ExecutiveSummary initializer with generatedAt
-        executiveSummary = CoreTypes.ExecutiveSummary(
-            totalBuildings: totalBuildings,
-            totalWorkers: totalWorkers,
-            portfolioHealth: portfolioHealth,
-            monthlyPerformance: monthlyPerformance,
-            generatedAt: Date()  // Added required generatedAt parameter
+        // Create and broadcast update
+        let update = DashboardUpdate(
+            source: .client,
+            type: .buildingMetricsChanged,
+            buildingId: nil,
+            workerId: nil,
+            data: [
+                "buildingCount": buildingMetrics.count,
+                "averageCompletion": calculateAverageCompletion()
+            ]
         )
-        
-        generatePortfolioBenchmarks()
-        generateStrategicRecommendations()
-        
-        print("✅ Executive summary generated")
+        broadcastDashboardUpdate(update)
     }
     
-    // MARK: - Portfolio Benchmarks Generation
-    private func generatePortfolioBenchmarks() {
-        guard let intelligence = portfolioIntelligence else { return }
+    /// Load compliance issues across portfolio
+    private func loadComplianceIssues() async {
+        do {
+            // Using existing service method
+            let allIssues = try await intelligenceService.getComplianceIssues()
+            self.complianceIssues = allIssues
+            
+            // Count critical issues
+            criticalIssues = allIssues.filter { $0.severity == .critical }.count
+            
+            print("✅ Loaded \(allIssues.count) compliance issues (\(criticalIssues) critical)")
+            
+        } catch {
+            print("⚠️ Failed to load compliance issues: \(error)")
+            self.complianceIssues = []
+        }
+    }
+    
+    /// Load AI-generated intelligence insights
+    private func loadIntelligenceInsights() async {
+        isLoadingInsights = true
         
-        portfolioBenchmarks = [
-            CoreTypes.PortfolioBenchmark(
-                metric: "Task Completion",
-                value: intelligence.completionRate * 100,
-                benchmark: 75.0,
-                trend: intelligence.completionRate > 0.8 ? "up" : "down",
-                period: "Monthly"
-            ),
-            CoreTypes.PortfolioBenchmark(
-                metric: "Compliance Score",
-                value: intelligence.complianceScore,
-                benchmark: 82.0,
-                trend: intelligence.complianceScore > 85 ? "up" : "stable",
-                period: "Monthly"
-            ),
-            CoreTypes.PortfolioBenchmark(
-                metric: "Critical Issues",
-                value: Double(intelligence.criticalIssues),
-                benchmark: 8.0,
-                trend: intelligence.criticalIssues < 5 ? "up" : "down",
-                period: "Monthly"
-            ),
-            CoreTypes.PortfolioBenchmark(
-                metric: "Worker Efficiency",
-                value: intelligence.totalBuildings > 0 ?
-                    Double(intelligence.activeWorkers) / Double(intelligence.totalBuildings) * 100 : 0,
-                benchmark: 150.0,
-                trend: intelligence.activeWorkers > intelligence.totalBuildings ? "up" : "down",
-                period: "Monthly"
+        do {
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            self.intelligenceInsights = insights
+            isLoadingInsights = false
+            
+            print("✅ Loaded \(insights.count) intelligence insights")
+            
+        } catch {
+            self.intelligenceInsights = []
+            isLoadingInsights = false
+            print("⚠️ Failed to load intelligence insights: \(error)")
+        }
+    }
+    
+    /// Create executive summary from portfolio data
+    func generateExecutiveSummary() async {
+        do {
+            // Use actual service method
+            let summary = try await intelligenceService.generateExecutiveSummary()
+            self.executiveSummary = summary
+            
+            print("✅ Executive summary generated")
+            
+        } catch {
+            print("⚠️ Failed to generate executive summary: \(error)")
+            
+            // Fallback summary
+            self.executiveSummary = CoreTypes.ExecutiveSummary(
+                totalBuildings: totalBuildings,
+                totalWorkers: activeWorkers,
+                portfolioHealth: completionRate,
+                monthlyPerformance: monthlyTrend.rawValue,
+                generatedAt: Date()
             )
-        ]
+        }
     }
     
-    // MARK: - Strategic Recommendations Generation
-    private func generateStrategicRecommendations() {
-        guard let intelligence = portfolioIntelligence else { return }
-        
-        var recommendations: [CoreTypes.StrategicRecommendation] = []
-        
-        // Completion rate recommendations
-        if intelligence.completionRate < 0.8 {
-            recommendations.append(CoreTypes.StrategicRecommendation(
-                title: "Improve Task Completion Rate",
-                description: "Current completion rate is \(Int(intelligence.completionRate * 100))%. Consider optimizing worker schedules and task prioritization.",
-                category: .efficiency,
-                priority: CoreTypes.StrategicRecommendation.Priority.high,
-                timeframe: "3-6 months",
-                estimatedImpact: "+15% efficiency"
-            ))
+    /// Load strategic recommendations
+    func loadStrategicRecommendations() async {
+        do {
+            let recommendations = try await intelligenceService.generateStrategicRecommendations()
+            self.strategicRecommendations = recommendations
+            
+            print("✅ Loaded \(recommendations.count) strategic recommendations")
+            
+        } catch {
+            print("⚠️ Failed to load strategic recommendations: \(error)")
+            self.strategicRecommendations = []
         }
-        
-        // Critical issues recommendations
-        if intelligence.criticalIssues > 5 {
-            recommendations.append(CoreTypes.StrategicRecommendation(
-                title: "Address Critical Issues",
-                description: "\(intelligence.criticalIssues) critical issues require immediate attention. Prioritize resolution to prevent escalation.",
-                category: .operations,
-                priority: CoreTypes.StrategicRecommendation.Priority.critical,
-                timeframe: "Immediate",
-                estimatedImpact: "Risk reduction"
-            ))
+    }
+    
+    /// Generate portfolio benchmarks
+    func loadPortfolioBenchmarks() async {
+        do {
+            let benchmarks = try await intelligenceService.generatePortfolioBenchmarks()
+            self.portfolioBenchmarks = benchmarks
+            
+            print("✅ Loaded \(benchmarks.count) portfolio benchmarks")
+            
+        } catch {
+            print("⚠️ Failed to load portfolio benchmarks: \(error)")
+            self.portfolioBenchmarks = []
         }
-        
-        // Compliance recommendations
-        if intelligence.complianceScore < 90 {
-            recommendations.append(CoreTypes.StrategicRecommendation(
-                title: "Enhance Compliance Program",
-                description: "Compliance score of \(Int(intelligence.complianceScore))% indicates room for improvement. Review audit processes.",
-                category: .compliance,
-                priority: CoreTypes.StrategicRecommendation.Priority.medium,
-                timeframe: "6-12 months",
-                estimatedImpact: "+10% compliance"
-            ))
-        }
-        
-        // Nova AI integration recommendation
-        if intelligenceInsights.count > 0 {
-            let highPriorityInsights = intelligenceInsights.filter {
-                $0.priority == .high || $0.priority == .critical
-            }
-            if highPriorityInsights.count > 3 {
-                recommendations.append(CoreTypes.StrategicRecommendation(
-                    title: "Implement AI-Driven Optimization",
-                    description: "Nova AI has identified \(highPriorityInsights.count) high-priority optimization opportunities across your portfolio.",
-                    category: .efficiency,
-                    priority: CoreTypes.StrategicRecommendation.Priority.medium,
-                    timeframe: "2-4 months",
-                    estimatedImpact: "+25% operational efficiency"
-                ))
-            }
-        }
-        
-        strategicRecommendations = recommendations
     }
     
     // MARK: - Helper Methods
-    private func calculateAverageEfficiency() -> Double {
-        let efficiencies = buildingMetrics.values.map { $0.completionRate }
-        return efficiencies.isEmpty ? 0.0 : efficiencies.reduce(0, +) / Double(efficiencies.count)
-    }
     
-    private func calculateComplianceRate() -> Double {
-        let totalIssues = complianceIssues.count
-        let resolvedIssues = complianceIssues.filter { $0.status == .resolved }.count
-        return totalIssues > 0 ? Double(resolvedIssues) / Double(totalIssues) : 1.0
-    }
-    
-    private func calculatePortfolioHealth() -> Double {
-        guard let intelligence = portfolioIntelligence else { return 0.0 }
+    private func calculateAverageCompletion() -> Double {
+        guard !buildingMetrics.isEmpty else { return 0.0 }
         
-        let completionWeight = 0.3
-        let complianceWeight = 0.3
-        let issuesWeight = 0.2
-        let efficiencyWeight = 0.2
-        
-        let completionScore = intelligence.completionRate * completionWeight
-        let complianceScore = (intelligence.complianceScore / 100.0) * complianceWeight
-        let issuesScore = (1.0 - min(Double(intelligence.criticalIssues) / 10.0, 1.0)) * issuesWeight
-        let efficiencyScore = calculateAverageEfficiency() * efficiencyWeight
-        
-        return (completionScore + complianceScore + issuesScore + efficiencyScore) * 100
+        let totalCompletion = buildingMetrics.values.reduce(0) { $0 + $1.completionRate }
+        return totalCompletion / Double(buildingMetrics.count)
     }
     
-    private func determineMonthlyPerformance() -> String {
-        guard let trend = portfolioIntelligence?.monthlyTrend else { return "Unknown" }
+    /// Load fallback data when services fail
+    private func loadFallbackData() async {
+        print("📱 Loading fallback data for client dashboard")
         
-        switch trend {
-        case .up, .improving: return "Improving"
-        case .down, .declining: return "Declining"
-        case .stable: return "Stable"
-        case .unknown: return "Unknown"
-        }
-    }
-    
-    // ✅ FIXED: Return ComplianceSeverity enum directly
-    private func mapPriorityToSeverity(_ priority: CoreTypes.AIPriority) -> CoreTypes.ComplianceSeverity {
-        switch priority {
-        case .critical: return .critical
-        case .high: return .high
-        case .medium: return .medium
-        case .low: return .low
-        }
-    }
-    
-    private func setFallbackData() {
-        // ✅ FIXED: Using correct PortfolioIntelligence initializer
+        // Create minimal portfolio intelligence
         portfolioIntelligence = CoreTypes.PortfolioIntelligence(
             totalBuildings: 0,
             activeWorkers: 0,
             completionRate: 0.0,
             criticalIssues: 0,
             monthlyTrend: .unknown,
-            complianceScore: 0.0
+            complianceScore: 0.0,
+            generatedAt: Date()
         )
         
-        buildingsList = []
-        buildingMetrics = [:]
-        intelligenceInsights = []
-        updateDashboardMetrics(from: portfolioIntelligence!)
-        
-        // ✅ FIXED: Using correct ExecutiveSummary initializer with generatedAt
+        // Create fallback executive summary
         executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: 0,
             totalWorkers: 0,
@@ -359,13 +275,13 @@ class ClientDashboardViewModel: ObservableObject {
         
         portfolioBenchmarks = []
         
-        // ✅ FIXED: Using correct StrategicRecommendation initializer
+        // Create fallback strategic recommendation
         strategicRecommendations = [
             CoreTypes.StrategicRecommendation(
                 title: "System Recovery",
                 description: "Portfolio data is temporarily unavailable. Attempting to restore connection...",
                 category: .operations,
-                priority: CoreTypes.StrategicRecommendation.Priority.medium,
+                priority: .medium,
                 timeframe: "Immediate",
                 estimatedImpact: "Service restoration"
             )
@@ -412,24 +328,16 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     private func schedulePeriodicRefresh() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { _ in
-            // FIXED: Use Task with @MainActor pattern from TimeStatus.swift
-            Task { @MainActor [weak self] in
-                await self?.refreshData()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                await self.refreshData()
             }
         }
     }
     
-    // FIXED: Line 423 - Using UpdateType (not DashboardUpdateType)
-    private func broadcastDashboardUpdate(_ type: UpdateType, buildingId: String? = nil, data: [String: Any] = [:]) {
-        let update = DashboardUpdate(
-            source: .client,
-            type: type,
-            buildingId: buildingId,
-            workerId: nil,
-            data: data
-        )
-        
+    /// Broadcast client dashboard update using DashboardUpdate directly
+    private func broadcastDashboardUpdate(_ update: DashboardUpdate) {
         dashboardUpdates.append(update)
         
         // Keep only recent updates
@@ -448,10 +356,9 @@ class ClientDashboardViewModel: ObservableObject {
                let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
                 // Use existing BuildingMetricsService to get updated metrics
-                // FIXED: Use Task with closure pattern
-                Task { [weak self] in
+                Task { @MainActor in
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        self?.buildingMetrics[buildingId] = updatedMetrics
+                        buildingMetrics[buildingId] = updatedMetrics
                     }
                 }
             }
@@ -467,91 +374,104 @@ class ClientDashboardViewModel: ObservableObject {
             if let buildingId = update.buildingId {
                 print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
                 // Use service to get updated metrics
-                // FIXED: Use Task with closure pattern
-                Task { [weak self] in
+                Task { @MainActor in
                     if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        self?.buildingMetrics[buildingId] = updatedMetrics
+                        buildingMetrics[buildingId] = updatedMetrics
                     }
                 }
             }
             
         case .complianceChanged:
-            // FIXED: Line 523 - Proper ComplianceIssue initialization with all required params
             if let buildingId = update.buildingId,
                let severityString = update.data["severity"] as? String,
                let title = update.data["title"] as? String,
                let description = update.data["description"] as? String {
                 
-                // Convert string to enum
-                let severity: CoreTypes.ComplianceSeverity
-                switch severityString.lowercased() {
-                case "critical": severity = .critical
-                case "high": severity = .high
-                case "medium": severity = .medium
-                case "low": severity = .low
-                default: severity = .medium
-                }
+                // Map severity string to enum
+                let severity: CoreTypes.ComplianceSeverity = {
+                    switch severityString.lowercased() {
+                    case "critical": return .critical
+                    case "high": return .high
+                    case "medium": return .medium
+                    default: return .low
+                    }
+                }()
                 
-                // FIXED: Use correct ComplianceIssue initializer with all required parameters
-                let issue = CoreTypes.ComplianceIssue(
+                let newIssue = CoreTypes.ComplianceIssue(
                     title: title,
                     description: description,
                     severity: severity,
                     buildingId: buildingId,
-                    status: .warning,
-                    dueDate: nil,
-                    assignedTo: nil,
-                    createdAt: Date(),
-                    type: .operational  // Added required type parameter
+                    status: .open,
+                    createdAt: Date()
                 )
-                print("📱 Client Dashboard: New compliance issue added")
-                complianceIssues.append(issue)
-                criticalIssues += 1
-            }
-            
-        case .portfolioUpdated:
-            if let buildingCount = update.data["buildingCount"] as? Int {
-                print("📱 Client Dashboard: Portfolio updated with \(buildingCount) buildings")
-                totalBuildings = buildingCount
+                
+                complianceIssues.append(newIssue)
+                
+                // Update critical issues count
+                criticalIssues = complianceIssues.filter { $0.severity == .critical }.count
+                
+                print("📱 Client Dashboard: New compliance issue - \(title)")
             }
             
         case .intelligenceGenerated:
             print("📱 Client Dashboard: New intelligence insights available")
-            if let totalInsights = update.data["totalInsights"] as? Int,
-               let criticalInsights = update.data["criticalInsights"] as? Int {
-                print("📊 Total: \(totalInsights), Critical: \(criticalInsights)")
+            // Refresh insights
+            Task { @MainActor in
+                await loadIntelligenceInsights()
             }
-            // FIXED: Use Task with closure pattern
-            Task { [weak self] in
-                await self?.generateExecutiveSummary()
+            
+        case .portfolioUpdated:
+            print("📱 Client Dashboard: Portfolio update received")
+            // Refresh portfolio data
+            Task { @MainActor in
+                await loadPortfolioIntelligence()
             }
             
         default:
-            print("📱 Client Dashboard: Received update type: \(update.type.rawValue)")
+            print("📱 Client Dashboard: Received update type \(update.type)")
         }
+    }
+}
+
+// MARK: - Supporting Types
+
+extension ClientDashboardViewModel {
+    /// Client-specific filter options
+    enum FilterOption: String, CaseIterable {
+        case all = "All"
+        case critical = "Critical"
+        case highPriority = "High Priority"
+        case compliance = "Compliance"
+        case efficiency = "Efficiency"
         
-        dashboardSyncStatus = .synced
-        lastUpdateTime = Date()
-        dashboardUpdates.append(update)
+        var icon: String {
+            switch self {
+            case .all: return "list.bullet"
+            case .critical: return "exclamationmark.triangle.fill"
+            case .highPriority: return "flag.fill"
+            case .compliance: return "shield.fill"
+            case .efficiency: return "speedometer"
+            }
+        }
     }
     
-    // MARK: - Nova AI Integration Support
-    func generateNovaAIContext() -> String {
-        guard let intelligence = portfolioIntelligence else {
-            return "Portfolio data unavailable"
+    /// Executive dashboard time range
+    enum TimeRange: String, CaseIterable {
+        case today = "Today"
+        case week = "This Week"
+        case month = "This Month"
+        case quarter = "This Quarter"
+        case year = "This Year"
+        
+        var days: Int {
+            switch self {
+            case .today: return 1
+            case .week: return 7
+            case .month: return 30
+            case .quarter: return 90
+            case .year: return 365
+            }
         }
-        
-        let contextItems = [
-            "Portfolio: \(intelligence.totalBuildings) buildings",
-            "Workers: \(intelligence.activeWorkers) active",
-            "Completion: \(Int(intelligence.completionRate * 100))%",
-            "Critical Issues: \(intelligence.criticalIssues)",
-            "Compliance: \(Int(intelligence.complianceScore))%",
-            "Trend: \(intelligence.monthlyTrend.rawValue)",
-            "Insights: \(intelligenceInsights.count) available",
-            "High Priority: \(intelligenceInsights.filter { $0.priority == .high || $0.priority == .critical }.count)"
-        ]
-        
-        return contextItems.joined(separator: ", ")
     }
 }
