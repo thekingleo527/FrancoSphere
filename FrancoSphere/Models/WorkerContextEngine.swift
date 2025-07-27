@@ -2,9 +2,9 @@
 //  WorkerContextEngine.swift
 //  FrancoSphere v6.0 - FIXED VERSION
 //
-//  ✅ CHANGED: From actor to @MainActor class with ObservableObject
-//  ✅ FIXED: All multiple await syntax errors
-//  ✅ ADDED: @Published properties for SwiftUI binding
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With actual service methods and types
+//  ✅ MAINTAINED: @MainActor class with ObservableObject pattern
 //
 
 import Foundation
@@ -47,9 +47,9 @@ public final class WorkerContextEngine: ObservableObject {
             }
             self.currentWorker = worker
             
-            // Load operational data
+            // Load operational data (not async)
             let workerName = WorkerConstants.getWorkerName(id: workerId)
-            let workerAssignments = await operationalData.getRealWorldTasks(for: workerName)
+            let workerAssignments = operationalData.getRealWorldTasks(for: workerName)
             
             // Build assigned buildings list
             var assignedBuildingsList: [NamedCoordinate] = []
@@ -58,8 +58,10 @@ public final class WorkerContextEngine: ObservableObject {
             for buildingName in uniqueBuildingNames {
                 if let buildingId = await operationalData.getRealBuildingId(from: buildingName) {
                     do {
-                        let building = try await buildingService.getBuilding(buildingId: buildingId)
-                        assignedBuildingsList.append(building)
+                        // ✅ FIXED: Handle optional building properly
+                        if let building = try await buildingService.getBuildingById(buildingId) {
+                            assignedBuildingsList.append(building)
+                        }
                     } catch {
                         print("⚠️ Could not load building \(buildingName): \(error)")
                     }
@@ -69,7 +71,7 @@ public final class WorkerContextEngine: ObservableObject {
             self.assignedBuildings = assignedBuildingsList
             self.portfolioBuildings = try await buildingService.getAllBuildings()
             
-            // Generate tasks
+            // Generate tasks with correct type
             self.todaysTasks = await generateContextualTasks(
                 for: workerId,
                 workerName: workerName,
@@ -84,8 +86,8 @@ public final class WorkerContextEngine: ObservableObject {
                 completedTasks: completedTasks
             )
             
-            // Get clock-in status
-            let clockStatus = await clockInManager.getCurrentSession(for: workerId)
+            // ✅ FIXED: Use correct method name
+            let clockStatus = clockInManager.getClockInStatus(for: workerId)
             if let session = clockStatus.session {
                 let building = NamedCoordinate(
                     id: session.buildingId ?? "unknown",
@@ -108,11 +110,12 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     // MARK: - Task Generation
+    // ✅ FIXED: Use correct type [OperationalDataTaskAssignment]
     private func generateContextualTasks(
         for workerId: String,
         workerName: String,
         assignedBuildings: [NamedCoordinate],
-        realWorldAssignments: [LegacyTaskAssignment]
+        realWorldAssignments: [OperationalDataTaskAssignment]
     ) async -> [ContextualTask] {
         var tasks: [ContextualTask] = []
         
@@ -122,20 +125,33 @@ public final class WorkerContextEngine: ObservableObject {
                 operational.building.lowercased().contains(building.name.lowercased())
             }
             
+            // ✅ FIXED: Use correct ContextualTask initializer
             let task = ContextualTask(
                 id: "op_task_\(workerId)_\(index)",
                 title: operational.taskName,
                 description: "Operational assignment: \(operational.taskName) at \(operational.building)",
                 isCompleted: false,
-                scheduledDate: Date(),
+                completedDate: nil,
                 dueDate: Date().addingTimeInterval(3600),
                 category: mapOperationalCategory(operational.category),
                 urgency: mapOperationalUrgency(operational.skillLevel),
+                building: building,
+                worker: currentWorker,
                 buildingId: building?.id,
-                buildingName: operational.building
+                priority: mapOperationalUrgency(operational.skillLevel),
+                buildingName: operational.building,
+                assignedWorkerId: workerId,
+                assignedWorkerName: workerName,
+                estimatedDuration: 3600
             )
             
             tasks.append(task)
+        }
+        
+        return tasks.sorted { task1, task2 in
+            let urgency1 = task1.urgency?.numericValue ?? 0
+            let urgency2 = task2.urgency?.numericValue ?? 0
+            return urgency1 > urgency2
         }
     }
     
@@ -148,7 +164,7 @@ public final class WorkerContextEngine: ObservableObject {
     public func getTaskProgress() -> CoreTypes.TaskProgress? { return taskProgress }
     
     // MARK: - Helper Methods
-    private func mapOperationalCategory(_ category: String) -> TaskCategory {
+    private func mapOperationalCategory(_ category: String) -> TaskCategory? {
         switch category.lowercased() {
         case "cleaning": return .cleaning
         case "maintenance": return .maintenance
@@ -156,21 +172,42 @@ public final class WorkerContextEngine: ObservableObject {
         case "inspection": return .inspection
         case "landscaping": return .landscaping
         case "security": return .security
+        case "sanitation": return .sanitation
+        case "emergency": return .emergency
         default: return .maintenance
         }
     }
     
-    private func mapOperationalUrgency(_ skillLevel: String) -> TaskUrgency {
+    private func mapOperationalUrgency(_ skillLevel: String) -> TaskUrgency? {
         switch skillLevel.lowercased() {
         case "basic": return .low
         case "intermediate": return .medium
         case "advanced": return .high
-        case "expert": return .critical
+        case "expert", "critical": return .critical
         default: return .medium
         }
     }
 }
 
+// MARK: - Worker Constants Helper
+struct WorkerConstants {
+    static func getWorkerName(id: String) -> String {
+        switch id {
+        case "1": return "Carlos"
+        case "2": return "Edwin Lema"
+        case "3": return "Hugo Gonzalez"
+        case "4": return "Kevin Dutan"
+        case "5": return "Mercedes Inamagua"
+        case "6": return "Luis Lopez"
+        case "7": return "Fabricio"
+        case "8": return "Juan Cuestas"
+        case "9": return "Freddie"
+        default: return "Worker \(id)"
+        }
+    }
+}
+
+// MARK: - Error Types
 public enum WorkerContextError: Error, LocalizedError {
     case workerNotFound(String)
     case dataLoadingFailed(Error)
@@ -185,6 +222,7 @@ public enum WorkerContextError: Error, LocalizedError {
     }
 }
 
+// MARK: - TaskUrgency Extension
 extension TaskUrgency {
     var numericValue: Int {
         switch self {

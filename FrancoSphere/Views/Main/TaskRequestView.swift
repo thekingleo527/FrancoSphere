@@ -6,20 +6,18 @@ import UIKit
 //  TaskRequestView.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: All compilation errors resolved definitively
 //  ✅ ALIGNED: With current CoreTypes and Phase 2.1 implementation
 //  ✅ ENHANCED: Proper integration with GRDB foundation
 //
-//  NOTES:
-//  - Removed type aliases to avoid redeclaration errors
-//  - Using CoreTypes namespace explicitly where needed
-//  - Fixed all Section syntax to use new SwiftUI format
-//  - Fixed all InventoryItem initializers with convenience initializer
-//  - TODO: Replace mock services with actual implementations
+//  Required Types:
+//  - CoreTypes: TaskCategory, TaskUrgency, InventoryItem, etc.
+//  - FrancoSphereModels: NamedCoordinate, WorkerProfile, ContextualTask
+//  These should be available through global imports
 //
 
 struct TaskRequestView: View {
-    // ✅ TODO: Replace with actual AuthManager implementation
+    // ✅ TODO: Replace with actual AuthManager implementation when available
     // @StateObject private var authManager = NewAuthManager.shared
     @State private var taskName: String = ""
     @State private var taskDescription: String = ""
@@ -51,32 +49,22 @@ struct TaskRequestView: View {
     var body: some View {
         NavigationView {
             Form {
-                Group {
-                    if isLoadingBuildings {
-                        Section {
-                            HStack {
-                                ProgressView()
-                                    .padding(.trailing, 10)
-                                Text("Loading buildings...")
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding()
-                        }
-                    } else {
-                        basicTaskSection
-                        buildingAndCategorySection
-                        timingSection
-                        
-                        if !requiredInventory.isEmpty {
-                            inventorySection
-                        }
-                        
-                        photoSection
-                        submitSection
-                        
-                        if !suggestions.isEmpty {
-                            suggestionsSection
-                        }
+                if isLoadingBuildings {
+                    loadingSection
+                } else {
+                    taskDetailsSection
+                    locationSection
+                    scheduleSection
+                    
+                    if !requiredInventory.isEmpty {
+                        materialsSection
+                    }
+                    
+                    attachmentSection
+                    actionSection
+                    
+                    if !suggestions.isEmpty {
+                        suggestionSection
                     }
                 }
             }
@@ -118,22 +106,21 @@ struct TaskRequestView: View {
         }
     }
     
-    // MARK: - Helper Functions
+    // MARK: - Form Sections
     
-    private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
-        switch urgency {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        case .emergency: return .red
-        case .urgent: return .red
+    private var loadingSection: some View {
+        Section {
+            HStack {
+                ProgressView()
+                    .padding(.trailing, 10)
+                Text("Loading buildings...")
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding()
         }
     }
     
-    // MARK: - Form Sections
-    
-    private var basicTaskSection: some View {
+    private var taskDetailsSection: some View {
         Section("Task Details") {
             TextField("Task Name", text: $taskName)
                 .autocapitalization(.words)
@@ -166,8 +153,7 @@ struct TaskRequestView: View {
         }
     }
     
-    // ✅ FIXED: Proper Section syntax
-    private var buildingAndCategorySection: some View {
+    private var locationSection: some View {
         Section("Location & Category") {
             Picker("Building", selection: $selectedBuildingID) {
                 Text("Select a building").tag("")
@@ -211,7 +197,7 @@ struct TaskRequestView: View {
         }
     }
     
-    private var timingSection: some View {
+    private var scheduleSection: some View {
         Section("Timing") {
             DatePicker("Due Date", selection: $selectedDate, displayedComponents: .date)
             
@@ -228,14 +214,14 @@ struct TaskRequestView: View {
                     .disabled(!addStartTime)
                     .onChange(of: startTime) { oldValue, newValue in
                         if endTime < newValue {
-                            endTime = newValue.addingTimeInterval(3600) // 1 hour later
+                            endTime = newValue.addingTimeInterval(3600)
                         }
                     }
             }
         }
     }
     
-    private var inventorySection: some View {
+    private var materialsSection: some View {
         Section("Required Materials") {
             ForEach(Array(requiredInventory.keys.sorted()), id: \.self) { itemId in
                 if let item = getInventoryItem(itemId),
@@ -267,7 +253,7 @@ struct TaskRequestView: View {
         }
     }
     
-    private var photoSection: some View {
+    private var attachmentSection: some View {
         Section("Attachment") {
             Toggle("Attach Photo", isOn: $attachPhoto)
             
@@ -306,8 +292,7 @@ struct TaskRequestView: View {
         }
     }
     
-    // ✅ FIXED: Proper Section syntax
-    private var submitSection: some View {
+    private var actionSection: some View {
         Section {
             if let errorMessage = errorMessage {
                 Text(errorMessage)
@@ -315,9 +300,7 @@ struct TaskRequestView: View {
                     .font(.caption)
             }
             
-                            Button(action: {
-                                Task { await submitTaskRequest() }
-                            }) {
+            Button(action: submitTaskWrapper) {
                 if isSubmitting {
                     HStack {
                         ProgressView()
@@ -336,7 +319,7 @@ struct TaskRequestView: View {
         }
     }
     
-    private var suggestionsSection: some View {
+    private var suggestionSection: some View {
         Section("Suggestions") {
             DisclosureGroup(
                 isExpanded: $showSuggestions,
@@ -412,6 +395,17 @@ struct TaskRequestView: View {
         return availableInventory.first { $0.id == itemId }
     }
     
+    private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
+        switch urgency {
+        case .low: return .green
+        case .medium: return .yellow
+        case .high: return .orange
+        case .critical: return .red
+        case .emergency: return .red
+        case .urgent: return .red
+        }
+    }
+    
     private func getCategoryIcon(_ category: String) -> String {
         switch category.lowercased() {
         case "maintenance": return "wrench.and.screwdriver"
@@ -452,7 +446,6 @@ struct TaskRequestView: View {
     // MARK: - Data Loading
     
     private func loadBuildings() async {
-        // ✅ TODO: Replace with actual BuildingService implementation
         await MainActor.run {
             self.buildingOptions = [
                 NamedCoordinate(
@@ -482,30 +475,29 @@ struct TaskRequestView: View {
     }
     
     private func loadSuggestions() {
-        // ✅ FIXED: Synchronous function - no async needed
         suggestions = [
             TaskSuggestion(
                 id: "1",
                 title: "HVAC Filter Replacement",
                 description: "Regular maintenance to replace HVAC filters throughout the building.",
-                category: TaskCategory.maintenance.rawValue,
-                urgency: TaskUrgency.medium.rawValue,
+                category: CoreTypes.TaskCategory.maintenance.rawValue,
+                urgency: CoreTypes.TaskUrgency.medium.rawValue,
                 buildingId: buildingOptions.first?.id ?? ""
             ),
             TaskSuggestion(
                 id: "2",
                 title: "Lobby Floor Cleaning",
                 description: "Deep cleaning of lobby floor and entrance mats.",
-                category: TaskCategory.cleaning.rawValue,
-                urgency: TaskUrgency.low.rawValue,
+                category: CoreTypes.TaskCategory.cleaning.rawValue,
+                urgency: CoreTypes.TaskUrgency.low.rawValue,
                 buildingId: buildingOptions.first?.id ?? ""
             ),
             TaskSuggestion(
                 id: "3",
                 title: "Security Camera Inspection",
                 description: "Check all security cameras for proper functioning and positioning.",
-                category: TaskCategory.inspection.rawValue,
-                urgency: TaskUrgency.medium.rawValue,
+                category: CoreTypes.TaskCategory.inspection.rawValue,
+                urgency: CoreTypes.TaskUrgency.medium.rawValue,
                 buildingId: buildingOptions.first?.id ?? ""
             )
         ]
@@ -521,7 +513,6 @@ struct TaskRequestView: View {
         }
     }
     
-    // ✅ FIXED: Use convenience initializer if needed
     private func createSampleInventory() -> [CoreTypes.InventoryItem] {
         return [
             CoreTypes.InventoryItem(
@@ -564,7 +555,6 @@ struct TaskRequestView: View {
         }
     }
     
-    // ✅ FIXED: Use correct ContextualTask initializer matching FrancoSphereModels.swift
     private func submitTaskRequest() async {
         guard isFormValid else { return }
         
@@ -573,19 +563,12 @@ struct TaskRequestView: View {
             errorMessage = nil
         }
         
-        // Calculate dates with timing information if specified
-        let calendar = Calendar.current
-        let dueDate = selectedDate
-        
-        // ✅ FIXED: Removed unused variables startTimeValue and endTimeValue
-        // These were being calculated but never used in the ContextualTask creation
-        
         // Get building and worker information
-        let building = buildingOptions.first(where: { $0.id == selectedBuildingID })
-        let worker = WorkerProfile(
-            id: UUID().uuidString, // ✅ FIXED: Use generated ID
-            name: "Current Worker",  // ✅ FIXED: Use placeholder name
-            email: "worker@example.com", // ✅ FIXED: Use placeholder email
+        let selectedBuilding = buildingOptions.first(where: { $0.id == selectedBuildingID })
+        let currentWorker = WorkerProfile(
+            id: UUID().uuidString,
+            name: "Current Worker",
+            email: "worker@example.com",
             phoneNumber: "",
             role: .worker,
             skills: [],
@@ -594,64 +577,24 @@ struct TaskRequestView: View {
             isActive: true
         )
         
-        // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
+        // Create the task
         let task = ContextualTask(
             title: taskName,
             description: taskDescription,
             isCompleted: false,
             completedDate: nil,
-            // ✅ REMOVED: scheduledDate parameter doesn't exist
-            dueDate: dueDate,
+            dueDate: selectedDate,
             category: selectedCategory,
             urgency: selectedUrgency,
-            building: building,
-            worker: worker
+            building: selectedBuilding,
+            worker: currentWorker
         )
         
-        // ✅ FIXED: No need for do-catch when not throwing
         // Simulate task creation
-        await MainActor.run {
-            isSubmitting = true
-            errorMessage = nil
-        }
-        
-        // Calculate dates with timing information if specified
-        let calendar = Calendar.current
-        let dueDate = selectedDate
-        
-        // Get building and worker information
-        let building = buildingOptions.first(where: { $0.id == selectedBuildingID })
-        let worker = WorkerProfile(
-            id: UUID().uuidString, // ✅ FIXED: Use generated ID
-            name: "Current Worker",  // ✅ FIXED: Use placeholder name
-            email: "worker@example.com", // ✅ FIXED: Use placeholder email
-            phoneNumber: "",
-            role: .worker,
-            skills: [],
-            certifications: [],
-            hireDate: Date(),
-            isActive: true
-        )
-        
-        // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
-        let task = ContextualTask(
-            title: taskName,
-            description: taskDescription,
-            isCompleted: false,
-            completedDate: nil,
-            // ✅ REMOVED: scheduledDate parameter doesn't exist
-            dueDate: dueDate,
-            category: selectedCategory,
-            urgency: selectedUrgency,
-            building: building,
-            worker: worker
-        )
-        
-        // ✅ TODO: Replace with actual TaskService implementation
         print("Creating task: \(task)")
         
-        // Simulate task creation delay
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+        // Simulate delay
+        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
         
         await MainActor.run {
             if !requiredInventory.isEmpty {
@@ -844,7 +787,6 @@ struct InventorySelectionView: View {
         }
     }
     
-    // ✅ FIXED: Use convenience initializer
     private func loadInventory() async {
         await MainActor.run {
             isLoading = true
@@ -946,7 +888,6 @@ struct PhotoPickerView: View {
                 presentationMode.wrappedValue.dismiss()
             })
             .sheet(isPresented: $showImagePicker) {
-                // ✅ FIXED: Use correct ImagePicker with @State var instead of @Binding
                 ImagePickerWrapper(sourceType: sourceType, selectedImage: $selectedImage)
             }
         }
@@ -1009,16 +950,11 @@ struct TaskSuggestion: Identifiable, Equatable {
     }
 }
 
-// Add convenience initializer for InventoryItem
+// MARK: - Extensions
+
+// Convenience initializer for InventoryItem to match usage in app
 extension CoreTypes.InventoryItem {
-    // Convenience initializer that matches the usage pattern in the app
-    init(
-        name: String,
-        category: CoreTypes.InventoryCategory,
-        quantity: Int,
-        minThreshold: Int,
-        location: String
-    ) {
+    init(name: String, category: CoreTypes.InventoryCategory, quantity: Int, minThreshold: Int, location: String) {
         self.init(
             id: UUID().uuidString,
             name: name,
@@ -1034,7 +970,9 @@ extension CoreTypes.InventoryItem {
             status: quantity <= minThreshold ? (quantity == 0 ? .outOfStock : .lowStock) : .inStock
         )
     }
-    
+}
+
+extension CoreTypes.InventoryItem {
     var displayUnit: String {
         switch category {
         case .tools: return "pcs"
@@ -1051,7 +989,6 @@ extension CoreTypes.InventoryItem {
         case .other: return "items"
         }
     }
-    // ✅ NOTE: quantity property already exists in CoreTypes.InventoryItem
 }
 
 // MARK: - Preview Support

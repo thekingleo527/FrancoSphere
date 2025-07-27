@@ -149,7 +149,9 @@ class NovaAIContextManager: ObservableObject {
             )
         }
         
-        return features.sorted { $0.priority.numericValue > $1.priority.numericValue }
+        return features.sorted { (first, second) in
+            first.priority.numericValue > second.priority.numericValue
+        }
     }
     
     // MARK: - Admin AI Features
@@ -282,17 +284,15 @@ class NovaAIContextManager: ObservableObject {
     private func generateSuggestions() {
         guard let context = currentContext else { return }
         
-        var suggestions: [CoreTypes.AISuggestion] = []
-        
         switch context.userRole {
         case .worker:
-            suggestions = generateWorkerSuggestions(context: context)
+            self.suggestedActions = generateWorkerSuggestions(context: context)
         case .admin:
-            suggestions = generateAdminSuggestions(context: context)
+            self.suggestedActions = generateAdminSuggestions(context: context)
         case .supervisor:
-            suggestions = generateSupervisorSuggestions(context: context)
+            self.suggestedActions = generateSupervisorSuggestions(context: context)
         case .client:
-            suggestions = generateClientSuggestions(context: context)
+            self.suggestedActions = generateClientSuggestions(context: context)
         }
     }
     
@@ -303,10 +303,11 @@ class NovaAIContextManager: ObservableObject {
         if !context.urgentTasks.isEmpty {
             suggestions.append(
                 CoreTypes.AISuggestion(
-                    id: "urgent-tasks",
-                    suggestion: "You have \(context.urgentTasks.count) urgent task(s) pending",
-                    actionType: "Review urgent tasks",
-                    confidence: 0.9
+                    title: "Urgent Tasks",
+                    description: "You have \(context.urgentTasks.count) urgent task(s) pending",
+                    priority: .high,
+                    category: .operations,
+                    actionRequired: true
                 )
             )
         }
@@ -315,10 +316,11 @@ class NovaAIContextManager: ObservableObject {
         if let weather = context.weatherConditions, weather.requiresIndoorWork {
             suggestions.append(
                 CoreTypes.AISuggestion(
-                    id: "weather-alert",
-                    suggestion: "Consider rescheduling outdoor work due to \(weather.description)",
-                    actionType: "View indoor alternatives",
-                    confidence: 0.85
+                    title: "Weather Alert",
+                    description: "Consider rescheduling outdoor work due to \(weather.description)",
+                    priority: .medium,
+                    category: .safety,
+                    actionRequired: true
                 )
             )
         }
@@ -327,10 +329,10 @@ class NovaAIContextManager: ObservableObject {
         if let building = context.currentBuilding {
             suggestions.append(
                 CoreTypes.AISuggestion(
-                    id: "building-checklist",
-                    suggestion: "Review \(building.name) systems and recent alerts",
-                    actionType: "Open building overview",
-                    confidence: 0.7
+                    title: "Building Checklist",
+                    description: "Review \(building.name) systems and recent alerts",
+                    priority: .medium,
+                    category: .operations
                 )
             )
         }
@@ -341,16 +343,16 @@ class NovaAIContextManager: ObservableObject {
     private func generateAdminSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
         [
             CoreTypes.AISuggestion(
-                id: "performance-review",
-                suggestion: "Analyze portfolio efficiency and worker productivity",
-                actionType: "Generate report",
-                confidence: 0.8
+                title: "Performance Review",
+                description: "Analyze portfolio efficiency and worker productivity",
+                priority: .medium,
+                category: .efficiency  // Changed from .performance
             ),
             CoreTypes.AISuggestion(
-                id: "budget-optimization",
-                suggestion: "Identify cost-saving opportunities",
-                actionType: "View recommendations",
-                confidence: 0.75
+                title: "Budget Optimization",
+                description: "Identify cost-saving opportunities",
+                priority: .medium,
+                category: .cost
             )
         ]
     }
@@ -358,10 +360,10 @@ class NovaAIContextManager: ObservableObject {
     private func generateSupervisorSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
         [
             CoreTypes.AISuggestion(
-                id: "team-check-in",
-                suggestion: "Review worker status and task progress",
-                actionType: "View team dashboard",
-                confidence: 0.85
+                title: "Team Check-in",
+                description: "Review worker status and task progress",
+                priority: .medium,
+                category: .operations
             )
         ]
     }
@@ -369,10 +371,10 @@ class NovaAIContextManager: ObservableObject {
     private func generateClientSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
         [
             CoreTypes.AISuggestion(
-                id: "service-summary",
-                suggestion: "Review this week's maintenance activities",
-                actionType: "View report",
-                confidence: 0.7
+                title: "Service Summary",
+                description: "Review this week's maintenance activities",
+                priority: .low,
+                category: .compliance
             )
         ]
     }
