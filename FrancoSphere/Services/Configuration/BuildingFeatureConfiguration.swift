@@ -2,13 +2,9 @@
 //  BuildingFeatureConfiguration.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/7/25.
-//
-
-//
-//  BuildingConfigurationManager.swift
-//  FrancoSphere
-//
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ CORRECTED: Function declarations and Task usage
+//  ✅ REMOVED: Invalid enum extensions
 //  ✅ V6.0: Phase 3.2 - Configuration-Driven Rollout
 //  ✅ Allows for enabling intelligence features on a per-building basis.
 //  ✅ Manages different configurations for pilot vs. production environments.
@@ -35,8 +31,11 @@ actor BuildingConfigurationManager {
     // Use UserDefaults for simple persistence of configurations.
     private let persistenceKey = "BuildingFeatureConfigurations"
 
+    // ✅ FIXED: Proper async initialization
     private init() {
-        Task { await loadConfigurations() }
+        Task {
+            await loadConfigurations()
+        }
         print("⚙️ BuildingConfigurationManager initialized with \(buildingConfigurations.count) custom configs.")
     }
 
@@ -81,7 +80,8 @@ actor BuildingConfigurationManager {
         }
     }
     
-    private func Task { await loadConfigurations() } {
+    // ✅ FIXED: Proper async function declaration
+    private func loadConfigurations() async {
         guard let data = UserDefaults.standard.data(forKey: persistenceKey) else { return }
         do {
             buildingConfigurations = try JSONDecoder().decode([CoreTypes.BuildingID: BuildingFeatureConfiguration].self, from: data)
@@ -91,12 +91,5 @@ actor BuildingConfigurationManager {
     }
 }
 
-// MARK: - Actor Isolation Fix
-extension BuildingFeatureConfiguration {
-    nonisolated convenience init() {
-        self.init()
-        Task {
-            await self.Task { await loadConfigurations() }
-        }
-    }
-}
+// ✅ REMOVED: Invalid enum extension with convenience initializer
+// Enums cannot have convenience initializers, and the extension was malformed

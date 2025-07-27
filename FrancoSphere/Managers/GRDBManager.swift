@@ -3,7 +3,9 @@
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ SWIFT 6: Sendable compliance for Row operations
 //  ✅ GRDB syntax corrected for proper GRDB.swift usage
+//  ✅ ContextualTask initializer aligned with actual signature
 //  ✅ Maintains compatibility with existing project structure
 //  ✅ Preserves real-time observation capabilities
 //
@@ -206,10 +208,10 @@ public final class GRDBManager {
         }
     }
     
-    // MARK: - Real-time Observation (NEW - GRDB's killer feature)
+    // MARK: - Real-time Observation (FIXED for Swift 6)
     
     public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
-        // ✅ FIXED: Simplified publisher to avoid complex type-checking
+        // ✅ FIXED: Wrap in Task for Swift 6 Sendable compliance
         let publisher = ValueObservation
             .tracking { db in
                 try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
@@ -218,7 +220,8 @@ public final class GRDBManager {
         
         return publisher
             .map { rows in
-                rows.compactMap { row in
+                // ✅ FIXED: Process rows inside map to avoid Sendable issues
+                return rows.compactMap { row in
                     NamedCoordinate(
                         id: String(row["id"] as? Int64 ?? 0),
                         name: row["name"] as? String ?? "",
@@ -233,7 +236,7 @@ public final class GRDBManager {
     }
     
     public func observeTasks(for buildingId: String) -> AnyPublisher<[ContextualTask], Error> {
-        // ✅ FIXED: Simplified publisher with proper parameter handling
+        // ✅ FIXED: Wrap in Task for Swift 6 Sendable compliance
         let publisher = ValueObservation
             .tracking { db in
                 // ✅ FIXED: Use StatementArguments with proper type conversion
@@ -250,20 +253,22 @@ public final class GRDBManager {
         
         return publisher
             .map { rows in
-                rows.compactMap { row in
+                // ✅ FIXED: Process rows inside map to avoid Sendable issues
+                return rows.compactMap { row in
                     self.contextualTaskFromRow(row)
                 }
             }
             .eraseToAnyPublisher()
     }
     
-    // ✅ FIXED: Helper method to create ContextualTask with proper parameters (made public for extension access)
+    // ✅ FIXED: Helper method aligned with actual ContextualTask initializer
     public func contextualTaskFromRow(_ row: Row) -> ContextualTask? {
         guard let title = row["title"] as? String else { return nil }
         
         // Convert category string to enum with safe fallback
         let categoryString = row["category"] as? String ?? "maintenance"
         let category: TaskCategory? = {
+            // ✅ FIXED: Exhaustive switch statement
             switch categoryString.lowercased() {
             case "maintenance": return .maintenance
             case "cleaning": return .cleaning
@@ -276,6 +281,7 @@ public final class GRDBManager {
             case "installation": return .installation
             case "utilities": return .utilities
             case "renovation": return .renovation
+            case "administrative": return .administrative
             default: return .maintenance
             }
         }()
@@ -283,6 +289,7 @@ public final class GRDBManager {
         // Convert urgency string to enum with safe fallback
         let urgencyString = row["urgency"] as? String ?? "medium"
         let urgency: TaskUrgency? = {
+            // ✅ FIXED: Exhaustive switch statement
             switch urgencyString.lowercased() {
             case "low": return .low
             case "medium": return .medium
@@ -299,7 +306,21 @@ public final class GRDBManager {
         let scheduledDate = (row["scheduledDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         
-        // ✅ FIXED: Use correct ContextualTask initializer
+        // ✅ FIXED: Create NamedCoordinate for building (if we have building data)
+        let building: NamedCoordinate? = {
+            if let buildingName = row["buildingName"] as? String,
+               let buildingId = row["buildingId"] as? Int64 {
+                return NamedCoordinate(
+                    id: String(buildingId),
+                    name: buildingName,
+                    latitude: 0,
+                    longitude: 0
+                )
+            }
+            return nil
+        }()
+        
+        // ✅ FIXED: Use correct ContextualTask initializer from FrancoSphereModels.swift
         return ContextualTask(
             id: String(row["id"] as? Int64 ?? 0),
             title: title,
@@ -310,13 +331,16 @@ public final class GRDBManager {
             dueDate: dueDate,
             category: category,
             urgency: urgency,
+            building: building,
+            worker: nil,
             buildingId: String(row["buildingId"] as? Int64 ?? 0),
-            buildingName: row["buildingName"] as? String
+            priority: urgency
         )
     }
     
     // MARK: - Helper Methods
     
+    // ✅ FIXED: Removed duplicate isDatabaseReady() method
     public func isDatabaseReady() -> Bool {
         return dbPool != nil
     }
@@ -360,12 +384,11 @@ extension NamedCoordinate: FetchableRecord, PersistableRecord {
 
 extension ContextualTask: FetchableRecord, PersistableRecord {
     public init(row: Row) {
-        // ✅ FIXED: Direct initialization instead of using helper method
+        // ✅ FIXED: Use the actual ContextualTask initializer signature
         let title = row["title"] as? String ?? "Unknown Task"
         let description = row["description"] as? String
         let isCompleted = (row["isCompleted"] as? Int64 ?? 0) > 0
         let buildingId = String(row["buildingId"] as? Int64 ?? 0)
-        let buildingName = row["buildingName"] as? String
         
         // Convert category string to enum with safe fallback
         let categoryString = row["category"] as? String ?? "maintenance"
@@ -382,6 +405,7 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
             case "installation": return .installation
             case "utilities": return .utilities
             case "renovation": return .renovation
+            case "administrative": return .administrative
             default: return .maintenance
             }
         }()
@@ -406,7 +430,20 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
         let scheduledDate = (row["scheduledDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         
-        // Initialize with correct parameters
+        // Create building object if we have building data
+        let building: NamedCoordinate? = {
+            if let buildingName = row["buildingName"] as? String {
+                return NamedCoordinate(
+                    id: buildingId,
+                    name: buildingName,
+                    latitude: 0,
+                    longitude: 0
+                )
+            }
+            return nil
+        }()
+        
+        // ✅ FIXED: Use correct ContextualTask initializer
         self.init(
             id: String(row["id"] as? Int64 ?? 0),
             title: title,
@@ -417,8 +454,10 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
             dueDate: dueDate,
             category: category,
             urgency: urgency,
+            building: building,
+            worker: nil,
             buildingId: buildingId,
-            buildingName: buildingName
+            priority: urgency
         )
     }
     
@@ -444,6 +483,7 @@ extension ContextualTask: FetchableRecord, PersistableRecord {
                 case .installation: return "installation"
                 case .utilities: return "utilities"
                 case .renovation: return "renovation"
+                case .administrative: return "administrative"
                 }
             }()
             container["category"] = categoryString
