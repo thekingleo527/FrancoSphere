@@ -255,7 +255,7 @@ public class OperationalDataManager: ObservableObject {
         setupRealTimeSync()
     }
     // MARK: - Real-Time Synchronization (GRDB)
-
+    
     private func setupRealTimeSync() {
         // Subscribe to building metrics updates
         Task { @MainActor in
@@ -323,7 +323,7 @@ public class OperationalDataManager: ObservableObject {
             }
             
             print("📦 Preparing to import operational data...")
-
+            
             // Step 2: Import all preserved operational data (50%)
             await MainActor.run {
                 importProgress = 0.3
@@ -339,9 +339,9 @@ public class OperationalDataManager: ObservableObject {
                 currentStatus = "Importing routine schedules..."
             }
             
-            let (routineCount, dsnyCount) = try await self.importRoutinesAndDSNY()
-            print("✅ Imported \(routineCount) routines and \(dsnyCount) DSNY schedules")
-
+            let result: (routines: Int, dsny: Int) = try await self.importRoutinesAndDSNY()
+            let routineCount = result.routines
+            let dsnyCount = result.dsny
             // Step 4: Validate data integrity (90%)
             await MainActor.run {
                 importProgress = 0.9
@@ -728,7 +728,7 @@ public class OperationalDataManager: ObservableObject {
                     
                     // Allow UI to update periodically - FIXED: Use proper Task.sleep syntax
                     if index % 5 == 0 {
-                        try await Task.sleep(nanoseconds: 500_000_000)
+                        Thread.sleep(forTimeInterval: 0.5)
                     }
                     
                 } catch {
@@ -844,96 +844,95 @@ public class OperationalDataManager: ObservableObject {
                 estimatedDuration: 3600
             )
             contextualTasks.append(task)
-        }
-        
-        // Special logging for Kevin's Rubin Museum tasks
-        if workerId == "4" {
-            let rubinTasks = contextualTasks.filter { task in
-                guard let building = task.building else { return false }
-                return building.name.contains("Rubin")
+            
+            // Special logging for Kevin's Rubin Museum tasks
+            if workerId == "4" {
+                let rubinTasks = contextualTasks.filter { task in
+                    guard let building = task.building else { return false }
+                    return building.name.contains("Rubin")
+                }
+                print("✅ PRESERVED: Kevin has \(rubinTasks.count) Rubin Museum tasks with building ID 14 (GRDB)")
             }
-            print("✅ PRESERVED: Kevin has \(rubinTasks.count) Rubin Museum tasks with building ID 14 (GRDB)")
+            
+            return contextualTasks
         }
         
-        return contextualTasks
-    }
-    
-    /// ✅ PRESERVED: Helper method to map building names to IDs with corrected mapping
-    private func getBuildingIdFromName(_ buildingName: String) -> String {
-        let buildingMap = [
-            // Perry Street cluster - ALL PRESERVED
-            "131 Perry Street": "10",
-            "68 Perry Street": "6",
+        /// ✅ PRESERVED: Helper method to map building names to IDs with corrected mapping
+        private func getBuildingIdFromName(_ buildingName: String) -> String {
+            let buildingMap = [
+                // Perry Street cluster - ALL PRESERVED
+                "131 Perry Street": "10",
+                "68 Perry Street": "6",
+                
+                // West 17th Street corridor - ALL PRESERVED
+                "135-139 West 17th Street": "3",    // ✅ PRESERVED: corrected mapping
+                "136 West 17th Street": "13",       // ✅ CONSISTENT
+                "138 West 17th Street": "5",        // ✅ PRESERVED: corrected mapping
+                "117 West 17th Street": "9",        // ✅ CONSISTENT
+                
+                // West 18th Street - ALL PRESERVED
+                "112 West 18th Street": "7",        // ✅ CONSISTENT
+                "12 West 18th Street": "1",         // ✅ CONSISTENT
+                
+                // ✅ CRITICAL: Rubin Museum (Kevin's workplace) - PRESERVED
+                "Rubin Museum (142–148 W 17th)": "14",  // ✅ PRESERVED REALITY
+                
+                // East side - ALL PRESERVED
+                "29-31 East 20th Street": "2",      // ✅ CONSISTENT
+                "133 East 15th Street": "15",       // ✅ CONSISTENT
+                
+                // Downtown - ALL PRESERVED
+                "178 Spring Street": "17",          // ✅ CONSISTENT
+                "104 Franklin Street": "4",         // ✅ CONSISTENT
+                "41 Elizabeth Street": "8",         // ✅ CONSISTENT
+                "36 Walker Street": "18",           // ✅ CONSISTENT
+                
+                // Special locations - ALL PRESERVED
+                "Stuyvesant Cove Park": "16",       // ✅ PRESERVED: unique ID
+                "123 1st Avenue": "11",             // ✅ CONSISTENT
+                "115 7th Avenue": "19",             // ✅ CONSISTENT
+                "FrancoSphere HQ": "20"             // ✅ CONSISTENT
+            ]
             
-            // West 17th Street corridor - ALL PRESERVED
-            "135-139 West 17th Street": "3",    // ✅ PRESERVED: corrected mapping
-            "136 West 17th Street": "13",       // ✅ CONSISTENT
-            "138 West 17th Street": "5",        // ✅ PRESERVED: corrected mapping
-            "117 West 17th Street": "9",        // ✅ CONSISTENT
-            
-            // West 18th Street - ALL PRESERVED
-            "112 West 18th Street": "7",        // ✅ CONSISTENT
-            "12 West 18th Street": "1",         // ✅ CONSISTENT
-            
-            // ✅ CRITICAL: Rubin Museum (Kevin's workplace) - PRESERVED
-            "Rubin Museum (142–148 W 17th)": "14",  // ✅ PRESERVED REALITY
-            
-            // East side - ALL PRESERVED
-            "29-31 East 20th Street": "2",      // ✅ CONSISTENT
-            "133 East 15th Street": "15",       // ✅ CONSISTENT
-            
-            // Downtown - ALL PRESERVED
-            "178 Spring Street": "17",          // ✅ CONSISTENT
-            "104 Franklin Street": "4",         // ✅ CONSISTENT
-            "41 Elizabeth Street": "8",         // ✅ CONSISTENT
-            "36 Walker Street": "18",           // ✅ CONSISTENT
-            
-            // Special locations - ALL PRESERVED
-            "Stuyvesant Cove Park": "16",       // ✅ PRESERVED: unique ID
-            "123 1st Avenue": "11",             // ✅ CONSISTENT
-            "115 7th Avenue": "19",             // ✅ CONSISTENT
-            "FrancoSphere HQ": "20"             // ✅ CONSISTENT
-        ]
+            return buildingMap[buildingName] ?? "1"
+        }
         
-        return buildingMap[buildingName] ?? "1"
-    }
-    
-    /// ✅ PRESERVED: Helper method to get building name from ID
-    private func getBuildingNameFromId(_ buildingId: String) -> String {
-        let reverseBuildingMap = [
-            "1": "12 West 18th Street",
-            "2": "29-31 East 20th Street",
-            "3": "135-139 West 17th Street",
-            "4": "104 Franklin Street",
-            "5": "138 West 17th Street",
-            "6": "68 Perry Street",
-            "7": "112 West 18th Street",
-            "8": "41 Elizabeth Street",
-            "9": "117 West 17th Street",
-            "10": "131 Perry Street",
-            "11": "123 1st Avenue",
-            "13": "136 West 17th Street",
-            "14": "Rubin Museum (142–148 W 17th)",  // ✅ CRITICAL: Kevin's workplace
-            "15": "133 East 15th Street",
-            "16": "Stuyvesant Cove Park",
-            "17": "178 Spring Street",
-            "18": "36 Walker Street",
-            "19": "115 7th Avenue",
-            "20": "FrancoSphere HQ"
-        ]
+        /// ✅ PRESERVED: Helper method to get building name from ID
+        private func getBuildingNameFromId(_ buildingId: String) -> String {
+            let reverseBuildingMap = [
+                "1": "12 West 18th Street",
+                "2": "29-31 East 20th Street",
+                "3": "135-139 West 17th Street",
+                "4": "104 Franklin Street",
+                "5": "138 West 17th Street",
+                "6": "68 Perry Street",
+                "7": "112 West 18th Street",
+                "8": "41 Elizabeth Street",
+                "9": "117 West 17th Street",
+                "10": "131 Perry Street",
+                "11": "123 1st Avenue",
+                "13": "136 West 17th Street",
+                "14": "Rubin Museum (142–148 W 17th)",  // ✅ CRITICAL: Kevin's workplace
+                "15": "133 East 15th Street",
+                "16": "Stuyvesant Cove Park",
+                "17": "178 Spring Street",
+                "18": "36 Walker Street",
+                "19": "115 7th Avenue",
+                "20": "FrancoSphere HQ"
+            ]
+            
+            return reverseBuildingMap[buildingId] ?? "Unknown Building"
+        }
         
-        return reverseBuildingMap[buildingId] ?? "Unknown Building"
-    }
-    
-    /// Enhanced import method for operational schedules using GRDB
-    func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
-        var routineCount = 0, dsnyCount = 0
-        
-        print("🔧 Creating routine scheduling tables with GRDB...")
-        print("✅ PRESERVED: Including Kevin's Rubin Museum routing with building ID 14")
-        
-        // Create routine_schedules table using GRDB
-        try await grdbManager.execute("""
+        /// Enhanced import method for operational schedules using GRDB
+        func importRoutinesAndDSNY() async throws -> (routines: Int, dsny: Int) {
+            var routineCount = 0, dsnyCount = 0
+            
+            print("🔧 Creating routine scheduling tables with GRDB...")
+            print("✅ PRESERVED: Including Kevin's Rubin Museum routing with building ID 14")
+            
+            // Create routine_schedules table using GRDB
+            try await grdbManager.execute("""
             CREATE TABLE IF NOT EXISTS routine_schedules (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -950,34 +949,34 @@ public class OperationalDataManager: ObservableObject {
                 FOREIGN KEY (worker_id) REFERENCES workers(id)
             )
         """)
-        
-        // Add UNIQUE constraints to prevent duplicates
-        try await grdbManager.execute("""
+            
+            // Add UNIQUE constraints to prevent duplicates
+            try await grdbManager.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_routine_unique 
             ON routine_schedules(building_id, worker_id, name)
         """)
-        
-        // Insert operational routines with deterministic IDs using GRDB
-        for routine in routineSchedules {
-            // Deterministic ID generation using hash
-            let id = "routine_\(routine.buildingId)_\(routine.workerId)_\(routine.name.hashValue.magnitude)"
-            let weatherDependent = routine.category == "Cleaning" ? 1 : 0
             
-            try await grdbManager.execute("""
+            // Insert operational routines with deterministic IDs using GRDB
+            for routine in routineSchedules {
+                // Deterministic ID generation using hash
+                let id = "routine_\(routine.buildingId)_\(routine.workerId)_\(routine.name.hashValue.magnitude)"
+                let weatherDependent = routine.category == "Cleaning" ? 1 : 0
+                
+                try await grdbManager.execute("""
                 INSERT OR REPLACE INTO routine_schedules 
                 (id, name, building_id, rrule, worker_id, category, weather_dependent)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, [id, routine.name, routine.buildingId, routine.rrule, routine.workerId, routine.category, String(weatherDependent)])
-            routineCount += 1
-            
-            // Special logging for Kevin's Rubin Museum routing
-            if routine.workerId == "4" && routine.buildingId == "14" {
-                print("✅ PRESERVED: Added Kevin's Rubin Museum routine with GRDB: \(routine.name) (building ID 14)")
+                routineCount += 1
+                
+                // Special logging for Kevin's Rubin Museum routing
+                if routine.workerId == "4" && routine.buildingId == "14" {
+                    print("✅ PRESERVED: Added Kevin's Rubin Museum routine with GRDB: \(routine.name) (building ID 14)")
+                }
             }
-        }
-        
-        // Create dsny_schedules table using GRDB
-        try await grdbManager.execute("""
+            
+            // Create dsny_schedules table using GRDB
+            try await grdbManager.execute("""
             CREATE TABLE IF NOT EXISTS dsny_schedules (
                 id TEXT PRIMARY KEY,
                 route_id TEXT NOT NULL,
@@ -992,763 +991,764 @@ public class OperationalDataManager: ObservableObject {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        // Add UNIQUE constraint for DSNY routes
-        try await grdbManager.execute("""
+            
+            // Add UNIQUE constraint for DSNY routes
+            try await grdbManager.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS idx_dsny_unique 
             ON dsny_schedules(route_id)
         """)
-        
-        // Insert DSNY schedules with deterministic IDs using GRDB
-        for dsny in dsnySchedules {
-            // Deterministic ID for DSNY routes
-            let id = "dsny_\(dsny.routeId.hashValue.magnitude)"
-            let buildingIdsJson = dsny.buildingIds.joined(separator: ",")
             
-            try await grdbManager.execute("""
+            // Insert DSNY schedules with deterministic IDs using GRDB
+            for dsny in dsnySchedules {
+                // Deterministic ID for DSNY routes
+                let id = "dsny_\(dsny.routeId.hashValue.magnitude)"
+                let buildingIdsJson = dsny.buildingIds.joined(separator: ",")
+                
+                try await grdbManager.execute("""
                 INSERT OR REPLACE INTO dsny_schedules 
                 (id, route_id, building_ids, collection_days, earliest_setout, latest_pickup, pickup_window_start, pickup_window_end)
                 VALUES (?, ?, ?, ?, 72000, 32400, 21600, 43200)
             """, [id, dsny.routeId, buildingIdsJson, dsny.collectionDays])
-            dsnyCount += 1
-            
-            // Special logging for Rubin Museum DSNY routing
-            if dsny.buildingIds.contains("14") {
-                print("✅ PRESERVED: Rubin Museum (building ID 14) included in DSNY route with GRDB: \(dsny.routeId)")
-            }
-        }
-        
-        print("✅ Imported with GRDB: \(routineCount) routine schedules, \(dsnyCount) DSNY routes")
-        print("   🗑️ DSNY compliance: Set-out after 8:00 PM, pickup 6:00-12:00 AM")
-        print("   🔄 Routine coverage: \(Set(routineSchedules.map { $0.workerId }).count) active workers")
-        print("   ✅ PRESERVED: Kevin's Rubin Museum fully integrated with building ID 14 (GRDB)")
-        
-        return (routineCount, dsnyCount)
-    }
-    
-    // MARK: - ⭐ PRESERVED: Worker Building Assignments using GRDB
-    
-    /// Populate worker_assignments with CURRENT ACTIVE WORKERS ONLY using GRDB
-    private func populateWorkerBuildingAssignments(_ assignments: [OperationalDataTaskAssignment]) async throws {
-        // Enhanced activeWorkers with exact name matching and diagnostic logging - ALL PRESERVED
-        let activeWorkers: [String: String] = [
-            "Greg Hutson": "1",
-            "Edwin Lema": "2",
-            "Kevin Dutan": "4",        // ✅ CRITICAL: Exact operational name match
-            "Mercedes Inamagua": "5",
-            "Luis Lopez": "6",
-            "Angel Guirachocha": "7",
-            "Shawn Magloire": "8"
-        ]
-        
-        // EMERGENCY DIAGNOSTIC: Log all worker names in operational data vs activeWorkers
-        print("🔍 Operational Data Import Diagnostic (GRDB)")
-        print("📋 Active Workers Dictionary:")
-        for (name, id) in activeWorkers.sorted(by: { $0.key < $1.key }) {
-            print("   '\(name)' → ID '\(id)'")
-        }
-        
-        // Count assignments per worker in operational data - ALL PRESERVED
-        let operationalWorkerCounts = Dictionary(grouping: assignments, by: { $0.assignedWorker })
-        print("📋 Operational Task Assignments:")
-        for (workerName, tasks) in operationalWorkerCounts.sorted(by: { $0.key < $1.key }) {
-            let isActive = activeWorkers[workerName] != nil
-            let status = isActive ? "✅ ACTIVE" : "❌ INACTIVE/UNKNOWN"
-            let rubinCount = tasks.filter { $0.building.contains("Rubin") }.count
-            let rubinStatus = rubinCount > 0 ? " (including \(rubinCount) Rubin Museum tasks)" : ""
-            print("   '\(workerName)': \(tasks.count) tasks (\(status))\(rubinStatus)")
-        }
-        
-        print("🔗 Extracting assignments from \(assignments.count) operational tasks for ACTIVE WORKERS ONLY (GRDB)")
-        print("✅ PRESERVED: Including Kevin's Rubin Museum assignments with building ID 14")
-        
-        // Extract unique worker-building pairs - ACTIVE WORKERS ONLY using GRDB
-        var workerBuildingPairs: Set<String> = []
-        var skippedAssignments = 0
-        var kevinAssignmentCount = 0  // Track Kevin specifically
-        var kevinRubinAssignments = 0 // Track Kevin's Rubin Museum specifically
-        
-        for assignment in assignments {
-            guard !assignment.assignedWorker.isEmpty,
-                  !assignment.building.isEmpty else {
-                continue
-            }
-            
-            // Enhanced worker validation with Kevin tracking
-            guard let workerId = activeWorkers[assignment.assignedWorker] else {
-                if assignment.assignedWorker.contains("Jose") || assignment.assignedWorker.contains("Santos") {
-                    print("📝 Skipping Jose Santos assignment (no longer with company)")
-                } else {
-                    print("⚠️ Skipping unknown worker: '\(assignment.assignedWorker)'")
-                }
-                skippedAssignments += 1
-                continue
-            }
-            
-            // Track Kevin's assignments specifically
-            if workerId == "4" {
-                kevinAssignmentCount += 1
-                if assignment.building.contains("Rubin") {
-                    kevinRubinAssignments += 1
-                }
-            }
-            
-            do {
-                let buildingId = try await mapBuildingNameToId(assignment.building)
-                let pairKey = "\(workerId)-\(buildingId)"
-                workerBuildingPairs.insert(pairKey)
+                dsnyCount += 1
                 
-            } catch {
-                print("⚠️ Skipping assignment - unknown building: '\(assignment.building)' for \(assignment.assignedWorker)")
-                skippedAssignments += 1
-                continue
-            }
-        }
-        
-        // Critical Kevin validation with Rubin Museum tracking
-        print("🔗 Assignment Extraction Results (GRDB):")
-        print("   Total pairs extracted: \(workerBuildingPairs.count)")
-        print("   Assignments skipped: \(skippedAssignments)")
-        print("   Kevin task assignments found: \(kevinAssignmentCount)")
-        print("   ✅ PRESERVED: Kevin Rubin Museum assignments: \(kevinRubinAssignments)")
-        
-        // Count Kevin's building assignments specifically
-        let kevinBuildingPairs = workerBuildingPairs.filter { $0.hasPrefix("4-") }
-        print("   Kevin building assignments: \(kevinBuildingPairs.count)")
-        
-        if kevinBuildingPairs.isEmpty {
-            print("🚨 CRITICAL: Kevin has NO building assignments!")
-            print("🔍 Debugging Kevin assignments...")
-            
-            // Emergency diagnostic for Kevin
-            let kevinTasks = assignments.filter { $0.assignedWorker == "Kevin Dutan" }
-            print("   Kevin tasks in operational data: \(kevinTasks.count)")
-            if kevinTasks.count > 0 {
-                print("   Sample Kevin task: '\(kevinTasks.first?.taskName ?? "N/A")' at '\(kevinTasks.first?.building ?? "N/A")'")
+                // Special logging for Rubin Museum DSNY routing
+                if dsny.buildingIds.contains("14") {
+                    print("✅ PRESERVED: Rubin Museum (building ID 14) included in DSNY route with GRDB: \(dsny.routeId)")
+                }
             }
             
-            // Check if Kevin's name appears with different spelling
-            let kevinVariants = assignments.filter { $0.assignedWorker.lowercased().contains("kevin") }
-            print("   Kevin name variants found: \(Set(kevinVariants.map { $0.assignedWorker }))")
+            print("✅ Imported with GRDB: \(routineCount) routine schedules, \(dsnyCount) DSNY routes")
+            print("   🗑️ DSNY compliance: Set-out after 8:00 PM, pickup 6:00-12:00 AM")
+            print("   🔄 Routine coverage: \(Set(routineSchedules.map { $0.workerId }).count) active workers")
+            print("   ✅ PRESERVED: Kevin's Rubin Museum fully integrated with building ID 14 (GRDB)")
+            
+            return (routineCount, dsnyCount)
         }
         
-        // Insert assignments into database using GRDB
-        var insertedCount = 0
-        for pair in workerBuildingPairs {
-            let components = pair.split(separator: "-")
-            guard components.count == 2 else { continue }
+        // MARK: - ⭐ PRESERVED: Worker Building Assignments using GRDB
+        
+        /// Populate worker_assignments with CURRENT ACTIVE WORKERS ONLY using GRDB
+        private func populateWorkerBuildingAssignments(_ assignments: [OperationalDataTaskAssignment]) async throws {
+            // Enhanced activeWorkers with exact name matching and diagnostic logging - ALL PRESERVED
+            let activeWorkers: [String: String] = [
+                "Greg Hutson": "1",
+                "Edwin Lema": "2",
+                "Kevin Dutan": "4",        // ✅ CRITICAL: Exact operational name match
+                "Mercedes Inamagua": "5",
+                "Luis Lopez": "6",
+                "Angel Guirachocha": "7",
+                "Shawn Magloire": "8"
+            ]
             
-            let workerId = String(components[0])
-            let buildingId = String(components[1])
+            // EMERGENCY DIAGNOSTIC: Log all worker names in operational data vs activeWorkers
+            print("🔍 Operational Data Import Diagnostic (GRDB)")
+            print("📋 Active Workers Dictionary:")
+            for (name, id) in activeWorkers.sorted(by: { $0.key < $1.key }) {
+                print("   '\(name)' → ID '\(id)'")
+            }
             
-            // Get worker name from active roster
-            let workerName = activeWorkers.first(where: { $0.value == workerId })?.key ?? "Unknown Worker"
+            // Count assignments per worker in operational data - ALL PRESERVED
+            let operationalWorkerCounts = Dictionary(grouping: assignments, by: { $0.assignedWorker })
+            print("📋 Operational Task Assignments:")
+            for (workerName, tasks) in operationalWorkerCounts.sorted(by: { $0.key < $1.key }) {
+                let isActive = activeWorkers[workerName] != nil
+                let status = isActive ? "✅ ACTIVE" : "❌ INACTIVE/UNKNOWN"
+                let rubinCount = tasks.filter { $0.building.contains("Rubin") }.count
+                let rubinStatus = rubinCount > 0 ? " (including \(rubinCount) Rubin Museum tasks)" : ""
+                print("   '\(workerName)': \(tasks.count) tasks (\(status))\(rubinStatus)")
+            }
             
-            do {
-                try await grdbManager.execute("""
+            print("🔗 Extracting assignments from \(assignments.count) operational tasks for ACTIVE WORKERS ONLY (GRDB)")
+            print("✅ PRESERVED: Including Kevin's Rubin Museum assignments with building ID 14")
+            
+            // Extract unique worker-building pairs - ACTIVE WORKERS ONLY using GRDB
+            var workerBuildingPairs: Set<String> = []
+            var skippedAssignments = 0
+            var kevinAssignmentCount = 0  // Track Kevin specifically
+            var kevinRubinAssignments = 0 // Track Kevin's Rubin Museum specifically
+            
+            for assignment in assignments {
+                guard !assignment.assignedWorker.isEmpty,
+                      !assignment.building.isEmpty else {
+                    continue
+                }
+                
+                // Enhanced worker validation with Kevin tracking
+                guard let workerId = activeWorkers[assignment.assignedWorker] else {
+                    if assignment.assignedWorker.contains("Jose") || assignment.assignedWorker.contains("Santos") {
+                        print("📝 Skipping Jose Santos assignment (no longer with company)")
+                    } else {
+                        print("⚠️ Skipping unknown worker: '\(assignment.assignedWorker)'")
+                    }
+                    skippedAssignments += 1
+                    continue
+                }
+                
+                // Track Kevin's assignments specifically
+                if workerId == "4" {
+                    kevinAssignmentCount += 1
+                    if assignment.building.contains("Rubin") {
+                        kevinRubinAssignments += 1
+                    }
+                }
+                
+                do {
+                    let buildingId = try await mapBuildingNameToId(assignment.building)
+                    let pairKey = "\(workerId)-\(buildingId)"
+                    workerBuildingPairs.insert(pairKey)
+                    
+                } catch {
+                    print("⚠️ Skipping assignment - unknown building: '\(assignment.building)' for \(assignment.assignedWorker)")
+                    skippedAssignments += 1
+                    continue
+                }
+            }
+            
+            // Critical Kevin validation with Rubin Museum tracking
+            print("🔗 Assignment Extraction Results (GRDB):")
+            print("   Total pairs extracted: \(workerBuildingPairs.count)")
+            print("   Assignments skipped: \(skippedAssignments)")
+            print("   Kevin task assignments found: \(kevinAssignmentCount)")
+            print("   ✅ PRESERVED: Kevin Rubin Museum assignments: \(kevinRubinAssignments)")
+            
+            // Count Kevin's building assignments specifically
+            let kevinBuildingPairs = workerBuildingPairs.filter { $0.hasPrefix("4-") }
+            print("   Kevin building assignments: \(kevinBuildingPairs.count)")
+            
+            if kevinBuildingPairs.isEmpty {
+                print("🚨 CRITICAL: Kevin has NO building assignments!")
+                print("🔍 Debugging Kevin assignments...")
+                
+                // Emergency diagnostic for Kevin
+                let kevinTasks = assignments.filter { $0.assignedWorker == "Kevin Dutan" }
+                print("   Kevin tasks in operational data: \(kevinTasks.count)")
+                if kevinTasks.count > 0 {
+                    print("   Sample Kevin task: '\(kevinTasks.first?.taskName ?? "N/A")' at '\(kevinTasks.first?.building ?? "N/A")'")
+                }
+                
+                // Check if Kevin's name appears with different spelling
+                let kevinVariants = assignments.filter { $0.assignedWorker.lowercased().contains("kevin") }
+                print("   Kevin name variants found: \(Set(kevinVariants.map { $0.assignedWorker }))")
+            }
+            
+            // Insert assignments into database using GRDB
+            var insertedCount = 0
+            for pair in workerBuildingPairs {
+                let components = pair.split(separator: "-")
+                guard components.count == 2 else { continue }
+                
+                let workerId = String(components[0])
+                let buildingId = String(components[1])
+                
+                // Get worker name from active roster
+                let workerName = activeWorkers.first(where: { $0.value == workerId })?.key ?? "Unknown Worker"
+                
+                do {
+                    try await grdbManager.execute("""
                     INSERT OR IGNORE INTO worker_assignments 
                     (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
                     VALUES (?, ?, ?, 'regular', datetime('now'), 1)
                 """, [workerId, buildingId, workerName])
-                insertedCount += 1
-                
-                // Special logging for Kevin's Rubin Museum assignment
-                if workerId == "4" && buildingId == "14" {
-                    print("✅ PRESERVED: Kevin assigned to Rubin Museum (building ID 14) with GRDB")
+                    insertedCount += 1
+                    
+                    // Special logging for Kevin's Rubin Museum assignment
+                    if workerId == "4" && buildingId == "14" {
+                        print("✅ PRESERVED: Kevin assigned to Rubin Museum (building ID 14) with GRDB")
+                    }
+                } catch {
+                    print("⚠️ Failed to insert assignment \(workerId)->\(buildingId) with GRDB: \(error)")
                 }
-            } catch {
-                print("⚠️ Failed to insert assignment \(workerId)->\(buildingId) with GRDB: \(error)")
             }
-        }
-        
-        // Enhanced results logging with Kevin focus
-        print("✅ Real-world assignments populated with GRDB: \(insertedCount) active assignments")
-        
-        // Immediate Kevin verification using GRDB
-        do {
-            let kevinVerification = try await grdbManager.query("""
+            
+            // Enhanced results logging with Kevin focus
+            print("✅ Real-world assignments populated with GRDB: \(insertedCount) active assignments")
+            
+            // Immediate Kevin verification using GRDB
+            do {
+                let kevinVerification = try await grdbManager.query("""
                 SELECT building_id FROM worker_assignments 
                 WHERE worker_id = '4' AND is_active = 1
             """)
-            print("🎯 Kevin verification with GRDB: \(kevinVerification.count) buildings in database")
-            
-            // Check specifically for Rubin Museum assignment
-            let kevinRubinVerification = try await grdbManager.query("""
+                print("🎯 Kevin verification with GRDB: \(kevinVerification.count) buildings in database")
+                
+                // Check specifically for Rubin Museum assignment
+                let kevinRubinVerification = try await grdbManager.query("""
                 SELECT building_id FROM worker_assignments 
                 WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
             """)
-            
-            if kevinRubinVerification.count > 0 {
-                print("✅ PRESERVED: Kevin's Rubin Museum assignment verified in GRDB database")
-            } else {
-                print("⚠️ PRESERVED: Kevin's Rubin Museum assignment NOT found in GRDB database")
+                
+                if kevinRubinVerification.count > 0 {
+                    print("✅ PRESERVED: Kevin's Rubin Museum assignment verified in GRDB database")
+                } else {
+                    print("⚠️ PRESERVED: Kevin's Rubin Museum assignment NOT found in GRDB database")
+                }
+                
+                if kevinVerification.count == 0 {
+                    print("🚨 EMERGENCY: Kevin still has 0 buildings after GRDB import!")
+                    // Call the emergency fix method
+                    try await validateWorkerAssignments()
+                }
+            } catch {
+                print("❌ Could not verify Kevin assignments with GRDB: \(error)")
             }
             
-            if kevinVerification.count == 0 {
-                print("🚨 EMERGENCY: Kevin still has 0 buildings after GRDB import!")
-                // Call the emergency fix method
-                try await validateWorkerAssignments()
-            }
-        } catch {
-            print("❌ Could not verify Kevin assignments with GRDB: \(error)")
+            // Log final worker assignment summary
+            await logWorkerAssignmentSummary()
         }
         
-        // Log final worker assignment summary
-        await logWorkerAssignmentSummary()
-    }
-    
-    /// Log summary of worker assignments for validation using GRDB
-    private func logWorkerAssignmentSummary() async {
-        do {
-            let results = try await grdbManager.query("""
+        /// Log summary of worker assignments for validation using GRDB
+        private func logWorkerAssignmentSummary() async {
+            do {
+                let results = try await grdbManager.query("""
                 SELECT wa.worker_name, COUNT(wa.building_id) as building_count 
                 FROM worker_assignments wa 
                 WHERE wa.is_active = 1 
                 GROUP BY wa.worker_id 
                 ORDER BY building_count DESC
             """)
-            
-            print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PRESERVED with GRDB):")
-            for row in results {
-                let name = row["worker_name"] as? String ?? "Unknown"
-                let count = row["building_count"] as? Int64 ?? 0
-                let emoji = getWorkerEmoji(name)
-                let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum (building ID 14)" : ""
-                print("   \(emoji) \(name): \(count) buildings \(status)")
-            }
-            
-            // Verify Kevin's expansion with Rubin Museum
-            let kevinCount = results.first(where: {
-                ($0["worker_name"] as? String)?.contains("Kevin") == true
-            })?["building_count"] as? Int64 ?? 0
-            
-            if kevinCount >= 8 {
-                print("✅ Kevin's expanded duties verified with GRDB: \(kevinCount) buildings (including Rubin Museum)")
-            } else {
-                print("⚠️ WARNING: Kevin should have 8+ buildings, found \(kevinCount) with GRDB")
-            }
-            
-            // Specific Rubin Museum verification
-            let rubinCheck = try await grdbManager.query("""
+                
+                print("📊 ACTIVE WORKER ASSIGNMENT SUMMARY (PRESERVED with GRDB):")
+                for row in results {
+                    let name = row["worker_name"] as? String ?? "Unknown"
+                    let count = row["building_count"] as? Int64 ?? 0
+                    let emoji = getWorkerEmoji(name)
+                    let status = name.contains("Kevin") ? "✅ EXPANDED + Rubin Museum (building ID 14)" : ""
+                    print("   \(emoji) \(name): \(count) buildings \(status)")
+                }
+                
+                // Verify Kevin's expansion with Rubin Museum
+                let kevinCount = results.first(where: {
+                    ($0["worker_name"] as? String)?.contains("Kevin") == true
+                })?["building_count"] as? Int64 ?? 0
+                
+                if kevinCount >= 8 {
+                    print("✅ Kevin's expanded duties verified with GRDB: \(kevinCount) buildings (including Rubin Museum)")
+                } else {
+                    print("⚠️ WARNING: Kevin should have 8+ buildings, found \(kevinCount) with GRDB")
+                }
+                
+                // Specific Rubin Museum verification
+                let rubinCheck = try await grdbManager.query("""
                 SELECT COUNT(*) as count FROM worker_assignments 
                 WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
             """)
-            let rubinCount = rubinCheck.first?["count"] as? Int64 ?? 0
-            if rubinCount > 0 {
-                print("✅ PRESERVED: Kevin's Rubin Museum assignment verified with GRDB (building ID 14)")
-            } else {
-                print("❌ PRESERVED: Kevin's Rubin Museum assignment MISSING from GRDB")
+                let rubinCount = rubinCheck.first?["count"] as? Int64 ?? 0
+                if rubinCount > 0 {
+                    print("✅ PRESERVED: Kevin's Rubin Museum assignment verified with GRDB (building ID 14)")
+                } else {
+                    print("❌ PRESERVED: Kevin's Rubin Museum assignment MISSING from GRDB")
+                }
+                
+            } catch {
+                print("⚠️ Could not generate assignment summary with GRDB: \(error)")
             }
-            
-        } catch {
-            print("⚠️ Could not generate assignment summary with GRDB: \(error)")
         }
-    }
-    
-    private func getWorkerEmoji(_ workerName: String) -> String {
-        switch workerName {
-        case "Greg Hutson": return "🔧"
-        case "Edwin Lema": return "🧹"
-        case "Kevin Dutan": return "⚡"  // Expanded duties + Rubin Museum
-        case "Mercedes Inamagua": return "✨"
-        case "Luis Lopez": return "🔨"
-        case "Angel Guirachocha": return "🗑️"
-        case "Shawn Magloire": return "🎨"
-        default: return "👷"
+        
+        private func getWorkerEmoji(_ workerName: String) -> String {
+            switch workerName {
+            case "Greg Hutson": return "🔧"
+            case "Edwin Lema": return "🧹"
+            case "Kevin Dutan": return "⚡"  // Expanded duties + Rubin Museum
+            case "Mercedes Inamagua": return "✨"
+            case "Luis Lopez": return "🔨"
+            case "Angel Guirachocha": return "🗑️"
+            case "Shawn Magloire": return "🎨"
+            default: return "👷"
+            }
         }
-    }
-    
-    // MARK: - Dynamic Worker Assignment Validation using GRDB
-    
-    /// Validates all worker assignments dynamically using GRDB (no hardcoding)
-    private func validateWorkerAssignments() async throws {
-        do {
-            let allWorkers = try await grdbManager.query("""
+        
+        // MARK: - Dynamic Worker Assignment Validation using GRDB
+        
+        /// Validates all worker assignments dynamically using GRDB (no hardcoding)
+        private func validateWorkerAssignments() async throws {
+            do {
+                let allWorkers = try await grdbManager.query("""
                 SELECT id, name FROM workers WHERE isActive = 1
             """)
-            
-            print("🔍 Validating assignments for \(allWorkers.count) active workers with GRDB...")
-            
-            for worker in allWorkers {
-                guard let workerId = worker["id"] as? String,
-                      let workerName = worker["name"] as? String else { continue }
                 
-                let assignments = try await grdbManager.query("""
+                print("🔍 Validating assignments for \(allWorkers.count) active workers with GRDB...")
+                
+                for worker in allWorkers {
+                    guard let workerId = worker["id"] as? String,
+                          let workerName = worker["name"] as? String else { continue }
+                    
+                    let assignments = try await grdbManager.query("""
                     SELECT COUNT(*) as count FROM worker_assignments 
                     WHERE worker_id = ? AND is_active = 1
                 """, [workerId])
-                
-                let count = assignments.first?["count"] as? Int64 ?? 0
-                
-                if count == 0 {
-                    print("⚠️ Worker \(workerName) has no building assignments")
-                    try await createDynamicAssignments(for: workerId, name: workerName)
-                } else {
-                    print("✅ Worker \(workerName) has \(count) building assignments with GRDB")
+                    
+                    let count = assignments.first?["count"] as? Int64 ?? 0
+                    
+                    if count == 0 {
+                        print("⚠️ Worker \(workerName) has no building assignments")
+                        try await createDynamicAssignments(for: workerId, name: workerName)
+                    } else {
+                        print("✅ Worker \(workerName) has \(count) building assignments with GRDB")
+                    }
                 }
+                
+            } catch {
+                print("❌ Assignment validation failed with GRDB: \(error)")
             }
-            
-        } catch {
-            print("❌ Assignment validation failed with GRDB: \(error)")
         }
-    }
-    
-    /// Creates assignments based on operational data using GRDB (no hardcoding)
-    private func createDynamicAssignments(for workerId: String, name: String) async throws {
-        // Find assignments from real operational data - ALL PRESERVED
-        let workerTasks = realWorldTasks.filter { $0.assignedWorker == name }
-        let buildings = Set(workerTasks.map { $0.building })
         
-        print("🔧 Creating \(buildings.count) dynamic assignments for \(name) with GRDB")
-        
-        for building in buildings {
-            // Find building ID from name in database using GRDB
-            let buildingResults = try await grdbManager.query("""
+        /// Creates assignments based on operational data using GRDB (no hardcoding)
+        private func createDynamicAssignments(for workerId: String, name: String) async throws {
+            // Find assignments from real operational data - ALL PRESERVED
+            let workerTasks = realWorldTasks.filter { $0.assignedWorker == name }
+            let buildings = Set(workerTasks.map { $0.building })
+            
+            print("🔧 Creating \(buildings.count) dynamic assignments for \(name) with GRDB")
+            
+            for building in buildings {
+                // Find building ID from name in database using GRDB
+                let buildingResults = try await grdbManager.query("""
                 SELECT id FROM buildings WHERE name LIKE ? OR name LIKE ?
             """, ["%\(building)%", "%\(building.components(separatedBy: " ").first ?? building)%"])
-            
-            if let buildingId = buildingResults.first?["id"] as? String {
-                try await grdbManager.execute("""
+                
+                if let buildingId = buildingResults.first?["id"] as? String {
+                    try await grdbManager.execute("""
                     INSERT OR REPLACE INTO worker_assignments 
                     (worker_id, building_id, worker_name, assignment_type, start_date, is_active) 
                     VALUES (?, ?, ?, 'dynamic_operational', datetime('now'), 1)
                 """, [workerId, buildingId, name])
-                
-                print("  ✅ Assigned \(name) to building \(building) (ID: \(buildingId)) with GRDB")
-            } else {
-                print("  ⚠️ Could not find building ID for: \(building) in GRDB")
+                    
+                    print("  ✅ Assigned \(name) to building \(building) (ID: \(buildingId)) with GRDB")
+                } else {
+                    print("  ⚠️ Could not find building ID for: \(building) in GRDB")
+                }
             }
         }
-    }
-    
-    /// Validate data integrity using GRDB
-    private func validateDataIntegrity() async throws {
-        print("🔍 Validating data integrity with GRDB...")
         
-        // Check for orphaned tasks
-        let orphanedTasks = try await grdbManager.query("""
+        /// Validate data integrity using GRDB
+        private func validateDataIntegrity() async throws {
+            print("🔍 Validating data integrity with GRDB...")
+            
+            // Check for orphaned tasks
+            let orphanedTasks = try await grdbManager.query("""
             SELECT COUNT(*) as count FROM tasks t
             LEFT JOIN buildings b ON t.buildingId = b.id
             WHERE b.id IS NULL
         """)
-        
-        let orphanCount = orphanedTasks.first?["count"] as? Int64 ?? 0
-        if orphanCount > 0 {
-            print("⚠️ Found \(orphanCount) orphaned tasks without valid buildings")
-        }
-        
-        // Check for inactive worker assignments
-        let inactiveAssignments = try await grdbManager.query("""
+            
+            let orphanCount = orphanedTasks.first?["count"] as? Int64 ?? 0
+            if orphanCount > 0 {
+                print("⚠️ Found \(orphanCount) orphaned tasks without valid buildings")
+            }
+            
+            // Check for inactive worker assignments
+            let inactiveAssignments = try await grdbManager.query("""
             SELECT COUNT(*) as count FROM worker_assignments wa
             LEFT JOIN workers w ON wa.worker_id = w.id
             WHERE w.isActive = 0 AND wa.is_active = 1
         """)
-        
-        let inactiveCount = inactiveAssignments.first?["count"] as? Int64 ?? 0
-        if inactiveCount > 0 {
-            print("⚠️ Found \(inactiveCount) assignments for inactive workers")
             
-            // Deactivate assignments for inactive workers using GRDB
-            try await grdbManager.execute("""
+            let inactiveCount = inactiveAssignments.first?["count"] as? Int64 ?? 0
+            if inactiveCount > 0 {
+                print("⚠️ Found \(inactiveCount) assignments for inactive workers")
+                
+                // Deactivate assignments for inactive workers using GRDB
+                try await grdbManager.execute("""
                 UPDATE worker_assignments 
                 SET is_active = 0, end_date = datetime('now')
                 WHERE worker_id IN (SELECT id FROM workers WHERE isActive = 0)
                 AND is_active = 1
             """)
+                
+                print("✅ Deactivated assignments for inactive workers with GRDB")
+            }
             
-            print("✅ Deactivated assignments for inactive workers with GRDB")
+            print("✅ Data integrity validation complete with GRDB")
         }
         
-        print("✅ Data integrity validation complete with GRDB")
-    }
-    
-    // MARK: - Validation and Summary Methods (ALL PRESERVED)
-    
-    func validateOperationalData() -> [String] {
-        var validationErrors: [String] = []
+        // MARK: - Validation and Summary Methods (ALL PRESERVED)
         
-        for (index, task) in realWorldTasks.enumerated() {
-            // Validate categories - ALL PRESERVED
-            let validCategories = ["Cleaning", "Sanitation", "Maintenance", "Inspection", "Operations", "Repair"]
-            if !validCategories.contains(task.category) {
-                validationErrors.append("Row \(index + 1): Invalid category '\(task.category)'")
-            }
+        func validateOperationalData() -> [String] {
+            var validationErrors: [String] = []
             
-            // Validate skill levels - ALL PRESERVED
-            let validSkillLevels = ["Basic", "Intermediate", "Advanced"]
-            if !validSkillLevels.contains(task.skillLevel) {
-                validationErrors.append("Row \(index + 1): Invalid skill level '\(task.skillLevel)'")
-            }
-            
-            // Validate recurrence patterns - ALL PRESERVED
-            let validRecurrences = ["Daily", "Weekly", "Bi-Weekly", "Bi-Monthly", "Monthly", "Quarterly", "Semiannual", "Annual", "On-Demand"]
-            if !validRecurrences.contains(task.recurrence) {
-                validationErrors.append("Row \(index + 1): Invalid recurrence '\(task.recurrence)'")
-            }
-            
-            // Validate time ranges - ALL PRESERVED
-            if let startHour = task.startHour, let endHour = task.endHour {
-                if startHour < 0 || startHour > 23 {
-                    validationErrors.append("Row \(index + 1): Invalid start hour \(startHour)")
+            for (index, task) in realWorldTasks.enumerated() {
+                // Validate categories - ALL PRESERVED
+                let validCategories = ["Cleaning", "Sanitation", "Maintenance", "Inspection", "Operations", "Repair"]
+                if !validCategories.contains(task.category) {
+                    validationErrors.append("Row \(index + 1): Invalid category '\(task.category)'")
                 }
-                if endHour < 0 || endHour > 23 {
-                    validationErrors.append("Row \(index + 1): Invalid end hour \(endHour)")
+                
+                // Validate skill levels - ALL PRESERVED
+                let validSkillLevels = ["Basic", "Intermediate", "Advanced"]
+                if !validSkillLevels.contains(task.skillLevel) {
+                    validationErrors.append("Row \(index + 1): Invalid skill level '\(task.skillLevel)'")
                 }
-                if startHour >= endHour && endHour != startHour {
-                    validationErrors.append("Row \(index + 1): Invalid time range \(startHour):00-\(endHour):00")
+                
+                // Validate recurrence patterns - ALL PRESERVED
+                let validRecurrences = ["Daily", "Weekly", "Bi-Weekly", "Bi-Monthly", "Monthly", "Quarterly", "Semiannual", "Annual", "On-Demand"]
+                if !validRecurrences.contains(task.recurrence) {
+                    validationErrors.append("Row \(index + 1): Invalid recurrence '\(task.recurrence)'")
+                }
+                
+                // Validate time ranges - ALL PRESERVED
+                if let startHour = task.startHour, let endHour = task.endHour {
+                    if startHour < 0 || startHour > 23 {
+                        validationErrors.append("Row \(index + 1): Invalid start hour \(startHour)")
+                    }
+                    if endHour < 0 || endHour > 23 {
+                        validationErrors.append("Row \(index + 1): Invalid end hour \(endHour)")
+                    }
+                    if startHour >= endHour && endHour != startHour {
+                        validationErrors.append("Row \(index + 1): Invalid time range \(startHour):00-\(endHour):00")
+                    }
+                }
+                
+                // Validate no Jose Santos - PRESERVED
+                if task.assignedWorker.contains("Jose") || task.assignedWorker.contains("Santos") {
+                    validationErrors.append("Row \(index + 1): Jose Santos is no longer active")
                 }
             }
             
-            // Validate no Jose Santos - PRESERVED
-            if task.assignedWorker.contains("Jose") || task.assignedWorker.contains("Santos") {
-                validationErrors.append("Row \(index + 1): Jose Santos is no longer active")
-            }
+            return validationErrors
         }
         
-        return validationErrors
-    }
-    
-    func getWorkerTaskSummary() -> [String: Int] {
-        var summary: [String: Int] = [:]
-        
-        for task in realWorldTasks {
-            summary[task.assignedWorker, default: 0] += 1
-        }
-        
-        return summary
-    }
-    
-    func getBuildingTaskSummary() -> [String: Int] {
-        var summary: [String: Int] = [:]
-        
-        for task in realWorldTasks {
-            summary[task.building, default: 0] += 1
-        }
-        
-        return summary
-    }
-    
-    func getTimeOfDayDistribution() -> [String: Int] {
-        var distribution: [String: Int] = [:]
-        
-        for task in realWorldTasks {
-            guard let startHour = task.startHour else { continue }
+        func getWorkerTaskSummary() -> [String: Int] {
+            var summary: [String: Int] = [:]
             
-            let timeSlot: String
-            switch startHour {
-            case 0..<6:
-                timeSlot = "Night (12AM-6AM)"
-            case 6..<12:
-                timeSlot = "Morning (6AM-12PM)"
-            case 12..<18:
-                timeSlot = "Afternoon (12PM-6PM)"
-            case 18..<24:
-                timeSlot = "Evening (6PM-12AM)"
-            default:
-                timeSlot = "Unknown"
+            for task in realWorldTasks {
+                summary[task.assignedWorker, default: 0] += 1
             }
             
-            distribution[timeSlot, default: 0] += 1
+            return summary
         }
         
-        return distribution
-    }
-    
-    func getCategoryDistribution() -> [String: Int] {
-        var distribution: [String: Int] = [:]
-        
-        for task in realWorldTasks {
-            distribution[task.category, default: 0] += 1
-        }
-        
-        return distribution
-    }
-    
-    func getRecurrenceDistribution() -> [String: Int] {
-        var distribution: [String: Int] = [:]
-        
-        for task in realWorldTasks {
-            distribution[task.recurrence, default: 0] += 1
-        }
-        
-        return distribution
-    }
-    
-    func getSkillLevelDistribution() -> [String: Int] {
-        var distribution: [String: Int] = [:]
-        
-        for task in realWorldTasks {
-            distribution[task.skillLevel, default: 0] += 1
-        }
-        
-        return distribution
-    }
-    
-    func getBuildingCoverage() -> [String: [String]] {
-        var coverage: [String: [String]] = [:]
-        
-        for task in realWorldTasks {
-            if coverage[task.building] == nil {
-                coverage[task.building] = []
-            }
-            if !coverage[task.building]!.contains(task.assignedWorker) {
-                coverage[task.building]!.append(task.assignedWorker)
-            }
-        }
-        
-        return coverage
-    }
-    
-    // MARK: - Legacy Support for DataConsolidationManager
-    
-    /// Get legacy task assignments for DataConsolidationManager migration
-    func getLegacyTaskAssignments() async -> [LegacyTaskAssignment] {
-        // Convert realWorldTasks to LegacyTaskAssignment format for migration
-        return realWorldTasks.map { task in
-            LegacyTaskAssignment(
-                building: task.building,
-                taskName: task.taskName,
-                assignedWorker: task.assignedWorker,
-                category: task.category,
-                skillLevel: task.skillLevel,
-                recurrence: task.recurrence,
-                startHour: task.startHour,
-                endHour: task.endHour,
-                daysOfWeek: task.daysOfWeek
-            )
-        }
-    }
-}
-
-// MARK: - Legacy Task Assignment Structure (for migration compatibility)
-
-public struct LegacyTaskAssignment: Codable {
-    public let building: String
-    public let taskName: String
-    public let assignedWorker: String
-    public let category: String
-    public let skillLevel: String
-    public let recurrence: String
-    public let startHour: Int?
-    public let endHour: Int?
-    public let daysOfWeek: String?
-}
-
-// MARK: - Error Types (Enhanced for OperationalDataManager)
-
-enum OperationalError: LocalizedError {
-    case noGRDBManager
-    case buildingNotFound(String)
-    case workerNotFound(String)
-    case inactiveWorker(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .noGRDBManager:
-            return "GRDBManager not available on OperationalDataManager"
-        case .buildingNotFound(let name):
-            return "Building not found: '\(name)'"
-        case .workerNotFound(let name):
-            return "Worker not found: '\(name)'"
-        case .inactiveWorker(let name):
-            return "Worker '\(name)' is no longer active"
-        }
-    }
-}
-
-// MARK: - Date Extension
-extension Date {
-    var iso8601String: String {
-        ISO8601DateFormatter().string(from: self)
-    }
-}
-
-// MARK: - Real Building Lookup Service
-
-extension OperationalDataManager {
-    
-    /// Get real building ID from name using database lookup
-    func getRealBuildingId(from name: String) async -> String? {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            return buildings.first { building in
-                building.name.lowercased().contains(name.lowercased()) ||
-                name.lowercased().contains(building.name.lowercased())
-            }?.id
-        } catch {
-            print("⚠️ Error looking up building: \(error)")
-            return nil
-        }
-    }
-    
-    /// Get real worker assignments from database
-    func getRealWorkerAssignments() async -> [String: [String]] {
-        var assignments: [String: [String]] = [:]
-        
-        do {
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
+        func getBuildingTaskSummary() -> [String: Int] {
+            var summary: [String: Int] = [:]
             
-            for worker in workers {
-                let workerBuildings = try await BuildingService.shared.getBuildingsForWorker(worker.id)
-                assignments[worker.id] = workerBuildings.map { $0.id }
+            for task in realWorldTasks {
+                summary[task.building, default: 0] += 1
             }
-        } catch {
-            print("⚠️ Error getting real worker assignments: \(error)")
+            
+            return summary
         }
         
-        return assignments
-    }
-    
-    /// Initialize with real operational data
-    func initializeRealOperationalData() async throws {
-        print("🏢 Initializing real operational data...")
-        
-        // Get real worker assignments
-        let realAssignments = await getRealWorkerAssignments()
-        
-        // Update internal data structures with real assignments
-        for (workerId, buildingIds) in realAssignments {
-            // Store real assignments in database or memory as needed
-            try await updateWorkerAssignments(workerId: workerId, buildingIds: buildingIds)
+        func getTimeOfDayDistribution() -> [String: Int] {
+            var distribution: [String: Int] = [:]
+            
+            for task in realWorldTasks {
+                guard let startHour = task.startHour else { continue }
+                
+                let timeSlot: String
+                switch startHour {
+                case 0..<6:
+                    timeSlot = "Night (12AM-6AM)"
+                case 6..<12:
+                    timeSlot = "Morning (6AM-12PM)"
+                case 12..<18:
+                    timeSlot = "Afternoon (12PM-6PM)"
+                case 18..<24:
+                    timeSlot = "Evening (6PM-12AM)"
+                default:
+                    timeSlot = "Unknown"
+                }
+                
+                distribution[timeSlot, default: 0] += 1
+            }
+            
+            return distribution
         }
         
-        print("✅ Real operational data initialized")
+        func getCategoryDistribution() -> [String: Int] {
+            var distribution: [String: Int] = [:]
+            
+            for task in realWorldTasks {
+                distribution[task.category, default: 0] += 1
+            }
+            
+            return distribution
+        }
+        
+        func getRecurrenceDistribution() -> [String: Int] {
+            var distribution: [String: Int] = [:]
+            
+            for task in realWorldTasks {
+                distribution[task.recurrence, default: 0] += 1
+            }
+            
+            return distribution
+        }
+        
+        func getSkillLevelDistribution() -> [String: Int] {
+            var distribution: [String: Int] = [:]
+            
+            for task in realWorldTasks {
+                distribution[task.skillLevel, default: 0] += 1
+            }
+            
+            return distribution
+        }
+        
+        func getBuildingCoverage() -> [String: [String]] {
+            var coverage: [String: [String]] = [:]
+            
+            for task in realWorldTasks {
+                if coverage[task.building] == nil {
+                    coverage[task.building] = []
+                }
+                if !coverage[task.building]!.contains(task.assignedWorker) {
+                    coverage[task.building]!.append(task.assignedWorker)
+                }
+            }
+            
+            return coverage
+        }
+        
+        // MARK: - Legacy Support for DataConsolidationManager
+        
+        /// Get legacy task assignments for DataConsolidationManager migration
+        func getLegacyTaskAssignments() async -> [LegacyTaskAssignment] {
+            // Convert realWorldTasks to LegacyTaskAssignment format for migration
+            return realWorldTasks.map { task in
+                LegacyTaskAssignment(
+                    building: task.building,
+                    taskName: task.taskName,
+                    assignedWorker: task.assignedWorker,
+                    category: task.category,
+                    skillLevel: task.skillLevel,
+                    recurrence: task.recurrence,
+                    startHour: task.startHour,
+                    endHour: task.endHour,
+                    daysOfWeek: task.daysOfWeek
+                )
+            }
+        }
     }
     
-    private func updateWorkerAssignments(workerId: String, buildingIds: [String]) async throws {
-        // Implementation to store worker assignments
-        let manager = GRDBManager.shared
+    // MARK: - Legacy Task Assignment Structure (for migration compatibility)
+    
+    public struct LegacyTaskAssignment: Codable {
+        public let building: String
+        public let taskName: String
+        public let assignedWorker: String
+        public let category: String
+        public let skillLevel: String
+        public let recurrence: String
+        public let startHour: Int?
+        public let endHour: Int?
+        public let daysOfWeek: String?
+    }
+    
+    // MARK: - Error Types (Enhanced for OperationalDataManager)
+    
+    enum OperationalError: LocalizedError {
+        case noGRDBManager
+        case buildingNotFound(String)
+        case workerNotFound(String)
+        case inactiveWorker(String)
         
-        // Remove old assignments
-        try await manager.execute(
-            "DELETE FROM worker_assignments WHERE worker_id = ?",
-            [workerId]
-        )
+        var errorDescription: String? {
+            switch self {
+            case .noGRDBManager:
+                return "GRDBManager not available on OperationalDataManager"
+            case .buildingNotFound(let name):
+                return "Building not found: '\(name)'"
+            case .workerNotFound(let name):
+                return "Worker not found: '\(name)'"
+            case .inactiveWorker(let name):
+                return "Worker '\(name)' is no longer active"
+            }
+        }
+    }
+    
+    // MARK: - Date Extension
+    extension Date {
+        var iso8601String: String {
+            ISO8601DateFormatter().string(from: self)
+        }
+    }
+    
+    // MARK: - Real Building Lookup Service
+    
+    extension OperationalDataManager {
         
-        // Insert new assignments
-        for buildingId in buildingIds {
+        /// Get real building ID from name using database lookup
+        func getRealBuildingId(from name: String) async -> String? {
+            do {
+                let buildings = try await BuildingService.shared.getAllBuildings()
+                return buildings.first { building in
+                    building.name.lowercased().contains(name.lowercased()) ||
+                    name.lowercased().contains(building.name.lowercased())
+                }?.id
+            } catch {
+                print("⚠️ Error looking up building: \(error)")
+                return nil
+            }
+        }
+        
+        /// Get real worker assignments from database
+        func getRealWorkerAssignments() async -> [String: [String]] {
+            var assignments: [String: [String]] = [:]
+            
+            do {
+                let workers = try await WorkerService.shared.getAllActiveWorkers()
+                
+                for worker in workers {
+                    let workerBuildings = try await BuildingService.shared.getBuildingsForWorker(worker.id)
+                    assignments[worker.id] = workerBuildings.map { $0.id }
+                }
+            } catch {
+                print("⚠️ Error getting real worker assignments: \(error)")
+            }
+            
+            return assignments
+        }
+        
+        /// Initialize with real operational data
+        func initializeRealOperationalData() async throws {
+            print("🏢 Initializing real operational data...")
+            
+            // Get real worker assignments
+            let realAssignments = await getRealWorkerAssignments()
+            
+            // Update internal data structures with real assignments
+            for (workerId, buildingIds) in realAssignments {
+                // Store real assignments in database or memory as needed
+                try await updateWorkerAssignments(workerId: workerId, buildingIds: buildingIds)
+            }
+            
+            print("✅ Real operational data initialized")
+        }
+        
+        private func updateWorkerAssignments(workerId: String, buildingIds: [String]) async throws {
+            // Implementation to store worker assignments
+            let manager = GRDBManager.shared
+            
+            // Remove old assignments
             try await manager.execute(
-                "INSERT INTO worker_assignments (worker_id, building_id, is_active) VALUES (?, ?, ?)",
-                [workerId, buildingId, true]
+                "DELETE FROM worker_assignments WHERE worker_id = ?",
+                [workerId]
             )
-        }
-    }
-}
-
-// MARK: - Missing Function Implementation
-
-/// Calculate realistic scheduling offset for task due dates
-/// Returns number of days to add based on operational scheduling logic
-private func calculateRealScore() -> Int {
-    let calendar = Calendar.current
-    let today = Date()
-    let dayOfWeek = calendar.component(.weekday, from: today)
-    
-    // Smart scheduling logic based on operational patterns
-    switch dayOfWeek {
-    case 1: // Sunday - Schedule for Monday
-        return 1
-    case 2: // Monday - Schedule for same day or next day
-        return Int.random(in: 0...1)
-    case 3: // Tuesday - Schedule within 2 days
-        return Int.random(in: 0...2)
-    case 4: // Wednesday - Schedule within 3 days
-        return Int.random(in: 0...3)
-    case 5: // Thursday - Schedule for Friday or Monday
-        return Int.random(in: 1...4)
-    case 6: // Friday - Schedule for Monday
-        return 3
-    case 7: // Saturday - Schedule for Monday
-        return 2
-    default:
-        return 1
-    }
-}
-
-/// Calculate fixed scheduling offset for predictable task scheduling
-private func calculateFixedScore(for recurrence: String) -> Int {
-    switch recurrence {
-    case "Daily":
-        return 0 // Same day
-    case "Weekly":
-        return 7 // Next week
-    case "Bi-Weekly":
-        return 14 // Two weeks
-    case "Monthly":
-        return 30 // Next month
-    case "Bi-Monthly":
-        return 60 // Two months
-    case "Quarterly":
-        return 90 // Three months
-    case "Semiannual":
-        return 180 // Six months
-    case "Annual":
-        return 365 // Next year
-    case "On-Demand":
-        return 1 // Next day
-    default:
-        return 1
-    }
-}
-
-// MARK: - Extension for Additional Helper Methods
-
-extension OperationalDataManager {
-    
-    /// Get building coordinate for a building name
-    private func getBuildingCoordinate(for buildingName: String) async -> NamedCoordinate? {
-        do {
-            let buildings = try await BuildingService.shared.getAllBuildings()
-            return buildings.first { building in
-                building.name.lowercased().contains(buildingName.lowercased()) ||
-                buildingName.lowercased().contains(building.name.lowercased())
+            
+            // Insert new assignments
+            for buildingId in buildingIds {
+                try await manager.execute(
+                    "INSERT INTO worker_assignments (worker_id, building_id, is_active) VALUES (?, ?, ?)",
+                    [workerId, buildingId, true]
+                )
             }
-        } catch {
-            print("⚠️ Error getting building coordinate for \(buildingName): \(error)")
-            return nil
         }
     }
     
-    /// Map operational category to TaskCategory
-    private func mapToTaskCategory(_ category: String) -> CoreTypes.TaskCategory {
-        switch category.lowercased() {
-        case "cleaning": return .cleaning
-        case "maintenance": return .maintenance
-        case "inspection": return .inspection
-        case "repair": return .repair
-        case "emergency": return .emergency
-        default: return .maintenance
+    // MARK: - Missing Function Implementation
+    
+    /// Calculate realistic scheduling offset for task due dates
+    /// Returns number of days to add based on operational scheduling logic
+    private func calculateRealScore() -> Int {
+        let calendar = Calendar.current
+        let today = Date()
+        let dayOfWeek = calendar.component(.weekday, from: today)
+        
+        // Smart scheduling logic based on operational patterns
+        switch dayOfWeek {
+        case 1: // Sunday - Schedule for Monday
+            return 1
+        case 2: // Monday - Schedule for same day or next day
+            return Int.random(in: 0...1)
+        case 3: // Tuesday - Schedule within 2 days
+            return Int.random(in: 0...2)
+        case 4: // Wednesday - Schedule within 3 days
+            return Int.random(in: 0...3)
+        case 5: // Thursday - Schedule for Friday or Monday
+            return Int.random(in: 1...4)
+        case 6: // Friday - Schedule for Monday
+            return 3
+        case 7: // Saturday - Schedule for Monday
+            return 2
+        default:
+            return 1
         }
     }
     
-    /// Map skill level to urgency
-    private func mapSkillLevelToUrgency(_ skillLevel: String) -> CoreTypes.TaskUrgency {
-        switch skillLevel.lowercased() {
-        case "basic": return .low
-        case "intermediate": return .medium
-        case "advanced": return .high
-        case "expert": return .critical
-        default: return .medium
+    /// Calculate fixed scheduling offset for predictable task scheduling
+    private func calculateFixedScore(for recurrence: String) -> Int {
+        switch recurrence {
+        case "Daily":
+            return 0 // Same day
+        case "Weekly":
+            return 7 // Next week
+        case "Bi-Weekly":
+            return 14 // Two weeks
+        case "Monthly":
+            return 30 // Next month
+        case "Bi-Monthly":
+            return 60 // Two months
+        case "Quarterly":
+            return 90 // Three months
+        case "Semiannual":
+            return 180 // Six months
+        case "Annual":
+            return 365 // Next year
+        case "On-Demand":
+            return 1 // Next day
+        default:
+            return 1
         }
     }
     
-    /// Generate task description with operational context
-    private func generateTaskDescription(_ task: OperationalDataTaskAssignment) -> String {
-        var description = task.taskName
+    // MARK: - Extension for Additional Helper Methods
+    
+    extension OperationalDataManager {
         
-        // Add time context if available
-        if let startHour = task.startHour, let endHour = task.endHour {
-            description += " (Scheduled: \(startHour):00 - \(endHour):00)"
+        /// Get building coordinate for a building name
+        private func getBuildingCoordinate(for buildingName: String) async -> NamedCoordinate? {
+            do {
+                let buildings = try await BuildingService.shared.getAllBuildings()
+                return buildings.first { building in
+                    building.name.lowercased().contains(buildingName.lowercased()) ||
+                    buildingName.lowercased().contains(building.name.lowercased())
+                }
+            } catch {
+                print("⚠️ Error getting building coordinate for \(buildingName): \(error)")
+                return nil
+            }
         }
         
-        // Add days of week if specified
-        if let daysOfWeek = task.daysOfWeek {
-            description += " [Days: \(daysOfWeek)]"
+        /// Map operational category to TaskCategory
+        private func mapToTaskCategory(_ category: String) -> CoreTypes.TaskCategory {
+            switch category.lowercased() {
+            case "cleaning": return .cleaning
+            case "maintenance": return .maintenance
+            case "inspection": return .inspection
+            case "repair": return .repair
+            case "emergency": return .emergency
+            default: return .maintenance
+            }
         }
         
-        // Add recurrence pattern
-        description += " - \(task.recurrence)"
+        /// Map skill level to urgency
+        private func mapSkillLevelToUrgency(_ skillLevel: String) -> CoreTypes.TaskUrgency {
+            switch skillLevel.lowercased() {
+            case "basic": return .low
+            case "intermediate": return .medium
+            case "advanced": return .high
+            case "expert": return .critical
+            default: return .medium
+            }
+        }
         
-        return description
+        /// Generate task description with operational context
+        private func generateTaskDescription(_ task: OperationalDataTaskAssignment) -> String {
+            var description = task.taskName
+            
+            // Add time context if available
+            if let startHour = task.startHour, let endHour = task.endHour {
+                description += " (Scheduled: \(startHour):00 - \(endHour):00)"
+            }
+            
+            // Add days of week if specified
+            if let daysOfWeek = task.daysOfWeek {
+                description += " [Days: \(daysOfWeek)]"
+            }
+            
+            // Add recurrence pattern
+            description += " - \(task.recurrence)"
+            
+            return description
+        }
     }
 }
