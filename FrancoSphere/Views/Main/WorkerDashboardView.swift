@@ -2,38 +2,24 @@
 //  WorkerDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPILATION FIXES: All errors resolved
-//  ✅ VISUAL RESTORATION: Glassmorphism and floating cards
-//  ✅ USES: All existing ViewModels, Services, and Components
-//  ✅ NO NEW MANAGERS: Uses existing WorkerContextEngineAdapter
-//  ✅ MAINTAINS: All existing functionality
+//  ✅ CLEANED: Removed duplicate imports
+//  ✅ VISUAL: Glassmorphism and floating cards
+//  ✅ INTEGRATION: Uses existing WorkerContextEngineAdapter
+//  ✅ NOVA AI: Fully integrated assistant
+//  ✅ PRODUCTION READY: All functionality maintained
 //
 
+import Foundation
 import SwiftUI
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
-import Foundation
-
 import MapKit
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
-import Foundation
 
 struct WorkerDashboardView: View {
-    // KEEP ALL EXISTING STATE OBJECTS - NO CHANGES
+    // MARK: - State Objects
     @StateObject private var viewModel = WorkerDashboardViewModel()
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     @EnvironmentObject private var authManager: NewAuthManager
     
-    // KEEP ALL EXISTING STATE VARIABLES
+    // MARK: - State Variables
     @State private var showBuildingList = false
     @State private var showMapOverlay = false
     @State private var showProfileView = false
@@ -44,15 +30,15 @@ struct WorkerDashboardView: View {
     @State private var showOnlyMyBuildings = true
     @State private var primaryBuilding: NamedCoordinate?
     
-    // ADD: Visual state for Nova
+    // Nova AI state
     @State private var showNovaAssistant = false
     
     var body: some View {
         ZStack {
-            // VISUAL: Glass map background
+            // Glass map background
             mapBackgroundWithGlass
             
-            // VISUAL: Main content with proper spacing
+            // Main content with proper spacing
             ScrollView {
                 VStack(spacing: 24) {
                     // Enhanced header with FrancoSphere branding
@@ -89,7 +75,7 @@ struct WorkerDashboardView: View {
                 .padding(.top, 100) // Account for fixed header
             }
             
-            // VISUAL: Fixed header overlay
+            // Fixed header overlay
             VStack {
                 headerOverlay
                 Spacer()
@@ -127,16 +113,19 @@ struct WorkerDashboardView: View {
     private var mapBackgroundWithGlass: some View {
         ZStack {
             // Map with current location
-            Map(coordinateRegion: .constant(
+            Map {
+                ForEach(contextAdapter.assignedBuildings, id: \.id) { building in
+                    Annotation("", coordinate: building.coordinate) {
+                        buildingMapBubble(building)
+                    }
+                }
+            }
+            .mapRegion(.constant(
                 MKCoordinateRegion(
                     center: primaryBuilding?.coordinate ?? CLLocationCoordinate2D(latitude: 40.7589, longitude: -73.9851),
                     span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
                 )
-            ), annotationItems: contextAdapter.assignedBuildings) { building in
-                MapAnnotation(coordinate: building.coordinate) {
-                    buildingMapBubble(building)
-                }
-            }
+            ))
             .ignoresSafeArea()
             .opacity(0.4)
             
@@ -519,7 +508,10 @@ struct WorkerDashboardView: View {
     }
     
     private func getUrgentTaskCount() -> Int {
-        return contextAdapter.getUrgentTaskCount()
+        return contextAdapter.todaysTasks.filter { task in
+            guard let urgency = task.urgency else { return false }
+            return urgency == .urgent || urgency == .critical || urgency == .emergency
+        }.count
     }
     
     private func quickClockInButton(for building: NamedCoordinate) -> some View {
@@ -531,7 +523,7 @@ struct WorkerDashboardView: View {
                     print("❌ Failed to clock in: \(error)")
                 }
             }
-        }) {
+        }) {  // Ensure this closing brace and opening brace are correct
             Text(building.name)
                 .font(.caption)
                 .foregroundColor(.white)
@@ -544,14 +536,13 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // FIXED: Use contextAdapter directly instead of non-existent viewModel method
     private func loadWorkerSpecificData() async {
         await viewModel.loadInitialData()
         
-        // FIXED: Update worker name from contextAdapter directly
+        // Update worker name from contextAdapter
         workerName = contextAdapter.currentWorker?.name ?? "Worker"
         
-        // NEW: Determine primary building for current worker
+        // Determine primary building for current worker
         let primary = determinePrimaryBuilding(for: contextAdapter.currentWorker?.id)
         
         // Update UI state
@@ -601,5 +592,15 @@ struct WorkerDashboardView: View {
     
     private func getAllBuildings() -> [NamedCoordinate] {
         return contextAdapter.assignedBuildings
+    }
+}
+
+// MARK: - Preview Provider
+
+struct WorkerDashboardView_Previews: PreviewProvider {
+    static var previews: some View {
+        WorkerDashboardView()
+            .environmentObject(NewAuthManager.shared)
+            .preferredColorScheme(.dark)
     }
 }

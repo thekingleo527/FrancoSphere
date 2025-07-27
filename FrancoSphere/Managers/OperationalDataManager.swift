@@ -1,14 +1,6 @@
 import Foundation
-
-// Type aliases for CoreTypes
-
 import GRDB
-
-// Type aliases for CoreTypes
-
 import Combine
-
-// Type aliases for CoreTypes
 
 // MARK: - Operational Task Assignment Structure (Enhanced) - Namespaced to avoid conflicts
 public struct OperationalDataTaskAssignment: Codable, Hashable {
@@ -47,7 +39,7 @@ public class OperationalDataManager: ObservableObject {
     public static let shared = OperationalDataManager()
     
     // MARK: - Dependencies (GRDB-based)
-    private let grdbManager = GRDBManager.shared  // ← GRDB MIGRATION
+    private let grdbManager = GRDBManager.shared
     private let buildingMetrics = BuildingMetricsService.shared
     
     // MARK: - Published State
@@ -297,10 +289,12 @@ public class OperationalDataManager: ObservableObject {
             currentStatus = "Operations require attention"
         }
     }
+    
     /// Async version of importRoutinesAndDSNY for UnifiedDataService
     public func importRoutinesAndDSNYAsync() async throws -> (routines: Int, dsny: Int) {
         return try await importRoutinesAndDSNY()
     }
+    
     // MARK: - Public API (GRDB Implementation)
     
     /// Initialize operational data using GRDB database as source of truth
@@ -396,25 +390,25 @@ public class OperationalDataManager: ObservableObject {
         case "Daily":
             return date
         case "Weekly":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Bi-Weekly":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Monthly", "Bi-Monthly":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Quarterly":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Semiannual":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "Annual":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         case "On-Demand":
-            let daysToAdd = calculateRealScore()
+            let daysToAdd = calculateFixedScore(for: recurrence)
             return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
         default:
             return date
@@ -556,40 +550,40 @@ public class OperationalDataManager: ObservableObject {
         default: return "9:00 AM - 5:00 PM"
         }
     }
-    // Add these public methods to your OperationalDataManager.swift file
-    // Insert them after the existing private methods
-
+    
     // MARK: - Public API for UnifiedDataService
-
+    
     /// Get all real world tasks (public access)
     public func getAllRealWorldTasks() -> [OperationalDataTaskAssignment] {
         return realWorldTasks
     }
-
+    
     /// Get real world tasks for a specific worker
     public func getRealWorldTasks(for workerName: String) -> [OperationalDataTaskAssignment] {
         return realWorldTasks.filter { $0.assignedWorker == workerName }
     }
-
+    
     /// Get real world tasks for a specific building
     public func getTasksForBuilding(_ buildingName: String) -> [OperationalDataTaskAssignment] {
         return realWorldTasks.filter { $0.building.contains(buildingName) }
     }
-
+    
     /// Get task count for statistics
     public var realWorldTaskCount: Int {
         return realWorldTasks.count
     }
-
+    
     /// Get unique worker names from operational data
     public func getUniqueWorkerNames() -> Set<String> {
         return Set(realWorldTasks.map { $0.assignedWorker })
     }
-
+    
     /// Get unique building names from operational data
     public func getUniqueBuildingNames() -> Set<String> {
         return Set(realWorldTasks.map { $0.building })
-    }    // MARK: - ⭐ PRESERVED: Enhanced Import Methods (GRDB Implementation)
+    }
+    
+    // MARK: - ⭐ PRESERVED: Enhanced Import Methods (GRDB Implementation)
     
     /// Main import function - uses GRDB and preserves ALL original data
     func importRealWorldTasks() async throws -> (imported: Int, errors: [String]) {
@@ -730,7 +724,7 @@ public class OperationalDataManager: ObservableObject {
                         print("📈 Imported \(index + 1)/\(realWorldTasks.count) tasks with GRDB")
                     }
                     
-                    // Allow UI to update periodically
+                    // Allow UI to update periodically - FIXED: Use proper Task.sleep syntax
                     if index % 5 == 0 {
                         try await Task.sleep(nanoseconds: 10_000_000)
                     }
@@ -785,14 +779,18 @@ public class OperationalDataManager: ObservableObject {
         for operationalTask in workerTasks {
             // Get building and worker objects for the task
             let buildingName = operationalTask.building
-            let buildingCoordinate = NamedCoordinate(
-                id: getBuildingIdFromName(operationalTask.building),
+            let buildingId = getBuildingIdFromName(operationalTask.building)
+            
+            // FIXED: Use CoreTypes.NamedCoordinate instead of just NamedCoordinate
+            let buildingCoordinate = CoreTypes.NamedCoordinate(
+                id: buildingId,
                 name: buildingName,
                 latitude: 0.0,
                 longitude: 0.0
             )
             
-            let workerProfile = WorkerProfile(
+            // FIXED: Use CoreTypes.WorkerProfile
+            let workerProfile = CoreTypes.WorkerProfile(
                 id: workerId,
                 name: operationalTask.assignedWorker,
                 email: "",
@@ -805,7 +803,7 @@ public class OperationalDataManager: ObservableObject {
             )
             
             // Map category and urgency
-            let taskCategory: TaskCategory?
+            let taskCategory: CoreTypes.TaskCategory?
             switch operationalTask.category.lowercased() {
             case "cleaning": taskCategory = .cleaning
             case "maintenance": taskCategory = .maintenance
@@ -816,7 +814,7 @@ public class OperationalDataManager: ObservableObject {
             default: taskCategory = .maintenance
             }
             
-            let taskUrgency: TaskUrgency?
+            let taskUrgency: CoreTypes.TaskUrgency?
             switch operationalTask.skillLevel.lowercased() {
             case "basic": taskUrgency = .low
             case "intermediate": taskUrgency = .medium
@@ -1628,8 +1626,8 @@ extension OperationalDataManager {
         }
     }
 }
+
 // MARK: - Missing Function Implementation
-// Add this function to your OperationalDataManager.swift class
 
 /// Calculate realistic scheduling offset for task due dates
 /// Returns number of days to add based on operational scheduling logic
@@ -1659,9 +1657,6 @@ private func calculateRealScore() -> Int {
     }
 }
 
-// MARK: - Alternative: Fixed Implementation
-// If you prefer consistent scheduling without randomness:
-
 /// Calculate fixed scheduling offset for predictable task scheduling
 private func calculateFixedScore(for recurrence: String) -> Int {
     switch recurrence {
@@ -1688,48 +1683,12 @@ private func calculateFixedScore(for recurrence: String) -> Int {
     }
 }
 
-// MARK: - Updated calculateDueDate Method
-// Replace your existing calculateDueDate method with this corrected version:
-
-/// Calculate appropriate due date based on recurrence and day pattern
-private func calculateDueDate(for recurrence: String, from date: Date) -> Date {
-    let calendar = Calendar.current
-    
-    switch recurrence {
-    case "Daily":
-        return date
-    case "Weekly":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    case "Bi-Weekly":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    case "Monthly", "Bi-Monthly":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    case "Quarterly":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    case "Semiannual":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    case "Annual":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    case "On-Demand":
-        let daysToAdd = calculateFixedScore(for: recurrence)
-        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
-    default:
-        return date
-    }
-}
 // MARK: - Extension for Additional Helper Methods
-// Remove duplicate methods and keep only new functionality
 
 extension OperationalDataManager {
     
     /// Get building coordinate for a building name
-    private func getBuildingCoordinate(for buildingName: String) async -> NamedCoordinate? {
+    private func getBuildingCoordinate(for buildingName: String) async -> CoreTypes.NamedCoordinate? {
         do {
             let buildings = try await BuildingService.shared.getAllBuildings()
             return buildings.first { building in
@@ -1743,7 +1702,7 @@ extension OperationalDataManager {
     }
     
     /// Map operational category to TaskCategory
-    private func mapToTaskCategory(_ category: String) -> TaskCategory {
+    private func mapToTaskCategory(_ category: String) -> CoreTypes.TaskCategory {
         switch category.lowercased() {
         case "cleaning": return .cleaning
         case "maintenance": return .maintenance
@@ -1755,7 +1714,7 @@ extension OperationalDataManager {
     }
     
     /// Map skill level to urgency
-    private func mapSkillLevelToUrgency(_ skillLevel: String) -> TaskUrgency {
+    private func mapSkillLevelToUrgency(_ skillLevel: String) -> CoreTypes.TaskUrgency {
         switch skillLevel.lowercased() {
         case "basic": return .low
         case "intermediate": return .medium
@@ -1783,59 +1742,5 @@ extension OperationalDataManager {
         description += " - \(task.recurrence)"
         
         return description
-    }
-    
-    /// Calculate realistic scheduling offset for task due dates
-    /// Returns number of days to add based on operational scheduling logic
-    private func calculateRealScore() -> Int {
-        let calendar = Calendar.current
-        let today = Date()
-        let dayOfWeek = calendar.component(.weekday, from: today)
-        
-        // Smart scheduling logic based on operational patterns
-        switch dayOfWeek {
-        case 1: // Sunday - Schedule for Monday
-            return 1
-        case 2: // Monday - Schedule for same day or next day
-            return Int.random(in: 0...1)
-        case 3: // Tuesday - Schedule within 2 days
-            return Int.random(in: 0...2)
-        case 4: // Wednesday - Schedule within 3 days
-            return Int.random(in: 0...3)
-        case 5: // Thursday - Schedule for Friday or Monday
-            return Int.random(in: 1...4)
-        case 6: // Friday - Schedule for Monday
-            return 3
-        case 7: // Saturday - Schedule for Monday
-            return 2
-        default:
-            return 1
-        }
-    }
-    
-    /// Calculate fixed scheduling offset for predictable task scheduling
-    private func calculateFixedScore(for recurrence: String) -> Int {
-        switch recurrence {
-        case "Daily":
-            return 0 // Same day
-        case "Weekly":
-            return 7 // Next week
-        case "Bi-Weekly":
-            return 14 // Two weeks
-        case "Monthly":
-            return 30 // Next month
-        case "Bi-Monthly":
-            return 60 // Two months
-        case "Quarterly":
-            return 90 // Three months
-        case "Semiannual":
-            return 180 // Six months
-        case "Annual":
-            return 365 // Next year
-        case "On-Demand":
-            return 1 // Next day
-        default:
-            return 1
-        }
     }
 }
