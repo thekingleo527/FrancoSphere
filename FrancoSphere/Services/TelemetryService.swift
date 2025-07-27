@@ -13,6 +13,55 @@ import OSLog
 import UIKit
 import CoreLocation
 
+// MARK: - Supporting Types & Enums (MOVED TO TOP)
+
+enum TelemetryCategory: String, CaseIterable {
+    case general = "General"
+    case dashboard = "Dashboard"
+    case dataLoading = "DataLoading"
+    case userInterface = "UserInterface"
+    case database = "Database"
+    case networking = "Networking"
+    case security = "Security"
+    case kevinWorkflow = "KevinWorkflow"
+}
+
+enum DashboardPhase: String, CaseIterable {
+    case initialization = "Initialization"
+    case workerAuth = "WorkerAuth"
+    case buildingLoad = "BuildingLoad"
+    case taskLoad = "TaskLoad"
+    case uiRender = "UIRender"
+    case complete = "Complete"
+}
+
+enum KevinWorkflowAction: String, CaseIterable {
+    case login = "Login"
+    case loadAssignments = "LoadAssignments"
+    case validateRubinMuseum = "ValidateRubinMuseum"
+    case loadTasks = "LoadTasks"
+    case completeTask = "CompleteTask"
+    case clockIn = "ClockIn"
+    case clockOut = "ClockOut"
+}
+
+enum PerformanceAlertType: String {
+    case dashboardLoadSlow = "DashboardLoadSlow"
+    case operationSlow = "OperationSlow"
+    case memorySpike = "MemorySpike"
+    case memoryBudgetExceeded = "MemoryBudgetExceeded"
+    case memoryWarning = "MemoryWarning"
+    case kevinWorkflowSlow = "KevinWorkflowSlow"
+}
+
+enum AlertSeverity: String {
+    case info = "Info"
+    case warning = "Warning"
+    case critical = "Critical"
+}
+
+// MARK: - Data Structures
+
 struct EventRecord {
     let category: TelemetryCategory
     let operation: String
@@ -50,8 +99,9 @@ private class MemoryWarningObserver {
     }
     
     @objc private func handleMemoryWarning() {
-        // Simple async call without Task wrapper
-        TelemetryService.shared.handleMemoryWarningSync()
+        Task {
+            await TelemetryService.shared.handleMemoryWarning()
+        }
     }
     
     deinit {
@@ -95,16 +145,12 @@ actor TelemetryService {
     // Initialize the service
     func initialize() async {
         guard !isInitialized else { return }
-        await setupMemoryWarningMonitoring()
+        
+        // Create the memory observer (it sets up its own notifications)
+        self.memoryObserver = MemoryWarningObserver()
+        
         await startSessionTracking()
         isInitialized = true
-    }
-    
-    // Add the missing handleMemoryWarningSync method
-    nonisolated func handleMemoryWarningSync() {
-        Task {
-            await self.handleMemoryWarning()
-        }
     }
     
     // MARK: - Core Operation Tracking
@@ -647,54 +693,7 @@ actor TelemetryService {
     }
 }
 
-// MARK: - Supporting Types & Enums
-
-enum TelemetryCategory: String, CaseIterable {
-    case general = "General"
-    case dashboard = "Dashboard"
-    case dataLoading = "DataLoading"
-    case userInterface = "UserInterface"
-    case database = "Database"
-    case networking = "Networking"
-    case security = "Security"
-    case kevinWorkflow = "KevinWorkflow"
-}
-
-enum DashboardPhase: String, CaseIterable {
-    case initialization = "Initialization"
-    case workerAuth = "WorkerAuth"
-    case buildingLoad = "BuildingLoad"
-    case taskLoad = "TaskLoad"
-    case uiRender = "UIRender"
-    case complete = "Complete"
-}
-
-enum KevinWorkflowAction: String, CaseIterable {
-    case login = "Login"
-    case loadAssignments = "LoadAssignments"
-    case validateRubinMuseum = "ValidateRubinMuseum"
-    case loadTasks = "LoadTasks"
-    case completeTask = "CompleteTask"
-    case clockIn = "ClockIn"
-    case clockOut = "ClockOut"
-}
-
-enum PerformanceAlertType: String {
-    case dashboardLoadSlow = "DashboardLoadSlow"
-    case operationSlow = "OperationSlow"
-    case memorySpike = "MemorySpike"
-    case memoryBudgetExceeded = "MemoryBudgetExceeded"
-    case memoryWarning = "MemoryWarning"
-    case kevinWorkflowSlow = "KevinWorkflowSlow"
-}
-
-enum AlertSeverity: String {
-    case info = "Info"
-    case warning = "Warning"
-    case critical = "Critical"
-}
-
-// MARK: - Data Structures
+// MARK: - Additional Data Structures
 
 struct OperationMetrics {
     let operation: String
