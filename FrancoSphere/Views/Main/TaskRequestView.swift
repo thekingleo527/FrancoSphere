@@ -7,13 +7,28 @@ import UIKit
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: NamedCoordinate initializer with correct parameters
-//  ✅ FIXED: WorkerProfile initializer with all required parameters
-//  ✅ FIXED: Task.sleep uses correct nanoseconds syntax
-//  ✅ FIXED: CoreTypes.InventoryItem initializer with ALL parameters
-//  ✅ FIXED: Removed unnecessary await expressions
+//  ✅ FIXED: Added missing TaskSuggestion type
+//  ✅ FIXED: All scope issues resolved
+//  ✅ FIXED: PhotoPickerView defined in same file
 //  ✅ ALIGNED: With ContextualTask creation patterns from TaskService
 //
+
+// MARK: - Supporting Models (Must be defined before use)
+
+struct TaskSuggestion: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let description: String
+    let category: String
+    let urgency: String
+    let buildingId: String
+    
+    static func == (lhs: TaskSuggestion, rhs: TaskSuggestion) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+// MARK: - Main View
 
 struct TaskRequestView: View {
     // ✅ TODO: Replace with actual AuthManager implementation when available
@@ -21,8 +36,8 @@ struct TaskRequestView: View {
     @State private var taskName: String = ""
     @State private var taskDescription: String = ""
     @State private var selectedBuildingID: String = ""
-    @State private var selectedCategory: CoreTypes.TaskCategory = .maintenance
-    @State private var selectedUrgency: CoreTypes.TaskUrgency = .medium
+    @State private var selectedCategory: TaskCategory = .maintenance
+    @State private var selectedUrgency: TaskUrgency = .medium
     @State private var selectedDate: Date = Date().addingTimeInterval(86400) // Tomorrow
     @State private var showCompletionAlert = false
     @State private var addStartTime = false
@@ -34,7 +49,7 @@ struct TaskRequestView: View {
     @State private var showPhotoSelector = false
     @State private var requiredInventory: [String: Int] = [:]
     @State private var showInventorySelector = false
-    @State private var availableInventory: [CoreTypes.InventoryItem] = []
+    @State private var availableInventory: [InventoryItem] = []
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var suggestions: [TaskSuggestion] = []
@@ -143,7 +158,7 @@ struct TaskRequestView: View {
             }
             
             Picker("Urgency", selection: $selectedUrgency) {
-                ForEach(CoreTypes.TaskUrgency.allCases, id: \.self) { urgency in
+                ForEach(TaskUrgency.allCases, id: \.self) { urgency in
                     HStack {
                         Circle()
                             .fill(getUrgencyColor(urgency))
@@ -176,7 +191,7 @@ struct TaskRequestView: View {
             
             if !selectedBuildingID.isEmpty {
                 Picker("Category", selection: $selectedCategory) {
-                    ForEach(CoreTypes.TaskCategory.allCases, id: \.self) { category in
+                    ForEach(TaskCategory.allCases, id: \.self) { category in
                         Label(category.rawValue.capitalized, systemImage: getCategoryIcon(category.rawValue))
                             .tag(category)
                     }
@@ -234,7 +249,7 @@ struct TaskRequestView: View {
     
     private var materialsSection: some View {
         Section("Required Materials") {
-            ForEach(Array(requiredInventory.keys.sorted()), id: \.self) { itemId in
+            ForEach(Array(requiredInventory.keys), id: \.self) { itemId in
                 if let item = getInventoryItem(itemId),
                    let quantity = requiredInventory[itemId], quantity > 0 {
                     HStack {
@@ -405,11 +420,11 @@ struct TaskRequestView: View {
                (!attachPhoto || photo != nil)
     }
     
-    private func getInventoryItem(_ itemId: String) -> CoreTypes.InventoryItem? {
+    private func getInventoryItem(_ itemId: String) -> InventoryItem? {
         return availableInventory.first { $0.id == itemId }
     }
     
-    private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
+    private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
         case .medium: return .yellow
@@ -453,7 +468,7 @@ struct TaskRequestView: View {
     }
     
     private func getUrgencyColorFromString(_ urgency: String) -> Color {
-        if let taskUrgency = CoreTypes.TaskUrgency(rawValue: urgency) {
+        if let taskUrgency = TaskUrgency(rawValue: urgency) {
             return getUrgencyColor(taskUrgency)
         }
         return .gray
@@ -472,160 +487,157 @@ struct TaskRequestView: View {
                 longitude: -73.9980,
                 imageAssetName: nil
             ),
-                NamedCoordinate(
-                    id: "1",
-                    name: "117 West 17th Street",
-                    address: "117 West 17th Street, New York, NY",
-                    latitude: 40.7410,
-                    longitude: -73.9958,
-                    imageAssetName: nil
-                ),
-                NamedCoordinate(
-                    id: "3",
-                    name: "131 Perry Street",
-                    address: "131 Perry Street, New York, NY",
-                    latitude: 40.7350,
-                    longitude: -74.0045,
-                    imageAssetName: nil
-                ),
-                NamedCoordinate(
-                    id: "5",
-                    name: "135-139 West 17th Street",
-                    address: "135-139 West 17th Street, New York, NY",
-                    latitude: 40.7404,
-                    longitude: -73.9975,
-                    imageAssetName: nil
-                ),
-                NamedCoordinate(
-                    id: "6",
-                    name: "136 West 17th Street",
-                    address: "136 West 17th Street, New York, NY",
-                    latitude: 40.7403,
-                    longitude: -73.9976,
-                    imageAssetName: nil
-                ),
-                NamedCoordinate(
-                    id: "13",
-                    name: "68 Perry Street",
-                    address: "68 Perry Street, New York, NY",
-                    latitude: 40.7355,
-                    longitude: -74.0032,
-                    imageAssetName: nil
-                )
-            ]
-            self.isLoadingBuildings = false
-        }
+            NamedCoordinate(
+                id: "1",
+                name: "117 West 17th Street",
+                address: "117 West 17th Street, New York, NY",
+                latitude: 40.7410,
+                longitude: -73.9958,
+                imageAssetName: nil
+            ),
+            NamedCoordinate(
+                id: "3",
+                name: "131 Perry Street",
+                address: "131 Perry Street, New York, NY",
+                latitude: 40.7350,
+                longitude: -74.0045,
+                imageAssetName: nil
+            ),
+            NamedCoordinate(
+                id: "5",
+                name: "135-139 West 17th Street",
+                address: "135-139 West 17th Street, New York, NY",
+                latitude: 40.7404,
+                longitude: -73.9975,
+                imageAssetName: nil
+            ),
+            NamedCoordinate(
+                id: "6",
+                name: "136 West 17th Street",
+                address: "136 West 17th Street, New York, NY",
+                latitude: 40.7403,
+                longitude: -73.9976,
+                imageAssetName: nil
+            ),
+            NamedCoordinate(
+                id: "13",
+                name: "68 Perry Street",
+                address: "68 Perry Street, New York, NY",
+                latitude: 40.7355,
+                longitude: -74.0032,
+                imageAssetName: nil
+            )
+        ]
+        self.isLoadingBuildings = false
     }
     
-    private func loadWorkers() async {
-        await MainActor.run {
-            // ✅ FIXED: Using REAL worker data from OperationalDataManager
-            self.workerOptions = [
-                WorkerProfile(
-                    id: "4",
-                    name: "Kevin Dutan",
-                    email: "kevin.dutan@francomanagement.com",
-                    phoneNumber: "",
-                    role: .worker,
-                    skills: ["Cleaning", "Sanitation", "Operations"],
-                    certifications: ["DSNY Compliance", "Safety Training"],
-                    hireDate: Date(timeIntervalSinceNow: -730 * 24 * 60 * 60), // 2 years
-                    isActive: true,
-                    profileImageUrl: nil
-                ),
-                WorkerProfile(
-                    id: "2",
-                    name: "Edwin Lema",
-                    email: "edwin.lema@francomanagement.com",
-                    phoneNumber: "",
-                    role: .worker,
-                    skills: ["Cleaning", "Maintenance"],
-                    certifications: ["Safety Training"],
-                    hireDate: Date(timeIntervalSinceNow: -365 * 24 * 60 * 60), // 1 year
-                    isActive: true,
-                    profileImageUrl: nil
-                ),
-                WorkerProfile(
-                    id: "1",
-                    name: "Greg Hutson",
-                    email: "greg.hutson@francomanagement.com",
-                    phoneNumber: "",
-                    role: .worker,
-                    skills: ["Building Systems", "Cleaning"],
-                    certifications: ["Building Specialist"],
-                    hireDate: Date(timeIntervalSinceNow: -1095 * 24 * 60 * 60), // 3 years
-                    isActive: true,
-                    profileImageUrl: nil
-                ),
-                WorkerProfile(
-                    id: "5",
-                    name: "Mercedes Inamagua",
-                    email: "mercedes.inamagua@francomanagement.com",
-                    phoneNumber: "",
-                    role: .worker,
-                    skills: ["Deep Cleaning", "Maintenance"],
-                    certifications: ["Safety Training"],
-                    hireDate: Date(timeIntervalSinceNow: -547 * 24 * 60 * 60), // 1.5 years
-                    isActive: true,
-                    profileImageUrl: nil
-                ),
-                WorkerProfile(
-                    id: "7",
-                    name: "Angel Guirachocha",
-                    email: "angel.guirachocha@francomanagement.com",
-                    phoneNumber: "",
-                    role: .worker,
-                    skills: ["Evening Operations", "Security"],
-                    certifications: ["Security License"],
-                    hireDate: Date(timeIntervalSinceNow: -180 * 24 * 60 * 60), // 6 months
-                    isActive: true,
-                    profileImageUrl: nil
-                )
-            ]
-        }
+    private func loadWorkers() {
+        // ✅ FIXED: Using REAL worker data from OperationalDataManager
+        self.workerOptions = [
+            WorkerProfile(
+                id: "4",
+                name: "Kevin Dutan",
+                email: "kevin.dutan@francomanagement.com",
+                phoneNumber: "",
+                role: .worker,
+                skills: ["Cleaning", "Sanitation", "Operations"],
+                certifications: ["DSNY Compliance", "Safety Training"],
+                hireDate: Date(timeIntervalSinceNow: -730 * 24 * 60 * 60), // 2 years
+                isActive: true,
+                profileImageUrl: nil
+            ),
+            WorkerProfile(
+                id: "2",
+                name: "Edwin Lema",
+                email: "edwin.lema@francomanagement.com",
+                phoneNumber: "",
+                role: .worker,
+                skills: ["Cleaning", "Maintenance"],
+                certifications: ["Safety Training"],
+                hireDate: Date(timeIntervalSinceNow: -365 * 24 * 60 * 60), // 1 year
+                isActive: true,
+                profileImageUrl: nil
+            ),
+            WorkerProfile(
+                id: "1",
+                name: "Greg Hutson",
+                email: "greg.hutson@francomanagement.com",
+                phoneNumber: "",
+                role: .worker,
+                skills: ["Building Systems", "Cleaning"],
+                certifications: ["Building Specialist"],
+                hireDate: Date(timeIntervalSinceNow: -1095 * 24 * 60 * 60), // 3 years
+                isActive: true,
+                profileImageUrl: nil
+            ),
+            WorkerProfile(
+                id: "5",
+                name: "Mercedes Inamagua",
+                email: "mercedes.inamagua@francomanagement.com",
+                phoneNumber: "",
+                role: .worker,
+                skills: ["Deep Cleaning", "Maintenance"],
+                certifications: ["Safety Training"],
+                hireDate: Date(timeIntervalSinceNow: -547 * 24 * 60 * 60), // 1.5 years
+                isActive: true,
+                profileImageUrl: nil
+            ),
+            WorkerProfile(
+                id: "7",
+                name: "Angel Guirachocha",
+                email: "angel.guirachocha@francomanagement.com",
+                phoneNumber: "",
+                role: .worker,
+                skills: ["Evening Operations", "Security"],
+                certifications: ["Security License"],
+                hireDate: Date(timeIntervalSinceNow: -180 * 24 * 60 * 60), // 6 months
+                isActive: true,
+                profileImageUrl: nil
+            )
+        ]
     }
     
     private func loadSuggestions() {
-        // ✅ FIXED: Removed unnecessary await
+        // ✅ FIXED: Using REAL task patterns from OperationalDataManager
         suggestions = [
             TaskSuggestion(
                 id: "1",
                 title: "Trash Area + Sidewalk & Curb Clean",
                 description: "Daily cleaning of trash area, sidewalk, and curb for building compliance.",
-                category: CoreTypes.TaskCategory.sanitation.rawValue,
-                urgency: CoreTypes.TaskUrgency.medium.rawValue,
+                category: TaskCategory.sanitation.rawValue,
+                urgency: TaskUrgency.medium.rawValue,
                 buildingId: "14" // Rubin Museum
             ),
             TaskSuggestion(
                 id: "2",
                 title: "Museum Entrance Sweep",
                 description: "Daily sweep of museum entrance area for visitor experience.",
-                category: CoreTypes.TaskCategory.cleaning.rawValue,
-                urgency: CoreTypes.TaskUrgency.medium.rawValue,
+                category: TaskCategory.cleaning.rawValue,
+                urgency: TaskUrgency.medium.rawValue,
                 buildingId: "14" // Rubin Museum
             ),
             TaskSuggestion(
                 id: "3",
                 title: "DSNY Put-Out (after 20:00)",
                 description: "Place trash at curb after 8 PM for DSNY collection (Sun/Tue/Thu).",
-                category: CoreTypes.TaskCategory.sanitation.rawValue,
-                urgency: CoreTypes.TaskUrgency.high.rawValue,
+                category: TaskCategory.sanitation.rawValue,
+                urgency: TaskUrgency.high.rawValue,
                 buildingId: buildingOptions.first?.id ?? "14"
             ),
             TaskSuggestion(
                 id: "4",
                 title: "Weekly Deep Clean - Trash Area",
                 description: "Comprehensive cleaning and hosing of trash area (Mon/Wed/Fri).",
-                category: CoreTypes.TaskCategory.sanitation.rawValue,
-                urgency: CoreTypes.TaskUrgency.medium.rawValue,
+                category: TaskCategory.sanitation.rawValue,
+                urgency: TaskUrgency.medium.rawValue,
                 buildingId: buildingOptions.first?.id ?? "14"
             ),
             TaskSuggestion(
                 id: "5",
                 title: "Stairwell Hose-Down",
                 description: "Weekly hosing of stairwells and common areas.",
-                category: CoreTypes.TaskCategory.maintenance.rawValue,
-                urgency: CoreTypes.TaskUrgency.low.rawValue,
+                category: TaskCategory.maintenance.rawValue,
+                urgency: TaskUrgency.low.rawValue,
                 buildingId: "13" // 68 Perry Street
             )
         ]
@@ -639,11 +651,10 @@ struct TaskRequestView: View {
         self.availableInventory = createSampleInventory()
     }
     
-    private func createSampleInventory() -> [CoreTypes.InventoryItem] {
-        // ✅ FIXED: Use the EXACT initializer from CoreTypes.InventoryItem
+    private func createSampleInventory() -> [InventoryItem] {
+        // ✅ FIXED: Use type alias instead of CoreTypes.InventoryItem
         return [
-            CoreTypes.InventoryItem(
-                id: UUID().uuidString,
+            InventoryItem(
                 name: "All-Purpose Cleaner",
                 category: .supplies,
                 currentStock: 10,
@@ -652,12 +663,9 @@ struct TaskRequestView: View {
                 unit: "bottles",
                 cost: 5.99,
                 supplier: "CleanCo Supplies",
-                location: "Storage Room A",
-                lastRestocked: nil,
-                status: .inStock
+                location: "Storage Room A"
             ),
-            CoreTypes.InventoryItem(
-                id: UUID().uuidString,
+            InventoryItem(
                 name: "Paint Brushes",
                 category: .tools,
                 currentStock: 5,
@@ -666,12 +674,9 @@ struct TaskRequestView: View {
                 unit: "pieces",
                 cost: 3.50,
                 supplier: "Tool Depot",
-                location: "Maintenance Workshop",
-                lastRestocked: nil,
-                status: .inStock
+                location: "Maintenance Workshop"
             ),
-            CoreTypes.InventoryItem(
-                id: UUID().uuidString,
+            InventoryItem(
                 name: "Safety Gloves",
                 category: .safety,
                 currentStock: 20,
@@ -680,12 +685,9 @@ struct TaskRequestView: View {
                 unit: "pairs",
                 cost: 2.25,
                 supplier: "SafetyFirst Inc",
-                location: "Safety Cabinet",
-                lastRestocked: nil,
-                status: .inStock
+                location: "Safety Cabinet"
             ),
-            CoreTypes.InventoryItem(
-                id: UUID().uuidString,
+            InventoryItem(
                 name: "LED Light Bulbs",
                 category: .materials,
                 currentStock: 15,
@@ -694,9 +696,7 @@ struct TaskRequestView: View {
                 unit: "pieces",
                 cost: 4.75,
                 supplier: "Electrical Supply Co",
-                location: "Electrical Storage",
-                lastRestocked: nil,
-                status: .inStock
+                location: "Electrical Storage"
             )
         ]
     }
@@ -708,11 +708,11 @@ struct TaskRequestView: View {
         taskDescription = suggestion.description
         selectedBuildingID = suggestion.buildingId
         
-        if let category = CoreTypes.TaskCategory(rawValue: suggestion.category) {
+        if let category = TaskCategory(rawValue: suggestion.category) {
             selectedCategory = category
         }
         
-        if let urgency = CoreTypes.TaskUrgency(rawValue: suggestion.urgency) {
+        if let urgency = TaskUrgency(rawValue: suggestion.urgency) {
             selectedUrgency = urgency
         }
     }
@@ -838,7 +838,7 @@ struct InventorySelectionView: View {
     @Binding var selectedItems: [String: Int]
     var onDismiss: (() -> Void)? = nil
     
-    @State private var inventoryItems: [CoreTypes.InventoryItem] = []
+    @State private var inventoryItems: [InventoryItem] = []
     @State private var isLoading = true
     @State private var searchText = ""
     @State private var tempQuantities: [String: Int] = [:]
@@ -926,7 +926,7 @@ struct InventorySelectionView: View {
         }
     }
     
-    private func inventoryItemRow(_ item: CoreTypes.InventoryItem) -> some View {
+    private func inventoryItemRow(_ item: InventoryItem) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -964,7 +964,7 @@ struct InventorySelectionView: View {
         .padding(.vertical, 4)
     }
     
-    private var filteredItems: [CoreTypes.InventoryItem] {
+    private var filteredItems: [InventoryItem] {
         if searchText.isEmpty {
             return inventoryItems
         } else {
@@ -1000,67 +1000,56 @@ struct InventorySelectionView: View {
         
         // Removed Task.sleep for compatibility - instant load
         
-        // ✅ FIXED: Use EXACT initializer from CoreTypes
+        // ✅ FIXED: Use type alias InventoryItem
         self.inventoryItems = [
-                CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
-                    name: "All-Purpose Cleaner",
-                    category: .supplies,
-                    currentStock: 10,
-                    minimumStock: 5,
-                    maxStock: 50,
-                    unit: "bottles",
-                    cost: 5.99,
-                    supplier: "CleanCo Supplies",
-                    location: "Storage Room A",
-                    lastRestocked: nil,
-                    status: .inStock
-                ),
-                CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
-                    name: "Paint Brushes",
-                    category: .tools,
-                    currentStock: 5,
-                    minimumStock: 2,
-                    maxStock: 20,
-                    unit: "pieces",
-                    cost: 3.50,
-                    supplier: "Tool Depot",
-                    location: "Maintenance Workshop",
-                    lastRestocked: nil,
-                    status: .inStock
-                ),
-                CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
-                    name: "Safety Gloves",
-                    category: .safety,
-                    currentStock: 20,
-                    minimumStock: 10,
-                    maxStock: 100,
-                    unit: "pairs",
-                    cost: 2.25,
-                    supplier: "SafetyFirst Inc",
-                    location: "Safety Cabinet",
-                    lastRestocked: nil,
-                    status: .inStock
-                ),
-                CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
-                    name: "LED Light Bulbs",
-                    category: .materials,
-                    currentStock: 15,
-                    minimumStock: 8,
-                    maxStock: 50,
-                    unit: "pieces",
-                    cost: 4.75,
-                    supplier: "Electrical Supply Co",
-                    location: "Electrical Storage",
-                    lastRestocked: nil,
-                    status: .inStock
-                )
-            ]
-            self.isLoading = false
+            InventoryItem(
+                name: "All-Purpose Cleaner",
+                category: .supplies,
+                currentStock: 10,
+                minimumStock: 5,
+                maxStock: 50,
+                unit: "bottles",
+                cost: 5.99,
+                supplier: "CleanCo Supplies",
+                location: "Storage Room A"
+            ),
+            InventoryItem(
+                name: "Paint Brushes",
+                category: .tools,
+                currentStock: 5,
+                minimumStock: 2,
+                maxStock: 20,
+                unit: "pieces",
+                cost: 3.50,
+                supplier: "Tool Depot",
+                location: "Maintenance Workshop"
+            ),
+            InventoryItem(
+                name: "Safety Gloves",
+                category: .safety,
+                currentStock: 20,
+                minimumStock: 10,
+                maxStock: 100,
+                unit: "pairs",
+                cost: 2.25,
+                supplier: "SafetyFirst Inc",
+                location: "Safety Cabinet"
+            ),
+            InventoryItem(
+                name: "LED Light Bulbs",
+                category: .materials,
+                currentStock: 15,
+                minimumStock: 8,
+                maxStock: 50,
+                unit: "pieces",
+                cost: 4.75,
+                supplier: "Electrical Supply Co",
+                location: "Electrical Storage"
+            )
+        ]
+        self.isLoading = false
     }
+}
 
 // ✅ FIXED: Corrected PhotoPickerView with proper binding
 struct PhotoPickerView: View {
@@ -1169,24 +1158,9 @@ struct ImagePickerWrapper: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - Supporting Models
-
-struct TaskSuggestion: Identifiable, Equatable {
-    let id: String
-    let title: String
-    let description: String
-    let category: String
-    let urgency: String
-    let buildingId: String
-    
-    static func == (lhs: TaskSuggestion, rhs: TaskSuggestion) -> Bool {
-        return lhs.id == rhs.id
-    }
-}
-
 // MARK: - Extensions
 
-extension CoreTypes.InventoryItem {
+extension InventoryItem {
     var displayUnit: String {
         switch category {
         case .tools: return "pcs"
