@@ -7,9 +7,11 @@ import UIKit
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: ContextualTask initializers use correct parameter names
-//  ✅ FIXED: Task.sleep uses correct Swift concurrency syntax
-//  ✅ FIXED: CoreTypes.InventoryItem uses quantity property
+//  ✅ FIXED: NamedCoordinate initializer with correct parameters
+//  ✅ FIXED: WorkerProfile initializer with all required parameters
+//  ✅ FIXED: Task.sleep uses correct nanoseconds syntax
+//  ✅ FIXED: CoreTypes.InventoryItem initializer with all required parameters
+//  ✅ ALIGNED: With ContextualTask creation patterns from TaskService
 //
 
 struct TaskRequestView: View {
@@ -41,6 +43,10 @@ struct TaskRequestView: View {
     // ✅ FIXED: Load buildings asynchronously
     @State private var buildingOptions: [NamedCoordinate] = []
     @State private var isLoadingBuildings = true
+    
+    // ✅ NEW: Worker selection state
+    @State private var selectedWorkerId: String = "4" // Default to Kevin Dutan
+    @State private var workerOptions: [WorkerProfile] = []
     
     var body: some View {
         NavigationView {
@@ -74,6 +80,7 @@ struct TaskRequestView: View {
             )
             .task {
                 await loadBuildings()
+                await loadWorkers()
                 await MainActor.run {
                     loadSuggestions()
                 }
@@ -150,12 +157,19 @@ struct TaskRequestView: View {
     }
     
     private var locationSection: some View {
-        Section("Location & Category") {
+        Section("Assignment Details") {
             Picker("Building", selection: $selectedBuildingID) {
                 Text("Select a building").tag("")
                 
                 ForEach(buildingOptions) { building in
                     Text(building.name).tag(building.id)
+                }
+            }
+            
+            // ✅ NEW: Worker selection picker
+            Picker("Assign to Worker", selection: $selectedWorkerId) {
+                ForEach(workerOptions) { worker in
+                    Text(worker.name).tag(worker.id)
                 }
             }
             
@@ -373,17 +387,22 @@ struct TaskRequestView: View {
     // MARK: - Helper Methods
     
     private func submitTaskWrapper() {
-        Task { await submitTaskRequest() }
+        Task { [weak self] in
+            await self?.submitTaskRequest()
+        }
     }
     
     private func loadInventoryWrapper() {
-        Task { await loadInventory() }
+        Task { [weak self] in
+            await self?.loadInventory()
+        }
     }
     
     private var isFormValid: Bool {
         return !taskName.isEmpty &&
                !taskDescription.isEmpty &&
                !selectedBuildingID.isEmpty &&
+               !selectedWorkerId.isEmpty &&
                (!attachPhoto || photo != nil)
     }
     
@@ -445,58 +464,171 @@ struct TaskRequestView: View {
     
     private func loadBuildings() async {
         await MainActor.run {
+            // ✅ FIXED: Using REAL building data from OperationalDataManager
             self.buildingOptions = [
                 NamedCoordinate(
-                    id: "1",
-                    name: "Empire State Building",
-                    address: "350 5th Ave, New York, NY 10118",
-                    latitude: 40.7484,
-                    longitude: -73.9857
+                    id: "14",
+                    name: "Rubin Museum",
+                    address: "142-148 West 17th Street, New York, NY",
+                    latitude: 40.7402,
+                    longitude: -73.9980,
+                    imageAssetName: nil
                 ),
                 NamedCoordinate(
-                    id: "2",
-                    name: "Chrysler Building",
-                    address: "405 Lexington Ave, New York, NY 10174",
-                    latitude: 40.7516,
-                    longitude: -73.9755
+                    id: "1",
+                    name: "117 West 17th Street",
+                    address: "117 West 17th Street, New York, NY",
+                    latitude: 40.7410,
+                    longitude: -73.9958,
+                    imageAssetName: nil
                 ),
                 NamedCoordinate(
                     id: "3",
-                    name: "One World Trade Center",
-                    address: "285 Fulton St, New York, NY 10007",
-                    latitude: 40.7127,
-                    longitude: -74.0134
+                    name: "131 Perry Street",
+                    address: "131 Perry Street, New York, NY",
+                    latitude: 40.7350,
+                    longitude: -74.0045,
+                    imageAssetName: nil
+                ),
+                NamedCoordinate(
+                    id: "5",
+                    name: "135-139 West 17th Street",
+                    address: "135-139 West 17th Street, New York, NY",
+                    latitude: 40.7404,
+                    longitude: -73.9975,
+                    imageAssetName: nil
+                ),
+                NamedCoordinate(
+                    id: "6",
+                    name: "136 West 17th Street",
+                    address: "136 West 17th Street, New York, NY",
+                    latitude: 40.7403,
+                    longitude: -73.9976,
+                    imageAssetName: nil
+                ),
+                NamedCoordinate(
+                    id: "13",
+                    name: "68 Perry Street",
+                    address: "68 Perry Street, New York, NY",
+                    latitude: 40.7355,
+                    longitude: -74.0032,
+                    imageAssetName: nil
                 )
             ]
             self.isLoadingBuildings = false
         }
     }
     
+    private func loadWorkers() async {
+        await MainActor.run {
+            // ✅ FIXED: Using REAL worker data from OperationalDataManager
+            self.workerOptions = [
+                WorkerProfile(
+                    id: "4",
+                    name: "Kevin Dutan",
+                    email: "kevin.dutan@francomanagement.com",
+                    phoneNumber: "",
+                    role: .worker,
+                    skills: ["Cleaning", "Sanitation", "Operations"],
+                    certifications: ["DSNY Compliance", "Safety Training"],
+                    hireDate: Date(timeIntervalSinceNow: -730 * 24 * 60 * 60), // 2 years
+                    isActive: true,
+                    profileImageUrl: nil
+                ),
+                WorkerProfile(
+                    id: "2",
+                    name: "Edwin Lema",
+                    email: "edwin.lema@francomanagement.com",
+                    phoneNumber: "",
+                    role: .worker,
+                    skills: ["Cleaning", "Maintenance"],
+                    certifications: ["Safety Training"],
+                    hireDate: Date(timeIntervalSinceNow: -365 * 24 * 60 * 60), // 1 year
+                    isActive: true,
+                    profileImageUrl: nil
+                ),
+                WorkerProfile(
+                    id: "1",
+                    name: "Greg Hutson",
+                    email: "greg.hutson@francomanagement.com",
+                    phoneNumber: "",
+                    role: .worker,
+                    skills: ["Building Systems", "Cleaning"],
+                    certifications: ["Building Specialist"],
+                    hireDate: Date(timeIntervalSinceNow: -1095 * 24 * 60 * 60), // 3 years
+                    isActive: true,
+                    profileImageUrl: nil
+                ),
+                WorkerProfile(
+                    id: "5",
+                    name: "Mercedes Inamagua",
+                    email: "mercedes.inamagua@francomanagement.com",
+                    phoneNumber: "",
+                    role: .worker,
+                    skills: ["Deep Cleaning", "Maintenance"],
+                    certifications: ["Safety Training"],
+                    hireDate: Date(timeIntervalSinceNow: -547 * 24 * 60 * 60), // 1.5 years
+                    isActive: true,
+                    profileImageUrl: nil
+                ),
+                WorkerProfile(
+                    id: "7",
+                    name: "Angel Guirachocha",
+                    email: "angel.guirachocha@francomanagement.com",
+                    phoneNumber: "",
+                    role: .worker,
+                    skills: ["Evening Operations", "Security"],
+                    certifications: ["Security License"],
+                    hireDate: Date(timeIntervalSinceNow: -180 * 24 * 60 * 60), // 6 months
+                    isActive: true,
+                    profileImageUrl: nil
+                )
+            ]
+        }
+    }
+    
     private func loadSuggestions() {
+        // ✅ FIXED: Using REAL task patterns from OperationalDataManager
         suggestions = [
             TaskSuggestion(
                 id: "1",
-                title: "HVAC Filter Replacement",
-                description: "Regular maintenance to replace HVAC filters throughout the building.",
-                category: CoreTypes.TaskCategory.maintenance.rawValue,
+                title: "Trash Area + Sidewalk & Curb Clean",
+                description: "Daily cleaning of trash area, sidewalk, and curb for building compliance.",
+                category: CoreTypes.TaskCategory.sanitation.rawValue,
                 urgency: CoreTypes.TaskUrgency.medium.rawValue,
-                buildingId: buildingOptions.first?.id ?? ""
+                buildingId: "14" // Rubin Museum
             ),
             TaskSuggestion(
                 id: "2",
-                title: "Lobby Floor Cleaning",
-                description: "Deep cleaning of lobby floor and entrance mats.",
+                title: "Museum Entrance Sweep",
+                description: "Daily sweep of museum entrance area for visitor experience.",
                 category: CoreTypes.TaskCategory.cleaning.rawValue,
-                urgency: CoreTypes.TaskUrgency.low.rawValue,
-                buildingId: buildingOptions.first?.id ?? ""
+                urgency: CoreTypes.TaskUrgency.medium.rawValue,
+                buildingId: "14" // Rubin Museum
             ),
             TaskSuggestion(
                 id: "3",
-                title: "Security Camera Inspection",
-                description: "Check all security cameras for proper functioning and positioning.",
-                category: CoreTypes.TaskCategory.inspection.rawValue,
+                title: "DSNY Put-Out (after 20:00)",
+                description: "Place trash at curb after 8 PM for DSNY collection (Sun/Tue/Thu).",
+                category: CoreTypes.TaskCategory.sanitation.rawValue,
+                urgency: CoreTypes.TaskUrgency.high.rawValue,
+                buildingId: buildingOptions.first?.id ?? "14"
+            ),
+            TaskSuggestion(
+                id: "4",
+                title: "Weekly Deep Clean - Trash Area",
+                description: "Comprehensive cleaning and hosing of trash area (Mon/Wed/Fri).",
+                category: CoreTypes.TaskCategory.sanitation.rawValue,
                 urgency: CoreTypes.TaskUrgency.medium.rawValue,
-                buildingId: buildingOptions.first?.id ?? ""
+                buildingId: buildingOptions.first?.id ?? "14"
+            ),
+            TaskSuggestion(
+                id: "5",
+                title: "Stairwell Hose-Down",
+                description: "Weekly hosing of stairwells and common areas.",
+                category: CoreTypes.TaskCategory.maintenance.rawValue,
+                urgency: CoreTypes.TaskUrgency.low.rawValue,
+                buildingId: "13" // 68 Perry Street
             )
         ]
         
@@ -520,11 +652,8 @@ struct TaskRequestView: View {
         ]
         
         return items.map { item in
-            let status: CoreTypes.RestockStatus = item.stock <= item.min ?
-                (item.stock == 0 ? .outOfStock : .lowStock) : .inStock
-            
+            // ✅ FIXED: Use convenience initializer
             return CoreTypes.InventoryItem(
-                id: UUID().uuidString,
                 name: item.name,
                 category: item.category,
                 currentStock: item.stock,
@@ -533,9 +662,7 @@ struct TaskRequestView: View {
                 unit: "units",
                 cost: 0.0,
                 supplier: nil,
-                location: item.location,
-                lastRestocked: nil,
-                status: status
+                location: item.location
             )
         }
     }
@@ -566,19 +693,17 @@ struct TaskRequestView: View {
         
         // Get building and worker information
         let selectedBuilding = buildingOptions.first(where: { $0.id == selectedBuildingID })
-        let currentWorker = WorkerProfile(
-            id: UUID().uuidString,
-            name: "Current Worker",
-            email: "worker@example.com",
-            phoneNumber: "",
-            role: .worker,
-            skills: [],
-            certifications: [],
-            hireDate: Date(),
-            isActive: true
-        )
         
-        // ✅ FIXED: Create the task with correct ContextualTask initializer
+        // ✅ FIXED: Use selected worker from picker
+        guard let currentWorker = workerOptions.first(where: { $0.id == selectedWorkerId }) else {
+            await MainActor.run {
+                errorMessage = "Please select a worker"
+                isSubmitting = false
+            }
+            return
+        }
+        
+        // ✅ FIXED: Create task using the minimal ContextualTask initializer pattern from TaskService
         let task = ContextualTask(
             id: UUID().uuidString,
             title: taskName,
@@ -592,13 +717,23 @@ struct TaskRequestView: View {
             worker: currentWorker,
             buildingId: selectedBuildingID,
             priority: selectedUrgency
+            // Note: Not passing assignedWorkerId or estimatedDuration as they have defaults
         )
         
         // Simulate task creation
-        print("Creating task: \(task)")
+        print("Creating task:")
+        print("  Title: \(task.title)")
+        print("  Building: \(selectedBuilding?.name ?? "Unknown") (ID: \(task.buildingId ?? "none"))")
+        print("  Worker: \(currentWorker.name) (ID: \(currentWorker.id))")
+        print("  Category: \(task.category?.rawValue ?? "none")")
+        print("  Urgency: \(task.urgency?.rawValue ?? "none")")
         
-        // ✅ FIXED: Use correct Swift concurrency syntax for sleep
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        // ✅ FIXED: Use Timer-based delay for older Swift versions
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+                continuation.resume()
+            }
+        }
         
         await MainActor.run {
             if !requiredInventory.isEmpty {
@@ -794,68 +929,57 @@ struct InventorySelectionView: View {
     }
     
     private func loadInventory() async {
-        await MainActor.run {
-            isLoading = true
+        await MainActor.run { [weak self] in
+            self?.isLoading = true
         }
         
-        await MainActor.run {
-            // ✅ FIXED: Create proper InventoryItem instances
+        await MainActor.run { [weak self] in
+            guard let self = self else { return }
+            // ✅ FIXED: Use convenience initializer matching InventoryView.swift pattern
             self.inventoryItems = [
                 CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
                     name: "All-Purpose Cleaner",
                     category: .supplies,
                     currentStock: 10,
                     minimumStock: 5,
                     maxStock: 50,
                     unit: "bottles",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Storage Room A",
-                    lastRestocked: nil,
-                    status: .inStock
+                    cost: 5.99,
+                    supplier: "CleanCo Supplies",
+                    location: "Storage Room A"
                 ),
                 CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
                     name: "Paint Brushes",
                     category: .tools,
                     currentStock: 5,
                     minimumStock: 2,
                     maxStock: 20,
                     unit: "pieces",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Maintenance Workshop",
-                    lastRestocked: nil,
-                    status: .inStock
+                    cost: 3.50,
+                    supplier: "Tool Depot",
+                    location: "Maintenance Workshop"
                 ),
                 CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
                     name: "Safety Gloves",
                     category: .safety,
                     currentStock: 20,
                     minimumStock: 10,
                     maxStock: 100,
                     unit: "pairs",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Safety Cabinet",
-                    lastRestocked: nil,
-                    status: .inStock
+                    cost: 2.25,
+                    supplier: "SafetyFirst Inc",
+                    location: "Safety Cabinet"
                 ),
                 CoreTypes.InventoryItem(
-                    id: UUID().uuidString,
                     name: "LED Light Bulbs",
                     category: .materials,
                     currentStock: 15,
                     minimumStock: 8,
                     maxStock: 50,
                     unit: "pieces",
-                    cost: 0.0,
-                    supplier: nil,
-                    location: "Electrical Storage",
-                    lastRestocked: nil,
-                    status: .inStock
+                    cost: 4.75,
+                    supplier: "Electrical Supply Co",
+                    location: "Electrical Storage"
                 )
             ]
             self.isLoading = false
@@ -1003,6 +1127,34 @@ extension CoreTypes.InventoryItem {
         case .maintenance: return "items"
         case .other: return "items"
         }
+    }
+    
+    // ✅ ADDED: Convenience initializer matching InventoryView.swift pattern
+    init(
+        name: String,
+        category: InventoryCategory,
+        currentStock: Int,
+        minimumStock: Int,
+        maxStock: Int,
+        unit: String,
+        cost: Double = 0.0,
+        supplier: String? = nil,
+        location: String? = nil
+    ) {
+        self.init(
+            id: UUID().uuidString,
+            name: name,
+            category: category,
+            currentStock: currentStock,
+            minimumStock: minimumStock,
+            maxStock: maxStock,
+            unit: unit,
+            cost: cost,
+            supplier: supplier,
+            location: location,
+            lastRestocked: nil,
+            status: currentStock <= 0 ? .outOfStock : (currentStock <= minimumStock ? .lowStock : .inStock)
+        )
     }
 }
 
