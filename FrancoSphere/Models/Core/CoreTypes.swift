@@ -4,9 +4,8 @@
 //
 //  ✅ REFACTORED: Services removed, only data types remain
 //  ✅ FIXED: All compilation errors eliminated
-//  ✅ FIXED: Removed duplicate 'rawValue' in Priority enum
-//  ✅ FIXED: Removed duplicate AI namespace
-//  ✅ FIXED: Removed conflicting DashboardUpdate type alias
+//  ✅ FIXED: Removed duplicate 'color' declarations
+//  ✅ FIXED: Proper enum closures and structure
 //  ✅ ORGANIZED: Clean architecture with data types only
 //
 
@@ -1224,7 +1223,7 @@ public struct CoreTypes {
             }
         }
         
-        public var color: Color {
+        public var aiPriorityColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
             switch self {
             case .low: return .green
             case .medium: return .yellow
@@ -1255,7 +1254,7 @@ public struct CoreTypes {
             }
         }
         
-        public var color: Color {
+        public var insightCategoryColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
             switch self {
             case .efficiency: return .blue
             case .cost: return .green
@@ -1481,7 +1480,6 @@ public struct CoreTypes {
             case high = "High"
             case critical = "Critical"
             
-            // ✅ FIXED: Only one color property named priorityColor
             public var priorityColor: Color {
                 switch self {
                 case .low: return .green
@@ -1596,7 +1594,7 @@ public struct CoreTypes {
         case atRisk = "At Risk"
         case needsReview = "Needs Review"
         
-        public var color: Color {
+        public var complianceStatusColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
             switch self {
             case .compliant: return .green
             case .warning: return .yellow
@@ -1616,7 +1614,7 @@ public struct CoreTypes {
         case high = "High"
         case critical = "Critical"
         
-        public var color: Color {
+        public var complianceSeverityColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
             switch self {
             case .low: return .green
             case .medium: return .yellow
@@ -1634,7 +1632,7 @@ public struct CoreTypes {
         case operational = "Operational"
         case documentation = "Documentation"
         
-        public var color: Color {
+        public var complianceIssueTypeColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
             switch self {
             case .safety: return .red
             case .environmental: return .green
@@ -1819,4 +1817,26 @@ public struct AI {
     public typealias Insight = CoreTypes.IntelligenceInsight
     public typealias Scenario = CoreTypes.AIScenario
     public typealias ScenarioType = CoreTypes.AIScenarioType
+}
+
+// MARK: - Extension for Color Property Access
+// This provides backward compatibility for code expecting .color property
+extension CoreTypes.AIPriority {
+    public var color: Color { aiPriorityColor }
+}
+
+extension CoreTypes.InsightCategory {
+    public var color: Color { insightCategoryColor }
+}
+
+extension CoreTypes.ComplianceStatus {
+    public var color: Color { complianceStatusColor }
+}
+
+extension CoreTypes.ComplianceSeverity {
+    public var color: Color { complianceSeverityColor }
+}
+
+extension CoreTypes.ComplianceIssueType {
+    public var color: Color { complianceIssueTypeColor }
 }

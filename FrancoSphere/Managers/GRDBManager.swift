@@ -3,43 +3,13 @@
 //  FrancoSphere
 //
 //  ✅ COMPLETE: Full authentication + operational database manager
-//  ✅ MERGED: All functionality from DatabaseManager + GRDBManager
+//  ✅ FIXED: No duplicate methods, all syntax errors resolved
 //  ✅ SINGLE SOURCE: One manager for everything
-//  ✅ FIXED: All syntax errors resolved
 //
 
 import Foundation
 import GRDB
 import Combine
-
-// MARK: - Authentication Types
-
-public enum AuthenticationResult {
-    case success(AuthenticatedUser)
-    case failure(String)
-}
-
-public struct AuthenticatedUser: Codable {
-    public let id: Int
-    public let name: String
-    public let email: String
-    public let password: String
-    public let role: String
-    public let workerId: String
-    public let displayName: String?
-    public let timezone: String
-    
-    public init(id: Int, name: String, email: String, password: String, role: String, workerId: String, displayName: String? = nil, timezone: String = "America/New_York") {
-        self.id = id
-        self.name = name
-        self.email = email
-        self.password = password
-        self.role = role
-        self.workerId = workerId
-        self.displayName = displayName
-        self.timezone = timezone
-    }
-}
 
 // MARK: - Complete GRDBManager Class
 
@@ -47,11 +17,6 @@ public final class GRDBManager {
     public static let shared = GRDBManager()
     
     private var dbPool: DatabasePool!
-    public let databaseURL: URL
-    
-    // Configuration
-    private let maxRetries = 3
-    private let retryDelay: TimeInterval = 0.5
     
     // ✅ FIXED: Make dateFormatter public for extension access
     public let dateFormatter: DateFormatter = {
@@ -61,11 +26,13 @@ public final class GRDBManager {
         return formatter
     }()
     
-    private init() {
-        // Set up database path
+    // Add databaseURL property for compatibility
+    public var databaseURL: URL {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        databaseURL = documentsPath.appendingPathComponent("FrancoSphere.sqlite")
-        
+        return documentsPath.appendingPathComponent("FrancoSphere.sqlite")
+    }
+    
+    private init() {
         initializeDatabase()
     }
     
@@ -73,7 +40,8 @@ public final class GRDBManager {
     
     private func initializeDatabase() {
         do {
-            print("📁 Database path: \(databaseURL.path)")
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let databasePath = documentsPath.appendingPathComponent("FrancoSphere.sqlite").path
             
             var config = Configuration()
             config.prepareDatabase { db in
@@ -81,222 +49,49 @@ public final class GRDBManager {
                 try db.execute(sql: "PRAGMA foreign_keys = ON")
             }
             
-            dbPool = try DatabasePool(path: databaseURL.path, configuration: config)
+            dbPool = try DatabasePool(path: databasePath, configuration: config)
             
             // Create tables
             try dbPool.write { db in
-                try self.createAllTables(db) // ✅ FIXED: Added self
+                try self.createTables(db)
             }
             
-            print("✅ GRDBManager initialized successfully")
-            
+            print("✅ GRDB Database initialized successfully")
         } catch {
             print("❌ GRDB Database initialization failed: \(error)")
-            fatalError("Failed to initialize database: \(error)")
         }
     }
     
-    // MARK: - Core Database Methods
-    
-    /// Execute a query and return results
-    public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
-        return try await withRetry {
-            try await self.dbPool.read { db in
-                // ✅ FIXED: Convert [Any] to proper GRDB arguments with safe unwrapping
-                let rows: [Row]
-                if parameters.isEmpty {
-                    rows = try Row.fetchAll(db, sql: sql)
-                } else {
-                    // Convert [Any] to [DatabaseValueConvertible]
-                    let grdbParams = parameters.map { param -> DatabaseValueConvertible in
-                        if let convertible = param as? DatabaseValueConvertible {
-                            return convertible
-                        } else {
-                            return String(describing: param)
-                        }
-                    }
-                    rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(grdbParams)!)
-                }
-                
-                // ✅ FIXED: Process rows within the closure to avoid Sendable issues
-                return rows.map { row in
-                    var dict: [String: Any] = [:]
-                    for (column, value) in row {
-                        dict[column] = value.storage.value
-                    }
-                    return dict
-                }
-            }
-        }
-    }
-    
-    /// Execute a non-query SQL statement
-    public func execute(_ sql: String, _ parameters: [Any] = []) async throws {
-        try await withRetry {
-            try await self.dbPool.write { db in
-                // ✅ FIXED: Convert [Any] to proper GRDB arguments
-                if parameters.isEmpty {
-                    try db.execute(sql: sql)
-                } else {
-                    // Convert [Any] to [DatabaseValueConvertible]
-                    let grdbParams = parameters.map { param -> DatabaseValueConvertible in
-                        if let convertible = param as? DatabaseValueConvertible {
-                            return convertible
-                        } else {
-                            return String(describing: param)
-                        }
-                    }
-                    try db.execute(sql: sql, arguments: StatementArguments(grdbParams)!)
-                }
-            }
-        }
-    }
-    
-    /// Execute and return last inserted ID
-    public func insertAndReturnID(_ sql: String, _ parameters: [Any] = []) async throws -> Int64 {
-        return try await withRetry {
-            try await self.dbPool.write { db in
-                // ✅ FIXED: Convert [Any] to proper GRDB arguments
-                if parameters.isEmpty {
-                    try db.execute(sql: sql)
-                } else {
-                    // Convert [Any] to [DatabaseValueConvertible]
-                    let grdbParams = parameters.map { param -> DatabaseValueConvertible in
-                        if let convertible = param as? DatabaseValueConvertible {
-                            return convertible
-                        } else {
-                            return String(describing: param)
-                        }
-                    }
-                    try db.execute(sql: sql, arguments: StatementArguments(grdbParams)!)
-                }
-                return db.lastInsertedRowID
-            }
-        }
-    }
-    
-    /// Execute multiple statements in a transaction
-    public func transaction<T>(_ block: @escaping (Database) throws -> T) async throws -> T {
-        return try await withRetry {
-            try await self.dbPool.write { db in
-                var result: T!
-                try db.inTransaction {
-                    result = try block(db)
-                    return .commit
-                }
-                return result
-            }
-        }
-    }
-    
-    // MARK: - Retry Logic
-    
-    private func withRetry<T>(_ operation: () async throws -> T) async throws -> T {
-        var lastError: Error?
-        
-        for attempt in 0..<maxRetries {
-            do {
-                return try await operation()
-            } catch {
-                lastError = error
-                print("⚠️ Database operation failed (attempt \(attempt + 1)/\(maxRetries)): \(error)")
-                
-                if attempt < maxRetries - 1 {
-                    try await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000))
-                }
-            }
-        }
-        
-        throw lastError ?? DatabaseError.unknownError
-    }
-    
-    // MARK: - Database Setup
-    
-    /// Check if database exists and is accessible
-    public func isDatabaseReady() async -> Bool {
-        do {
-            let result = try await query("SELECT 1")
-            return !result.isEmpty
-        } catch {
-            print("❌ Database not ready: \(error)")
-            return false
-        }
-    }
-    
-    /// Get database file size
-    public func getDatabaseSize() -> Int64 {
-        do {
-            let attributes = try FileManager.default.attributesOfItem(atPath: databaseURL.path)
-            return attributes[.size] as? Int64 ?? 0
-        } catch {
-            return 0
-        }
-    }
-    
-    /// Reset database (dangerous - for testing only)
-    public func resetDatabase() async throws {
-        try await dbPool.write { db in
-            // Drop all tables
-            let tables = try String.fetchAll(db, sql: """
-                SELECT name FROM sqlite_master 
-                WHERE type='table' AND name NOT LIKE 'sqlite_%'
-            """)
-            
-            for table in tables {
-                try db.execute(sql: "DROP TABLE IF EXISTS \(table)")
-            }
-            
-            // Recreate all tables
-            try self.createAllTables(db)
-        }
-        
-        print("🔄 Database reset complete")
-    }
-    
-    // MARK: - Table Creation (Core Implementation)
-    
-    func createAllTables(_ db: Database) throws {
-        print("🔧 Creating complete unified schema...")
-        
-        // 1. Enhanced workers table (merged users + workers)
+    public func createTables(_ db: Database) throws {
+        // Workers table with auth fields
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS workers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                -- Core worker fields
                 name TEXT NOT NULL,
                 email TEXT UNIQUE NOT NULL,
+                password TEXT DEFAULT 'password',
+                role TEXT NOT NULL DEFAULT 'worker',
                 phone TEXT,
                 hourlyRate REAL DEFAULT 25.0,
                 skills TEXT,
+                isActive INTEGER NOT NULL DEFAULT 1,
                 profileImagePath TEXT,
                 address TEXT,
                 emergencyContact TEXT,
                 notes TEXT,
                 shift TEXT,
-                
-                -- Authentication fields (from users table)
-                password TEXT DEFAULT 'password',
-                role TEXT NOT NULL DEFAULT 'worker',
-                isActive INTEGER NOT NULL DEFAULT 1,
                 lastLogin TEXT,
                 loginAttempts INTEGER DEFAULT 0,
                 lockedUntil TEXT,
-                
-                -- Profile fields (from user_profiles)
                 display_name TEXT,
                 timezone TEXT DEFAULT 'America/New_York',
-                language TEXT DEFAULT 'en',
                 notification_preferences TEXT,
-                profile_picture_url TEXT,
-                emergency_contact_json TEXT,
-                
-                -- Timestamps
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
         
-        // 2. Buildings table
+        // Buildings table
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS buildings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -312,13 +107,11 @@ public final class GRDBManager {
                 primaryContact TEXT,
                 contactPhone TEXT,
                 contactEmail TEXT,
-                specialNotes TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                specialNotes TEXT
             )
         """)
         
-        // 3. Routine tasks table
+        // Tasks table
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS routine_tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -336,15 +129,12 @@ public final class GRDBManager {
                 estimatedDuration INTEGER DEFAULT 30,
                 notes TEXT,
                 photoPaths TEXT,
-                external_id TEXT UNIQUE,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (buildingId) REFERENCES buildings(id),
                 FOREIGN KEY (workerId) REFERENCES workers(id)
             )
         """)
         
-        // 4. Worker building assignments
+        // Worker assignments
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS worker_building_assignments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -353,15 +143,13 @@ public final class GRDBManager {
                 role TEXT NOT NULL DEFAULT 'maintenance',
                 assigned_date TEXT NOT NULL,
                 is_active INTEGER NOT NULL DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (worker_id) REFERENCES workers(id),
                 FOREIGN KEY (building_id) REFERENCES buildings(id),
                 UNIQUE(worker_id, building_id)
             )
         """)
         
-        // 5. User sessions (for authentication)
+        // User sessions
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS user_sessions (
                 session_id TEXT PRIMARY KEY,
@@ -377,7 +165,7 @@ public final class GRDBManager {
             )
         """)
         
-        // 6. Login history (for security)
+        // Login history
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS login_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -392,7 +180,7 @@ public final class GRDBManager {
             )
         """)
         
-        // 7. Clock sessions (for time tracking)
+        // Clock sessions
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS clock_sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -410,7 +198,7 @@ public final class GRDBManager {
             )
         """)
         
-        // 8. Task completions (evidence tracking)
+        // Task completions
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS task_completions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -428,7 +216,7 @@ public final class GRDBManager {
             )
         """)
         
-        // 9. Worker assignments table (compatibility)
+        // Legacy compatibility tables
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS worker_assignments (
                 worker_id TEXT NOT NULL,
@@ -441,7 +229,6 @@ public final class GRDBManager {
             )
         """)
         
-        // 10. Tasks table (legacy compatibility)
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -458,7 +245,7 @@ public final class GRDBManager {
             )
         """)
         
-        // 11. Inventory items
+        // Inventory items
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS inventory_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -468,9 +255,6 @@ public final class GRDBManager {
                 minimumStock INTEGER DEFAULT 0,
                 maxStock INTEGER,
                 unit TEXT DEFAULT 'units',
-                cost REAL,
-                supplier TEXT,
-                location TEXT,
                 buildingId INTEGER,
                 lastRestocked TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -479,7 +263,7 @@ public final class GRDBManager {
             )
         """)
         
-        // 12. Compliance issues
+        // Compliance issues
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS compliance_issues (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -498,35 +282,121 @@ public final class GRDBManager {
             )
         """)
         
-        // Create all necessary indexes
+        // Create indexes
         try createIndexes(db)
         
-        print("✅ Complete unified schema created")
+        print("✅ GRDB Tables created successfully")
     }
     
     private func createIndexes(_ db: Database) throws {
-        // Worker indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_workers_email ON workers(email)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_workers_active ON workers(isActive)")
-        
-        // Task indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_building ON routine_tasks(buildingId)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_worker ON routine_tasks(workerId)")
-        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_scheduled ON routine_tasks(scheduledDate)")
-        
-        // Session indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sessions_worker_active ON user_sessions(worker_id, is_active)")
-        
-        // Login history indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_login_history_worker ON login_history(worker_id, login_time)")
-        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_login_history_email ON login_history(email)")
-        
-        // Assignment indexes
-        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_assignments_worker ON worker_building_assignments(worker_id)")
-        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_assignments_building ON worker_building_assignments(building_id)")
     }
     
-    // MARK: - Complete Authentication Implementation
+    // MARK: - Public API (Compatible with existing GRDBManager calls)
+    
+    public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
+        return try await dbPool.read { db in
+            let rows: [Row]
+            if parameters.isEmpty {
+                rows = try Row.fetchAll(db, sql: sql)
+            } else {
+                // Convert [Any] to [DatabaseValueConvertible]
+                let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                    if let convertible = param as? DatabaseValueConvertible {
+                        return convertible
+                    } else {
+                        return String(describing: param)
+                    }
+                }
+                rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(grdbParams)!)
+            }
+            
+            // Process rows within the closure to avoid Sendable issues
+            return rows.map { row in
+                var dict: [String: Any] = [:]
+                for (column, value) in row {
+                    dict[column] = value.storage.value
+                }
+                return dict
+            }
+        }
+    }
+    
+    public func execute(_ sql: String, _ parameters: [Any] = []) async throws {
+        try await dbPool.write { db in
+            if parameters.isEmpty {
+                try db.execute(sql: sql)
+            } else {
+                // Convert [Any] to [DatabaseValueConvertible]
+                let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                    if let convertible = param as? DatabaseValueConvertible {
+                        return convertible
+                    } else {
+                        return String(describing: param)
+                    }
+                }
+                try db.execute(sql: sql, arguments: StatementArguments(grdbParams)!)
+            }
+        }
+    }
+    
+    public func insertAndReturnID(_ sql: String, _ parameters: [Any] = []) async throws -> Int64 {
+        return try await dbPool.write { db in
+            if parameters.isEmpty {
+                try db.execute(sql: sql)
+            } else {
+                // Convert [Any] to [DatabaseValueConvertible]
+                let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                    if let convertible = param as? DatabaseValueConvertible {
+                        return convertible
+                    } else {
+                        return String(describing: param)
+                    }
+                }
+                try db.execute(sql: sql, arguments: StatementArguments(grdbParams)!)
+            }
+            return db.lastInsertedRowID
+        }
+    }
+    
+    // MARK: - Database State
+    
+    public func isDatabaseReady() async -> Bool {
+        return dbPool != nil
+    }
+    
+    public func getDatabaseSize() -> Int64 {
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: databaseURL.path)
+            return attributes[.size] as? Int64 ?? 0
+        } catch {
+            return 0
+        }
+    }
+    
+    public func resetDatabase() async throws {
+        try await dbPool.write { db in
+            // Drop all tables
+            let tables = try String.fetchAll(db, sql: """
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name NOT LIKE 'sqlite_%'
+            """)
+            
+            for table in tables {
+                try db.execute(sql: "DROP TABLE IF EXISTS \(table)")
+            }
+            
+            // Recreate all tables
+            try self.createTables(db)
+        }
+    }
+    
+    // MARK: - Authentication Implementation
     
     /// Authenticate worker with email and password
     public func authenticateWorker(email: String, password: String) async -> AuthenticationResult {
@@ -651,7 +521,7 @@ public final class GRDBManager {
         """, [workerId])
     }
     
-    // MARK: - Security Features
+    // MARK: - Security Features (Private)
     
     private func isAccountLocked(email: String) async throws -> Bool {
         let rows = try await query("""
@@ -713,84 +583,7 @@ public final class GRDBManager {
         }
     }
     
-    // MARK: - Complete Seed Data (All Workers + Test Accounts)
-    
-    public func seedCompleteWorkerData() async throws {
-        print("🌱 Seeding complete worker data with authentication...")
-        
-        // Real worker data with authentication
-        let realWorkers: [(String, String, String, String, String, String?, Double)] = [
-            // (id, name, email, password, role, phone, hourlyRate)
-            ("1", "Greg Hutson", "g.hutson1989@gmail.com", "password", "worker", "917-555-0001", 28.0),
-            ("2", "Edwin Lema", "edwinlema911@gmail.com", "password", "worker", "917-555-0002", 26.0),
-            ("3", "Francisco Franco", "francisco@francomanagementgroup.com", "password", "admin", "917-555-0003", 50.0),
-            ("4", "Kevin Dutan", "dutankevin1@gmail.com", "password", "worker", "917-555-0004", 25.0),
-            ("5", "Mercedes Inamagua", "jneola@gmail.com", "password", "worker", "917-555-0005", 27.0),
-            ("6", "Luis Lopez", "luislopez030@yahoo.com", "password", "worker", "917-555-0006", 25.0),
-            ("7", "Angel Guirachocha", "lio.angel71@gmail.com", "password", "worker", "917-555-0007", 26.0),
-            ("8", "Shawn Magloire", "shawn@francomanagementgroup.com", "password", "admin", "917-555-0008", 45.0)
-        ]
-        
-        // Additional accounts for Shawn (multiple roles)
-        let additionalAccounts: [(String, String, String, String)] = [
-            // (name, email, password, role)
-            ("Shawn Magloire", "francosphere@francomanagementgroup.com", "password", "client"),
-            ("Shawn Magloire", "shawn@fme-llc.com", "password", "admin")
-        ]
-        
-        // Test accounts for development
-        let testAccounts: [(String, String, String, String)] = [
-            ("Test Worker", "test@franco.com", "password", "worker"),
-            ("Test Admin", "admin@franco.com", "password", "admin"),
-            ("Test Client", "client@franco.com", "password", "client"),
-            ("Demo User", "demo@franco.com", "password", "worker")
-        ]
-        
-        // Insert real workers
-        for (id, name, email, password, role, phone, rate) in realWorkers {
-            try await execute("""
-                INSERT OR REPLACE INTO workers 
-                (id, name, email, password, role, phone, hourlyRate, isActive, 
-                 skills, timezone, notification_preferences, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
-            """, [id, name, email, password, role, phone ?? "", rate, getDefaultSkills(for: role)])
-        }
-        
-        // Insert additional accounts (without specific IDs)
-        for (name, email, password, role) in additionalAccounts {
-            try await execute("""
-                INSERT OR IGNORE INTO workers 
-                (name, email, password, role, isActive, hourlyRate, 
-                 skills, timezone, notification_preferences, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, 1, ?, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
-            """, [name, email, password, role, 35.0, getDefaultSkills(for: role)])
-        }
-        
-        // Insert test accounts
-        for (name, email, password, role) in testAccounts {
-            try await execute("""
-                INSERT OR IGNORE INTO workers 
-                (name, email, password, role, isActive, hourlyRate, 
-                 skills, timezone, notification_preferences, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, 1, 25.0, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
-            """, [name, email, password, role, getDefaultSkills(for: role)])
-        }
-        
-        print("✅ Seeded \(realWorkers.count) real workers + \(additionalAccounts.count + testAccounts.count) additional accounts")
-    }
-    
-    private func getDefaultSkills(for role: String) -> String {
-        switch role {
-        case "admin":
-            return "Management,Scheduling,Reporting,Quality Control"
-        case "client":
-            return "Property Management,Communication"
-        default:
-            return "General Maintenance,Cleaning,Basic Repairs,Safety Protocols"
-        }
-    }
-    
-    // MARK: - User Management Methods
+    // MARK: - User Management
     
     /// Get all users (workers) with optional filtering
     public func getAllUsers(includeInactive: Bool = false) async throws -> [AuthenticatedUser] {
@@ -821,7 +614,7 @@ public final class GRDBManager {
         // Check if user already exists
         let existing = try await query("SELECT id FROM workers WHERE email = ?", [email])
         guard existing.isEmpty else {
-            throw GRDBError.duplicateUser("User with email \(email) already exists")
+            throw DatabaseError.duplicateUser("User with email \(email) already exists")
         }
         
         try await execute("""
@@ -831,36 +624,7 @@ public final class GRDBManager {
         """, [name, email, password, role])
     }
     
-    /// Update user details
-    public func updateUser(id: Int, name: String? = nil, email: String? = nil, role: String? = nil, isActive: Bool? = nil) async throws {
-        var updates: [String] = []
-        var params: [Any] = []
-        
-        if let name = name {
-            updates.append("name = ?")
-            params.append(name)
-        }
-        if let email = email {
-            updates.append("email = ?")
-            params.append(email)
-        }
-        if let role = role {
-            updates.append("role = ?")
-            params.append(role)
-        }
-        if let isActive = isActive {
-            updates.append("isActive = ?")
-            params.append(isActive ? 1 : 0)
-        }
-        
-        updates.append("updated_at = datetime('now')")
-        params.append(id)
-        
-        let updateSQL = "UPDATE workers SET \(updates.joined(separator: ", ")) WHERE id = ?"
-        try await execute(updateSQL, params)
-    }
-    
-    // MARK: - Statistics and Debugging
+    // MARK: - Statistics
     
     /// Get authentication statistics
     public func getAuthenticationStats() async throws -> [String: Any] {
@@ -899,17 +663,72 @@ public final class GRDBManager {
         """)
         stats["successfulLoginsLast7Days"] = recentLogins.first?["count"] as? Int64 ?? 0
         
-        // Failed login attempts
-        let failedLogins = try await query("""
-            SELECT COUNT(*) as count FROM login_history 
-            WHERE login_time >= datetime('now', '-24 hours') AND success = 0
-        """)
-        stats["failedLoginsLast24Hours"] = failedLogins.first?["count"] as? Int64 ?? 0
-        
         return stats
     }
     
-    /// Test authentication for all real workers
+    // MARK: - Seed Data
+    
+    public func seedCompleteWorkerData() async throws {
+        print("🌱 Seeding complete worker data with authentication...")
+        
+        // Real worker data with authentication
+        let realWorkers: [(String, String, String, String, String, String?, Double)] = [
+            // (id, name, email, password, role, phone, hourlyRate)
+            ("1", "Greg Hutson", "g.hutson1989@gmail.com", "password", "worker", "917-555-0001", 28.0),
+            ("2", "Edwin Lema", "edwinlema911@gmail.com", "password", "worker", "917-555-0002", 26.0),
+            ("3", "Francisco Franco", "francisco@francomanagementgroup.com", "password", "admin", "917-555-0003", 50.0),
+            ("4", "Kevin Dutan", "dutankevin1@gmail.com", "password", "worker", "917-555-0004", 25.0),
+            ("5", "Mercedes Inamagua", "jneola@gmail.com", "password", "worker", "917-555-0005", 27.0),
+            ("6", "Luis Lopez", "luislopez030@yahoo.com", "password", "worker", "917-555-0006", 25.0),
+            ("7", "Angel Guirachocha", "lio.angel71@gmail.com", "password", "worker", "917-555-0007", 26.0),
+            ("8", "Shawn Magloire", "shawn@francomanagementgroup.com", "password", "admin", "917-555-0008", 45.0)
+        ]
+        
+        // Additional accounts
+        let additionalAccounts: [(String, String, String, String)] = [
+            ("Shawn Magloire", "francosphere@francomanagementgroup.com", "password", "client"),
+            ("Shawn Magloire", "shawn@fme-llc.com", "password", "admin"),
+            ("Test Worker", "test@franco.com", "password", "worker"),
+            ("Test Admin", "admin@franco.com", "password", "admin"),
+            ("Test Client", "client@franco.com", "password", "client")
+        ]
+        
+        // Insert real workers
+        for (id, name, email, password, role, phone, rate) in realWorkers {
+            try await execute("""
+                INSERT OR REPLACE INTO workers 
+                (id, name, email, password, role, phone, hourlyRate, isActive, 
+                 skills, timezone, notification_preferences, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
+            """, [id, name, email, password, role, phone ?? "", rate, getDefaultSkills(for: role)])
+        }
+        
+        // Insert additional accounts
+        for (name, email, password, role) in additionalAccounts {
+            try await execute("""
+                INSERT OR IGNORE INTO workers 
+                (name, email, password, role, isActive, hourlyRate, 
+                 skills, timezone, notification_preferences, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, 1, 35.0, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
+            """, [name, email, password, role, getDefaultSkills(for: role)])
+        }
+        
+        print("✅ Seeded \(realWorkers.count + additionalAccounts.count) accounts")
+    }
+    
+    private func getDefaultSkills(for role: String) -> String {
+        switch role {
+        case "admin":
+            return "Management,Scheduling,Reporting,Quality Control"
+        case "client":
+            return "Property Management,Communication"
+        default:
+            return "General Maintenance,Cleaning,Basic Repairs,Safety Protocols"
+        }
+    }
+    
+    // MARK: - Test Authentication
+    
     public func testRealWorkerAuthentication() async {
         print("🔐 TESTING REAL WORKER AUTHENTICATION")
         print("═══════════════════════════════════════")
@@ -940,10 +759,9 @@ public final class GRDBManager {
         print("═══════════════════════════════════════")
     }
     
-    // MARK: - Real-time Observation (For compatibility with original)
+    // MARK: - Real-time Observation (FIXED for Swift 6)
     
     public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
-        // ✅ FIXED: Process rows within ValueObservation to avoid Sendable issues
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
                 .map { row in
@@ -951,9 +769,8 @@ public final class GRDBManager {
                         id: String(row["id"] as? Int64 ?? 0),
                         name: row["name"] as? String ?? "",
                         address: row["address"] as? String,
-                        latitude: row["latitude"] as? Double ?? 0,
-                        longitude: row["longitude"] as? Double ?? 0,
-                        imageAssetName: row["imageAssetName"] as? String
+                        latitude: (row["latitude"] as? Double) ?? 0,
+                        longitude: (row["longitude"] as? Double) ?? 0
                     )
                 }
         }
@@ -962,7 +779,6 @@ public final class GRDBManager {
     }
     
     public func observeTasks(for buildingId: String) -> AnyPublisher<[ContextualTask], Error> {
-        // ✅ FIXED: Process rows within ValueObservation to avoid Sendable issues
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: """
                 SELECT t.*, b.name as buildingName, w.name as workerName 
@@ -981,23 +797,49 @@ public final class GRDBManager {
         return observation.publisher(in: dbPool).eraseToAnyPublisher()
     }
     
-    // Helper for task conversion
-    private func contextualTaskFromRow(_ row: Row) -> ContextualTask? {
+    // Helper method for task conversion
+    public func contextualTaskFromRow(_ row: Row) -> ContextualTask? {
         guard let title = row["title"] as? String else { return nil }
         
-        // Convert category string to enum
+        // Convert category string to enum with safe fallback
         let categoryString = row["category"] as? String ?? "maintenance"
-        let category: TaskCategory? = TaskCategory(rawValue: categoryString.capitalized)
+        let category: TaskCategory? = {
+            switch categoryString.lowercased() {
+            case "maintenance": return .maintenance
+            case "cleaning": return .cleaning
+            case "repair": return .repair
+            case "sanitation": return .sanitation
+            case "inspection": return .inspection
+            case "landscaping": return .landscaping
+            case "security": return .security
+            case "emergency": return .emergency
+            case "installation": return .installation
+            case "utilities": return .utilities
+            case "renovation": return .renovation
+            case "administrative": return .administrative
+            default: return .maintenance
+            }
+        }()
         
-        // Convert urgency string to enum
+        // Convert urgency string to enum with safe fallback
         let urgencyString = row["urgency"] as? String ?? "medium"
-        let urgency: TaskUrgency? = TaskUrgency(rawValue: urgencyString.capitalized)
+        let urgency: TaskUrgency? = {
+            switch urgencyString.lowercased() {
+            case "low": return .low
+            case "medium": return .medium
+            case "high": return .high
+            case "critical": return .critical
+            case "urgent": return .urgent
+            case "emergency": return .emergency
+            default: return .medium
+            }
+        }()
         
         // Convert dates
         let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         
-        // Create building if we have data
+        // Create NamedCoordinate for building (if we have building data)
         let building: NamedCoordinate? = {
             if let buildingName = row["buildingName"] as? String,
                let buildingId = row["buildingId"] as? Int64 {
@@ -1030,30 +872,47 @@ public final class GRDBManager {
 
 // MARK: - Custom Errors
 
-enum GRDBError: LocalizedError {
+enum DatabaseError: LocalizedError {
     case duplicateUser(String)
     case invalidSession(String)
     case authenticationFailed(String)
+    case unknownError
     
     var errorDescription: String? {
         switch self {
         case .duplicateUser(let msg): return msg
         case .invalidSession(let msg): return msg
         case .authenticationFailed(let msg): return msg
+        case .unknownError: return "An unknown database error occurred"
         }
     }
 }
 
-enum DatabaseError: LocalizedError {
-    case unknownError
-    case connectionFailed
-    case transactionFailed(String)
+// MARK: - Authentication Types
+
+public enum AuthenticationResult {
+    case success(AuthenticatedUser)
+    case failure(String)
+}
+
+public struct AuthenticatedUser: Codable {
+    public let id: Int
+    public let name: String
+    public let email: String
+    public let password: String
+    public let role: String
+    public let workerId: String
+    public let displayName: String?
+    public let timezone: String
     
-    var errorDescription: String? {
-        switch self {
-        case .unknownError: return "An unknown database error occurred"
-        case .connectionFailed: return "Failed to connect to database"
-        case .transactionFailed(let msg): return "Transaction failed: \(msg)"
-        }
+    public init(id: Int, name: String, email: String, password: String, role: String, workerId: String, displayName: String? = nil, timezone: String = "America/New_York") {
+        self.id = id
+        self.name = name
+        self.email = email
+        self.password = password
+        self.role = role
+        self.workerId = workerId
+        self.displayName = displayName
+        self.timezone = timezone
     }
 }

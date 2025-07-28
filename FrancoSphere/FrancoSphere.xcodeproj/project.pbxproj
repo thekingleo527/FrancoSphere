@@ -213,7 +213,6 @@
 		238DBE8E2E2CCC9900D6B671 /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 		23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */; };
-		23EA71002E3838150010FA03 /* GRDBManager+Authentication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA70FF2E3838150010FA03 /* GRDBManager+Authentication.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -440,7 +439,6 @@
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
 		23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardViewModel.swift; sourceTree = "<group>"; };
-		23EA70FF2E3838150010FA03 /* GRDBManager+Authentication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GRDBManager+Authentication.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -641,7 +639,6 @@
 				2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */,
 				2327395B2E2B8674004A52C6 /* UnifiedDataInitializer.swift */,
 				2327395C2E2B8674004A52C6 /* WorkerManager.swift */,
-				23EA70FF2E3838150010FA03 /* GRDBManager+Authentication.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1179,7 +1176,6 @@
 				23273A312E2B8674004A52C6 /* VerificationRecord.swift in Sources */,
 				23273A322E2B8674004A52C6 /* AIScenarioSheetView.swift in Sources */,
 				23273A332E2B8674004A52C6 /* ProfileBadge.swift in Sources */,
-				23EA71002E3838150010FA03 /* GRDBManager+Authentication.swift in Sources */,
 				23273A342E2B8674004A52C6 /* WorkerActionType.swift in Sources */,
 				23273A352E2B8674004A52C6 /* RoutinePriority.swift in Sources */,
 				23273A362E2B8674004A52C6 /* BuildingPreviewPopover.swift in Sources */,

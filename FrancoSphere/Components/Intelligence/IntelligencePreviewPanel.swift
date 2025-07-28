@@ -2,8 +2,8 @@
 //  IntelligencePreviewPanel.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Changed .performance to .efficiency
 //  ✅ ALIGNED: With actual CoreTypes.IntelligenceInsight structure
-//  ✅ FIXED: All compilation errors resolved
 //  ✅ ENHANCED: Real-time intelligence display with proper data
 //  ✅ COMPATIBLE: Works with existing three-dashboard system
 //
@@ -452,7 +452,7 @@ struct IntelligencePreviewPanel_Previews: PreviewProvider {
             CoreTypes.IntelligenceInsight(
                 title: "High Task Completion Rate",
                 description: "Building has maintained 95% task completion rate this week",
-                type: .performance,
+                type: .efficiency,  // ✅ FIXED: Changed from .performance to .efficiency
                 priority: .medium,
                 actionRequired: false,
                 affectedBuildings: ["14"]
