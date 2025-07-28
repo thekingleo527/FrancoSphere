@@ -2,32 +2,14 @@
 //  TimeStatus.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 6/9/25.
-//
-
-//
-//  TaskStatusExtension.swift
-//  FrancoSphere
-//
 //  Extensions to add real-time status to existing MaintenanceTask model
 //
 
 import Foundation
-
-// Type aliases for CoreTypes
-
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
 
-// Type aliases for CoreTypes
-
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 // MARK: - Task Time Status
-extension MaintenanceTask {
+extension CoreTypes.MaintenanceTask {
     
     enum TimeStatus {
         case upcoming(minutesUntil: Int)
@@ -93,54 +75,50 @@ extension MaintenanceTask {
         let calendar = Calendar.current
         
         // Check if task is for today
+        guard let dueDate = dueDate else {
+            return .notToday
+        }
+        
         if !calendar.isDateInToday(dueDate) {
             return .notToday
         }
         
-        if isComplete {
+        if isCompleted {
             return .completed
         }
         
-        // If no start/end times, use due date
-        guard let start = startTime, let end = endTime else {
-            if isPastDue {
-                let minutes = calendar.dateComponents([.minute], from: dueDate, to: now).minute ?? 0
-                return .overdue(minutesLate: minutes)
-            } else {
-                let minutes = calendar.dateComponents([.minute], from: now, to: dueDate).minute ?? 0
-                return .upcoming(minutesUntil: minutes)
-            }
-        }
+        // Calculate task timing based on estimated duration
+        let taskStartTime = dueDate.addingTimeInterval(-estimatedDuration)
+        let taskEndTime = dueDate
         
-        // Calculate based on start/end times
-        if now < start {
-            let minutes = calendar.dateComponents([.minute], from: now, to: start).minute ?? 0
+        if now < taskStartTime {
+            let minutes = calendar.dateComponents([.minute], from: now, to: taskStartTime).minute ?? 0
             return .upcoming(minutesUntil: minutes)
-        } else if now >= start && now <= end {
-            let totalDuration = end.timeIntervalSince(start)
-            let elapsed = now.timeIntervalSince(start)
+        } else if now >= taskStartTime && now <= taskEndTime {
+            let totalDuration = taskEndTime.timeIntervalSince(taskStartTime)
+            let elapsed = now.timeIntervalSince(taskStartTime)
             let percent = elapsed / totalDuration
             return .inProgress(percentComplete: percent)
         } else {
-            let minutes = calendar.dateComponents([.minute], from: end, to: now).minute ?? 0
+            let minutes = calendar.dateComponents([.minute], from: taskEndTime, to: now).minute ?? 0
             return .overdue(minutesLate: minutes)
         }
     }
     
     // Time slot display
     var timeSlot: String {
-        guard let start = startTime, let end = endTime else { 
-            return "All day" 
-        }
+        guard let dueDate = dueDate else { return "Not scheduled" }
+        
+        let startTime = dueDate.addingTimeInterval(-estimatedDuration)
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
+        
+        return "\(formatter.string(from: startTime)) - \(formatter.string(from: dueDate))"
     }
     
     // Duration display
     var durationText: String {
-        guard let start = startTime, let end = endTime else { return "" }
-        let minutes = Int(end.timeIntervalSince(start) / 60)
+        let minutes = Int(estimatedDuration / 60)
         if minutes < 60 {
             return "\(minutes) min"
         } else {
@@ -151,17 +129,43 @@ extension MaintenanceTask {
     }
 }
 
-// MARK: - Task Manager Extensions for Real-Time Features
-extension TaskManager {
+// MARK: - TaskService Extensions for Real-Time Features
+extension TaskService {
     
     /// Fetch today's tasks for a worker with real-time status
-    func fetchTodaysTasks(forWorker workerId: String) async -> (current: [MaintenanceTask], upcoming: [MaintenanceTask], completed: [MaintenanceTask]) {
+    func fetchTodaysTasks(forWorker workerId: String) async throws -> (current: [CoreTypes.MaintenanceTask], upcoming: [CoreTypes.MaintenanceTask], completed: [CoreTypes.MaintenanceTask]) {
         
-        let todaysTasks = await fetchTasksAsync(forWorker: workerId, date: Date())
+        // Get tasks for today
+        let todaysTasks = try await getTasksForWorker(workerId)
+            .filter { task in
+                guard let dueDate = task.dueDate else { return false }
+                return Calendar.current.isDateInToday(dueDate)
+            }
+            .compactMap { contextualTask -> CoreTypes.MaintenanceTask? in
+                // Convert ContextualTask to MaintenanceTask
+                CoreTypes.MaintenanceTask(
+                    id: contextualTask.id,
+                    title: contextualTask.title,
+                    description: contextualTask.description ?? "",
+                    category: contextualTask.category ?? .maintenance,
+                    urgency: contextualTask.urgency ?? .medium,
+                    status: contextualTask.status,
+                    buildingId: contextualTask.buildingId ?? "",
+                    assignedWorkerId: workerId,
+                    estimatedDuration: 3600, // Default 1 hour
+                    createdDate: Date(),
+                    dueDate: contextualTask.dueDate,
+                    completedDate: contextualTask.completedDate,
+                    instructions: nil,
+                    requiredSkills: [],
+                    isRecurring: false,
+                    parentTaskId: nil
+                )
+            }
         
-        var current: [MaintenanceTask] = []
-        var upcoming: [MaintenanceTask] = []
-        var completed: [MaintenanceTask] = []
+        var current: [CoreTypes.MaintenanceTask] = []
+        var upcoming: [CoreTypes.MaintenanceTask] = []
+        var completed: [CoreTypes.MaintenanceTask] = []
         
         for task in todaysTasks {
             switch task.timeStatus {
@@ -177,16 +181,16 @@ extension TaskManager {
         }
         
         // Sort by time
-        current.sort { ($0.startTime ?? $0.dueDate) < ($1.startTime ?? $1.dueDate) }
-        upcoming.sort { ($0.startTime ?? $0.dueDate) < ($1.startTime ?? $1.dueDate) }
-        completed.sort { ($0.startTime ?? $0.dueDate) > ($1.startTime ?? $1.dueDate) }
+        current.sort { ($0.dueDate ?? Date()) < ($1.dueDate ?? Date()) }
+        upcoming.sort { ($0.dueDate ?? Date()) < ($1.dueDate ?? Date()) }
+        completed.sort { ($0.dueDate ?? Date()) > ($1.dueDate ?? Date()) }
         
         return (current, upcoming, completed)
     }
     
     /// Get next task for worker
-    func getNextTask(forWorker workerId: String) async -> MaintenanceTask? {
-        let (current, upcoming, _) = await fetchTodaysTasks(forWorker: workerId)
+    func getNextTask(forWorker workerId: String) async throws -> CoreTypes.MaintenanceTask? {
+        let (current, upcoming, _) = try await fetchTodaysTasks(forWorker: workerId)
         
         // First check current tasks (in progress or overdue)
         if let currentTask = current.first {
@@ -198,8 +202,8 @@ extension TaskManager {
     }
     
     /// Get time until next task
-    func getTimeUntilNextTask(forWorker workerId: String) async -> String? {
-        guard let nextTask = await getNextTask(forWorker: workerId) else { return nil }
+    func getTimeUntilNextTask(forWorker workerId: String) async throws -> String? {
+        guard let nextTask = try await getNextTask(forWorker: workerId) else { return nil }
         
         switch nextTask.timeStatus {
         case .upcoming(let minutes):
@@ -220,13 +224,13 @@ extension TaskManager {
 // MARK: - Observable Task State Manager
 @MainActor
 class TaskStateManager: ObservableObject {
-    @Published var currentTasks: [MaintenanceTask] = []
-    @Published var upcomingTasks: [MaintenanceTask] = []
-    @Published var completedTasks: [MaintenanceTask] = []
+    @Published var currentTasks: [CoreTypes.MaintenanceTask] = []
+    @Published var upcomingTasks: [CoreTypes.MaintenanceTask] = []
+    @Published var completedTasks: [CoreTypes.MaintenanceTask] = []
     @Published var isLoading = false
     
     private var refreshTimer: Timer?
-    private let taskManager = TaskService.shared
+    private let taskService = TaskService.shared
     
     init() {
         startAutoRefresh()
@@ -236,19 +240,27 @@ class TaskStateManager: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        let (current, upcoming, completed) = await taskManager.fetchTodaysTasks(forWorker: workerId)
-        
-        self.currentTasks = current
-        self.upcomingTasks = upcoming
-        self.completedTasks = completed
+        do {
+            let (current, upcoming, completed) = try await taskService.fetchTodaysTasks(forWorker: workerId)
+            
+            self.currentTasks = current
+            self.upcomingTasks = upcoming
+            self.completedTasks = completed
+        } catch {
+            print("Error loading tasks: \(error)")
+        }
     }
     
-    func markTaskComplete(_ taskId: String) async {
-        await taskManager.toggleTaskCompletionAsync(taskID: taskId, completedBy: "Worker")
-        
-        // Reload tasks
-        if let workerId = currentTasks.first?.assignedWorkers.first {
-            await loadTasks(forWorker: workerId)
+    func markTaskComplete(_ taskId: String, evidence: CoreTypes.ActionEvidence) async {
+        do {
+            try await taskService.completeTask(taskId, evidence: evidence)
+            
+            // Reload tasks
+            if let workerId = currentTasks.first?.assignedWorkerId {
+                await loadTasks(forWorker: workerId)
+            }
+        } catch {
+            print("Error completing task: \(error)")
         }
     }
     
@@ -260,8 +272,8 @@ class TaskStateManager: ObservableObject {
                 // Re-categorize tasks based on current time
                 let allTasks = self.currentTasks + self.upcomingTasks
                 
-                var newCurrent: [MaintenanceTask] = []
-                var newUpcoming: [MaintenanceTask] = []
+                var newCurrent: [CoreTypes.MaintenanceTask] = []
+                var newUpcoming: [CoreTypes.MaintenanceTask] = []
                 
                 for task in allTasks {
                     switch task.timeStatus {
@@ -274,8 +286,8 @@ class TaskStateManager: ObservableObject {
                     }
                 }
                 
-                self.currentTasks = newCurrent.sorted { ($0.startTime ?? $0.dueDate) < ($1.startTime ?? $1.dueDate) }
-                self.upcomingTasks = newUpcoming.sorted { ($0.startTime ?? $0.dueDate) < ($1.startTime ?? $1.dueDate) }
+                self.currentTasks = newCurrent.sorted { ($0.dueDate ?? Date()) < ($1.dueDate ?? Date()) }
+                self.upcomingTasks = newUpcoming.sorted { ($0.dueDate ?? Date()) < ($1.dueDate ?? Date()) }
             }
         }
     }
