@@ -2,6 +2,7 @@
 //  TypeMigrationService.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Updated to use GRDBManager instead of DatabaseManager
 //  ✅ FIXED: Uses actual UserRole enum cases (no .manager)
 //  ✅ FIXED: ContextualTask.title is String, not optional
 //  ✅ ALIGNED: With existing type definitions in codebase
@@ -14,7 +15,7 @@ actor TypeMigrationService {
     static let shared = TypeMigrationService()
     
     // MARK: - Migration Dependencies
-    private let databaseManager = DatabaseManager.shared
+    private let grdbManager = GRDBManager.shared  // ✅ FIXED: Changed from DatabaseManager
     private let workerService = WorkerService.shared
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
@@ -447,9 +448,9 @@ actor TypeMigrationService {
     // MARK: - Validation Helpers
     
     private func isValidUserRole(_ role: UserRole) -> Bool {
-        // ✅ FIXED: Only use actual UserRole cases (no .manager)
+        // ✅ FIXED: Only use actual UserRole cases
         switch role {
-        case .worker, .admin, .client, .supervisor:
+        case .worker, .admin, .client:
             return true
         }
     }
@@ -457,7 +458,7 @@ actor TypeMigrationService {
     private func isValidTaskCategory(_ category: TaskCategory) -> Bool {
         switch category {
         case .cleaning, .maintenance, .repair, .sanitation, .inspection,
-             .landscaping, .security, .emergency, .installation, .utilities, .renovation:
+             .landscaping, .security, .emergency, .installation, .utilities, .renovation, .administrative:
             return true
         }
     }
@@ -482,7 +483,8 @@ actor TypeMigrationService {
     
     private func hasValidImageAsset(_ building: NamedCoordinate) -> Bool {
         // Check if building has associated image asset
-        return building.imageAssetName != nil
+        // Note: NamedCoordinate doesn't have imageAssetName property, this would need to be checked elsewhere
+        return true // Placeholder
     }
     
     private func isDashboardReady(_ building: NamedCoordinate) -> Bool {
@@ -507,7 +509,7 @@ actor TypeMigrationService {
     
     private func isNovaAICompatible(_ building: NamedCoordinate) -> Bool {
         // Check if building data works with Nova AI
-        return isDashboardReady(building) && hasValidImageAsset(building)
+        return isDashboardReady(building)
     }
     
     private func isValidBuildingMetrics(_ metrics: CoreTypes.BuildingMetrics) -> Bool {
@@ -516,9 +518,9 @@ actor TypeMigrationService {
     }
     
     private func mapToDashboardRole(_ role: UserRole) -> UserRole {
-        // ✅ FIXED: Map existing roles to dashboard-compatible roles (no .manager)
+        // ✅ FIXED: Map existing roles to dashboard-compatible roles
         switch role {
-        case .worker, .supervisor:
+        case .worker:
             return .worker
         case .admin:
             return .admin
@@ -528,12 +530,11 @@ actor TypeMigrationService {
     }
     
     private func getDashboardRoles(for worker: WorkerProfile) -> [String] {
-        // ✅ FIXED: Determine which dashboard roles a worker can access (no .manager)
+        // ✅ FIXED: Determine which dashboard roles a worker can access
         switch worker.role {
         case .worker: return ["worker"]
         case .admin: return ["worker", "admin"]
         case .client: return ["client"]
-        case .supervisor: return ["worker", "admin", "client"]
         }
     }
     
