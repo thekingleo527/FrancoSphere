@@ -1,235 +1,17 @@
-import Foundation
-import SwiftUI
-import UIKit
-import Combine
-
-// MARK: - Placeholder CoreTypes and other external models (These would typically be in separate files)
-// Adding these to make the current file self-contained for compilation.
-
-enum TaskCategory: String, CaseIterable, Codable {
-    case maintenance
-    case cleaning
-    case repair
-    case inspection
-    case installation
-    case utilities
-    case emergency
-    case renovation
-    case landscaping
-    case security
-    case sanitation
-    case administrative
-}
-
-enum TaskUrgency: String, CaseIterable, Codable {
-    case low
-    case medium
-    case high
-    case urgent
-    case critical
-    case emergency // Added from TaskDetailView context
-}
-
-enum UserRole: String, Codable {
-    case admin
-    case manager
-    case worker
-    case client
-}
-
-struct NamedCoordinate: Identifiable, Codable {
-    let id: String
-    let name: String
-    let address: String
-    let latitude: Double
-    let longitude: Double
-
-    // Dummy initializer to satisfy ContextualTask if needed, though not strictly required for TaskRequestView
-    init(id: String, name: String, latitude: Double, longitude: Double) {
-        self.id = id
-        self.name = name
-        self.address = "Dummy Address"
-        self.latitude = latitude
-        self.longitude = longitude
-    }
-    
-    // Original initializer needed for TaskRequestViewModel.defaultBuildings
-    init(id: String, name: String, address: String, latitude: Double, longitude: Double) {
-        self.id = id
-        self.name = name
-        self.address = address
-        self.latitude = latitude
-        self.longitude = longitude
-    }
-}
-
-struct WorkerProfile: Identifiable, Codable {
-    let id: String
-    let name: String
-    let email: String
-    let phoneNumber: String?
-    let role: UserRole
-    let skills: [String]?
-    let certifications: [String]?
-    let hireDate: Date?
-    let isActive: Bool
-    let profileImageUrl: URL?
-}
-
-struct ContextualTask: Identifiable, Codable {
-    let id: String
-    let title: String
-    let description: String?
-    var isCompleted: Bool
-    var completedDate: Date?
-    var dueDate: Date?
-    var category: TaskCategory?
-    var urgency: TaskUrgency?
-    var building: NamedCoordinate?
-    var worker: WorkerProfile?
-    var buildingId: String? // Added from TaskRequestViewModel usage
-    var priority: TaskUrgency? // Added from TaskRequestViewModel usage
-
-    // Dummy initializer to satisfy TaskRequestViewModel usage
-    init(id: String, title: String, description: String, isCompleted: Bool, completedDate: Date?, dueDate: Date?, category: TaskCategory?, urgency: TaskUrgency?, building: NamedCoordinate?, worker: WorkerProfile?, buildingId: String?, priority: TaskUrgency?) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.isCompleted = isCompleted
-        self.completedDate = completedDate
-        self.dueDate = dueDate
-        self.category = category
-        self.urgency = urgency
-        self.building = building
-        self.worker = worker
-        self.buildingId = buildingId
-        self.priority = priority
-    }
-
-    // Constructor from TaskDetailView Preview, added for completeness
-    init(title: String, description: String?, isCompleted: Bool, scheduledDate: Date?, dueDate: Date?, category: TaskCategory?, urgency: TaskUrgency?, building: NamedCoordinate?, worker: WorkerProfile?) {
-        self.id = UUID().uuidString
-        self.title = title
-        self.description = description
-        self.isCompleted = isCompleted
-        self.completedDate = nil // Or appropriate default
-        self.dueDate = dueDate ?? scheduledDate // Use dueDate, fallback to scheduledDate
-        self.category = category
-        self.urgency = urgency
-        self.building = building
-        self.worker = worker
-        self.buildingId = building?.id // Populate buildingId from building
-        self.priority = urgency // Populate priority from urgency
-    }
-}
-
-
-// Placeholder for CoreTypes.InventoryItem and its associated enums
-struct CoreTypes {
-    enum InventoryCategory: String, Codable {
-        case supplies
-        case tools
-        case equipment
-        case materials
-        case safety
-        case cleaning // Added based on context
-        case electrical // Added based on context
-        case plumbing // Added based on context
-        case general // Added based on context
-        case office // Added based on context
-        case maintenance // Added based on context
-        case other // Added based on context
-    }
-    
-    enum RestockStatus: String, Codable {
-        case inStock
-        case lowStock
-        case outOfStock
-    }
-    
-    struct InventoryItem: Identifiable, Codable {
-        let id: String
-        let name: String
-        let category: InventoryCategory
-        let currentStock: Int
-        let minimumStock: Int
-        let maxStock: Int
-        let unit: String
-        let cost: Double
-        let supplier: String?
-        let location: String
-        let lastRestocked: Date?
-        let status: RestockStatus
-    }
-}
-
-// Placeholder for TaskService
-class TaskService {
-    static let shared = TaskService()
-    
-    func createTask(_ task: ContextualTask) async throws {
-        print("Simulating task creation for: \(task.title)")
-        // Simulate network delay
-        try await Task.sleep(nanoseconds: 500_000_000)
-        print("Task created: \(task.title)")
-    }
-
-    // Method from TaskDetailView context
-    func completeTask(_ taskId: String, evidence: ActionEvidence) async throws {
-        print("Simulating task completion for: \(taskId)")
-        try await Task.sleep(nanoseconds: 500_000_000)
-        print("Task completed: \(taskId)")
-    }
-}
-
-// Placeholder for DashboardUpdate
-struct DashboardUpdate: Codable {
-    enum Source: String, Codable {
-        case admin
-        case worker
-    }
-    
-    enum UpdateType: String, Codable {
-        case taskStarted
-        case taskCompleted
-        case taskUpdated
-    }
-    
-    let source: Source
-    let type: UpdateType
-    let buildingId: String
-    let workerId: String
-    let data: [String: String]
-}
-
-// Placeholder for DashboardSyncService
-class DashboardSyncService {
-    static let shared = DashboardSyncService()
-    
-    func broadcastAdminUpdate(_ update: DashboardUpdate) {
-        print("Simulating broadcast of admin update: \(update.type.rawValue)")
-    }
-}
-
-// Placeholder for ActionEvidence (from TaskDetailView context)
-struct ActionEvidence: Codable {
-    let description: String?
-    let photoURLs: [URL]?
-    let timestamp: Date
-}
-
-
 //
 //  TaskRequestView.swift
 //  FrancoSphere
 //
-//  ✅ ARCHITECTURAL FIX: Modularized to prevent type confusion
-//  ✅ FIXED: Separated view logic from data models
-//  ✅ FIXED: Explicit type declarations throughout
-//  ✅ FIXED: No ambiguous closures or type inference issues
+//  ✅ FIXED: Removed all duplicate type definitions
+//  ✅ FIXED: Now properly imports from CoreTypes
+//  ✅ FIXED: No type ambiguity or redeclaration errors
 //
 
-// MARK: - View Model (Isolates Business Logic)
+import SwiftUI
+import UIKit
+import Combine
+
+// MARK: - View Model
 
 @MainActor
 final class TaskRequestViewModel: ObservableObject {
@@ -237,8 +19,8 @@ final class TaskRequestViewModel: ObservableObject {
     @Published var taskName: String = ""
     @Published var taskDescription: String = ""
     @Published var selectedBuildingID: String = ""
-    @Published var selectedCategory: TaskCategory = .maintenance
-    @Published var selectedUrgency: TaskUrgency = .medium
+    @Published var selectedCategory: CoreTypes.TaskCategory = .maintenance
+    @Published var selectedUrgency: CoreTypes.TaskUrgency = .medium
     @Published var selectedDate: Date = Date().addingTimeInterval(86400)
     @Published var selectedWorkerId: String = "4"
     @Published var attachPhoto: Bool = false
@@ -250,8 +32,8 @@ final class TaskRequestViewModel: ObservableObject {
     @Published var showCompletionAlert: Bool = false
     
     // Data collections
-    @Published var buildingOptions: [NamedCoordinate] = []
-    @Published var workerOptions: [WorkerProfile] = []
+    @Published var buildingOptions: [CoreTypes.NamedCoordinate] = []
+    @Published var workerOptions: [CoreTypes.WorkerProfile] = []
     @Published var suggestions: [TaskSuggestion] = []
     @Published var isLoadingBuildings: Bool = true
     @Published var showSuggestions: Bool = false
@@ -309,11 +91,11 @@ final class TaskRequestViewModel: ObservableObject {
         taskDescription = suggestion.description
         selectedBuildingID = suggestion.buildingId
         
-        if let category = TaskCategory(rawValue: suggestion.category) {
+        if let category = CoreTypes.TaskCategory(rawValue: suggestion.category) {
             selectedCategory = category
         }
         
-        if let urgency = TaskUrgency(rawValue: suggestion.urgency) {
+        if let urgency = CoreTypes.TaskUrgency(rawValue: suggestion.urgency) {
             selectedUrgency = urgency
         }
     }
@@ -334,7 +116,7 @@ final class TaskRequestViewModel: ObservableObject {
         }
         
         // Create task
-        let task = ContextualTask(
+        let task = CoreTypes.ContextualTask(
             id: UUID().uuidString,
             title: taskName,
             description: taskDescription,
@@ -403,43 +185,43 @@ final class TaskRequestViewModel: ObservableObject {
     
     // MARK: - Static Data
     
-    static let defaultBuildings: [NamedCoordinate] = [
-        NamedCoordinate(
+    static let defaultBuildings: [CoreTypes.NamedCoordinate] = [
+        CoreTypes.NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
             address: "142-148 West 17th Street, New York, NY",
             latitude: 40.7402,
             longitude: -73.9980
         ),
-        NamedCoordinate(
+        CoreTypes.NamedCoordinate(
             id: "1",
             name: "117 West 17th Street",
             address: "117 West 17th Street, New York, NY",
             latitude: 40.7410,
             longitude: -73.9958
         ),
-        NamedCoordinate(
+        CoreTypes.NamedCoordinate(
             id: "3",
             name: "131 Perry Street",
             address: "131 Perry Street, New York, NY",
             latitude: 40.7350,
             longitude: -74.0045
         ),
-        NamedCoordinate(
+        CoreTypes.NamedCoordinate(
             id: "5",
             name: "135-139 West 17th Street",
             address: "135-139 West 17th Street, New York, NY",
             latitude: 40.7404,
             longitude: -73.9975
         ),
-        NamedCoordinate(
+        CoreTypes.NamedCoordinate(
             id: "6",
             name: "136 West 17th Street",
             address: "136 West 17th Street, New York, NY",
             latitude: 40.7403,
             longitude: -73.9976
         ),
-        NamedCoordinate(
+        CoreTypes.NamedCoordinate(
             id: "13",
             name: "68 Perry Street",
             address: "68 Perry Street, New York, NY",
@@ -448,61 +230,61 @@ final class TaskRequestViewModel: ObservableObject {
         )
     ]
     
-    static let defaultWorkers: [WorkerProfile] = [
-        WorkerProfile(
+    static let defaultWorkers: [CoreTypes.WorkerProfile] = [
+        CoreTypes.WorkerProfile(
             id: "4",
             name: "Kevin Dutan",
             email: "kevin.dutan@francomanagement.com",
             phoneNumber: "555-0104",
-            role: UserRole.worker,
+            role: CoreTypes.UserRole.worker,
             skills: ["Cleaning", "Sanitation", "Operations"],
             certifications: ["DSNY Compliance", "Safety Training"],
             hireDate: Date(timeIntervalSinceNow: -730 * 24 * 60 * 60),
             isActive: true,
             profileImageUrl: nil
         ),
-        WorkerProfile(
+        CoreTypes.WorkerProfile(
             id: "2",
             name: "Edwin Lema",
             email: "edwin.lema@francomanagement.com",
             phoneNumber: "555-0102",
-            role: UserRole.worker,
+            role: CoreTypes.UserRole.worker,
             skills: ["Cleaning", "Maintenance"],
             certifications: ["Safety Training"],
             hireDate: Date(timeIntervalSinceNow: -365 * 24 * 60 * 60),
             isActive: true,
             profileImageUrl: nil
         ),
-        WorkerProfile(
+        CoreTypes.WorkerProfile(
             id: "1",
             name: "Greg Hutson",
             email: "greg.hutson@francomanagement.com",
             phoneNumber: "555-0101",
-            role: UserRole.worker,
+            role: CoreTypes.UserRole.worker,
             skills: ["Building Systems", "Cleaning"],
             certifications: ["Building Specialist"],
             hireDate: Date(timeIntervalSinceNow: -1095 * 24 * 60 * 60),
             isActive: true,
             profileImageUrl: nil
         ),
-        WorkerProfile(
+        CoreTypes.WorkerProfile(
             id: "5",
             name: "Mercedes Inamagua",
             email: "mercedes.inamagua@francomanagement.com",
             phoneNumber: "555-0105",
-            role: UserRole.worker,
+            role: CoreTypes.UserRole.worker,
             skills: ["Deep Cleaning", "Maintenance"],
             certifications: ["Safety Training"],
             hireDate: Date(timeIntervalSinceNow: -547 * 24 * 60 * 60),
             isActive: true,
             profileImageUrl: nil
         ),
-        WorkerProfile(
+        CoreTypes.WorkerProfile(
             id: "7",
             name: "Angel Guirachocha",
             email: "angel.guirachocha@francomanagement.com",
             phoneNumber: "555-0107",
-            role: UserRole.worker,
+            role: CoreTypes.UserRole.worker,
             skills: ["Evening Operations", "Security"],
             certifications: ["Security License"],
             hireDate: Date(timeIntervalSinceNow: -180 * 24 * 60 * 60),
@@ -516,40 +298,40 @@ final class TaskRequestViewModel: ObservableObject {
             id: "1",
             title: "Trash Area + Sidewalk & Curb Clean",
             description: "Daily cleaning of trash area, sidewalk, and curb for building compliance.",
-            category: TaskCategory.sanitation.rawValue,
-            urgency: TaskUrgency.medium.rawValue,
+            category: CoreTypes.TaskCategory.sanitation.rawValue,
+            urgency: CoreTypes.TaskUrgency.medium.rawValue,
             buildingId: "14"
         ),
         TaskSuggestion(
             id: "2",
             title: "Museum Entrance Sweep",
             description: "Daily sweep of museum entrance area for visitor experience.",
-            category: TaskCategory.cleaning.rawValue,
-            urgency: TaskUrgency.medium.rawValue,
+            category: CoreTypes.TaskCategory.cleaning.rawValue,
+            urgency: CoreTypes.TaskUrgency.medium.rawValue,
             buildingId: "14"
         ),
         TaskSuggestion(
             id: "3",
             title: "DSNY Put-Out (after 20:00)",
             description: "Place trash at curb after 8 PM for DSNY collection (Sun/Tue/Thu).",
-            category: TaskCategory.sanitation.rawValue,
-            urgency: TaskUrgency.high.rawValue,
+            category: CoreTypes.TaskCategory.sanitation.rawValue,
+            urgency: CoreTypes.TaskUrgency.high.rawValue,
             buildingId: "14"
         ),
         TaskSuggestion(
             id: "4",
             title: "Weekly Deep Clean - Trash Area",
             description: "Comprehensive cleaning and hosing of trash area (Mon/Wed/Fri).",
-            category: TaskCategory.sanitation.rawValue,
-            urgency: TaskUrgency.medium.rawValue,
+            category: CoreTypes.TaskCategory.sanitation.rawValue,
+            urgency: CoreTypes.TaskUrgency.medium.rawValue,
             buildingId: "14"
         ),
         TaskSuggestion(
             id: "5",
             title: "Stairwell Hose-Down",
             description: "Weekly hosing of stairwells and common areas.",
-            category: TaskCategory.maintenance.rawValue,
-            urgency: TaskUrgency.low.rawValue,
+            category: CoreTypes.TaskCategory.maintenance.rawValue,
+            urgency: CoreTypes.TaskUrgency.low.rawValue,
             buildingId: "13"
         )
     ]
@@ -631,7 +413,7 @@ struct TaskSuggestion: Identifiable, Equatable {
     }
 }
 
-// MARK: - Main View (Simplified)
+// MARK: - Main View
 
 struct TaskRequestView: View {
     @StateObject private var viewModel = TaskRequestViewModel()
@@ -668,7 +450,6 @@ struct TaskRequestView: View {
                 },
                 trailing: submitButton
             )
-            // ✅ FIXED: Simple onAppear without complex closures
             .onAppear(perform: viewModel.initializeData)
             .alert(isPresented: $viewModel.showCompletionAlert) {
                 Alert(
@@ -697,8 +478,6 @@ struct TaskRequestView: View {
     // MARK: - View Components
     
     private var submitButton: some View {
-        // Fix for "Trailing closure passed to parameter of type 'any Decoder'":
-        // Call a synchronous helper function instead of inline async Task.
         Button(action: {
             submitTaskAction()
         }, label: {
@@ -738,7 +517,7 @@ struct TaskRequestView: View {
             }
             
             Picker("Urgency", selection: $viewModel.selectedUrgency) {
-                ForEach(TaskUrgency.allCases, id: \.self) { urgency in
+                ForEach(CoreTypes.TaskUrgency.allCases, id: \.self) { urgency in
                     HStack {
                         Circle()
                             .fill(TaskRequestHelpers.getUrgencyColor(urgency))
@@ -770,7 +549,7 @@ struct TaskRequestView: View {
             
             if !viewModel.selectedBuildingID.isEmpty {
                 Picker("Category", selection: $viewModel.selectedCategory) {
-                    ForEach(TaskCategory.allCases, id: \.self) { category in
+                    ForEach(CoreTypes.TaskCategory.allCases, id: \.self) { category in
                         Label(
                             category.rawValue.capitalized,
                             systemImage: TaskRequestHelpers.getCategoryIcon(category.rawValue)
@@ -909,12 +688,10 @@ struct TaskRequestView: View {
                         .font(.caption)
                 }
                 
-                // Fix for "Trailing closure passed to parameter of type 'any Decoder'":
-                // Call a synchronous helper function instead of inline async Task.
                 Button(action: {
                     submitTaskAction()
                 }, label: {
-                    Group { // Ensures consistent return type for the button's label
+                    Group {
                         if viewModel.isSubmitting {
                             HStack {
                                 ProgressView()
@@ -990,7 +767,7 @@ struct TaskRequestView: View {
         }
     }
 
-    // MARK: - Helper to wrap async submitTaskRequest (for Button actions)
+    // MARK: - Helper to wrap async submitTaskRequest
     private func submitTaskAction() {
         Task { @MainActor in
             await viewModel.submitTaskRequest()
@@ -998,10 +775,10 @@ struct TaskRequestView: View {
     }
 }
 
-// MARK: - Helper Functions (Static to avoid issues)
+// MARK: - Helper Functions
 
 struct TaskRequestHelpers {
-    static func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
+    static func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
         case .medium: return .yellow
@@ -1041,14 +818,14 @@ struct TaskRequestHelpers {
     }
     
     static func getUrgencyColorFromString(_ urgency: String) -> Color {
-        if let taskUrgency = TaskUrgency(rawValue: urgency) {
+        if let taskUrgency = CoreTypes.TaskUrgency(rawValue: urgency) {
             return getUrgencyColor(taskUrgency)
         }
         return .gray
     }
 }
 
-// MARK: - Supporting Views (Keep separate files in production)
+// MARK: - Supporting Views
 
 struct InventorySelectionView: View {
     let buildingId: String
@@ -1213,7 +990,6 @@ struct InventorySelectionView: View {
     
     private func loadInventory() {
         isLoading = true
-        // Simulated delay removed - instant load
         self.inventoryItems = TaskRequestViewModel.createSampleInventory()
         self.isLoading = false
     }
