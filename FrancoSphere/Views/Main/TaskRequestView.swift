@@ -1,20 +1,17 @@
 import Foundation
 import SwiftUI
 import UIKit
+import Combine
 
 //
 //  TaskRequestView.swift
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Added missing TaskSuggestion type
-//  ✅ FIXED: All scope issues resolved
-//  ✅ FIXED: PhotoPickerView defined in same file
-//  ✅ ALIGNED: With ContextualTask creation patterns from TaskService
-//  ✅ FIXED: InventoryItem initializer without status parameter
-//  ✅ FIXED: Removed await from non-async broadcastAdminUpdate
-//  ✅ FIXED: Fixed .task modifier syntax
-//  ✅ FIXED: Restructured to fix scope issues
+//  ✅ FIXED: Using CoreTypes.InventoryItem with FULL initializer
+//  ✅ FIXED: All type references explicitly use CoreTypes namespace
+//  ✅ FIXED: .onAppear closure structure corrected
+//  ✅ FIXED: Added Combine import for better type support
 //
 
 // MARK: - Supporting Models (Must be defined before use)
@@ -53,7 +50,7 @@ struct TaskRequestView: View {
     @State private var showPhotoSelector = false
     @State private var requiredInventory: [String: Int] = [:]
     @State private var showInventorySelector = false
-    @State private var availableInventory: [InventoryItem] = []
+    @State private var availableInventory: [CoreTypes.InventoryItem] = []
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var suggestions: [TaskSuggestion] = []
@@ -425,7 +422,7 @@ struct TaskRequestView: View {
                (!attachPhoto || photo != nil)
     }
     
-    private func getInventoryItem(_ itemId: String) -> InventoryItem? {
+    private func getInventoryItem(_ itemId: String) -> CoreTypes.InventoryItem? {
         return availableInventory.first { $0.id == itemId }
     }
     
@@ -650,21 +647,25 @@ struct TaskRequestView: View {
         self.availableInventory = createSampleInventory()
     }
     
-    private func createSampleInventory() -> [InventoryItem] {
-        // ✅ FIXED: Use InventoryItem without status (has default value)
+    private func createSampleInventory() -> [CoreTypes.InventoryItem] {
+        // ✅ FIXED: Use FULL initializer with ALL parameters explicitly
         return [
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "All-Purpose Cleaner",
-                category: .supplies,
+                category: CoreTypes.InventoryCategory.supplies,
                 currentStock: 10,
                 minimumStock: 5,
                 maxStock: 50,
                 unit: "bottles",
                 cost: 5.99,
-                supplier: "CleanCo Supplies",
-                location: "Storage Room A"
+                supplier: nil,
+                location: "Storage Room A",
+                lastRestocked: nil,
+                status: CoreTypes.RestockStatus.inStock
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "Paint Brushes",
                 category: .tools,
                 currentStock: 5,
@@ -672,10 +673,13 @@ struct TaskRequestView: View {
                 maxStock: 20,
                 unit: "pieces",
                 cost: 3.50,
-                supplier: "Tool Depot",
-                location: "Maintenance Workshop"
+                supplier: nil,
+                location: "Maintenance Workshop",
+                lastRestocked: nil,
+                status: .inStock
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "Safety Gloves",
                 category: .safety,
                 currentStock: 20,
@@ -683,10 +687,13 @@ struct TaskRequestView: View {
                 maxStock: 100,
                 unit: "pairs",
                 cost: 2.25,
-                supplier: "SafetyFirst Inc",
-                location: "Safety Cabinet"
+                supplier: nil,
+                location: "Safety Cabinet",
+                lastRestocked: nil,
+                status: .inStock
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "LED Light Bulbs",
                 category: .materials,
                 currentStock: 15,
@@ -694,8 +701,10 @@ struct TaskRequestView: View {
                 maxStock: 50,
                 unit: "pieces",
                 cost: 4.75,
-                supplier: "Electrical Supply Co",
-                location: "Electrical Storage"
+                supplier: nil,
+                location: "Electrical Storage",
+                lastRestocked: nil,
+                status: .inStock
             )
         ]
     }
@@ -837,7 +846,7 @@ struct InventorySelectionView: View {
     @Binding var selectedItems: [String: Int]
     var onDismiss: (() -> Void)? = nil
     
-    @State private var inventoryItems: [InventoryItem] = []
+    @State private var inventoryItems: [CoreTypes.InventoryItem] = []
     @State private var isLoading = true
     @State private var searchText = ""
     @State private var tempQuantities: [String: Int] = [:]
@@ -918,15 +927,15 @@ struct InventorySelectionView: View {
                 }
             )
             .onAppear {
+                tempQuantities = selectedItems
                 Task {
                     await loadInventory()
                 }
-                tempQuantities = selectedItems
             }
         }
     }
     
-    private func inventoryItemRow(_ item: InventoryItem) -> some View {
+    private func inventoryItemRow(_ item: CoreTypes.InventoryItem) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -964,7 +973,7 @@ struct InventorySelectionView: View {
         .padding(.vertical, 4)
     }
     
-    private var filteredItems: [InventoryItem] {
+    private var filteredItems: [CoreTypes.InventoryItem] {
         if searchText.isEmpty {
             return inventoryItems
         } else {
@@ -996,9 +1005,10 @@ struct InventorySelectionView: View {
         
         // Removed Task.sleep for compatibility - instant load
         
-        // ✅ FIXED: Use InventoryItem without status (has default value)
+        // ✅ FIXED: Use FULL initializer with ALL parameters explicitly
         self.inventoryItems = [
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "All-Purpose Cleaner",
                 category: .supplies,
                 currentStock: 10,
@@ -1006,10 +1016,13 @@ struct InventorySelectionView: View {
                 maxStock: 50,
                 unit: "bottles",
                 cost: 5.99,
-                supplier: "CleanCo Supplies",
-                location: "Storage Room A"
+                supplier: nil,
+                location: "Storage Room A",
+                lastRestocked: nil,
+                status: .inStock
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "Paint Brushes",
                 category: .tools,
                 currentStock: 5,
@@ -1017,10 +1030,13 @@ struct InventorySelectionView: View {
                 maxStock: 20,
                 unit: "pieces",
                 cost: 3.50,
-                supplier: "Tool Depot",
-                location: "Maintenance Workshop"
+                supplier: nil,
+                location: "Maintenance Workshop",
+                lastRestocked: nil,
+                status: .inStock
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "Safety Gloves",
                 category: .safety,
                 currentStock: 20,
@@ -1028,10 +1044,13 @@ struct InventorySelectionView: View {
                 maxStock: 100,
                 unit: "pairs",
                 cost: 2.25,
-                supplier: "SafetyFirst Inc",
-                location: "Safety Cabinet"
+                supplier: nil,
+                location: "Safety Cabinet",
+                lastRestocked: nil,
+                status: .inStock
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
+                id: UUID().uuidString,
                 name: "LED Light Bulbs",
                 category: .materials,
                 currentStock: 15,
@@ -1039,8 +1058,10 @@ struct InventorySelectionView: View {
                 maxStock: 50,
                 unit: "pieces",
                 cost: 4.75,
-                supplier: "Electrical Supply Co",
-                location: "Electrical Storage"
+                supplier: nil,
+                location: "Electrical Storage",
+                lastRestocked: nil,
+                status: .inStock
             )
         ]
         self.isLoading = false
@@ -1156,7 +1177,7 @@ struct ImagePickerWrapper: UIViewControllerRepresentable {
 
 // MARK: - Extensions
 
-extension InventoryItem {
+extension CoreTypes.InventoryItem {
     var displayUnit: String {
         switch category {
         case .tools: return "pcs"
