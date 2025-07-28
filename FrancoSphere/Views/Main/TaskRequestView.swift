@@ -8,10 +8,9 @@ import Combine
 //  FrancoSphere
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Using CoreTypes.InventoryItem with FULL initializer
-//  ✅ FIXED: All type references explicitly use CoreTypes namespace
-//  ✅ FIXED: .onAppear closure structure corrected
-//  ✅ FIXED: Added Combine import for better type support
+//  ✅ FIXED: WorkerProfile initializer with proper imports
+//  ✅ FIXED: .onAppear instead of .task to avoid Decoder confusion
+//  ✅ FIXED: Explicit type annotations to help compiler
 //
 
 // MARK: - Supporting Models (Must be defined before use)
@@ -97,10 +96,11 @@ struct TaskRequestView: View {
                 trailing: Button("Submit", action: submitTaskWrapper)
                     .disabled(!isFormValid || isSubmitting)
             )
-            .task {
-                loadBuildings()
-                loadWorkers()
-                loadSuggestions()
+            // ✅ FIXED: Use .onAppear with explicit Task to avoid compiler confusion
+            .onAppear {
+                Task { @MainActor in
+                    await initializeView()
+                }
             }
             .alert(isPresented: $showCompletionAlert) {
                 Alert(
@@ -124,6 +124,16 @@ struct TaskRequestView: View {
                 )
             }
         }
+    }
+    
+    // MARK: - Initialization
+    
+    @MainActor
+    private func initializeView() async {
+        // Load all initial data
+        loadBuildings()
+        loadWorkers()
+        loadSuggestions()
     }
     
     // MARK: - Form Sections
@@ -199,7 +209,7 @@ struct TaskRequestView: View {
                 }
                 
                 Button(action: {
-                    loadInventoryWrapper()
+                    loadInventory()
                     showInventorySelector = true
                 }) {
                     HStack {
@@ -409,11 +419,6 @@ struct TaskRequestView: View {
         }
     }
     
-    private func loadInventoryWrapper() {
-        // ✅ FIXED: loadInventory in main view is NOT async
-        loadInventory()
-    }
-    
     private var isFormValid: Bool {
         return !taskName.isEmpty &&
                !taskDescription.isEmpty &&
@@ -528,17 +533,18 @@ struct TaskRequestView: View {
     }
     
     private func loadWorkers() {
-        // ✅ FIXED: Using REAL worker data from OperationalDataManager
+        // ✅ FIXED: Create WorkerProfile array with simple data
+        // Using direct initialization to avoid any import issues
         self.workerOptions = [
             WorkerProfile(
                 id: "4",
                 name: "Kevin Dutan",
                 email: "kevin.dutan@francomanagement.com",
-                phoneNumber: "",
-                role: .worker,
+                phoneNumber: "555-0104",
+                role: UserRole.worker,
                 skills: ["Cleaning", "Sanitation", "Operations"],
                 certifications: ["DSNY Compliance", "Safety Training"],
-                hireDate: Date(timeIntervalSinceNow: -730 * 24 * 60 * 60), // 2 years
+                hireDate: Date(timeIntervalSinceNow: -730 * 24 * 60 * 60), // 2 years ago
                 isActive: true,
                 profileImageUrl: nil
             ),
@@ -546,11 +552,11 @@ struct TaskRequestView: View {
                 id: "2",
                 name: "Edwin Lema",
                 email: "edwin.lema@francomanagement.com",
-                phoneNumber: "",
-                role: .worker,
+                phoneNumber: "555-0102",
+                role: UserRole.worker,
                 skills: ["Cleaning", "Maintenance"],
                 certifications: ["Safety Training"],
-                hireDate: Date(timeIntervalSinceNow: -365 * 24 * 60 * 60), // 1 year
+                hireDate: Date(timeIntervalSinceNow: -365 * 24 * 60 * 60), // 1 year ago
                 isActive: true,
                 profileImageUrl: nil
             ),
@@ -558,11 +564,11 @@ struct TaskRequestView: View {
                 id: "1",
                 name: "Greg Hutson",
                 email: "greg.hutson@francomanagement.com",
-                phoneNumber: "",
-                role: .worker,
+                phoneNumber: "555-0101",
+                role: UserRole.worker,
                 skills: ["Building Systems", "Cleaning"],
                 certifications: ["Building Specialist"],
-                hireDate: Date(timeIntervalSinceNow: -1095 * 24 * 60 * 60), // 3 years
+                hireDate: Date(timeIntervalSinceNow: -1095 * 24 * 60 * 60), // 3 years ago
                 isActive: true,
                 profileImageUrl: nil
             ),
@@ -570,11 +576,11 @@ struct TaskRequestView: View {
                 id: "5",
                 name: "Mercedes Inamagua",
                 email: "mercedes.inamagua@francomanagement.com",
-                phoneNumber: "",
-                role: .worker,
+                phoneNumber: "555-0105",
+                role: UserRole.worker,
                 skills: ["Deep Cleaning", "Maintenance"],
                 certifications: ["Safety Training"],
-                hireDate: Date(timeIntervalSinceNow: -547 * 24 * 60 * 60), // 1.5 years
+                hireDate: Date(timeIntervalSinceNow: -547 * 24 * 60 * 60), // 1.5 years ago
                 isActive: true,
                 profileImageUrl: nil
             ),
@@ -582,11 +588,11 @@ struct TaskRequestView: View {
                 id: "7",
                 name: "Angel Guirachocha",
                 email: "angel.guirachocha@francomanagement.com",
-                phoneNumber: "",
-                role: .worker,
+                phoneNumber: "555-0107",
+                role: UserRole.worker,
                 skills: ["Evening Operations", "Security"],
                 certifications: ["Security License"],
-                hireDate: Date(timeIntervalSinceNow: -180 * 24 * 60 * 60), // 6 months
+                hireDate: Date(timeIntervalSinceNow: -180 * 24 * 60 * 60), // 6 months ago
                 isActive: true,
                 profileImageUrl: nil
             )
@@ -745,7 +751,7 @@ struct TaskRequestView: View {
             return
         }
         
-        // ✅ FIXED: Create task using the minimal ContextualTask initializer pattern from TaskService
+        // ✅ FIXED: Create task using ONLY the parameters ContextualTask accepts
         let task = ContextualTask(
             id: UUID().uuidString,
             title: taskName,
@@ -758,9 +764,7 @@ struct TaskRequestView: View {
             building: selectedBuilding,
             worker: currentWorker,
             buildingId: selectedBuildingID,
-            priority: selectedUrgency,
-            assignedWorkerId: currentWorker.id,
-            estimatedDuration: 3600 // Default 1 hour
+            priority: selectedUrgency
         )
         
         do {
@@ -778,7 +782,7 @@ struct TaskRequestView: View {
                     "taskTitle": task.title,
                     "taskCategory": task.category?.rawValue ?? "maintenance",
                     "taskUrgency": task.urgency?.rawValue ?? "medium",
-                    "dueDate": task.dueDate ?? Date()
+                    "dueDate": ISO8601DateFormatter().string(from: task.dueDate ?? Date())
                 ]
             )
             
@@ -814,13 +818,6 @@ struct TaskRequestView: View {
         for (itemId, quantity) in requiredInventory {
             if let item = getInventoryItem(itemId) {
                 print("  - \(quantity) of \(item.name)")
-                
-                // Example of how to save to database:
-                // try? await inventoryService.recordTaskRequirement(
-                //     taskId: taskId,
-                //     itemId: itemId,
-                //     quantity: quantity
-                // )
             }
         }
     }
@@ -829,13 +826,6 @@ struct TaskRequestView: View {
         print("Saving photo for task \(taskId)")
         
         // TODO: In production, save to storage service
-        // Example:
-        // if let imageData = image.jpegData(compressionQuality: 0.8) {
-        //     try? await storageService.saveTaskPhoto(
-        //         taskId: taskId,
-        //         imageData: imageData
-        //     )
-        // }
     }
 }
 
@@ -1002,8 +992,6 @@ struct InventorySelectionView: View {
     
     private func loadInventory() async {
         isLoading = true
-        
-        // Removed Task.sleep for compatibility - instant load
         
         // ✅ FIXED: Use FULL initializer with ALL parameters explicitly
         self.inventoryItems = [
