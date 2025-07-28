@@ -97,7 +97,6 @@
 		23273A692E2B8674004A52C6 /* TodaysProgressDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739362E2B8674004A52C6 /* TodaysProgressDetailView.swift */; };
 		23273A6A2E2B8674004A52C6 /* AdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */; };
 		23273A6B2E2B8674004A52C6 /* SchemaMigrationPatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739422E2B8674004A52C6 /* SchemaMigrationPatch.swift */; };
-		23273A6D2E2B8674004A52C6 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739652E2B8674004A52C6 /* UnifiedDataService.swift */; };
 		23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */; };
 		23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CD2E2B8674004A52C6 /* WorkerService.swift */; };
 		23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739272E2B8674004A52C6 /* HeroStatusCard.swift */; };
@@ -315,7 +314,6 @@
 		232739602E2B8674004A52C6 /* MapInteractionHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapInteractionHint.swift; sourceTree = "<group>"; };
 		232739612E2B8674004A52C6 /* MapRevealContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRevealContainer.swift; sourceTree = "<group>"; };
 		232739642E2B8674004A52C6 /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
-		232739652E2B8674004A52C6 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		232739682E2B8674004A52C6 /* BuildingIntelligenceDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceDTO.swift; sourceTree = "<group>"; };
 		232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceDataDTO.swift; sourceTree = "<group>"; };
 		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
@@ -660,7 +658,6 @@
 			isa = PBXGroup;
 			children = (
 				232739642E2B8674004A52C6 /* CoreTypes.swift */,
-				232739652E2B8674004A52C6 /* UnifiedDataService.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -1231,7 +1228,6 @@
 				23273A692E2B8674004A52C6 /* TodaysProgressDetailView.swift in Sources */,
 				23273A6A2E2B8674004A52C6 /* AdaptiveGlassModifier.swift in Sources */,
 				23273A6B2E2B8674004A52C6 /* SchemaMigrationPatch.swift in Sources */,
-				23273A6D2E2B8674004A52C6 /* UnifiedDataService.swift in Sources */,
 				23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */,
 				23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */,
 				23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */,
