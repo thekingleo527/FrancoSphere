@@ -10,17 +10,10 @@ import Foundation
 import CoreLocation
 import SwiftUI
 
-// MARK: - Type Aliases for Convenience
-// These allow files that previously imported this file to continue working
-public typealias NamedCoordinate = CoreTypes.NamedCoordinate
-public typealias UserRole = CoreTypes.UserRole
-public typealias WorkerProfile = CoreTypes.WorkerProfile
-public typealias ContextualTask = CoreTypes.ContextualTask
-public typealias BuildingType = CoreTypes.BuildingType
-public typealias TaskCategory = CoreTypes.TaskCategory
-public typealias TaskUrgency = CoreTypes.TaskUrgency
-public typealias TaskStatus = CoreTypes.TaskStatus
-public typealias ActionEvidence = CoreTypes.ActionEvidence
+// MARK: - Note on Types
+// All type definitions have been moved to CoreTypes.swift
+// This file only contains extensions and utilities
+// Types are available globally through CoreTypes namespace
 
 // MARK: - Extensions
 
@@ -189,9 +182,9 @@ public func filterTasksByUrgency(_ tasks: [CoreTypes.ContextualTask], minUrgency
 #if DEBUG
 extension CoreTypes {
     /// Real buildings from FrancoSphere portfolio (from OperationalDataManager)
-    static let productionBuildings: [NamedCoordinate] = [
+    static let productionBuildings: [CoreTypes.NamedCoordinate] = [
         // Kevin's primary building
-        NamedCoordinate(
+        CoreTypes.NamedCoordinate(
             id: "14",
             name: "Rubin Museum (142–148 W 17th)",
             address: "150 W 17th St, New York, NY 10011",
@@ -318,8 +311,8 @@ extension CoreTypes {
     ]
     
     /// Real worker profiles from FrancoSphere (from OperationalDataManager and QuickBooksPayrollExporter)
-    static let productionWorkers: [WorkerProfile] = [
-        WorkerProfile(
+    static let productionWorkers: [CoreTypes.WorkerProfile] = [
+        CoreTypes.WorkerProfile(
             id: "4", // Kevin's actual ID in the system
             name: "Kevin Dutan",
             email: "kevin.dutan@francosphere.com",
