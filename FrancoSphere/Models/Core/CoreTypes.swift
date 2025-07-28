@@ -1218,7 +1218,8 @@ public struct CoreTypes {
         case high = "High"
         case critical = "Critical"
         
-        public var color: Color {
+        // ✅ FIXED: Renamed to aiPriorityColor to avoid conflicts
+        public var aiPriorityColor: Color {
             switch self {
             case .low: return .green
             case .medium: return .yellow
@@ -1249,7 +1250,8 @@ public struct CoreTypes {
             }
         }
         
-        public var color: Color {
+        // ✅ FIXED: Renamed to categoryColor to avoid conflicts
+        public var categoryColor: Color {
             switch self {
             case .efficiency: return .blue
             case .cost: return .green
@@ -1735,6 +1737,22 @@ extension CoreTypes {
                 description: description
             )
         }
+    }
+}
+
+// MARK: - Color Property Extensions (Backward Compatibility)
+// ✅ ADDED: Extensions to provide backward compatibility for color properties
+extension CoreTypes.AIPriority {
+    /// Backward compatibility - use aiPriorityColor internally
+    public var color: Color {
+        return self.aiPriorityColor
+    }
+}
+
+extension CoreTypes.InsightCategory {
+    /// Backward compatibility - use categoryColor internally
+    public var color: Color {
+        return self.categoryColor
     }
 }
 
