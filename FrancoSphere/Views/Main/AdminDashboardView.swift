@@ -6,7 +6,7 @@
 //  ✅ ALIGNED: With AdminDashboardViewModel (no duplicate definitions)
 //  ✅ REAL-TIME: Cross-dashboard synchronization ready
 //  ✅ DESIGN: FrancoSphere glass morphism and dark theme
-//  ✅ FIXED: No compilation errors or duplicate types
+//  ✅ FIXED: Using CoreTypes.DashboardUpdate consistently
 //
 
 import SwiftUI
@@ -470,19 +470,19 @@ struct AdminSummaryCard: View {
 }
 
 struct UpdateRow: View {
-    let update: DashboardUpdate
+    let update: CoreTypes.DashboardUpdate
     
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: update.source.icon)
+            Image(systemName: iconForSource(update.source))
                 .font(.caption)
-                .foregroundColor(update.source.color)
+                .foregroundColor(colorForSource(update.source))
                 .frame(width: 24, height: 24)
-                .background(update.source.color.opacity(0.2))
+                .background(colorForSource(update.source).opacity(0.2))
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(update.description)
+                Text(update.displayDescription)
                     .font(.caption)
                     .foregroundColor(.white)
                 
@@ -496,6 +496,24 @@ struct UpdateRow: View {
         .padding(8)
         .background(.ultraThinMaterial)
         .cornerRadius(8)
+    }
+    
+    private func iconForSource(_ source: CoreTypes.DashboardUpdate.Source) -> String {
+        switch source {
+        case .admin: return "person.badge.shield.checkmark"
+        case .worker: return "person.fill"
+        case .client: return "building.2"
+        case .system: return "gear"
+        }
+    }
+    
+    private func colorForSource(_ source: CoreTypes.DashboardUpdate.Source) -> Color {
+        switch source {
+        case .admin: return .blue
+        case .worker: return .green
+        case .client: return .orange
+        case .system: return .gray
+        }
     }
 }
 
@@ -577,12 +595,10 @@ struct BuildingAdminCard: View {
                             .font(.headline)
                             .foregroundColor(.white)
                         
-                        if let address = building.address {
-                            Text(address)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .lineLimit(1)
-                        }
+                        Text(building.address)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .lineLimit(1)
                     }
                     
                     Spacer()
@@ -675,8 +691,8 @@ struct WorkerAdminCard: View {
                         .font(.caption)
                         .foregroundColor(.gray)
                     
-                    if !worker.skills.isEmpty {
-                        Text("• \(worker.skills.count) skills")
+                    if let skills = worker.skills, !skills.isEmpty {
+                        Text("• \(skills.count) skills")
                             .font(.caption)
                             .foregroundColor(.blue)
                     }
@@ -754,7 +770,8 @@ struct IntelligenceInsightCard: View {
     }
 }
 
-// Add this helper view
+// MARK: - Helper Views
+
 struct BuildingIntelligencePanelContent: View {
     let buildingId: String
     let buildingName: String
@@ -796,7 +813,6 @@ struct BuildingIntelligencePanelContent: View {
     }
 }
 
-// Add this helper view for IntelligenceInsightsView
 struct IntelligenceInsightsView: View {
     let insights: [CoreTypes.IntelligenceInsight]
     let onRefreshInsights: () -> Void
@@ -864,17 +880,52 @@ extension CoreTypes.DashboardSyncStatus {
     }
 }
 
-extension DashboardUpdate {
-    var description: String {
-        let sourcePrefix = "[\(source.displayName)]"
-        let typeDescription = type.displayName
+extension CoreTypes.DashboardUpdate {
+    var displayDescription: String {
+        let sourcePrefix = "[\(displaySource)]"
+        let typeDescription = displayType
         
-        if let buildingId = buildingId {
+        if !buildingId.isEmpty {
             return "\(sourcePrefix) \(typeDescription) - Building \(buildingId)"
-        } else if let workerId = workerId {
+        } else if !workerId.isEmpty {
             return "\(sourcePrefix) \(typeDescription) - Worker \(workerId)"
         } else {
             return "\(sourcePrefix) \(typeDescription)"
+        }
+    }
+    
+    var displaySource: String {
+        switch source {
+        case .admin: return "Admin"
+        case .worker: return "Worker"
+        case .client: return "Client"
+        case .system: return "System"
+        }
+    }
+    
+    var displayType: String {
+        switch type {
+        case .taskStarted: return "Task Started"
+        case .taskCompleted: return "Task Completed"
+        case .taskUpdated: return "Task Updated"
+        case .workerClockedIn: return "Worker Clocked In"
+        case .workerClockedOut: return "Worker Clocked Out"
+        case .buildingMetricsChanged: return "Building Metrics Changed"
+        case .inventoryUpdated: return "Inventory Updated"
+        case .complianceStatusChanged: return "Compliance Status Changed"
+        }
+    }
+}
+
+// MARK: - Helper Extensions
+
+extension CoreTypes.AIPriority {
+    var color: Color {
+        switch self {
+        case .low: return .green
+        case .medium: return .yellow
+        case .high: return .orange
+        case .critical: return .red
         }
     }
 }
