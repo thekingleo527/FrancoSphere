@@ -2,35 +2,30 @@
 //  TodaysTasksGlassCard.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All property access and method issues resolved
-//  ✅ ALIGNED: With current MaintenanceTask structure (not CoreTypes)
-//  ✅ CORRECTED: Animation typos and building name lookup
-//  ✅ USES: Correct MaintenanceTask type via TypeAliases
+//  ✅ FIXED: Removed duplicate sortOrder extension
+//  ✅ USES: Existing TaskUrgency.priorityValue property
+//  ✅ ALIGNED: With current MaintenanceTask structure
 //
 
 import SwiftUI
 
-// Type aliases for CoreTypes
-
 struct TodaysTasksGlassCard: View {
-    let tasks: [MaintenanceTask]  // ✅ FIXED: Use MaintenanceTask from TypeAliases
-    let onTaskTap: (MaintenanceTask) -> Void  // ✅ FIXED: Use MaintenanceTask from TypeAliases
+    let tasks: [MaintenanceTask]
+    let onTaskTap: (MaintenanceTask) -> Void
     
     @State private var showCompleted = false
     
     private var pendingTasks: [MaintenanceTask] {
-        // ✅ FIXED: Use .isCompleted instead of .isComplete
         tasks.filter { !$0.isCompleted }.sorted { task1, task2 in
-            // Sort by urgency then time
+            // Sort by urgency then time using existing priorityValue
             if task1.urgency != task2.urgency {
-                return task1.urgency.sortOrder > task2.urgency.sortOrder
+                return task1.urgency.priorityValue > task2.urgency.priorityValue
             }
             return (task1.dueDate ?? Date.distantFuture) < (task2.dueDate ?? Date.distantFuture)
         }
     }
     
     private var completedTasks: [MaintenanceTask] {
-        // ✅ FIXED: Use .isCompleted instead of .isComplete
         tasks.filter { $0.isCompleted }
     }
     
@@ -75,8 +70,8 @@ struct TodaysTasksGlassCard: View {
                     EmptyTasksView()
                 } else {
                     VStack(spacing: 8) {
-                        // Pending tasks - ✅ FIXED: Very explicit type to prevent Task confusion
-                        ForEach(pendingTasks, id: \.id) { (maintenanceTask: MaintenanceTask) in
+                        // Pending tasks
+                        ForEach(pendingTasks, id: \.id) { maintenanceTask in
                             TaskGlassRow(task: maintenanceTask) {
                                 onTaskTap(maintenanceTask)
                             }
@@ -85,7 +80,6 @@ struct TodaysTasksGlassCard: View {
                         // Completed section
                         if completedTasks.count > 0 {
                             Button(action: {
-                                // ✅ FIXED: Animation instead of Animation
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showCompleted.toggle()
                                 }
@@ -104,8 +98,7 @@ struct TodaysTasksGlassCard: View {
                             }
                             
                             if showCompleted {
-                                // ✅ FIXED: Very explicit type to prevent Task confusion
-                                ForEach(completedTasks, id: \.id) { (maintenanceTask: MaintenanceTask) in
+                                ForEach(completedTasks, id: \.id) { maintenanceTask in
                                     TaskGlassRow(task: maintenanceTask, isCompleted: true) {
                                         onTaskTap(maintenanceTask)
                                     }
@@ -120,22 +113,8 @@ struct TodaysTasksGlassCard: View {
     }
 }
 
-// Task urgency extension for sorting - ✅ FIXED: Use TaskUrgency from TypeAliases
-extension TaskUrgency {
-    var sortOrder: Int {
-        switch self {
-        case .urgent: return 6
-        case .critical: return 5
-        case .emergency: return 4
-        case .high: return 3
-        case .medium: return 2
-        case .low: return 1
-        }
-    }
-}
-
 struct TaskGlassRow: View {
-    let task: MaintenanceTask  // ✅ FIXED: Use MaintenanceTask from TypeAliases
+    let task: MaintenanceTask
     var isCompleted: Bool = false
     let onTap: () -> Void
     
@@ -157,7 +136,6 @@ struct TaskGlassRow: View {
                 
                 // Task info
                 VStack(alignment: .leading, spacing: 4) {
-                    // ✅ FIXED: Use .title property from MaintenanceTask
                     Text(task.title)
                         .font(.subheadline)
                         .foregroundColor(.white)
@@ -214,7 +192,6 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        // ✅ FIXED: Use simple building name lookup with fallback
         getBuildingName(for: task.buildingId)
     }
     
@@ -224,7 +201,6 @@ struct TaskGlassRow: View {
         return formatter.string(from: date)
     }
     
-    // ✅ FIXED: Simple building name lookup function
     private func getBuildingName(for buildingId: String) -> String {
         // Try to find building in allBuildings static data
         if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingId }) {
@@ -286,7 +262,7 @@ struct EmptyTasksView: View {
 
 // MARK: - Enhanced Task Row with Priority Indicator
 struct EnhancedTaskGlassRow: View {
-    let task: MaintenanceTask  // ✅ FIXED: Use MaintenanceTask from TypeAliases
+    let task: MaintenanceTask
     var isCompleted: Bool = false
     let onTap: () -> Void
     let onComplete: () -> Void
@@ -321,7 +297,6 @@ struct EnhancedTaskGlassRow: View {
                     // Task info
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            // ✅ FIXED: Use .title property from MaintenanceTask
                             Text(task.title)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
@@ -413,7 +388,6 @@ struct EnhancedTaskGlassRow: View {
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .opacity(isCompleted ? 0.7 : 1.0)
-        // ✅ FIXED: Animation instead of Animation
         .animation(.easeInOut(duration: 0.1), value: isPressed)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
@@ -432,7 +406,6 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        // ✅ FIXED: Use simple building name lookup with fallback
         getBuildingName(for: task.buildingId)
     }
     
@@ -442,7 +415,6 @@ struct EnhancedTaskGlassRow: View {
         return formatter.string(from: date)
     }
     
-    // ✅ FIXED: Simple building name lookup function
     private func getBuildingName(for buildingId: String) -> String {
         if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingId }) {
             return building.displayName
@@ -474,7 +446,7 @@ struct TodaysTasksGlassCard_Previews: PreviewProvider {
             
             ScrollView {
                 VStack(spacing: 20) {
-                    // Sample tasks - ✅ FIXED: Use MaintenanceTask from TypeAliases
+                    // Sample tasks
                     let sampleTasks = [
                         MaintenanceTask(
                             title: "HVAC Filter Replacement",
@@ -503,7 +475,6 @@ struct TodaysTasksGlassCard_Previews: PreviewProvider {
                     ]
                     
                     TodaysTasksGlassCard(tasks: sampleTasks) { task in
-                        // ✅ FIXED: Use .title property
                         print("Task tapped: \(task.title)")
                     }
                     
