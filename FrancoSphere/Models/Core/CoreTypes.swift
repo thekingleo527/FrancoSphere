@@ -25,6 +25,41 @@ public struct CoreTypes {
     public typealias AssignmentID = String
     public typealias RoleID = String
     
+    // MARK: - User Role
+    public enum UserRole: String, Codable, CaseIterable {
+        case admin = "admin"
+        case manager = "manager"
+        case worker = "worker"
+        case client = "client"
+        
+        public var rawValue: String {
+            switch self {
+            case .admin: return "admin"
+            case .manager: return "manager"
+            case .worker: return "worker"
+            case .client: return "client"
+            }
+        }
+        
+        public var displayName: String {
+            switch self {
+            case .admin: return "Admin"
+            case .manager: return "Manager"
+            case .worker: return "Worker"
+            case .client: return "Client"
+            }
+        }
+        
+        public var color: Color {
+            switch self {
+            case .admin: return .red
+            case .manager: return .orange
+            case .worker: return .blue
+            case .client: return .green
+            }
+        }
+    }
+    
     // MARK: - User Model
     public struct User: Codable, Hashable, Identifiable {
         public let id: String
@@ -84,6 +119,53 @@ public struct CoreTypes {
         }
     }
     
+    // MARK: - Dashboard Update
+    public struct DashboardUpdate: Codable, Identifiable {
+        public enum Source: String, Codable {
+            case admin = "admin"
+            case worker = "worker"
+            case client = "client"
+            case system = "system"
+        }
+        
+        public enum UpdateType: String, Codable {
+            case taskStarted = "taskStarted"
+            case taskCompleted = "taskCompleted"
+            case taskUpdated = "taskUpdated"
+            case workerClockedIn = "workerClockedIn"
+            case workerClockedOut = "workerClockedOut"
+            case buildingMetricsChanged = "buildingMetricsChanged"
+            case inventoryUpdated = "inventoryUpdated"
+            case complianceStatusChanged = "complianceStatusChanged"
+        }
+        
+        public let id: String
+        public let source: Source
+        public let type: UpdateType
+        public let buildingId: String
+        public let workerId: String
+        public let data: [String: String]
+        public let timestamp: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            source: Source,
+            type: UpdateType,
+            buildingId: String,
+            workerId: String,
+            data: [String: String] = [:],
+            timestamp: Date = Date()
+        ) {
+            self.id = id
+            self.source = source
+            self.type = type
+            self.buildingId = buildingId
+            self.workerId = workerId
+            self.data = data
+            self.timestamp = timestamp
+        }
+    }
+    
     // MARK: - Worker Types
     public enum WorkerStatus: String, Codable, CaseIterable {
         case available = "Available"
@@ -108,6 +190,50 @@ public struct CoreTypes {
             case .offline: return .gray
             }
         }
+    }
+    
+    // MARK: - Worker Profile
+    public struct WorkerProfile: Identifiable, Codable, Hashable {
+        public let id: String
+        public let name: String
+        public let email: String
+        public let phoneNumber: String?
+        public let role: UserRole
+        public let skills: [String]?
+        public let certifications: [String]?
+        public let hireDate: Date?
+        public let isActive: Bool
+        public let profileImageUrl: URL?
+        
+        public init(
+            id: String,
+            name: String,
+            email: String,
+            phoneNumber: String? = nil,
+            role: UserRole,
+            skills: [String]? = nil,
+            certifications: [String]? = nil,
+            hireDate: Date? = nil,
+            isActive: Bool = true,
+            profileImageUrl: URL? = nil
+        ) {
+            self.id = id
+            self.name = name
+            self.email = email
+            self.phoneNumber = phoneNumber
+            self.role = role
+            self.skills = skills
+            self.certifications = certifications
+            self.hireDate = hireDate
+            self.isActive = isActive
+            self.profileImageUrl = profileImageUrl
+        }
+        
+        public var displayName: String { name }
+        public var isAdmin: Bool { role == .admin }
+        public var isWorker: Bool { role == .worker }
+        public var isManager: Bool { role == .manager }
+        public var isClient: Bool { role == .client }
     }
     
     public struct WorkerSkill: Codable, Hashable, Identifiable {
@@ -175,6 +301,42 @@ public struct CoreTypes {
             self.shift = shift
             self.specialRole = specialRole
             self.isActive = isActive
+        }
+    }
+    
+    // MARK: - Location Types
+    public struct NamedCoordinate: Identifiable, Codable, Hashable {
+        public let id: String
+        public let name: String
+        public let address: String
+        public let latitude: Double
+        public let longitude: Double
+        
+        public init(id: String, name: String, address: String, latitude: Double, longitude: Double) {
+            self.id = id
+            self.name = name
+            self.address = address
+            self.latitude = latitude
+            self.longitude = longitude
+        }
+        
+        // Convenience initializer for compatibility
+        public init(id: String, name: String, latitude: Double, longitude: Double) {
+            self.id = id
+            self.name = name
+            self.address = ""
+            self.latitude = latitude
+            self.longitude = longitude
+        }
+        
+        public var coordinate: CLLocationCoordinate2D {
+            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        
+        public func distance(from other: NamedCoordinate) -> Double {
+            let location1 = CLLocation(latitude: self.latitude, longitude: self.longitude)
+            let location2 = CLLocation(latitude: other.latitude, longitude: other.longitude)
+            return location1.distance(from: location2)
         }
     }
     
@@ -502,6 +664,87 @@ public struct CoreTypes {
         }
     }
     
+    // MARK: - Contextual Task
+    public struct ContextualTask: Identifiable, Codable, Hashable {
+        public let id: String
+        public let title: String
+        public let description: String?
+        public var isCompleted: Bool
+        public var completedDate: Date?
+        public var dueDate: Date?
+        public var category: TaskCategory?
+        public var urgency: TaskUrgency?
+        public var building: NamedCoordinate?
+        public var worker: WorkerProfile?
+        public var buildingId: String?
+        public var priority: TaskUrgency?
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String? = nil,
+            isCompleted: Bool = false,
+            completedDate: Date? = nil,
+            dueDate: Date? = nil,
+            category: TaskCategory? = nil,
+            urgency: TaskUrgency? = nil,
+            building: NamedCoordinate? = nil,
+            worker: WorkerProfile? = nil,
+            buildingId: String? = nil,
+            priority: TaskUrgency? = nil
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.isCompleted = isCompleted
+            self.completedDate = completedDate
+            self.dueDate = dueDate
+            self.category = category
+            self.urgency = urgency
+            self.building = building
+            self.worker = worker
+            self.buildingId = buildingId ?? building?.id
+            self.priority = priority ?? urgency
+        }
+        
+        // Convenience initializer for compatibility
+        public init(
+            title: String,
+            description: String?,
+            isCompleted: Bool,
+            scheduledDate: Date?,
+            dueDate: Date?,
+            category: TaskCategory?,
+            urgency: TaskUrgency?,
+            building: NamedCoordinate?,
+            worker: WorkerProfile?
+        ) {
+            self.id = UUID().uuidString
+            self.title = title
+            self.description = description
+            self.isCompleted = isCompleted
+            self.completedDate = nil
+            self.dueDate = dueDate ?? scheduledDate
+            self.category = category
+            self.urgency = urgency
+            self.building = building
+            self.worker = worker
+            self.buildingId = building?.id
+            self.priority = urgency
+        }
+        
+        public var isOverdue: Bool {
+            guard let dueDate = dueDate else { return false }
+            return Date() > dueDate && !isCompleted
+        }
+        
+        public var status: TaskStatus {
+            if isCompleted { return .completed }
+            if isOverdue { return .overdue }
+            return .pending
+        }
+    }
+    
     public struct MaintenanceTask: Codable, Identifiable {
         public let id: String
         public let title: String
@@ -560,6 +803,38 @@ public struct CoreTypes {
         public var isOverdue: Bool {
             guard let dueDate = dueDate else { return false }
             return Date() > dueDate && status != .completed
+        }
+    }
+    
+    // MARK: - Action Evidence
+    public struct ActionEvidence: Codable, Hashable, Identifiable {
+        public let id: String
+        public let description: String?
+        public let photoURLs: [URL]?
+        public let photoData: [Data]?
+        public let timestamp: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            description: String? = nil,
+            photoURLs: [URL]? = nil,
+            photoData: [Data]? = nil,
+            timestamp: Date = Date()
+        ) {
+            self.id = id
+            self.description = description
+            self.photoURLs = photoURLs
+            self.photoData = photoData
+            self.timestamp = timestamp
+        }
+        
+        // Compatibility initializer
+        public init(description: String, photoURLs: [URL] = [], timestamp: Date = Date(), photoData: [Data]? = nil) {
+            self.id = UUID().uuidString
+            self.description = description
+            self.photoURLs = photoURLs.isEmpty ? nil : photoURLs
+            self.photoData = photoData
+            self.timestamp = timestamp
         }
     }
     
@@ -1448,6 +1723,32 @@ public struct CoreTypes {
         }
     }
     
+    // MARK: - PortfolioState (Missing Type)
+    public struct PortfolioState: Codable {
+        public let totalBuildings: Int
+        public let activeWorkers: Int
+        public let overallCompletion: Double
+        public let criticalIssues: Int
+        public let complianceScore: Double
+        public let lastUpdated: Date
+        
+        public init(
+            totalBuildings: Int,
+            activeWorkers: Int,
+            overallCompletion: Double,
+            criticalIssues: Int,
+            complianceScore: Double,
+            lastUpdated: Date = Date()
+        ) {
+            self.totalBuildings = totalBuildings
+            self.activeWorkers = activeWorkers
+            self.overallCompletion = overallCompletion
+            self.criticalIssues = criticalIssues
+            self.complianceScore = complianceScore
+            self.lastUpdated = lastUpdated
+        }
+    }
+    
     // MARK: - Compliance Types
     public enum ComplianceTab: String, CaseIterable {
         case overview = "overview"
@@ -1701,6 +2002,138 @@ extension CoreTypes {
     }
 }
 
+// MARK: - Services
+
+// Dashboard Sync Service
+public class DashboardSyncService {
+    public static let shared = DashboardSyncService()
+    private init() {}
+    
+    // Published updates
+    @Published public var lastUpdate: CoreTypes.DashboardUpdate?
+    @Published public var syncStatus: CoreTypes.DashboardSyncStatus = .synced
+    
+    // Update methods
+    public func broadcastAdminUpdate(_ update: CoreTypes.DashboardUpdate) {
+        self.lastUpdate = update
+        NotificationCenter.default.post(
+            name: Notification.Name("DashboardUpdate"),
+            object: nil,
+            userInfo: ["update": update]
+        )
+    }
+    
+    public func broadcastWorkerUpdate(_ update: CoreTypes.DashboardUpdate) {
+        self.lastUpdate = update
+        NotificationCenter.default.post(
+            name: Notification.Name("DashboardUpdate"),
+            object: nil,
+            userInfo: ["update": update]
+        )
+    }
+    
+    public func onWorkerClockedIn(workerId: String, buildingId: String, buildingName: String) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .worker,
+            type: .workerClockedIn,
+            buildingId: buildingId,
+            workerId: workerId,
+            data: ["buildingName": buildingName]
+        )
+        broadcastWorkerUpdate(update)
+    }
+    
+    public func onWorkerClockedOut(workerId: String, buildingId: String) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .worker,
+            type: .workerClockedOut,
+            buildingId: buildingId,
+            workerId: workerId
+        )
+        broadcastWorkerUpdate(update)
+    }
+    
+    public func onTaskCompleted(taskId: String, workerId: String, buildingId: String) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .worker,
+            type: .taskCompleted,
+            buildingId: buildingId,
+            workerId: workerId,
+            data: ["taskId": taskId]
+        )
+        broadcastWorkerUpdate(update)
+    }
+    
+    public func onBuildingMetricsChanged(buildingId: String, metrics: CoreTypes.BuildingMetrics) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .system,
+            type: .buildingMetricsChanged,
+            buildingId: buildingId,
+            workerId: "",
+            data: ["completionRate": "\(metrics.completionRate)"]
+        )
+        broadcastAdminUpdate(update)
+    }
+    
+    // Helper methods
+    private func getBuildingName(_ buildingId: String?) -> String? {
+        guard let id = buildingId else { return nil }
+        return "Building \(id)"
+    }
+    
+    private func getWorkerName(_ workerId: String) -> String? {
+        switch workerId {
+        case "worker_001", "4": return "Kevin Dutan"
+        case "worker_002": return "Maria Rodriguez"
+        case "worker_003": return "James Wilson"
+        default: return "Worker \(workerId)"
+        }
+    }
+}
+
+// Task Service
+public class TaskService {
+    public static let shared = TaskService()
+    private init() {}
+    
+    // Task management methods
+    public func createTask(_ task: CoreTypes.ContextualTask) async throws {
+        // Implementation would go here
+        print("Creating task: \(task.title)")
+    }
+    
+    public func updateTask(_ task: CoreTypes.ContextualTask) async throws {
+        // Implementation would go here
+        print("Updating task: \(task.title)")
+    }
+    
+    public func completeTask(_ taskId: String, evidence: CoreTypes.ActionEvidence) async throws {
+        // Implementation would go here
+        print("Completing task: \(taskId)")
+    }
+    
+    public func getTasks(for buildingId: String? = nil) async throws -> [CoreTypes.ContextualTask] {
+        // Implementation would go here
+        return []
+    }
+    
+    public func getTask(id: String) async throws -> CoreTypes.ContextualTask? {
+        // Implementation would go here
+        return nil
+    }
+    
+    // Helper methods
+    private func getWorkerIdForTask(_ taskId: String) async -> String? {
+        // Implementation would go here
+        return nil
+    }
+    
+    private func getBuildingIdForTask(_ taskId: String) async -> String {
+        // Implementation would go here
+        return "unknown"
+    }
+}
+
 // MARK: - Global Type Aliases (For backward compatibility)
 public typealias WorkerID = CoreTypes.WorkerID
 public typealias BuildingID = CoreTypes.BuildingID
@@ -1708,7 +2141,13 @@ public typealias TaskID = CoreTypes.TaskID
 public typealias AssignmentID = CoreTypes.AssignmentID
 public typealias RoleID = CoreTypes.RoleID
 
-// Additional type aliases for missing types
+// Type aliases for all types
+public typealias UserRole = CoreTypes.UserRole
+public typealias NamedCoordinate = CoreTypes.NamedCoordinate
+public typealias WorkerProfile = CoreTypes.WorkerProfile
+public typealias ContextualTask = CoreTypes.ContextualTask
+public typealias DashboardUpdate = CoreTypes.DashboardUpdate
+public typealias ActionEvidence = CoreTypes.ActionEvidence
 public typealias BuildingMetrics = CoreTypes.BuildingMetrics
 public typealias MaintenanceTask = CoreTypes.MaintenanceTask
 public typealias BuildingType = CoreTypes.BuildingType
@@ -1735,6 +2174,7 @@ public typealias WorkerDailyRoute = CoreTypes.WorkerDailyRoute
 public typealias WorkerRoutineSummary = CoreTypes.WorkerRoutineSummary
 public typealias BuildingStatistics = CoreTypes.BuildingStatistics
 public typealias BuildingTab = CoreTypes.BuildingTab
+public typealias PortfolioState = CoreTypes.PortfolioState
 
 // MARK: - Models Namespace Alias
 public typealias Models = CoreTypes
@@ -1768,31 +2208,4 @@ public class DatabaseDebugger {
     // Placeholder for DatabaseDebugger functionality
     public func debugDatabase() {}
     public func cleanDatabase() {}
-}
-
-// MARK: - Portfolio State (Added by Integration Script)
-
-public struct PortfolioState: Codable {
-    public let totalBuildings: Int
-    public let activeWorkers: Int
-    public let overallCompletion: Double
-    public let criticalIssues: Int
-    public let complianceScore: Double
-    public let lastUpdated: Date
-    
-    public init(
-        totalBuildings: Int,
-        activeWorkers: Int,
-        overallCompletion: Double,
-        criticalIssues: Int,
-        complianceScore: Double,
-        lastUpdated: Date = Date()
-    ) {
-        self.totalBuildings = totalBuildings
-        self.activeWorkers = activeWorkers
-        self.overallCompletion = overallCompletion
-        self.criticalIssues = criticalIssues
-        self.complianceScore = complianceScore
-        self.lastUpdated = lastUpdated
-    }
 }
