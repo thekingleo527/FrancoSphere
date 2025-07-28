@@ -4,6 +4,9 @@
 //
 //  ✅ REFACTORED: Services removed, only data types remain
 //  ✅ FIXED: All compilation errors eliminated
+//  ✅ FIXED: Removed duplicate 'rawValue' in Priority enum
+//  ✅ FIXED: Removed duplicate AI namespace
+//  ✅ FIXED: Removed conflicting DashboardUpdate type alias
 //  ✅ ORGANIZED: Clean architecture with data types only
 //
 
@@ -1472,7 +1475,9 @@ public struct CoreTypes {
             case high = "High"
             case critical = "Critical"
             
-            public var color: Color {
+            // ✅ FIXED: Removed duplicate color property
+            // There was a conflict with another color property elsewhere
+            public var priorityColor: Color {
                 switch self {
                 case .low: return .green
                 case .medium: return .yellow
@@ -1696,43 +1701,7 @@ public struct CoreTypes {
 }
 
 // MARK: - AI Namespace Extension
-extension CoreTypes {
-    public struct AI {
-        public static func generateInsight() -> IntelligenceInsight {
-            return IntelligenceInsight(
-                id: UUID().uuidString,
-                title: "AI Generated Insight",
-                description: "Nova AI has generated this insight based on current data patterns",
-                type: .operations,
-                priority: .medium,
-                actionRequired: false,
-                affectedBuildings: [],
-                generatedAt: Date()
-            )
-        }
-        
-        public static func createSuggestion(title: String, description: String, priority: AIPriority = .medium) -> AISuggestion {
-            return AISuggestion(
-                title: title,
-                description: description,
-                priority: priority,
-                category: .operations,
-                actionRequired: false,
-                estimatedImpact: "Medium"
-            )
-        }
-        
-        public static func analyzeScenario(type: AIScenarioType, title: String, description: String) -> AIScenario {
-            return AIScenario(
-                type: type,
-                title: title,
-                description: description
-            )
-        }
-    }
-}
-
-// MARK: - AI Namespace Extension
+// ✅ FIXED: Kept only one AI namespace extension
 extension CoreTypes {
     public struct AI {
         public static func generateInsight() -> IntelligenceInsight {
@@ -1781,7 +1750,7 @@ public typealias UserRole = CoreTypes.UserRole
 public typealias NamedCoordinate = CoreTypes.NamedCoordinate
 public typealias WorkerProfile = CoreTypes.WorkerProfile
 public typealias ContextualTask = CoreTypes.ContextualTask
-public typealias DashboardUpdate = CoreTypes.DashboardUpdate
+// ✅ FIXED: Removed conflicting DashboardUpdate alias - use CoreTypes.DashboardUpdate directly
 public typealias ActionEvidence = CoreTypes.ActionEvidence
 public typealias BuildingMetrics = CoreTypes.BuildingMetrics
 public typealias MaintenanceTask = CoreTypes.MaintenanceTask
