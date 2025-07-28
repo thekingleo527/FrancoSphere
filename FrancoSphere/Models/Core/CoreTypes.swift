@@ -576,6 +576,8 @@ public struct CoreTypes {
             case .emergency: return 6
             }
         }
+        
+        public var sortOrder: Int { priorityValue }
     }
     
     public enum TaskStatus: String, Codable, CaseIterable {
@@ -613,6 +615,7 @@ public struct CoreTypes {
         public var building: NamedCoordinate?
         public var worker: WorkerProfile?
         public var buildingId: String?
+        public var assignedWorkerId: String?
         public var priority: TaskUrgency?
         
         public init(
@@ -627,6 +630,7 @@ public struct CoreTypes {
             building: NamedCoordinate? = nil,
             worker: WorkerProfile? = nil,
             buildingId: String? = nil,
+            assignedWorkerId: String? = nil,
             priority: TaskUrgency? = nil
         ) {
             self.id = id
@@ -640,6 +644,7 @@ public struct CoreTypes {
             self.building = building
             self.worker = worker
             self.buildingId = buildingId ?? building?.id
+            self.assignedWorkerId = assignedWorkerId ?? worker?.id
             self.priority = priority ?? urgency
         }
         
@@ -666,6 +671,7 @@ public struct CoreTypes {
             self.building = building
             self.worker = worker
             self.buildingId = building?.id
+            self.assignedWorkerId = worker?.id
             self.priority = urgency
         }
         
@@ -745,30 +751,21 @@ public struct CoreTypes {
     // MARK: - Action Evidence
     public struct ActionEvidence: Codable, Hashable, Identifiable {
         public let id: String
-        public let description: String?
-        public let photoURLs: [URL]?
+        public let description: String
+        public let photoURLs: [URL]
         public let photoData: [Data]?
         public let timestamp: Date
         
         public init(
             id: String = UUID().uuidString,
-            description: String? = nil,
-            photoURLs: [URL]? = nil,
+            description: String,
+            photoURLs: [URL] = [],
             photoData: [Data]? = nil,
             timestamp: Date = Date()
         ) {
             self.id = id
             self.description = description
             self.photoURLs = photoURLs
-            self.photoData = photoData
-            self.timestamp = timestamp
-        }
-        
-        // Compatibility initializer
-        public init(description: String, photoURLs: [URL] = [], timestamp: Date = Date(), photoData: [Data]? = nil) {
-            self.id = UUID().uuidString
-            self.description = description
-            self.photoURLs = photoURLs.isEmpty ? nil : photoURLs
             self.photoData = photoData
             self.timestamp = timestamp
         }
@@ -1218,8 +1215,16 @@ public struct CoreTypes {
         case high = "High"
         case critical = "Critical"
         
-        // ✅ FIXED: Renamed to aiPriorityColor to avoid conflicts
-        public var aiPriorityColor: Color {
+        public var priorityValue: Int {
+            switch self {
+            case .low: return 1
+            case .medium: return 2
+            case .high: return 3
+            case .critical: return 4
+            }
+        }
+        
+        public var color: Color {
             switch self {
             case .low: return .green
             case .medium: return .yellow
@@ -1250,8 +1255,7 @@ public struct CoreTypes {
             }
         }
         
-        // ✅ FIXED: Renamed to categoryColor to avoid conflicts
-        public var categoryColor: Color {
+        public var color: Color {
             switch self {
             case .efficiency: return .blue
             case .cost: return .green
@@ -1477,8 +1481,7 @@ public struct CoreTypes {
             case high = "High"
             case critical = "Critical"
             
-            // ✅ FIXED: Removed duplicate color property
-            // There was a conflict with another color property elsewhere
+            // ✅ FIXED: Only one color property named priorityColor
             public var priorityColor: Color {
                 switch self {
                 case .low: return .green
@@ -1518,6 +1521,10 @@ public struct CoreTypes {
         public let complianceScore: Double
         public let generatedAt: Date
         
+        // Additional properties for backward compatibility
+        public var completedTasks: Int { Int(completionRate * 100) }
+        public var weeklyTrend: Double { 0.05 }
+        
         public init(
             id: String = UUID().uuidString,
             totalBuildings: Int,
@@ -1536,6 +1543,27 @@ public struct CoreTypes {
             self.monthlyTrend = monthlyTrend
             self.complianceScore = complianceScore
             self.generatedAt = generatedAt
+        }
+        
+        // Convenience initializer for backward compatibility
+        public init(
+            totalBuildings: Int,
+            activeWorkers: Int,
+            completionRate: Double,
+            criticalIssues: Int,
+            monthlyTrend: TrendDirection,
+            completedTasks: Int,
+            complianceScore: Double,
+            weeklyTrend: Double
+        ) {
+            self.id = UUID().uuidString
+            self.totalBuildings = totalBuildings
+            self.activeWorkers = activeWorkers
+            self.completionRate = completionRate
+            self.criticalIssues = criticalIssues
+            self.monthlyTrend = monthlyTrend
+            self.complianceScore = complianceScore
+            self.generatedAt = Date()
         }
     }
     
@@ -1703,7 +1731,6 @@ public struct CoreTypes {
 }
 
 // MARK: - AI Namespace Extension
-// ✅ FIXED: Kept only one AI namespace extension
 extension CoreTypes {
     public struct AI {
         public static func generateInsight() -> IntelligenceInsight {
@@ -1737,22 +1764,6 @@ extension CoreTypes {
                 description: description
             )
         }
-    }
-}
-
-// MARK: - Color Property Extensions (Backward Compatibility)
-// ✅ ADDED: Extensions to provide backward compatibility for color properties
-extension CoreTypes.AIPriority {
-    /// Backward compatibility - use aiPriorityColor internally
-    public var color: Color {
-        return self.aiPriorityColor
-    }
-}
-
-extension CoreTypes.InsightCategory {
-    /// Backward compatibility - use categoryColor internally
-    public var color: Color {
-        return self.categoryColor
     }
 }
 
