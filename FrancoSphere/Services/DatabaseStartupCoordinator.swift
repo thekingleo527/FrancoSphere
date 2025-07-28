@@ -2,13 +2,12 @@
 //  DatabaseStartupCoordinator.swift
 //  FrancoSphere v6.0 - SINGLE SOURCE OF TRUTH
 //
-//  ✅ This is the ONLY database initialization service
-//  ✅ Uses GRDB exclusively (no SQLite)
-//  ✅ Handles all seeding and migration
+//  ✅ Updated to work with new GRDBManager
+//  ✅ Uses raw SQL queries instead of GRDB ORM
+//  ✅ Handles all seeding and initialization
 //
 
 import Foundation
-import GRDB
 
 @MainActor
 public class DatabaseStartupCoordinator {
@@ -28,8 +27,10 @@ public class DatabaseStartupCoordinator {
         
         print("🚀 Starting database initialization...")
         
-        // Step 1: Run migrations
-        try await runMigrations()
+        // Step 1: Check if database is ready
+        guard await grdbManager.isDatabaseReady() else {
+            throw DatabaseError.integrityCheckFailed("Database not ready")
+        }
         
         // Step 2: Seed initial data if needed
         try await seedInitialDataIfNeeded()
@@ -44,199 +45,184 @@ public class DatabaseStartupCoordinator {
         print("✅ Database initialization complete")
     }
     
-    private func runMigrations() async throws {
-        print("📊 Running database migrations...")
-        
-        try await grdbManager.migrate { migrator in
-            // V1: Initial schema
-            migrator.registerMigration("v1_initial") { db in
-                try db.create(table: "workers", ifNotExists: true) { t in
-                    t.column("id", .text).primaryKey()
-                    t.column("name", .text).notNull()
-                    t.column("email", .text).notNull().unique()
-                    t.column("role", .text).notNull()
-                    t.column("isActive", .boolean).notNull().defaults(to: true)
-                }
-                
-                try db.create(table: "buildings", ifNotExists: true) { t in
-                    t.column("id", .text).primaryKey()
-                    t.column("name", .text).notNull()
-                    t.column("address", .text).notNull()
-                    t.column("latitude", .double).notNull()
-                    t.column("longitude", .double).notNull()
-                    t.column("type", .text)
-                    t.column("imageUrl", .text)
-                }
-                
-                try db.create(table: "worker_assignments", ifNotExists: true) { t in
-                    t.column("id", .text).primaryKey()
-                    t.column("workerId", .text).notNull().references("workers")
-                    t.column("buildingId", .text).notNull().references("buildings")
-                    t.column("isPrimary", .boolean).notNull().defaults(to: false)
-                    t.column("createdAt", .datetime).notNull()
-                }
-                
-                try db.create(table: "tasks", ifNotExists: true) { t in
-                    t.column("id", .text).primaryKey()
-                    t.column("title", .text).notNull()
-                    t.column("description", .text)
-                    t.column("buildingId", .text).notNull().references("buildings")
-                    t.column("assignedWorkerId", .text).references("workers")
-                    t.column("category", .text).notNull()
-                    t.column("urgency", .text).notNull()
-                    t.column("status", .text).notNull()
-                    t.column("dueDate", .datetime)
-                    t.column("completedAt", .datetime)
-                    t.column("createdAt", .datetime).notNull()
-                }
-            }
-        }
-        
-        print("✅ Migrations completed")
-    }
-    
     private func seedInitialDataIfNeeded() async throws {
         print("🌱 Checking if seeding needed...")
         
-        let workerCount = try await grdbManager.read { db in
-            try Worker.fetchCount(db)
-        }
+        // Check if workers exist
+        let workerCountResult = try await grdbManager.query("SELECT COUNT(*) as count FROM workers")
+        let workerCount = workerCountResult.first?["count"] as? Int64 ?? 0
         
         if workerCount == 0 {
             print("📝 Seeding initial data...")
-            try await seedWorkers()
+            
+            // Use GRDBManager's built-in seeding
+            try await grdbManager.seedCompleteWorkerData()
+            
+            // Seed buildings
             try await seedBuildings()
+            
+            // Seed worker assignments
             try await seedWorkerAssignments()
+            
+            // Seed sample tasks
             try await seedSampleTasks()
+            
             print("✅ Initial data seeded")
         } else {
             print("✅ Data already exists, skipping seed")
         }
     }
     
-    private func seedWorkers() async throws {
-        let workers = [
-            Worker(id: "1", name: "Kevin Dutan", email: "kevin@francosphere.com", role: "worker"),
-            Worker(id: "2", name: "Edwin Lema", email: "edwin@francosphere.com", role: "worker"),
-            Worker(id: "3", name: "Mercedes Inamagua", email: "mercedes@francosphere.com", role: "worker"),
-            Worker(id: "4", name: "Luis Lopez", email: "luis@francosphere.com", role: "worker"),
-            Worker(id: "5", name: "Angel Guiracocha", email: "angel@francosphere.com", role: "worker"),
-            Worker(id: "6", name: "Greg Hutson", email: "greg@francosphere.com", role: "worker"),
-            Worker(id: "7", name: "Shawn Magloire", email: "shawn@francosphere.com", role: "admin")
-        ]
-        
-        try await grdbManager.write { db in
-            for worker in workers {
-                try worker.insert(db)
-            }
-        }
-    }
-    
     private func seedBuildings() async throws {
         let buildings = [
             // Kevin's buildings (including Rubin Museum)
-            Building(id: "14", name: "Rubin Museum", address: "150 W 17th St", latitude: 40.7402, longitude: -73.9979),
-            Building(id: "1", name: "12 West 18th Street", address: "12 W 18th St", latitude: 40.7391, longitude: -73.9929),
-            Building(id: "2", name: "133 East 15th Street", address: "133 E 15th St", latitude: 40.7343, longitude: -73.9859),
-            Building(id: "3", name: "41 Elizabeth Street", address: "41 Elizabeth St", latitude: 40.7178, longitude: -73.9962),
-            Building(id: "4", name: "104 Franklin Street", address: "104 Franklin St", latitude: 40.7190, longitude: -74.0089),
-            Building(id: "5", name: "131 Perry Street", address: "131 Perry St", latitude: 40.7355, longitude: -74.0067),
-            Building(id: "6", name: "36 Walker Street", address: "36 Walker St", latitude: 40.7173, longitude: -74.0027),
-            Building(id: "7", name: "123 1st Avenue", address: "123 1st Ave", latitude: 40.7264, longitude: -73.9838),
+            ("14", "Rubin Museum", "150 W 17th St, New York, NY 10011", 40.7402, -73.9979, "rubin_museum"),
+            ("1", "12 West 18th Street", "12 W 18th St, New York, NY 10011", 40.7391, -73.9929, "building_12w18"),
+            ("2", "133 East 15th Street", "133 E 15th St, New York, NY 10003", 40.7343, -73.9859, "building_133e15"),
+            ("3", "41 Elizabeth Street", "41 Elizabeth St, New York, NY 10013", 40.7178, -73.9962, "building_41elizabeth"),
+            ("4", "104 Franklin Street", "104 Franklin St, New York, NY 10013", 40.7190, -74.0089, "building_104franklin"),
+            ("5", "131 Perry Street", "131 Perry St, New York, NY 10014", 40.7355, -74.0067, "building_131perry"),
+            ("6", "36 Walker Street", "36 Walker St, New York, NY 10013", 40.7173, -74.0027, "building_36walker"),
+            ("7", "123 1st Avenue", "123 1st Ave, New York, NY 10003", 40.7264, -73.9838, "building_123first"),
             
             // Other buildings
-            Building(id: "8", name: "117 West 17th Street", address: "117 W 17th St", latitude: 40.7401, longitude: -73.9967),
-            Building(id: "9", name: "142-148 West 17th Street", address: "142-148 W 17th St", latitude: 40.7403, longitude: -73.9981),
-            Building(id: "10", name: "135 West 17th Street", address: "135 W 17th St", latitude: 40.7402, longitude: -73.9975),
-            Building(id: "11", name: "138 West 17th Street", address: "138 W 17th St", latitude: 40.7403, longitude: -73.9978),
-            Building(id: "12", name: "67 Perry Street", address: "67 Perry St", latitude: 40.7352, longitude: -74.0033),
-            Building(id: "13", name: "Stuyvesant Cove Park", address: "E 20th St & FDR Dr", latitude: 40.7325, longitude: -73.9732)
+            ("8", "117 West 17th Street", "117 W 17th St, New York, NY 10011", 40.7401, -73.9967, "building_117w17"),
+            ("9", "142-148 West 17th Street", "142-148 W 17th St, New York, NY 10011", 40.7403, -73.9981, "building_142w17"),
+            ("10", "135 West 17th Street", "135 W 17th St, New York, NY 10011", 40.7402, -73.9975, "building_135w17"),
+            ("11", "138 West 17th Street", "138 W 17th St, New York, NY 10011", 40.7403, -73.9978, "building_138w17"),
+            ("12", "67 Perry Street", "67 Perry St, New York, NY 10014", 40.7352, -74.0033, "building_67perry"),
+            ("13", "Stuyvesant Cove Park", "E 20th St & FDR Dr, New York, NY 10009", 40.7325, -73.9732, "stuyvesant_park")
         ]
         
-        try await grdbManager.write { db in
-            for building in buildings {
-                try building.insert(db)
-            }
+        for (id, name, address, lat, lng, imageAsset) in buildings {
+            try await grdbManager.execute("""
+                INSERT OR IGNORE INTO buildings 
+                (id, name, address, latitude, longitude, imageAssetName, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+            """, [id, name, address, lat, lng, imageAsset])
         }
+        
+        print("✅ Seeded \(buildings.count) buildings")
     }
     
     private func seedWorkerAssignments() async throws {
+        // First, seed into worker_building_assignments table
         let assignments = [
-            // Kevin's assignments (Worker ID 1)
-            WorkerAssignment(workerId: "1", buildingId: "14", isPrimary: true),  // Rubin Museum PRIMARY
-            WorkerAssignment(workerId: "1", buildingId: "1", isPrimary: false),
-            WorkerAssignment(workerId: "1", buildingId: "2", isPrimary: false),
-            WorkerAssignment(workerId: "1", buildingId: "3", isPrimary: false),
-            WorkerAssignment(workerId: "1", buildingId: "4", isPrimary: false),
-            WorkerAssignment(workerId: "1", buildingId: "5", isPrimary: false),
-            WorkerAssignment(workerId: "1", buildingId: "6", isPrimary: false),
-            WorkerAssignment(workerId: "1", buildingId: "7", isPrimary: false),
+            // Kevin's assignments (Worker ID 4 based on seed data)
+            ("4", "14", "maintenance", true),   // Rubin Museum PRIMARY
+            ("4", "1", "maintenance", false),
+            ("4", "2", "maintenance", false),
+            ("4", "3", "maintenance", false),
+            ("4", "4", "maintenance", false),
+            ("4", "5", "maintenance", false),
+            ("4", "6", "maintenance", false),
+            ("4", "7", "maintenance", false),
             
-            // Edwin's park assignment
-            WorkerAssignment(workerId: "2", buildingId: "13", isPrimary: true),
+            // Edwin's park assignment (Worker ID 2)
+            ("2", "13", "maintenance", true),
             
             // Other assignments
-            WorkerAssignment(workerId: "3", buildingId: "8", isPrimary: true),
-            WorkerAssignment(workerId: "3", buildingId: "9", isPrimary: false),
-            WorkerAssignment(workerId: "4", buildingId: "10", isPrimary: true),
-            WorkerAssignment(workerId: "4", buildingId: "11", isPrimary: false),
-            WorkerAssignment(workerId: "5", buildingId: "12", isPrimary: true)
+            ("5", "8", "maintenance", true),    // Mercedes
+            ("5", "9", "maintenance", false),
+            ("6", "10", "maintenance", true),   // Luis
+            ("6", "11", "maintenance", false),
+            ("7", "12", "maintenance", true)    // Angel
         ]
         
-        try await grdbManager.write { db in
-            for assignment in assignments {
-                try assignment.insert(db)
-            }
+        for (workerId, buildingId, role, isPrimary) in assignments {
+            // Insert into worker_building_assignments
+            try await grdbManager.execute("""
+                INSERT OR IGNORE INTO worker_building_assignments 
+                (worker_id, building_id, role, assigned_date, is_active)
+                VALUES (?, ?, ?, datetime('now'), 1)
+            """, [workerId, buildingId, role])
+            
+            // Also insert into legacy worker_assignments table for compatibility
+            let workerName = try await getWorkerName(workerId: workerId)
+            let buildingName = try await getBuildingName(buildingId: buildingId)
+            
+            try await grdbManager.execute("""
+                INSERT OR REPLACE INTO worker_assignments 
+                (worker_id, building_id, worker_name, building_name, is_active)
+                VALUES (?, ?, ?, ?, 1)
+            """, [workerId, buildingId, workerName ?? "", buildingName ?? ""])
         }
+        
+        print("✅ Seeded worker assignments")
     }
     
     private func seedSampleTasks() async throws {
+        let kevinId = "4" // Kevin's worker ID from seed data
+        
         let tasks = [
-            Task(
-                id: UUID().uuidString,
-                title: "Clean lobby windows",
-                buildingId: "14",
-                assignedWorkerId: "1",
-                category: "cleaning",
-                urgency: "medium",
-                status: "pending"
-            ),
-            Task(
-                id: UUID().uuidString,
-                title: "Check HVAC filters",
-                buildingId: "14",
-                assignedWorkerId: "1",
-                category: "maintenance",
-                urgency: "high",
-                status: "pending"
-            )
+            ("Clean lobby windows", "Regular window cleaning", "14", kevinId, "cleaning", "medium"),
+            ("Check HVAC filters", "Monthly HVAC maintenance", "14", kevinId, "maintenance", "high"),
+            ("Empty trash bins", "Daily trash collection", "14", kevinId, "cleaning", "low"),
+            ("Inspect fire extinguishers", "Safety equipment check", "14", kevinId, "inspection", "high"),
+            ("Polish brass fixtures", "Weekly brass maintenance", "14", kevinId, "cleaning", "medium")
         ]
         
-        try await grdbManager.write { db in
-            for task in tasks {
-                try task.insert(db)
-            }
+        for (title, desc, buildingId, workerId, category, urgency) in tasks {
+            // Insert into routine_tasks table
+            try await grdbManager.execute("""
+                INSERT INTO routine_tasks 
+                (title, description, buildingId, workerId, category, urgency, 
+                 isCompleted, scheduledDate, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, 0, date('now'), datetime('now'), datetime('now'))
+            """, [title, desc, buildingId, workerId, category, urgency])
+            
+            // Also insert into tasks table for compatibility
+            try await grdbManager.execute("""
+                INSERT INTO tasks 
+                (name, description, buildingId, workerId, category, urgency, 
+                 isCompleted, scheduledDate, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 0, date('now'), datetime('now'))
+            """, [title, desc, Int(buildingId) ?? 0, Int(workerId) ?? 0, category, urgency])
         }
+        
+        print("✅ Seeded sample tasks")
     }
     
     private func verifyKevinAssignment() async throws {
         print("🔍 Verifying Kevin's Rubin Museum assignment...")
         
-        let kevinAssignments = try await grdbManager.read { db in
-            try WorkerAssignment
-                .filter(Column("workerId") == "1")
-                .fetchAll(db)
+        // Kevin is worker ID 4 in our seed data
+        let kevinAssignments = try await grdbManager.query("""
+            SELECT wa.*, b.name as building_name
+            FROM worker_assignments wa
+            JOIN buildings b ON wa.building_id = b.id
+            WHERE wa.worker_id = '4' AND wa.is_active = 1
+        """)
+        
+        let hasRubinMuseum = kevinAssignments.contains { assignment in
+            (assignment["building_id"] as? String) == "14"
         }
         
-        let hasRubinMuseum = kevinAssignments.contains { $0.buildingId == "14" && $0.isPrimary }
-        
         if hasRubinMuseum {
-            print("✅ Kevin properly assigned to Rubin Museum as PRIMARY")
+            print("✅ Kevin properly assigned to Rubin Museum")
+            print("   Total assignments: \(kevinAssignments.count)")
+            for assignment in kevinAssignments {
+                if let buildingName = assignment["building_name"] as? String {
+                    print("   - \(buildingName)")
+                }
+            }
         } else {
             print("❌ Kevin's Rubin Museum assignment missing - fixing...")
-            try await grdbManager.write { db in
-                try WorkerAssignment(workerId: "1", buildingId: "14", isPrimary: true).insert(db)
-            }
+            
+            // Add the assignment
+            try await grdbManager.execute("""
+                INSERT OR REPLACE INTO worker_assignments 
+                (worker_id, building_id, worker_name, building_name, is_active)
+                VALUES ('4', '14', 'Kevin Dutan', 'Rubin Museum', 1)
+            """, [])
+            
+            // Also add to worker_building_assignments
+            try await grdbManager.execute("""
+                INSERT OR IGNORE INTO worker_building_assignments 
+                (worker_id, building_id, role, assigned_date, is_active)
+                VALUES ('4', '14', 'maintenance', datetime('now'), 1)
+            """, [])
+            
             print("✅ Kevin's assignment fixed")
         }
     }
@@ -244,150 +230,165 @@ public class DatabaseStartupCoordinator {
     private func runIntegrityChecks() async throws {
         print("🔍 Running database integrity checks...")
         
-        let stats = try await grdbManager.read { db -> (workers: Int, buildings: Int, assignments: Int, tasks: Int) in
-            let workers = try Worker.fetchCount(db)
-            let buildings = try Building.fetchCount(db)
-            let assignments = try WorkerAssignment.fetchCount(db)
-            let tasks = try Task.fetchCount(db)
-            return (workers, buildings, assignments, tasks)
-        }
+        // Check workers
+        let workerResult = try await grdbManager.query("SELECT COUNT(*) as count FROM workers")
+        let workerCount = workerResult.first?["count"] as? Int64 ?? 0
+        
+        // Check buildings
+        let buildingResult = try await grdbManager.query("SELECT COUNT(*) as count FROM buildings")
+        let buildingCount = buildingResult.first?["count"] as? Int64 ?? 0
+        
+        // Check assignments
+        let assignmentResult = try await grdbManager.query("SELECT COUNT(*) as count FROM worker_assignments WHERE is_active = 1")
+        let assignmentCount = assignmentResult.first?["count"] as? Int64 ?? 0
+        
+        // Check tasks
+        let taskResult = try await grdbManager.query("SELECT COUNT(*) as count FROM routine_tasks")
+        let taskCount = taskResult.first?["count"] as? Int64 ?? 0
         
         print("📊 Database Statistics:")
-        print("  - Workers: \(stats.workers)")
-        print("  - Buildings: \(stats.buildings)")
-        print("  - Assignments: \(stats.assignments)")
-        print("  - Tasks: \(stats.tasks)")
+        print("  - Workers: \(workerCount)")
+        print("  - Buildings: \(buildingCount)")
+        print("  - Active Assignments: \(assignmentCount)")
+        print("  - Tasks: \(taskCount)")
         
-        guard stats.workers > 0 && stats.buildings > 0 else {
+        // Database size
+        let dbSize = grdbManager.getDatabaseSize()
+        let formatter = ByteCountFormatter()
+        print("  - Database Size: \(formatter.string(fromByteCount: dbSize))")
+        
+        guard workerCount > 0 && buildingCount > 0 else {
             throw DatabaseError.integrityCheckFailed("Missing critical data")
         }
         
         print("✅ Integrity checks passed")
     }
     
-    // MARK: - Data Integrity (Added by Fix Script)
+    // MARK: - Helper Methods
     
-    func ensureDataIntegrity() async throws {
-        print("🔍 Checking data integrity...")
-        // Placeholder for data integrity checks
+    private func getWorkerName(workerId: String) async throws -> String? {
+        let result = try await grdbManager.query(
+            "SELECT name FROM workers WHERE id = ?",
+            [workerId]
+        )
+        return result.first?["name"] as? String
     }
     
-    func quickHealthCheck() async throws {
+    private func getBuildingName(buildingId: String) async throws -> String? {
+        let result = try await grdbManager.query(
+            "SELECT name FROM buildings WHERE id = ?",
+            [buildingId]
+        )
+        return result.first?["name"] as? String
+    }
+    
+    // MARK: - Public Methods for Testing
+    
+    /// Reset the database (for testing only)
+    public func resetAndReinitialize() async throws {
+        print("🔄 Resetting database...")
+        isInitialized = false
+        try await grdbManager.resetDatabase()
+        try await initializeDatabase()
+    }
+    
+    /// Quick health check
+    public func quickHealthCheck() async throws -> Bool {
         print("💓 Performing quick health check...")
-        // Placeholder for health check
+        
+        // Check if Kevin (worker ID 4) has Rubin Museum assignment
+        let kevinCheck = try await grdbManager.query("""
+            SELECT COUNT(*) as count 
+            FROM worker_assignments 
+            WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
+        """)
+        
+        let hasRubinAssignment = (kevinCheck.first?["count"] as? Int64 ?? 0) > 0
+        
+        if hasRubinAssignment {
+            print("✅ Health check passed - Kevin has Rubin Museum")
+        } else {
+            print("❌ Health check failed - Kevin missing Rubin Museum")
+        }
+        
+        return hasRubinAssignment
+    }
+    
+    /// Get detailed statistics
+    public func getDatabaseStatistics() async throws -> [String: Any] {
+        var stats: [String: Any] = [:]
+        
+        // Get authentication stats from GRDBManager
+        stats["authentication"] = try await grdbManager.getAuthenticationStats()
+        
+        // Get operational stats
+        let workerStats = try await grdbManager.query("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN isActive = 1 THEN 1 ELSE 0 END) as active,
+                COUNT(DISTINCT role) as roles
+            FROM workers
+        """)
+        
+        if let row = workerStats.first {
+            stats["workers"] = [
+                "total": row["total"] as? Int64 ?? 0,
+                "active": row["active"] as? Int64 ?? 0,
+                "roles": row["roles"] as? Int64 ?? 0
+            ]
+        }
+        
+        // Get building stats
+        let buildingStats = try await grdbManager.query("""
+            SELECT 
+                COUNT(*) as total,
+                COUNT(DISTINCT SUBSTR(address, -5)) as zipcodes
+            FROM buildings
+        """)
+        
+        if let row = buildingStats.first {
+            stats["buildings"] = [
+                "total": row["total"] as? Int64 ?? 0,
+                "zipcodes": row["zipcodes"] as? Int64 ?? 0
+            ]
+        }
+        
+        // Get task stats
+        let taskStats = try await grdbManager.query("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN isCompleted = 1 THEN 1 ELSE 0 END) as completed,
+                COUNT(DISTINCT category) as categories
+            FROM routine_tasks
+        """)
+        
+        if let row = taskStats.first {
+            stats["tasks"] = [
+                "total": row["total"] as? Int64 ?? 0,
+                "completed": row["completed"] as? Int64 ?? 0,
+                "categories": row["categories"] as? Int64 ?? 0
+            ]
+        }
+        
+        return stats
     }
 }
 
-// MARK: - Database Models
+// MARK: - Error Types
 
-struct Worker: Codable, FetchableRecord, PersistableRecord {
-    static let databaseTableName = "workers"
-    
-    let id: String
-    let name: String
-    let email: String
-    let role: String
-    var isActive: Bool = true
-    
-    // MARK: - Data Integrity (Added by Fix Script)
-    
-    func ensureDataIntegrity() async throws {
-        print("🔍 Checking data integrity...")
-        // Placeholder for data integrity checks
-    }
-    
-    func quickHealthCheck() async throws {
-        print("💓 Performing quick health check...")
-        // Placeholder for health check
-    }
-}
-
-struct Building: Codable, FetchableRecord, PersistableRecord {
-    static let databaseTableName = "buildings"
-    
-    let id: String
-    let name: String
-    let address: String
-    let latitude: Double
-    let longitude: Double
-    var type: String?
-    var imageUrl: String?
-    
-    // MARK: - Data Integrity (Added by Fix Script)
-    
-    func ensureDataIntegrity() async throws {
-        print("🔍 Checking data integrity...")
-        // Placeholder for data integrity checks
-    }
-    
-    func quickHealthCheck() async throws {
-        print("💓 Performing quick health check...")
-        // Placeholder for health check
-    }
-}
-
-struct WorkerAssignment: Codable, FetchableRecord, PersistableRecord {
-    static let databaseTableName = "worker_assignments"
-    
-    var id: String = UUID().uuidString
-    let workerId: String
-    let buildingId: String
-    let isPrimary: Bool
-    var createdAt: Date = Date()
-    
-    // MARK: - Data Integrity (Added by Fix Script)
-    
-    func ensureDataIntegrity() async throws {
-        print("🔍 Checking data integrity...")
-        // Placeholder for data integrity checks
-    }
-    
-    func quickHealthCheck() async throws {
-        print("💓 Performing quick health check...")
-        // Placeholder for health check
-    }
-}
-
-struct Task: Codable, FetchableRecord, PersistableRecord {
-    static let databaseTableName = "tasks"
-    
-    let id: String
-    let title: String
-    var description: String?
-    let buildingId: String
-    let assignedWorkerId: String?
-    let category: String
-    let urgency: String
-    let status: String
-    var dueDate: Date?
-    var completedAt: Date?
-    var createdAt: Date = Date()
-    
-    // MARK: - Data Integrity (Added by Fix Script)
-    
-    func ensureDataIntegrity() async throws {
-        print("🔍 Checking data integrity...")
-        // Placeholder for data integrity checks
-    }
-    
-    func quickHealthCheck() async throws {
-        print("💓 Performing quick health check...")
-        // Placeholder for health check
-    }
-}
-
-enum DatabaseError: Error {
+enum DatabaseError: LocalizedError {
     case integrityCheckFailed(String)
+    case seedingFailed(String)
+    case migrationFailed(String)
     
-    // MARK: - Data Integrity (Added by Fix Script)
-    
-    func ensureDataIntegrity() async throws {
-        print("🔍 Checking data integrity...")
-        // Placeholder for data integrity checks
-    }
-    
-    func quickHealthCheck() async throws {
-        print("💓 Performing quick health check...")
-        // Placeholder for health check
+    var errorDescription: String? {
+        switch self {
+        case .integrityCheckFailed(let msg):
+            return "Database integrity check failed: \(msg)"
+        case .seedingFailed(let msg):
+            return "Database seeding failed: \(msg)"
+        case .migrationFailed(let msg):
+            return "Database migration failed: \(msg)"
+        }
     }
 }
