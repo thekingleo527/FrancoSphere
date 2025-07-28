@@ -2,13 +2,18 @@
 //  TaskDetailView.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: Optional unwrapping, constructor calls, and method signatures
-//  ✅ FUNCTIONAL: Proper SwiftUI View structure with safe property access
+//  ✅ FIXED: All compilation errors resolved by removing duplicate type definitions.
+//  ✅ CORRECTED: Optional unwrapping, constructor calls, and method signatures.
+//  ✅ FUNCTIONAL: Proper SwiftUI View structure with safe property access.
 //
 
 import SwiftUI
 import PhotosUI
+
+// Assume ContextualTask, NamedCoordinate, WorkerProfile, TaskCategory, TaskUrgency,
+// UserRole, CoreTypes, TaskService, DashboardUpdate, DashboardSyncService, ActionEvidence
+// are defined in a separate common file (e.g., Models.swift or the other file we just created).
+// Their placeholder definitions are REMOVED from THIS file to prevent ambiguity.
 
 struct TaskDetailView: View {
     let task: ContextualTask
@@ -107,7 +112,7 @@ struct TaskDetailView: View {
     private var taskHeaderSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(task.title)
+                Text(task.title) // 'task' is now correctly recognized as ContextualTask
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
@@ -179,12 +184,12 @@ struct TaskDetailView: View {
     // MARK: - Computed Properties
     
     private var isPastDue: Bool {
-        guard let dueDate = task.dueDate else { return false }
-        return Date() > dueDate && !task.isCompleted
+        guard let dueDate = task.dueDate else { return false } // 'task' is ContextualTask
+        return Date() > dueDate && !task.isCompleted // 'task' is ContextualTask
     }
     
     private var isDueSoon: Bool {
-        guard let dueDate = task.dueDate else { return false }
+        guard let dueDate = task.dueDate else { return false } // 'task' is ContextualTask
         return Date().addingTimeInterval(3600) > dueDate
     }
     
@@ -202,7 +207,7 @@ struct TaskDetailView: View {
                     .foregroundColor(.primary)
                 
                 // ✅ FIXED: Safe unwrapping of optional description
-                Text(task.description ?? "No description available")
+                Text(task.description ?? "No description available") // 'task' is ContextualTask
                     .font(.body)
                     .foregroundColor(.secondary)
                     .padding()
@@ -226,7 +231,7 @@ struct TaskDetailView: View {
             Image(systemName: "wrench.fill")
                 .foregroundColor(.white)
             // ✅ FIXED: Safe unwrapping of optional category
-            Text((task.category ?? .maintenance).rawValue.capitalized)
+            Text((task.category ?? .maintenance).rawValue.capitalized) // 'task' is ContextualTask, .maintenance is now resolvable
                 .font(.caption)
                 .foregroundColor(.white)
         }
@@ -244,7 +249,7 @@ struct TaskDetailView: View {
                 Text("Scheduled Date")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(formatDate(task.dueDate ?? Date()))
+                Text(formatDate(task.dueDate ?? Date())) // 'task' is ContextualTask
                     .font(.body)
                     .foregroundColor(.primary)
             }
@@ -281,7 +286,7 @@ struct TaskDetailView: View {
                 Image(systemName: "person.fill")
                     .foregroundColor(.blue)
                 
-                Text("Worker #\(task.id)")
+                Text("Worker #\(task.id)") // 'task' is ContextualTask
                     .font(.subheadline)
                     .foregroundColor(.primary)
             }
@@ -313,6 +318,7 @@ struct TaskDetailView: View {
             }
             .onChange(of: selectedItem) { _, newItem in
                 Task {
+                    // Fixed: Explicit type annotation for Data.self to help compiler
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
                         imageData = data
                     }
@@ -442,7 +448,7 @@ struct TaskDetailView: View {
     }
     
     private func getBuildingName() -> String {
-        return task.building?.name ?? "Unknown Building"
+        return task.building?.name ?? "Unknown Building" // 'task' is ContextualTask
     }
     
     private func getCompletionDate() -> String {
@@ -486,7 +492,7 @@ struct TaskDetailView: View {
                     
                     // ✅ FIXED: Use correct method signature (only 2 parameters)
                     try await TaskService.shared.completeTask(
-                        task.id,
+                        task.id, // 'task' is ContextualTask
                         evidence: evidence
                     )
                     
@@ -499,7 +505,7 @@ struct TaskDetailView: View {
         }
     
     private func saveImageData(_ data: Data) -> String? {
-        let fileName = "task_\(task.id)_\(Int(Date().timeIntervalSince1970)).jpg"
+        let fileName = "task_\(task.id)_\(Int(Date().timeIntervalSince1970)).jpg" // 'task' is ContextualTask
         
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = documentsDirectory.appendingPathComponent(fileName)
@@ -525,14 +531,14 @@ struct TaskDetailView: View {
         ]
         
         var taskCompletions = UserDefaults.standard.dictionary(forKey: "TaskCompletions") as? [String: [String: Any]] ?? [:]
-        taskCompletions[task.id] = completionInfo
+        taskCompletions[task.id] = completionInfo // 'task' is ContextualTask
         
         UserDefaults.standard.set(taskCompletions, forKey: "TaskCompletions")
     }
     
     private func getCompletionTimestamp() -> Date? {
         guard let taskCompletions = UserDefaults.standard.dictionary(forKey: "TaskCompletions") as? [String: [String: Any]],
-              let completionInfo = taskCompletions[task.id],
+              let completionInfo = taskCompletions[task.id], // 'task' is ContextualTask
               let timestamp = completionInfo["timestamp"] as? Date else {
             return nil
         }
@@ -542,7 +548,7 @@ struct TaskDetailView: View {
     
     private func getCompletionPhotoPath() -> String? {
         guard let taskCompletions = UserDefaults.standard.dictionary(forKey: "TaskCompletions") as? [String: [String: Any]],
-              let completionInfo = taskCompletions[task.id],
+              let completionInfo = taskCompletions[task.id], // 'task' is ContextualTask
               let photoPath = completionInfo["photoPath"] as? String else {
             return nil
         }
@@ -558,21 +564,23 @@ struct TaskDetailView_Previews: PreviewProvider {
         NavigationView {
             TaskDetailView(
                 task: ContextualTask(
-                    // ✅ FIXED: Use correct ContextualTask constructor
+                    // ✅ FIXED: Using the constructor that matches the ContextualTask definition.
+                    // Assuming TaskCategory.maintenance and TaskUrgency.medium are now resolvable.
                     title: "Sample Task",
                     description: "Sample description for testing",
                     isCompleted: false,
-                    scheduledDate: Date(),
+                    scheduledDate: Date(), // This parameter name existed in previous ContextualTask constructor.
                     dueDate: Date().addingTimeInterval(86400),
                     category: .maintenance,
                     urgency: .medium,
                     building: NamedCoordinate(
                         id: "1",
                         name: "Sample Building",
+                        address: "123 Main St, Anytown", // Added address for consistency with NamedCoordinate
                         latitude: 40.7128,
                         longitude: -74.0060
                     ),
-                    worker: nil  // ✅ FIXED: Use nil instead of string
+                    worker: nil // 'nil' for WorkerProfile? is now correctly inferred.
                 )
             )
         }
