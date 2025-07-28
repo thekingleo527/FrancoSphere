@@ -622,29 +622,30 @@ struct TaskDetailView: View {
 // MARK: - Preview Provider
 
 struct TaskDetailView_Previews: PreviewProvider {
+    // Move PreviewTask struct OUTSIDE of the previews property
+    struct PreviewTask {
+        let id = "preview_1"
+        let title = "Sample Task"
+        let description: String? = "Sample description for testing"
+        let isCompleted = false
+        let completedDate: Date? = nil
+        let dueDate: Date? = Date().addingTimeInterval(86400)
+        let category: CoreTypes.TaskCategory? = CoreTypes.TaskCategory.maintenance
+        let urgency: CoreTypes.TaskUrgency? = CoreTypes.TaskUrgency.medium
+        let building: NamedCoordinate? = NamedCoordinate(
+            id: "1",
+            name: "Sample Building",
+            address: "123 Main St, Anytown",
+            latitude: 40.7128,
+            longitude: -74.0060
+        )
+        let worker: WorkerProfile? = nil
+        let buildingId: String? = "1"
+        let assignedWorkerId: String? = "4"
+    }
+    
     static var previews: some View {
-        // Create a simple task structure for preview
-        struct PreviewTask {
-            let id = "preview_1"
-            let title = "Sample Task"
-            let description: String? = "Sample description for testing"
-            let isCompleted = false
-            let completedDate: Date? = nil
-            let dueDate: Date? = Date().addingTimeInterval(86400)
-            let category: CoreTypes.TaskCategory? = CoreTypes.TaskCategory.maintenance
-            let urgency: CoreTypes.TaskUrgency? = CoreTypes.TaskUrgency.medium
-            let building: NamedCoordinate? = NamedCoordinate(
-                id: "1",
-                name: "Sample Building",
-                address: "123 Main St, Anytown",
-                latitude: 40.7128,
-                longitude: -74.0060
-            )
-            let worker: WorkerProfile? = nil
-            let buildingId: String? = "1"
-            let assignedWorkerId: String? = "4"
-        }
-        
+        // Now just use PreviewTask here
         NavigationView {
             TaskDetailView(task: PreviewTask())
         }
