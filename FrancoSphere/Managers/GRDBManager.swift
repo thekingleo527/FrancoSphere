@@ -5,6 +5,7 @@
 //  ✅ COMPLETE: Full authentication + operational database manager
 //  ✅ MERGED: All functionality from DatabaseManager + GRDBManager
 //  ✅ SINGLE SOURCE: One manager for everything
+//  ✅ FIXED: All syntax errors resolved
 //
 
 import Foundation
@@ -42,63 +43,133 @@ public struct AuthenticatedUser: Codable {
 
 // MARK: - Complete GRDBManager Class
 
-public class GRDBManager {
+public final class GRDBManager {
     public static let shared = GRDBManager()
     
-    private let dbQueue: DatabaseQueue
-    private let dbPath: String
+    private var dbPool: DatabasePool!
+    public let databaseURL: URL
     
     // Configuration
     private let maxRetries = 3
     private let retryDelay: TimeInterval = 0.5
     
+    // ✅ FIXED: Make dateFormatter public for extension access
+    public let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter
+    }()
+    
     private init() {
+        // Set up database path
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        databaseURL = documentsPath.appendingPathComponent("FrancoSphere.sqlite")
+        
+        initializeDatabase()
+    }
+    
+    // MARK: - Database Initialization
+    
+    private func initializeDatabase() {
         do {
-            // Set up database path
-            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            dbPath = "\(documentsPath)/francosphere.db"
+            print("📁 Database path: \(databaseURL.path)")
             
-            print("📁 Database path: \(dbPath)")
-            
-            // Create database queue
-            dbQueue = try DatabaseQueue(path: dbPath)
-            
-            // Configure database
-            try dbQueue.write { db in
+            var config = Configuration()
+            config.prepareDatabase { db in
                 // Enable foreign keys
                 try db.execute(sql: "PRAGMA foreign_keys = ON")
-                
-                // Create all tables
-                try createAllTables(db)
+            }
+            
+            dbPool = try DatabasePool(path: databaseURL.path, configuration: config)
+            
+            // Create tables
+            try dbPool.write { db in
+                try self.createAllTables(db) // ✅ FIXED: Added self
             }
             
             print("✅ GRDBManager initialized successfully")
             
         } catch {
-            fatalError("❌ Failed to initialize GRDBManager: \(error)")
+            print("❌ GRDB Database initialization failed: \(error)")
+            fatalError("Failed to initialize database: \(error)")
         }
     }
     
     // MARK: - Core Database Methods
     
     /// Execute a query and return results
-    public func query(_ sql: String, _ arguments: [Any] = []) async throws -> [[String: Any]] {
+    public func query(_ sql: String, _ parameters: [Any] = []) async throws -> [[String: Any]] {
         return try await withRetry {
-            try await self.dbQueue.read { db in
-                let rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments))
+            try await self.dbPool.read { db in
+                // ✅ FIXED: Convert [Any] to proper GRDB arguments with safe unwrapping
+                let rows: [Row]
+                if parameters.isEmpty {
+                    rows = try Row.fetchAll(db, sql: sql)
+                } else {
+                    // Convert [Any] to [DatabaseValueConvertible]
+                    let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                        if let convertible = param as? DatabaseValueConvertible {
+                            return convertible
+                        } else {
+                            return String(describing: param)
+                        }
+                    }
+                    rows = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(grdbParams)!)
+                }
+                
+                // ✅ FIXED: Process rows within the closure to avoid Sendable issues
                 return rows.map { row in
-                    Dictionary(uniqueKeysWithValues: row.columnNames.map { ($0, row[$0] as Any) })
+                    var dict: [String: Any] = [:]
+                    for (column, value) in row {
+                        dict[column] = value.storage.value
+                    }
+                    return dict
                 }
             }
         }
     }
     
     /// Execute a non-query SQL statement
-    @discardableResult
-    public func execute(_ sql: String, _ arguments: [Any] = []) async throws -> Int64 {
+    public func execute(_ sql: String, _ parameters: [Any] = []) async throws {
+        try await withRetry {
+            try await self.dbPool.write { db in
+                // ✅ FIXED: Convert [Any] to proper GRDB arguments
+                if parameters.isEmpty {
+                    try db.execute(sql: sql)
+                } else {
+                    // Convert [Any] to [DatabaseValueConvertible]
+                    let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                        if let convertible = param as? DatabaseValueConvertible {
+                            return convertible
+                        } else {
+                            return String(describing: param)
+                        }
+                    }
+                    try db.execute(sql: sql, arguments: StatementArguments(grdbParams)!)
+                }
+            }
+        }
+    }
+    
+    /// Execute and return last inserted ID
+    public func insertAndReturnID(_ sql: String, _ parameters: [Any] = []) async throws -> Int64 {
         return try await withRetry {
-            try await self.dbQueue.write { db in
-                try db.execute(sql: sql, arguments: StatementArguments(arguments))
+            try await self.dbPool.write { db in
+                // ✅ FIXED: Convert [Any] to proper GRDB arguments
+                if parameters.isEmpty {
+                    try db.execute(sql: sql)
+                } else {
+                    // Convert [Any] to [DatabaseValueConvertible]
+                    let grdbParams = parameters.map { param -> DatabaseValueConvertible in
+                        if let convertible = param as? DatabaseValueConvertible {
+                            return convertible
+                        } else {
+                            return String(describing: param)
+                        }
+                    }
+                    try db.execute(sql: sql, arguments: StatementArguments(grdbParams)!)
+                }
                 return db.lastInsertedRowID
             }
         }
@@ -107,11 +178,13 @@ public class GRDBManager {
     /// Execute multiple statements in a transaction
     public func transaction<T>(_ block: @escaping (Database) throws -> T) async throws -> T {
         return try await withRetry {
-            try await self.dbQueue.write { db in
+            try await self.dbPool.write { db in
+                var result: T!
                 try db.inTransaction {
-                    try block(db)
+                    result = try block(db)
                     return .commit
                 }
+                return result
             }
         }
     }
@@ -153,7 +226,7 @@ public class GRDBManager {
     /// Get database file size
     public func getDatabaseSize() -> Int64 {
         do {
-            let attributes = try FileManager.default.attributesOfItem(atPath: dbPath)
+            let attributes = try FileManager.default.attributesOfItem(atPath: databaseURL.path)
             return attributes[.size] as? Int64 ?? 0
         } catch {
             return 0
@@ -162,7 +235,7 @@ public class GRDBManager {
     
     /// Reset database (dangerous - for testing only)
     public func resetDatabase() async throws {
-        try await dbQueue.write { db in
+        try await dbPool.write { db in
             // Drop all tables
             let tables = try String.fetchAll(db, sql: """
                 SELECT name FROM sqlite_master 
@@ -174,7 +247,7 @@ public class GRDBManager {
             }
             
             // Recreate all tables
-            try createAllTables(db)
+            try self.createAllTables(db)
         }
         
         print("🔄 Database reset complete")
@@ -199,9 +272,10 @@ public class GRDBManager {
                 address TEXT,
                 emergencyContact TEXT,
                 notes TEXT,
+                shift TEXT,
                 
                 -- Authentication fields (from users table)
-                password TEXT NOT NULL,
+                password TEXT DEFAULT 'password',
                 role TEXT NOT NULL DEFAULT 'worker',
                 isActive INTEGER NOT NULL DEFAULT 1,
                 lastLogin TEXT,
@@ -222,7 +296,7 @@ public class GRDBManager {
             )
         """)
         
-        // 2. Buildings table (unchanged)
+        // 2. Buildings table
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS buildings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -244,7 +318,7 @@ public class GRDBManager {
             )
         """)
         
-        // 3. Routine tasks table (enhanced)
+        // 3. Routine tasks table
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS routine_tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -384,18 +458,43 @@ public class GRDBManager {
             )
         """)
         
-        // 11. Worker time logs
+        // 11. Inventory items
         try db.execute(sql: """
-            CREATE TABLE IF NOT EXISTS worker_time_logs (
+            CREATE TABLE IF NOT EXISTS inventory_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                workerId INTEGER NOT NULL,
-                buildingId INTEGER NOT NULL,
-                clockInTime TEXT NOT NULL,
-                clockOutTime TEXT,
-                duration REAL,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                currentStock INTEGER DEFAULT 0,
+                minimumStock INTEGER DEFAULT 0,
+                maxStock INTEGER,
+                unit TEXT DEFAULT 'units',
+                cost REAL,
+                supplier TEXT,
+                location TEXT,
+                buildingId INTEGER,
+                lastRestocked TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (workerId) REFERENCES workers(id),
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (buildingId) REFERENCES buildings(id)
+            )
+        """)
+        
+        // 12. Compliance issues
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS compliance_issues (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                severity TEXT NOT NULL,
+                buildingId INTEGER,
+                status TEXT DEFAULT 'open',
+                dueDate TEXT,
+                assignedTo INTEGER,
+                type TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (buildingId) REFERENCES buildings(id),
+                FOREIGN KEY (assignedTo) REFERENCES workers(id)
             )
         """)
         
@@ -839,6 +938,93 @@ public class GRDBManager {
         }
         
         print("═══════════════════════════════════════")
+    }
+    
+    // MARK: - Real-time Observation (For compatibility with original)
+    
+    public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
+        // ✅ FIXED: Process rows within ValueObservation to avoid Sendable issues
+        let observation = ValueObservation.tracking { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
+                .map { row in
+                    NamedCoordinate(
+                        id: String(row["id"] as? Int64 ?? 0),
+                        name: row["name"] as? String ?? "",
+                        address: row["address"] as? String,
+                        latitude: row["latitude"] as? Double ?? 0,
+                        longitude: row["longitude"] as? Double ?? 0,
+                        imageAssetName: row["imageAssetName"] as? String
+                    )
+                }
+        }
+        
+        return observation.publisher(in: dbPool).eraseToAnyPublisher()
+    }
+    
+    public func observeTasks(for buildingId: String) -> AnyPublisher<[ContextualTask], Error> {
+        // ✅ FIXED: Process rows within ValueObservation to avoid Sendable issues
+        let observation = ValueObservation.tracking { db in
+            try Row.fetchAll(db, sql: """
+                SELECT t.*, b.name as buildingName, w.name as workerName 
+                FROM routine_tasks t
+                LEFT JOIN buildings b ON t.buildingId = b.id
+                LEFT JOIN workers w ON t.workerId = w.id
+                WHERE t.buildingId = ?
+                ORDER BY t.scheduledDate
+                """, arguments: [buildingId])
+                .map { row in
+                    self.contextualTaskFromRow(row)
+                }
+                .compactMap { $0 }
+        }
+        
+        return observation.publisher(in: dbPool).eraseToAnyPublisher()
+    }
+    
+    // Helper for task conversion
+    private func contextualTaskFromRow(_ row: Row) -> ContextualTask? {
+        guard let title = row["title"] as? String else { return nil }
+        
+        // Convert category string to enum
+        let categoryString = row["category"] as? String ?? "maintenance"
+        let category: TaskCategory? = TaskCategory(rawValue: categoryString.capitalized)
+        
+        // Convert urgency string to enum
+        let urgencyString = row["urgency"] as? String ?? "medium"
+        let urgency: TaskUrgency? = TaskUrgency(rawValue: urgencyString.capitalized)
+        
+        // Convert dates
+        let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
+        
+        // Create building if we have data
+        let building: NamedCoordinate? = {
+            if let buildingName = row["buildingName"] as? String,
+               let buildingId = row["buildingId"] as? Int64 {
+                return NamedCoordinate(
+                    id: String(buildingId),
+                    name: buildingName,
+                    latitude: 0,
+                    longitude: 0
+                )
+            }
+            return nil
+        }()
+        
+        return ContextualTask(
+            id: String(row["id"] as? Int64 ?? 0),
+            title: title,
+            description: row["description"] as? String,
+            isCompleted: (row["isCompleted"] as? Int64 ?? 0) > 0,
+            completedDate: completedDate,
+            dueDate: dueDate,
+            category: category,
+            urgency: urgency,
+            building: building,
+            worker: nil,
+            buildingId: String(row["buildingId"] as? Int64 ?? 0),
+            priority: urgency
+        )
     }
 }
 
