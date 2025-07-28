@@ -61,13 +61,6 @@ extension NamedCoordinate {
         }
     }
     
-    /// Distance from another coordinate
-    func distance(from other: NamedCoordinate) -> Double {
-        let fromLocation = CLLocation(latitude: latitude, longitude: longitude)
-        let toLocation = CLLocation(latitude: other.latitude, longitude: other.longitude)
-        return fromLocation.distance(from: toLocation)
-    }
-    
     /// Check if building has required image asset
     var hasValidImageAsset: Bool {
         return !(imageAssetName?.isEmpty ?? true) && imageAssetName != "placeholder"

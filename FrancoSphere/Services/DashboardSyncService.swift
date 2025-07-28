@@ -9,6 +9,7 @@
 //  ✅ FIXED: Using established initialization pattern from codebase
 //  ✅ FIXED: Proper sink syntax with receiveValue parameter
 //  ✅ FIXED: No references to non-existent PortfolioState
+//  ✅ UPDATED: Uses only real data from OperationalDataManager
 //
 
 import Foundation
@@ -171,10 +172,18 @@ public class DashboardSyncService: ObservableObject {
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
+    private let operationalDataManager = OperationalDataManager.shared  // ✅ ADDED FOR REAL DATA
     
     private var cancellables = Set<AnyCancellable>()
     private var syncTimer: Timer?
     private var isInitialized = false
+    
+    // Debug mode for logging
+    #if DEBUG
+    private let debugMode = true
+    #else
+    private let debugMode = false
+    #endif
     
     private init() {
         // Simple synchronous init - setup happens in initialize()
@@ -191,8 +200,41 @@ public class DashboardSyncService: ObservableObject {
         guard !isInitialized else { return }
         isInitialized = true
         
+        // Validate data sources
+        guard validateDataSources() else {
+            print("⚠️ DashboardSyncService: Proceeding with limited functionality")
+        }
+        
         setupRealTimeSynchronization()
         setupAutoSync()
+    }
+    
+    // MARK: - Data Validation
+    
+    /// Validates that all required data sources are available
+    public func validateDataSources() -> Bool {
+        // Check if OperationalDataManager is initialized and has data
+        guard operationalDataManager.isInitialized else {
+            print("❌ DashboardSyncService: OperationalDataManager not initialized")
+            return false
+        }
+        
+        // Verify we can access configuration
+        let config = operationalDataManager.getSystemConfiguration()
+        guard config.isValid else {
+            print("❌ DashboardSyncService: Invalid system configuration")
+            return false
+        }
+        
+        // Verify we have at least some cached data
+        let hasWorkers = operationalDataManager.getCachedWorkerCount() > 0
+        let hasBuildings = operationalDataManager.getCachedBuildingCount() > 0
+        
+        if !hasWorkers || !hasBuildings {
+            print("⚠️ DashboardSyncService: No cached data available, will fetch on demand")
+        }
+        
+        return true
     }
     
     // MARK: - Public Broadcasting Methods
@@ -268,8 +310,8 @@ public class DashboardSyncService: ObservableObject {
             buildingId: buildingId,
             workerId: workerId,
             data: [
-                "buildingName": (buildingName ?? getBuildingName(buildingId) ?? "Unknown Building") as Any,
-                "workerName": (getWorkerName(workerId) ?? "Worker \(workerId)") as Any
+                "buildingName": buildingName ?? getBuildingName(buildingId) ?? "",
+                "workerName": getWorkerName(workerId) ?? ""
             ]
         )
         broadcastWorkerUpdate(update)
@@ -283,8 +325,8 @@ public class DashboardSyncService: ObservableObject {
             buildingId: buildingId,
             workerId: workerId,
             data: [
-                "buildingName": (getBuildingName(buildingId) ?? "Unknown Building") as Any,
-                "workerName": (getWorkerName(workerId) ?? "Worker \(workerId)") as Any
+                "buildingName": getBuildingName(buildingId) ?? "",
+                "workerName": getWorkerName(workerId) ?? ""
             ]
         )
         broadcastWorkerUpdate(update)
@@ -298,9 +340,9 @@ public class DashboardSyncService: ObservableObject {
             buildingId: buildingId,
             workerId: workerId,
             data: [
-                "taskId": taskId as Any,
-                "buildingName": (getBuildingName(buildingId) ?? "Unknown Building") as Any,
-                "workerName": (getWorkerName(workerId) ?? "Worker \(workerId)") as Any
+                "taskId": taskId,
+                "buildingName": getBuildingName(buildingId) ?? "",
+                "workerName": getWorkerName(workerId) ?? ""
             ]
         )
         broadcastWorkerUpdate(update)
@@ -313,10 +355,10 @@ public class DashboardSyncService: ObservableObject {
             type: .buildingMetricsChanged,
             buildingId: buildingId,
             data: [
-                "completionRate": metrics.completionRate as Any,
-                "overdueTasks": metrics.overdueTasks as Any,
-                "urgentTasks": metrics.urgentTasksCount as Any,
-                "activeWorkers": metrics.activeWorkers as Any
+                "completionRate": metrics.completionRate,
+                "overdueTasks": metrics.overdueTasks,
+                "urgentTasks": metrics.urgentTasksCount,
+                "activeWorkers": metrics.activeWorkers
             ]
         )
         broadcastAdminUpdate(update)
@@ -328,8 +370,8 @@ public class DashboardSyncService: ObservableObject {
             source: .admin,
             type: .intelligenceGenerated,
             data: [
-                "insightCount": insights.count as Any,
-                "highPriorityCount": insights.filter { $0.priority == .high || $0.priority == .critical }.count as Any
+                "insightCount": insights.count,
+                "highPriorityCount": insights.filter { $0.priority == .high || $0.priority == .critical }.count
             ]
         )
         broadcastAdminUpdate(update)
@@ -341,10 +383,10 @@ public class DashboardSyncService: ObservableObject {
             source: .client,
             type: .portfolioUpdated,
             data: [
-                "totalBuildings": portfolio.totalBuildings as Any,
-                "activeWorkers": portfolio.activeWorkers as Any,
-                "completionRate": portfolio.completionRate as Any,
-                "criticalIssues": portfolio.criticalIssues as Any
+                "totalBuildings": portfolio.totalBuildings,
+                "activeWorkers": portfolio.activeWorkers,
+                "completionRate": portfolio.completionRate,
+                "criticalIssues": portfolio.criticalIssues
             ]
         )
         broadcastClientUpdate(update)
@@ -374,12 +416,20 @@ public class DashboardSyncService: ObservableObject {
               update.type == .performanceChanged else { return }
         
         let severity: LiveAdminAlert.Severity = {
-            if let overdueTasks = update.data["overdueTasks"] as? Int, overdueTasks > 10 {
+            // Use real thresholds from OperationalDataManager
+            let config = operationalDataManager.getSystemConfiguration()
+            
+            if let overdueTasks = update.data["overdueTasks"] as? Int,
+               overdueTasks > config.criticalOverdueThreshold {
                 return .critical
-            } else if let completionRate = update.data["completionRate"] as? Double, completionRate < 0.5 {
+            } else if let completionRate = update.data["completionRate"] as? Double,
+                     completionRate < config.minimumCompletionRate {
                 return .high
-            } else {
+            } else if let urgentTasks = update.data["urgentTasks"] as? Int,
+                     urgentTasks > config.urgentTaskThreshold {
                 return .medium
+            } else {
+                return .low
             }
         }()
         
@@ -398,10 +448,26 @@ public class DashboardSyncService: ObservableObject {
             return
         }
         
+        // Calculate real trend from OperationalDataManager historical data
+        let trend: CoreTypes.TrendDirection = {
+            if let metricName = update.data["metricName"] as? String {
+                let historicalTrend = operationalDataManager.calculateTrend(for: metricName, days: 7)
+                return historicalTrend
+            }
+            return .stable
+        }()
+        
+        let metricValue: String = {
+            if let value = update.data["value"] {
+                return String(describing: value)
+            }
+            return "N/A"
+        }()
+        
         let metric = LiveClientMetric(
             name: update.type.displayName,
-            value: "Updated",
-            trend: .stable // Can be enhanced with real trend calculation
+            value: metricValue,
+            trend: trend
         )
         
         liveClientMetrics.append(metric)
@@ -409,15 +475,19 @@ public class DashboardSyncService: ObservableObject {
     }
     
     private func limitLiveUpdates() {
-        // Keep only last 10 updates for performance
-        if liveWorkerUpdates.count > 10 {
-            liveWorkerUpdates.removeFirst(liveWorkerUpdates.count - 10)
+        // Get limit from OperationalDataManager configuration
+        let config = operationalDataManager.getSystemConfiguration()
+        let maxLiveUpdates = config.maxLiveUpdatesPerFeed ?? 10
+        
+        // Keep only last N updates for performance
+        if liveWorkerUpdates.count > maxLiveUpdates {
+            liveWorkerUpdates.removeFirst(liveWorkerUpdates.count - maxLiveUpdates)
         }
-        if liveAdminAlerts.count > 10 {
-            liveAdminAlerts.removeFirst(liveAdminAlerts.count - 10)
+        if liveAdminAlerts.count > maxLiveUpdates {
+            liveAdminAlerts.removeFirst(liveAdminAlerts.count - maxLiveUpdates)
         }
-        if liveClientMetrics.count > 10 {
-            liveClientMetrics.removeFirst(liveClientMetrics.count - 10)
+        if liveClientMetrics.count > maxLiveUpdates {
+            liveClientMetrics.removeFirst(liveClientMetrics.count - maxLiveUpdates)
         }
     }
     
@@ -487,7 +557,11 @@ public class DashboardSyncService: ObservableObject {
     }
     
     private func setupAutoSync() {
-        syncTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+        // Get sync interval from OperationalDataManager configuration
+        let config = operationalDataManager.getSystemConfiguration()
+        let syncInterval = config.autoSyncInterval ?? 30.0
+        
+        syncTimer = Timer.scheduledTimer(withTimeInterval: syncInterval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 self.scheduleAutoSync()
@@ -518,7 +592,7 @@ public class DashboardSyncService: ObservableObject {
                     type: .portfolioUpdated,
                     buildingId: nil,
                     workerId: nil,
-                    data: ["buildingCount": buildings.count as Any, "autoSync": true as Any]
+                    data: ["buildingCount": buildings.count, "autoSync": true]
                 )
                 
                 broadcastAdminUpdate(update)
@@ -526,28 +600,46 @@ public class DashboardSyncService: ObservableObject {
             
             lastSyncTime = Date()
             
+            // Store sync event in OperationalDataManager
+            operationalDataManager.recordSyncEvent(timestamp: lastSyncTime ?? Date())
+            
         } catch {
             print("❌ Auto-sync failed: \(error)")
+            // Log error to OperationalDataManager
+            operationalDataManager.logError("Auto-sync failed", error: error)
         }
     }
     
-    // MARK: - Helper Methods
+    // MARK: - Helper Methods (✅ UPDATED TO USE REAL DATA ONLY)
     
     private func getBuildingName(_ buildingId: String?) -> String? {
         guard let id = buildingId else { return nil }
-        // In a real implementation, this would fetch from database
-        // For now, return a placeholder
-        return "Building \(id)"
+        
+        // Fetch real building data from OperationalDataManager
+        if let building = operationalDataManager.getBuilding(byId: id) {
+            return building.name
+        }
+        
+        // Log when data is missing in debug mode
+        if debugMode {
+            print("⚠️ DashboardSyncService: Building name not found for ID: \(id)")
+        }
+        
+        return nil
     }
     
     private func getWorkerName(_ workerId: String) -> String? {
-        // Map known worker IDs to names
-        switch workerId {
-        case "worker_001", "4": return "Kevin Dutan"
-        case "worker_002": return "Maria Rodriguez"
-        case "worker_003": return "James Wilson"
-        default: return "Worker \(workerId)"
+        // Fetch real worker data from OperationalDataManager
+        if let worker = operationalDataManager.getWorker(byId: workerId) {
+            return worker.name
         }
+        
+        // Log when data is missing in debug mode
+        if debugMode {
+            print("⚠️ DashboardSyncService: Worker name not found for ID: \(workerId)")
+        }
+        
+        return nil
     }
     
     private func generateActionDescription(for update: DashboardUpdate) -> String {
@@ -587,8 +679,21 @@ extension DashboardSyncService {
     
     /// Get recent updates for a specific dashboard
     public func getRecentUpdates(for source: DashboardSource, limit: Int = 5) -> [DashboardUpdate] {
-        // This would be enhanced with actual update history storage
-        return []
+        // Fetch real recent updates from OperationalDataManager
+        let recentEvents = operationalDataManager.getRecentEvents(limit: limit)
+        
+        return recentEvents.compactMap { event in
+            // Convert operational events to dashboard updates
+            guard let eventType = UpdateType(rawValue: event.type) else { return nil }
+            
+            return DashboardUpdate(
+                source: source,
+                type: eventType,
+                buildingId: event.buildingId,
+                workerId: event.workerId,
+                data: event.metadata ?? [:]
+            )
+        }
     }
     
     /// Clear live update feeds
@@ -634,3 +739,51 @@ extension DashboardSyncService {
         shared.initialize()
     }
 }
+
+// MARK: - Sample Data Generation (Based on Real Data Only)
+
+extension DashboardSyncService {
+    /// Generate sample updates based on real data patterns
+    /// Used for testing and demo purposes - all data comes from OperationalDataManager
+    public func generateSampleUpdate(type: UpdateType) -> DashboardUpdate? {
+        // Get real workers and buildings from OperationalDataManager
+        guard let randomWorker = operationalDataManager.getRandomWorker(),
+              let randomBuilding = operationalDataManager.getRandomBuilding() else {
+            if debugMode {
+                print("⚠️ DashboardSyncService: Cannot generate sample - no real data available")
+            }
+            return nil
+        }
+        
+        // Create update based on real data
+        return DashboardUpdate(
+            source: .worker,
+            type: type,
+            buildingId: randomBuilding.id,
+            workerId: randomWorker.id,
+            data: [
+                "workerName": randomWorker.name,
+                "buildingName": randomBuilding.name,
+                "isRealData": true
+            ]
+        )
+    }
+}
+
+// MARK: - Data Source Requirements Summary
+/*
+ This service MUST use real data only:
+ 
+ 1. Worker Data: OperationalDataManager.getWorker(byId:)
+ 2. Building Data: OperationalDataManager.getBuilding(byId:)
+ 3. System Config: OperationalDataManager.getSystemConfiguration()
+ 4. Trends: OperationalDataManager.calculateTrend(for:days:)
+ 5. Events: OperationalDataManager.getRecentEvents(limit:)
+ 
+ NO hardcoded values are allowed except for:
+ - Enum cases and their display names
+ - Error messages
+ - Log statements
+ 
+ All thresholds, limits, and intervals must come from configuration.
+ */
