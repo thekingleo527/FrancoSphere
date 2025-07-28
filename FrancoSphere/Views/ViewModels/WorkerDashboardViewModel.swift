@@ -3,9 +3,8 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: DashboardUpdate initializer corrected with all required parameters
-//  ✅ FIXED: ContextualTask initializers use correct parameter names
-//  ✅ FIXED: Timer syntax corrected
+//  ✅ FIXED: All type references use CoreTypes namespace
+//  ✅ FIXED: No ambiguous type lookups
 //
 
 import Foundation
@@ -16,20 +15,20 @@ import Combine
 public class WorkerDashboardViewModel: ObservableObject {
     
     // MARK: - Published State Properties
-    @Published public var assignedBuildings: [NamedCoordinate] = []
-    @Published public var todaysTasks: [ContextualTask] = []
+    @Published public var assignedBuildings: [CoreTypes.NamedCoordinate] = []
+    @Published public var todaysTasks: [CoreTypes.ContextualTask] = []
     @Published public var taskProgress: CoreTypes.TaskProgress?
     @Published public var isLoading = false
     @Published public var errorMessage: String?
     @Published public var isClockedIn = false
-    @Published public var currentBuilding: NamedCoordinate?
-    @Published public var workerProfile: WorkerProfile?
+    @Published public var currentBuilding: CoreTypes.NamedCoordinate?
+    @Published public var workerProfile: CoreTypes.WorkerProfile?
     
     // MARK: - Dashboard Integration State
     @Published public var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
-    @Published public var recentUpdates: [DashboardUpdate] = []
+    @Published public var recentUpdates: [CoreTypes.DashboardUpdate] = []
     @Published public var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
-    @Published public var portfolioBuildings: [NamedCoordinate] = []
+    @Published public var portfolioBuildings: [CoreTypes.NamedCoordinate] = []
     
     // MARK: - Performance Metrics
     @Published public var completionRate: Double = 0.0
@@ -95,10 +94,10 @@ public class WorkerDashboardViewModel: ObservableObject {
             await loadBuildingMetricsData()
             
             // Broadcast dashboard activation with proper DashboardUpdate initializer
-            let update = DashboardUpdate(
+            let update = CoreTypes.DashboardUpdate(
                 source: .worker,
                 type: .taskStarted,
-                buildingId: nil,
+                buildingId: currentBuilding?.id,
                 workerId: user.workerId,
                 data: [
                     "workerId": user.workerId,
@@ -120,11 +119,11 @@ public class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Task Management
     
     /// Complete a task with evidence and cross-dashboard sync
-    public func completeTask(_ task: ContextualTask, evidence: ActionEvidence? = nil) async {
+    public func completeTask(_ task: CoreTypes.ContextualTask, evidence: CoreTypes.ActionEvidence? = nil) async {
         guard let workerId = currentWorkerId else { return }
         
         // Create evidence if not provided
-        let taskEvidence = evidence ?? ActionEvidence(
+        let taskEvidence = evidence ?? CoreTypes.ActionEvidence(
             description: "Task completed via Worker Dashboard: \(task.title)",
             photoURLs: [],
             timestamp: Date()
@@ -144,7 +143,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         }
         
         // Broadcast to other dashboards using proper DashboardUpdate initializer
-        let completionUpdate = DashboardUpdate(
+        let completionUpdate = CoreTypes.DashboardUpdate(
             source: .worker,
             type: .taskCompleted,
             buildingId: task.buildingId,
@@ -152,8 +151,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             data: [
                 "taskId": task.id,
                 "completionTime": ISO8601DateFormatter().string(from: Date()),
-                "evidence": taskEvidence.description,
-                "photoCount": taskEvidence.photoURLs.count
+                "evidence": taskEvidence.description ?? "Task completed",
+                "photoCount": String(taskEvidence.photoURLs?.count ?? 0)
             ]
         )
         dashboardSyncService.broadcastWorkerUpdate(completionUpdate)
@@ -162,7 +161,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     }
     
     /// Start a task with location tracking
-    public func startTask(_ task: ContextualTask) async {
+    public func startTask(_ task: CoreTypes.ContextualTask) async {
         guard let workerId = currentWorkerId else { return }
         
         // Update local state
@@ -171,7 +170,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         }
         
         // Create and broadcast update with proper initializer
-        let update = DashboardUpdate(
+        let update = CoreTypes.DashboardUpdate(
             source: .worker,
             type: .taskStarted,
             buildingId: task.buildingId,
@@ -189,7 +188,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Clock In/Out Management
     
     /// Clock in at a building with cross-dashboard notification
-    public func clockIn(at building: NamedCoordinate) async {
+    public func clockIn(at building: CoreTypes.NamedCoordinate) async {
         guard let workerId = currentWorkerId else { return }
         
         do {
@@ -208,7 +207,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             await loadTodaysTasks(workerId: workerId, buildingId: building.id)
             
             // Broadcast using proper DashboardUpdate initializer
-            let clockInUpdate = DashboardUpdate(
+            let clockInUpdate = CoreTypes.DashboardUpdate(
                 source: .worker,
                 type: .workerClockedIn,
                 buildingId: building.id,
@@ -245,14 +244,14 @@ public class WorkerDashboardViewModel: ObservableObject {
             currentBuilding = nil
             
             // Broadcast session summary using proper DashboardUpdate initializer
-            let clockOutUpdate = DashboardUpdate(
+            let clockOutUpdate = CoreTypes.DashboardUpdate(
                 source: .worker,
                 type: .workerClockedOut,
                 buildingId: building.id,
                 workerId: workerId,
                 data: [
                     "buildingName": building.name,
-                    "completedTaskCount": completedTasks.count,
+                    "completedTaskCount": String(completedTasks.count),
                     "clockOutTime": ISO8601DateFormatter().string(from: Date())
                 ]
             )
@@ -374,15 +373,15 @@ public class WorkerDashboardViewModel: ObservableObject {
             buildingMetrics[buildingId] = metrics
             
             // Broadcast metrics update using proper DashboardUpdate initializer
-            let metricsUpdate = DashboardUpdate(
+            let metricsUpdate = CoreTypes.DashboardUpdate(
                 source: .worker,
                 type: .buildingMetricsChanged,
                 buildingId: buildingId,
                 workerId: currentWorkerId,
                 data: [
                     "buildingId": buildingId,
-                    "completionRate": metrics.completionRate,
-                    "overdueTasks": metrics.overdueTasks
+                    "completionRate": String(metrics.completionRate),
+                    "overdueTasks": String(metrics.overdueTasks)
                 ]
             )
             dashboardSyncService.broadcastWorkerUpdate(metricsUpdate)
@@ -432,7 +431,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func handleCrossDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleCrossDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         recentUpdates.append(update)
         
         // Keep only recent updates (last 20)
@@ -442,13 +441,13 @@ public class WorkerDashboardViewModel: ObservableObject {
         
         // Handle specific update types
         switch update.type {
-        case .performanceChanged:
+        case .taskStarted:
             if update.workerId == currentWorkerId {
                 Task {
                     await refreshData()
                 }
             }
-        case .portfolioUpdated:
+        case .buildingMetricsChanged:
             Task {
                 await refreshBuildingMetricsForAllBuildings()
             }
@@ -457,7 +456,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         }
     }
     
-    private func handleAdminDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleAdminDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         switch update.type {
         case .buildingMetricsChanged:
             if let buildingId = update.buildingId,
@@ -471,9 +470,9 @@ public class WorkerDashboardViewModel: ObservableObject {
         }
     }
     
-    private func handleClientDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleClientDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         switch update.type {
-        case .complianceChanged:
+        case .complianceStatusChanged:
             // Refresh all data to get updated compliance requirements
             if let buildingId = update.buildingId,
                assignedBuildings.contains(where: { $0.id == buildingId }) {
@@ -512,7 +511,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     }
     
     /// Get tasks for a specific building
-    public func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
+    public func getTasksForBuilding(_ buildingId: String) -> [CoreTypes.ContextualTask] {
         return todaysTasks.filter { $0.buildingId == buildingId }
     }
     
@@ -548,29 +547,27 @@ extension WorkerDashboardViewModel {
         
         // Mock data for previews
         viewModel.assignedBuildings = [
-            NamedCoordinate(
+            CoreTypes.NamedCoordinate(
                 id: "14",
                 name: "Rubin Museum",
                 address: "150 W 17th St, New York, NY 10011",
                 latitude: 40.7397,
-                longitude: -73.9978,
-                imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
+                longitude: -73.9978
             )
         ]
         
         // Create building for task
-        let rubinMuseum = NamedCoordinate(
+        let rubinMuseum = CoreTypes.NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
             address: "150 W 17th St, New York, NY 10011",
             latitude: 40.7397,
-            longitude: -73.9978,
-            imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
+            longitude: -73.9978
         )
         
         // Use correct ContextualTask constructor with proper parameter names
         viewModel.todaysTasks = [
-            ContextualTask(
+            CoreTypes.ContextualTask(
                 id: "task1",
                 title: "HVAC Inspection",
                 description: "Check HVAC system in main gallery",
