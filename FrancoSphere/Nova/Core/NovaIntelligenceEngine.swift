@@ -25,10 +25,11 @@ public class NovaIntelligenceEngine: ObservableObject {
     @Published public var lastError: Error?
     
     // MARK: - Dependencies
-    private let dataAggregator = NovaDataService.shared
+    private let dataService = NovaDataService.shared
     private let intelligenceService = IntelligenceService.shared
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
+    private let buildingMetricsService = BuildingMetricsService.shared
     
     // MARK: - State
     public enum ProcessingState {
@@ -50,19 +51,15 @@ public class NovaIntelligenceEngine: ObservableObject {
         processingState = .processing
         
         do {
-            // 1. Aggregate current data into a dictionary
-            let aggregatedData = try await dataAggregator.getPortfolioSummary()
-            
-            // 2. Generate context-aware prompt
-            let prompt = generatePrompt(
+            // 1. Generate context-aware prompt using internal data aggregation
+            let prompt = try await generatePromptWithData(
                 query: query,
-                portfolioData: aggregatedData,
                 context: context
             )
             
             processingState = .generating
             
-            // 3. Generate insight based on CoreTypes structure
+            // 2. Generate insight based on CoreTypes structure
             let insight = CoreTypes.IntelligenceInsight(
                 title: extractTitle(from: query),
                 description: await generateResponse(for: prompt),
@@ -72,7 +69,7 @@ public class NovaIntelligenceEngine: ObservableObject {
                 affectedBuildings: extractAffectedBuildings(from: context)
             )
             
-            // 4. Update state
+            // 3. Update state
             insights.append(insight)
             processingState = .idle
             
@@ -115,25 +112,27 @@ public class NovaIntelligenceEngine: ObservableObject {
         ]
     }
     
-    // MARK: - Private Helpers
+    // MARK: - Private Helpers (internal data handling)
     
-    private func generatePrompt(query: String, portfolioData: [String: Any], context: [String: Any]?) -> String {
-        // Extract key metrics from portfolio data
-        let buildingCount = portfolioData["buildingCount"] as? Int ?? 0
-        let workerCount = portfolioData["workerCount"] as? Int ?? 0
-        let taskCount = portfolioData["taskCount"] as? Int ?? 0
-        let completionRate = portfolioData["completionRate"] as? Double ?? 0.0
-        let urgentTasks = portfolioData["urgentTaskCount"] as? Int ?? 0
+    private func generatePromptWithData(query: String, context: [String: Any]?) async throws -> String {
+        // Use NovaDataService internally to get aggregated data
+        let portfolioData = try await dataService.aggregatePortfolioData()
         
-        return """
-        Query: \(query)
-        Buildings: \(buildingCount)
-        Active Workers: \(workerCount)
-        Tasks Today: \(taskCount)
-        Completion Rate: \(String(format: "%.1f%%", completionRate * 100))
-        Urgent Tasks: \(urgentTasks)
-        Context: \(context?.description ?? "None")
-        """
+        // Convert internal data to prompt string
+        var promptParts = [String]()
+        promptParts.append("Query: \(query)")
+        promptParts.append("Buildings: \(portfolioData.buildingCount)")
+        promptParts.append("Active Workers: \(portfolioData.workerCount)")
+        promptParts.append("Tasks Today: \(portfolioData.taskCount)")
+        promptParts.append("Completion Rate: \(String(format: "%.1f%%", portfolioData.averageCompletionRate * 100))")
+        promptParts.append("Urgent Tasks: \(portfolioData.urgentTaskCount)")
+        
+        // Add context if provided
+        if let context = context {
+            promptParts.append("Context: \(context.description)")
+        }
+        
+        return promptParts.joined(separator: "\n")
     }
     
     private func generateResponse(for prompt: String) async -> String {
@@ -196,12 +195,17 @@ extension NovaIntelligenceEngine {
             // BuildingService returns [NamedCoordinate] which is Building via typealias
             let buildings = try await buildingService.getAllBuildings()
             
+            var newInsights: [CoreTypes.IntelligenceInsight] = []
+            
             for building in buildings.prefix(3) { // Process first 3 for performance
                 let insight = try await generateInsight(for: building)
-                insights.append(insight)
+                newInsights.append(insight)
             }
             
-            return insights
+            // Update published insights
+            insights.append(contentsOf: newInsights)
+            
+            return newInsights
         } catch {
             print("Failed to generate insights: \(error)")
             return []
@@ -229,15 +233,20 @@ extension NovaIntelligenceEngine {
     
     /// Replaces NovaAIIntegrationService methods
     public func analyzeBuilding(_ buildingId: String) async throws -> CoreTypes.IntelligenceInsight {
-        let buildingData = try await dataAggregator.getBuildingSummary(for: buildingId)
+        // Use NovaDataService to get building-specific data
+        let buildingData = try await dataService.aggregateBuildingData(for: buildingId)
+        
+        // Create context from aggregated data
+        let buildingContext: [String: Any] = [
+            "buildingId": buildingId,
+            "taskCount": buildingData.taskCount,
+            "completionRate": buildingData.averageCompletionRate,
+            "activeWorkers": buildingData.workerCount
+        ]
         
         return try await process(
             query: "Analyze building performance and suggest improvements",
-            context: [
-                "buildingId": buildingId,
-                "taskCount": buildingData["taskCount"] ?? 0,
-                "completionRate": buildingData["completionRate"] ?? 0.0
-            ],
+            context: buildingContext,
             priority: .medium
         )
     }
@@ -272,6 +281,39 @@ extension NovaIntelligenceEngine {
             )
         ]
     }
+    
+    /// Generate portfolio intelligence for AdminDashboardView
+    public func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
+        // Use NovaDataService to get portfolio data
+        let portfolioData = try await dataService.aggregatePortfolioData()
+        
+        // Get compliance data separately
+        let complianceData = try await dataService.aggregateComplianceData()
+        
+        // Calculate critical issues from current insights
+        let criticalIssues = insights.filter { $0.priority == .critical }.count
+        
+        // Determine trend based on completion rate
+        // Since we don't have weekly data in NovaAggregatedData, we'll estimate
+        let trend: CoreTypes.TrendDirection = {
+            if portfolioData.averageCompletionRate > 0.8 {
+                return .up
+            } else if portfolioData.averageCompletionRate < 0.5 {
+                return .down
+            } else {
+                return .stable
+            }
+        }()
+        
+        return CoreTypes.PortfolioIntelligence(
+            totalBuildings: portfolioData.buildingCount,
+            activeWorkers: portfolioData.workerCount,
+            completionRate: portfolioData.averageCompletionRate,
+            criticalIssues: criticalIssues,
+            monthlyTrend: trend,
+            complianceScore: complianceData.averageCompletionRate // Use compliance rate as score
+        )
+    }
 }
 
 // MARK: - Migration Helpers
@@ -303,29 +345,29 @@ extension NovaIntelligenceEngine {
             )
         ]
     }
-}
-
-// MARK: - NovaDataService Extension
-// Temporary methods until NovaDataService is properly defined
-extension NovaDataService {
-    func getPortfolioSummary() async throws -> [String: Any] {
-        // Placeholder implementation
+    
+    /// Generate portfolio summary for real-time updates
+    public func getPortfolioSummary() async throws -> [String: Any] {
+        let data = try await dataService.aggregatePortfolioData()
+        
         return [
-            "buildingCount": 20,
-            "workerCount": 45,
-            "taskCount": 125,
-            "completionRate": 0.78,
-            "urgentTaskCount": 8
+            "buildingCount": data.buildingCount,
+            "workerCount": data.workerCount,
+            "taskCount": data.taskCount,
+            "completionRate": data.averageCompletionRate,
+            "urgentTaskCount": data.urgentTaskCount
         ]
     }
     
-    func getBuildingSummary(for buildingId: String) async throws -> [String: Any] {
-        // Placeholder implementation
+    /// Generate building summary for specific building
+    public func getBuildingSummary(for buildingId: String) async throws -> [String: Any] {
+        let data = try await dataService.aggregateBuildingData(for: buildingId)
+        
         return [
             "buildingId": buildingId,
-            "taskCount": 15,
-            "completionRate": 0.82,
-            "activeWorkers": 3
+            "taskCount": data.taskCount,
+            "completionRate": data.averageCompletionRate,
+            "activeWorkers": data.workerCount
         ]
     }
 }

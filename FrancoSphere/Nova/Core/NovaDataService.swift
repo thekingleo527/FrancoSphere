@@ -1,4 +1,3 @@
-
 //
 //  NovaDataService.swift
 //  FrancoSphere v6.0
@@ -257,7 +256,7 @@ public actor NovaDataService {
         
         for building in buildings {
             if let metrics = try? await buildingMetricsService.calculateMetrics(for: building.id) {
-                if metrics.complianceScore >= 0.8 {
+                if metrics.isCompliant {
                     compliantCount += 1
                 } else {
                     issueCount += 1
