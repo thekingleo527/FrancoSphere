@@ -3,9 +3,8 @@
 //  FrancoSphere
 //
 //  🔧 COMPILATION FIXED - Using BuildingService for building data
-//  ✅ Fixed: Using BuildingService.shared.getAllBuildings() instead of non-existent allBuildings
-//  ✅ Fixed: Proper async/await for service calls
-//  ✅ Fixed: Optional unwrapping for imageAssetName
+//  ✅ Fixed: Made buildingIdToAssetName internal for access from view
+//  ✅ Fixed: Broke up complex expression for compiler
 //
 
 import SwiftUI
@@ -77,7 +76,8 @@ final class AssetImageDebugger {
     }
     
     // MARK: - Building ID to Asset Name Mapping
-    private func buildingIdToAssetName(_ buildingId: String) -> String {
+    // ✅ FIXED: Changed from private to internal for access from SwiftUI view
+    func buildingIdToAssetName(_ buildingId: String) -> String {
         // Same mapping used in MapRevealContainer
         let buildingAssetMap: [String: String] = [
             "1": "12_West_18th_Street",
@@ -241,7 +241,10 @@ struct AssetDebuggerView: View {
                                         Text(item.building.name).font(.headline)
                                         Text("ID: \(item.building.id)")
                                             .font(.caption).foregroundColor(.secondary)
-                                        Text("Asset: \(AssetImageDebugger.shared.buildingIdToAssetName(item.building.id))")
+                                        
+                                        // ✅ FIXED: Broke up complex expression
+                                        let assetName = AssetImageDebugger.shared.buildingIdToAssetName(item.building.id)
+                                        Text("Asset: \(assetName)")
                                             .font(.caption2).foregroundColor(.blue)
                                         
                                         // ✅ Special indicators for Kevin's assignments
