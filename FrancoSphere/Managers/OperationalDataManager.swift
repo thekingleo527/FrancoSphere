@@ -9,6 +9,69 @@ extension Date {
     }
 }
 
+// MARK: - System Configuration
+public struct SystemConfiguration {
+    public let criticalOverdueThreshold: Int = 5
+    public let minimumCompletionRate: Double = 0.7
+    public let urgentTaskThreshold: Int = 10
+    public let maxLiveUpdatesPerFeed: Int = 10
+    public let autoSyncInterval: Double = 30.0
+    
+    public var isValid: Bool {
+        return criticalOverdueThreshold > 0 &&
+               minimumCompletionRate > 0 &&
+               minimumCompletionRate <= 1.0 &&
+               urgentTaskThreshold > 0 &&
+               maxLiveUpdatesPerFeed > 0 &&
+               autoSyncInterval > 0
+    }
+}
+
+// MARK: - Event Tracking
+public struct OperationalEvent {
+    public let id: String = UUID().uuidString
+    public let timestamp: Date
+    public let type: String
+    public let buildingId: String?
+    public let workerId: String?
+    public let metadata: [String: Any]?
+    
+    public init(type: String, buildingId: String? = nil, workerId: String? = nil, metadata: [String: Any]? = nil) {
+        self.timestamp = Date()
+        self.type = type
+        self.buildingId = buildingId
+        self.workerId = workerId
+        self.metadata = metadata
+    }
+}
+
+// MARK: - Cached Data Models
+public struct CachedBuilding {
+    public let id: String
+    public let name: String
+    public let address: String?
+    
+    public init(id: String, name: String, address: String? = nil) {
+        self.id = id
+        self.name = name
+        self.address = address
+    }
+}
+
+public struct CachedWorker {
+    public let id: String
+    public let name: String
+    public let email: String?
+    public let role: String?
+    
+    public init(id: String, name: String, email: String? = nil, role: String? = nil) {
+        self.id = id
+        self.name = name
+        self.email = email
+        self.role = role
+    }
+}
+
 // MARK: - Operational Task Assignment Structure (Enhanced) - Namespaced to avoid conflicts
 public struct OperationalDataTaskAssignment: Codable, Hashable {
     public let building: String             // Plain-English building name as spoken internally
@@ -35,16 +98,12 @@ public struct OperationalDataTaskAssignment: Codable, Hashable {
 }
 
 // MARK: - OperationalDataManager (GRDB Implementation)
-// 🚀 MIGRATED TO GRDB.swift - Preserves ALL original real-world data
+// 🚀 ENHANCED FOR DASHBOARDSYNCSERVICE INTEGRATION
 // ✅ ALL worker assignments preserved: Kevin, Edwin, Mercedes, Luis, Angel, Greg, Shawn
 // ✅ ALL building mappings preserved: Rubin Museum, Perry Street, 17th Street corridor
 // ✅ ALL routine schedules preserved: DSNY, maintenance, cleaning circuits
 // ✅ Kevin's Rubin Museum duties preserved: Building ID 14 assignments
-//
-// USAGE:
-// 1. Get shared instance: let manager = OperationalDataManager.shared
-// 2. Initialize data: try await manager.initializeOperationalData()
-// 3. (Optional) Setup real-time sync: await manager.setupRealTimeSync()
+// ✅ NEW: System configuration, caching, event tracking, trend analysis
 
 @MainActor
 public class OperationalDataManager: ObservableObject {
@@ -63,6 +122,17 @@ public class OperationalDataManager: ObservableObject {
     private var hasImported = false
     private var importErrors: [String] = []
     private var cancellables = Set<AnyCancellable>()
+    
+    // MARK: - NEW: Caching & Configuration
+    private var cachedBuildings: [String: CachedBuilding] = [:]
+    private var cachedWorkers: [String: CachedWorker] = [:]
+    private var recentEvents: [OperationalEvent] = []
+    private var syncEvents: [Date] = []
+    private var errorLog: [(message: String, error: Error?, timestamp: Date)] = []
+    private let systemConfig = SystemConfiguration()
+    
+    // MARK: - NEW: Metrics History for Trend Analysis
+    private var metricsHistory: [String: [(date: Date, value: Double)]] = [:]
     
     // ──────────────────────────────────────────────────────────────────────────────
     //  🔧 PRESERVED: CURRENT ACTIVE WORKER TASK MATRIX  (José removed, Kevin expanded)
@@ -265,6 +335,237 @@ public class OperationalDataManager: ObservableObject {
     
     private init() {
         // Initialize without real-time sync - it can be set up separately if needed
+        setupCachedData()
+    }
+    
+    // MARK: - NEW: System Configuration
+    
+    /// Get system configuration for thresholds and limits
+    public func getSystemConfiguration() -> SystemConfiguration {
+        return systemConfig
+    }
+    
+    // MARK: - NEW: Cached Data Access
+    
+    /// Get count of cached workers
+    public func getCachedWorkerCount() -> Int {
+        return cachedWorkers.count
+    }
+    
+    /// Get count of cached buildings
+    public func getCachedBuildingCount() -> Int {
+        return cachedBuildings.count
+    }
+    
+    /// Get building by ID from cache or database
+    public func getBuilding(byId buildingId: String) -> CachedBuilding? {
+        // First check cache
+        if let cached = cachedBuildings[buildingId] {
+            return cached
+        }
+        
+        // Try to fetch from database
+        Task { @MainActor in
+            await refreshBuildingCache()
+        }
+        
+        // Return from cache if available now
+        return cachedBuildings[buildingId]
+    }
+    
+    /// Get worker by ID from cache or database
+    public func getWorker(byId workerId: String) -> CachedWorker? {
+        // First check cache
+        if let cached = cachedWorkers[workerId] {
+            return cached
+        }
+        
+        // Try to fetch from database
+        Task { @MainActor in
+            await refreshWorkerCache()
+        }
+        
+        // Return from cache if available now
+        return cachedWorkers[workerId]
+    }
+    
+    /// Get random worker for testing
+    public func getRandomWorker() -> CachedWorker? {
+        let workers = Array(cachedWorkers.values)
+        return workers.randomElement()
+    }
+    
+    /// Get random building for testing
+    public func getRandomBuilding() -> CachedBuilding? {
+        let buildings = Array(cachedBuildings.values)
+        return buildings.randomElement()
+    }
+    
+    // MARK: - NEW: Event Tracking
+    
+    /// Record a sync event
+    public func recordSyncEvent(timestamp: Date) {
+        syncEvents.append(timestamp)
+        
+        // Keep only last 100 events
+        if syncEvents.count > 100 {
+            syncEvents.removeFirst(syncEvents.count - 100)
+        }
+    }
+    
+    /// Log an error
+    public func logError(_ message: String, error: Error? = nil) {
+        errorLog.append((message: message, error: error, timestamp: Date()))
+        
+        // Keep only last 50 errors
+        if errorLog.count > 50 {
+            errorLog.removeFirst(errorLog.count - 50)
+        }
+        
+        print("❌ OperationalDataManager Error: \(message) - \(error?.localizedDescription ?? "No error details")")
+    }
+    
+    /// Get recent events
+    public func getRecentEvents(limit: Int) -> [OperationalEvent] {
+        return Array(recentEvents.suffix(limit))
+    }
+    
+    /// Add operational event
+    private func addOperationalEvent(_ event: OperationalEvent) {
+        recentEvents.append(event)
+        
+        // Keep only last 200 events
+        if recentEvents.count > 200 {
+            recentEvents.removeFirst(recentEvents.count - 200)
+        }
+    }
+    
+    // MARK: - NEW: Trend Analysis
+    
+    /// Calculate trend for a metric over specified days
+    public func calculateTrend(for metricName: String, days: Int) -> CoreTypes.TrendDirection {
+        guard let history = metricsHistory[metricName] else {
+            return .stable
+        }
+        
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
+        let recentData = history.filter { $0.date > cutoffDate }
+        
+        guard recentData.count >= 2 else {
+            return .stable
+        }
+        
+        let values = recentData.map { $0.value }
+        let avgFirst = values.prefix(values.count / 2).reduce(0, +) / Double(values.count / 2)
+        let avgSecond = values.suffix(values.count / 2).reduce(0, +) / Double(values.count / 2)
+        
+        let changePercent = ((avgSecond - avgFirst) / avgFirst) * 100
+        
+        if changePercent > 5 {
+            return .increasing
+        } else if changePercent < -5 {
+            return .decreasing
+        } else {
+            return .stable
+        }
+    }
+    
+    /// Record metric value for trend analysis
+    public func recordMetricValue(metricName: String, value: Double) {
+        if metricsHistory[metricName] == nil {
+            metricsHistory[metricName] = []
+        }
+        
+        metricsHistory[metricName]?.append((date: Date(), value: value))
+        
+        // Keep only last 30 days of data
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        metricsHistory[metricName] = metricsHistory[metricName]?.filter { $0.date > cutoff }
+    }
+    
+    // MARK: - Setup Cached Data
+    
+    private func setupCachedData() {
+        // Pre-populate worker cache with active workers
+        let activeWorkerData: [(id: String, name: String, email: String, role: String)] = [
+            ("1", "Greg Hutson", "greg.hutson@francomanagement.com", "Maintenance"),
+            ("2", "Edwin Lema", "edwin.lema@francomanagement.com", "Cleaning"),
+            ("4", "Kevin Dutan", "kevin.dutan@francomanagement.com", "Cleaning"),
+            ("5", "Mercedes Inamagua", "mercedes.inamagua@francomanagement.com", "Cleaning"),
+            ("6", "Luis Lopez", "luis.lopez@francomanagement.com", "Maintenance"),
+            ("7", "Angel Guirachocha", "angel.guirachocha@francomanagement.com", "Sanitation"),
+            ("8", "Shawn Magloire", "shawn.magloire@francomanagement.com", "Management")
+        ]
+        
+        for (id, name, email, role) in activeWorkerData {
+            cachedWorkers[id] = CachedWorker(id: id, name: name, email: email, role: role)
+        }
+        
+        // Pre-populate building cache with known buildings
+        let buildingData: [(id: String, name: String)] = [
+            ("1", "12 West 18th Street"),
+            ("2", "29-31 East 20th Street"),
+            ("3", "135-139 West 17th Street"),
+            ("4", "104 Franklin Street"),
+            ("5", "138 West 17th Street"),
+            ("6", "68 Perry Street"),
+            ("7", "112 West 18th Street"),
+            ("8", "41 Elizabeth Street"),
+            ("9", "117 West 17th Street"),
+            ("10", "131 Perry Street"),
+            ("11", "123 1st Avenue"),
+            ("13", "136 West 17th Street"),
+            ("14", "Rubin Museum (142–148 W 17th)"),
+            ("15", "133 East 15th Street"),
+            ("16", "Stuyvesant Cove Park"),
+            ("17", "178 Spring Street"),
+            ("18", "36 Walker Street"),
+            ("19", "115 7th Avenue"),
+            ("20", "FrancoSphere HQ")
+        ]
+        
+        for (id, name) in buildingData {
+            cachedBuildings[id] = CachedBuilding(id: id, name: name)
+        }
+    }
+    
+    // MARK: - Cache Refresh Methods
+    
+    private func refreshBuildingCache() async {
+        do {
+            let buildings = try await grdbManager.query("""
+                SELECT id, name, address FROM buildings WHERE is_active = 1
+            """)
+            
+            for building in buildings {
+                guard let id = building["id"] as? String,
+                      let name = building["name"] as? String else { continue }
+                
+                let address = building["address"] as? String
+                cachedBuildings[id] = CachedBuilding(id: id, name: name, address: address)
+            }
+        } catch {
+            logError("Failed to refresh building cache", error: error)
+        }
+    }
+    
+    private func refreshWorkerCache() async {
+        do {
+            let workers = try await grdbManager.query("""
+                SELECT id, name, email, role FROM workers WHERE isActive = 1
+            """)
+            
+            for worker in workers {
+                guard let id = worker["id"] as? String,
+                      let name = worker["name"] as? String else { continue }
+                
+                let email = worker["email"] as? String
+                let role = worker["role"] as? String
+                cachedWorkers[id] = CachedWorker(id: id, name: name, email: email, role: role)
+            }
+        } catch {
+            logError("Failed to refresh worker cache", error: error)
+        }
     }
     
     // MARK: - Real-Time Synchronization (GRDB)
@@ -304,6 +605,16 @@ public class OperationalDataManager: ObservableObject {
         } else {
             currentStatus = "Operations require attention"
         }
+        
+        // Record efficiency metric for trend analysis
+        recordMetricValue(metricName: "portfolio_efficiency", value: efficiency)
+        
+        // Add operational event
+        let event = OperationalEvent(
+            type: "Metrics Updated",
+            metadata: ["efficiency": efficiency, "buildingCount": totalBuildings]
+        )
+        addOperationalEvent(event)
     }
     
     // MARK: - Public API (GRDB Implementation)
@@ -374,12 +685,24 @@ public class OperationalDataManager: ObservableObject {
                 isInitialized = true
             }
             
+            // Refresh caches
+            await refreshBuildingCache()
+            await refreshWorkerCache()
+            
             print("✅ GRDB operational data initialization complete - ALL original data preserved")
+            
+            // Add initialization event
+            let event = OperationalEvent(
+                type: "System Initialized",
+                metadata: ["taskCount": imported, "routineCount": routineCount, "dsnyCount": dsnyCount]
+            )
+            addOperationalEvent(event)
             
         } catch {
             await MainActor.run {
                 currentStatus = "Initialization failed: \(error.localizedDescription)"
             }
+            logError("Failed to initialize operational data", error: error)
             throw error
         }
     }
@@ -742,6 +1065,15 @@ public class OperationalDataManager: ObservableObject {
                         print("📈 Imported \(index + 1)/\(realWorldTasks.count) tasks with GRDB")
                     }
                     
+                    // Add import event
+                    let event = OperationalEvent(
+                        type: "Task Imported",
+                        buildingId: "\(buildingId)",
+                        workerId: "\(validWorkerId)",
+                        metadata: ["taskName": operationalTask.taskName, "category": operationalTask.category]
+                    )
+                    addOperationalEvent(event)
+                    
                 } catch {
                     let errorMsg = "Error processing task \(operationalTask.taskName) with GRDB: \(error.localizedDescription)"
                     importErrors.append(errorMsg)
@@ -765,6 +1097,7 @@ public class OperationalDataManager: ObservableObject {
             await MainActor.run {
                 currentStatus = "GRDB import failed: \(error.localizedDescription)"
             }
+            logError("Task import failed", error: error)
             throw error
         }
     }

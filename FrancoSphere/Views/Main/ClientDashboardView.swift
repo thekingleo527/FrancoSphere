@@ -2,9 +2,8 @@
 //  ClientDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPLETE: Full client dashboard implementation with all integrations
-//  ✅ DESIGN: Uses FrancoSphereDesign system and Glass components
-//  ✅ INTEGRATION: IntelligencePreviewPanel, cross-dashboard sync, real data
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With actual project types and components
 //  ✅ RESPONSIVE: Adaptive layout for all device sizes
 //
 
@@ -15,27 +14,18 @@ struct ClientDashboardView: View {
     @StateObject private var viewModel = ClientDashboardViewModel()
     @EnvironmentObject private var authManager: NewAuthManager
     
-    @State private var selectedTab: ClientTab = .overview
+    @State private var selectedTabIndex = 0
     @State private var showingIntelligenceDetail = false
     @State private var selectedInsight: CoreTypes.IntelligenceInsight?
     @State private var showingBuildingDetail = false
     @State private var selectedBuilding: NamedCoordinate?
     
-    enum ClientTab: String, CaseIterable {
-        case overview = "Overview"
-        case buildings = "Buildings"
-        case compliance = "Compliance"
-        case insights = "Insights"
-        
-        var icon: String {
-            switch self {
-            case .overview: return "chart.pie.fill"
-            case .buildings: return "building.2.fill"
-            case .compliance: return "checkmark.shield.fill"
-            case .insights: return "brain.head.profile"
-            }
-        }
-    }
+    private let tabs = [
+        GlassTabItem(title: "Overview", icon: "chart.pie", selectedIcon: "chart.pie.fill"),
+        GlassTabItem(title: "Buildings", icon: "building.2", selectedIcon: "building.2.fill"),
+        GlassTabItem(title: "Compliance", icon: "checkmark.shield", selectedIcon: "checkmark.shield.fill"),
+        GlassTabItem(title: "Insights", icon: "brain", selectedIcon: "brain.fill")
+    ]
     
     var body: some View {
         NavigationView {
@@ -55,14 +45,17 @@ struct ClientDashboardView: View {
                     // Header
                     clientHeader
                     
-                    // Tab bar
-                    clientTabBar
-                    
                     // Content
                     ScrollView {
                         tabContent
                             .padding()
                     }
+                    
+                    // Tab bar
+                    GlassTabBar(
+                        selectedTab: $selectedTabIndex,
+                        tabs: tabs
+                    )
                 }
             }
             .navigationBarHidden(true)
@@ -120,12 +113,38 @@ struct ClientDashboardView: View {
                 .padding(.horizontal)
                 .padding(.bottom)
             
-            // Sync status
-            SyncStatusComponents.SyncStatusIndicator(status: viewModel.dashboardSyncStatus)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+            // Simple sync status
+            HStack {
+                Image(systemName: syncStatusIcon)
+                    .foregroundColor(syncStatusColor)
+                    .font(.caption)
+                Text(viewModel.dashboardSyncStatus.rawValue)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
         .background(.ultraThinMaterial)
+    }
+    
+    private var syncStatusIcon: String {
+        switch viewModel.dashboardSyncStatus {
+        case .syncing: return "arrow.triangle.2.circlepath"
+        case .synced: return "checkmark.circle.fill"
+        case .failed: return "exclamationmark.triangle.fill"
+        case .offline: return "wifi.slash"
+        }
+    }
+    
+    private var syncStatusColor: Color {
+        switch viewModel.dashboardSyncStatus {
+        case .syncing: return .blue
+        case .synced: return .green
+        case .failed: return .red
+        case .offline: return .gray
+        }
     }
     
     private var portfolioSummarySection: some View {
@@ -171,26 +190,14 @@ struct ClientDashboardView: View {
         }
     }
     
-    // MARK: - Tab Bar
-    
-    private var clientTabBar: some View {
-        GlassTabBar(
-            tabs: ClientTab.allCases,
-            selectedTab: $selectedTab,
-            tabLabel: { tab in
-                Label(tab.rawValue, systemImage: tab.icon)
-            }
-        )
-    }
-    
     // MARK: - Tab Content
     
     @ViewBuilder
     private var tabContent: some View {
-        switch selectedTab {
-        case .overview:
+        switch selectedTabIndex {
+        case 0:
             PortfolioOverviewTab(viewModel: viewModel)
-        case .buildings:
+        case 1:
             BuildingsTab(
                 viewModel: viewModel,
                 onBuildingTap: { building in
@@ -198,9 +205,9 @@ struct ClientDashboardView: View {
                     showingBuildingDetail = true
                 }
             )
-        case .compliance:
+        case 2:
             ComplianceTab(viewModel: viewModel)
-        case .insights:
+        case 3:
             InsightsTab(
                 viewModel: viewModel,
                 onInsightTap: { insight in
@@ -208,6 +215,8 @@ struct ClientDashboardView: View {
                     showingIntelligenceDetail = true
                 }
             )
+        default:
+            PortfolioOverviewTab(viewModel: viewModel)
         }
     }
 }
@@ -224,7 +233,8 @@ struct PortfolioOverviewTab: View {
                 IntelligencePreviewPanel(
                     insights: Array(viewModel.intelligenceInsights.prefix(3)),
                     onRefresh: {
-                        await viewModel.loadIntelligenceInsights()
+                        // Make it public in viewModel or use different approach
+                        await viewModel.refreshData()
                     }
                 )
             }
@@ -329,7 +339,7 @@ struct ComplianceTab: View {
             // Issues list
             VStack(spacing: 12) {
                 ForEach(filteredComplianceIssues, id: \.id) { issue in
-                    ComplianceIssueCard(issue: issue)
+                    ClientComplianceIssueCard(issue: issue)
                 }
             }
         }
@@ -377,7 +387,7 @@ struct InsightsTab: View {
                 insights: viewModel.intelligenceInsights,
                 onInsightTap: onInsightTap,
                 onRefresh: {
-                    await viewModel.loadIntelligenceInsights()
+                    await viewModel.refreshData()
                 }
             )
             
@@ -690,7 +700,7 @@ struct IssueCountBadge: View {
     }
 }
 
-struct ComplianceIssueCard: View {
+struct ClientComplianceIssueCard: View {
     let issue: CoreTypes.ComplianceIssue
     
     var body: some View {
@@ -763,7 +773,7 @@ struct ComplianceIssueCard: View {
         case .open: return .orange
         case .inProgress: return .blue
         case .resolved: return .green
-        case .closed: return .gray
+        default: return .gray
         }
     }
 }
@@ -944,7 +954,7 @@ struct RecommendationRow: View {
 struct InsightsCategoryBreakdown: View {
     let insights: [CoreTypes.IntelligenceInsight]
     
-    var categoryCounts: [CoreTypes.InsightType: Int] {
+    var categoryCounts: [CoreTypes.InsightCategory: Int] {
         Dictionary(grouping: insights, by: { $0.type })
             .mapValues { $0.count }
     }
@@ -959,7 +969,12 @@ struct InsightsCategoryBreakdown: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                ForEach(CoreTypes.InsightType.allCases, id: \.self) { type in
+                // Only show categories that are available in InsightCategory
+                ForEach([CoreTypes.InsightCategory.efficiency,
+                        CoreTypes.InsightCategory.maintenance,
+                        CoreTypes.InsightCategory.compliance,
+                        CoreTypes.InsightCategory.safety,
+                        CoreTypes.InsightCategory.cost], id: \.self) { type in
                     CategoryCard(
                         type: type,
                         count: categoryCounts[type] ?? 0
@@ -971,7 +986,7 @@ struct InsightsCategoryBreakdown: View {
 }
 
 struct CategoryCard: View {
-    let type: CoreTypes.InsightType
+    let type: CoreTypes.InsightCategory
     let count: Int
     
     var body: some View {
@@ -984,42 +999,20 @@ struct CategoryCard: View {
                 Text("\(count)")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(typeColor)
+                    .foregroundColor(type.color)
             }
             
             Spacer()
             
-            Image(systemName: typeIcon)
+            Image(systemName: type.icon)
                 .font(.title3)
-                .foregroundColor(typeColor.opacity(0.6))
+                .foregroundColor(type.color.opacity(0.6))
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(typeColor.opacity(0.1))
+                .fill(type.color.opacity(0.1))
         )
-    }
-    
-    private var typeColor: Color {
-        switch type {
-        case .efficiency: return .blue
-        case .maintenance: return .orange
-        case .compliance: return .purple
-        case .safety: return .red
-        case .cost: return .green
-        case .staffing: return .cyan
-        }
-    }
-    
-    private var typeIcon: String {
-        switch type {
-        case .efficiency: return "speedometer"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .compliance: return "checkmark.shield"
-        case .safety: return "exclamationmark.triangle"
-        case .cost: return "dollarsign.circle"
-        case .staffing: return "person.3"
-        }
     }
 }
 
@@ -1201,11 +1194,11 @@ struct BuildingDetailSheet: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Header
+                    // Header using the correct parameters
                     BuildingHeaderGlassOverlay(
-                        buildingName: building.name,
-                        buildingAddress: building.address ?? "No address",
-                        buildingType: .commercial // Default
+                        building: building,
+                        clockedInStatus: (false, nil),  // Client doesn't clock in
+                        onClockAction: { }  // No-op for client
                     )
                     
                     // Metrics
@@ -1241,7 +1234,7 @@ struct BuildingDetailSheet: View {
 struct ClientDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         ClientDashboardView()
-            .environmentObject(NewAuthManager())
+            .environmentObject(NewAuthManager.shared)
             .preferredColorScheme(.dark)
     }
 }

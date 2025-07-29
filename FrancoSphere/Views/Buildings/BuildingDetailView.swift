@@ -2,49 +2,14 @@
 //  BuildingDetailView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: All compilation errors resolved
 //  ✅ ENHANCED: Preserves ALL existing functionality
 //  ✅ ADDED: Coverage detection and intelligence panel integration
 //  ✅ MAINTAINS: Real data integration, clock in/out, four-tab system
-//  ✅ KEEPS: All existing service integrations and data loading
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
-
 import MapKit
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
 
 struct BuildingDetailView: View {
     let building: NamedCoordinate
@@ -195,8 +160,8 @@ struct BuildingDetailView: View {
     // PRESERVED: Building image view with ALL existing functionality
     private var buildingImageView: some View {
         ZStack {
-            if let imageName = building.imageAssetName,
-               let image = UIImage(named: imageName) {
+            // Try to get image from imageAssetName or use fallback
+            if let image = getBuildingImage() {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -252,6 +217,30 @@ struct BuildingDetailView: View {
                 Spacer()
             }
         )
+    }
+    
+    // Helper function to get building image
+    private func getBuildingImage() -> UIImage? {
+        // Try imageAssetName first
+        if let imageName = building.imageAssetName,
+           !imageName.isEmpty,
+           let image = UIImage(named: imageName) {
+            return image
+        }
+        
+        // Try standardized name based on building name
+        let standardName = building.name
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: "(", with: "")
+            .replacingOccurrences(of: ")", with: "")
+        
+        if let image = UIImage(named: standardName) {
+            return image
+        }
+        
+        // No image found
+        return nil
     }
     
     // PRESERVED: Clock in button with ALL existing functionality
@@ -386,14 +375,15 @@ struct BuildingDetailView: View {
                 
                 if let metrics = buildingMetrics {
                     statRow("Completion Rate", "\(Int(metrics.completionRate * 100))%")
-                    statRow("Overall Score", "\(metrics.overallScore)")
+                    statRow("Overall Score", String(format: "%.1f", metrics.overallScore))
                     statRow("Compliance", metrics.isCompliant ? "✅ Compliant" : "⚠️ Needs Attention")
                 }
             }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
             
-            if let address = building.address {
+            // Show address if available
+            if let address = building.address, !address.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Address")
                         .font(.headline)
@@ -490,7 +480,7 @@ struct BuildingDetailView: View {
                     analyticsRow("Overdue Tasks", "\(metrics.overdueTasks)", metrics.overdueTasks == 0 ? .green : .red)
                     analyticsRow("Active Workers", "\(metrics.activeWorkers)", .blue)
                     analyticsRow("Urgent Tasks", "\(metrics.urgentTasksCount)", metrics.urgentTasksCount == 0 ? .green : .orange)
-                    analyticsRow("Overall Score", "\(metrics.overallScore)", scoreColor(metrics.overallScore))
+                    analyticsRow("Overall Score", String(format: "%.1f", metrics.overallScore), scoreColor(metrics.overallScore))
                 }
                 .padding()
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -684,8 +674,8 @@ struct BuildingDetailView: View {
         }
     }
     
-    private func scoreColor(_ score: Int) -> Color {
-        switch score {
+    private func scoreColor(_ score: Double) -> Color {
+        switch Int(score) {
         case 90...100: return .green
         case 70...89: return .blue
         case 50...69: return .orange
@@ -715,22 +705,14 @@ struct BuildingDetailView: View {
         isLoading = true
         errorMessage = nil
         
-        do {
-            // Load all building data concurrently
-            async let tasks = loadBuildingTasks()
-            async let workers = loadBuildingWorkers()
-            async let metrics = loadBuildingMetrics()
-            
-            await tasks
-            await workers
-            await metrics
-            
-            print("✅ Building data loaded for \(building.name): \(buildingTasks.count) tasks, \(workersOnSite.count) workers")
-            
-        } catch {
-            errorMessage = "Failed to load building data: \(error.localizedDescription)"
-            print("❌ Failed to load building data: \(error)")
+        // Load all data concurrently
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadBuildingTasks() }
+            group.addTask { await self.loadBuildingWorkers() }
+            group.addTask { await self.loadBuildingMetrics() }
         }
+        
+        print("✅ Building data loaded for \(building.name): \(buildingTasks.count) tasks, \(workersOnSite.count) workers")
         
         isLoading = false
     }
@@ -810,8 +792,7 @@ struct BuildingDetailView_Previews: PreviewProvider {
             id: "14",
             name: "Rubin Museum",
             latitude: 40.7402,
-            longitude: -73.9980,
-            imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
+            longitude: -73.9980
         )
         
         BuildingDetailView(building: sampleBuilding)
