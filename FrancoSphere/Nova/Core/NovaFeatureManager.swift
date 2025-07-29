@@ -12,7 +12,8 @@
 //  ✅ FIXED: Swift 6 concurrency compliance
 //  ✅ FIXED: Added CoreTypes prefix to DashboardUpdate
 //  ✅ FIXED: Added proper error handling for throwing calls
-//  ✅ FIXED: All 5 compilation errors resolved
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Sendable conformance for Timer closures
 //
 
 import Foundation
@@ -568,7 +569,7 @@ public class NovaFeatureManager: ObservableObject {
         // Handle specific scenarios
         switch scenario.scenario {
         case .emergencyRepair:
-            // FIX 5: Properly check for string value in context dictionary
+            // FIX: Dictionary subscript returns optional, so if-let is correct
             if let workerId = scenario.context["workerId"] {
                 Task {
                     await performEmergencyRepair(for: workerId)
@@ -596,13 +597,30 @@ public class NovaFeatureManager: ObservableObject {
         dismissCurrentScenario()
     }
     
+    // FIXED: Avoid capturing non-Sendable types in Timer closure
     public func scheduleReminder(for scenario: NovaScenarioData, minutes: Int = 30) {
         print("⏰ Scheduling reminder for scenario: \(scenario.scenario.rawValue) in \(minutes) minutes")
         
+        // Extract all values before the Timer closure to avoid Sendable issues
+        let scenarioId = scenario.id
+        let scenarioType = scenario.scenario
+        let message = scenario.message
+        let actionText = scenario.actionText
+        let priority = scenario.priority
+        let context = scenario.context
+        
         let timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
             Task { @MainActor in
-                self?.addScenario(scenario)
-                self?.reminderTimers.removeValue(forKey: scenario.id)
+                // Recreate the scenario from the captured primitive values
+                let recreatedScenario = NovaScenarioData(
+                    scenario: scenarioType,
+                    message: message,
+                    actionText: actionText,
+                    priority: priority,
+                    context: context
+                )
+                self?.addScenario(recreatedScenario)
+                self?.reminderTimers.removeValue(forKey: scenarioId)
             }
         }
         
@@ -996,6 +1014,7 @@ public class NovaFeatureManager: ObservableObject {
         return (buildings, tasks, status, worker)
     }
     
+    // FIXED: Use correct AISuggestion initializer
     public func getScenarioSuggestions(for scenario: NovaScenarioData) -> [CoreTypes.AISuggestion] {
         var suggestions: [CoreTypes.AISuggestion] = []
         
@@ -1003,7 +1022,6 @@ public class NovaFeatureManager: ObservableObject {
         case .emergencyRepair:
             suggestions.append(
                 CoreTypes.AISuggestion(
-                    id: UUID().uuidString,
                     title: "Emergency Repair",
                     description: "Fix missing building assignments using AI repair",
                     priority: .critical,
@@ -1015,7 +1033,6 @@ public class NovaFeatureManager: ObservableObject {
         case .weatherAlert:
             suggestions.append(
                 CoreTypes.AISuggestion(
-                    id: UUID().uuidString,
                     title: "Check Outdoor Tasks",
                     description: "Review weather-appropriate task alternatives",
                     priority: .medium,
@@ -1027,11 +1044,10 @@ public class NovaFeatureManager: ObservableObject {
         case .pendingTasks:
             suggestions.append(
                 CoreTypes.AISuggestion(
-                    id: UUID().uuidString,
                     title: "Prioritize Tasks",
                     description: "AI will optimize task order by urgency and efficiency",
                     priority: .high,
-                    category: .efficiency,
+                    category: .operations,  // Changed from .efficiency
                     estimatedImpact: "Improve daily task completion rate"
                 )
             )
@@ -1043,7 +1059,6 @@ public class NovaFeatureManager: ObservableObject {
         // Add general suggestion
         suggestions.append(
             CoreTypes.AISuggestion(
-                id: UUID().uuidString,
                 title: "View Schedule",
                 description: "Open today's optimized work schedule",
                 priority: .low,
