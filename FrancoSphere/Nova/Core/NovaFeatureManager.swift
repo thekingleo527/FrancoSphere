@@ -7,6 +7,8 @@
 //  ✅ ENHANCED: Added emergency repair functionality
 //  ✅ ENHANCED: Added reminder scheduling
 //  ✅ FIXED: Swift 6 concurrency compliance
+//  ✅ FIXED: Added CoreTypes prefix to DashboardUpdate
+//  ✅ FIXED: Added proper error handling for throwing calls
 //
 
 import Foundation
@@ -184,7 +186,12 @@ public class NovaFeatureManager: ObservableObject {
         }
         
         // Trigger actual data refresh
-        await contextAdapter.loadContext(for: workerId)
+        // ✅ FIXED: Added try-catch for the throwing call on line 187
+        do {
+            try await contextAdapter.loadContext(for: workerId)
+        } catch {
+            print("⚠️ Error loading context during emergency repair: \(error)")
+        }
         
         await MainActor.run {
             self.repairState.isActive = false
@@ -406,7 +413,7 @@ public class NovaFeatureManager: ObservableObject {
     
     // MARK: - Dashboard Updates
     
-    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {  // ✅ FIXED: Added CoreTypes prefix
         // React to dashboard changes
         switch update.type {
         case .taskCompleted:
