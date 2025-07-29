@@ -3,11 +3,16 @@
 //  FrancoSphere v6.0
 //
 //  ✅ ENHANCED: Rich prompt generation for Nova models
+//  ✅ FIXED: Proper async/await handling throughout
+//  ✅ FIXED: Uses correct type properties and method signatures
 //  ✅ UTILIZES: Aggregated GRDB data with contextual enhancement
-//  ✅ ALIGNED: With FrancoSphere architecture and patterns
+//  ✅ ALIGNED: With FrancoSphere architecture and existing types
 //
 
 import Foundation
+
+// Note: NovaContext, NovaPrompt, and other Nova types are imported from NovaTypes.swift
+// NovaContext structure: id: UUID, data: String, timestamp: Date, insights: [String], metadata: [String: String]
 
 /// Generates intelligent text prompts from aggregated Nova data
 public actor NovaPromptEngine {
@@ -67,7 +72,7 @@ public actor NovaPromptEngine {
     // MARK: - Building Prompt Generation
     
     /// Create a comprehensive building specific prompt
-    public func generateBuildingPrompt(for buildingId: CoreTypes.BuildingID, data: NovaAggregatedData) -> String {
+    public func generateBuildingPrompt(for buildingId: CoreTypes.BuildingID, data: NovaAggregatedData) async -> String {
         var prompt = "Building \(buildingId) Status: "
         prompt += "\(data.workerCount) workers assigned, "
         prompt += "\(data.taskCount) tasks scheduled. "
@@ -88,8 +93,8 @@ public actor NovaPromptEngine {
         for buildingId: CoreTypes.BuildingID,
         data: NovaAggregatedData,
         includeHistory: Bool
-    ) -> String {
-        var prompt = generateBuildingPrompt(for: buildingId, data: data)
+    ) async -> String {
+        var prompt = await generateBuildingPrompt(for: buildingId, data: data)
         
         if includeHistory {
             prompt += " Historical performance: Consistent maintenance record with specialized care requirements."
@@ -173,6 +178,48 @@ public actor NovaPromptEngine {
                "Immediate response coordination and resource allocation required."
     }
     
+    /// Generate real-time update prompt
+    public func generateRealTimePrompt(update: CoreTypes.DashboardUpdate) -> String {
+        var prompt = "Real-time Update: "
+        
+        switch update.type {
+        case .taskStarted:
+            prompt += "Task started at building \(update.buildingId) by worker \(update.workerId). "
+        case .taskCompleted:
+            prompt += "Task completed at building \(update.buildingId) by worker \(update.workerId). "
+        case .taskUpdated:
+            prompt += "Task updated at building \(update.buildingId) by worker \(update.workerId). "
+        case .workerClockedIn:
+            prompt += "Worker \(update.workerId) clocked in at building \(update.buildingId). "
+        case .workerClockedOut:
+            prompt += "Worker \(update.workerId) clocked out from building \(update.buildingId). "
+        case .buildingMetricsChanged:
+            prompt += "Building \(update.buildingId) metrics updated. "
+        case .inventoryUpdated:
+            prompt += "Inventory updated at building \(update.buildingId). "
+        case .complianceStatusChanged:
+            prompt += "Compliance status changed for building \(update.buildingId). "
+        }
+        
+        if !update.data.isEmpty {
+            prompt += "Additional details: \(update.data.map { "\($0.key): \($0.value)" }.joined(separator: ", ")). "
+        }
+        
+        return prompt
+    }
+    
+    /// Generate AI scenario prompt
+    public func generateScenarioPrompt(scenario: CoreTypes.AIScenario) -> String {
+        var prompt = "AI Scenario Analysis: "
+        prompt += "\(scenario.title). "
+        prompt += "\(scenario.description). "
+        prompt += "Type: \(scenario.type.rawValue). "
+        prompt += "Priority: \(scenario.priority.rawValue). "
+        prompt += "Generated at: \(scenario.timestamp). "
+        
+        return prompt
+    }
+    
     // MARK: - Context Generation Methods
     
     private func generatePortfolioContext(_ data: NovaAggregatedData) -> String {
@@ -195,6 +242,16 @@ public actor NovaPromptEngine {
             context += "Light task load today. "
         }
         
+        // Add worker distribution context
+        if data.workerCount > 0 && data.buildingCount > 0 {
+            let avgWorkersPerBuilding = Double(data.workerCount) / Double(data.buildingCount)
+            if avgWorkersPerBuilding < 1.5 {
+                context += "Worker coverage may be stretched thin. "
+            } else if avgWorkersPerBuilding > 3 {
+                context += "Strong worker coverage across properties. "
+            }
+        }
+        
         return context
     }
     
@@ -202,11 +259,42 @@ public actor NovaPromptEngine {
         let avgTasksPerWorker = data.workerCount > 0 ? data.taskCount / data.workerCount : 0
         let avgTasksPerBuilding = data.buildingCount > 0 ? data.taskCount / data.buildingCount : 0
         
-        return "Metrics: \(avgTasksPerWorker) tasks/worker, \(avgTasksPerBuilding) tasks/building. "
+        var metrics = "Metrics: \(avgTasksPerWorker) tasks/worker, \(avgTasksPerBuilding) tasks/building. "
+        
+        // Add utilization insights
+        if avgTasksPerWorker > 10 {
+            metrics += "High worker utilization detected. "
+        } else if avgTasksPerWorker < 3 {
+            metrics += "Low worker utilization - opportunity for optimization. "
+        }
+        
+        return metrics
     }
     
     private func generateBuildingContext(_ buildingId: String) async -> String {
-        // Building-specific context based on ID
+        // Try to get actual building data
+        do {
+            if let building = try await buildingService.getBuilding(buildingId: buildingId) {
+                var context = "\(building.name): "
+                
+                // Add building type context
+                if building.name.lowercased().contains("museum") {
+                    context += "Museum facility with climate control and artifact protection priorities. "
+                } else if building.name.lowercased().contains("park") {
+                    context += "Outdoor facility with weather-dependent maintenance needs. "
+                } else if building.address.contains("Perry") || building.address.contains("Franklin") {
+                    context += "Residential property focusing on tenant satisfaction. "
+                } else {
+                    context += "Commercial property with standard maintenance protocols. "
+                }
+                
+                return context
+            }
+        } catch {
+            // Fallback to hardcoded context if service fails
+        }
+        
+        // Fallback building-specific context based on ID
         switch buildingId {
         case "14": // Rubin Museum
             return "Museum facility with climate control and artifact protection priorities. "
@@ -223,7 +311,16 @@ public actor NovaPromptEngine {
     
     private func generateBuildingMetrics(_ buildingId: String, _ data: NovaAggregatedData) -> String {
         // In a full implementation, would fetch actual metrics
-        return "Building efficiency metrics within normal range. "
+        var metrics = "Building efficiency metrics: "
+        
+        // Add mock metrics based on building type
+        if buildingId == "14" { // Rubin Museum
+            metrics += "Climate control 98% optimal, security systems active, visitor flow normal. "
+        } else {
+            metrics += "All systems operational, maintenance schedule on track. "
+        }
+        
+        return metrics
     }
     
     // MARK: - Utility Methods
@@ -250,6 +347,18 @@ public actor NovaPromptEngine {
         }
         
         return truncatePrompt(prompt)
+    }
+    
+    /// Batch generate prompts for multiple scenarios
+    public func generateBatchPrompts(scenarios: [CoreTypes.AIScenario]) async -> [String] {
+        var prompts: [String] = []
+        
+        for scenario in scenarios {
+            let prompt = generateScenarioPrompt(scenario: scenario)
+            prompts.append(prompt)
+        }
+        
+        return prompts
     }
 }
 
@@ -294,4 +403,74 @@ public struct PromptTemplate {
         baseText: "Maintenance required at {buildingName}: {issueType}. Priority: {priority}. Estimated time: {duration}.",
         requiredParameters: ["buildingName", "issueType", "priority", "duration"]
     )
+    
+    public static let complianceUpdate = PromptTemplate(
+        name: "Compliance Update",
+        baseText: "Compliance status for {buildingName}: {status}. Issues: {issueCount}. Next audit: {auditDate}.",
+        requiredParameters: ["buildingName", "status", "issueCount", "auditDate"]
+    )
+    
+    public static let emergencyResponse = PromptTemplate(
+        name: "Emergency Response",
+        baseText: "EMERGENCY at {buildingName}: {emergencyType}. Severity: {severity}. Response team: {responders}.",
+        requiredParameters: ["buildingName", "emergencyType", "severity", "responders"]
+    )
+}
+
+// MARK: - Nova Integration Extensions
+
+extension NovaPromptEngine {
+    
+    /// Generate prompts optimized for Nova AI analysis
+    /// Note: Uses NovaContext from NovaTypes.swift, not a custom struct
+    public func generateNovaOptimizedPrompt(
+        context: NovaContext,
+        contextType: NovaContextType,
+        aggregatedData: NovaAggregatedData
+    ) async -> String {
+        var prompt = "Nova Analysis Request: "
+        
+        // Add context metadata
+        if !context.metadata.isEmpty {
+            prompt += "Context: \(context.metadata.map { "\($0.key): \($0.value)" }.joined(separator: ", ")). "
+        }
+        
+        // Add context-specific information
+        switch contextType {
+        case .portfolio:
+            prompt += generatePortfolioPrompt(from: aggregatedData)
+        case .building:
+            if let buildingId = context.metadata["building_id"] {
+                prompt += await generateBuildingPrompt(for: buildingId, data: aggregatedData)
+            }
+        case .worker:
+            if let workerId = context.metadata["worker_id"] {
+                prompt += generateWorkerPrompt(
+                    workerId: workerId,
+                    workerName: context.metadata["worker_name"] ?? "Worker",
+                    taskCount: aggregatedData.taskCount
+                )
+            }
+        case .task:
+            prompt += generateTaskPrompt(
+                totalTasks: aggregatedData.taskCount,
+                completedTasks: 0, // Would fetch from actual data
+                urgentTasks: 0     // Would fetch from actual data
+            )
+        }
+        
+        // Add Nova-specific instructions
+        prompt += " Provide actionable insights with priority rankings and specific recommendations."
+        
+        return prompt
+    }
+}
+
+// MARK: - Nova Context Type
+
+public enum NovaContextType {
+    case portfolio
+    case building
+    case worker
+    case task
 }

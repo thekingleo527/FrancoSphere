@@ -1,9 +1,9 @@
 //
 //  SignUpView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
 //  ✅ FIXED: Binding conversion issues and missing UserRole cases
-//  ✅ FIXED: Use correct UserRole enum cases (no .manager, use .admin instead)
+//  ✅ FIXED: Use correct UserRole enum cases (admin, manager, worker, client)
 //  ✅ FIXED: Remove incorrect .wrappedValue usage
 //
 
@@ -59,7 +59,6 @@ struct SignUpView: View {
     
     private var formSection: some View {
         VStack(spacing: 20) {
-            // ✅ FIXED: Remove incorrect .wrappedValue usage - fullName is already a String
             CustomTextField(
                 title: "Full Name",
                 text: $fullName,
@@ -96,9 +95,9 @@ struct SignUpView: View {
                 .font(.headline)
                 .foregroundColor(.white)
             
-            // ✅ FIXED: Use actual UserRole cases - no .manager, use .admin instead
+            // ✅ FIXED: Use actual UserRole cases (admin, manager, worker, client)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                ForEach([UserRole.worker, UserRole.admin, UserRole.supervisor, UserRole.client], id: \.self) { role in
+                ForEach([UserRole.worker, UserRole.manager, UserRole.admin, UserRole.client], id: \.self) { role in
                     roleButton(for: role)
                 }
             }
@@ -114,7 +113,7 @@ struct SignUpView: View {
                     .font(.title2)
                     .foregroundColor(selectedRole == role ? .blue : .white.opacity(0.7))
                 
-                Text(role.rawValue.capitalized)
+                Text(role.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundColor(selectedRole == role ? .blue : .white.opacity(0.7))
@@ -167,8 +166,8 @@ struct SignUpView: View {
     private func iconForRole(_ role: UserRole) -> String {
         switch role {
         case .worker: return "person.fill"
-        case .admin: return "person.badge.key.fill"  // ✅ FIXED: Use .admin instead of .manager
-        case .supervisor: return "person.3.fill"     // ✅ FIXED: Use .supervisor for management-like role
+        case .admin: return "person.badge.key.fill"
+        case .manager: return "person.3.fill"
         case .client: return "building.2.fill"
         }
     }

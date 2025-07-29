@@ -104,10 +104,10 @@ class ClientDashboardViewModel: ObservableObject {
             await generateExecutiveSummary()
             
             // Generate strategic recommendations from insights
-            await generateStrategicRecommendations()
+            await loadStrategicRecommendations()
             
             // Generate portfolio benchmarks from metrics
-            await generatePortfolioBenchmarks()
+            await loadPortfolioBenchmarks()
             
             // Create and broadcast update
             let update = DashboardUpdate(
@@ -313,7 +313,7 @@ class ClientDashboardViewModel: ObservableObject {
                 recommendations.append(CoreTypes.StrategicRecommendation(
                     title: "Optimize Worker Distribution",
                     description: "Each worker is covering \(String(format: "%.1f", buildingsPerWorker)) buildings on average. Consider hiring additional staff.",
-                    category: .workforce,
+                    category: .operations,
                     priority: .medium,
                     timeframe: "Next quarter",
                     estimatedImpact: "Improved coverage and response times"
@@ -345,21 +345,21 @@ class ClientDashboardViewModel: ObservableObject {
         
         // Task completion benchmark
         benchmarks.append(CoreTypes.PortfolioBenchmark(
-            category: "Task Completion",
-            currentValue: completionRate,
-            targetValue: 0.90,
-            industryAverage: 0.82,
-            trend: monthlyTrend
+            metric: "Task Completion",
+            value: completionRate,
+            benchmark: 0.90,
+            trend: monthlyTrend.rawValue,
+            period: "This Month"
         ))
         
         // Compliance benchmark
         let complianceRate = Double(complianceScore) / 100.0
         benchmarks.append(CoreTypes.PortfolioBenchmark(
-            category: "Compliance Score",
-            currentValue: complianceRate,
-            targetValue: 0.95,
-            industryAverage: 0.87,
-            trend: complianceRate >= 0.90 ? .stable : .declining
+            metric: "Compliance Score",
+            value: complianceRate,
+            benchmark: 0.95,
+            trend: complianceRate >= 0.90 ? "Stable" : "Declining",
+            period: "This Month"
         ))
         
         // Worker efficiency benchmark
@@ -368,11 +368,11 @@ class ClientDashboardViewModel: ObservableObject {
             let efficiency = min(3.0 / buildingsPerWorker, 1.0) // Optimal is 3 buildings per worker
             
             benchmarks.append(CoreTypes.PortfolioBenchmark(
-                category: "Worker Efficiency",
-                currentValue: efficiency,
-                targetValue: 1.0,
-                industryAverage: 0.75,
-                trend: efficiency >= 0.8 ? .stable : .declining
+                metric: "Worker Efficiency",
+                value: efficiency,
+                benchmark: 1.0,
+                trend: efficiency >= 0.8 ? "Stable" : "Declining",
+                period: "This Month"
             ))
         }
         
@@ -381,11 +381,11 @@ class ClientDashboardViewModel: ObservableObject {
         let responseEfficiency = avgResponseTime > 0 ? min(120.0 / avgResponseTime, 1.0) : 0.85 // 120 minutes is target
         
         benchmarks.append(CoreTypes.PortfolioBenchmark(
-            category: "Response Time",
-            currentValue: responseEfficiency,
-            targetValue: 1.0,
-            industryAverage: 0.80,
-            trend: .stable
+            metric: "Response Time",
+            value: responseEfficiency,
+            benchmark: 1.0,
+            trend: "Stable",
+            period: "This Month"
         ))
         
         self.portfolioBenchmarks = benchmarks
