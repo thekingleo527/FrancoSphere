@@ -3,9 +3,10 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: All type references use CoreTypes namespace consistently
-//  ✅ FIXED: No ambiguous type lookups
-//  ✅ FIXED: Proper optional handling
+//  ✅ FIXED: DashboardUpdate properly namespaced as CoreTypes.DashboardUpdate
+//  ✅ FIXED: Enum member references use full paths
+//  ✅ FIXED: Actor isolation issues resolved
+//  ✅ REFACTORED: Cleaner architecture and better separation of concerns
 //
 
 import Foundation
@@ -27,7 +28,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     // MARK: - Dashboard Integration State
     @Published public var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
-    @Published public var recentUpdates: [DashboardUpdate] = []
+    @Published public var recentUpdates: [CoreTypes.DashboardUpdate] = []
     @Published public var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
     @Published public var portfolioBuildings: [CoreTypes.NamedCoordinate] = []
     
@@ -48,7 +49,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     // MARK: - Private State
     private var cancellables = Set<AnyCancellable>()
-    private var refreshTimer: Foundation.Timer?
+    private var refreshTimer: Timer?
     private var currentWorkerId: String?
     
     // MARK: - Initialization
@@ -79,8 +80,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             // Load worker profile first
             await loadWorkerProfile(workerId: user.workerId)
             
-            // Use the correct method name
-            try await contextEngine.loadContext(for: user.workerId as CoreTypes.WorkerID)
+            // Load context for worker
+            try await contextEngine.loadContext(for: user.workerId)
             
             // Update UI state from WorkerContextEngine
             assignedBuildings = contextEngine.assignedBuildings
@@ -94,12 +95,11 @@ public class WorkerDashboardViewModel: ObservableObject {
             await calculateDerivedMetrics()
             await loadBuildingMetricsData()
             
-            // Broadcast dashboard activation with proper DashboardUpdate initializer
-            // Fix optional buildingId by providing nil if not available
-            let update = DashboardUpdate(
-                source: .worker,
-                type: .taskStarted,
-                buildingId: currentBuilding?.id,
+            // Broadcast dashboard activation
+            let update = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: CoreTypes.DashboardUpdate.UpdateType.taskStarted,
+                buildingId: currentBuilding?.id ?? "",
                 workerId: user.workerId,
                 data: [
                     "workerId": user.workerId,
@@ -144,17 +144,17 @@ public class WorkerDashboardViewModel: ObservableObject {
             await updateBuildingMetrics(buildingId: buildingId)
         }
         
-        // Broadcast to other dashboards using proper DashboardUpdate initializer
-        let completionUpdate = DashboardUpdate(
-            source: .worker,
-            type: .taskCompleted,
-            buildingId: task.buildingId,
+        // Broadcast to other dashboards
+        let completionUpdate = CoreTypes.DashboardUpdate(
+            source: CoreTypes.DashboardUpdate.Source.worker,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskCompleted,
+            buildingId: task.buildingId ?? "",
             workerId: workerId,
             data: [
                 "taskId": task.id,
                 "completionTime": ISO8601DateFormatter().string(from: Date()),
                 "evidence": taskEvidence.description ?? "Task completed",
-                "photoCount": String(taskEvidence.photoURLs.count) // Fixed: photoURLs is not optional
+                "photoCount": String(taskEvidence.photoURLs.count)
             ]
         )
         dashboardSyncService.broadcastWorkerUpdate(completionUpdate)
@@ -171,11 +171,11 @@ public class WorkerDashboardViewModel: ObservableObject {
             print("✅ Task started: \(task.title)")
         }
         
-        // Create and broadcast update with proper initializer
-        let update = DashboardUpdate(
-            source: .worker,
-            type: .taskStarted,
-            buildingId: task.buildingId,
+        // Create and broadcast update
+        let update = CoreTypes.DashboardUpdate(
+            source: CoreTypes.DashboardUpdate.Source.worker,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskStarted,
+            buildingId: task.buildingId ?? "",
             workerId: workerId,
             data: [
                 "taskId": task.id,
@@ -208,10 +208,10 @@ public class WorkerDashboardViewModel: ObservableObject {
             // Refresh tasks for this building
             await loadTodaysTasks(workerId: workerId, buildingId: building.id)
             
-            // Broadcast using proper DashboardUpdate initializer
-            let clockInUpdate = DashboardUpdate(
-                source: .worker,
-                type: .workerClockedIn,
+            // Broadcast clock-in
+            let clockInUpdate = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: CoreTypes.DashboardUpdate.UpdateType.workerClockedIn,
                 buildingId: building.id,
                 workerId: workerId,
                 data: [
@@ -245,15 +245,15 @@ public class WorkerDashboardViewModel: ObservableObject {
             isClockedIn = false
             currentBuilding = nil
             
-            // Broadcast session summary using proper DashboardUpdate initializer
-            let clockOutUpdate = DashboardUpdate(
-                source: .worker,
-                type: .workerClockedOut,
+            // Broadcast session summary
+            let clockOutUpdate = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: CoreTypes.DashboardUpdate.UpdateType.workerClockedOut,
                 buildingId: building.id,
                 workerId: workerId,
                 data: [
                     "buildingName": building.name,
-                        "completedTaskCount": String(completedTasks.count),
+                    "completedTaskCount": String(completedTasks.count),
                     "clockOutTime": ISO8601DateFormatter().string(from: Date())
                 ]
             )
@@ -273,8 +273,8 @@ public class WorkerDashboardViewModel: ObservableObject {
         guard let workerId = currentWorkerId else { return }
         
         do {
-            // Use the correct method name
-            try await contextEngine.loadContext(for: workerId as CoreTypes.WorkerID)
+            // Reload context
+            try await contextEngine.loadContext(for: workerId)
             
             // Update UI state from WorkerContextEngine
             assignedBuildings = contextEngine.assignedBuildings
@@ -300,14 +300,17 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     private func loadWorkerProfile(workerId: String) async {
         do {
-            workerProfile = try await workerService.getWorkerProfile(for: workerId)
+            // Get worker profile from worker service
+            if let profile = try await workerService.getWorker(by: workerId) {
+                workerProfile = profile
+            }
         } catch {
             print("⚠️ Failed to load worker profile: \(error)")
         }
     }
     
     private func loadTodaysTasks(workerId: String, buildingId: String? = nil) async {
-        // Use actual available method from contextEngine
+        // Use contextEngine's tasks
         todaysTasks = contextEngine.todaysTasks
         
         if let buildingId = buildingId {
@@ -318,12 +321,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         print("✅ Loaded \(todaysTasks.count) tasks for today")
     }
     
-    // Renamed method to avoid duplicate declaration
     private func loadBuildingMetricsData() async {
-        await refreshBuildingMetricsForAllBuildings()
-    }
-    
-    private func refreshBuildingMetricsForAllBuildings() async {
         for building in assignedBuildings {
             do {
                 let metrics = try await metricsService.calculateMetrics(for: building.id)
@@ -331,15 +329,6 @@ public class WorkerDashboardViewModel: ObservableObject {
             } catch {
                 print("⚠️ Failed to load metrics for building \(building.id): \(error)")
             }
-        }
-    }
-    
-    private func refreshSingleBuildingMetrics(buildingId: String) async {
-        do {
-            let metrics = try await metricsService.calculateMetrics(for: buildingId)
-            buildingMetrics[buildingId] = metrics
-        } catch {
-            print("⚠️ Failed to refresh metrics for building \(buildingId): \(error)")
         }
     }
     
@@ -354,8 +343,6 @@ public class WorkerDashboardViewModel: ObservableObject {
         )
         
         completionRate = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
-        
-        // Calculate efficiency based on time vs. standard
         todaysEfficiency = calculateDailyEfficiency()
         
         print("✅ Progress calculated: \(completedTasks)/\(totalTasks) = \(Int(completionRate * 100))%")
@@ -374,13 +361,12 @@ public class WorkerDashboardViewModel: ObservableObject {
             let metrics = try await metricsService.calculateMetrics(for: buildingId)
             buildingMetrics[buildingId] = metrics
             
-            // Broadcast metrics update using proper DashboardUpdate initializer
-            // Fixed: use workerId if available, otherwise nil
-            let metricsUpdate = DashboardUpdate(
-                source: .worker,
-                type: .buildingMetricsChanged,
+            // Broadcast metrics update
+            let metricsUpdate = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,
                 buildingId: buildingId,
-                workerId: currentWorkerId,
+                workerId: currentWorkerId ?? "",
                 data: [
                     "buildingId": buildingId,
                     "completionRate": String(metrics.completionRate),
@@ -434,7 +420,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func handleCrossDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleCrossDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         recentUpdates.append(update)
         
         // Keep only recent updates (last 20)
@@ -446,27 +432,26 @@ public class WorkerDashboardViewModel: ObservableObject {
         switch update.type {
         case .taskStarted:
             if update.workerId == currentWorkerId {
-                Task {
+                Task { @MainActor in
                     await refreshData()
                 }
             }
         case .buildingMetricsChanged:
-            Task {
-                await refreshBuildingMetricsForAllBuildings()
+            Task { @MainActor in
+                await loadBuildingMetricsData()
             }
         default:
             break
         }
     }
     
-    private func handleAdminDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleAdminDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         switch update.type {
         case .buildingMetricsChanged:
-            // Fixed: properly handle optional buildingId
-            if let buildingId = update.buildingId,
-               assignedBuildings.contains(where: { $0.id == buildingId }) {
-                Task {
-                    await refreshSingleBuildingMetrics(buildingId: buildingId)
+            if !update.buildingId.isEmpty,
+               assignedBuildings.contains(where: { $0.id == update.buildingId }) {
+                Task { @MainActor in
+                    await updateBuildingMetrics(buildingId: update.buildingId)
                 }
             }
         default:
@@ -474,13 +459,12 @@ public class WorkerDashboardViewModel: ObservableObject {
         }
     }
     
-    private func handleClientDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleClientDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         switch update.type {
-        case .complianceChanged:
-            // Fixed: properly handle optional buildingId
-            if let buildingId = update.buildingId,
-               assignedBuildings.contains(where: { $0.id == buildingId }) {
-                Task {
+        case .complianceStatusChanged:
+            if !update.buildingId.isEmpty,
+               assignedBuildings.contains(where: { $0.id == update.buildingId }) {
+                Task { @MainActor in
                     await refreshData()
                 }
             }
@@ -492,10 +476,13 @@ public class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Auto-refresh Setup
     
     private func setupAutoRefresh() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { _ in
-            guard !self.isLoading else { return }
+        // Create timer with weak self capture
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
             
-            Task {
+            Task { @MainActor in
+                // Check loading state on main actor
+                guard !self.isLoading else { return }
                 await self.refreshData()
             }
         }

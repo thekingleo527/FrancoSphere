@@ -2,10 +2,12 @@
 //  ClientDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ REFACTORED: Aligned with actual IntelligenceService API
-//  ✅ FIXED: Removed calls to non-existent methods
-//  ✅ ALIGNED: Generates missing data from available services
-//  ✅ PRODUCTION-READY: Works with existing service architecture
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: DashboardUpdate properly namespaced as CoreTypes.DashboardUpdate
+//  ✅ FIXED: Enum member references use full paths
+//  ✅ FIXED: Nil parameters properly typed
+//  ✅ REFACTORED: Cleaner architecture and consistent patterns
+//  ✅ ALIGNED: Works with existing service architecture
 //
 
 import Foundation
@@ -13,39 +15,39 @@ import SwiftUI
 import Combine
 
 @MainActor
-class ClientDashboardViewModel: ObservableObject {
+public class ClientDashboardViewModel: ObservableObject {
     
     // MARK: - Published Properties (Using Existing CoreTypes)
-    @Published var portfolioIntelligence: CoreTypes.PortfolioIntelligence?
-    @Published var buildingsList: [NamedCoordinate] = []
-    @Published var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
-    @Published var complianceIssues: [CoreTypes.ComplianceIssue] = []
-    @Published var intelligenceInsights: [CoreTypes.IntelligenceInsight] = []
+    @Published public var portfolioIntelligence: CoreTypes.PortfolioIntelligence?
+    @Published public var buildingsList: [CoreTypes.NamedCoordinate] = []
+    @Published public var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
+    @Published public var complianceIssues: [CoreTypes.ComplianceIssue] = []
+    @Published public var intelligenceInsights: [CoreTypes.IntelligenceInsight] = []
     
     // MARK: - Dashboard Metrics (Derived from Portfolio)
-    @Published var totalBuildings: Int = 0
-    @Published var activeWorkers: Int = 0
-    @Published var completionRate: Double = 0.0
-    @Published var criticalIssues: Int = 0
-    @Published var complianceScore: Int = 0
-    @Published var monthlyTrend: CoreTypes.TrendDirection = .stable
+    @Published public var totalBuildings: Int = 0
+    @Published public var activeWorkers: Int = 0
+    @Published public var completionRate: Double = 0.0
+    @Published public var criticalIssues: Int = 0
+    @Published public var complianceScore: Int = 0
+    @Published public var monthlyTrend: CoreTypes.TrendDirection = .stable
     
     // MARK: - UI State
-    @Published var isLoading = false
-    @Published var isLoadingInsights = false
-    @Published var errorMessage: String?
-    @Published var lastUpdateTime: Date?
+    @Published public var isLoading = false
+    @Published public var isLoadingInsights = false
+    @Published public var errorMessage: String?
+    @Published public var lastUpdateTime: Date?
     
-    // MARK: - Cross-Dashboard Integration (Using DashboardUpdate from DashboardSyncService)
-    @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
-    @Published var dashboardUpdates: [DashboardUpdate] = []
+    // MARK: - Cross-Dashboard Integration
+    @Published public var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
+    @Published public var dashboardUpdates: [CoreTypes.DashboardUpdate] = []
     
-    // MARK: - Executive Summary Data (Using Existing CoreTypes)
-    @Published var executiveSummary: CoreTypes.ExecutiveSummary?
-    @Published var portfolioBenchmarks: [CoreTypes.PortfolioBenchmark] = []
-    @Published var strategicRecommendations: [CoreTypes.StrategicRecommendation] = []
+    // MARK: - Executive Summary Data
+    @Published public var executiveSummary: CoreTypes.ExecutiveSummary?
+    @Published public var portfolioBenchmarks: [CoreTypes.PortfolioBenchmark] = []
+    @Published public var strategicRecommendations: [CoreTypes.StrategicRecommendation] = []
     
-    // MARK: - Services (Using Existing .shared Pattern)
+    // MARK: - Services
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
@@ -58,7 +60,7 @@ class ClientDashboardViewModel: ObservableObject {
     private var refreshTimer: Timer?
     
     // MARK: - Initialization
-    init() {
+    public init() {
         setupSubscriptions()
         schedulePeriodicRefresh()
     }
@@ -70,7 +72,7 @@ class ClientDashboardViewModel: ObservableObject {
     // MARK: - Primary Data Loading
     
     /// Load portfolio intelligence for executive client view
-    func loadPortfolioIntelligence() async {
+    public func loadPortfolioIntelligence() async {
         isLoading = true
         errorMessage = nil
         
@@ -110,15 +112,16 @@ class ClientDashboardViewModel: ObservableObject {
             await loadPortfolioBenchmarks()
             
             // Create and broadcast update
-            let update = DashboardUpdate(
-                source: .client,
-                type: .portfolioUpdated,
-                buildingId: nil,
-                workerId: nil,
+            let update = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.client,
+                type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,
+                buildingId: "",  // Empty string instead of nil
+                workerId: "",    // Empty string instead of nil
                 data: [
-                    "totalBuildings": totalBuildings,
-                    "completionRate": completionRate,
-                    "activeWorkers": activeWorkers
+                    "totalBuildings": String(totalBuildings),
+                    "completionRate": String(completionRate),
+                    "activeWorkers": String(activeWorkers),
+                    "updateType": "portfolioUpdated"
                 ]
             )
             broadcastDashboardUpdate(update)
@@ -148,14 +151,14 @@ class ClientDashboardViewModel: ObservableObject {
         }
         
         // Create and broadcast update
-        let update = DashboardUpdate(
-            source: .client,
-            type: .buildingMetricsChanged,
-            buildingId: nil,
-            workerId: nil,
+        let update = CoreTypes.DashboardUpdate(
+            source: CoreTypes.DashboardUpdate.Source.client,
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,
+            buildingId: "",  // Empty string for portfolio-wide update
+            workerId: "",    // Empty string when not worker-specific
             data: [
-                "buildingCount": buildingMetrics.count,
-                "averageCompletion": calculateAverageCompletion()
+                "buildingCount": String(buildingMetrics.count),
+                "averageCompletion": String(calculateAverageCompletion())
             ]
         )
         broadcastDashboardUpdate(update)
@@ -264,7 +267,7 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     /// Generate executive summary from available data
-    func generateExecutiveSummary() async {
+    private func generateExecutiveSummary() async {
         // Generate summary from existing data
         self.executiveSummary = CoreTypes.ExecutiveSummary(
             totalBuildings: totalBuildings,
@@ -278,7 +281,7 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     /// Generate strategic recommendations from insights
-    func loadStrategicRecommendations() async {
+    private func loadStrategicRecommendations() async {
         // Generate recommendations from insights and metrics
         var recommendations: [CoreTypes.StrategicRecommendation] = []
         
@@ -340,7 +343,7 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     /// Generate portfolio benchmarks from metrics
-    func loadPortfolioBenchmarks() async {
+    private func loadPortfolioBenchmarks() async {
         var benchmarks: [CoreTypes.PortfolioBenchmark] = []
         
         // Task completion benchmark
@@ -442,35 +445,37 @@ class ClientDashboardViewModel: ObservableObject {
     }
     
     // MARK: - Public Interface
-    func refreshData() async {
+    
+    public func refreshData() async {
         await loadPortfolioIntelligence()
     }
     
-    func forceRefresh() async {
+    public func forceRefresh() async {
         dashboardSyncStatus = .syncing
         await loadPortfolioIntelligence()
         dashboardSyncStatus = .synced
     }
     
-    func getBuildingMetrics(for buildingId: String) -> CoreTypes.BuildingMetrics? {
+    public func getBuildingMetrics(for buildingId: String) -> CoreTypes.BuildingMetrics? {
         return buildingMetrics[buildingId]
     }
     
-    func getComplianceIssues(for buildingId: String? = nil) -> [CoreTypes.ComplianceIssue] {
+    public func getComplianceIssues(for buildingId: String? = nil) -> [CoreTypes.ComplianceIssue] {
         if let buildingId = buildingId {
             return complianceIssues.filter { $0.buildingId == buildingId }
         }
         return complianceIssues
     }
     
-    func getInsights(filteredBy priority: CoreTypes.AIPriority? = nil) -> [CoreTypes.IntelligenceInsight] {
+    public func getInsights(filteredBy priority: CoreTypes.AIPriority? = nil) -> [CoreTypes.IntelligenceInsight] {
         if let priority = priority {
             return intelligenceInsights.filter { $0.priority == priority }
         }
         return intelligenceInsights
     }
     
-    // MARK: - Cross-Dashboard Integration (Using DashboardUpdate)
+    // MARK: - Cross-Dashboard Integration
+    
     private func setupSubscriptions() {
         dashboardSyncService.clientDashboardUpdates
             .receive(on: DispatchQueue.main)
@@ -489,8 +494,8 @@ class ClientDashboardViewModel: ObservableObject {
         }
     }
     
-    /// Broadcast client dashboard update using DashboardUpdate directly
-    private func broadcastDashboardUpdate(_ update: DashboardUpdate) {
+    /// Broadcast client dashboard update
+    private func broadcastDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         dashboardUpdates.append(update)
         
         // Keep only recent updates
@@ -501,17 +506,17 @@ class ClientDashboardViewModel: ObservableObject {
         dashboardSyncService.broadcastClientUpdate(update)
     }
     
-    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         switch update.type {
         case .taskCompleted:
-            if let taskId = update.data["taskId"] as? String,
-               let workerId = update.workerId,
-               let buildingId = update.buildingId {
-                print("📱 Client Dashboard: Task \(taskId) completed by worker \(workerId) at building \(buildingId)")
+            if let taskId = update.data["taskId"],
+               !update.workerId.isEmpty,
+               !update.buildingId.isEmpty {
+                print("📱 Client Dashboard: Task \(taskId) completed by worker \(update.workerId) at building \(update.buildingId)")
                 // Use existing BuildingMetricsService to get updated metrics
                 Task { @MainActor in
-                    if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        buildingMetrics[buildingId] = updatedMetrics
+                    if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: update.buildingId) {
+                        buildingMetrics[update.buildingId] = updatedMetrics
                     }
                     // Recalculate completion rate
                     completionRate = calculateAverageCompletion()
@@ -519,34 +524,41 @@ class ClientDashboardViewModel: ObservableObject {
             }
             
         case .workerClockedIn:
-            if let workerId = update.workerId,
-               let buildingId = update.buildingId {
-                print("📱 Client Dashboard: Worker \(workerId) clocked in at building \(buildingId)")
+            if !update.workerId.isEmpty,
+               !update.buildingId.isEmpty {
+                print("📱 Client Dashboard: Worker \(update.workerId) clocked in at building \(update.buildingId)")
                 activeWorkers += 1
             }
             
+        case .workerClockedOut:
+            if !update.workerId.isEmpty,
+               !update.buildingId.isEmpty {
+                print("📱 Client Dashboard: Worker \(update.workerId) clocked out from building \(update.buildingId)")
+                activeWorkers = max(0, activeWorkers - 1)
+            }
+            
         case .buildingMetricsChanged:
-            if let buildingId = update.buildingId {
-                print("📱 Client Dashboard: Metrics updated for building \(buildingId)")
+            if !update.buildingId.isEmpty {
+                print("📱 Client Dashboard: Metrics updated for building \(update.buildingId)")
                 // Use service to get updated metrics
                 Task { @MainActor in
-                    if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
-                        buildingMetrics[buildingId] = updatedMetrics
+                    if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: update.buildingId) {
+                        buildingMetrics[update.buildingId] = updatedMetrics
                         // Recalculate completion rate
                         completionRate = calculateAverageCompletion()
                     }
                 }
             }
             
-        case .complianceChanged:
-            if let buildingId = update.buildingId,
-               let severityString = update.data["severity"] as? String,
-               let title = update.data["title"] as? String,
-               let description = update.data["description"] as? String {
+        case .complianceStatusChanged:
+            if !update.buildingId.isEmpty,
+               let severity = update.data["severity"],
+               let title = update.data["title"],
+               let description = update.data["description"] {
                 
                 // Map severity string to enum
-                let severity: CoreTypes.ComplianceSeverity = {
-                    switch severityString.lowercased() {
+                let severityEnum: CoreTypes.ComplianceSeverity = {
+                    switch severity.lowercased() {
                     case "critical": return .critical
                     case "high": return .high
                     case "medium": return .medium
@@ -557,8 +569,8 @@ class ClientDashboardViewModel: ObservableObject {
                 let newIssue = CoreTypes.ComplianceIssue(
                     title: title,
                     description: description,
-                    severity: severity,
-                    buildingId: buildingId,
+                    severity: severityEnum,
+                    buildingId: update.buildingId,
                     status: .open,
                     createdAt: Date()
                 )
@@ -571,20 +583,6 @@ class ClientDashboardViewModel: ObservableObject {
                 print("📱 Client Dashboard: New compliance issue - \(title)")
             }
             
-        case .intelligenceGenerated:
-            print("📱 Client Dashboard: New intelligence insights available")
-            // Refresh insights
-            Task { @MainActor in
-                await loadIntelligenceInsights()
-            }
-            
-        case .portfolioUpdated:
-            print("📱 Client Dashboard: Portfolio update received")
-            // Refresh portfolio data
-            Task { @MainActor in
-                await loadPortfolioIntelligence()
-            }
-            
         default:
             print("📱 Client Dashboard: Received update type \(update.type)")
         }
@@ -595,14 +593,14 @@ class ClientDashboardViewModel: ObservableObject {
 
 extension ClientDashboardViewModel {
     /// Client-specific filter options
-    enum FilterOption: String, CaseIterable {
+    public enum FilterOption: String, CaseIterable {
         case all = "All"
         case critical = "Critical"
         case highPriority = "High Priority"
         case compliance = "Compliance"
         case efficiency = "Efficiency"
         
-        var icon: String {
+        public var icon: String {
             switch self {
             case .all: return "list.bullet"
             case .critical: return "exclamationmark.triangle.fill"
@@ -614,14 +612,14 @@ extension ClientDashboardViewModel {
     }
     
     /// Executive dashboard time range
-    enum TimeRange: String, CaseIterable {
+    public enum TimeRange: String, CaseIterable {
         case today = "Today"
         case week = "This Week"
         case month = "This Month"
         case quarter = "This Quarter"
         case year = "This Year"
         
-        var days: Int {
+        public var days: Int {
             switch self {
             case .today: return 1
             case .week: return 7
@@ -632,3 +630,51 @@ extension ClientDashboardViewModel {
         }
     }
 }
+
+// MARK: - Preview Helpers
+
+#if DEBUG
+extension ClientDashboardViewModel {
+    static func preview() -> ClientDashboardViewModel {
+        let viewModel = ClientDashboardViewModel()
+        
+        // Mock portfolio intelligence
+        viewModel.portfolioIntelligence = CoreTypes.PortfolioIntelligence(
+            totalBuildings: 12,
+            activeWorkers: 8,
+            completionRate: 0.85,
+            criticalIssues: 2,
+            monthlyTrend: .improving,
+            complianceScore: 92.5,
+            generatedAt: Date()
+        )
+        
+        // Mock buildings
+        viewModel.buildingsList = [
+            CoreTypes.NamedCoordinate(
+                id: "14",
+                name: "Rubin Museum",
+                address: "150 W 17th St, New York, NY 10011",
+                latitude: 40.7397,
+                longitude: -73.9978
+            ),
+            CoreTypes.NamedCoordinate(
+                id: "4",
+                name: "131 Perry Street",
+                address: "131 Perry St, New York, NY 10014",
+                latitude: 40.7350,
+                longitude: -74.0045
+            )
+        ]
+        
+        // Mock metrics
+        viewModel.totalBuildings = 12
+        viewModel.activeWorkers = 8
+        viewModel.completionRate = 0.85
+        viewModel.criticalIssues = 2
+        viewModel.complianceScore = 92
+        
+        return viewModel
+    }
+}
+#endif

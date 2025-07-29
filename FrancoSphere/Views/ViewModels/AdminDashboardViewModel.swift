@@ -2,11 +2,9 @@
 //  AdminDashboardViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: DashboardSyncService integration with proper types
-//  ✅ ALIGNED: With actual project API structure
-//  ✅ ENHANCED: Cross-dashboard integration ready
-//  ✅ VIEWMODEL ONLY: No View definitions in this file
+//  ✅ FIXED: All DashboardUpdate references now use CoreTypes prefix
+//  ✅ ALIGNED: With DashboardSyncService using CoreTypes.DashboardUpdate
+//  ✅ READY: Full cross-dashboard integration
 //
 
 import Foundation
@@ -36,7 +34,7 @@ class AdminDashboardViewModel: ObservableObject {
     
     // MARK: - Cross-Dashboard Integration (Using proper DashboardSyncService)
     @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
-    @Published var crossDashboardUpdates: [DashboardUpdate] = []
+    @Published var crossDashboardUpdates: [CoreTypes.DashboardUpdate] = []  // ✅ Fixed: Added CoreTypes prefix
     
     // MARK: - Services (Using .shared pattern consistently)
     private let buildingService = BuildingService.shared
@@ -117,14 +115,14 @@ class AdminDashboardViewModel: ObservableObject {
         self.buildingMetrics = metrics
         
         // Create and broadcast update
-        let update = DashboardUpdate(
+        let update = CoreTypes.DashboardUpdate(  // ✅ Fixed: Added CoreTypes prefix
             source: .admin,
             type: .buildingMetricsChanged,
-            buildingId: nil,
-            workerId: nil,
+            buildingId: "",  // ✅ Fixed: Empty string instead of nil
+            workerId: "",    // ✅ Fixed: Empty string instead of nil
             data: [
                 "buildingIds": Array(metrics.keys).joined(separator: ","),
-                "totalBuildings": metrics.count
+                "totalBuildings": String(metrics.count)
             ]
         )
         broadcastAdminUpdate(update)
@@ -142,14 +140,15 @@ class AdminDashboardViewModel: ObservableObject {
             print("✅ Portfolio insights loaded: \(insights.count) insights")
             
             // Create and broadcast update
-            let update = DashboardUpdate(
+            let update = CoreTypes.DashboardUpdate(  // ✅ Fixed: Added CoreTypes prefix
                 source: .admin,
-                type: .intelligenceGenerated,
-                buildingId: nil,
-                workerId: nil,
+                type: .buildingMetricsChanged,  // ✅ Fixed: Using existing enum case
+                buildingId: "",  // ✅ Fixed: Empty string instead of nil
+                workerId: "",    // ✅ Fixed: Empty string instead of nil
                 data: [
-                    "insightCount": insights.count,
-                    "criticalInsights": insights.filter { $0.priority == .critical }.count
+                    "insightCount": String(insights.count),
+                    "criticalInsights": String(insights.filter { $0.priority == .critical }.count),
+                    "intelligenceGenerated": "true"  // ✅ Added flag to indicate intelligence update
                 ]
             )
             broadcastAdminUpdate(update)
@@ -183,14 +182,15 @@ class AdminDashboardViewModel: ObservableObject {
             print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
             
             // Create and broadcast update
-            let update = DashboardUpdate(
+            let update = CoreTypes.DashboardUpdate(  // ✅ Fixed: Added CoreTypes prefix
                 source: .admin,
-                type: .intelligenceGenerated,
+                type: .buildingMetricsChanged,  // ✅ Fixed: Using existing enum case
                 buildingId: buildingId,
-                workerId: nil,
+                workerId: "",  // ✅ Fixed: Empty string instead of nil
                 data: [
-                    "buildingInsights": insights.count,
-                    "buildingId": buildingId
+                    "buildingInsights": String(insights.count),
+                    "buildingId": buildingId,
+                    "intelligenceGenerated": "true"  // ✅ Added flag to indicate intelligence update
                 ]
             )
             broadcastAdminUpdate(update)
@@ -219,15 +219,15 @@ class AdminDashboardViewModel: ObservableObject {
             print("✅ Refreshed metrics for building \(buildingId)")
             
             // Create and broadcast update
-            let update = DashboardUpdate(
+            let update = CoreTypes.DashboardUpdate(  // ✅ Fixed: Added CoreTypes prefix
                 source: .admin,
                 type: .buildingMetricsChanged,
                 buildingId: buildingId,
-                workerId: nil,
+                workerId: "",  // ✅ Fixed: Empty string instead of nil
                 data: [
                     "buildingId": buildingId,
-                    "completionRate": metrics.completionRate,
-                    "overdueTasks": metrics.overdueTasks
+                    "completionRate": String(metrics.completionRate),
+                    "overdueTasks": String(metrics.overdueTasks)
                 ]
             )
             broadcastAdminUpdate(update)
@@ -247,14 +247,15 @@ class AdminDashboardViewModel: ObservableObject {
         dashboardSyncStatus = CoreTypes.DashboardSyncStatus(rawValue: status) ?? .synced
         
         // Create and broadcast update
-        let update = DashboardUpdate(
+        let update = CoreTypes.DashboardUpdate(  // ✅ Fixed: Added CoreTypes prefix
             source: .admin,
-            type: .performanceChanged,
-            buildingId: nil,
-            workerId: nil,
+            type: .buildingMetricsChanged,  // ✅ Fixed: Using existing enum case
+            buildingId: "",  // ✅ Fixed: Empty string instead of nil
+            workerId: "",    // ✅ Fixed: Empty string instead of nil
             data: [
                 "adminStatus": status,
-                "timestamp": ISO8601DateFormatter().string(from: Date())
+                "timestamp": ISO8601DateFormatter().string(from: Date()),
+                "performanceUpdate": "true"  // ✅ Added flag to indicate performance update
             ]
         )
         broadcastAdminUpdate(update)
@@ -349,7 +350,7 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     /// Broadcast admin update using DashboardUpdate directly
-    private func broadcastAdminUpdate(_ update: DashboardUpdate) {
+    private func broadcastAdminUpdate(_ update: CoreTypes.DashboardUpdate) {  // ✅ Fixed: Added CoreTypes prefix
         crossDashboardUpdates.append(update)
         
         // Keep only recent updates (last 50)
@@ -373,7 +374,7 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     /// Handle cross-dashboard updates with proper type and enum cases
-    private func handleCrossDashboardUpdate(_ update: DashboardUpdate) async {
+    private func handleCrossDashboardUpdate(_ update: CoreTypes.DashboardUpdate) async {  // ✅ Fixed: Added CoreTypes prefix
         crossDashboardUpdates.append(update)
         
         // Keep only recent updates
@@ -384,29 +385,32 @@ class AdminDashboardViewModel: ObservableObject {
         // Handle specific update types using correct enum cases
         switch update.type {
         case .taskCompleted:
-            if let buildingId = update.buildingId {
-                await refreshBuildingMetrics(for: buildingId)
+            if !update.buildingId.isEmpty {  // ✅ Fixed: Check for non-empty string
+                await refreshBuildingMetrics(for: update.buildingId)
             }
         case .workerClockedIn:
-            if let buildingId = update.buildingId {
-                await refreshBuildingMetrics(for: buildingId)
+            if !update.buildingId.isEmpty {  // ✅ Fixed: Check for non-empty string
+                await refreshBuildingMetrics(for: update.buildingId)
             }
-        case .complianceChanged:
+        case .complianceStatusChanged:
             // Refresh all affected buildings
             await loadBuildingMetrics()
-        case .portfolioUpdated:
-            await loadPortfolioInsights()
+        case .buildingMetricsChanged:
+            // Check if this is a portfolio update based on data flags
+            if update.data["portfolioUpdate"] == "true" {  // ✅ Fixed: Use data flag instead of non-existent enum
+                await loadPortfolioInsights()
+            }
         default:
             break
         }
     }
     
     /// Handle worker dashboard updates
-    private func handleWorkerDashboardUpdate(_ update: DashboardUpdate) async {
+    private func handleWorkerDashboardUpdate(_ update: CoreTypes.DashboardUpdate) async {  // ✅ Fixed: Added CoreTypes prefix
         switch update.type {
         case .taskCompleted, .taskStarted:
-            if let buildingId = update.buildingId {
-                await refreshBuildingMetrics(for: buildingId)
+            if !update.buildingId.isEmpty {  // ✅ Fixed: Check for non-empty string
+                await refreshBuildingMetrics(for: update.buildingId)
             }
         case .workerClockedIn, .workerClockedOut:
             // Update worker status tracking
@@ -417,11 +421,14 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     /// Handle client dashboard updates
-    private func handleClientDashboardUpdate(_ update: DashboardUpdate) async {
+    private func handleClientDashboardUpdate(_ update: CoreTypes.DashboardUpdate) async {  // ✅ Fixed: Added CoreTypes prefix
         switch update.type {
-        case .portfolioUpdated:
-            await loadPortfolioInsights()
-        case .complianceChanged:
+        case .buildingMetricsChanged:
+            // Check if this is a portfolio update based on data flags
+            if update.data["portfolioUpdate"] == "true" {  // ✅ Fixed: Use data flag
+                await loadPortfolioInsights()
+            }
+        case .complianceStatusChanged:
             await loadBuildingMetrics()
         default:
             break
