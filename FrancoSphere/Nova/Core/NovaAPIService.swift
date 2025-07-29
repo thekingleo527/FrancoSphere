@@ -6,6 +6,7 @@
 //  ✅ UPDATED: Removed NovaContextEngine dependency
 //  ✅ ENHANCED: Direct context generation without external dependencies
 //  ✅ INTEGRATED: Works with NovaFeatureManager for comprehensive AI support
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -120,7 +121,10 @@ public actor NovaAPIService {
                 let tasks = try await taskService.getAllTasks()
                 contextData["totalTasks"] = "\(tasks.count)"
                 
-                let urgentTasks = tasks.filter { $0.urgency == .urgent || $0.urgency == .critical }
+                let urgentTasks = tasks.filter {
+                    guard let urgency = $0.urgency else { return false }
+                    return urgency == .urgent || urgency == .critical
+                }
                 if !urgentTasks.isEmpty {
                     contextData["urgentTaskCount"] = "\(urgentTasks.count)"
                     insights.append("\(urgentTasks.count) urgent tasks detected")
@@ -132,10 +136,14 @@ public actor NovaAPIService {
         }
         
         // Build comprehensive context
+        // FIX 1: Pass dictionary directly to data parameter
         return NovaContext(
-            data: await buildContextDescription(type: contextType, contextData: contextData),
+            data: contextData,  // Already a [String: String]
             insights: insights,
-            metadata: contextData,
+            metadata: [
+                "contextType": contextType.rawValue,
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ],
             userRole: await WorkerContextEngineAdapter.shared.currentWorker?.role,
             buildingContext: contextData["rubinBuildingId"],
             taskContext: contextType == .task ? text : nil
@@ -298,11 +306,11 @@ public actor NovaAPIService {
                 insights.append(contentsOf: portfolioInsights.prefix(3)) // Top 3 insights
             }
         } catch {
-            // Fallback to basic insights
+            // FIX 2 & 3: Use correct initializer signature
             insights.append(CoreTypes.IntelligenceInsight(
                 title: "Portfolio Analysis",
                 description: "AI-powered insights available for deeper analysis",
-                type: .operational,
+                type: .analytics,  // FIX 3: Use standard InsightCategory case
                 priority: .medium,
                 confidence: 0.8,
                 actionRequired: false,
@@ -375,7 +383,7 @@ public actor NovaAPIService {
                 description: "View your assigned tasks",
                 actionType: .navigate,
                 priority: .high,
-                parameters: ["workerId": context.metadata["workerId"] ?? ""]
+                parameters: ["workerId": context.data["workerId"] ?? ""]
             ))
         }
         
@@ -417,12 +425,12 @@ public actor NovaAPIService {
 
 // MARK: - Supporting Types
 
-private enum ContextType {
-    case building
-    case worker
-    case portfolio
-    case task
-    case general
+private enum ContextType: String {
+    case building = "building"
+    case worker = "worker"
+    case portfolio = "portfolio"
+    case task = "task"
+    case general = "general"
 }
 
 // MARK: - Error Types
