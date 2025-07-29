@@ -3,9 +3,10 @@
 //  FrancoSphere v6.0
 //
 //  ✅ UNIFIED: Resolves all ComplianceIssue type conflicts
-//  ✅ COMPATIBLE: Works with both string and enum severity patterns
-//  ✅ ALIGNED: With ComplianceOverviewView expectations
+//  ✅ ALIGNED: With actual CoreTypes definitions
+//  ✅ FIXED: All compilation errors resolved
 //  ✅ EXTENDS: CoreTypes.ComplianceIssue with convenience methods
+//  ✅ INTEGRATED: Uses FrancoSphereDesign for all colors
 //
 
 import Foundation
@@ -17,30 +18,7 @@ extension CoreTypes.ComplianceIssue {
     
     // MARK: - Convenience Initializers
     
-    /// Initializer with ComplianceSeverity enum (for ComplianceOverviewView compatibility)
-    init(
-        id: String = UUID().uuidString,
-        title: String,
-        description: String,
-        severity: CoreTypes.ComplianceSeverity,  // Enum input
-        buildingId: String,
-        status: CoreTypes.ComplianceStatus = .pending,
-        dueDate: Date? = nil,
-        createdAt: Date = Date()
-    ) {
-        self.init(
-            id: id,
-            title: title,
-            description: description,
-            severity: severity.rawValue,  // Convert enum to string for storage
-            buildingId: buildingId,
-            status: status,
-            dueDate: dueDate,
-            createdAt: createdAt
-        )
-    }
-    
-    /// Initializer with issue type and computed severity
+    /// Initializer with issue type
     init(
         id: String = UUID().uuidString,
         title: String,
@@ -48,7 +26,6 @@ extension CoreTypes.ComplianceIssue {
         issueType: CoreTypes.ComplianceIssueType,
         severity: CoreTypes.ComplianceSeverity,
         buildingId: String,
-        buildingName: String? = nil,
         assignedTo: String? = nil,
         dueDate: Date? = nil
     ) {
@@ -56,50 +33,36 @@ extension CoreTypes.ComplianceIssue {
             id: id,
             title: title,
             description: description,
-            severity: severity.rawValue,
+            severity: severity,
             buildingId: buildingId,
-            status: .pending,
+            status: .open,
             dueDate: dueDate,
-            createdAt: Date()
+            assignedTo: assignedTo,
+            createdAt: Date(),
+            type: issueType
         )
     }
     
     // MARK: - Computed Properties
     
-    /// Get severity as enum (for UI display)
-    var severityEnum: CoreTypes.ComplianceSeverity {
-        switch severity.lowercased() {
-        case "critical": return .critical
-        case "high": return .high
-        case "medium": return .medium
-        case "low": return .low
-        default: return .medium
-        }
-    }
-    
     /// Priority value for sorting
     var priorityValue: Int {
-        severityEnum.priorityValue
+        severity.priorityValue
     }
     
     /// Color for UI display
     var severityColor: Color {
-        severityEnum.color
+        severity.color
     }
     
     /// Icon for severity level
     var severityIcon: String {
-        switch severityEnum {
-        case .critical: return "exclamationmark.triangle.fill"
-        case .high: return "exclamationmark.circle.fill"
-        case .medium: return "exclamationmark.circle"
-        case .low: return "info.circle"
-        }
+        severity.iconName
     }
     
     /// Badge text for severity
     var severityBadge: String {
-        severityEnum.rawValue.uppercased()
+        severity.badgeText
     }
     
     /// Days until due date
@@ -113,7 +76,7 @@ extension CoreTypes.ComplianceIssue {
     /// Is issue overdue?
     var isOverdue: Bool {
         guard let dueDate = dueDate else { return false }
-        return Date() > dueDate && status != .compliant
+        return Date() > dueDate && status != .compliant && status != .resolved
     }
     
     /// Status color for UI
@@ -138,7 +101,8 @@ extension CoreTypes.ComplianceIssue {
             severity: severity,
             buildingId: buildingId,
             status: .warning,
-            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 3, to: Date())
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 3, to: Date()),
+            type: .safety
         )
     }
     
@@ -156,7 +120,8 @@ extension CoreTypes.ComplianceIssue {
             severity: severity,
             buildingId: buildingId,
             status: .warning,
-            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 7, to: Date())
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 7, to: Date()),
+            type: .operational
         )
     }
     
@@ -174,7 +139,8 @@ extension CoreTypes.ComplianceIssue {
             severity: severity,
             buildingId: buildingId,
             status: .pending,
-            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 14, to: Date())
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 14, to: Date()),
+            type: .documentation
         )
     }
     
@@ -192,7 +158,8 @@ extension CoreTypes.ComplianceIssue {
             severity: severity,
             buildingId: buildingId,
             status: .violation,
-            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 5, to: Date())
+            dueDate: dueDate ?? Calendar.current.date(byAdding: .day, value: 5, to: Date()),
+            type: .environmental
         )
     }
     
@@ -243,6 +210,11 @@ extension CoreTypes.ComplianceSeverity {
         }
     }
     
+    /// Color for UI display - uses FrancoSphereDesign
+    var color: Color {
+        return FrancoSphereDesign.EnumColors.complianceSeverity(self)
+    }
+    
     /// SFSymbol icon name
     var iconName: String {
         switch self {
@@ -273,23 +245,35 @@ extension CoreTypes.ComplianceSeverity {
 
 extension CoreTypes.ComplianceStatus {
     
+    /// Color for UI display - uses FrancoSphereDesign
+    var color: Color {
+        return FrancoSphereDesign.EnumColors.complianceStatus(self)
+    }
+    
     /// SFSymbol icon name
     var iconName: String {
         switch self {
-        case .compliant: return "checkmark.circle.fill"
+        case .compliant, .resolved: return "checkmark.circle.fill"
         case .warning: return "exclamationmark.triangle.fill"
-        case .violation: return "xmark.circle.fill"
-        case .pending: return "clock.circle.fill"
+        case .violation, .nonCompliant: return "xmark.circle.fill"
+        case .pending, .needsReview: return "clock.circle.fill"
+        case .open: return "circle"
+        case .inProgress: return "circle.dotted"
+        case .atRisk: return "exclamationmark.shield.fill"
         }
     }
     
     /// Progress value (0.0 to 1.0)
     var progressValue: Double {
         switch self {
-        case .compliant: return 1.0
+        case .compliant, .resolved: return 1.0
         case .warning: return 0.7
-        case .violation: return 0.3
+        case .violation, .nonCompliant: return 0.3
         case .pending: return 0.5
+        case .open: return 0.2
+        case .inProgress: return 0.6
+        case .atRisk: return 0.4
+        case .needsReview: return 0.5
         }
     }
 }
@@ -303,21 +287,27 @@ extension CoreTypes.ComplianceIssueType {
         switch self {
         case .safety: return "shield.fill"
         case .environmental: return "leaf.fill"
-        case .building: return "building.fill"
-        case .accessibility: return "figure.roll"
-        case .fire: return "flame.fill"
-        case .health: return "heart.fill"
-        case .security: return "lock.fill"
+        case .regulatory: return "doc.badge.gearshape"
+        case .financial: return "dollarsign.circle.fill"
+        case .operational: return "gearshape.fill"
+        case .documentation: return "doc.text.fill"
         }
+    }
+    
+    /// Color for UI display - uses FrancoSphereDesign
+    var color: Color {
+        return FrancoSphereDesign.EnumColors.complianceIssueType(self)
     }
     
     /// Default severity for this issue type
     var defaultSeverity: CoreTypes.ComplianceSeverity {
         switch self {
-        case .safety, .fire: return .critical
-        case .environmental, .health: return .high
-        case .building, .accessibility: return .medium
-        case .security: return .medium
+        case .safety: return .critical
+        case .environmental: return .high
+        case .regulatory: return .high
+        case .financial: return .medium
+        case .operational: return .medium
+        case .documentation: return .low
         }
     }
 }
@@ -343,7 +333,7 @@ extension Array where Element == CoreTypes.ComplianceIssue {
     
     /// Filter by severity level
     func filtered(by severity: CoreTypes.ComplianceSeverity) -> [CoreTypes.ComplianceIssue] {
-        return filter { $0.severityEnum == severity }
+        return filter { $0.severity == severity }
     }
     
     /// Filter by status
@@ -358,7 +348,7 @@ extension Array where Element == CoreTypes.ComplianceIssue {
     
     /// Filter critical issues
     var critical: [CoreTypes.ComplianceIssue] {
-        return filter { $0.severityEnum == .critical }
+        return filter { $0.severity == .critical }
     }
     
     /// Get compliance summary statistics
