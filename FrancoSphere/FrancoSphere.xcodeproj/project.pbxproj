@@ -60,7 +60,6 @@
 		23273A492E2B8674004A52C6 /* DataBootstrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BE2E2B8674004A52C6 /* DataBootstrapper.swift */; };
 		23273A4A2E2B8674004A52C6 /* MapInteractionHint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739602E2B8674004A52C6 /* MapInteractionHint.swift */; };
 		23273A4B2E2B8674004A52C6 /* TaskRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F72E2B8674004A52C6 /* TaskRequestView.swift */; };
-		23273A4C2E2B8674004A52C6 /* WeatherAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739812E2B8674004A52C6 /* WeatherAlert.swift */; };
 		23273A4D2E2B8674004A52C6 /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390E2E2B8674004A52C6 /* GlassButtonModifier.swift */; };
 		23273A4E2E2B8674004A52C6 /* GlassStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739152E2B8674004A52C6 /* GlassStatusBadge.swift */; };
 		23273A4F2E2B8674004A52C6 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FA2E2B8674004A52C6 /* WorkerProfileView.swift */; };
@@ -311,7 +310,6 @@
 		2327397E2E2B8674004A52C6 /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
 		2327397F2E2B8674004A52C6 /* UserExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExtensions.swift; sourceTree = "<group>"; };
 		232739802E2B8674004A52C6 /* VerificationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerificationRecord.swift; sourceTree = "<group>"; };
-		232739812E2B8674004A52C6 /* WeatherAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAlert.swift; sourceTree = "<group>"; };
 		232739822E2B8674004A52C6 /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
 		232739832E2B8674004A52C6 /* WorkerConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerConstants.swift; sourceTree = "<group>"; };
 		232739842E2B8674004A52C6 /* WorkerContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngine.swift; sourceTree = "<group>"; };
@@ -670,7 +668,6 @@
 				2327397E2E2B8674004A52C6 /* SharedTypes.swift */,
 				2327397F2E2B8674004A52C6 /* UserExtensions.swift */,
 				232739802E2B8674004A52C6 /* VerificationRecord.swift */,
-				232739812E2B8674004A52C6 /* WeatherAlert.swift */,
 				232739822E2B8674004A52C6 /* WorkerActionType.swift */,
 				232739832E2B8674004A52C6 /* WorkerConstants.swift */,
 				232739842E2B8674004A52C6 /* WorkerContextEngine.swift */,
@@ -1140,7 +1137,6 @@
 				23273A492E2B8674004A52C6 /* DataBootstrapper.swift in Sources */,
 				23273A4A2E2B8674004A52C6 /* MapInteractionHint.swift in Sources */,
 				23273A4B2E2B8674004A52C6 /* TaskRequestView.swift in Sources */,
-				23273A4C2E2B8674004A52C6 /* WeatherAlert.swift in Sources */,
 				23273A4D2E2B8674004A52C6 /* GlassButtonModifier.swift in Sources */,
 				23273A4E2E2B8674004A52C6 /* GlassStatusBadge.swift in Sources */,
 				23273A4F2E2B8674004A52C6 /* WorkerProfileView.swift in Sources */,

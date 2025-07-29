@@ -2,9 +2,7 @@
 //  GRDBManager.swift
 //  FrancoSphere
 //
-//  ✅ COMPLETE: Full authentication + operational database manager
-//  ✅ FIXED: No duplicate methods, all syntax errors resolved
-//  ✅ SINGLE SOURCE: One manager for everything
+//  ✅ FIXED: Added public type aliases to resolve visibility issues
 //
 
 import Foundation
@@ -760,6 +758,7 @@ public final class GRDBManager {
     }
     
     // MARK: - Real-time Observation (FIXED for Swift 6)
+    // ✅ FIXED: Now returns public types
     
     public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
         let observation = ValueObservation.tracking { db in

@@ -85,17 +85,17 @@ actor TaskService {
         
         // FIXED: Get workerId from task since ActionEvidence doesn't have evidenceType
         if let workerId = await getWorkerIdForTask(taskId) {
-            // FIXED: Create DashboardUpdate properly
-            let update = DashboardUpdate(
-                source: .worker,
-                type: .taskCompleted,
+            // FIXED: Use CoreTypes.DashboardUpdate with full namespace
+            let update = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: CoreTypes.DashboardUpdate.UpdateType.taskCompleted,
                 buildingId: await getBuildingIdForTask(taskId),
                 workerId: workerId,
                 data: [
                     "taskId": taskId,
-                    "completionTime": Date(),
+                    "completionTime": ISO8601DateFormatter().string(from: Date()),
                     "evidence": evidence.description,
-                    "photoCount": evidence.photoURLs.count
+                    "photoCount": String(evidence.photoURLs.count)
                 ]
             )
             
@@ -407,6 +407,9 @@ enum TaskServiceError: LocalizedError {
  ✅ FIXED ALL COMPILATION ERRORS:
  
  🔧 MAJOR FIXES:
+ - ✅ Fixed DashboardUpdate to use CoreTypes.DashboardUpdate with full namespace
+ - ✅ Fixed enum member references to use fully qualified names
+ - ✅ Fixed data dictionary values to be String types
  - ✅ Removed duplicate getWorkerIdForTask method definitions (lines 409, 446)
  - ✅ Removed duplicate getBuildingIdForTask method definitions (lines 417, 454)
  - ✅ Removed invalid grdbManager references from error enum extension
@@ -414,7 +417,9 @@ enum TaskServiceError: LocalizedError {
  - ✅ Added proper null-checking for workerId in completeTask method
  
  🔧 SPECIFIC FIXES:
- - Line 87: Fixed ambiguous getWorkerIdForTask call by adding null check
+ - Line 87-97: Fixed DashboardUpdate creation with proper namespace and enum references
+ - Line 94: Changed Date() to ISO8601DateFormatter().string(from: Date()) for String type
+ - Line 96: Changed photoURLs.count to String(evidence.photoURLs.count) for String type
  - Lines 409-458: Removed all duplicate method definitions and scope errors
  - Kept only canonical implementations in main actor body
  

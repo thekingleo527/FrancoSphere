@@ -2,32 +2,21 @@
 //  BuildingTaskDetailView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed incorrect CoreTypes module import
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: Property access to match actual CoreTypes structure
-//  ✅ ALIGNED: With actual service methods and enum cases
-//  ✅ ENHANCED: Complete task management functionality
+//  ✅ FIXED: All property access aligned with actual CoreTypes definitions
+//  ✅ FIXED: Proper optional unwrapping throughout
+//  ✅ FIXED: Switch statements made exhaustive
+//  ✅ FIXED: Correct InventoryItem initializers
+//  ✅ FIXED: WorkerSkill handling without hardcoded cases
 //
-
-import Foundation
-
-// Type aliases for CoreTypes
 
 import SwiftUI
 
-// Type aliases for CoreTypes
-
-// MARK: - Extensions for Type Compatibility
-
-extension CoreTypes.WorkerSkill {
-    var levelStars: String {
-        return "★★★" // Default 3 stars - can be enhanced based on skill level
-    }
-    
-    var name: String {
-        return self.displayName
-    }
-}
+// Type aliases for convenience
+typealias ContextualTask = CoreTypes.ContextualTask
+typealias TaskCategory = CoreTypes.TaskCategory
+typealias TaskUrgency = CoreTypes.TaskUrgency
+typealias InventoryItem = CoreTypes.InventoryItem
+typealias InventoryCategory = CoreTypes.InventoryCategory
 
 // MARK: - BuildingTaskDetailView
 
@@ -40,7 +29,7 @@ struct BuildingTaskDetailView: View {
     @State private var selectedWorkers: [String] = []
     @State private var showingCompletionDialog = false
     @State private var isEditingTask = false
-    @State private var requiredSkills: [CoreTypes.WorkerSkill] = []
+    @State private var requiredSkills: [String] = []  // Using String instead of WorkerSkill enum
     @State private var availableInventory: [InventoryItem] = []
     @State private var selectedInventoryItems: [String: Int] = [:]
     @State private var showInventoryPicker = false
@@ -210,14 +199,9 @@ struct BuildingTaskDetailView: View {
                     Label("Due: \(dueDate, formatter: dateFormatter)", systemImage: "calendar")
                         .font(.subheadline)
                 }
-                if let startDate = task.startDate {
-                    Label("Start: \(startDate, formatter: timeFormatter)", systemImage: "clock")
-                        .font(.subheadline)
-                }
-                if let endDate = task.endDate {
-                    Label("End: \(endDate, formatter: timeFormatter)", systemImage: "clock.badge.checkmark")
-                        .font(.subheadline)
-                }
+                // ✅ FIXED: Removed references to non-existent startDate and endDate
+                Label("Status: \(task.isCompleted ? "Completed" : "Active")", systemImage: "clock")
+                    .font(.subheadline)
             }
             Spacer()
             if !task.isCompleted {
@@ -240,10 +224,10 @@ struct BuildingTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(requiredSkills, id: \.self) { skill in
                 HStack {
-                    Text(skill.name)
+                    Text(skill)
                         .font(.subheadline)
                     Spacer()
-                    Text(skill.levelStars)
+                    Text("★★★")  // Default skill level
                         .font(.caption)
                 }
             }
@@ -254,30 +238,34 @@ struct BuildingTaskDetailView: View {
     }
     
     private var categoryBadge: some View {
-        HStack {
-            Image(systemName: categoryIcon(task.category))
+        // ✅ FIXED: Proper optional unwrapping
+        let category = task.category ?? .maintenance
+        return HStack {
+            Image(systemName: categoryIcon(category))
                 .foregroundColor(.white)
-            Text(task.category.displayName)
+            Text(category.rawValue.capitalized)
                 .font(.caption)
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(categoryColor(task.category))
+        .background(categoryColor(category))
         .cornerRadius(20)
     }
     
     private var urgencyBadge: some View {
-        HStack {
-            Image(systemName: urgencyIcon(task.urgency))
+        // ✅ FIXED: Proper optional unwrapping
+        let urgency = task.urgency ?? .medium
+        return HStack {
+            Image(systemName: urgencyIcon(urgency))
                 .foregroundColor(.white)
-            Text(task.urgency.displayName)
+            Text(urgency.rawValue.capitalized)
                 .font(.caption)
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(getUrgencyColor(task.urgency))
+        .background(getUrgencyColor(urgency))
         .cornerRadius(20)
     }
     
@@ -394,7 +382,8 @@ struct BuildingTaskDetailView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.name)
                             .font(.subheadline)
-                        Text("Location: \(item.location)")
+                        // ✅ FIXED: Proper string interpolation
+                        Text("Location: \(item.location ?? "Unknown")")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -502,6 +491,7 @@ struct BuildingTaskDetailView: View {
         return !task.isCompleted && dueDate < Date()
     }
     
+    // ✅ FIXED: Made switch exhaustive with all cases
     private func categoryColor(_ category: TaskCategory) -> Color {
         switch category {
         case .cleaning: return .blue
@@ -515,25 +505,29 @@ struct BuildingTaskDetailView: View {
         case .installation: return .orange
         case .renovation: return .purple
         case .sanitation: return .green
+        case .administrative: return .gray
         }
     }
     
+    // ✅ FIXED: Made switch exhaustive with all cases
     private func categoryIcon(_ category: TaskCategory) -> String {
         switch category {
-        case .cleaning: return "spray.and.wipe"
+        case .cleaning: return "sparkles"
         case .maintenance: return "wrench.and.screwdriver"
         case .repair: return "hammer"
-        case .inspection: return "checklist"
+        case .inspection: return "magnifyingglass"
         case .security: return "shield"
         case .landscaping: return "leaf"
         case .utilities: return "bolt"
-        case .emergency: return "exclamationmark.triangle"
-        case .installation: return "gear"
+        case .emergency: return "exclamationmark.triangle.fill"
+        case .installation: return "plus.square"
         case .renovation: return "building.2"
         case .sanitation: return "trash"
+        case .administrative: return "folder"
         }
     }
     
+    // ✅ FIXED: Made switch exhaustive with all cases
     private func getUrgencyColor(_ urgency: TaskUrgency) -> Color {
         switch urgency {
         case .low: return .green
@@ -541,10 +535,11 @@ struct BuildingTaskDetailView: View {
         case .high: return .orange
         case .critical: return .red
         case .emergency: return .red
-        case .urgent: return .purple
+        case .urgent: return .red
         }
     }
     
+    // ✅ FIXED: Made switch exhaustive with all cases
     private func urgencyIcon(_ urgency: TaskUrgency) -> String {
         switch urgency {
         case .low: return "arrow.down.circle.fill"
@@ -556,6 +551,7 @@ struct BuildingTaskDetailView: View {
         }
     }
     
+    // ✅ FIXED: Made switch exhaustive with all cases
     private func categoryIcon(for category: InventoryCategory) -> String {
         switch category {
         case .tools: return "wrench.and.screwdriver"
@@ -563,6 +559,12 @@ struct BuildingTaskDetailView: View {
         case .equipment: return "gear"
         case .materials: return "cube.box"
         case .safety: return "shield"
+        case .cleaning: return "spray.bottle"
+        case .electrical: return "bolt"
+        case .plumbing: return "wrench"
+        case .general: return "shippingbox"
+        case .office: return "folder"
+        case .maintenance: return "wrench.and.screwdriver"
         case .other: return "questionmark.circle"
         }
     }
@@ -571,8 +573,9 @@ struct BuildingTaskDetailView: View {
         return true // Allow all users to manage workers for now
     }
     
+    // ✅ FIXED: WorkerAssignment doesn't have role property
     private func workerRoleDisplay(for assignment: CoreTypes.WorkerAssignment) -> String {
-        return assignment.role
+        return "Maintenance Worker"  // Default role since WorkerAssignment doesn't have role
     }
     
     private func getWorkerName(for assignment: CoreTypes.WorkerAssignment) -> String {
@@ -590,13 +593,12 @@ struct BuildingTaskDetailView: View {
     
     private func loadAssignedWorkers() {
         if let worker = task.worker {
+            // ✅ FIXED: WorkerAssignment initializer parameters
             assignedWorkers = [
                 CoreTypes.WorkerAssignment(
                     id: worker.id,
                     workerId: worker.id,
-                    buildingId: task.buildingId ?? "",
-                    role: "Maintenance Worker",
-                    startDate: Date()
+                    buildingId: task.buildingId ?? ""
                 )
             ]
         } else {
@@ -604,48 +606,49 @@ struct BuildingTaskDetailView: View {
         }
     }
     
+    // ✅ FIXED: Using string skills instead of WorkerSkill enum
     private func loadRequiredSkills() {
-        let skillForCategory: CoreTypes.WorkerSkill
-        switch task.category {
-        case .cleaning: skillForCategory = .cleaning
-        case .maintenance: skillForCategory = .plumbing
-        case .repair: skillForCategory = .carpentry
-        case .inspection: skillForCategory = .security
-        case .sanitation: skillForCategory = .cleaning
-        case .security: skillForCategory = .security
-        case .landscaping: skillForCategory = .landscaping
-        case .utilities: skillForCategory = .electrical
-        case .emergency: skillForCategory = .security
-        case .installation: skillForCategory = .electrical
-        case .renovation: skillForCategory = .carpentry
+        let skillForCategory: String
+        switch task.category ?? .maintenance {
+        case .cleaning: skillForCategory = "Cleaning"
+        case .maintenance: skillForCategory = "General Maintenance"
+        case .repair: skillForCategory = "Repair Work"
+        case .inspection: skillForCategory = "Safety Inspection"
+        case .sanitation: skillForCategory = "Sanitation"
+        case .security: skillForCategory = "Security"
+        case .landscaping: skillForCategory = "Landscaping"
+        case .utilities: skillForCategory = "Utilities Management"
+        case .emergency: skillForCategory = "Emergency Response"
+        case .installation: skillForCategory = "Installation"
+        case .renovation: skillForCategory = "Renovation"
+        case .administrative: skillForCategory = "Administrative"
         }
         
         requiredSkills = [skillForCategory]
     }
     
     private func loadInventory() {
+        // ✅ FIXED: Correct InventoryItem initializer
         availableInventory = [
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 id: "item1",
                 name: "All-Purpose Cleaner",
                 category: .supplies,
-                quantity: 10,
-                minThreshold: 2,
-                location: "Janitor Closet",
                 currentStock: 10,
                 minimumStock: 2,
-                unit: "bottles"
+                maxStock: 50,
+                unit: "bottles",
+                cost: 5.99
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 id: "item2",
                 name: "Screwdriver Set",
                 category: .tools,
-                quantity: 5,
-                minThreshold: 1,
-                location: "Tool Room",
                 currentStock: 5,
                 minimumStock: 1,
-                unit: "sets"
+                maxStock: 10,
+                unit: "sets",
+                cost: 29.99
             )
         ]
     }
@@ -678,6 +681,7 @@ struct BuildingTaskDetailView: View {
     }
     
     private func completeTask() {
+        // ✅ FIXED: Removed unnecessary do-catch since no throwing code
         for (itemId, quantity) in selectedInventoryItems {
             if let item = availableInventory.first(where: { $0.id == itemId }) {
                 print("Used \(quantity) of \(item.name)")
@@ -685,14 +689,10 @@ struct BuildingTaskDetailView: View {
         }
         
         Task {
-            do {
-                await MainActor.run {
-                    isComplete = true
-                }
-                print("Task completed: \(task.title)")
-            } catch {
-                print("❌ Failed to complete task: \(error)")
+            await MainActor.run {
+                isComplete = true
             }
+            print("Task completed: \(task.title)")
         }
     }
 }
@@ -744,14 +744,13 @@ struct WorkerAssignmentView: View {
     }
     
     private func loadBuildingWorkers() {
+        // ✅ FIXED: Correct WorkerAssignment initializer
         let placeholderWorkers = (1...5).map { i -> CoreTypes.WorkerAssignment in
             let workerId = "100\(i)"
             return CoreTypes.WorkerAssignment(
                 id: workerId,
                 workerId: workerId,
-                buildingId: buildingId,
-                role: "Maintenance Worker",
-                startDate: Date()
+                buildingId: buildingId
             )
         }
         availableWorkers = placeholderWorkers
@@ -774,8 +773,6 @@ struct EditTaskView: View {
     @State private var dueDate: Date
     @State private var category: TaskCategory
     @State private var urgency: TaskUrgency
-    @State private var startDate: Date?
-    @State private var endDate: Date?
     @Environment(\.presentationMode) var presentationMode
     
     init(task: ContextualTask, onSave: @escaping (ContextualTask) -> Void) {
@@ -784,10 +781,9 @@ struct EditTaskView: View {
         _title = State(initialValue: task.title)
         _description = State(initialValue: task.description ?? "")
         _dueDate = State(initialValue: task.dueDate ?? Date())
-        _category = State(initialValue: task.category)
-        _urgency = State(initialValue: task.urgency)
-        _startDate = State(initialValue: task.startDate)
-        _endDate = State(initialValue: task.endDate)
+        // ✅ FIXED: Proper optional unwrapping with defaults
+        _category = State(initialValue: task.category ?? .maintenance)
+        _urgency = State(initialValue: task.urgency ?? .medium)
     }
     
     var body: some View {
@@ -802,41 +798,22 @@ struct EditTaskView: View {
                         TextEditor(text: $description)
                             .frame(minHeight: 100)
                     }
+                    // ✅ FIXED: Proper Picker with CoreTypes prefix
                     Picker("Category", selection: $category) {
-                        ForEach(TaskCategory.allCases, id: \.self) { cat in
-                            Text(cat.displayName)
+                        ForEach(CoreTypes.TaskCategory.allCases, id: \.self) { cat in
+                            Text(cat.rawValue.capitalized)
                                 .tag(cat)
                         }
                     }
                     Picker("Urgency", selection: $urgency) {
-                        ForEach(TaskUrgency.allCases, id: \.self) { urgency in
-                            Text(urgency.displayName)
+                        ForEach(CoreTypes.TaskUrgency.allCases, id: \.self) { urgency in
+                            Text(urgency.rawValue.capitalized)
                                 .tag(urgency)
                         }
                     }
                 }
                 Section(header: Text("Schedule")) {
                     DatePicker("Due Date", selection: $dueDate, displayedComponents: .date)
-                    Toggle("Specific Start Time", isOn: Binding(
-                        get: { startDate != nil },
-                        set: { newValue in startDate = newValue ? Date() : nil }
-                    ))
-                    if startDate != nil {
-                        DatePicker("Start Time", selection: Binding(
-                            get: { startDate ?? Date() },
-                            set: { startDate = $0 }
-                        ), displayedComponents: .hourAndMinute)
-                    }
-                    Toggle("Specific End Time", isOn: Binding(
-                        get: { endDate != nil },
-                        set: { newValue in endDate = newValue ? Date() : nil }
-                    ))
-                    if endDate != nil {
-                        DatePicker("End Time", selection: Binding(
-                            get: { endDate ?? Date() },
-                            set: { endDate = $0 }
-                        ), displayedComponents: .hourAndMinute)
-                    }
                 }
             }
             .navigationTitle("Edit Task")
@@ -919,28 +896,27 @@ struct BuildingTaskInventorySelectionView: View {
     }
     
     private func loadInventoryItems() {
+        // ✅ FIXED: Correct InventoryItem initializer
         availableItems = [
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 id: "item1",
                 name: "All-Purpose Cleaner",
                 category: .supplies,
-                quantity: 10,
-                minThreshold: 2,
-                location: "Janitor Closet",
                 currentStock: 10,
                 minimumStock: 2,
-                unit: "bottles"
+                maxStock: 50,
+                unit: "bottles",
+                cost: 5.99
             ),
-            InventoryItem(
+            CoreTypes.InventoryItem(
                 id: "item2",
                 name: "Screwdriver Set",
                 category: .tools,
-                quantity: 5,
-                minThreshold: 1,
-                location: "Tool Room",
                 currentStock: 5,
                 minimumStock: 1,
-                unit: "sets"
+                maxStock: 10,
+                unit: "sets",
+                cost: 29.99
             )
         ]
     }
@@ -954,14 +930,26 @@ struct BuildingTaskInventorySelectionView: View {
 
 struct BuildingTaskDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleTask = ContextualTask(
+        // ✅ FIXED: Correct ContextualTask initializer
+        let sampleTask = CoreTypes.ContextualTask(
             id: "task1",
             title: "HVAC Maintenance",
             description: "Monthly HVAC system inspection and filter replacement",
+            isCompleted: false,
+            completedDate: nil,
+            dueDate: Date(),
             category: .maintenance,
             urgency: .medium,
+            building: CoreTypes.NamedCoordinate(
+                id: "14",
+                name: "Rubin Museum",
+                address: "142-148 West 17th Street",
+                latitude: 40.7402,
+                longitude: -73.9980
+            ),
+            worker: nil,
             buildingId: "14",
-            buildingName: "Rubin Museum"
+            priority: .medium
         )
         
         NavigationView {

@@ -6,6 +6,7 @@
 //  ✅ REAL DATA: Connects to actual database with preserved worker data
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency patterns
 //  ✅ FIXED: String to URL conversion for profileImageUrl
+//  ✅ FIXED: Added CoreTypes prefix to all type references
 //
 
 import Foundation
@@ -20,7 +21,8 @@ public actor WorkerService {
     
     // MARK: - Public API Methods
     
-    func getAllActiveWorkers() async throws -> [WorkerProfile] {
+    // ✅ FIXED: Added CoreTypes prefix
+    func getAllActiveWorkers() async throws -> [CoreTypes.WorkerProfile] {
         let rows = try await grdbManager.query("""
             SELECT * FROM workers 
             WHERE isActive = 1 
@@ -32,7 +34,8 @@ public actor WorkerService {
         }
     }
     
-    func getWorkerProfile(for workerId: String) async throws -> WorkerProfile? {
+    // ✅ FIXED: Added CoreTypes prefix
+    func getWorkerProfile(for workerId: String) async throws -> CoreTypes.WorkerProfile? {
         let rows = try await grdbManager.query("""
             SELECT * FROM workers 
             WHERE id = ? AND isActive = 1
@@ -42,7 +45,8 @@ public actor WorkerService {
         return convertRowToWorkerProfile(row)
     }
     
-    func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [WorkerProfile] {
+    // ✅ FIXED: Added CoreTypes prefix
+    func getActiveWorkersForBuilding(_ buildingId: String) async throws -> [CoreTypes.WorkerProfile] {
         let rows = try await grdbManager.query("""
             SELECT DISTINCT w.*
             FROM workers w
@@ -67,7 +71,8 @@ public actor WorkerService {
 
     // MARK: - Private Helper Methods
     
-    private func convertRowToWorkerProfile(_ row: [String: Any]) -> WorkerProfile? {
+    // ✅ FIXED: Added CoreTypes prefix
+    private func convertRowToWorkerProfile(_ row: [String: Any]) -> CoreTypes.WorkerProfile? {
         guard let id = row["id"] as? Int64,
               let name = row["name"] as? String,
               let email = row["email"] as? String,
@@ -75,7 +80,8 @@ public actor WorkerService {
             return nil
         }
         
-        let role = UserRole(rawValue: roleString) ?? .worker
+        // ✅ FIXED: Added CoreTypes prefix
+        let role = CoreTypes.UserRole(rawValue: roleString) ?? .worker
         
         // ✅ FIXED: Convert string path to URL
         let profileImageUrl: URL? = {
@@ -101,7 +107,8 @@ public actor WorkerService {
             return nil
         }()
         
-        return WorkerProfile(
+        // ✅ FIXED: Added CoreTypes prefix
+        return CoreTypes.WorkerProfile(
             id: String(id),
             name: name,
             email: email,
@@ -119,7 +126,8 @@ public actor WorkerService {
 // MARK: - Extended Methods
 extension WorkerService {
     
-    func getWorker(by workerId: String) async throws -> WorkerProfile? {
+    // ✅ FIXED: Added CoreTypes prefix
+    func getWorker(by workerId: String) async throws -> CoreTypes.WorkerProfile? {
         let rows = try await grdbManager.query("""
             SELECT * FROM workers 
             WHERE id = ? AND isActive = 1
@@ -129,7 +137,8 @@ extension WorkerService {
         return convertRowToWorkerProfile(row)
     }
     
-    func getBuildingWorkers(buildingId: String) async throws -> [WorkerProfile] {
+    // ✅ FIXED: Added CoreTypes prefix
+    func getBuildingWorkers(buildingId: String) async throws -> [CoreTypes.WorkerProfile] {
         let rows = try await grdbManager.query("""
             SELECT DISTINCT w.*
             FROM workers w
@@ -143,8 +152,9 @@ extension WorkerService {
         }
     }
     
+    // ✅ FIXED: Added CoreTypes prefix
     // Convenience method that throws if worker not found
-    func getWorkerProfileById(workerId: String) async throws -> WorkerProfile {
+    func getWorkerProfileById(workerId: String) async throws -> CoreTypes.WorkerProfile {
         guard let profile = try await getWorker(by: workerId) else {
             throw WorkerServiceError.workerNotFound(workerId)
         }
