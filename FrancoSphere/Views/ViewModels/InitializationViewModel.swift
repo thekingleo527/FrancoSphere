@@ -166,7 +166,8 @@ class InitializationViewModel: ObservableObject {
         
         do {
             // Load the worker context - use the proper method signature
-            try await WorkerContextEngine.shared.loadContext(for: for: currentUser.workerId)
+            try await WorkerContextEngine.shared.loadContext(for: currentUser.workerId)
+
             
             await updateProgress(0.85, "User data loaded successfully")
             

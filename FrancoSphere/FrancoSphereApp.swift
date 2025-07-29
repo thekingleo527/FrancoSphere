@@ -3,60 +3,65 @@
 //  FrancoSphere v6.0
 //
 //  ✅ CLEAN: Single startup system integration
-//  ✅ ORGANIZED: Uses DatabaseStartupCoordinator
+//  ✅ ORGANIZED: Uses existing InitializationViewModel
 //  ✅ SIMPLE: Clear initialization flow
 //  ✅ PRODUCTION: Ready for deployment
 //
 
-import SwiftUI  
+import SwiftUI
 
 @main
 struct FrancoSphereApp: App {
     @StateObject private var authManager = NewAuthManager.shared
     @StateObject private var initializationViewModel = InitializationViewModel()
-
+    @StateObject private var dataSyncService = DataSynchronizationService.shared
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
                 if !initializationViewModel.isComplete {
                     InitializationView(viewModel: initializationViewModel)
                 } else if authManager.isAuthenticated {
-                    switch authManager.userRole {
-                    case "admin":
-                        AdminDashboardView().environmentObject(authManager)
-                    case "client":
-                        ClientDashboardView().environmentObject(authManager)
-                    default: // worker
-                        WorkerDashboardView().environmentObject(authManager)
-                    }
+                    authenticatedView
                 } else {
-                    LoginView().environmentObject(authManager)
+                    LoginView()
+                        .environmentObject(authManager)
                 }
             }
             .preferredColorScheme(.dark)
+            .environmentObject(authManager)
+            .environmentObject(dataSyncService)
             .task {
                 if !initializationViewModel.isInitializing && !initializationViewModel.isComplete {
-                    // Start UI initialization
                     await initializationViewModel.startInitialization()
-                    
-                    // Start database initialization in parallel
-                    await initializeDatabaseSystems()
                 }
             }
         }
     }
     
-    /// Clean database initialization using single entry point
-    @MainActor
-    private func initializeDatabaseSystems() async {
-        do {
-            print("🚀 Starting database initialization...")
-            try await DatabaseStartupCoordinator.shared.ensureDataIntegrity()
-            print("✅ Database initialization completed successfully")
-        } catch {
-            print("❌ Database initialization failed: \(error)")
-            // Don't block app launch on database errors
-            // User can still use app with limited functionality
+    @ViewBuilder
+    private var authenticatedView: some View {
+        switch authManager.userRole {
+        case "admin":
+            AdminDashboardView()
+        case "client":
+            ClientDashboardView()
+        default: // worker
+            WorkerDashboardView()
         }
     }
+}
+
+// MARK: - App Environment
+struct AppEnvironment {
+    static let isDebug = {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }()
+    
+    static let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+    static let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
 }
