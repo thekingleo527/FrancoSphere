@@ -2,10 +2,10 @@
 //  WorkerDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: iOS 17 Map API implementation
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With existing WorkerContextEngineAdapter
-//  ✅ INTEGRATED: Nova AI assistant
+//  ✅ REFACTORED: Dual-mode map system with MapRevealContainer
+//  ✅ FIXED: Nova AI centered in header
+//  ✅ ALIGNED: With consolidated WorkerContextEngine
+//  ✅ INTEGRATED: Building intelligence on map
 //
 
 import Foundation
@@ -15,73 +15,78 @@ import MapKit
 struct WorkerDashboardView: View {
     // MARK: - State Objects
     @StateObject private var viewModel = WorkerDashboardViewModel()
-    @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     
     // MARK: - State Variables
     @State private var showBuildingList = false
-    @State private var showMapOverlay = false
     @State private var showProfileView = false
-    @State private var workerName = "Worker"
-    @State private var selectedBuilding: NamedCoordinate?
     @State private var showBuildingDetail = false
-    @State private var selectedBuildingIsAssigned = false
+    @State private var selectedBuilding: NamedCoordinate?
+    @State private var showNovaAssistant = false
     @State private var showOnlyMyBuildings = true
     @State private var primaryBuilding: NamedCoordinate?
-    @State private var mapRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 40.7589, longitude: -73.9851),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
-    
-    // Nova AI state
-    @State private var showNovaAssistant = false
     
     var body: some View {
-        ZStack {
-            // Glass map background
-            mapBackgroundWithGlass
-            
-            // Main content with proper spacing
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Enhanced header with FrancoSphere branding
-                    glassmorphicHeader
-                    
-                    // Nova AI Manager section (centered)
-                    novaAIManagerCard
-                        .padding(.horizontal, 20)
-                    
-                    // Clock-in card with glass effect
-                    if !viewModel.isClockedIn {
-                        clockInGlassCard
-                            .padding(.horizontal, 20)
-                    }
-                    
-                    // Progress overview with glass
-                    if contextAdapter.todaysTasks.count > 0 {
-                        progressOverviewCard
-                            .padding(.horizontal, 20)
-                    }
-                    
-                    // My buildings grid with glass cards
-                    myBuildingsSection
-                        .padding(.horizontal, 20)
-                    
-                    // Floating intelligence insights
-                    if !contextAdapter.todaysTasks.isEmpty {
-                        floatingInsightsSection
-                            .padding(.horizontal, 20)
-                    }
-                    
-                    Spacer(minLength: 100)
-                }
-                .padding(.top, 100) // Account for fixed header
+        MapRevealContainer(
+            buildings: contextEngine.assignedBuildings,
+            currentBuildingId: contextEngine.currentBuilding?.id,  // Pass current clocked-in building
+            focusBuildingId: selectedBuilding?.id,  // Pass focused building
+            onBuildingTap: { building in
+                selectedBuilding = building
+                showBuildingDetail = true
             }
-            
-            // Fixed header overlay
-            VStack {
-                headerOverlay
-                Spacer()
+        ) {
+            // Main dashboard content
+            ZStack {
+                // Background gradient
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.9),
+                        Color.black.opacity(0.7)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                
+                // Scrollable content
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Clock-in card
+                        if !contextEngine.clockInStatus.isClockedIn {
+                            clockInGlassCard
+                        }
+                        
+                        // Progress overview
+                        if contextEngine.todaysTasks.count > 0 {
+                            progressOverviewCard
+                        }
+                        
+                        // Today's tasks card
+                        if contextEngine.todaysTasks.count > 0 {
+                            TodaysTasksGlassCard(tasks: contextEngine.todaysTasks)
+                        }
+                        
+                        // My buildings section
+                        myBuildingsSection
+                        
+                        // Floating intelligence insights
+                        if !contextEngine.todaysTasks.isEmpty {
+                            floatingInsightsSection
+                        }
+                        
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 120) // Account for fixed header
+                }
+                
+                // Fixed header overlay
+                VStack {
+                    headerOverlay
+                    Spacer()
+                }
             }
         }
         .navigationBarHidden(true)
@@ -91,15 +96,20 @@ struct WorkerDashboardView: View {
         }
         .sheet(isPresented: $showBuildingList) {
             BuildingSelectionView(
-                buildings: showOnlyMyBuildings ? contextAdapter.assignedBuildings : getAllBuildings()
+                buildings: showOnlyMyBuildings ? contextEngine.assignedBuildings : contextEngine.portfolioBuildings
             ) { building in
-                navigateToBuilding(building)
+                selectedBuilding = building
+                showBuildingDetail = true
                 showBuildingList = false
             }
         }
         .sheet(isPresented: $showBuildingDetail) {
             if let building = selectedBuilding {
                 BuildingDetailView(building: building)
+                    .onDisappear {
+                        // Clear selection when sheet dismisses
+                        selectedBuilding = nil
+                    }
             }
         }
         .sheet(isPresented: $showProfileView) {
@@ -111,171 +121,79 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // MARK: - Glass Map Background (FIXED for iOS 17)
-    
-    private var mapBackgroundWithGlass: some View {
-        ZStack {
-            // Map with current location - FIXED for iOS 17
-            Map(coordinateRegion: $mapRegion,
-                annotationItems: contextAdapter.assignedBuildings) { building in
-                MapAnnotation(coordinate: building.coordinate) {
-                    buildingMapBubble(building)
-                }
-            }
-            .ignoresSafeArea()
-            .opacity(0.4)
-            .onAppear {
-                updateMapRegion()
-            }
-            
-            // Glass overlay gradient
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.7),
-                    Color.black.opacity(0.3),
-                    Color.black.opacity(0.5)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        }
-    }
-    
-    // MARK: - Header Overlay (Fixed Position)
+    // MARK: - Header Overlay (Reorganized)
     
     private var headerOverlay: some View {
-        HStack {
-            // Worker profile
-            Button(action: { showProfileView = true }) {
-                HStack(spacing: 8) {
-                    // Worker avatar
-                    ZStack {
-                        Circle()
-                            .fill(.ultraThinMaterial)
-                            .frame(width: 40, height: 40)
-                        
-                        Text(getWorkerInitials())
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(contextAdapter.currentWorker?.name ?? "Worker")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                        
-                        Text(getEnhancedWorkerRole())
-                            .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                }
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            Spacer()
-            
-            // FrancoSphere branding
-            Image("AppIcon") // Use your app icon
+        HStack(spacing: 16) {
+            // FrancoSphere logo on left
+            Image("AppIcon")
                 .resizable()
                 .frame(width: 36, height: 36)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .shadow(color: .black.opacity(0.3), radius: 4)
             
             Spacer()
             
-            // Clock-in status
-            if viewModel.isClockedIn {
-                GlassStatusBadge(
-                    text: "Active",
-                    icon: "clock.fill",
-                    style: .success,
-                    size: .small,
-                    isPulsing: true
-                )
+            // Nova AI in center
+            NovaAvatar(
+                size: .medium,
+                isActive: contextEngine.hasPendingScenario,
+                hasUrgentInsights: getUrgentTaskCount() > 0,
+                isBusy: contextEngine.isLoading,
+                onTap: { showNovaAssistant = true },
+                onLongPress: { showNovaAssistant = true }
+            )
+            .shadow(color: .purple.opacity(0.5), radius: 10)
+            
+            Spacer()
+            
+            // Profile and clock status on right
+            HStack(spacing: 12) {
+                // Worker profile button
+                Button(action: { showProfileView = true }) {
+                    HStack(spacing: 8) {
+                        // Worker avatar
+                        ZStack {
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .frame(width: 36, height: 36)
+                            
+                            Text(getWorkerInitials())
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Show name only on larger screens
+                        if UIScreen.main.bounds.width > 390 {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(contextEngine.currentWorker?.name ?? "Worker")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white)
+                                
+                                Text(getEnhancedWorkerRole())
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Clock-in status
+                if contextEngine.clockInStatus.isClockedIn {
+                    GlassStatusBadge(
+                        text: "Active",
+                        icon: "clock.fill",
+                        style: .success,
+                        size: .small,
+                        isPulsing: true
+                    )
+                }
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(.ultraThinMaterial)
-        .ignoresSafeArea(edges: .top)
-    }
-    
-    // MARK: - Glassmorphic Header
-    
-    private var glassmorphicHeader: some View {
-        VStack(spacing: 16) {
-            Text("FrancoSphere")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-            
-            HStack(spacing: 20) {
-                // Stats with glass effect
-                statCard("Buildings", "\(contextAdapter.assignedBuildings.count)", icon: "building.2.fill", color: .blue)
-                statCard("Tasks", "\(contextAdapter.todaysTasks.count)", icon: "checkmark.circle.fill", color: .green)
-                statCard("Progress", "\(Int(contextAdapter.taskProgress?.progressPercentage ?? 0))%", icon: "chart.line.uptrend.xyaxis", color: .purple)
-            }
-        }
-        .padding(.vertical, 20)
-    }
-    
-    private func statCard(_ title: String, _ value: String, icon: String, color: Color) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
-            
-            Text(title)
-                .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.7))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(color.opacity(0.3), lineWidth: 1)
-        )
-    }
-    
-    // MARK: - Nova AI Manager Card
-    
-    private var novaAIManagerCard: some View {
-        Button(action: { showNovaAssistant = true }) {
-            HStack(spacing: 16) {
-                // Nova Avatar using existing AIAssistantImageLoader
-                AIAssistantImageLoader.circularAIAssistantView(
-                    diameter: 60,
-                    borderColor: .purple
-                )
-                .shadow(color: .purple.opacity(0.5), radius: 10)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Nova AI Assistant")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Text("Tap for portfolio intelligence")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .francoCardPadding()
-        .francoGlassBackground()
-        .francoShadow(FrancoSphereDesign.Shadow.glassCard)
     }
     
     // MARK: - Clock In Glass Card
@@ -301,13 +219,15 @@ struct WorkerDashboardView: View {
             }
             
             // Quick clock-in buttons
-            if contextAdapter.assignedBuildings.count > 0 {
+            if contextEngine.assignedBuildings.count > 0 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(contextAdapter.assignedBuildings.prefix(3), id: \.id) { building in
+                        ForEach(contextEngine.assignedBuildings.prefix(3), id: \.id) { building in
                             Button(action: {
                                 Task {
                                     await viewModel.clockIn(at: building)
+                                    // Update context engine after clock in
+                                    await contextEngine.updateClockInStatus(for: contextEngine.currentWorker?.id ?? "")
                                 }
                             }) {
                                 Text(building.name)
@@ -341,7 +261,7 @@ struct WorkerDashboardView: View {
                 Spacer()
                 
                 GlassStatusBadge(
-                    text: "\(contextAdapter.todaysTasks.filter { $0.isCompleted }.count) of \(contextAdapter.todaysTasks.count)",
+                    text: "\(contextEngine.todaysTasks.filter { $0.isCompleted }.count) of \(contextEngine.todaysTasks.count)",
                     style: .info,
                     size: .small
                 )
@@ -363,16 +283,38 @@ struct WorkerDashboardView: View {
                             )
                         )
                         .frame(
-                            width: geometry.size.width * (contextAdapter.taskProgress?.progressPercentage ?? 0) / 100,
+                            width: geometry.size.width * contextEngine.getCompletionPercentage() / 100,
                             height: 8
                         )
                 }
             }
             .frame(height: 8)
+            
+            // Quick stats
+            HStack(spacing: 20) {
+                statPill("Completed", "\(contextEngine.todaysTasks.filter { $0.isCompleted }.count)", color: .green)
+                statPill("Remaining", "\(contextEngine.todaysTasks.filter { !$0.isCompleted }.count)", color: .blue)
+                if getUrgentTaskCount() > 0 {
+                    statPill("Urgent", "\(getUrgentTaskCount())", color: .orange)
+                }
+            }
         }
         .francoCardPadding()
         .francoGlassBackground()
         .francoShadow(FrancoSphereDesign.Shadow.glassCard)
+    }
+    
+    private func statPill(_ title: String, _ value: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(color)
+            
+            Text(title)
+                .font(.system(size: 10))
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - My Buildings Section
@@ -388,7 +330,7 @@ struct WorkerDashboardView: View {
                 
                 Button(action: { showBuildingList = true }) {
                     HStack(spacing: 4) {
-                        Text("All")
+                        Text("View All")
                         Image(systemName: "chevron.right")
                     }
                     .font(.caption)
@@ -396,12 +338,12 @@ struct WorkerDashboardView: View {
                 }
             }
             
-            // Building grid using existing PropertyCard
+            // Building grid
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 16) {
-                ForEach(contextAdapter.assignedBuildings, id: \.id) { building in
+                ForEach(contextEngine.assignedBuildings.prefix(4), id: \.id) { building in
                     glassBuildingCard(for: building)
                 }
             }
@@ -409,16 +351,13 @@ struct WorkerDashboardView: View {
     }
     
     private func glassBuildingCard(for building: NamedCoordinate) -> some View {
-        Button(action: { navigateToBuilding(building) }) {
+        Button(action: {
+            selectedBuilding = building
+            showBuildingDetail = true
+        }) {
             VStack(spacing: 12) {
-                // Building image placeholder since imageAssetName is not available
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.title)
-                            .foregroundColor(.gray.opacity(0.5))
-                    )
+                // Building image using PropertyCard's logic
+                PropertyCard.buildingImage(for: building)
                     .frame(height: 100)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 
@@ -428,13 +367,37 @@ struct WorkerDashboardView: View {
                         .fontWeight(.medium)
                         .foregroundColor(.white)
                         .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                     
-                    if building.id == primaryBuilding?.id {
-                        GlassStatusBadge(
-                            text: "PRIMARY",
-                            style: .success,
-                            size: .small
-                        )
+                    // Show status badges
+                    HStack(spacing: 4) {
+                        if building.id == primaryBuilding?.id {
+                            GlassStatusBadge(
+                                text: "PRIMARY",
+                                style: .success,
+                                size: .small
+                            )
+                        }
+                        
+                        if building.id == contextEngine.currentBuilding?.id {
+                            GlassStatusBadge(
+                                text: "ACTIVE",
+                                icon: "clock.fill",
+                                style: .info,
+                                size: .small
+                            )
+                        }
+                        
+                        // Show task count for building
+                        let buildingTasks = contextEngine.getTasksForBuilding(building.id)
+                        if !buildingTasks.isEmpty {
+                            GlassStatusBadge(
+                                text: "\(buildingTasks.count)",
+                                icon: "checklist",
+                                style: .default,
+                                size: .small
+                            )
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -459,12 +422,31 @@ struct WorkerDashboardView: View {
                 )
             }
             
-            if let nextTask = contextAdapter.todaysTasks.first(where: { !$0.isCompleted }) {
+            if let nextTask = contextEngine.todaysTasks.first(where: { !$0.isCompleted }) {
                 insightCard(
                     title: "Next Task",
                     message: nextTask.title,
                     icon: "arrow.right.circle.fill",
                     color: .blue
+                )
+            }
+            
+            if contextEngine.assignedBuildings.count > 1 {
+                insightCard(
+                    title: "Route Optimization",
+                    message: "Swipe up on the map to view optimal route",
+                    icon: "map.fill",
+                    color: .purple
+                )
+            }
+            
+            // Suggest clock out if all tasks at current building are done
+            if contextEngine.shouldSuggestClockOut() {
+                insightCard(
+                    title: "Tasks Complete",
+                    message: "All tasks at \(contextEngine.currentBuilding?.name ?? "this building") are done",
+                    icon: "checkmark.seal.fill",
+                    color: .green
                 )
             }
         }
@@ -498,30 +480,10 @@ struct WorkerDashboardView: View {
         .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
     }
     
-    // MARK: - Map Bubble Markers
-    
-    private func buildingMapBubble(_ building: NamedCoordinate) -> some View {
-        ZStack {
-            Circle()
-                .fill(.ultraThinMaterial)
-                .frame(width: 40, height: 40)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                )
-            
-            Image(systemName: "building.2.fill")
-                .font(.system(size: 16))
-                .foregroundColor(.white)
-        }
-        .scaleEffect(selectedBuilding?.id == building.id ? 1.2 : 1.0)
-        .shadow(color: .white.opacity(0.3), radius: 4)
-    }
-    
     // MARK: - Helper Methods
     
     private func getWorkerInitials() -> String {
-        guard let worker = contextAdapter.currentWorker else { return "WO" }
+        guard let worker = contextEngine.currentWorker else { return "WO" }
         let components = worker.name.components(separatedBy: " ")
         let first = components.first?.first ?? Character("W")
         let last = components.count > 1 ? components.last?.first ?? Character("O") : Character("O")
@@ -529,7 +491,7 @@ struct WorkerDashboardView: View {
     }
     
     private func getUrgentTaskCount() -> Int {
-        return contextAdapter.todaysTasks.filter { task in
+        return contextEngine.todaysTasks.filter { task in
             guard let urgency = task.urgency else { return false }
             return urgency == .urgent || urgency == .critical || urgency == .emergency
         }.count
@@ -538,31 +500,21 @@ struct WorkerDashboardView: View {
     private func loadWorkerSpecificData() async {
         await viewModel.loadInitialData()
         
-        workerName = contextAdapter.currentWorker?.name ?? "Worker"
+        // Load context for current worker
+        if let currentUser = await authManager.getCurrentUser(),
+           let workerId = currentUser.workerId {
+            try? await contextEngine.loadContext(for: workerId)
+        }
         
-        let primary = determinePrimaryBuilding(for: contextAdapter.currentWorker?.id)
-        
+        let primary = determinePrimaryBuilding(for: contextEngine.currentWorker?.id)
         self.showOnlyMyBuildings = true
         self.primaryBuilding = primary
         
-        updateMapRegion()
-        
-        print("✅ Worker dashboard loaded: \(contextAdapter.assignedBuildings.count) buildings, primary: \(primary?.name ?? "none")")
-    }
-    
-    private func updateMapRegion() {
-        let center = primaryBuilding?.coordinate ??
-                     contextAdapter.assignedBuildings.first?.coordinate ??
-                     CLLocationCoordinate2D(latitude: 40.7589, longitude: -73.9851)
-        
-        mapRegion = MKCoordinateRegion(
-            center: center,
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        )
+        print("✅ Worker dashboard loaded: \(contextEngine.assignedBuildings.count) buildings, primary: \(primary?.name ?? "none")")
     }
     
     private func determinePrimaryBuilding(for workerId: String?) -> NamedCoordinate? {
-        let buildings = contextAdapter.assignedBuildings
+        let buildings = contextEngine.assignedBuildings
         guard let workerId = workerId else { return buildings.first }
         
         switch workerId {
@@ -578,29 +530,18 @@ struct WorkerDashboardView: View {
     }
     
     private func getEnhancedWorkerRole() -> String {
-        guard let worker = contextAdapter.currentWorker else { return "Building Operations" }
+        guard let worker = contextEngine.currentWorker else { return "Building Operations" }
         
         switch worker.id {
-        case "4": return "Museum & Property Specialist"
-        case "2": return "Park Operations & Maintenance"
-        case "5": return "West Village Buildings"
-        case "6": return "Downtown Maintenance"
-        case "1": return "Building Systems Specialist"
-        case "7": return "Evening Operations"
-        case "8": return "Portfolio Management"
+        case "4": return "Museum Specialist"
+        case "2": return "Park Operations"
+        case "5": return "West Village"
+        case "6": return "Downtown"
+        case "1": return "Systems Specialist"
+        case "7": return "Evening Ops"
+        case "8": return "Portfolio Mgmt"
         default: return worker.role.rawValue.capitalized
         }
-    }
-    
-    private func navigateToBuilding(_ building: NamedCoordinate) {
-        let isMyBuilding = contextAdapter.assignedBuildings.contains { $0.id == building.id }
-        selectedBuilding = building
-        selectedBuildingIsAssigned = isMyBuilding
-        showBuildingDetail = true
-    }
-    
-    private func getAllBuildings() -> [NamedCoordinate] {
-        return contextAdapter.assignedBuildings
     }
 }
 

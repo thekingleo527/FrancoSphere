@@ -2,20 +2,29 @@ import SwiftUI
 // Import Nova Types
 // All Nova types (NovaContext, NovaPrompt, etc.) come from NovaTypes.swift
 
+// DEPENDENCIES:
+// - AIAssistantImageLoader: Loads the AI assistant image from Assets
+// - AIAssistant image: Must be present in Assets catalog
+// - Nova types: Import from NovaTypes.swift if needed
+
 //
-//  NovaAvatar.swift - UNIFIED VERSION
+//  NovaAvatar.swift - AI ASSISTANT ANIMATED VERSION
 //  FrancoSphere
 //
-//  ✅ Uses Size enum pattern
-//  ✅ Integrates AIAssistantImageLoader.circularAIAssistantView
-//  ✅ Maintains sophisticated animations
-//  ✅ Circular image with pulsating effects
+//  ✅ Uses actual AI Assistant image from Assets
+//  ✅ Sophisticated animations on the AI image itself
+//  ✅ Thinking particles when busy
+//  ✅ Breathing and rotation effects
+//  ✅ Status badge with mini AI avatar
 //  ✅ FIXED: iOS 17 onChange syntax and method parameters
 //
 
 import SwiftUI
 
 // MARK: - Nova Avatar Component
+/// An animated AI assistant avatar that shows the actual AI assistant image
+/// with sophisticated animations for different states (active, busy, urgent).
+/// The avatar breathes naturally, rotates when thinking, and shows particle effects.
 struct NovaAvatar: View {
     // Configuration
     let size: Size
@@ -31,6 +40,7 @@ struct NovaAvatar: View {
     @State private var glowOpacity: Double = 0.3
     @State private var rotationAngle: Double = 0
     @State private var busyPulse = false
+    @State private var hasStartedPulse = false
     
     init(
         size: Size = .large,
@@ -59,7 +69,6 @@ struct NovaAvatar: View {
             avatarView
                 .overlay(glowEffect)
                 .overlay(urgentPulseRing)
-                .scaleEffect(breathe ? 1.03 : 0.97)
                 .shadow(
                     color: glowColor.opacity(glowOpacity),
                     radius: size.shadowRadius,
@@ -84,7 +93,6 @@ struct NovaAvatar: View {
                     )
             }
         }
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: breathe)
         .onChange(of: isBusy) { oldValue, newValue in
             if newValue {
                 startBusyAnimation()
@@ -97,104 +105,209 @@ struct NovaAvatar: View {
     // MARK: - Avatar View using AIAssistantImageLoader
     private var avatarView: some View {
         ZStack {
-            // Base avatar with custom border
+            // Base AI Assistant avatar
             AIAssistantImageLoader.circularAIAssistantView(
                 diameter: size.dimension,
-                borderColor: borderColor
+                borderColor: .clear // We'll add our own animated border
             )
+            .scaleEffect(breathe ? 1.05 : 0.95) // Breathing effect on the AI image itself
+            .rotationEffect(.degrees(isBusy ? rotationAngle : 0)) // Rotate when thinking
             
-            // Custom border overlay for width control
+            // Animated border ring
             Circle()
-                .stroke(borderColor, lineWidth: borderWidth)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            borderColor,
+                            borderColor.opacity(0.6),
+                            borderColor.opacity(0.3)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: borderWidth
+                )
                 .frame(width: size.dimension, height: size.dimension)
+                .rotationEffect(.degrees(isBusy ? -rotationAngle * 0.5 : 0)) // Counter-rotate border
             
-            // Rotation effect overlay when busy
+            // Thinking particles effect when busy
             if isBusy {
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.purple.opacity(0.6),
-                                Color.blue.opacity(0.4),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 2
-                    )
-                    .frame(width: size.dimension, height: size.dimension)
-                    .rotationEffect(.degrees(rotationAngle))
+                ForEach(0..<3) { index in
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.purple.opacity(0.8),
+                                    Color.blue.opacity(0.6)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 4, height: 4)
+                        .offset(y: -size.dimension * 0.4)
+                        .rotationEffect(.degrees(Double(index) * 120 + rotationAngle * 2))
+                        .opacity(busyPulse ? 0.0 : 1.0)
+                        .animation(
+                            Animation.easeInOut(duration: 1.0)
+                                .repeatForever()
+                                .delay(Double(index) * 0.2),
+                            value: busyPulse
+                        )
+                }
             }
         }
     }
     
     // MARK: - Busy Pulse Ring
     private var busyPulseRing: some View {
-        Circle()
-            .stroke(
-                LinearGradient(
-                    colors: [
-                        Color.blue,
-                        Color.purple
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                lineWidth: 3
-            )
-            .frame(
-                width: size.dimension + 16,
-                height: size.dimension + 16
-            )
-            .scaleEffect(busyPulse ? 1.2 : 1.0)
-            .opacity(busyPulse ? 0.0 : 0.8)
-            .animation(
-                Animation.easeInOut(duration: 1.0)
-                    .repeatForever(autoreverses: false),
-                value: busyPulse
-            )
+        ZStack {
+            // Primary thinking ring
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.blue,
+                            Color.purple,
+                            Color.blue
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 3
+                )
+                .frame(
+                    width: size.dimension + 16,
+                    height: size.dimension + 16
+                )
+                .scaleEffect(busyPulse ? 1.2 : 1.0)
+                .opacity(busyPulse ? 0.0 : 0.8)
+                .rotationEffect(.degrees(rotationAngle * 0.5))
+                .animation(
+                    Animation.easeInOut(duration: 1.5)
+                        .repeatForever(autoreverses: false),
+                    value: busyPulse
+                )
+            
+            // Secondary inner ring for depth
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.purple.opacity(0.6),
+                            Color.blue.opacity(0.4)
+                        ],
+                        startPoint: .bottom,
+                        endPoint: .top
+                    ),
+                    lineWidth: 1.5
+                )
+                .frame(
+                    width: size.dimension + 8,
+                    height: size.dimension + 8
+                )
+                .scaleEffect(busyPulse ? 1.1 : 0.95)
+                .opacity(busyPulse ? 0.0 : 0.6)
+                .rotationEffect(.degrees(-rotationAngle * 0.3))
+                .animation(
+                    Animation.easeInOut(duration: 1.2)
+                        .repeatForever(autoreverses: false)
+                        .delay(0.2),
+                    value: busyPulse
+                )
+        }
     }
     
     // MARK: - Glow Effect
     private var glowEffect: some View {
-        Circle()
-            .stroke(
-                LinearGradient(
-                    colors: [
-                        glowColor.opacity(0.6),
-                        glowColor.opacity(0.3),
-                        Color.clear
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                ),
-                lineWidth: 2
-            )
-            .blur(radius: 4)
-            .opacity(breathe ? 0.9 : 0.6)
+        ZStack {
+            // Outer glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            glowColor.opacity(0.4),
+                            glowColor.opacity(0.1),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: size.dimension * 0.3,
+                        endRadius: size.dimension * 0.6
+                    )
+                )
+                .frame(
+                    width: size.dimension * 1.4,
+                    height: size.dimension * 1.4
+                )
+                .blur(radius: 8)
+                .opacity(breathe ? 0.9 : 0.5)
+            
+            // Inner ring glow
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            glowColor.opacity(0.6),
+                            glowColor.opacity(0.3),
+                            Color.clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 2
+                )
+                .blur(radius: 4)
+                .opacity(breathe ? 0.9 : 0.6)
+        }
     }
     
     // MARK: - Urgent Pulse Ring
     private var urgentPulseRing: some View {
         Group {
             if hasUrgentInsights {
-                Circle()
-                    .stroke(Color.orange, lineWidth: 2)
-                    .frame(
-                        width: size.dimension + 8,
-                        height: size.dimension + 8
-                    )
-                    .scaleEffect(pulseScale)
-                    .opacity(2.0 - pulseScale)
-                    .animation(
-                        Animation.easeInOut(duration: 1.0)
-                            .repeatForever(autoreverses: false),
-                        value: pulseScale
-                    )
-                    .onAppear {
+                ZStack {
+                    // Primary urgent ring
+                    Circle()
+                        .stroke(Color.orange, lineWidth: 2)
+                        .frame(
+                            width: size.dimension + 8,
+                            height: size.dimension + 8
+                        )
+                        .scaleEffect(pulseScale)
+                        .opacity(2.0 - pulseScale)
+                        .animation(
+                            Animation.easeInOut(duration: 1.0)
+                                .repeatForever(autoreverses: false),
+                            value: pulseScale
+                        )
+                    
+                    // Secondary urgent dots
+                    ForEach(0..<4) { index in
+                        Circle()
+                            .fill(Color.orange)
+                            .frame(width: 3, height: 3)
+                            .offset(y: -size.dimension * 0.5 - 4)
+                            .rotationEffect(.degrees(Double(index) * 90))
+                            .scaleEffect(pulseScale * 0.8)
+                            .opacity(2.0 - pulseScale)
+                            .animation(
+                                Animation.easeInOut(duration: 1.0)
+                                    .repeatForever(autoreverses: false)
+                                    .delay(Double(index) * 0.1),
+                                value: pulseScale
+                            )
+                    }
+                }
+                .onAppear {
+                    if !hasStartedPulse {
+                        hasStartedPulse = true
                         pulseScale = 1.3
                     }
+                }
+                .onDisappear {
+                    hasStartedPulse = false
+                    pulseScale = 1.0
+                }
             }
         }
     }
@@ -202,6 +315,28 @@ struct NovaAvatar: View {
     // MARK: - Status Badge
     private var statusBadge: some View {
         ZStack {
+            // Glowing background when busy
+            if isBusy {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                statusBadgeColor,
+                                statusBadgeColor.opacity(0.3)
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size.badgeSize
+                        )
+                    )
+                    .frame(
+                        width: size.badgeSize * 1.5,
+                        height: size.badgeSize * 1.5
+                    )
+                    .blur(radius: 3)
+                    .opacity(glowOpacity)
+            }
+            
             Circle()
                 .fill(statusBadgeColor)
                 .frame(
@@ -213,9 +348,21 @@ struct NovaAvatar: View {
                         .stroke(Color.white, lineWidth: 1)
                 )
             
-            statusIcon
-                .font(.system(size: size.badgeIconSize, weight: .bold))
-                .foregroundColor(.white)
+            // Use mini AI assistant icon instead of system icons
+            if isBusy {
+                // Mini spinning AI icon for busy state
+                AIAssistantImageLoader.circularAIAssistantView(
+                    diameter: size.badgeSize - 4,
+                    borderColor: .white
+                )
+                .rotationEffect(.degrees(rotationAngle))
+                .scaleEffect(0.8)
+            } else {
+                // Status indicator overlay
+                statusIcon
+                    .font(.system(size: size.badgeIconSize, weight: .bold))
+                    .foregroundColor(.white)
+            }
         }
     }
     
@@ -247,45 +394,47 @@ struct NovaAvatar: View {
     }
     
     private var statusIcon: Image {
-        if isBusy {
-            return Image(systemName: "brain")
-        } else if hasUrgentInsights {
-            return Image(systemName: "exclamationmark")
+        if hasUrgentInsights {
+            return Image(systemName: "exclamationmark.circle.fill")
         } else if isActive {
-            return Image(systemName: "waveform")
+            return Image(systemName: "waveform.circle.fill")
         } else {
-            return Image(systemName: "checkmark")
+            return Image(systemName: "checkmark.circle.fill")
         }
     }
     
     // MARK: - Animation Methods
     
     private func startBreathingAnimation() {
+        // Natural breathing rhythm
         withAnimation(
-            Animation.easeInOut(duration: 2.0)
+            Animation.easeInOut(duration: 3.0)
                 .repeatForever(autoreverses: true)
         ) {
             breathe = true
         }
         
+        // Gentle glow pulsing
         withAnimation(
-            Animation.easeInOut(duration: 3.0)
+            Animation.easeInOut(duration: 4.0)
                 .repeatForever(autoreverses: true)
         ) {
-            glowOpacity = 0.8
+            glowOpacity = 0.9
         }
     }
     
     private func startBusyAnimation() {
+        // Smooth thinking animation
         withAnimation(
-            Animation.easeInOut(duration: 1.0)
+            Animation.easeInOut(duration: 1.5)
                 .repeatForever(autoreverses: false)
         ) {
             busyPulse = true
         }
         
+        // Gentle rotation for thinking state
         withAnimation(
-            Animation.linear(duration: 4.0)
+            Animation.linear(duration: 8.0)
                 .repeatForever(autoreverses: false)
         ) {
             rotationAngle = 360
