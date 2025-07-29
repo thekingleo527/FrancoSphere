@@ -152,7 +152,6 @@
 		23273AB92E2B8674004A52C6 /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F32E2B8674004A52C6 /* InitializationView.swift */; };
 		23273ABA2E2B8674004A52C6 /* UnifiedDataInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395B2E2B8674004A52C6 /* UnifiedDataInitializer.swift */; };
 		23273ABB2E2B8674004A52C6 /* DatabaseSchemaVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739412E2B8674004A52C6 /* DatabaseSchemaVerifier.swift */; };
-		23273ABC2E2B8674004A52C6 /* ContextualTaskIntelligence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */; };
 		23273ABD2E2B8674004A52C6 /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E12E2B8674004A52C6 /* BuildingDetailView.swift */; };
 		23273ABE2E2B8674004A52C6 /* PressableGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739192E2B8674004A52C6 /* PressableGlassCard.swift */; };
 		23273ABF2E2B8674004A52C6 /* WeatherTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739392E2B8674004A52C6 /* WeatherTasksSection.swift */; };
@@ -309,7 +308,6 @@
 		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
 		2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
 		232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
-		232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualTaskIntelligence.swift; sourceTree = "<group>"; };
 		232739772E2B8674004A52C6 /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
 		232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereExtensions.swift; sourceTree = "<group>"; };
 		232739792E2B8674004A52C6 /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
@@ -672,7 +670,6 @@
 				2327396B2E2B8674004A52C6 /* DTOs */,
 				2327396E2E2B8674004A52C6 /* Enums */,
 				232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */,
-				232739752E2B8674004A52C6 /* ContextualTaskIntelligence.swift */,
 				232739772E2B8674004A52C6 /* FilteredTaskResult.swift */,
 				232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */,
 				232739792E2B8674004A52C6 /* FrancoSphereModels.swift */,
@@ -1247,7 +1244,6 @@
 				23273AB92E2B8674004A52C6 /* InitializationView.swift in Sources */,
 				23273ABA2E2B8674004A52C6 /* UnifiedDataInitializer.swift in Sources */,
 				23273ABB2E2B8674004A52C6 /* DatabaseSchemaVerifier.swift in Sources */,
-				23273ABC2E2B8674004A52C6 /* ContextualTaskIntelligence.swift in Sources */,
 				23273ABD2E2B8674004A52C6 /* BuildingDetailView.swift in Sources */,
 				23273ABE2E2B8674004A52C6 /* PressableGlassCard.swift in Sources */,
 				23273ABF2E2B8674004A52C6 /* WeatherTasksSection.swift in Sources */,

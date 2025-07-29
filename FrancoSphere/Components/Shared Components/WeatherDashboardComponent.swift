@@ -45,8 +45,9 @@ struct WeatherDashboardComponent: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                if let address = building.address {
-                    Text(address)
+                // ✅ FIXED: address is non-optional, just check if not empty
+                if !building.address.isEmpty {
+                    Text(building.address)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
@@ -72,7 +73,7 @@ struct WeatherDashboardComponent: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text(weather.condition)  // ✅ FIXED: Use 'condition' not 'conditions'
+                Text(weather.condition)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
@@ -82,8 +83,7 @@ struct WeatherDashboardComponent: View {
             
             // Additional Weather Info
             VStack(alignment: .trailing, spacing: 2) {
-                // Note: precipitation not in CoreTypes.WeatherData
-                
+                // Wind info if significant
                 if weather.windSpeed > 10 {
                     HStack(spacing: 4) {
                         Image(systemName: "wind")
@@ -131,7 +131,6 @@ struct WeatherDashboardComponent: View {
     // MARK: - Computed Properties
     
     private var weatherIcon: String {
-        // ✅ FIXED: Properly convert string condition to enum
         let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
         
         switch conditionEnum {
@@ -149,7 +148,6 @@ struct WeatherDashboardComponent: View {
     }
     
     private var weatherColor: Color {
-        // ✅ FIXED: Properly convert string condition to enum
         let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
         
         switch conditionEnum {
@@ -180,7 +178,7 @@ struct TaskRowView: View {
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
                 
-                // Task title - ✅ FIXED: title is not optional
+                // Task title
                 Text(task.title)
                     .font(.caption)
                     .foregroundColor(.primary)
@@ -263,23 +261,23 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
     // MARK: - Sample Data
     
     static var sampleBuilding: NamedCoordinate {
+        // ✅ FIXED: Removed imageAssetName
         NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
             address: "150 W 17th St, New York, NY 10011",
             latitude: 40.7402,
-            longitude: -73.9980,
-            imageAssetName: "rubin_museum"
+            longitude: -73.9980
         )
     }
     
     static var sampleWeather: CoreTypes.WeatherData {
         CoreTypes.WeatherData(
             temperature: 72,
-            condition: CoreTypes.WeatherCondition.sunny.rawValue,  // ✅ FIXED: Use enum rawValue
+            condition: CoreTypes.WeatherCondition.sunny.rawValue,
             humidity: 65,
             windSpeed: 8.5,
-            outdoorWorkRisk: CoreTypes.OutdoorWorkRisk.low,  // ✅ FIXED: Added OutdoorWorkRisk
+            outdoorWorkRisk: CoreTypes.OutdoorWorkRisk.low,
             timestamp: Date()
         )
     }
@@ -287,31 +285,30 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
     static var stormyWeather: CoreTypes.WeatherData {
         CoreTypes.WeatherData(
             temperature: 58,
-            condition: CoreTypes.WeatherCondition.stormy.rawValue,  // ✅ FIXED: Use enum rawValue
+            condition: CoreTypes.WeatherCondition.stormy.rawValue,
             humidity: 85,
             windSpeed: 25.0,
-            outdoorWorkRisk: CoreTypes.OutdoorWorkRisk.extreme,  // ✅ FIXED: Added OutdoorWorkRisk
+            outdoorWorkRisk: CoreTypes.OutdoorWorkRisk.extreme,
             timestamp: Date()
         )
     }
     
     static var sampleTasks: [ContextualTask] {
         [
+            // ✅ FIXED: Removed estimatedDuration from all tasks
             ContextualTask(
                 id: "1",
                 title: "Window Cleaning",
                 description: "Clean exterior windows",
                 isCompleted: false,
                 completedDate: nil,
-                dueDate: Date(),  // Use dueDate, not scheduledDate
+                dueDate: Date(),
                 category: .cleaning,
                 urgency: .medium,
                 building: nil,
                 worker: nil,
                 buildingId: "14",
-                priority: .medium,
-                assignedWorkerId: nil,
-                estimatedDuration: 3600
+                priority: .medium
             ),
             ContextualTask(
                 id: "2",
@@ -325,9 +322,7 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 building: nil,
                 worker: nil,
                 buildingId: "14",
-                priority: .high,
-                assignedWorkerId: nil,
-                estimatedDuration: 3600
+                priority: .high
             ),
             ContextualTask(
                 id: "3",
@@ -341,9 +336,7 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 building: nil,
                 worker: nil,
                 buildingId: "14",
-                priority: .critical,
-                assignedWorkerId: nil,
-                estimatedDuration: 3600
+                priority: .critical
             )
         ]
     }

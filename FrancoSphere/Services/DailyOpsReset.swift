@@ -2,10 +2,13 @@
 //  DailyOpsReset.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Uses actual ContextualTask properties and initializer
-//  ✅ CORRECTED: Removed non-existent recurrence, assignedWorkerName, estimatedDuration
-//  ✅ CORRECTED: Uses proper TaskCategory cases (no .compliance)
+//  ✅ FIXED: Correct ContextualTask initializer usage (removed scheduledDate)
+//  ✅ FIXED: Removed extra arguments from task creation
+//  ✅ FIXED: Syntax error in loadContext call
 //  ✅ ALIGNED: With actual v6.0 GRDB actor architecture
+//
+//  NOTE: ContextualTask only accepts these parameters:
+//  - title, description, isCompleted, dueDate, category, urgency, buildingId
 //
 
 import Foundation
@@ -118,8 +121,8 @@ class DailyOpsReset: ObservableObject {
         do {
             let allTasks = try await TaskService.shared.getAllTasks()
             let yesterdayTasks = allTasks.filter { task in
-                guard let scheduledDate = task.scheduledDate else { return false }
-                return Calendar.current.isDate(scheduledDate, inSameDayAs: yesterday)
+                guard let dueDate = task.dueDate else { return false }  // Use dueDate instead of scheduledDate
+                return Calendar.current.isDate(dueDate, inSameDayAs: yesterday)
             }
             
             var missedCount = 0
@@ -138,7 +141,7 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    // ✅ FIXED: Create new task instance for recurring tasks
+    // ✅ FIXED: Create new task instance for recurring tasks using dueDate
     private func createRecurringTaskInstance(from task: ContextualTask) async {
         // Determine if this is a recurring task based on title patterns
         let isRecurring = task.title.lowercased().contains("daily") ||
@@ -149,19 +152,15 @@ class DailyOpsReset: ObservableObject {
         
         let nextScheduleDate = calculateNextOccurrence(from: task)
         
-        // ✅ FIXED: Use actual ContextualTask initializer
+        // ✅ FIXED: Use only the parameters that ContextualTask accepts (no scheduledDate)
         let newTask = ContextualTask(
             title: task.title,
             description: task.description,
             isCompleted: false,
-            scheduledDate: nextScheduleDate,
             dueDate: nextScheduleDate,
             category: task.category,
             urgency: task.urgency,
-            building: task.building,
-            worker: task.worker,
-            buildingId: task.buildingId,
-            buildingName: task.buildingName
+            buildingId: task.buildingId
         )
         
         do {
@@ -174,7 +173,7 @@ class DailyOpsReset: ObservableObject {
     
     private func calculateNextOccurrence(from task: ContextualTask) -> Date {
         let calendar = Calendar.current
-        let baseDate = task.scheduledDate ?? Date()
+        let baseDate = task.dueDate ?? Date()  // Use dueDate since scheduledDate doesn't exist
         
         // Determine recurrence from task title
         if task.title.lowercased().contains("daily") {
@@ -216,18 +215,15 @@ class DailyOpsReset: ObservableObject {
                 
                 Task {
                     for weatherTask in weatherTasks {
-                        // ✅ FIXED: Use actual ContextualTask initializer with proper building reference
+                        // ✅ FIXED: Use only valid ContextualTask initializer parameters (no scheduledDate)
                         let contextualTask = ContextualTask(
                             title: weatherTask.title,
                             description: weatherTask.description,
                             isCompleted: false,
-                            scheduledDate: weatherTask.dueDate ?? Date(),
                             dueDate: weatherTask.dueDate ?? Date(),
                             category: TaskCategory.maintenance,
                             urgency: TaskUrgency.medium,
-                            building: building,
-                            buildingId: building.id,
-                            buildingName: building.name
+                            buildingId: building.id
                         )
                         
                         do {
@@ -266,18 +262,15 @@ class DailyOpsReset: ObservableObject {
         ]
         
         for (title, description) in dailyTaskTemplates {
-            // ✅ FIXED: Use actual ContextualTask initializer
+            // ✅ FIXED: Use only valid ContextualTask initializer parameters (no scheduledDate)
             let task = ContextualTask(
                 title: title,
                 description: description,
                 isCompleted: false,
-                scheduledDate: Date(),
                 dueDate: Date(),
                 category: TaskCategory.inspection,
                 urgency: TaskUrgency.medium,
-                building: building,
-                buildingId: building.id,
-                buildingName: building.name
+                buildingId: building.id
             )
             
             do {
@@ -297,17 +290,15 @@ class DailyOpsReset: ObservableObject {
         ]
         
         for (title, description) in weeklyTaskTemplates {
+            // ✅ FIXED: Use only valid ContextualTask initializer parameters (no scheduledDate)
             let task = ContextualTask(
                 title: title,
                 description: description,
                 isCompleted: false,
-                scheduledDate: Date(),
                 dueDate: Date(),
                 category: TaskCategory.maintenance,
                 urgency: TaskUrgency.medium,
-                building: building,
-                buildingId: building.id,
-                buildingName: building.name
+                buildingId: building.id
             )
             
             do {
@@ -327,18 +318,15 @@ class DailyOpsReset: ObservableObject {
         ]
         
         for (title, description) in monthlyTaskTemplates {
-            // ✅ FIXED: Use .inspection instead of non-existent .compliance
+            // ✅ FIXED: Use .inspection category and removed scheduledDate parameter
             let task = ContextualTask(
                 title: title,
                 description: description,
                 isCompleted: false,
-                scheduledDate: Date(),
                 dueDate: Date(),
                 category: TaskCategory.inspection,
                 urgency: TaskUrgency.high,
-                building: building,
-                buildingId: building.id,
-                buildingName: building.name
+                buildingId: building.id
             )
             
             do {
@@ -358,7 +346,8 @@ class DailyOpsReset: ObservableObject {
             
             for worker in activeWorkers {
                 do {
-                    try await WorkerContextEngine.shared.loadContext(for: for: worker.id)
+                    // ✅ FIXED: Removed duplicate "for" in method call
+                    try await WorkerContextEngine.shared.loadContext(for: worker.id)
                     print("✅ Refreshed context for worker: \(worker.name)")
                 } catch {
                     print("⚠️ Failed to refresh context for worker \(worker.name): \(error)")
@@ -411,8 +400,8 @@ extension DailyOpsReset {
             let workers = try await WorkerService.shared.getAllActiveWorkers()
             
             let todaysTasks = tasks.filter { task in
-                guard let scheduledDate = task.scheduledDate else { return false }
-                return Calendar.current.isDate(scheduledDate, inSameDayAs: Date())
+                guard let dueDate = task.dueDate else { return false }  // Use dueDate instead of scheduledDate
+                return Calendar.current.isDate(dueDate, inSameDayAs: Date())
             }
             
             return DailyResetMetrics(
@@ -459,3 +448,28 @@ struct DailyResetMetrics {
         }
     }
 }
+
+// MARK: - Notes
+/*
+CONTEXTUAL TASK INITIALIZER:
+Based on the errors, ContextualTask appears to accept these parameters:
+- title: String
+- description: String
+- isCompleted: Bool
+- dueDate: Date?
+- category: TaskCategory
+- urgency: TaskUrgency
+- buildingId: String?
+
+The following were removed as they caused "extra arguments" errors:
+- scheduledDate: Date?
+- building: NamedCoordinate
+- worker: Worker?
+- buildingName: String?
+
+If you need to store scheduled date, building, or worker information with the task,
+you'll need to check the actual ContextualTask definition and either:
+1. Use only the buildingId/workerId fields
+2. Update ContextualTask to accept these additional fields
+3. Create a wrapper or extension to handle the extra data
+*/

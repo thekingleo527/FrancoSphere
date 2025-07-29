@@ -6,6 +6,7 @@
 //  ✅ ENHANCED: Preserves ALL existing functionality
 //  ✅ ADDED: Coverage detection and intelligence panel integration
 //  ✅ MAINTAINS: Real data integration, clock in/out, four-tab system
+//  ✅ ALIGNED: With actual NamedCoordinate type properties
 //
 
 import SwiftUI
@@ -13,7 +14,7 @@ import MapKit
 
 struct BuildingDetailView: View {
     let building: NamedCoordinate
-    @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
+    @StateObject private var contextAdapter = WorkerContextEngine.shared
     @Environment(\.dismiss) private var dismiss
     
     // PRESERVED: All existing state variables
@@ -157,10 +158,10 @@ struct BuildingDetailView: View {
         .cornerRadius(12)
     }
     
-    // PRESERVED: Building image view with ALL existing functionality
+    // FIXED: Building image view without imageAssetName
     private var buildingImageView: some View {
         ZStack {
-            // Try to get image from imageAssetName or use fallback
+            // Try to get image using standardized name based on building name
             if let image = getBuildingImage() {
                 Image(uiImage: image)
                     .resizable()
@@ -219,23 +220,34 @@ struct BuildingDetailView: View {
         )
     }
     
-    // Helper function to get building image
+    // FIXED: Helper function to get building image without imageAssetName
     private func getBuildingImage() -> UIImage? {
-        // Try imageAssetName first
-        if let imageName = building.imageAssetName,
-           !imageName.isEmpty,
-           let image = UIImage(named: imageName) {
-            return image
-        }
-        
         // Try standardized name based on building name
         let standardName = building.name
             .replacingOccurrences(of: " ", with: "_")
             .replacingOccurrences(of: "-", with: "_")
             .replacingOccurrences(of: "(", with: "")
             .replacingOccurrences(of: ")", with: "")
+            .lowercased()
         
+        // Try exact match first
         if let image = UIImage(named: standardName) {
+            return image
+        }
+        
+        // Try with "building_" prefix
+        if let image = UIImage(named: "building_\(standardName)") {
+            return image
+        }
+        
+        // Try simplified name
+        let simplifiedName = building.name
+            .components(separatedBy: " ")
+            .first?
+            .lowercased() ?? ""
+        
+        if !simplifiedName.isEmpty,
+           let image = UIImage(named: "building_\(simplifiedName)") {
             return image
         }
         
@@ -357,7 +369,7 @@ struct BuildingDetailView: View {
         }
     }
     
-    // PRESERVED: Overview tab with ALL existing functionality
+    // FIXED: Overview tab with proper address handling
     private var overviewTab: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Building Overview")
@@ -382,14 +394,14 @@ struct BuildingDetailView: View {
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
             
-            // Show address if available
-            if let address = building.address, !address.isEmpty {
+            // FIXED: Show address without conditional binding (address is non-optional)
+            if !building.address.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Address")
                         .font(.headline)
                         .foregroundColor(.white)
                     
-                    Text(address)
+                    Text(building.address)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -791,6 +803,7 @@ struct BuildingDetailView_Previews: PreviewProvider {
         let sampleBuilding = NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
+            address: "150 W 17th St, New York, NY 10011",
             latitude: 40.7402,
             longitude: -73.9980
         )
