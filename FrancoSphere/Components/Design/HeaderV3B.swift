@@ -7,6 +7,7 @@
 //  ✅ ROLE-AWARE: AI adapts features based on user role and current task
 //  ✅ CONTEXT-INTELLIGENT: AI understands worker location, task, and building
 //  ✅ VISUAL DIFFERENTIATION: AI button appearance reflects role context
+//  ✅ FIXED: Aligned with CoreTypes.UserRole (admin, manager, worker, client)
 //
 
 import SwiftUI
@@ -209,7 +210,7 @@ struct HeaderV3B: View {
         switch role {
         case .worker: return .blue.opacity(0.7)
         case .admin: return .green.opacity(0.7)
-        case .supervisor: return .orange.opacity(0.7)
+        case .manager: return .orange.opacity(0.7)  // ✅ FIXED: Was .supervisor
         case .client: return .purple.opacity(0.7)
         }
     }
@@ -219,24 +220,21 @@ struct HeaderV3B: View {
         
         // Enhanced role descriptions based on worker
         switch worker.id {
-        case "4": return "Museum & Property Specialist"
-        case "2": return "Park Operations & Maintenance"
-        case "5": return "West Village Buildings"
-        case "6": return "Downtown Maintenance"
-        case "1": return "Building Systems Specialist"
-        case "7": return "Evening Operations"
-        case "8": return "Portfolio Management"
-        default: return worker.role.rawValue.capitalized
+        case "4": return "Museum & Property Specialist"  // Kevin
+        case "2": return "Park Operations & Maintenance"  // Edwin
+        case "5": return "West Village Buildings"         // Mercedes
+        case "6": return "Downtown Maintenance"           // Luis
+        case "1": return "Building Systems Specialist"    // Greg
+        case "7": return "Evening Operations"             // Angel
+        case "8": return "Portfolio Management"           // Shawn
+        case "3": return "Executive Operations"           // Francisco
+        default: return worker.role.displayName
         }
     }
     
     private var clockStatusColor: Color {
-        // Check if adapter has clock-in info, fallback to showClockPill
-        if let hasClockInProperty = contextAdapter.currentBuilding {
-            return .green
-        } else {
-            return showClockPill ? .green : .orange
-        }
+        // ✅ FIXED: Simplified logic to avoid unused variable
+        return contextAdapter.currentBuilding != nil ? .green : .orange
     }
     
     private var clockStatusText: String {
@@ -259,7 +257,7 @@ struct HeaderV3B: View {
         switch worker.role {
         case .worker: return .blue        // Field assistance focus
         case .admin: return .green        // Management oversight
-        case .supervisor: return .orange  // Team coordination
+        case .manager: return .orange     // ✅ FIXED: Team coordination
         case .client: return .purple      // Service insights
         }
     }
@@ -271,7 +269,7 @@ struct HeaderV3B: View {
         switch worker.role {
         case .worker: return [.blue, .cyan, .blue]
         case .admin: return [.green, .mint, .green]
-        case .supervisor: return [.orange, .yellow, .orange]
+        case .manager: return [.orange, .yellow, .orange]  // ✅ FIXED
         case .client: return [.purple, .pink, .purple]
         }
     }
@@ -282,9 +280,9 @@ struct HeaderV3B: View {
         
         switch worker.role {
         case .worker: return "wrench.and.screwdriver"     // Tools for field work
-        case .admin: return "chart.line.uptrend.xyaxis"  // Analytics for management
-        case .supervisor: return "person.3"               // Team coordination
-        case .client: return "building.2"                 // Building insights
+        case .admin: return "chart.line.uptrend.xyaxis"   // Analytics for management
+        case .manager: return "person.3"                   // ✅ FIXED: Team coordination
+        case .client: return "building.2"                  // Building insights
         }
     }
     
@@ -333,7 +331,7 @@ extension HeaderV3B {
         case .admin:
             context += "Portfolio management & analytics"
             
-        case .supervisor:
+        case .manager:  // ✅ FIXED
             context += "Team coordination & oversight"
             
         case .client:
@@ -370,7 +368,7 @@ extension HeaderV3B {
                 "Worker productivity"
             ]
             
-        case .supervisor:
+        case .manager:  // ✅ FIXED
             return [
                 "Team coordination",
                 "Task assignment",
@@ -443,6 +441,11 @@ struct HeaderV3B_Previews: PreviewProvider {
 /*
 🎯 POST-CLEANUP VERSION:
 
+✅ FIXED ALL ERRORS:
+- Replaced all .supervisor references with .manager
+- Removed unused hasClockInProperty variable
+- Aligned with CoreTypes.UserRole enum
+
 ✅ SINGLE ADAPTER REFERENCE:
 - Uses WorkerContextEngineAdapter.shared (no duplicates)
 - Proper import statements
@@ -456,7 +459,7 @@ struct HeaderV3B_Previews: PreviewProvider {
 ✅ ROLE-BASED CONTEXT:
 - Workers: Blue theme, field assistance focus
 - Admins: Green theme, portfolio management
-- Supervisors: Orange theme, team coordination
+- Managers: Orange theme, team coordination
 - Clients: Purple theme, building insights
 
 🔄 REAL DATA INTEGRATION:

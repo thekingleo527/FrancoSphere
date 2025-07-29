@@ -213,6 +213,7 @@
 		238DBE8E2E2CCC9900D6B671 /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 		23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */; };
+		23EA71022E3860C40010FA03 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71012E3860C40010FA03 /* UnifiedDataService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -439,6 +440,7 @@
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
 		23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardViewModel.swift; sourceTree = "<group>"; };
+		23EA71012E3860C40010FA03 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -833,6 +835,7 @@
 		232739CE2E2B8674004A52C6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				23EA71012E3860C40010FA03 /* UnifiedDataService.swift */,
 				232739B02E2B8674004A52C6 /* AI */,
 				232739B22E2B8674004A52C6 /* Configuration */,
 				232739B42E2B8674004A52C6 /* Migration */,
@@ -1170,6 +1173,7 @@
 				23273A2B2E2B8674004A52C6 /* UpdatedDataLoading.swift in Sources */,
 				23273A2C2E2B8674004A52C6 /* TypeMigrationService.swift in Sources */,
 				23273A2D2E2B8674004A52C6 /* TimelineProgressBar.swift in Sources */,
+				23EA71022E3860C40010FA03 /* UnifiedDataService.swift in Sources */,
 				23273A2E2E2B8674004A52C6 /* AssetImageDebugger.swift in Sources */,
 				23273A2F2E2B8674004A52C6 /* AssignedBuildingsView.swift in Sources */,
 				23273A302E2B8674004A52C6 /* BuildingDetailViewModel.swift in Sources */,
