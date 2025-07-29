@@ -70,7 +70,6 @@
 		23273A4E2E2B8674004A52C6 /* GlassStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739152E2B8674004A52C6 /* GlassStatusBadge.swift */; };
 		23273A4F2E2B8674004A52C6 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FA2E2B8674004A52C6 /* WorkerProfileView.swift */; };
 		23273A502E2B8674004A52C6 /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C02E2B8674004A52C6 /* IntelligenceService.swift */; };
-		23273A512E2B8674004A52C6 /* AIAvatarOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739212E2B8674004A52C6 /* AIAvatarOverlayView.swift */; };
 		23273A522E2B8674004A52C6 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739332E2B8674004A52C6 /* StatCard.swift */; };
 		23273A532E2B8674004A52C6 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739A72E2B8674004A52C6 /* TestRealDataIntegration.swift */; };
 		23273A552E2B8674004A52C6 /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */; };
@@ -264,7 +263,6 @@
 		2327391D2E2B8674004A52C6 /* IntelligencePreviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligencePreviewPanel.swift; sourceTree = "<group>"; };
 		2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
-		232739212E2B8674004A52C6 /* AIAvatarOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAvatarOverlayView.swift; sourceTree = "<group>"; };
 		232739222E2B8674004A52C6 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		232739232E2B8674004A52C6 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
@@ -546,7 +544,6 @@
 			isa = PBXGroup;
 			children = (
 				232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */,
-				232739212E2B8674004A52C6 /* AIAvatarOverlayView.swift */,
 				232739222E2B8674004A52C6 /* AIScenarioSheetView.swift */,
 				232739232E2B8674004A52C6 /* Building.swift */,
 				232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */,
@@ -1180,7 +1177,6 @@
 				23273A4E2E2B8674004A52C6 /* GlassStatusBadge.swift in Sources */,
 				23273A4F2E2B8674004A52C6 /* WorkerProfileView.swift in Sources */,
 				23273A502E2B8674004A52C6 /* IntelligenceService.swift in Sources */,
-				23273A512E2B8674004A52C6 /* AIAvatarOverlayView.swift in Sources */,
 				23273A522E2B8674004A52C6 /* StatCard.swift in Sources */,
 				23273A532E2B8674004A52C6 /* TestRealDataIntegration.swift in Sources */,
 				23273A552E2B8674004A52C6 /* DashboardTaskDetailView.swift in Sources */,

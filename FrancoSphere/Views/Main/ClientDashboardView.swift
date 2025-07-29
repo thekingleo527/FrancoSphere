@@ -521,7 +521,8 @@ struct BuildingCard: View {
                             .foregroundColor(.white)
                             .lineLimit(1)
                         
-                        Text(building.address ?? "No address")
+                        // ✅ FIXED: Removed nil coalescing operator
+                        Text(building.address)
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
@@ -951,12 +952,18 @@ struct RecommendationRow: View {
     }
 }
 
+// ✅ FIXED: Extracted array to avoid complex expression
 struct InsightsCategoryBreakdown: View {
     let insights: [CoreTypes.IntelligenceInsight]
     
     var categoryCounts: [CoreTypes.InsightCategory: Int] {
         Dictionary(grouping: insights, by: { $0.type })
             .mapValues { $0.count }
+    }
+    
+    // ✅ FIXED: Created computed property to simplify ForEach
+    private var insightCategories: [CoreTypes.InsightCategory] {
+        [.efficiency, .maintenance, .compliance, .safety, .cost]
     }
     
     var body: some View {
@@ -969,12 +976,8 @@ struct InsightsCategoryBreakdown: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                // Only show categories that are available in InsightCategory
-                ForEach([CoreTypes.InsightCategory.efficiency,
-                        CoreTypes.InsightCategory.maintenance,
-                        CoreTypes.InsightCategory.compliance,
-                        CoreTypes.InsightCategory.safety,
-                        CoreTypes.InsightCategory.cost], id: \.self) { type in
+                // ✅ FIXED: Now using the extracted array
+                ForEach(insightCategories, id: \.self) { type in
                     CategoryCard(
                         type: type,
                         count: categoryCounts[type] ?? 0
@@ -985,6 +988,7 @@ struct InsightsCategoryBreakdown: View {
     }
 }
 
+// ✅ FIXED: Using design system colors instead of type.color
 struct CategoryCard: View {
     let type: CoreTypes.InsightCategory
     let count: Int
@@ -999,19 +1003,19 @@ struct CategoryCard: View {
                 Text("\(count)")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(type.color)
+                    .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(type))
             }
             
             Spacer()
             
             Image(systemName: type.icon)
                 .font(.title3)
-                .foregroundColor(type.color.opacity(0.6))
+                .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(type).opacity(0.6))
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(type.color.opacity(0.1))
+                .fill(FrancoSphereDesign.EnumColors.insightCategory(type).opacity(0.1))
         )
     }
 }
@@ -1201,11 +1205,11 @@ struct BuildingDetailSheet: View {
                         onClockAction: { }  // No-op for client
                     )
                     
-                    // Metrics
+                    // ✅ FIXED: Calculate completedTasksCount
                     if let metrics = metrics {
                         BuildingStatsGlassCard(
                             pendingTasksCount: metrics.pendingTasks,
-                            completedTasksCount: metrics.completedTasks,
+                            completedTasksCount: metrics.totalTasks - metrics.pendingTasks,
                             assignedWorkersCount: metrics.activeWorkers,
                             weatherRisk: .low // Default
                         )
