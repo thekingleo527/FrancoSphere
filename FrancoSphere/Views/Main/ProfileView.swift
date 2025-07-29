@@ -6,6 +6,7 @@
 //  ✅ No async operations in computed properties or view builders
 //  ✅ Proper ViewBuilder usage
 //  ✅ Cross-dashboard integration ready
+//  ✅ FIXED: Proper error handling for logout
 //
 
 import SwiftUI
@@ -14,11 +15,13 @@ import Foundation
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var authManager = NewAuthManager.shared
-    @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     
     @State private var showImagePicker = false
     @State private var showLogoutConfirmation = false
     @State private var profileImage: UIImage?
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     // ✅ FIXED: No async in computed properties
     private var currentWorkerRole: String {
@@ -98,6 +101,11 @@ struct ProfileView: View {
             }
         } message: {
             Text("Are you sure you want to sign out?")
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
     }
     
@@ -383,17 +391,34 @@ struct ProfileView: View {
     
     // MARK: - Helper Methods
     
+    // ✅ FIXED: Proper error handling for logout
     private func handleLogout() {
         HapticManager.impact(.heavy)
         Task {
-            await authManager.logout()
-            dismiss()
+            do {
+                try await authManager.logout()
+                await MainActor.run {
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to sign out: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
         }
     }
     
     private func refreshContextData() async {
         guard let workerId = authManager.workerId else { return }
-        await contextEngine.loadContext(for: workerId)
+        do {
+            try await contextEngine.loadContext(for: workerId)
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to refresh data: \(error.localizedDescription)"
+                showError = true
+            }
+        }
     }
     
     private func getPendingTasksCount() -> Int {
