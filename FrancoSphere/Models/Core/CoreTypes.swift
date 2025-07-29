@@ -1223,7 +1223,7 @@ public struct CoreTypes {
             }
         }
         
-        public var aiPriorityColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
+        public var color: Color {  // ✅ Using color directly
             switch self {
             case .low: return .green
             case .medium: return .yellow
@@ -1254,7 +1254,7 @@ public struct CoreTypes {
             }
         }
         
-        public var insightCategoryColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
+        public var color: Color {  // ✅ Using color directly
             switch self {
             case .efficiency: return .blue
             case .cost: return .green
@@ -1594,7 +1594,7 @@ public struct CoreTypes {
         case atRisk = "At Risk"
         case needsReview = "Needs Review"
         
-        public var complianceStatusColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
+        public var color: Color {  // ✅ Using color directly
             switch self {
             case .compliant: return .green
             case .warning: return .yellow
@@ -1614,7 +1614,7 @@ public struct CoreTypes {
         case high = "High"
         case critical = "Critical"
         
-        public var complianceSeverityColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
+        public var color: Color {  // ✅ Using color directly
             switch self {
             case .low: return .green
             case .medium: return .yellow
@@ -1632,7 +1632,7 @@ public struct CoreTypes {
         case operational = "Operational"
         case documentation = "Documentation"
         
-        public var complianceIssueTypeColor: Color {  // ✅ FIXED: Renamed to avoid conflicts
+        public var color: Color {  // ✅ Using color directly
             switch self {
             case .safety: return .red
             case .environmental: return .green
@@ -1819,24 +1819,10 @@ public struct AI {
     public typealias ScenarioType = CoreTypes.AIScenarioType
 }
 
-// MARK: - Extension for Color Property Access
-// This provides backward compatibility for code expecting .color property
-extension CoreTypes.AIPriority {
-    public var color: Color { aiPriorityColor }
-}
-
-extension CoreTypes.InsightCategory {
-    public var color: Color { insightCategoryColor }
-}
-
-extension CoreTypes.ComplianceStatus {
-    public var color: Color { complianceStatusColor }
-}
-
-extension CoreTypes.ComplianceSeverity {
-    public var color: Color { complianceSeverityColor }
-}
-
-extension CoreTypes.ComplianceIssueType {
-    public var color: Color { complianceIssueTypeColor }
-}
+// MARK: - Color Property Helpers
+// Note: Each enum defines its own `color` property. If you encounter
+// "Invalid redeclaration of 'color'" errors, it may be due to a protocol
+// extension elsewhere in the codebase adding a color property to all
+// CaseIterable or Codable enums. In that case, either:
+// 1. Remove the conflicting protocol extension, or
+// 2. Use unique property names (e.g., aiPriorityColor, complianceColor)

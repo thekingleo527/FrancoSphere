@@ -6,6 +6,7 @@
 //  ✅ FIXED: Animation typo corrected
 //  ✅ ENHANCED: Aligned with v6.0 three-dashboard system
 //  ✅ INTEGRATED: Actor-compatible design patterns
+//  ✅ ADDED: Centralized color system for all CoreTypes enums
 //
 
 import SwiftUI
@@ -167,6 +168,198 @@ enum FrancoSphereDesign {
         static let warning = Color.orange
         static let critical = Color.red
         static let inactive = Color.gray
+    }
+    
+    // MARK: - Enum Colors (Centralized from CoreTypes)
+    enum EnumColors {
+        
+        // MARK: AI Priority Colors
+        static func aiPriority(_ priority: CoreTypes.AIPriority) -> Color {
+            switch priority {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return .red
+            }
+        }
+        
+        // MARK: Insight Category Colors
+        static func insightCategory(_ category: CoreTypes.InsightCategory) -> Color {
+            switch category {
+            case .efficiency: return .blue
+            case .cost: return .green
+            case .safety: return .red
+            case .compliance: return .orange
+            case .quality: return .purple
+            case .operations: return .gray
+            case .maintenance: return .yellow
+            }
+        }
+        
+        // MARK: Task Status Colors
+        static func taskStatus(_ status: CoreTypes.TaskStatus) -> Color {
+            switch status {
+            case .pending: return .gray
+            case .inProgress: return .blue
+            case .completed: return .green
+            case .overdue: return .red
+            case .cancelled: return .gray
+            case .paused: return .orange
+            case .waiting: return .yellow
+            }
+        }
+        
+        // MARK: Task Urgency Colors
+        static func taskUrgency(_ urgency: CoreTypes.TaskUrgency) -> Color {
+            switch urgency {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .urgent: return .purple
+            case .critical: return .red
+            case .emergency: return .red
+            }
+        }
+        
+        // MARK: Compliance Status Colors
+        static func complianceStatus(_ status: CoreTypes.ComplianceStatus) -> Color {
+            switch status {
+            case .compliant: return DashboardColors.compliant
+            case .warning: return DashboardColors.warning
+            case .violation, .nonCompliant: return DashboardColors.critical
+            case .pending, .needsReview: return DashboardColors.warning
+            case .atRisk: return DashboardColors.warning
+            case .open: return DashboardColors.critical
+            case .inProgress: return DashboardColors.warning
+            case .resolved: return .blue
+            }
+        }
+        
+        // MARK: Compliance Severity Colors
+        static func complianceSeverity(_ severity: CoreTypes.ComplianceSeverity) -> Color {
+            switch severity {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .critical: return DashboardColors.critical
+            }
+        }
+        
+        // MARK: Compliance Issue Type Colors
+        static func complianceIssueType(_ type: CoreTypes.ComplianceIssueType) -> Color {
+            switch type {
+            case .safety: return .red
+            case .environmental: return .green
+            case .regulatory: return .blue
+            case .financial: return .orange
+            case .operational: return .purple
+            case .documentation: return .gray
+            }
+        }
+        
+        // MARK: Worker Status Colors
+        static func workerStatus(_ status: CoreTypes.WorkerStatus) -> Color {
+            switch status {
+            case .available: return .green
+            case .clockedIn: return .blue
+            case .onBreak: return .orange
+            case .offline: return .gray
+            }
+        }
+        
+        // MARK: User Role Colors
+        static func userRole(_ role: CoreTypes.UserRole) -> Color {
+            switch role {
+            case .admin: return .red
+            case .manager: return .orange
+            case .worker: return .blue
+            case .client: return .green
+            }
+        }
+        
+        // MARK: Building Type Colors
+        static func buildingType(_ type: CoreTypes.BuildingType) -> Color {
+            switch type {
+            case .office: return .blue
+            case .residential: return .green
+            case .retail: return .purple
+            case .industrial: return .orange
+            case .warehouse: return .brown
+            case .medical: return .red
+            case .educational: return .yellow
+            case .mixed: return .gray
+            }
+        }
+        
+        // MARK: Dashboard Sync Status Colors
+        static func dashboardSyncStatus(_ status: CoreTypes.DashboardSyncStatus) -> Color {
+            switch status {
+            case .synced: return .green
+            case .syncing: return .blue
+            case .failed: return .red
+            case .offline: return .gray
+            }
+        }
+        
+        // MARK: Verification Status Colors
+        static func verificationStatus(_ status: CoreTypes.VerificationStatus) -> Color {
+            switch status {
+            case .pending: return .orange
+            case .verified: return .green
+            case .rejected: return .red
+            case .notRequired: return .gray
+            }
+        }
+        
+        // MARK: Outdoor Work Risk Colors
+        static func outdoorWorkRisk(_ risk: CoreTypes.OutdoorWorkRisk) -> Color {
+            switch risk {
+            case .low: return .green
+            case .medium: return .yellow
+            case .high: return .orange
+            case .extreme: return .red
+            }
+        }
+        
+        // MARK: Trend Direction Colors
+        static func trendDirection(_ direction: CoreTypes.TrendDirection) -> Color {
+            switch direction {
+            case .up, .improving: return .green
+            case .down, .declining: return .red
+            case .stable: return .blue
+            case .unknown: return .gray
+            }
+        }
+        
+        // MARK: Skill Level Colors
+        static func skillLevel(_ level: CoreTypes.SkillLevel) -> Color {
+            switch level {
+            case .beginner: return .red
+            case .intermediate: return .orange
+            case .advanced: return .yellow
+            case .expert: return .green
+            }
+        }
+        
+        // MARK: Restock Status Colors
+        static func restockStatus(_ status: CoreTypes.RestockStatus) -> Color {
+            switch status {
+            case .inStock: return .green
+            case .lowStock: return .orange
+            case .outOfStock: return .red
+            case .ordered: return .blue
+            }
+        }
+        
+        // MARK: Data Health Status Colors
+        static func dataHealthStatus(_ status: CoreTypes.DataHealthStatus) -> Color {
+            switch status {
+            case .healthy: return .green
+            case .warning: return .yellow
+            case .error: return .red
+            case .unknown: return .gray
+            }
+        }
     }
     
     // MARK: - Metrics Display (NEW for v6.0)

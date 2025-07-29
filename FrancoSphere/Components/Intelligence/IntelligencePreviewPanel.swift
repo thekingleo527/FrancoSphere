@@ -6,6 +6,7 @@
 //  ✅ ALIGNED: With actual CoreTypes.IntelligenceInsight structure
 //  ✅ ENHANCED: Real-time intelligence display with proper data
 //  ✅ COMPATIBLE: Works with existing three-dashboard system
+//  ✅ UPDATED: Uses FrancoSphereDesign.EnumColors for all color references
 //
 
 import SwiftUI
@@ -244,12 +245,7 @@ struct IntelligencePreviewPanel: View {
     }
     
     private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
-        switch priority {
-        case .low: return .gray
-        case .medium: return .blue
-        case .high: return .orange
-        case .critical: return .red
-        }
+        FrancoSphereDesign.EnumColors.aiPriority(priority)
     }
 }
 
@@ -270,7 +266,7 @@ struct InsightRowView: View {
                 // Category icon
                 Image(systemName: insight.type.icon)
                     .font(.caption)
-                    .foregroundColor(insight.type.color)
+                    .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(insight.type))
                     .frame(width: 20)
                 
                 // Content
@@ -305,12 +301,7 @@ struct InsightRowView: View {
     }
     
     private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
-        switch priority {
-        case .low: return .gray
-        case .medium: return .blue
-        case .high: return .orange
-        case .critical: return .red
-        }
+        FrancoSphereDesign.EnumColors.aiPriority(priority)
     }
 }
 
@@ -329,7 +320,7 @@ struct InsightDetailView: View {
                         HStack {
                             Image(systemName: insight.type.icon)
                                 .font(.title2)
-                                .foregroundColor(insight.type.color)
+                                .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(insight.type))
                             
                             Text(insight.title)
                                 .font(.title2)
@@ -435,12 +426,7 @@ struct InsightDetailView: View {
     }
     
     private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
-        switch priority {
-        case .low: return .gray
-        case .medium: return .blue
-        case .high: return .orange
-        case .critical: return .red
-        }
+        FrancoSphereDesign.EnumColors.aiPriority(priority)
     }
 }
 

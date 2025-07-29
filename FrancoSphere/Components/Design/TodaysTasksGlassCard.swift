@@ -5,6 +5,7 @@
 //  ✅ FIXED: Removed duplicate sortOrder extension
 //  ✅ USES: Existing TaskUrgency.priorityValue property
 //  ✅ ALIGNED: With current MaintenanceTask structure
+//  ✅ UPDATED: Uses FrancoSphereDesign.EnumColors for all color references
 //
 
 import SwiftUI
@@ -181,14 +182,7 @@ struct TaskGlassRow: View {
     }
     
     private var taskUrgencyColor: Color {
-        switch task.urgency {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .red
-        case .urgent: return .purple
-        case .critical: return .red
-        case .emergency: return .red
-        }
+        FrancoSphereDesign.EnumColors.taskUrgency(task.urgency)
     }
     
     private var buildingName: String {
@@ -395,14 +389,7 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var taskUrgencyColor: Color {
-        switch task.urgency {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .red
-        case .urgent: return .purple
-        case .critical: return .red
-        case .emergency: return .red
-        }
+        FrancoSphereDesign.EnumColors.taskUrgency(task.urgency)
     }
     
     private var buildingName: String {
