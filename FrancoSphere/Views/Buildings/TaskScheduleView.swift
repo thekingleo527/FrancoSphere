@@ -4,6 +4,9 @@
 //
 //  ✅ FIXED: Removed duplicate TaskFormView (exists in separate file)
 //  ✅ FIXED: Updated TaskFormView call to match existing constructor
+//  ✅ FIXED: Updated onChange to iOS 17+ syntax
+//  ✅ FIXED: Made all switch statements exhaustive
+//  ✅ FIXED: Removed duplicate case statements
 //  ✅ STRUCTURE: Clean file without redeclarations
 //
 
@@ -84,10 +87,10 @@ struct TaskScheduleView: View {
             setupCalendar()
             loadTasks()
         }
-        .onChange(of: selectedDate) { _ in
+        .onChange(of: selectedDate) {
             loadTasksForSelectedDate()
         }
-        .onChange(of: visibleMonth) { _ in
+        .onChange(of: visibleMonth) {
             updateMonthDates()
         }
         .sheet(item: $showTaskDetail) { task in
@@ -141,7 +144,7 @@ struct TaskScheduleView: View {
         if task.isCompleted {
             return .gray
         } else {
-            return (task.urgency ?? .medium).color
+            return FrancoSphereDesign.EnumColors.taskUrgency(task.urgency ?? .medium)
         }
     }
     
@@ -606,8 +609,8 @@ struct TaskRow: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     
-                    if let scheduledDate = task.scheduledDate {
-                        Label(formatTime(scheduledDate), systemImage: "clock")
+                    if let dueDate = task.dueDate {
+                        Label(formatTime(dueDate), systemImage: "clock")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -634,7 +637,7 @@ struct TaskRow: View {
         if task.isCompleted {
             return .gray
         } else {
-            return (task.urgency ?? .medium).color
+            return FrancoSphereDesign.EnumColors.taskUrgency(task.urgency ?? .medium)
         }
     }
     
@@ -661,18 +664,18 @@ struct TaskRow: View {
     
     private func categoryIcon(_ category: TaskCategory) -> String {
         switch category {
-        case .cleaning:     return "sparkles"
-        case .maintenance:  return "wrench"
-        case .repair:       return "hammer"
-        case .inspection:   return "eye"
-        case .security:     return "shield"
-        case .landscaping:  return "leaf"
-        case .installation: return "plus.square"
-        case .utilities:    return "bolt"
-        case .emergency:    return "exclamationmark.triangle"
-        case .renovation:   return "house"
-        case .sanitation:   return "trash"
-        case .sanitation:   return "trash"
+        case .cleaning:         return "sparkles"
+        case .maintenance:      return "wrench.and.screwdriver"
+        case .repair:          return "hammer"
+        case .inspection:      return "magnifyingglass"
+        case .security:        return "shield"
+        case .landscaping:     return "leaf"
+        case .installation:    return "plus.square"
+        case .utilities:       return "bolt"
+        case .emergency:       return "exclamationmark.triangle.fill"
+        case .renovation:      return "building.2"
+        case .sanitation:      return "trash"
+        case .administrative:  return "folder"
         }
     }
 }
@@ -715,7 +718,7 @@ struct FilterView: View {
                         Button(action: { toggleUrgency(urgency) }) {
                             HStack {
                                 Circle()
-                                    .fill(urgency.color)
+                                    .fill(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
                                     .frame(width: 10, height: 10)
                                 
                                 Text(urgency.rawValue.capitalized)
@@ -773,34 +776,35 @@ struct FilterView: View {
     
     private func categoryColor(_ category: TaskCategory) -> Color {
         switch category {
-        case .cleaning:     return .blue
-        case .maintenance:  return .orange
-        case .repair:       return .red
-        case .inspection:   return .purple
-        case .security:     return .red
-        case .landscaping:  return .green
-        case .installation: return .green
-        case .utilities:    return .yellow
-        case .emergency:    return .red
-        case .renovation:   return .brown
-        case .sanitation:   return .green
+        case .cleaning:         return .blue
+        case .maintenance:      return .orange
+        case .repair:          return .red
+        case .inspection:      return .purple
+        case .security:        return .indigo
+        case .landscaping:     return .green
+        case .installation:    return .teal
+        case .utilities:       return .yellow
+        case .emergency:       return .red
+        case .renovation:      return .brown
+        case .sanitation:      return .mint
+        case .administrative:  return .gray
         }
     }
     
     private func categoryIcon(_ category: TaskCategory) -> String {
         switch category {
-        case .cleaning:     return "sparkles"
-        case .maintenance:  return "wrench"
-        case .repair:       return "hammer"
-        case .inspection:   return "eye"
-        case .security:     return "shield"
-        case .landscaping:  return "leaf"
-        case .installation: return "plus.square"
-        case .utilities:    return "bolt"
-        case .emergency:    return "exclamationmark.triangle"
-        case .renovation:   return "house"
-        case .sanitation:   return "trash"
-        case .sanitation:   return "trash"
+        case .cleaning:         return "sparkles"
+        case .maintenance:      return "wrench.and.screwdriver"
+        case .repair:          return "hammer"
+        case .inspection:      return "magnifyingglass"
+        case .security:        return "shield"
+        case .landscaping:     return "leaf"
+        case .installation:    return "plus.square"
+        case .utilities:       return "bolt"
+        case .emergency:       return "exclamationmark.triangle.fill"
+        case .renovation:      return "building.2"
+        case .sanitation:      return "trash"
+        case .administrative:  return "folder"
         }
     }
 }

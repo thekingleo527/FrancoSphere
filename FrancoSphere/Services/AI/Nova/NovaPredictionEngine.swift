@@ -46,7 +46,7 @@ public actor NovaPredictionEngine {
             
             // Get aggregated data
             let data = try await aggregator.aggregatePortfolioData()
-            let basePrompt = promptEngine.generatePortfolioPrompt(from: data)
+            let basePrompt = await promptEngine.generatePortfolioPrompt(from: data)
             
             // Enhance with intelligence insights
             let insights = try await intelligenceService.generatePortfolioInsights()
@@ -70,7 +70,7 @@ public actor NovaPredictionEngine {
     }
     
     /// Generate portfolio prediction with specific focus area
-    public func portfolioPrediction(focus: PredictionFocus) async throws -> String {
+    public func portfolioPrediction(focus: PromptFocus) async throws -> String {
         let basePrompt = try await portfolioPrediction()
         
         // Add focus-specific enhancements
@@ -111,7 +111,7 @@ public actor NovaPredictionEngine {
             
             // Get aggregated data
             let data = try await aggregator.aggregateBuildingData(for: buildingId)
-            let basePrompt = promptEngine.generateBuildingPrompt(for: buildingId, data: data)
+            let basePrompt = await promptEngine.generateBuildingPrompt(for: buildingId, data: data)
             
             // Get building details
             guard let building = try await buildingService.getBuilding(buildingId: buildingId) else {
@@ -372,18 +372,7 @@ public actor NovaPredictionEngine {
     }
 }
 
-// MARK: - Supporting Types
-
-/// Focus areas for predictions
-public enum PredictionFocus {
-    case efficiency
-    case compliance
-    case maintenance
-    case cost
-    case operations
-}
-
-/// Errors specific to prediction generation
+// MARK: - Errors specific to prediction generation
 public enum NovaPredictionError: Error, LocalizedError {
     case generationInProgress
     case buildingNotFound(String)
