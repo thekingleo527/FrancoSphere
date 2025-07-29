@@ -3,18 +3,13 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: LoadingView reference corrected to IntelligenceLoadingView
 //  ✅ ALIGNED: With existing CoreTypes and BuildingIntelligenceViewModel
 //  ✅ USES: Existing service patterns and data types
 //  ✅ INTEGRATED: With real operational data
 //
 
 import SwiftUI
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
 import Foundation
 
 struct BuildingIntelligencePanel: View {
@@ -611,7 +606,8 @@ struct EmergencyInfoTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if isLoading {
-                LoadingView(message: "Loading emergency information...")
+                // ✅ FIXED: Changed LoadingView to IntelligenceLoadingView
+                IntelligenceLoadingView(message: "Loading emergency information...")
             } else {
                 // Emergency contacts
                 emergencyContactsSection
@@ -914,7 +910,7 @@ struct BuildingIntelligencePanel_Previews: PreviewProvider {
         let sampleBuilding = NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
-            latitude: 40.7402,
+            address: "150 W 17th St, New York, NY 10011", latitude: 40.7402,
             longitude: -73.9980
         )
         
