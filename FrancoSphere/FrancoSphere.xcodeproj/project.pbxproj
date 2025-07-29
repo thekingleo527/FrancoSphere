@@ -12,7 +12,6 @@
 		23273A0B2E2B8674004A52C6 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */; };
 		23273A0D2E2B8674004A52C6 /* OperationalDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */; };
 		23273A0F2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BD2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift */; };
-		23273A102E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */; };
 		23273A112E2B8674004A52C6 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739552E2B8674004A52C6 /* GRDBManager.swift */; };
 		23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DE2E2B8674004A52C6 /* SignUpView.swift */; };
 		23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739102E2B8674004A52C6 /* GlassDeckContainer.swift */; };
@@ -367,7 +366,6 @@
 		232739D12E2B8674004A52C6 /* RouteStatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStatItem.swift; sourceTree = "<group>"; };
 		232739D22E2B8674004A52C6 /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
 		232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
-		232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OperationalDataManager+DatabaseIntegration.swift"; sourceTree = "<group>"; };
 		232739D72E2B8674004A52C6 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
 		232739D82E2B8674004A52C6 /* WorkerEventOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerEventOutbox.swift; sourceTree = "<group>"; };
 		232739DC2E2B8674004A52C6 /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
@@ -828,7 +826,6 @@
 			isa = PBXGroup;
 			children = (
 				232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */,
-				232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */,
 				232739D72E2B8674004A52C6 /* TypeMigrationService.swift */,
 				232739D82E2B8674004A52C6 /* WorkerEventOutbox.swift */,
 			);
@@ -1086,7 +1083,6 @@
 				23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */,
 				23273A0D2E2B8674004A52C6 /* OperationalDataManager.swift in Sources */,
 				23273A0F2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift in Sources */,
-				23273A102E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift in Sources */,
 				23273A112E2B8674004A52C6 /* GRDBManager.swift in Sources */,
 				23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */,
 				23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */,

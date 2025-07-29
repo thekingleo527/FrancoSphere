@@ -10,14 +10,6 @@
 //
 
 import SwiftUI
-
-// Type aliases for convenience
-typealias ContextualTask = CoreTypes.ContextualTask
-typealias TaskCategory = CoreTypes.TaskCategory
-typealias TaskUrgency = CoreTypes.TaskUrgency
-typealias InventoryItem = CoreTypes.InventoryItem
-typealias InventoryCategory = CoreTypes.InventoryCategory
-
 // MARK: - BuildingTaskDetailView
 
 struct BuildingTaskDetailView: View {
