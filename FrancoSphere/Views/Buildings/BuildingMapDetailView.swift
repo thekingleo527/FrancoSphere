@@ -2,12 +2,10 @@
 //  BuildingMapDetailView.swift
 //  FrancoSphere
 //
-//  ✅ PHASE 2: Fixed to match ACTUAL ContextualTask structure from FrancoSphereModels.swift
-//  ✅ Uses title (not name), urgency enum (not urgencyLevel), building object (not buildingId)
-//  ✅ Proper filter syntax for modern Swift arrays
-//  ✅ Real operational data integration
-//  ✅ FIXED: Removed imageAssetName reference
-//  ✅ FIXED: Corrected async/await syntax
+//  ✅ COMPLETE VERSION: All missing components added
+//  ✅ FIXED: BuildingStatCard component defined
+//  ✅ FIXED: getUrgencyDisplay and getUrgencyColor methods implemented
+//  ✅ ALIGNED: With CoreTypes structure
 //
 
 import SwiftUI
@@ -16,7 +14,7 @@ import Foundation
 struct BuildingMapDetailView: View {
     let building: NamedCoordinate
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var contextEngine = WorkerContextEngine.shared  // ✅ FIXED: Use consolidated engine
+    @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     
     @State private var tasks: [ContextualTask] = []
     @State private var isLoading = true
@@ -91,7 +89,6 @@ struct BuildingMapDetailView: View {
     private var buildingHeader: some View {
         VStack(spacing: 12) {
             // Building image
-            // ✅ FIXED: Try to load image based on building name
             if let buildingImage = getBuildingImage() {
                 Image(uiImage: buildingImage)
                     .resizable()
@@ -209,51 +206,60 @@ struct BuildingMapDetailView: View {
     // MARK: - Helper Methods
     
     private func getBuildingImage() -> UIImage? {
-        // Try standardized name based on building name
-        let standardName = building.name
-            .replacingOccurrences(of: " ", with: "_")
-            .replacingOccurrences(of: "-", with: "_")
-            .replacingOccurrences(of: "(", with: "")
-            .replacingOccurrences(of: ")", with: "")
-            .lowercased()
-        
-        // Try exact match first
-        if let image = UIImage(named: standardName) {
-            return image
+        // Map building IDs to their image assets
+        switch building.id {
+        case "14", "15":
+            return UIImage(named: "Rubin_Museum_142_148_West_17th_Street")
+        case "1":
+            return UIImage(named: "building_12w18")
+        case "2":
+            return UIImage(named: "building_29e20")
+        case "3":
+            return UIImage(named: "building_133e15")
+        case "4":
+            return UIImage(named: "building_104franklin")
+        case "5":
+            return UIImage(named: "building_36walker")
+        case "6":
+            return UIImage(named: "building_68perry")
+        case "7":
+            return UIImage(named: "building_136w17")
+        case "8":
+            return UIImage(named: "building_41elizabeth")
+        case "9":
+            return UIImage(named: "building_117w17")
+        case "10":
+            return UIImage(named: "building_123first")
+        case "11":
+            return UIImage(named: "building_131perry")
+        case "12":
+            return UIImage(named: "building_135w17")
+        case "13":
+            return UIImage(named: "building_138w17")
+        case "16":
+            return UIImage(named: "stuyvesant_park")
+        default:
+            // Try to create a name from the building name
+            let cleanName = building.name
+                .lowercased()
+                .replacingOccurrences(of: " ", with: "_")
+                .replacingOccurrences(of: "(", with: "")
+                .replacingOccurrences(of: ")", with: "")
+                .replacingOccurrences(of: "-", with: "_")
+            return UIImage(named: cleanName)
         }
-        
-        // Try with "building_" prefix
-        if let image = UIImage(named: "building_\(standardName)") {
-            return image
-        }
-        
-        // Try simplified name
-        let simplifiedName = building.name
-            .components(separatedBy: " ")
-            .first?
-            .lowercased() ?? ""
-        
-        if !simplifiedName.isEmpty,
-           let image = UIImage(named: "building_\(simplifiedName)") {
-            return image
-        }
-        
-        // No image found
-        return nil
     }
     
     // MARK: - Data Loading
     
     private func loadBuildingData() {
         Task {
-            // ✅ FIXED: Removed double await
-            let allTasks = contextEngine.todaysTasks
+            let allTasks = contextAdapter.getTodaysTasks()
             
             await MainActor.run {
                 // Filter tasks for this building
                 tasks = allTasks.filter { task in
-                    // Match by building object comparison
-                    task.building?.id == building.id || task.buildingId == building.id
+                    task.buildingId == building.id
                 }
                 isLoading = false
             }
@@ -274,7 +280,36 @@ struct BuildingMapDetailView: View {
     }
 }
 
-// MARK: - Building-Specific Components
+// MARK: - Building Stat Card Component
+
+struct BuildingStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            Text(title)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Building Task Row Component
 
 struct BuildingTaskRow: View {
     let task: ContextualTask
@@ -287,13 +322,11 @@ struct BuildingTaskRow: View {
                 .frame(width: 8, height: 8)
             
             VStack(alignment: .leading, spacing: 2) {
-                // ✅ FIXED: Use task.title (actual property from FrancoSphereModels)
                 Text(task.title)
                     .font(.callout)
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
-                // ✅ FIXED: Safe category handling with actual TaskCategory enum
                 Text("Category: \(getCategoryString(task.category))")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.6))
@@ -301,7 +334,6 @@ struct BuildingTaskRow: View {
             
             Spacer()
             
-            // ✅ FIXED: Handle urgency enum properly
             Text(getUrgencyDisplay(task.urgency))
                 .font(.caption2)
                 .fontWeight(.medium)
@@ -312,12 +344,65 @@ struct BuildingTaskRow: View {
         .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
     }
     
-    // Helper methods for safe property access using actual ContextualTask structure
-    private func getCategoryString(_ category: TaskCategory?) -> String {
+    // Helper methods for safe property access
+    private func getCategoryString(_ category: CoreTypes.TaskCategory?) -> String {
         return category?.rawValue.capitalized ?? "General"
     }
     
-    // ✅ FIXED: Handle TaskUrgency enum properly (not urgencyLevel string)
-    private func getUrgencyDisplay(_ urgency: TaskUrgency?) -> String {
+    private func getUrgencyDisplay(_ urgency: CoreTypes.TaskUrgency?) -> String {
+        guard let urgency = urgency else { return "Normal" }
+        
+        switch urgency {
+        case .low:
+            return "Low"
+        case .medium:
+            return "Medium"
+        case .high:
+            return "High"
+        case .urgent:
+            return "Urgent"
+        case .critical:
+            return "Critical"
+        case .emergency:
+            return "Emergency"
+        }
+    }
+    
+    private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency?) -> Color {
+        guard let urgency = urgency else { return .gray }
+        
+        switch urgency {
+        case .low:
+            return .green
+        case .medium:
+            return .yellow
+        case .high:
+            return .orange
+        case .urgent:
+            return .orange
+        case .critical:
+            return .red
+        case .emergency:
+            return .red
+        }
+    }
+}
+
+// MARK: - Preview
+
+struct BuildingMapDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            BuildingMapDetailView(
+                building: NamedCoordinate(
+                    id: "14",
+                    name: "Rubin Museum",
+                    address: "150 W 17th St, New York, NY 10011",
+                    latitude: 40.7402,
+                    longitude: -73.9980
+                )
+            )
+        }
+        .preferredColorScheme(.dark)
     }
 }
