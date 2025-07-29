@@ -1630,6 +1630,7 @@ public typealias TaskProgress = CoreTypes.TaskProgress
 public typealias TrendDirection = CoreTypes.TrendDirection
 public typealias TaskCategory = CoreTypes.TaskCategory
 public typealias TaskUrgency = CoreTypes.TaskUrgency
+public typealias TaskStatus = CoreTypes.TaskStatus
 public typealias WeatherCondition = CoreTypes.WeatherCondition
 public typealias InventoryItem = CoreTypes.InventoryItem
 public typealias InventoryCategory = CoreTypes.InventoryCategory

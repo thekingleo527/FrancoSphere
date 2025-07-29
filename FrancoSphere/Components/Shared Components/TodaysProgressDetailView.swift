@@ -5,14 +5,13 @@
 //  ✅ F6: Navigation destination for "Today's Progress" taps
 //  Shows detailed progress analytics with completed vs pending tasks grid
 //  Includes building-wise breakdown and time-based analysis
+//  ✅ FIXED: Updated to use correct ContextualTask properties
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 struct TodaysProgressDetailView: View {
-    @EnvironmentObject private var contextEngine: WorkerContextEngine
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedMetric: ProgressMetric = .overview
@@ -35,23 +34,22 @@ struct TodaysProgressDetailView: View {
         }
     }
     
+    // MARK: - Computed Properties
+    
     private var allTasks: [ContextualTask] {
-        await await contextEngine.getTodaysTasks()
+        contextEngine.todaysTasks
     }
     
     private var completedTasks: [ContextualTask] {
-        allTasks.filter { $0.status == "completed" }
+        allTasks.filter { $0.isCompleted }
     }
     
     private var pendingTasks: [ContextualTask] {
-        allTasks.filter { $0.status != "completed" }
+        allTasks.filter { !$0.isCompleted }
     }
     
     private var overdueTasks: [ContextualTask] {
-        pendingTasks.filter { task in
-            guard let startTime = task.startTime else { return false }
-            return isTaskOverdue(startTime)
-        }
+        pendingTasks.filter { $0.isOverdue }
     }
     
     private var completionPercentage: Double {
@@ -72,6 +70,14 @@ struct TodaysProgressDetailView: View {
         .background(Color.black)
         .navigationTitle("Today's Progress")
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+                .foregroundColor(.blue)
+            }
+        }
         .preferredColorScheme(.dark)
         .task {
             await loadProgressData()
@@ -156,8 +162,12 @@ struct TodaysProgressDetailView: View {
     
     private func metricChip(_ metric: ProgressMetric) -> some View {
         Button(action: {
-            selectedMetric = metric
-            HapticManager.impact(.light)
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedMetric = metric
+            }
+            // Simple haptic feedback
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
         }) {
             HStack(spacing: 6) {
                 Image(systemName: metric.icon)
@@ -251,13 +261,15 @@ struct TodaysProgressDetailView: View {
     // MARK: - Building Breakdown Content
     
     private var buildingBreakdownContent: some View {
-        let tasksByBuilding = Dictionary(grouping: allTasks) { $0.buildingName }
+        let tasksByBuilding = Dictionary(grouping: allTasks) { task in
+            task.building?.name ?? "Unassigned"
+        }
         
         return VStack(spacing: 16) {
             ForEach(Array(tasksByBuilding.keys.sorted()), id: \.self) { buildingName in
                 let tasks = tasksByBuilding[buildingName] ?? []
-                let completed = tasks.filter { $0.status == "completed" }.count
-                let progress = Double(completed) / Double(tasks.count) * 100
+                let completed = tasks.filter { $0.isCompleted }.count
+                let progress = tasks.isEmpty ? 0 : Double(completed) / Double(tasks.count) * 100
                 
                 buildingProgressCard(
                     buildingName: buildingName,
@@ -309,15 +321,23 @@ struct TodaysProgressDetailView: View {
         let timeSlots = getTimeSlotBreakdown()
         
         return VStack(spacing: 16) {
-            ForEach(Array(timeSlots.keys.sorted()), id: \.self) { timeSlot in
-                let tasks = timeSlots[timeSlot] ?? []
-                let completed = tasks.filter { $0.status == "completed" }.count
-                
-                timeSlotCard(
-                    timeSlot: timeSlot,
-                    completed: completed,
-                    total: tasks.count
-                )
+            if timeSlots.isEmpty {
+                Text("No tasks with scheduled times")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.6))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 40)
+            } else {
+                ForEach(Array(timeSlots.keys.sorted()), id: \.self) { timeSlot in
+                    let tasks = timeSlots[timeSlot] ?? []
+                    let completed = tasks.filter { $0.isCompleted }.count
+                    
+                    timeSlotCard(
+                        timeSlot: timeSlot,
+                        completed: completed,
+                        total: tasks.count
+                    )
+                }
             }
         }
     }
@@ -355,17 +375,17 @@ struct TodaysProgressDetailView: View {
     // MARK: - Priority Breakdown Content
     
     private var priorityBreakdownContent: some View {
-        let priorities = ["high", "medium", "low"]
+        let priorities: [TaskUrgency] = [.emergency, .critical, .urgent, .high, .medium, .low]
         
         return VStack(spacing: 16) {
             ForEach(priorities, id: \.self) { priority in
-                let tasks = allTasks.filter { $0.priority == priority }
-                let completed = tasks.filter { $0.status == "completed" }.count
+                let tasks = allTasks.filter { $0.urgency == priority }
+                let completed = tasks.filter { $0.isCompleted }.count
                 let color = priorityColor(for: priority)
                 
                 if !tasks.isEmpty {
                     priorityCard(
-                        priority: priority.capitalized,
+                        priority: priority.rawValue.capitalized,
                         completed: completed,
                         total: tasks.count,
                         color: color
@@ -416,9 +436,11 @@ struct TodaysProgressDetailView: View {
         var timeSlots: [String: [ContextualTask]] = [:]
         
         for task in allTasks {
-            guard let startTime = task.startTime else { continue }
-            let components = startTime.split(separator: ":")
-            guard let hour = Int(components.first ?? "0") else { continue }
+            // Use dueDate for time breakdown instead of non-existent startTime
+            guard let dueDate = task.dueDate else { continue }
+            
+            let calendar = Calendar.current
+            let hour = calendar.component(.hour, from: dueDate)
             
             let timeSlot: String
             switch hour {
@@ -438,32 +460,23 @@ struct TodaysProgressDetailView: View {
         return timeSlots
     }
     
-    private func priorityColor(for priority: String) -> Color {
-        switch priority.lowercased() {
-        case "high": return .red
-        case "medium": return .orange
-        default: return .blue
+    private func priorityColor(for priority: TaskUrgency) -> Color {
+        switch priority {
+        case .emergency, .critical:
+            return .red
+        case .urgent, .high:
+            return .orange
+        case .medium:
+            return .yellow
+        case .low:
+            return .blue
         }
     }
     
-    private func isTaskOverdue(_ startTime: String) -> Bool {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        guard let taskTime = formatter.date(from: startTime) else { return false }
-        
-        let now = Date()
-        let calendar = Calendar.current
-        let todayStart = calendar.startOfDay(for: now)
-        
-        guard let todayTaskTime = calendar.date(byAdding: .second,
-                                               value: Int(taskTime.timeIntervalSince1970),
-                                               to: todayStart) else { return false }
-        
-        return now.timeIntervalSince(todayTaskTime) > 1800 // 30 minutes
-    }
-    
     private func loadProgressData() async {
+        // Refresh context if needed
+        await contextEngine.refreshContext()
+        
         await MainActor.run {
             isLoading = false
         }
@@ -485,19 +498,21 @@ struct ProgressTaskRow: View {
             
             // Task details
             VStack(alignment: .leading, spacing: 2) {
-                Text(task.name)
+                Text(task.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
                 HStack {
-                    Text(task.buildingName)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                    if let building = task.building {
+                        Text(building.name)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
                     
-                    if let startTime = task.startTime {
-                        Text("• \(startTime)")
+                    if let dueDate = task.dueDate {
+                        Text("• Due: \(dueDate, style: .time)")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.6))
                     }
@@ -507,14 +522,40 @@ struct ProgressTaskRow: View {
             Spacer()
             
             // Priority indicator
-            if task.priority == "high" {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundColor(.red)
+            if let urgency = task.urgency {
+                if urgency == .emergency || urgency == .critical || urgency == .urgent {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(priorityColor(for: urgency))
+                }
             }
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 12)
         .background(Color.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 8))
+    }
+    
+    private func priorityColor(for urgency: TaskUrgency) -> Color {
+        switch urgency {
+        case .emergency, .critical:
+            return .red
+        case .urgent, .high:
+            return .orange
+        case .medium:
+            return .yellow
+        case .low:
+            return .blue
+        }
+    }
+}
+
+// MARK: - Preview
+
+struct TodaysProgressDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            TodaysProgressDetailView()
+        }
+        .preferredColorScheme(.dark)
     }
 }

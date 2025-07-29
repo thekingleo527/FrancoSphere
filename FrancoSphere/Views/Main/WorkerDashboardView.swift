@@ -26,12 +26,14 @@ struct WorkerDashboardView: View {
     @State private var showNovaAssistant = false
     @State private var showOnlyMyBuildings = true
     @State private var primaryBuilding: NamedCoordinate?
+    @State private var selectedTask: MaintenanceTask?
+    @State private var showTaskDetail = false
     
     var body: some View {
         MapRevealContainer(
             buildings: contextEngine.assignedBuildings,
-            currentBuildingId: contextEngine.currentBuilding?.id,  // Pass current clocked-in building
-            focusBuildingId: selectedBuilding?.id,  // Pass focused building
+            currentBuildingId: contextEngine.currentBuilding?.id,
+            focusBuildingId: selectedBuilding?.id,
             onBuildingTap: { building in
                 selectedBuilding = building
                 showBuildingDetail = true
@@ -63,9 +65,15 @@ struct WorkerDashboardView: View {
                             progressOverviewCard
                         }
                         
-                        // Today's tasks card
+                        // Today's tasks card - Convert ContextualTask to MaintenanceTask
                         if contextEngine.todaysTasks.count > 0 {
-                            TodaysTasksGlassCard(tasks: contextEngine.todaysTasks)
+                            TodaysTasksGlassCard(
+                                tasks: contextEngine.todaysTasks.map { convertToMaintenanceTask($0) },
+                                onTaskTap: { task in
+                                    selectedTask = task
+                                    showTaskDetail = true
+                                }
+                            )
                         }
                         
                         // My buildings section
@@ -107,7 +115,6 @@ struct WorkerDashboardView: View {
             if let building = selectedBuilding {
                 BuildingDetailView(building: building)
                     .onDisappear {
-                        // Clear selection when sheet dismisses
                         selectedBuilding = nil
                     }
             }
@@ -118,6 +125,11 @@ struct WorkerDashboardView: View {
         .sheet(isPresented: $showNovaAssistant) {
             NovaInteractionView()
                 .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showTaskDetail) {
+            if let task = selectedTask {
+                TaskDetailView(task: task)
+            }
         }
     }
     
@@ -226,8 +238,8 @@ struct WorkerDashboardView: View {
                             Button(action: {
                                 Task {
                                     await viewModel.clockIn(at: building)
-                                    // Update context engine after clock in
-                                    await contextEngine.updateClockInStatus(for: contextEngine.currentWorker?.id ?? "")
+                                    // Refresh context after clock in
+                                    await contextEngine.refreshContext()
                                 }
                             }) {
                                 Text(building.name)
@@ -356,8 +368,8 @@ struct WorkerDashboardView: View {
             showBuildingDetail = true
         }) {
             VStack(spacing: 12) {
-                // Building image using PropertyCard's logic
-                PropertyCard.buildingImage(for: building)
+                // Building image
+                buildingImage(for: building)
                     .frame(height: 100)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 
@@ -394,7 +406,7 @@ struct WorkerDashboardView: View {
                             GlassStatusBadge(
                                 text: "\(buildingTasks.count)",
                                 icon: "checklist",
-                                style: .default,
+                                style: .info,  // Changed from .default to .info
                                 size: .small
                             )
                         }
@@ -407,6 +419,49 @@ struct WorkerDashboardView: View {
         .padding(12)
         .francoPropertyCardBackground()
         .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
+    }
+    
+    // MARK: - Building Image Helper (same logic as MapBuildingBubble)
+    
+    @ViewBuilder
+    private func buildingImage(for building: NamedCoordinate) -> some View {
+        let buildingAssetMap: [String: String] = [
+            "1": "12_West_18th_Street",
+            "2": "29_31_East_20th_Street",
+            "3": "36_Walker_Street",
+            "4": "41_Elizabeth_Street",
+            "5": "68_Perry_Street",
+            "6": "104_Franklin_Street",
+            "7": "112_West_18th_Street",
+            "8": "117_West_17th_Street",
+            "9": "123_1st_Avenue",
+            "10": "131_Perry_Street",
+            "11": "133_East_15th_Street",
+            "12": "135West17thStreet",
+            "13": "136_West_17th_Street",
+            "14": "Rubin_Museum_142_148_West_17th_Street",
+            "15": "138West17thStreet",
+            "16": "41_Elizabeth_Street",
+            "park": "Stuyvesant_Cove_Park"
+        ]
+        
+        if let assetName = buildingAssetMap[building.id], let image = UIImage(named: assetName) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            // Fallback gradient
+            LinearGradient(
+                colors: [Color.gray.opacity(0.3), Color.gray.opacity(0.5)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .overlay(
+                Image(systemName: "building.2.fill")
+                    .font(.title)
+                    .foregroundColor(.gray.opacity(0.7))
+            )
+        }
     }
     
     // MARK: - Floating Insights Section
@@ -501,8 +556,8 @@ struct WorkerDashboardView: View {
         await viewModel.loadInitialData()
         
         // Load context for current worker
-        if let currentUser = await authManager.getCurrentUser(),
-           let workerId = currentUser.workerId {
+        if let currentUser = await authManager.getCurrentUser() {
+            let workerId = currentUser.workerId  // workerId is not optional
             try? await contextEngine.loadContext(for: workerId)
         }
         
@@ -542,6 +597,33 @@ struct WorkerDashboardView: View {
         case "8": return "Portfolio Mgmt"
         default: return worker.role.rawValue.capitalized
         }
+    }
+    
+    // MARK: - Task Conversion Helper
+    
+    private func convertToMaintenanceTask(_ contextualTask: ContextualTask) -> MaintenanceTask {
+        // Determine status based on completion
+        let status: TaskStatus = contextualTask.isCompleted ? .completed :
+                                (contextualTask.isOverdue ? .overdue : .pending)
+        
+        return MaintenanceTask(
+            id: contextualTask.id,
+            title: contextualTask.title,
+            description: contextualTask.description ?? "",  // Provide default for optional
+            category: contextualTask.category ?? .maintenance,  // Provide default
+            urgency: contextualTask.urgency ?? .medium,  // Provide default
+            status: status,
+            buildingId: contextualTask.buildingId ?? "",  // Provide default
+            assignedWorkerId: contextualTask.assignedWorkerId ?? contextualTask.worker?.id,
+            estimatedDuration: 3600,  // Default 1 hour
+            createdDate: Date(),
+            dueDate: contextualTask.dueDate,
+            completedDate: contextualTask.completedDate,
+            instructions: nil,
+            requiredSkills: [],
+            isRecurring: false,
+            parentTaskId: nil
+        )
     }
 }
 

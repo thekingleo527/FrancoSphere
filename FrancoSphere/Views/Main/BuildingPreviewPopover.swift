@@ -4,7 +4,9 @@
 //
 //  ✅ FIXED: Asset names match exactly what's in Assets.xcassets
 //  ✅ MAINTAINED: All existing functionality preserved
-//  ✅ KEPT: WorkerContextEngineAdapter as is
+//  ✅ UPDATED: Uses consolidated WorkerContextEngine
+//  ✅ ADDED: Missing button styles
+//  ✅ FIXED: Unnecessary await expression
 //
 
 import SwiftUI
@@ -16,7 +18,8 @@ struct BuildingPreviewPopover: View {
     let onDetails: () -> Void
     let onDismiss: () -> Void
     
-    @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
+    // Using WorkerContextEngine (WorkerContextEngineAdapter is now a type alias)
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     @State private var tasks: [ContextualTask] = []
     @State private var openTasksCount: Int = 0
     @State private var nextSanitationDate: String?
@@ -350,12 +353,12 @@ struct BuildingPreviewPopover: View {
         }
     }
     
-    // MARK: - Real Data Loading (UNCHANGED)
+    // MARK: - Real Data Loading
     
     private func loadBuildingData() {
         Task {
             // Load real task data for this building
-            let allTasks = await WorkerContextEngine.shared.getTodaysTasks()
+            let allTasks = WorkerContextEngine.shared.getTodaysTasks()
             
             await MainActor.run {
                 self.tasks = allTasks
@@ -420,5 +423,98 @@ struct BuildingPreviewPopover: View {
     }
 }
 
-// Button styles remain UNCHANGED...
-// Preview provider remains UNCHANGED...
+// MARK: - Button Styles
+
+struct PrimaryPreviewButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline)
+            .fontWeight(.medium)
+            .foregroundColor(.white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.blue,
+                                Color.blue.opacity(0.8)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+struct SecondaryPreviewButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline)
+            .fontWeight(.medium)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Preview Provider
+
+struct BuildingPreviewPopover_Previews: PreviewProvider {
+    static var previews: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                // Rubin Museum preview
+                BuildingPreviewPopover(
+                    building: NamedCoordinate(
+                        id: "14",
+                        name: "Rubin Museum",
+                        address: "150 W 17th St, New York, NY 10011",
+                        latitude: 40.7402,
+                        longitude: -73.9979
+                    ),
+                    onDetails: {
+                        print("Show Rubin Museum details")
+                    },
+                    onDismiss: {
+                        print("Dismiss popover")
+                    }
+                )
+                
+                // Stuyvesant Cove Park preview
+                BuildingPreviewPopover(
+                    building: NamedCoordinate(
+                        id: "park",
+                        name: "Stuyvesant Cove Park",
+                        address: "E 20th St & FDR Dr, New York, NY 10009",
+                        latitude: 40.7325,
+                        longitude: -73.9732
+                    ),
+                    onDetails: {
+                        print("Show park details")
+                    },
+                    onDismiss: {
+                        print("Dismiss popover")
+                    }
+                )
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
