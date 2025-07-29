@@ -16,7 +16,7 @@ public actor NovaPredictionEngine {
     nonisolated public static let shared = NovaPredictionEngine()
     
     // MARK: - Dependencies
-    private let aggregator = NovaDataAggregator.shared
+    private let aggregator = NovaDataService.shared
     private let promptEngine = NovaPromptEngine.shared
     private let intelligenceService = IntelligenceService.shared
     private let buildingService = BuildingService.shared

@@ -1,10 +1,10 @@
+
 //
-//  NovaDataAggregator.swift
+//  NovaDataService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ ENHANCED: Comprehensive data collection for Nova
-//  ✅ REAL DATA: Pulls from GRDB-backed services with rich metrics
-//  ✅ ALIGNED: With FrancoSphere architecture patterns
+//  Data aggregation service for Nova AI
+//  (Renamed from NovaDataAggregator for consistency)
 //
 
 import Foundation
@@ -41,9 +41,9 @@ public struct NovaAggregatedData: Codable {
     }
 }
 
-/// Enhanced aggregator for portfolio and building data for Nova's models
-public actor NovaDataAggregator {
-    nonisolated public static let shared = NovaDataAggregator()
+/// Data service for aggregating portfolio and building metrics
+public actor NovaDataService {
+    nonisolated public static let shared = NovaDataService()
     
     // MARK: - Dependencies
     private let buildingService = BuildingService.shared
@@ -257,7 +257,7 @@ public actor NovaDataAggregator {
         
         for building in buildings {
             if let metrics = try? await buildingMetricsService.calculateMetrics(for: building.id) {
-                if metrics.isCompliant {
+                if metrics.complianceScore >= 0.8 {
                     compliantCount += 1
                 } else {
                     issueCount += 1
@@ -265,56 +265,16 @@ public actor NovaDataAggregator {
             }
         }
         
-        // Get compliance-related tasks
-        let allTasks = try await taskService.getAllTasks()
-        let complianceTasks = allTasks.filter { task in
-            task.category == .inspection ||
-            task.title.lowercased().contains("compliance") ||
-            task.title.lowercased().contains("inspection")
-        }
+        let complianceRate = buildings.isEmpty ? 0.0 : Double(compliantCount) / Double(buildings.count)
         
         return NovaAggregatedData(
             buildingCount: buildings.count,
-            taskCount: complianceTasks.count,
-            workerCount: 0, // Not applicable for compliance
-            completedTaskCount: complianceTasks.filter { $0.isCompleted }.count,
+            taskCount: 0, // Not relevant for compliance
+            workerCount: 0, // Not relevant for compliance
+            completedTaskCount: compliantCount,
             urgentTaskCount: issueCount,
-            overdueTaskCount: complianceTasks.filter { !$0.isCompleted && $0.isOverdue }.count,
-            averageCompletionRate: Double(compliantCount) / Double(max(buildings.count, 1))
+            overdueTaskCount: 0,
+            averageCompletionRate: complianceRate
         )
-    }
-    
-    // MARK: - Cache Management
-    
-    /// Clear all cached data
-    public func clearCache() {
-        portfolioCache = nil
-        buildingCache.removeAll()
-    }
-    
-    /// Get cache statistics
-    public func getCacheStats() -> (portfolioCached: Bool, buildingsCached: Int) {
-        return (
-            portfolioCached: portfolioCache != nil,
-            buildingsCached: buildingCache.count
-        )
-    }
-    
-    /// Preload cache for all buildings
-    public func preloadCache() async {
-        do {
-            // Load portfolio data
-            _ = try await aggregatePortfolioData()
-            
-            // Load data for all buildings
-            let buildings = try await buildingService.getAllBuildings()
-            for building in buildings.prefix(10) { // Limit to first 10 for performance
-                _ = try await aggregateBuildingData(for: building.id)
-            }
-            
-            print("✅ Cache preloaded for portfolio and \(min(buildings.count, 10)) buildings")
-        } catch {
-            print("⚠️ Cache preload failed: \(error)")
-        }
     }
 }

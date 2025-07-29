@@ -2,10 +2,8 @@
 //  NovaAPIService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Correct NovaInsightCategory enum case (.efficiency not .optimization)
-//  ✅ CRITICAL: Missing implementation for Nova AI chat interface
-//  ✅ MVP: Local processing with future API integration ready
-//  ✅ INTEGRATED: Uses existing NovaTypes and NovaContextEngine
+//  Updated to use CoreTypes while preserving all domain knowledge
+//  Includes specific details about Kevin Dutan, Rubin Museum, and portfolio
 //
 
 import Foundation
@@ -17,14 +15,16 @@ public actor NovaAPIService {
     
     // MARK: - Dependencies
     private let contextEngine = NovaContextEngine.shared
-    
-    // Note: These may be in different locations, so we'll use them conditionally
-    // private let dataAggregator = NovaDataAggregator.shared
-    // private let promptEngine = NovaPromptEngine.shared
+    private let intelligenceService = IntelligenceService.shared
     
     // MARK: - Configuration
     private let processingTimeout: TimeInterval = 30.0
     private let maxRetries = 3
+    
+    // MARK: - Portfolio Constants (Domain Knowledge)
+    private let BUILDING_COUNT = 18
+    private let WORKER_COUNT = 8
+    private let TASK_COUNT = 150
     
     // MARK: - Processing State
     private var isProcessing = false
@@ -113,7 +113,8 @@ public actor NovaAPIService {
             message: responseText,
             actions: actions,
             insights: insights,
-            context: context
+            context: context,
+            timestamp: Date()
         )
     }
     
@@ -144,27 +145,21 @@ public actor NovaAPIService {
         return await generateGeneralResponse(prompt: promptText, context: context)
     }
     
-    // MARK: - Specific Response Generators
+    // MARK: - Specific Response Generators (PRESERVED FROM ORIGINAL)
     
     private func generateBuildingResponse(prompt: String, context: NovaContext) async -> String {
-        // Use a simple approach for now since we're having dependency issues
-        let buildingCount = 18 // Fallback value
-        let taskCount = 150 // Fallback value
-        
         if prompt.contains("rubin") {
             return """
-            The Rubin Museum is one of our key properties with specialized requirements. Kevin Dutan is the primary specialist for this building, handling approximately \(taskCount) tasks across the museum's unique operational needs. The building requires careful attention to climate control and security protocols for the art collection.
+            The Rubin Museum is one of our key properties with specialized requirements. Kevin Dutan is the primary specialist for this building, handling approximately \(TASK_COUNT) tasks across the museum's unique operational needs. The building requires careful attention to climate control and security protocols for the art collection.
             """
         }
         
         return """
-        We manage \(buildingCount) buildings in our portfolio. Each building has specific operational requirements and assigned specialist workers. Would you like information about a specific building or general portfolio metrics?
+        We manage \(BUILDING_COUNT) buildings in our portfolio. Each building has specific operational requirements and assigned specialist workers. Would you like information about a specific building or general portfolio metrics?
         """
     }
     
     private func generateWorkerResponse(prompt: String, context: NovaContext) async -> String {
-        let workerCount = 8 // Fallback value
-        
         if prompt.contains("kevin") {
             return """
             Kevin Dutan is our museum and property specialist, primarily responsible for the Rubin Museum and several other key buildings. He manages complex tasks requiring specialized knowledge of museum operations, climate control, and security protocols. His expertise is essential for maintaining our art-related properties.
@@ -172,28 +167,22 @@ public actor NovaAPIService {
         }
         
         return """
-        Our team includes \(workerCount) active workers, each with specialized skills and building assignments. Workers are assigned based on their expertise and the specific needs of each property. Would you like information about a specific worker or team assignments?
+        Our team includes \(WORKER_COUNT) active workers, each with specialized skills and building assignments. Workers are assigned based on their expertise and the specific needs of each property. Would you like information about a specific worker or team assignments?
         """
     }
     
     private func generateTaskResponse(prompt: String, context: NovaContext) async -> String {
-        let taskCount = 150 // Fallback value
-        
         return """
-        Currently tracking \(taskCount) tasks across our portfolio. Tasks are prioritized by urgency and building requirements. Our system ensures efficient allocation based on worker expertise and building needs. Would you like to see pending tasks or completion statistics?
+        Currently tracking \(TASK_COUNT) tasks across our portfolio. Tasks are prioritized by urgency and building requirements. Our system ensures efficient allocation based on worker expertise and building needs. Would you like to see pending tasks or completion statistics?
         """
     }
     
     private func generatePortfolioResponse(prompt: String, context: NovaContext) async -> String {
-        let buildingCount = 18 // Fallback value
-        let workerCount = 8 // Fallback value
-        let taskCount = 150 // Fallback value
-        
         return """
         Portfolio Overview:
-        • Buildings: \(buildingCount) properties under management
-        • Active Workers: \(workerCount) specialized team members
-        • Current Tasks: \(taskCount) active assignments
+        • Buildings: \(BUILDING_COUNT) properties under management
+        • Active Workers: \(WORKER_COUNT) specialized team members
+        • Current Tasks: \(TASK_COUNT) active assignments
         
         Our portfolio spans diverse property types from residential to specialized facilities like the Rubin Museum. Each property receives tailored management based on its unique operational requirements.
         """
@@ -213,10 +202,10 @@ public actor NovaAPIService {
         """
     }
     
-    // MARK: - Insight Generation
+    // MARK: - Insight Generation (Using CoreTypes)
     
-    private func generateInsights(for prompt: NovaPrompt, context: NovaContext) async throws -> [NovaInsight] {
-        var insights: [NovaInsight] = []
+    private func generateInsights(for prompt: NovaPrompt, context: NovaContext) async throws -> [CoreTypes.IntelligenceInsight] {
+        var insights: [CoreTypes.IntelligenceInsight] = []
         
         // Generate operational insights
         if let operationalInsight = await generateOperationalInsight(context: context) {
@@ -231,38 +220,42 @@ public actor NovaAPIService {
         return insights
     }
     
-    private func generateOperationalInsight(context: NovaContext) async -> NovaInsight? {
-        return NovaInsight(
+    private func generateOperationalInsight(context: NovaContext) async -> CoreTypes.IntelligenceInsight? {
+        return CoreTypes.IntelligenceInsight(
+            id: UUID().uuidString,
             title: "Operational Efficiency",
             description: "Current operations are running smoothly with optimized worker assignments and task distribution.",
-            category: .efficiency,
+            type: .operations,
             priority: .medium,
             confidence: 0.85,
-            actionable: true,
+            timestamp: Date(),
+            source: "Nova AI",
+            impactScore: 0.7,
+            affectedEntityId: nil,
+            affectedEntityType: nil,
             suggestedActions: [
-                NovaAction(
-                    title: "Review Assignments",
-                    description: "Review current worker-building assignments for optimization opportunities",
-                    actionType: .review
-                )
+                "Review current worker-building assignments for optimization opportunities",
+                "Analyze task completion patterns for efficiency gains"
             ]
         )
     }
     
-    private func generateEfficiencyInsight(context: NovaContext) async -> NovaInsight? {
-        return NovaInsight(
+    private func generateEfficiencyInsight(context: NovaContext) async -> CoreTypes.IntelligenceInsight? {
+        return CoreTypes.IntelligenceInsight(
+            id: UUID().uuidString,
             title: "Resource Optimization",
             description: "Potential for 15% efficiency improvement through schedule optimization and cross-training initiatives.",
-            category: .efficiency, // ✅ FIXED: Changed from .optimization to .efficiency
+            type: .efficiency,
             priority: .high,
             confidence: 0.78,
-            actionable: true,
+            timestamp: Date(),
+            source: "Nova AI",
+            impactScore: 0.85,
+            affectedEntityId: nil,
+            affectedEntityType: nil,
             suggestedActions: [
-                NovaAction(
-                    title: "Optimize Schedule",
-                    description: "Analyze current schedules for optimization opportunities",
-                    actionType: .schedule
-                )
+                "Implement cross-training program for specialized tasks",
+                "Optimize daily schedules based on task proximity"
             ]
         )
     }
@@ -279,7 +272,8 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "View Building Details",
                 description: "Access complete building information and metrics",
-                actionType: .navigate
+                actionType: .navigate,
+                priority: prompt.priority
             ))
         }
         
@@ -288,7 +282,18 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "View Tasks",
                 description: "Navigate to task management interface",
-                actionType: .navigate
+                actionType: .navigate,
+                priority: prompt.priority
+            ))
+        }
+        
+        // Schedule-related actions
+        if promptText.contains("schedule") || promptText.contains("assign") {
+            actions.append(NovaAction(
+                title: "Optimize Schedule",
+                description: "Analyze current schedules for optimization opportunities",
+                actionType: .schedule,
+                priority: .high
             ))
         }
         
@@ -296,7 +301,8 @@ public actor NovaAPIService {
         actions.append(NovaAction(
             title: "Get Help",
             description: "Access Nova AI documentation and features",
-            actionType: .review
+            actionType: .review,
+            priority: .low
         ))
         
         return actions
@@ -326,35 +332,72 @@ public actor NovaAPIService {
         return .general
     }
     
-    // MARK: - Context Generators
+    // MARK: - Context Generators (Enhanced with Domain Knowledge)
     
     private func generateBuildingContext(from text: String) async -> NovaContext {
+        var insights = ["Building operations analysis", "Specialized requirements assessment"]
+        
+        // Add Rubin Museum specific insights if mentioned
+        if text.lowercased().contains("rubin") {
+            insights.append("Museum climate control requirements")
+            insights.append("Security protocol compliance")
+        }
+        
         return NovaContext(
-            data: "Building management context with portfolio overview",
-            insights: ["Building operations analysis", "Specialized requirements assessment"],
-            metadata: ["context_type": "building", "source": "portfolio_data"]
+            data: ["buildingId": "14", "type": "building"],
+            timestamp: Date(),
+            insights: insights,
+            metadata: [
+                "context_type": "building",
+                "source": "portfolio_data",
+                "specialization": "museum_operations"
+            ]
         )
     }
     
     private func generateWorkerContext(from text: String) async -> NovaContext {
+        var insights = ["Worker specialization analysis", "Assignment optimization"]
+        
+        // Add Kevin-specific insights if mentioned
+        if text.lowercased().contains("kevin") {
+            insights.append("Museum specialist expertise")
+            insights.append("Multi-building coverage analysis")
+        }
+        
         return NovaContext(
-            data: "Worker management context with team assignments",
-            insights: ["Worker specialization analysis", "Assignment optimization"],
-            metadata: ["context_type": "worker", "source": "team_data"]
+            data: ["workerId": "4", "type": "worker", "name": "Kevin Dutan"],
+            timestamp: Date(),
+            insights: insights,
+            metadata: [
+                "context_type": "worker",
+                "source": "team_data",
+                "specialization": "museum_operations"
+            ]
         )
     }
     
     private func generatePortfolioContext(from text: String) async -> NovaContext {
         return NovaContext(
-            data: "Portfolio management context with comprehensive metrics",
-            insights: ["Portfolio performance analysis", "Operational efficiency metrics"],
+            data: [
+                "type": "portfolio",
+                "buildingCount": String(BUILDING_COUNT),
+                "workerCount": String(WORKER_COUNT),
+                "taskCount": String(TASK_COUNT)
+            ],
+            timestamp: Date(),
+            insights: [
+                "Portfolio performance analysis",
+                "Operational efficiency metrics",
+                "Resource utilization patterns"
+            ],
             metadata: ["context_type": "portfolio", "source": "aggregate_data"]
         )
     }
     
     private func generateTaskContext(from text: String) async -> NovaContext {
         return NovaContext(
-            data: "Task management context with operational priorities",
+            data: ["type": "task", "totalTasks": String(TASK_COUNT)],
+            timestamp: Date(),
             insights: ["Task distribution analysis", "Priority optimization"],
             metadata: ["context_type": "task", "source": "task_data"]
         )
@@ -362,7 +405,8 @@ public actor NovaAPIService {
     
     private func generateGeneralContext(from text: String) async -> NovaContext {
         return NovaContext(
-            data: "General assistance context with system capabilities",
+            data: ["type": "general", "query": text],
+            timestamp: Date(),
             insights: ["System features overview", "Available assistance options"],
             metadata: ["context_type": "general", "source": "system_info"]
         )
@@ -400,6 +444,32 @@ public enum NovaAPIError: Error, LocalizedError {
             return "Request timed out"
         case .invalidPrompt:
             return "Invalid prompt provided"
+        }
+    }
+}
+
+// MARK: - Future API Integration
+extension NovaAPIService {
+    
+    /// Placeholder for future OpenAI/Claude API integration
+    private func callExternalAPI(prompt: String) async throws -> String {
+        // Future implementation:
+        // 1. Format prompt for API
+        // 2. Make API call
+        // 3. Parse response
+        // 4. Return formatted result
+        
+        return "API response placeholder"
+    }
+    
+    /// Prepare for streaming responses
+    public func streamResponse(for prompt: NovaPrompt) async throws -> AsyncStream<String> {
+        return AsyncStream { continuation in
+            Task {
+                // Future: Stream responses from API
+                continuation.yield("Streaming response coming soon...")
+                continuation.finish()
+            }
         }
     }
 }
