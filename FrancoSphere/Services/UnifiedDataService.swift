@@ -197,8 +197,8 @@ public class UnifiedDataService: ObservableObject {
             
             // Import routines and DSNY schedules
             print("📅 Importing routines and schedules...")
-            // FIX: Call the unambiguous method name
-            let importResult = try await operationalData.importRoutinesAndDSNYAsync()
+            // FIX: Replace unused variable with underscore
+            _ = try await operationalData.importRoutinesAndDSNYAsync()
             print("✅ Imported routines and DSNY schedules")
             syncProgress = 0.5
             
@@ -304,7 +304,8 @@ public class UnifiedDataService: ObservableObject {
     // MARK: - Fallback Data Access
     
     /// Get tasks with fallback to OperationalDataManager
-    public func getTasksWithFallback(for workerId: String, date: Date) async -> [ContextualTask] {
+    /// FIX: Change return type to use CoreTypes namespace
+    public func getTasksWithFallback(for workerId: String, date: Date) async -> [CoreTypes.ContextualTask] {
         do {
             // Try database first
             let dbTasks = try await taskService.getTasks(for: workerId, date: date)
@@ -323,7 +324,8 @@ public class UnifiedDataService: ObservableObject {
     }
     
     /// Get all tasks with fallback to OperationalDataManager
-    public func getAllTasksWithFallback() async -> [ContextualTask] {
+    /// FIX: Change return type to use CoreTypes namespace
+    public func getAllTasksWithFallback() async -> [CoreTypes.ContextualTask] {
         do {
             // Try database first
             let dbTasks = try await taskService.getAllTasks()
@@ -416,11 +418,12 @@ public class UnifiedDataService: ObservableObject {
     // MARK: - Operational Data Conversion
     
     /// Get tasks from OperationalDataManager with proper async handling
-    private func getTasksFromOperationalData(workerId: String, date: Date) async -> [ContextualTask] {
+    /// FIX: Change return type to use CoreTypes namespace
+    private func getTasksFromOperationalData(workerId: String, date: Date) async -> [CoreTypes.ContextualTask] {
         let workerName = WorkerConstants.getWorkerName(id: workerId)
         let workerTasks = operationalData.getRealWorldTasks(for: workerName)
         
-        var contextualTasks: [ContextualTask] = []
+        var contextualTasks: [CoreTypes.ContextualTask] = []
         
         for operationalTask in workerTasks {
             let contextualTask = await convertOperationalTaskToContextualTask(operationalTask, workerId: workerId)
@@ -431,9 +434,10 @@ public class UnifiedDataService: ObservableObject {
     }
     
     /// Get all tasks from OperationalDataManager with proper async handling
-    private func getAllTasksFromOperationalData() async -> [ContextualTask] {
+    /// FIX: Change return type to use CoreTypes namespace
+    private func getAllTasksFromOperationalData() async -> [CoreTypes.ContextualTask] {
         let allTasks = operationalData.getAllRealWorldTasks()
-        var contextualTasks: [ContextualTask] = []
+        var contextualTasks: [CoreTypes.ContextualTask] = []
         
         for operationalTask in allTasks {
             guard let workerId = getWorkerIdFromName(operationalTask.assignedWorker) else { continue }
@@ -445,12 +449,13 @@ public class UnifiedDataService: ObservableObject {
     }
     
     /// Convert operational task to contextual task with proper async building ID lookup
-    private func convertOperationalTaskToContextualTask(_ operationalTask: OperationalDataTaskAssignment, workerId: String) async -> ContextualTask {
+    /// FIX: Change return type to use CoreTypes namespace
+    private func convertOperationalTaskToContextualTask(_ operationalTask: OperationalDataTaskAssignment, workerId: String) async -> CoreTypes.ContextualTask {
         // Properly handle async building ID lookup
         let buildingId = await getBuildingIdFromName(operationalTask.building) ?? "unknown_building_\(operationalTask.building.hash)"
         
-        // FIX: Use minimal ContextualTask parameters
-        return ContextualTask(
+        // FIX: Use CoreTypes namespace and minimal ContextualTask parameters
+        return CoreTypes.ContextualTask(
             id: "op_\(operationalTask.taskName.hash)_\(workerId)",
             title: operationalTask.taskName,
             description: generateTaskDescription(operationalTask),
@@ -646,6 +651,10 @@ public struct ServiceDataFlow {
  - ✅ Removed do-catch since nothing throws in that block
  - ✅ Simplified the initialization flow
  
+ 🔧 LINE 201 FIX:
+ - ✅ Changed from `let importResult =` to `_ =` to suppress unused variable warning
+ - ✅ The result isn't used, so we discard it properly
+ 
  🔧 LINE 206 FIX:
  - ✅ Changed to use unambiguous method name: importRoutinesAndDSNYAsync()
  - ✅ This avoids ambiguity with overloaded methods
@@ -654,7 +663,13 @@ public struct ServiceDataFlow {
  - ✅ Properly unwrap optionals using map to avoid implicit coercion
  - ✅ Use NSNull() for nil values in database
  
+ 🔧 LINES 307, 326, 411, 425, 442 FIX:
+ - ✅ Changed all ContextualTask references to CoreTypes.ContextualTask
+ - ✅ This fixes "Method cannot be declared public because its result uses an internal type"
+ - ✅ Applied to both public methods and private helper methods for consistency
+ 
  🔧 LINE 456 FIX:
+ - ✅ Changed to use CoreTypes.ContextualTask in return statement
  - ✅ Removed extra parameters at positions #6 and #13
  - ✅ Using minimal ContextualTask initialization
  
