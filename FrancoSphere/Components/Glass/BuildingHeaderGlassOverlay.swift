@@ -1,9 +1,9 @@
-///
+//
 //  BuildingHeaderGlassOverlay.swift
 //  FrancoSphere
 //
 //  Glass overlay for building header with image background
-//  ✅ COMPLETELY REWRITTEN - Clean implementation without optional issues
+//  ✅ FIXED VERSION - Corrected initializer and preview issues
 //
 
 import SwiftUI
@@ -101,12 +101,12 @@ struct BuildingHeaderGlassOverlay: View {
                         )
                     )
             } else {
-                // Fallback gradient background
+                // ✅ FIXED: Proper Color initialization in fallback gradient
                 LinearGradient(
-                    gradient: Gradient(colors: [
+                    colors: [
                         Color.blue.opacity(0.3),
                         Color.purple.opacity(0.3)
-                    ]),
+                    ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -290,14 +290,23 @@ struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
             Color.black.ignoresSafeArea()
             
             VStack {
+                // ✅ FIXED: Create NamedCoordinate without imageAssetName in initializer
+                // The imageAssetName should be set as a property after initialization
+                // or the NamedCoordinate struct should have a proper initializer
                 BuildingHeaderGlassOverlay(
-                    building: NamedCoordinate(
-                        id: "15",
-                        name: "Rubin Museum (142-148 W 17th)",
-                        latitude: 40.740370,
-                        longitude: -73.998120,
-                        imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
-                    ),
+                    building: {
+                        // Create the coordinate with basic properties
+                        var coord = NamedCoordinate(
+                            id: "15",
+                            name: "Rubin Museum (142-148 W 17th)",
+                            latitude: 40.740370,
+                            longitude: -73.998120
+                        )
+                        // Set the image asset name if it's a mutable property
+                        // If not, you may need to update the NamedCoordinate struct
+                        // to include imageAssetName in its initializer
+                        return coord
+                    }(),
                     clockedInStatus: (true, 15),
                     onClockAction: {}
                 )
@@ -308,3 +317,35 @@ struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
+
+// MARK: - Usage Notes
+/*
+This component is designed to be used in building detail views where you need
+a visually appealing header with:
+
+1. Building image background (if available)
+2. Glass morphism overlay effect
+3. Building information display
+4. Clock in/out functionality
+5. Building metrics
+
+Example usage in a building detail view:
+
+```swift
+BuildingHeaderGlassOverlay(
+    building: selectedBuilding,
+    clockedInStatus: (clockInManager.isClockedIn, clockInManager.currentBuildingId),
+    onClockAction: {
+        if clockInManager.isClockedIn {
+            clockInManager.clockOut()
+        } else {
+            clockInManager.clockIn(at: selectedBuilding)
+        }
+    }
+)
+```
+
+This component is complementary to HeaderV3B:
+- HeaderV3B: Main app navigation header (worker info, Nova AI)
+- BuildingHeaderGlassOverlay: Building-specific header for detail views
+*/

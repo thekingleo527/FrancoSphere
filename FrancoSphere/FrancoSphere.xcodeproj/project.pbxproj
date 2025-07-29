@@ -15,7 +15,6 @@
 		23273A0F2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BD2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift */; };
 		23273A102E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */; };
 		23273A112E2B8674004A52C6 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739552E2B8674004A52C6 /* GRDBManager.swift */; };
-		23273A122E2B8674004A52C6 /* WorkerContextEngineAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393B2E2B8674004A52C6 /* WorkerContextEngineAdapter.swift */; };
 		23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DE2E2B8674004A52C6 /* SignUpView.swift */; };
 		23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739102E2B8674004A52C6 /* GlassDeckContainer.swift */; };
 		23273A162E2B8674004A52C6 /* NewAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739582E2B8674004A52C6 /* NewAuthManager.swift */; };
@@ -52,7 +51,6 @@
 		23273A3C2E2B8674004A52C6 /* WeatherDataAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CB2E2B8674004A52C6 /* WeatherDataAdapter.swift */; };
 		23273A3D2E2B8674004A52C6 /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739262E2B8674004A52C6 /* FrancoSphereColors.swift */; };
 		23273A3E2E2B8674004A52C6 /* GlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739122E2B8674004A52C6 /* GlassModal.swift */; };
-		23273A3F2E2B8674004A52C6 /* WorkerContextEngine+DataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739852E2B8674004A52C6 /* WorkerContextEngine+DataFlow.swift */; };
 		23273A402E2B8674004A52C6 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739572E2B8674004A52C6 /* LocationManager.swift */; };
 		23273A412E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390A2E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift */; };
 		23273A432E2B8674004A52C6 /* InitializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739292E2B8674004A52C6 /* InitializationStatus.swift */; };
@@ -71,7 +69,6 @@
 		23273A522E2B8674004A52C6 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739332E2B8674004A52C6 /* StatCard.swift */; };
 		23273A532E2B8674004A52C6 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739A72E2B8674004A52C6 /* TestRealDataIntegration.swift */; };
 		23273A552E2B8674004A52C6 /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */; };
-		23273A562E2B8674004A52C6 /* WorkerContextEnginePatches.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739862E2B8674004A52C6 /* WorkerContextEnginePatches.swift */; };
 		23273A572E2B8674004A52C6 /* BuildingService+Intelligence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B92E2B8674004A52C6 /* BuildingService+Intelligence.swift */; };
 		23273A582E2B8674004A52C6 /* WorkerContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739842E2B8674004A52C6 /* WorkerContextEngine.swift */; };
 		23273A592E2B8674004A52C6 /* TrackableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D22E2B8674004A52C6 /* TrackableScrollView.swift */; };
@@ -282,7 +279,6 @@
 		232739382E2B8674004A52C6 /* WeatherDashboardComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDashboardComponent.swift; sourceTree = "<group>"; };
 		232739392E2B8674004A52C6 /* WeatherTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTasksSection.swift; sourceTree = "<group>"; };
 		2327393A2E2B8674004A52C6 /* WeatherViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewModifier.swift; sourceTree = "<group>"; };
-		2327393B2E2B8674004A52C6 /* WorkerContextEngineAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngineAdapter.swift; sourceTree = "<group>"; };
 		2327393C2E2B8674004A52C6 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
 		2327393E2E2B8674004A52C6 /* EmergencyContactsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyContactsSheet.swift; sourceTree = "<group>"; };
 		232739412E2B8674004A52C6 /* DatabaseSchemaVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSchemaVerifier.swift; sourceTree = "<group>"; };
@@ -326,8 +322,6 @@
 		232739822E2B8674004A52C6 /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
 		232739832E2B8674004A52C6 /* WorkerConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerConstants.swift; sourceTree = "<group>"; };
 		232739842E2B8674004A52C6 /* WorkerContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngine.swift; sourceTree = "<group>"; };
-		232739852E2B8674004A52C6 /* WorkerContextEngine+DataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkerContextEngine+DataFlow.swift"; sourceTree = "<group>"; };
-		232739862E2B8674004A52C6 /* WorkerContextEnginePatches.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEnginePatches.swift; sourceTree = "<group>"; };
 		232739872E2B8674004A52C6 /* WorkerRoutineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineViewModel.swift; sourceTree = "<group>"; };
 		232739892E2B8674004A52C6 /* NovaAIContextManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAIContextManager.swift; sourceTree = "<group>"; };
 		2327398A2E2B8674004A52C6 /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
@@ -561,7 +555,6 @@
 				232739382E2B8674004A52C6 /* WeatherDashboardComponent.swift */,
 				232739392E2B8674004A52C6 /* WeatherTasksSection.swift */,
 				2327393A2E2B8674004A52C6 /* WeatherViewModifier.swift */,
-				2327393B2E2B8674004A52C6 /* WorkerContextEngineAdapter.swift */,
 				2327393C2E2B8674004A52C6 /* WorkersInlineList.swift */,
 			);
 			path = "Shared Components";
@@ -692,8 +685,6 @@
 				232739822E2B8674004A52C6 /* WorkerActionType.swift */,
 				232739832E2B8674004A52C6 /* WorkerConstants.swift */,
 				232739842E2B8674004A52C6 /* WorkerContextEngine.swift */,
-				232739852E2B8674004A52C6 /* WorkerContextEngine+DataFlow.swift */,
-				232739862E2B8674004A52C6 /* WorkerContextEnginePatches.swift */,
 				232739872E2B8674004A52C6 /* WorkerRoutineViewModel.swift */,
 			);
 			path = Models;
@@ -1113,7 +1104,6 @@
 				23273A0F2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift in Sources */,
 				23273A102E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift in Sources */,
 				23273A112E2B8674004A52C6 /* GRDBManager.swift in Sources */,
-				23273A122E2B8674004A52C6 /* WorkerContextEngineAdapter.swift in Sources */,
 				23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */,
 				23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */,
 				23273A162E2B8674004A52C6 /* NewAuthManager.swift in Sources */,
@@ -1152,7 +1142,6 @@
 				23273A3C2E2B8674004A52C6 /* WeatherDataAdapter.swift in Sources */,
 				23273A3D2E2B8674004A52C6 /* FrancoSphereColors.swift in Sources */,
 				23273A3E2E2B8674004A52C6 /* GlassModal.swift in Sources */,
-				23273A3F2E2B8674004A52C6 /* WorkerContextEngine+DataFlow.swift in Sources */,
 				23273A402E2B8674004A52C6 /* LocationManager.swift in Sources */,
 				23EA71082E387DF70010FA03 /* NovaDataService.swift in Sources */,
 				23273A412E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift in Sources */,
@@ -1172,7 +1161,6 @@
 				23273A522E2B8674004A52C6 /* StatCard.swift in Sources */,
 				23273A532E2B8674004A52C6 /* TestRealDataIntegration.swift in Sources */,
 				23273A552E2B8674004A52C6 /* DashboardTaskDetailView.swift in Sources */,
-				23273A562E2B8674004A52C6 /* WorkerContextEnginePatches.swift in Sources */,
 				23273A572E2B8674004A52C6 /* BuildingService+Intelligence.swift in Sources */,
 				23273A582E2B8674004A52C6 /* WorkerContextEngine.swift in Sources */,
 				23273A592E2B8674004A52C6 /* TrackableScrollView.swift in Sources */,

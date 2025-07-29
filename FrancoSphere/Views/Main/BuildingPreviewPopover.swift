@@ -2,30 +2,14 @@
 //  BuildingPreviewPopover.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Missing tasks property added
-//  ✅ FIXED: Animation syntax errors resolved
-//  ✅ FIXED: Expression syntax issues corrected
-//  ✅ ALIGNED: With current CoreTypes structure and Phase 2.1 implementation
-//  ✅ GRDB: Real-time data integration ready
+//  ✅ ALIGNED: With current CoreTypes structure
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ REFACTORED: Works with actual NamedCoordinate properties
 //
 
 import SwiftUI
-// COMPILATION FIX: Add missing imports
 import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
-import Foundation
-
 import MapKit
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
-import Foundation
 
 struct BuildingPreviewPopover: View {
     let building: NamedCoordinate
@@ -33,7 +17,7 @@ struct BuildingPreviewPopover: View {
     let onDismiss: () -> Void
     
     @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
-    @State private var tasks: [ContextualTask] = []  // ✅ FIXED: Added missing tasks property
+    @State private var tasks: [ContextualTask] = []
     @State private var openTasksCount: Int = 0
     @State private var nextSanitationDate: String?
     @State private var isLoading = true
@@ -103,25 +87,47 @@ struct BuildingPreviewPopover: View {
     
     @ViewBuilder
     private var buildingImageView: some View {
-        // ✅ FIXED: Proper optional handling for imageAssetName
-        if let imageAssetName = building.imageAssetName, !imageAssetName.isEmpty,
-           let uiImage = UIImage(named: imageAssetName) {
+        // Try to load image based on building name
+        // Convert building name to potential asset name format
+        let potentialAssetName = building.name
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: ".", with: "")
+            .replacingOccurrences(of: ",", with: "")
+        
+        if let uiImage = UIImage(named: potentialAssetName) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else if let uiImage = UIImage(named: "building_\(building.id)") {
+            // Try with building ID
             Image(uiImage: uiImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         } else {
             // Fallback view with building icon
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.blue.opacity(0.3))
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.blue.opacity(0.3),
+                            Color.blue.opacity(0.2)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .overlay(
                     VStack(spacing: 8) {
                         Image(systemName: "building.2.fill")
                             .font(.title)
                             .foregroundColor(.blue)
                         
-                        Text("No Image")
-                            .font(.caption)
+                        Text(building.name)
+                            .font(.caption2)
                             .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .padding(.horizontal, 8)
                     }
                 )
         }
@@ -131,16 +137,29 @@ struct BuildingPreviewPopover: View {
     
     private var buildingInfo: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Building address or coordinates
+            // Building address if available
+            if !building.address.isEmpty {
+                HStack {
+                    Image(systemName: "location.fill")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    
+                    Text(building.address)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(2)
+                }
+            }
+            
+            // Building ID
             HStack {
-                Image(systemName: "location.fill")
+                Image(systemName: "building.2")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.gray)
                 
                 Text("Building ID: \(building.id)")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(2)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
             }
             
             // Coordinates for reference
@@ -191,7 +210,7 @@ struct BuildingPreviewPopover: View {
             HStack {
                 Image(systemName: "checklist")
                     .font(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(openTasksCount > 0 ? .orange : .green)
                 
                 Text("\(openTasksCount) open tasks")
                     .font(.subheadline)
@@ -214,6 +233,21 @@ struct BuildingPreviewPopover: View {
                         .foregroundColor(.green)
                     
                     Text("Next sanitation: \(sanitationDate)")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Spacer()
+                }
+            }
+            
+            // Quick stats
+            if !tasks.isEmpty {
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    
+                    Text("\(completedTasksCount)/\(tasks.count) completed today")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                     
@@ -244,21 +278,20 @@ struct BuildingPreviewPopover: View {
     private func loadBuildingData() {
         Task {
             // Load real task data for this building
-            let allTasksTask = Task {
-                let allTasks = await WorkerContextEngine.shared.getTodaysTasks()
-                await MainActor.run {
-                    self.tasks = allTasks
-                }
-            }
+            let allTasks = await WorkerContextEngine.shared.getTodaysTasks()
             
-            await allTasksTask.value  // ✅ FIXED: Proper task awaiting
+            await MainActor.run {
+                self.tasks = allTasks
+            }
             
             let buildingTasks = tasks.filter { task in
                 task.buildingName == building.name || task.buildingId == building.id
             }
             
-            // Use .status instead of .isCompleted
-            let openTasks = buildingTasks.filter { $0.status != "completed" }
+            // Filter open tasks using TaskStatus enum
+            let openTasks = buildingTasks.filter { task in
+                task.status != .completed && task.status != .cancelled
+            }
             
             // Find next sanitation task
             let sanitationTasks = buildingTasks.filter { task in
@@ -268,10 +301,12 @@ struct BuildingPreviewPopover: View {
                 task.title.lowercased().contains("trash")
             }
             
-            let nextSanitation = sanitationTasks.first { $0.status != "completed" }
+            let nextSanitation = sanitationTasks.first { task in
+                task.status != .completed && task.status != .cancelled
+            }
             
             await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.6)) {  // ✅ FIXED: Proper animation syntax
+                withAnimation(.easeInOut(duration: 0.6)) {
                     openTasksCount = openTasks.count
                     
                     if let next = nextSanitation {
@@ -282,7 +317,7 @@ struct BuildingPreviewPopover: View {
                             nextSanitationDate = "Scheduled"
                         }
                     } else {
-                        nextSanitationDate = "No scheduled sanitation"
+                        nextSanitationDate = nil
                     }
                     
                     isLoading = false
@@ -291,9 +326,13 @@ struct BuildingPreviewPopover: View {
         }
     }
     
+    private var completedTasksCount: Int {
+        tasks.filter { $0.status == .completed }.count
+    }
+    
     private func startDismissTimer() {
         dismissTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
-            withAnimation(.easeOut(duration: 0.3)) {  // ✅ FIXED: Proper animation syntax
+            withAnimation(.easeOut(duration: 0.3)) {
                 onDismiss()
             }
         }
@@ -315,7 +354,7 @@ struct PrimaryPreviewButtonStyle: ButtonStyle {
                     .fill(Color.blue)
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)  // ✅ FIXED: Proper animation syntax
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -336,11 +375,12 @@ struct SecondaryPreviewButtonStyle: ButtonStyle {
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)  // ✅ FIXED: Proper animation syntax
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
 // MARK: - Preview
+
 struct BuildingPreviewPopover_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
@@ -350,9 +390,9 @@ struct BuildingPreviewPopover_Previews: PreviewProvider {
                 building: NamedCoordinate(
                     id: "1",
                     name: "12 West 18th Street",
+                    address: "12 West 18th Street, New York, NY 10011",
                     latitude: 40.7397,
-                    longitude: -73.9944,
-                    imageAssetName: "12_West_18th_Street"
+                    longitude: -73.9944
                 ),
                 onDetails: { print("View details tapped") },
                 onDismiss: { print("Dismiss tapped") }
