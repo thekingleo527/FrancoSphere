@@ -966,23 +966,34 @@ struct InsightsCategoryBreakdown: View {
         [.efficiency, .maintenance, .compliance, .safety, .cost]
     }
     
+    // ✅ FIXED: Extract grid columns to reduce complexity
+    private var gridColumns: [GridItem] {
+        [GridItem(.flexible()), GridItem(.flexible())]
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Insights by Category")
-                .font(.headline)
-                .foregroundColor(.white)
+            // Header
+            categoryHeader
             
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                // ✅ FIXED: Now using the extracted array
-                ForEach(insightCategories, id: \.self) { type in
-                    CategoryCard(
-                        type: type,
-                        count: categoryCounts[type] ?? 0
-                    )
-                }
+            // ✅ FIXED: Simplified grid by extracting components
+            categoryGrid
+        }
+    }
+    
+    private var categoryHeader: some View {
+        Text("Insights by Category")
+            .font(.headline)
+            .foregroundColor(.white)
+    }
+    
+    private var categoryGrid: some View {
+        LazyVGrid(columns: gridColumns, spacing: 12) {
+            ForEach(insightCategories, id: \.self) { category in
+                CategoryCard(
+                    type: category,
+                    count: categoryCounts[category] ?? 0
+                )
             }
         }
     }

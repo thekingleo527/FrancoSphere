@@ -10,8 +10,8 @@ import SwiftUI
 import Combine
 import CoreLocation  // For NamedCoordinate support
 
-// Type alias for clarity
-typealias Building = CoreTypes.NamedCoordinate
+// Private type alias for internal use
+private typealias Building = CoreTypes.NamedCoordinate
 
 @MainActor
 public class NovaIntelligenceEngine: ObservableObject {
@@ -84,7 +84,7 @@ public class NovaIntelligenceEngine: ObservableObject {
     
     // MARK: - Convenience Methods (replaces multiple services)
     
-    public func generateInsight(for building: Building) async throws -> CoreTypes.IntelligenceInsight {
+    public func generateInsight(for building: CoreTypes.NamedCoordinate) async throws -> CoreTypes.IntelligenceInsight {
         return try await process(
             query: "Generate insight for building \(building.name)",
             context: ["buildingId": building.id, "building": building],
@@ -192,7 +192,7 @@ extension NovaIntelligenceEngine {
     /// Replaces NovaCore.generateInsights()
     public func generateInsights() async -> [CoreTypes.IntelligenceInsight] {
         do {
-            // BuildingService returns [NamedCoordinate] which is Building via typealias
+            // BuildingService returns [CoreTypes.NamedCoordinate]
             let buildings = try await buildingService.getAllBuildings()
             
             var newInsights: [CoreTypes.IntelligenceInsight] = []
