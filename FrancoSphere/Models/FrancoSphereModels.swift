@@ -75,8 +75,8 @@ extension CoreTypes.WorkerProfile {
     var initials: String {
         let components = name.components(separatedBy: " ")
         let firstInitial = components.first?.first ?? "?"
-        let lastInitial = components.count > 1 ? components.last?.first ?? "" : ""
-        return "\(firstInitial)\(lastInitial)".uppercased()
+        let lastInitial: Character = components.count > 1 ? (components.last?.first ?? " ") : " "
+        return "\(firstInitial)\(lastInitial)".uppercased().trimmingCharacters(in: .whitespaces)
     }
     
     /// Check if worker has a specific skill
