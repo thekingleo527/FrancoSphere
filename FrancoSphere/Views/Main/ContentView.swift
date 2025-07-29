@@ -6,6 +6,7 @@
 //  ✅ ENHANCED: Automatic database initialization on first auth
 //  ✅ REAL-TIME: Progress tracking and error handling
 //  ✅ ALIGNED: With updated CoreTypes and dashboard models
+//  ✅ FIXED: Correct DashboardSyncService method call
 //
 
 import SwiftUI
@@ -168,8 +169,11 @@ struct ContentView: View {
         // Initialize real-time sync for operational data
         await OperationalDataManager.shared.setupRealTimeSync()
         
-        // Start dashboard sync service
-        await DashboardSyncService.shared.startSync()
+        // ✅ FIXED: Initialize and enable dashboard sync service
+        await MainActor.run {
+            DashboardSyncService.shared.initialize()
+            DashboardSyncService.shared.enableCrossDashboardSync()
+        }
         
         // Initialize intelligence service
         _ = IntelligenceService.shared
