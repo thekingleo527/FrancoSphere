@@ -3,15 +3,13 @@
 //  FrancoSphere v6.0
 //
 //  Single entry point for all Nova AI operations
+//  Incorporates data aggregation from NovaDataService
 //  Uses CoreTypes for all data structures
 //
 
 import SwiftUI
 import Combine
 import CoreLocation  // For NamedCoordinate support
-
-// Private type alias for internal use
-private typealias Building = CoreTypes.NamedCoordinate
 
 @MainActor
 public class NovaIntelligenceEngine: ObservableObject {
@@ -25,11 +23,16 @@ public class NovaIntelligenceEngine: ObservableObject {
     @Published public var lastError: Error?
     
     // MARK: - Dependencies
-    private let dataService = NovaDataService.shared
     private let intelligenceService = IntelligenceService.shared
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
     private let buildingMetricsService = BuildingMetricsService.shared
+    
+    // MARK: - Data Aggregation Cache (from NovaDataService)
+    private var portfolioCache: (data: NovaAggregatedData, timestamp: Date)?
+    private var buildingCache: [String: (data: NovaAggregatedData, timestamp: Date)] = [:]
+    private let cacheTimeout: TimeInterval = 300 // 5 minutes
     
     // MARK: - State
     public enum ProcessingState {
@@ -82,6 +85,228 @@ public class NovaIntelligenceEngine: ObservableObject {
         }
     }
     
+    // MARK: - Data Aggregation Methods (from NovaDataService)
+    
+    /// Gather comprehensive portfolio metrics from GRDB data
+    public func aggregatePortfolioData() async throws -> NovaAggregatedData {
+        // Check cache first
+        if let cached = portfolioCache,
+           Date().timeIntervalSince(cached.timestamp) < cacheTimeout {
+            print("📦 Using cached portfolio data")
+            return cached.data
+        }
+        
+        print("🔄 Aggregating fresh portfolio data...")
+        
+        // Fetch real data using existing services
+        async let buildings = buildingService.getAllBuildings()
+        async let tasks = taskService.getAllTasks()
+        async let workers = workerService.getAllActiveWorkers()
+        
+        // Wait for all data
+        let allBuildings = try await buildings
+        let allTasks = try await tasks
+        let allWorkers = try await workers
+        
+        // Calculate task metrics
+        let completedTasks = allTasks.filter { $0.isCompleted }
+        let urgentTasks = allTasks.filter { task in
+            task.urgency == .urgent || task.urgency == .critical || task.urgency == .emergency
+        }
+        let overdueTasks = allTasks.filter { task in
+            !task.isCompleted && task.isOverdue
+        }
+        
+        // Calculate average completion rate
+        let completionRate = allTasks.isEmpty ? 0.0 : Double(completedTasks.count) / Double(allTasks.count)
+        
+        let aggregated = NovaAggregatedData(
+            buildingCount: allBuildings.count,
+            taskCount: allTasks.count,
+            workerCount: allWorkers.count,
+            completedTaskCount: completedTasks.count,
+            urgentTaskCount: urgentTasks.count,
+            overdueTaskCount: overdueTasks.count,
+            averageCompletionRate: completionRate
+        )
+        
+        // Cache the result
+        portfolioCache = (aggregated, Date())
+        
+        print("✅ Portfolio data aggregated: \(allBuildings.count) buildings, \(allTasks.count) tasks, \(allWorkers.count) workers")
+        
+        return aggregated
+    }
+    
+    /// Gather comprehensive metrics for a specific building
+    public func aggregateBuildingData(for buildingId: CoreTypes.BuildingID) async throws -> NovaAggregatedData {
+        // Check cache first
+        if let cached = buildingCache[buildingId],
+           Date().timeIntervalSince(cached.timestamp) < cacheTimeout {
+            print("📦 Using cached data for building \(buildingId)")
+            return cached.data
+        }
+        
+        print("🔄 Aggregating fresh data for building \(buildingId)...")
+        
+        // Fetch building-specific data
+        async let building = buildingService.getBuilding(buildingId: buildingId)
+        async let allTasks = taskService.getAllTasks()
+        async let workers = workerService.getActiveWorkersForBuilding(buildingId)
+        
+        // Get building metrics if available
+        let metrics = try? await buildingMetricsService.calculateMetrics(for: buildingId)
+        
+        // Filter tasks for this building
+        let tasks = try await allTasks
+        let buildingTasks = tasks.filter { task in
+            task.buildingId == buildingId || task.building?.id == buildingId
+        }
+        
+        // Calculate task metrics
+        let completedTasks = buildingTasks.filter { $0.isCompleted }
+        let urgentTasks = buildingTasks.filter { task in
+            task.urgency == .urgent || task.urgency == .critical || task.urgency == .emergency
+        }
+        let overdueTasks = buildingTasks.filter { task in
+            !task.isCompleted && task.isOverdue
+        }
+        
+        // Use metrics if available, otherwise calculate
+        let completionRate = metrics?.completionRate ??
+            (buildingTasks.isEmpty ? 0.0 : Double(completedTasks.count) / Double(buildingTasks.count))
+        
+        let buildingData = try await building
+        let buildingWorkers = try await workers
+        
+        let aggregated = NovaAggregatedData(
+            buildingCount: buildingData == nil ? 0 : 1,
+            taskCount: buildingTasks.count,
+            workerCount: buildingWorkers.count,
+            completedTaskCount: completedTasks.count,
+            urgentTaskCount: urgentTasks.count,
+            overdueTaskCount: overdueTasks.count,
+            averageCompletionRate: completionRate
+        )
+        
+        // Cache the result
+        buildingCache[buildingId] = (aggregated, Date())
+        
+        print("✅ Building data aggregated: \(buildingTasks.count) tasks, \(buildingWorkers.count) workers")
+        
+        return aggregated
+    }
+    
+    /// Gather metrics for a specific worker
+    public func aggregateWorkerData(for workerId: CoreTypes.WorkerID) async throws -> NovaAggregatedData {
+        print("🔄 Aggregating data for worker \(workerId)...")
+        
+        // Get worker profile
+        let worker = try await workerService.getWorkerProfile(for: workerId)
+        
+        // Get worker's tasks
+        let allTasks = try await taskService.getAllTasks()
+        let workerTasks = allTasks.filter { task in
+            task.assignedWorkerId == workerId || task.worker?.id == workerId
+        }
+        
+        // Calculate metrics
+        let completedTasks = workerTasks.filter { $0.isCompleted }
+        let urgentTasks = workerTasks.filter { task in
+            task.urgency == .urgent || task.urgency == .critical || task.urgency == .emergency
+        }
+        let overdueTasks = workerTasks.filter { task in
+            !task.isCompleted && task.isOverdue
+        }
+        
+        let completionRate = workerTasks.isEmpty ? 0.0 : Double(completedTasks.count) / Double(workerTasks.count)
+        
+        return NovaAggregatedData(
+            buildingCount: 0, // Workers don't have buildings
+            taskCount: workerTasks.count,
+            workerCount: worker == nil ? 0 : 1,
+            completedTaskCount: completedTasks.count,
+            urgentTaskCount: urgentTasks.count,
+            overdueTaskCount: overdueTasks.count,
+            averageCompletionRate: completionRate
+        )
+    }
+    
+    /// Aggregate data by task category
+    public func aggregateByCategory(_ category: TaskCategory) async throws -> NovaAggregatedData {
+        let allTasks = try await taskService.getAllTasks()
+        let categoryTasks = allTasks.filter { $0.category == category }
+        
+        let completedTasks = categoryTasks.filter { $0.isCompleted }
+        let urgentTasks = categoryTasks.filter { task in
+            task.urgency == .urgent || task.urgency == .critical || task.urgency == .emergency
+        }
+        let overdueTasks = categoryTasks.filter { task in
+            !task.isCompleted && task.isOverdue
+        }
+        
+        let completionRate = categoryTasks.isEmpty ? 0.0 : Double(completedTasks.count) / Double(categoryTasks.count)
+        
+        // Get unique buildings and workers
+        let buildingIds = Set(categoryTasks.compactMap { $0.buildingId })
+        let workerIds = Set(categoryTasks.compactMap { $0.assignedWorkerId })
+        
+        return NovaAggregatedData(
+            buildingCount: buildingIds.count,
+            taskCount: categoryTasks.count,
+            workerCount: workerIds.count,
+            completedTaskCount: completedTasks.count,
+            urgentTaskCount: urgentTasks.count,
+            overdueTaskCount: overdueTasks.count,
+            averageCompletionRate: completionRate
+        )
+    }
+    
+    /// Aggregate compliance-related data
+    public func aggregateComplianceData() async throws -> NovaAggregatedData {
+        // Get all buildings and check compliance
+        let buildings = try await buildingService.getAllBuildings()
+        var compliantCount = 0
+        var issueCount = 0
+        
+        for building in buildings {
+            if let metrics = try? await buildingMetricsService.calculateMetrics(for: building.id) {
+                if metrics.isCompliant {
+                    compliantCount += 1
+                } else {
+                    issueCount += 1
+                }
+            }
+        }
+        
+        let complianceRate = buildings.isEmpty ? 0.0 : Double(compliantCount) / Double(buildings.count)
+        
+        return NovaAggregatedData(
+            buildingCount: buildings.count,
+            taskCount: 0, // Not relevant for compliance
+            workerCount: 0, // Not relevant for compliance
+            completedTaskCount: compliantCount,
+            urgentTaskCount: issueCount,
+            overdueTaskCount: 0,
+            averageCompletionRate: complianceRate
+        )
+    }
+    
+    // MARK: - Cache Management
+    
+    /// Invalidate all caches
+    public func invalidateAllCaches() {
+        portfolioCache = nil
+        buildingCache.removeAll()
+        print("🗑️ All Nova caches invalidated")
+    }
+    
+    /// Invalidate cache for specific building
+    public func invalidateBuildingCache(for buildingId: String) {
+        buildingCache.removeValue(forKey: buildingId)
+        print("🗑️ Cache invalidated for building \(buildingId)")
+    }
+    
     // MARK: - Convenience Methods (replaces multiple services)
     
     public func generateInsight(for building: CoreTypes.NamedCoordinate) async throws -> CoreTypes.IntelligenceInsight {
@@ -115,8 +340,8 @@ public class NovaIntelligenceEngine: ObservableObject {
     // MARK: - Private Helpers (internal data handling)
     
     private func generatePromptWithData(query: String, context: [String: Any]?) async throws -> String {
-        // Use NovaDataService internally to get aggregated data
-        let portfolioData = try await dataService.aggregatePortfolioData()
+        // Use internal data aggregation
+        let portfolioData = try await aggregatePortfolioData()
         
         // Convert internal data to prompt string
         var promptParts = [String]()
@@ -178,7 +403,7 @@ public class NovaIntelligenceEngine: ObservableObject {
             return [buildingId]
         }
         
-        if let building = context["building"] as? Building {
+        if let building = context["building"] as? CoreTypes.NamedCoordinate {
             return [building.id]
         }
         
@@ -233,8 +458,8 @@ extension NovaIntelligenceEngine {
     
     /// Replaces NovaAIIntegrationService methods
     public func analyzeBuilding(_ buildingId: String) async throws -> CoreTypes.IntelligenceInsight {
-        // Use NovaDataService to get building-specific data
-        let buildingData = try await dataService.aggregateBuildingData(for: buildingId)
+        // Use internal building data aggregation
+        let buildingData = try await aggregateBuildingData(for: buildingId)
         
         // Create context from aggregated data
         let buildingContext: [String: Any] = [
@@ -284,17 +509,16 @@ extension NovaIntelligenceEngine {
     
     /// Generate portfolio intelligence for AdminDashboardView
     public func generatePortfolioIntelligence() async throws -> CoreTypes.PortfolioIntelligence {
-        // Use NovaDataService to get portfolio data
-        let portfolioData = try await dataService.aggregatePortfolioData()
+        // Use internal portfolio data aggregation
+        let portfolioData = try await aggregatePortfolioData()
         
         // Get compliance data separately
-        let complianceData = try await dataService.aggregateComplianceData()
+        let complianceData = try await aggregateComplianceData()
         
         // Calculate critical issues from current insights
         let criticalIssues = insights.filter { $0.priority == .critical }.count
         
         // Determine trend based on completion rate
-        // Since we don't have weekly data in NovaAggregatedData, we'll estimate
         let trend: CoreTypes.TrendDirection = {
             if portfolioData.averageCompletionRate > 0.8 {
                 return .up
@@ -313,6 +537,80 @@ extension NovaIntelligenceEngine {
             monthlyTrend: trend,
             complianceScore: complianceData.averageCompletionRate // Use compliance rate as score
         )
+    }
+    
+    /// Generate task timeline insights (NEW METHOD for TaskTimelineView)
+    public func generateTaskTimelineInsights(workerId: String, date: Date) async throws -> [CoreTypes.IntelligenceInsight] {
+        var timelineInsights: [CoreTypes.IntelligenceInsight] = []
+        
+        // Get worker-specific tasks for the date
+        let tasks = try await taskService.getTasksForWorker(workerId)
+        let calendar = Calendar.current
+        let dayTasks = tasks.filter { task in
+            if let dueDate = task.dueDate {
+                return calendar.isDate(dueDate, inSameDayAs: date)
+            }
+            return false
+        }
+        
+        // Analyze task load
+        if dayTasks.count > 10 {
+            timelineInsights.append(CoreTypes.IntelligenceInsight(
+                title: "Heavy Task Load",
+                description: "\(dayTasks.count) tasks scheduled for this date. Consider prioritizing critical tasks and potentially rescheduling non-urgent items.",
+                type: .efficiency,
+                priority: .high,
+                actionRequired: true
+            ))
+        }
+        
+        // Check for overdue tasks
+        let overdueTasks = dayTasks.filter { task in
+            guard let dueDate = task.dueDate, !task.isCompleted else { return false }
+            return dueDate < Date()
+        }
+        
+        if !overdueTasks.isEmpty {
+            timelineInsights.append(CoreTypes.IntelligenceInsight(
+                title: "Overdue Tasks Alert",
+                description: "\(overdueTasks.count) tasks are overdue. Focus on completing these tasks first to maintain compliance.",
+                type: .maintenance,
+                priority: .critical,
+                actionRequired: true
+            ))
+        }
+        
+        // Day-specific insights
+        let dayOfWeek = calendar.component(.weekday, from: date)
+        let isWeekend = calendar.isDateInWeekend(date)
+        
+        if isWeekend {
+            timelineInsights.append(CoreTypes.IntelligenceInsight(
+                title: "Weekend Operations",
+                description: "Weekend tasks typically focus on deep cleaning and maintenance. Ensure proper coverage for emergency requests.",
+                type: .operations,
+                priority: .low,
+                actionRequired: false
+            ))
+        } else if dayOfWeek == 2 { // Monday
+            timelineInsights.append(CoreTypes.IntelligenceInsight(
+                title: "Monday Rush",
+                description: "Mondays typically see 20% higher task volume. Start early and prioritize time-sensitive tasks.",
+                type: .efficiency,
+                priority: .medium,
+                actionRequired: false
+            ))
+        } else if dayOfWeek == 6 { // Friday
+            timelineInsights.append(CoreTypes.IntelligenceInsight(
+                title: "End of Week Preparation",
+                description: "Complete all critical tasks today to ensure smooth weekend operations. Review next week's schedule.",
+                type: .operations,
+                priority: .medium,
+                actionRequired: false
+            ))
+        }
+        
+        return timelineInsights
     }
 }
 
@@ -348,7 +646,7 @@ extension NovaIntelligenceEngine {
     
     /// Generate portfolio summary for real-time updates
     public func getPortfolioSummary() async throws -> [String: Any] {
-        let data = try await dataService.aggregatePortfolioData()
+        let data = try await aggregatePortfolioData()
         
         return [
             "buildingCount": data.buildingCount,
@@ -361,7 +659,7 @@ extension NovaIntelligenceEngine {
     
     /// Generate building summary for specific building
     public func getBuildingSummary(for buildingId: String) async throws -> [String: Any] {
-        let data = try await dataService.aggregateBuildingData(for: buildingId)
+        let data = try await aggregateBuildingData(for: buildingId)
         
         return [
             "buildingId": buildingId,

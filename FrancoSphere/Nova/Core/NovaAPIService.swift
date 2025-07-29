@@ -3,7 +3,9 @@
 //  FrancoSphere v6.0
 //
 //  Nova API Service with domain knowledge about Kevin Dutan, Rubin Museum, and portfolio
-//  Simplified to resolve compilation errors with multiple NovaTypes definitions
+//  ✅ UPDATED: Removed NovaContextEngine dependency
+//  ✅ ENHANCED: Direct context generation without external dependencies
+//  ✅ INTEGRATED: Works with NovaFeatureManager for comprehensive AI support
 //
 
 import Foundation
@@ -14,8 +16,10 @@ public actor NovaAPIService {
     public static let shared = NovaAPIService()
     
     // MARK: - Dependencies
-    private let contextEngine = NovaContextEngine.shared
     private let intelligenceService = IntelligenceService.shared
+    private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
     
     // MARK: - Configuration
     private let processingTimeout: TimeInterval = 30.0
@@ -71,7 +75,7 @@ public actor NovaAPIService {
         return processingQueue.count
     }
     
-    // MARK: - Context Management
+    // MARK: - Context Management (Enhanced without NovaContextEngine)
     
     private func getOrCreateContext(for prompt: NovaPrompt) async -> NovaContext {
         // Use existing context if available
@@ -79,26 +83,85 @@ public actor NovaAPIService {
             return context
         }
         
-        // Generate new context based on prompt content
-        return await generateContextualResponse(for: prompt.text)
+        // Generate new context based on prompt content and current data
+        return await generateEnhancedContext(for: prompt.text)
     }
     
-    private func generateContextualResponse(for text: String) async -> NovaContext {
+    private func generateEnhancedContext(for text: String) async -> NovaContext {
         // Analyze prompt for context clues
         let contextType = determineContextType(from: text)
         
-        switch contextType {
-        case .building:
-            return await generateBuildingContext(from: text)
-        case .worker:
-            return await generateWorkerContext(from: text)
-        case .portfolio:
-            return await generatePortfolioContext(from: text)
-        case .task:
-            return await generateTaskContext(from: text)
-        case .general:
-            return await generateGeneralContext(from: text)
+        // Gather real-time data
+        var contextData: [String: String] = [:]
+        var insights: [String] = []
+        
+        do {
+            // Get current worker context if available
+            if let currentWorker = await WorkerContextEngineAdapter.shared.currentWorker {
+                contextData["workerId"] = currentWorker.id
+                contextData["workerName"] = currentWorker.name
+                contextData["workerRole"] = currentWorker.role.rawValue
+                insights.append("Worker context: \(currentWorker.name)")
+            }
+            
+            // Get building context if mentioned
+            if text.lowercased().contains("building") || text.lowercased().contains("rubin") {
+                let buildings = try await buildingService.getAllBuildings()
+                contextData["totalBuildings"] = "\(buildings.count)"
+                
+                if let rubin = buildings.first(where: { $0.name.contains("Rubin") }) {
+                    contextData["rubinBuildingId"] = rubin.id
+                    insights.append("Rubin Museum context available")
+                }
+            }
+            
+            // Get task context if relevant
+            if text.lowercased().contains("task") {
+                let tasks = try await taskService.getAllTasks()
+                contextData["totalTasks"] = "\(tasks.count)"
+                
+                let urgentTasks = tasks.filter { $0.urgency == .urgent || $0.urgency == .critical }
+                if !urgentTasks.isEmpty {
+                    contextData["urgentTaskCount"] = "\(urgentTasks.count)"
+                    insights.append("\(urgentTasks.count) urgent tasks detected")
+                }
+            }
+            
+        } catch {
+            print("⚠️ Error gathering context data: \(error)")
         }
+        
+        // Build comprehensive context
+        return NovaContext(
+            data: await buildContextDescription(type: contextType, contextData: contextData),
+            insights: insights,
+            metadata: contextData,
+            userRole: await WorkerContextEngineAdapter.shared.currentWorker?.role,
+            buildingContext: contextData["rubinBuildingId"],
+            taskContext: contextType == .task ? text : nil
+        )
+    }
+    
+    private func buildContextDescription(type: ContextType, contextData: [String: String]) async -> String {
+        var description = "Context type: \(type). "
+        
+        if let workerName = contextData["workerName"] {
+            description += "Worker: \(workerName). "
+        }
+        
+        if let buildings = contextData["totalBuildings"] {
+            description += "Portfolio: \(buildings) buildings. "
+        }
+        
+        if let tasks = contextData["totalTasks"] {
+            description += "Tasks: \(tasks) total. "
+        }
+        
+        if let urgent = contextData["urgentTaskCount"] {
+            description += "Urgent: \(urgent) tasks. "
+        }
+        
+        return description
     }
     
     // MARK: - Response Generation
@@ -112,7 +175,9 @@ public actor NovaAPIService {
             success: true,
             message: responseText,
             insights: insights,
-            actions: actions
+            actions: actions,
+            context: context,
+            metadata: ["processedAt": ISO8601DateFormatter().string(from: Date())]
         )
     }
     
@@ -170,9 +235,16 @@ public actor NovaAPIService {
     }
     
     private func generateTaskResponse(prompt: String, context: NovaContext) async -> String {
-        return """
-        Currently tracking \(TASK_COUNT) tasks across our portfolio. Tasks are prioritized by urgency and building requirements. Our system ensures efficient allocation based on worker expertise and building needs. Would you like to see pending tasks or completion statistics?
-        """
+        // Enhanced with real-time data if available
+        var response = "Currently tracking \(TASK_COUNT) tasks across our portfolio. "
+        
+        if let urgentCount = context.metadata["urgentTaskCount"] {
+            response += "⚠️ \(urgentCount) tasks require urgent attention. "
+        }
+        
+        response += "Tasks are prioritized by urgency and building requirements. Our system ensures efficient allocation based on worker expertise and building needs. Would you like to see pending tasks or completion statistics?"
+        
+        return response
     }
     
     private func generatePortfolioResponse(prompt: String, context: NovaContext) async -> String {
@@ -187,8 +259,15 @@ public actor NovaAPIService {
     }
     
     private func generateGeneralResponse(prompt: String, context: NovaContext) async -> String {
-        return """
-        I'm Nova, your intelligent portfolio assistant. I can help you with:
+        var response = "I'm Nova, your intelligent portfolio assistant. "
+        
+        // Add personalized greeting if we have worker context
+        if let workerName = context.metadata["workerName"] {
+            response = "Hello \(workerName)! " + response
+        }
+        
+        response += """
+        I can help you with:
         
         • Building information and management
         • Worker assignments and schedules
@@ -198,14 +277,40 @@ public actor NovaAPIService {
         
         What would you like to know about your portfolio operations?
         """
+        
+        return response
     }
     
     // MARK: - Insight Generation
     
     private func generateInsights(for prompt: NovaPrompt, context: NovaContext) async throws -> [NovaInsight] {
-        // Return empty array until we resolve which NovaInsight type definition to use
-        // The project has multiple conflicting NovaTypes.swift files
-        return []
+        var insights: [NovaInsight] = []
+        
+        // Generate insights based on context and prompt
+        do {
+            // Try to get real insights from IntelligenceService
+            if let buildingId = context.buildingContext {
+                let buildingInsights = try await intelligenceService.generateBuildingInsights(for: buildingId)
+                insights.append(contentsOf: buildingInsights)
+            } else {
+                // Get portfolio insights
+                let portfolioInsights = try await intelligenceService.generatePortfolioInsights()
+                insights.append(contentsOf: portfolioInsights.prefix(3)) // Top 3 insights
+            }
+        } catch {
+            // Fallback to basic insights
+            insights.append(CoreTypes.IntelligenceInsight(
+                title: "Portfolio Analysis",
+                description: "AI-powered insights available for deeper analysis",
+                type: .operational,
+                priority: .medium,
+                confidence: 0.8,
+                actionRequired: false,
+                estimatedImpact: "Operational efficiency improvement"
+            ))
+        }
+        
+        return insights
     }
     
     // MARK: - Action Generation
@@ -220,8 +325,18 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "View Building Details",
                 description: "Access complete building information and metrics",
-                actionType: .navigate
+                actionType: .navigate,
+                priority: .medium
             ))
+            
+            if context.buildingContext != nil {
+                actions.append(NovaAction(
+                    title: "Building Analytics",
+                    description: "View detailed analytics for this building",
+                    actionType: .analysis,
+                    priority: .high
+                ))
+            }
         }
         
         // Task-related actions
@@ -229,8 +344,18 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "View Tasks",
                 description: "Navigate to task management interface",
-                actionType: .navigate
+                actionType: .navigate,
+                priority: .medium
             ))
+            
+            if let urgentCount = context.metadata["urgentTaskCount"], Int(urgentCount) ?? 0 > 0 {
+                actions.append(NovaAction(
+                    title: "Review Urgent Tasks",
+                    description: "\(urgentCount) tasks need immediate attention",
+                    actionType: .review,
+                    priority: .critical
+                ))
+            }
         }
         
         // Schedule-related actions
@@ -238,15 +363,28 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "Optimize Schedule",
                 description: "Analyze current schedules for optimization opportunities",
-                actionType: .schedule
+                actionType: .schedule,
+                priority: .medium
             ))
         }
         
-        // General help action
+        // Worker-specific actions
+        if context.userRole == .worker || context.userRole == .manager {
+            actions.append(NovaAction(
+                title: "My Tasks",
+                description: "View your assigned tasks",
+                actionType: .navigate,
+                priority: .high,
+                parameters: ["workerId": context.metadata["workerId"] ?? ""]
+            ))
+        }
+        
+        // Always include help action
         actions.append(NovaAction(
             title: "Get Help",
             description: "Access Nova AI documentation and features",
-            actionType: .review
+            actionType: .review,
+            priority: .low
         ))
         
         return actions
@@ -274,93 +412,6 @@ public actor NovaAPIService {
         }
         
         return .general
-    }
-    
-    // MARK: - Context Generators (Enhanced with Domain Knowledge)
-    
-    private func generateBuildingContext(from text: String) async -> NovaContext {
-        var insights = ["Building operations analysis", "Specialized requirements assessment"]
-        
-        // Add Rubin Museum specific insights if mentioned
-        if text.lowercased().contains("rubin") {
-            insights.append("Museum climate control requirements")
-            insights.append("Security protocol compliance")
-        }
-        
-        return NovaContext(
-            data: "Building management context with portfolio overview - Building ID: 14 (Rubin Museum)",
-            insights: insights,
-            metadata: [
-                "context_type": "building",
-                "source": "portfolio_data",
-                "specialization": "museum_operations",
-                "buildingId": "14"
-            ]
-        )
-    }
-    
-    private func generateWorkerContext(from text: String) async -> NovaContext {
-        var insights = ["Worker specialization analysis", "Assignment optimization"]
-        
-        // Add Kevin-specific insights if mentioned
-        if text.lowercased().contains("kevin") {
-            insights.append("Museum specialist expertise")
-            insights.append("Multi-building coverage analysis")
-        }
-        
-        return NovaContext(
-            data: "Worker management context - Worker ID: 4 (Kevin Dutan) - Museum Specialist",
-            insights: insights,
-            metadata: [
-                "context_type": "worker",
-                "source": "team_data",
-                "specialization": "museum_operations",
-                "workerId": "4",
-                "workerName": "Kevin Dutan"
-            ]
-        )
-    }
-    
-    private func generatePortfolioContext(from text: String) async -> NovaContext {
-        return NovaContext(
-            data: "Portfolio management context - \(BUILDING_COUNT) buildings, \(WORKER_COUNT) workers, \(TASK_COUNT) tasks",
-            insights: [
-                "Portfolio performance analysis",
-                "Operational efficiency metrics",
-                "Resource utilization patterns"
-            ],
-            metadata: [
-                "context_type": "portfolio",
-                "source": "aggregate_data",
-                "buildingCount": String(BUILDING_COUNT),
-                "workerCount": String(WORKER_COUNT),
-                "taskCount": String(TASK_COUNT)
-            ]
-        )
-    }
-    
-    private func generateTaskContext(from text: String) async -> NovaContext {
-        return NovaContext(
-            data: "Task management context - \(TASK_COUNT) total tasks across portfolio",
-            insights: ["Task distribution analysis", "Priority optimization"],
-            metadata: [
-                "context_type": "task",
-                "source": "task_data",
-                "totalTasks": String(TASK_COUNT)
-            ]
-        )
-    }
-    
-    private func generateGeneralContext(from text: String) async -> NovaContext {
-        return NovaContext(
-            data: "General assistance context - Query: \(text)",
-            insights: ["System features overview", "Available assistance options"],
-            metadata: [
-                "context_type": "general",
-                "source": "system_info",
-                "originalQuery": text
-            ]
-        )
     }
 }
 
@@ -421,6 +472,26 @@ extension NovaAPIService {
                 continuation.yield("Streaming response coming soon...")
                 continuation.finish()
             }
+        }
+    }
+    
+    /// Generate response using NovaFeatureManager's enhanced capabilities
+    public func processWithFeatureManager(_ query: String) async -> NovaResponse {
+        // This allows NovaFeatureManager to use the API service
+        let prompt = NovaPrompt(
+            text: query,
+            priority: .medium,
+            metadata: ["source": "feature_manager"]
+        )
+        
+        do {
+            return try await processPrompt(prompt)
+        } catch {
+            return NovaResponse(
+                success: false,
+                message: "Unable to process request: \(error.localizedDescription)",
+                metadata: ["error": "true"]
+            )
         }
     }
 }

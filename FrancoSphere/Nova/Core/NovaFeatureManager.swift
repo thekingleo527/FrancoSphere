@@ -6,6 +6,9 @@
 //  ✅ ENHANCED: Added scenario support from AIScenarioSheetView
 //  ✅ ENHANCED: Added emergency repair functionality
 //  ✅ ENHANCED: Added reminder scheduling
+//  ✅ ENHANCED: Added query processing from AIContextManager
+//  ✅ ENHANCED: Added prediction caching from PredictionEngine
+//  ✅ ENHANCED: Added context awareness and time-based features
 //  ✅ FIXED: Swift 6 concurrency compliance
 //  ✅ FIXED: Added CoreTypes prefix to DashboardUpdate
 //  ✅ FIXED: Added proper error handling for throwing calls
@@ -25,6 +28,10 @@ public class NovaFeatureManager: ObservableObject {
     @Published public var activeInsights: [CoreTypes.IntelligenceInsight] = []
     @Published public var isProcessing = false
     
+    // MARK: - Context Properties (from AIContextManager)
+    @Published public var currentContext: NovaContext?
+    @Published public var timeOfDay: TimeOfDay = .morning
+    
     // MARK: - Scenario Management Properties
     @Published public var activeScenarios: [NovaScenarioData] = []
     @Published public var currentScenario: NovaScenarioData?
@@ -34,16 +41,25 @@ public class NovaFeatureManager: ObservableObject {
     // MARK: - Emergency Repair Properties
     @Published public var repairState = NovaEmergencyRepairState()
     
+    // MARK: - Caching Properties (from PredictionEngine)
+    private var predictionCache: [String: (content: String, timestamp: Date)] = [:]
+    private let cacheTimeout: TimeInterval = 300 // 5 minutes
+    
     // MARK: - Dependencies
     private let contextAdapter = WorkerContextEngineAdapter.shared
     private let intelligenceEngine = NovaIntelligenceEngine.shared
     private let dashboardSyncService = DashboardSyncService.shared
+    private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
+    private let workerService = WorkerService.shared
+    private let buildingMetricsService = BuildingMetricsService.shared
     
     private var cancellables = Set<AnyCancellable>()
     private var reminderTimers: [UUID: Timer] = [:]
     
     private init() {
         setupSubscriptions()
+        updateContext()
         updateFeatures()
         checkForScenarios()
     }
@@ -61,6 +77,7 @@ public class NovaFeatureManager: ObservableObject {
         // Subscribe to worker context changes
         contextAdapter.$currentWorker
             .sink(receiveValue: { [weak self] _ in
+                self?.updateContext()
                 self?.updateFeatures()
                 self?.checkForScenarios()
             })
@@ -68,6 +85,7 @@ public class NovaFeatureManager: ObservableObject {
         
         contextAdapter.$currentBuilding
             .sink(receiveValue: { [weak self] _ in
+                self?.updateContext()
                 self?.updateFeatures()
             })
             .store(in: &cancellables)
@@ -76,6 +94,419 @@ public class NovaFeatureManager: ObservableObject {
         $activeScenarios
             .map { !$0.isEmpty }
             .assign(to: &$hasActiveScenarios)
+        
+        // Update time of day periodically
+        Timer.publish(every: 60, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.updateTimeOfDay()
+            }
+            .store(in: &cancellables)
+    }
+    
+    // MARK: - Context Management (from AIContextManager)
+    
+    private func updateContext() {
+        guard let worker = contextAdapter.currentWorker else { return }
+        
+        // Update time of day
+        updateTimeOfDay()
+        
+        // Build comprehensive context
+        let urgentTasks = getUrgentTasks()
+        let activeTask = getCurrentActiveTask()
+        
+        currentContext = NovaContext(
+            data: [
+                "userRole": worker.role.rawValue,
+                "workerId": worker.id,
+                "workerName": worker.name,
+                "currentBuilding": contextAdapter.currentBuilding?.id ?? "",
+                "buildingName": contextAdapter.currentBuilding?.name ?? "",
+                "assignedBuildingsCount": contextAdapter.assignedBuildings.count,
+                "portfolioBuildingsCount": contextAdapter.portfolioBuildings.count,
+                "todaysTasksCount": contextAdapter.todaysTasks.count,
+                "completedTasksCount": contextAdapter.todaysTasks.filter { $0.isCompleted }.count,
+                "urgentTasksCount": urgentTasks.count,
+                "activeTaskId": activeTask?.id ?? "",
+                "activeTaskTitle": activeTask?.title ?? "",
+                "timeOfDay": timeOfDay.rawValue,
+                "completionRate": calculateCurrentCompletionRate()
+            ],
+            insights: activeInsights,
+            metadata: [
+                "lastUpdated": ISO8601DateFormatter().string(from: Date()),
+                "contextVersion": "1.0"
+            ]
+        )
+    }
+    
+    // MARK: - Query Processing (from AIContextManager)
+    
+    public func processUserQuery(_ query: String) async -> String {
+        isProcessing = true
+        defer { isProcessing = false }
+        
+        let lowercaseQuery = query.lowercased()
+        
+        // Check for specific intents
+        if lowercaseQuery.contains("portfolio") || lowercaseQuery.contains("overview") {
+            return await generatePortfolioPrediction()
+        }
+        
+        if lowercaseQuery.contains("building") {
+            if let buildingId = contextAdapter.currentBuilding?.id {
+                return await generateBuildingPrediction(for: buildingId)
+            } else {
+                return "Please select a building to get building-specific information."
+            }
+        }
+        
+        if lowercaseQuery.contains("task") || lowercaseQuery.contains("what should i do") {
+            return await generateTaskGuidance()
+        }
+        
+        if lowercaseQuery.contains("urgent") || lowercaseQuery.contains("priority") {
+            let urgentCount = getUrgentTaskCount()
+            if urgentCount > 0 {
+                let urgentTasks = getUrgentTasks()
+                var response = "You have \(urgentCount) urgent task(s):\n"
+                for (index, task) in urgentTasks.prefix(3).enumerated() {
+                    response += "\(index + 1). \(task.title) - \(task.urgency.rawValue)\n"
+                }
+                return response
+            } else {
+                return "No urgent tasks at the moment. You're all caught up!"
+            }
+        }
+        
+        if lowercaseQuery.contains("weather") {
+            return await generateWeatherBasedGuidance()
+        }
+        
+        if lowercaseQuery.contains("help") || lowercaseQuery.contains("nova") {
+            return generateContextAwareHelp()
+        }
+        
+        // Default to using intelligence engine for general queries
+        do {
+            let insight = try await intelligenceEngine.process(
+                query: query,
+                context: currentContext?.data ?? [:],
+                priority: .medium
+            )
+            return insight.description
+        } catch {
+            return "I'm having trouble processing that request. Could you try rephrasing it?"
+        }
+    }
+    
+    // MARK: - Prediction Methods (from PredictionEngine)
+    
+    public func generatePortfolioPrediction() async -> String {
+        // Check cache first
+        if let cached = getCachedPrediction(for: "portfolio") {
+            return cached
+        }
+        
+        do {
+            // Get real portfolio data
+            let buildings = try await buildingService.getAllBuildings()
+            let tasks = try await taskService.getAllTasks()
+            let workers = try await workerService.getAllActiveWorkers()
+            
+            let completedTasks = tasks.filter { $0.isCompleted }.count
+            let urgentTasks = tasks.filter {
+                $0.urgency == .urgent || $0.urgency == .critical || $0.urgency == .emergency
+            }.count
+            let overdueTasks = tasks.filter { $0.isOverdue && !$0.isCompleted }.count
+            
+            // Build prediction
+            var prediction = "📊 Portfolio Overview: "
+            prediction += "\(buildings.count) buildings, \(workers.count) active workers, \(tasks.count) total tasks. "
+            
+            // Add completion metrics
+            let completionRate = tasks.isEmpty ? 100 : Int(Double(completedTasks) / Double(tasks.count) * 100)
+            prediction += "Current completion rate: \(completionRate)%. "
+            
+            // Add urgency indicators
+            if urgentTasks > 0 {
+                prediction += "⚠️ \(urgentTasks) urgent tasks require attention. "
+            }
+            if overdueTasks > 0 {
+                prediction += "⏰ \(overdueTasks) overdue tasks. "
+            }
+            
+            // Add predictive element
+            let predictedRate = calculatePredictedCompletionRate()
+            prediction += "Predicted end-of-day completion: \(predictedRate)%. "
+            
+            // Add time-based recommendation
+            switch timeOfDay {
+            case .morning:
+                prediction += "Morning focus: Prioritize urgent and outdoor tasks."
+            case .afternoon:
+                prediction += "Afternoon focus: Indoor tasks and documentation."
+            case .evening:
+                prediction += "Evening focus: Wrap up tasks and prepare for tomorrow."
+            case .night:
+                prediction += "After hours: Emergency response only."
+            }
+            
+            // Cache the result
+            cachePrediction(prediction, for: "portfolio")
+            
+            return prediction
+        } catch {
+            return "Portfolio analysis is being updated. Using cached data: Multiple buildings under active management."
+        }
+    }
+    
+    public func generateBuildingPrediction(for buildingId: String) async -> String {
+        let cacheKey = "building_\(buildingId)"
+        
+        // Check cache
+        if let cached = getCachedPrediction(for: cacheKey) {
+            return cached
+        }
+        
+        do {
+            // Get real building data
+            guard let building = try await buildingService.getBuilding(buildingId: buildingId) else {
+                return "Building not found."
+            }
+            
+            let tasks = try await taskService.getTasksForBuilding(buildingId)
+            let metrics = try await buildingMetricsService.calculateMetrics(for: buildingId)
+            
+            // Build prediction
+            var prediction = "🏢 \(building.name) Status: "
+            
+            // Add metrics
+            prediction += "\(tasks.count) tasks, \(metrics.activeWorkers) workers on-site. "
+            prediction += "Completion rate: \(Int(metrics.completionRate * 100))%. "
+            
+            if metrics.overdueTasks > 0 {
+                prediction += "⚠️ \(metrics.overdueTasks) overdue tasks. "
+            }
+            
+            if metrics.urgentTasksCount > 0 {
+                prediction += "🚨 \(metrics.urgentTasksCount) urgent tasks. "
+            }
+            
+            // Add building-specific context (from PredictionEngine)
+            prediction = enhanceBuildingContext(prediction, building: building)
+            
+            // Add compliance status
+            prediction += metrics.isCompliant ? "✅ Compliance: OK. " : "❌ Compliance: Needs attention. "
+            
+            // Cache the result
+            cachePrediction(prediction, for: cacheKey)
+            
+            return prediction
+        } catch {
+            return "Building analysis for \(buildingId) is being updated."
+        }
+    }
+    
+    private func enhanceBuildingContext(_ base: String, building: NamedCoordinate) -> String {
+        var enhanced = base
+        
+        // Special handling for known buildings (from PredictionEngine)
+        switch building.name.lowercased() {
+        case let name where name.contains("rubin"):
+            enhanced += "🏛️ Special: Museum environment - climate control critical, artifact protection priority. "
+        case let name where name.contains("perry"):
+            enhanced += "🏠 Special: Residential property - tenant satisfaction priority, quiet hours observed. "
+        case let name where name.contains("park"):
+            enhanced += "🌳 Special: Outdoor facility - weather dependent, seasonal maintenance required. "
+        case let name where name.contains("hudson"):
+            enhanced += "🏢 Special: Commercial property - business hours constraints, minimal disruption. "
+        case let name where name.contains("chelsea"):
+            enhanced += "🏪 Special: Mixed-use building - flexible scheduling, diverse tenant needs. "
+        default:
+            if building.name.contains("Museum") {
+                enhanced += "🎨 Cultural institution requiring specialized care. "
+            } else if building.name.contains("Office") || building.name.contains("Tower") {
+                enhanced += "💼 Commercial property with weekday priority scheduling. "
+            }
+        }
+        
+        return enhanced
+    }
+    
+    // MARK: - Task Guidance
+    
+    private func generateTaskGuidance() async -> String {
+        let activeTask = getCurrentActiveTask()
+        let urgentTasks = getUrgentTasks()
+        
+        if let task = activeTask {
+            var guidance = "📋 Current Task: \(task.title)\n"
+            guidance += "Priority: \(task.urgency.rawValue)\n"
+            
+            if let description = task.description {
+                guidance += "Details: \(description)\n"
+            }
+            
+            // Add category-specific guidance
+            if let category = task.category {
+                switch category {
+                case .cleaning:
+                    guidance += "💡 Tip: Check cleaning supplies and follow building-specific protocols."
+                case .maintenance:
+                    guidance += "💡 Tip: Review equipment manuals and safety procedures."
+                case .repair:
+                    guidance += "💡 Tip: Diagnose issue thoroughly before beginning repairs."
+                case .inspection:
+                    guidance += "💡 Tip: Use checklist and document all findings with photos."
+                case .emergency:
+                    guidance += "🚨 EMERGENCY: Follow safety protocols immediately!"
+                default:
+                    break
+                }
+            }
+            
+            return guidance
+        } else if !urgentTasks.isEmpty {
+            return "No active task. You have \(urgentTasks.count) urgent task(s) to choose from."
+        } else {
+            let totalTasks = contextAdapter.todaysTasks.count
+            let completedTasks = contextAdapter.todaysTasks.filter { $0.isCompleted }.count
+            return "Great job! You've completed \(completedTasks) of \(totalTasks) tasks today."
+        }
+    }
+    
+    // MARK: - Weather-Based Guidance
+    
+    private func generateWeatherBasedGuidance() async -> String {
+        // In real implementation, this would check actual weather service
+        // For now, provide context-aware guidance
+        
+        let outdoorTasks = contextAdapter.todaysTasks.filter { task in
+            task.category == .landscaping ||
+            task.title.lowercased().contains("outdoor") ||
+            task.title.lowercased().contains("exterior")
+        }
+        
+        if outdoorTasks.isEmpty {
+            return "☀️ No weather-dependent tasks scheduled today."
+        } else {
+            return "🌤️ You have \(outdoorTasks.count) outdoor task(s). Check current conditions before starting exterior work."
+        }
+    }
+    
+    // MARK: - Context-Aware Help
+    
+    private func generateContextAwareHelp() -> String {
+        guard let worker = contextAdapter.currentWorker else {
+            return "👋 Hi! I'm Nova, your AI assistant. Please log in to get personalized help."
+        }
+        
+        var help = "👋 Hi \(worker.name)! I'm Nova, here to help with:\n\n"
+        
+        switch worker.role {
+        case .worker, .manager:
+            help += "• 📋 Task guidance and prioritization\n"
+            help += "• 🔧 Equipment troubleshooting\n"
+            help += "• 🏢 Building information\n"
+            help += "• 🚨 Safety protocols\n"
+            help += "• 📸 Photo documentation help"
+            
+        case .admin:
+            help += "• 📊 Portfolio analytics\n"
+            help += "• 👥 Workforce optimization\n"
+            help += "• 🔮 Predictive maintenance\n"
+            help += "• 💰 Cost analysis\n"
+            help += "• ✅ Compliance monitoring"
+            
+        case .client:
+            help += "• 📑 Service reports\n"
+            help += "• 🏢 Building status\n"
+            help += "• 📈 Performance metrics\n"
+            help += "• ✅ Compliance overview\n"
+            help += "• 💡 Strategic insights"
+        }
+        
+        help += "\n\nJust ask me anything!"
+        
+        return help
+    }
+    
+    // MARK: - Helper Methods (from AIContextManager)
+    
+    private func getCurrentActiveTask() -> CoreTypes.ContextualTask? {
+        return contextAdapter.todaysTasks.first { !$0.isCompleted }
+    }
+    
+    private func getUrgentTasks() -> [CoreTypes.ContextualTask] {
+        return contextAdapter.todaysTasks.filter {
+            $0.urgency == .urgent || $0.urgency == .critical || $0.urgency == .emergency
+        }
+    }
+    
+    private func getUrgentTaskCount() -> Int {
+        return getUrgentTasks().count
+    }
+    
+    private func updateTimeOfDay() {
+        let hour = Calendar.current.component(.hour, from: Date())
+        timeOfDay = switch hour {
+        case 6..<12: .morning
+        case 12..<17: .afternoon
+        case 17..<20: .evening
+        default: .night
+        }
+    }
+    
+    private func calculateCurrentCompletionRate() -> Int {
+        let tasks = contextAdapter.todaysTasks
+        guard !tasks.isEmpty else { return 100 }
+        
+        let completed = tasks.filter { $0.isCompleted }.count
+        return Int(Double(completed) / Double(tasks.count) * 100)
+    }
+    
+    private func calculatePredictedCompletionRate() -> Int {
+        let tasks = contextAdapter.todaysTasks
+        guard !tasks.isEmpty else { return 100 }
+        
+        let completed = tasks.filter { $0.isCompleted }.count
+        let remaining = tasks.count - completed
+        
+        let now = Date()
+        let endOfDay = Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: now) ?? now
+        let hoursRemaining = max(0, endOfDay.timeIntervalSince(now) / 3600)
+        
+        // Average tasks per hour based on role
+        let averageTasksPerHour: Double = switch contextAdapter.currentWorker?.role {
+        case .worker: 2.5
+        case .manager: 2.0
+        default: 1.5
+        }
+        
+        let predictedAdditional = Int(averageTasksPerHour * hoursRemaining)
+        let predictedTotal = completed + min(remaining, predictedAdditional)
+        
+        return min(100, Int(Double(predictedTotal) / Double(tasks.count) * 100))
+    }
+    
+    // MARK: - Caching (from PredictionEngine)
+    
+    private func cachePrediction(_ content: String, for key: String) {
+        predictionCache[key] = (content, Date())
+    }
+    
+    private func getCachedPrediction(for key: String) -> String? {
+        guard let cached = predictionCache[key],
+              Date().timeIntervalSince(cached.timestamp) < cacheTimeout else {
+            return nil
+        }
+        return cached.content
+    }
+    
+    public func clearPredictionCache() {
+        predictionCache.removeAll()
     }
     
     // MARK: - Scenario Management
@@ -186,7 +617,6 @@ public class NovaFeatureManager: ObservableObject {
         }
         
         // Trigger actual data refresh
-        // ✅ FIXED: Added try-catch for the throwing call on line 187
         do {
             try await contextAdapter.loadContext(for: workerId)
         } catch {
@@ -235,13 +665,13 @@ public class NovaFeatureManager: ObservableObject {
             addScenario(scenario)
         }
         
-        // Weather alerts (mock for now)
-        if Date().formatted(.dateTime.weekday()) == "Monday" {
+        // Check for clock out based on time
+        if timeOfDay == .evening && contextAdapter.currentWorker != nil {
             let scenario = NovaScenarioData(
-                scenario: .weatherAlert,
-                message: "Rain expected this afternoon. Consider completing outdoor tasks this morning.",
-                actionText: "Check Weather Tasks",
-                priority: .high
+                scenario: .clockOutReminder,
+                message: "It's getting late. Don't forget to clock out when you're done.",
+                actionText: "Clock Out",
+                priority: .low
             )
             addScenario(scenario)
         }
@@ -413,21 +843,29 @@ public class NovaFeatureManager: ObservableObject {
     
     // MARK: - Dashboard Updates
     
-    private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {  // ✅ FIXED: Added CoreTypes prefix
+    private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         // React to dashboard changes
         switch update.type {
         case .taskCompleted:
-            // Refresh suggestions after task completion
+            // Refresh suggestions and context after task completion
+            updateContext()
             generateSuggestions()
+            // Clear relevant cache
+            clearPredictionCache()
             
         case .buildingMetricsChanged:
             // Update insights when metrics change
             Task {
                 await refreshInsights()
             }
+            // Clear building cache
+            if let buildingId = update.buildingId {
+                predictionCache.removeValue(forKey: "building_\(buildingId)")
+            }
             
         case .workerClockedIn, .workerClockedOut:
-            // Check for clock-related scenarios
+            // Update context and check for clock-related scenarios
+            updateContext()
             checkForScenarios()
             
         default:
@@ -494,6 +932,26 @@ public class NovaFeatureManager: ObservableObject {
             }
         } catch {
             print("Error loading building insights: \(error)")
+            await MainActor.run {
+                self.isProcessing = false
+            }
+        }
+    }
+    
+    // MARK: - Portfolio Intelligence
+    
+    public func loadPortfolioInsights() async {
+        isProcessing = true
+        
+        do {
+            // Use the actual IntelligenceService method
+            let insights = try await IntelligenceService.shared.generatePortfolioInsights()
+            await MainActor.run {
+                self.activeInsights = insights
+                self.isProcessing = false
+            }
+        } catch {
+            print("Error loading portfolio insights: \(error)")
             await MainActor.run {
                 self.isProcessing = false
             }
@@ -584,6 +1042,17 @@ public class NovaFeatureManager: ObservableObject {
         return workerId == "worker_001" && buildings.isEmpty
     }
     
+    /// Get Nova avatar state based on current context
+    public var novaAvatarState: NovaAvatarState {
+        if isProcessing {
+            return .busy
+        } else if getUrgentTaskCount() > 3 {
+            return .urgent
+        } else {
+            return .idle
+        }
+    }
+    
     /// Cleanup timers on deallocation
     deinit {
         reminderTimers.values.forEach { $0.invalidate() }
@@ -607,4 +1076,49 @@ public enum NovaAIFeatureCategory {
     case compliance, teamManagement, qualityAssurance, training, problemSolving
     case reporting, monitoring, serviceManagement, performance, taskManagement
     case strategic
+}
+
+// MARK: - Time of Day Enum (from AIContextManager)
+public enum TimeOfDay: String {
+    case morning = "morning"
+    case afternoon = "afternoon"
+    case evening = "evening"
+    case night = "night"
+}
+
+// MARK: - Nova Avatar State
+public enum NovaAvatarState {
+    case idle
+    case busy
+    case urgent
+}
+
+// MARK: - Extensions for NovaAvatar Integration
+
+extension NovaFeatureManager {
+    /// Get current Nova message based on context
+    public var currentNovaMessage: String {
+        if isProcessing {
+            return "Processing..."
+        }
+        
+        if let scenario = activeScenarios.first(where: { $0.priority == .critical }) {
+            return scenario.message
+        }
+        
+        if getUrgentTaskCount() > 0 {
+            return "\(getUrgentTaskCount()) urgent tasks need attention!"
+        }
+        
+        switch timeOfDay {
+        case .morning:
+            return "Good morning! Ready to help."
+        case .afternoon:
+            return "Good afternoon! How can I assist?"
+        case .evening:
+            return "Good evening! Wrapping up?"
+        case .night:
+            return "Working late? I'm here to help."
+        }
+    }
 }

@@ -4,20 +4,13 @@
 //
 //  ✅ FIXED: Removed duplicate BuildingCard declaration
 //  ✅ FIXED: All syntax errors and ambiguous references resolved
+//  ✅ FIXED: Optional binding error for non-optional address property
 //  ✅ CLEAN: Single BuildingCard implementation that works with existing components
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
-
 import MapKit
-
-// Type aliases for CoreTypes
-
 import CoreLocation
-
-// Type aliases for CoreTypes
 
 struct BuildingSelectionView: View {
     let buildings: [NamedCoordinate]
@@ -47,7 +40,12 @@ struct BuildingSelectionView: View {
                 VStack(spacing: 0) {
                     headerView
                     searchBarView
-                    buildingListView
+                    
+                    if viewMode == .list {
+                        buildingListView
+                    } else {
+                        buildingMapView
+                    }
                 }
             }
             .navigationBarHidden(true)
@@ -95,10 +93,26 @@ struct BuildingSelectionView: View {
                 ForEach(filteredBuildings) { building in
                     BuildingSelectionCard(building: building) {
                         onSelect(building)
+                        dismiss()
                     }
                 }
             }
             .padding()
+        }
+    }
+    
+    private var buildingMapView: some View {
+        Map {
+            ForEach(filteredBuildings) { building in
+                Marker(building.name, coordinate: CLLocationCoordinate2D(
+                    latitude: building.latitude,
+                    longitude: building.longitude
+                ))
+                .tint(.blue)
+            }
+        }
+        .onTapGesture { location in
+            // Handle map tap if needed
         }
     }
     
@@ -126,8 +140,9 @@ struct BuildingSelectionCard: View {
                         .foregroundColor(.white)
                         .lineLimit(2)
                     
-                    if let address = building.address {
-                        Text(address)
+                    // Fixed: Check if address is not empty instead of optional binding
+                    if !building.address.isEmpty {
+                        Text(building.address)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else {
@@ -168,16 +183,20 @@ struct BuildingSelectionCard: View {
             NamedCoordinate(
                 id: "1",
                 name: "12 West 18th Street",
+                address: "12 West 18th Street, New York, NY",
                 latitude: 40.7389,
                 longitude: -73.9936
             ),
             NamedCoordinate(
                 id: "14",
                 name: "Rubin Museum",
+                address: "150 W 17th St, New York, NY 10011",
                 latitude: 40.7401,
                 longitude: -73.9978
             )
         ],
-        onSelect: { _ in }
+        onSelect: { building in
+            print("Selected: \(building.name)")
+        }
     )
 }

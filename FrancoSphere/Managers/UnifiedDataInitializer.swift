@@ -55,8 +55,9 @@ public class UnifiedDataInitializer: ObservableObject {
             // Import any additional operational data not in seed
             if await shouldImportOperationalData() {
                 do {
-                    let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
-                    print("✅ Imported \(imported) additional tasks, \(errors.count) errors")
+                    // FIXED: Use the public async wrapper method
+                    let result = try await OperationalDataManager.shared.importRoutinesAndDSNYAsync()
+                    print("✅ Imported \(result.routines) routines and \(result.dsny) DSNY schedules")
                 } catch {
                     print("⚠️ OperationalDataManager import skipped: \(error)")
                     // Not critical - continue with initialization
@@ -132,8 +133,9 @@ public class UnifiedDataInitializer: ObservableObject {
         currentStep = "Reimporting data..."
         
         do {
-            let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
-            print("✅ Force reimported \(imported) tasks, \(errors.count) errors")
+            // FIXED: Use the public async wrapper method
+            let result = try await OperationalDataManager.shared.importRoutinesAndDSNYAsync()
+            print("✅ Force reimported \(result.routines) routines and \(result.dsny) DSNY schedules")
         } catch {
             print("⚠️ Force reimport failed: \(error)")
             throw error
@@ -232,7 +234,7 @@ public struct SimpleInitializationProgressView: View {
 //
 // This initializer depends on:
 // 1. DatabaseStartupCoordinator - Handles all database setup
-// 2. OperationalDataManager.importRoutinesAndDSNY() - Optional, for importing additional data
+// 2. OperationalDataManager.importRoutinesAndDSNYAsync() - For importing additional data
 // 3. TaskService.getAllTasks() - For checking existing data
 // 4. BuildingMetricsService.invalidateAllCaches() - For refreshing metrics
 // 5. BuildingService.getAllBuildings() - Optional, for fetching building data

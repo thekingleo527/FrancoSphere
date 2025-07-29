@@ -22,7 +22,6 @@
 		23273A1C2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391B2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift */; };
 		23273A1D2E2B8674004A52C6 /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395C2E2B8674004A52C6 /* WorkerManager.swift */; };
 		23273A1E2E2B8674004A52C6 /* TimeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394A2E2B8674004A52C6 /* TimeStatus.swift */; };
-		23273A1F2E2B8674004A52C6 /* NovaContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398B2E2B8674004A52C6 /* NovaContextEngine.swift */; };
 		23273A202E2B8674004A52C6 /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E52E2B8674004A52C6 /* BuildingTaskDetailView.swift */; };
 		23273A212E2B8674004A52C6 /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E32E2B8674004A52C6 /* BuildingSelectionView.swift */; };
 		23273A232E2B8674004A52C6 /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DC2E2B8674004A52C6 /* ForgotPasswordView.swift */; };
@@ -53,7 +52,6 @@
 		23273A412E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390A2E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift */; };
 		23273A432E2B8674004A52C6 /* InitializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739292E2B8674004A52C6 /* InitializationStatus.swift */; };
 		23273A442E2B8674004A52C6 /* TimeBasedTaskFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C82E2B8674004A52C6 /* TimeBasedTaskFilter.swift */; };
-		23273A452E2B8674004A52C6 /* NovaAIContextManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739892E2B8674004A52C6 /* NovaAIContextManager.swift */; };
 		23273A462E2B8674004A52C6 /* WorkerFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B52E2B8674004A52C6 /* WorkerFeedbackManager.swift */; };
 		23273A472E2B8674004A52C6 /* NovaTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398E2E2B8674004A52C6 /* NovaTypes.swift */; };
 		23273A492E2B8674004A52C6 /* DataBootstrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BE2E2B8674004A52C6 /* DataBootstrapper.swift */; };
@@ -198,9 +196,6 @@
 		23EA71022E3860C40010FA03 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71012E3860C40010FA03 /* UnifiedDataService.swift */; };
 		23EA71042E387B790010FA03 /* NovaIntelligenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */; };
 		23EA71062E387D6B0010FA03 /* NovaFeatureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71052E387D6B0010FA03 /* NovaFeatureManager.swift */; };
-		23EA71082E387DF70010FA03 /* NovaDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71072E387DF70010FA03 /* NovaDataService.swift */; };
-		23EA710B2E3883570010FA03 /* NovaPredictionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71092E3883570010FA03 /* NovaPredictionEngine.swift */; };
-		23EA710C2E3883570010FA03 /* NovaPromptEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA710A2E3883570010FA03 /* NovaPromptEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -313,9 +308,7 @@
 		232739832E2B8674004A52C6 /* WorkerConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerConstants.swift; sourceTree = "<group>"; };
 		232739842E2B8674004A52C6 /* WorkerContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngine.swift; sourceTree = "<group>"; };
 		232739872E2B8674004A52C6 /* WorkerRoutineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineViewModel.swift; sourceTree = "<group>"; };
-		232739892E2B8674004A52C6 /* NovaAIContextManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAIContextManager.swift; sourceTree = "<group>"; };
 		2327398A2E2B8674004A52C6 /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
-		2327398B2E2B8674004A52C6 /* NovaContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaContextEngine.swift; sourceTree = "<group>"; };
 		2327398D2E2B8674004A52C6 /* NovaInteractionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaInteractionView.swift; sourceTree = "<group>"; };
 		2327398E2E2B8674004A52C6 /* NovaTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaTypes.swift; sourceTree = "<group>"; };
 		232739912E2B8674004A52C6 /* 12_West_18th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 12_West_18th_Street.jpg; sourceTree = "<group>"; };
@@ -412,9 +405,6 @@
 		23EA71012E3860C40010FA03 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaIntelligenceEngine.swift; sourceTree = "<group>"; };
 		23EA71052E387D6B0010FA03 /* NovaFeatureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaFeatureManager.swift; sourceTree = "<group>"; };
-		23EA71072E387DF70010FA03 /* NovaDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaDataService.swift; sourceTree = "<group>"; };
-		23EA71092E3883570010FA03 /* NovaPredictionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaPredictionEngine.swift; sourceTree = "<group>"; };
-		23EA710A2E3883570010FA03 /* NovaPromptEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaPromptEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -677,14 +667,9 @@
 		2327398F2E2B8674004A52C6 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				23EA71092E3883570010FA03 /* NovaPredictionEngine.swift */,
-				23EA710A2E3883570010FA03 /* NovaPromptEngine.swift */,
-				23EA71072E387DF70010FA03 /* NovaDataService.swift */,
 				23EA71052E387D6B0010FA03 /* NovaFeatureManager.swift */,
 				23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */,
-				232739892E2B8674004A52C6 /* NovaAIContextManager.swift */,
 				2327398A2E2B8674004A52C6 /* NovaAPIService.swift */,
-				2327398B2E2B8674004A52C6 /* NovaContextEngine.swift */,
 				2327398D2E2B8674004A52C6 /* NovaInteractionView.swift */,
 				2327398E2E2B8674004A52C6 /* NovaTypes.swift */,
 			);
@@ -1093,7 +1078,6 @@
 				23273A1C2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift in Sources */,
 				23273A1D2E2B8674004A52C6 /* WorkerManager.swift in Sources */,
 				23273A1E2E2B8674004A52C6 /* TimeStatus.swift in Sources */,
-				23273A1F2E2B8674004A52C6 /* NovaContextEngine.swift in Sources */,
 				23273A202E2B8674004A52C6 /* BuildingTaskDetailView.swift in Sources */,
 				23273A212E2B8674004A52C6 /* BuildingSelectionView.swift in Sources */,
 				23273A232E2B8674004A52C6 /* ForgotPasswordView.swift in Sources */,
@@ -1123,11 +1107,9 @@
 				23273A3D2E2B8674004A52C6 /* FrancoSphereColors.swift in Sources */,
 				23273A3E2E2B8674004A52C6 /* GlassModal.swift in Sources */,
 				23273A402E2B8674004A52C6 /* LocationManager.swift in Sources */,
-				23EA71082E387DF70010FA03 /* NovaDataService.swift in Sources */,
 				23273A412E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift in Sources */,
 				23273A432E2B8674004A52C6 /* InitializationStatus.swift in Sources */,
 				23273A442E2B8674004A52C6 /* TimeBasedTaskFilter.swift in Sources */,
-				23273A452E2B8674004A52C6 /* NovaAIContextManager.swift in Sources */,
 				23273A462E2B8674004A52C6 /* WorkerFeedbackManager.swift in Sources */,
 				23273A472E2B8674004A52C6 /* NovaTypes.swift in Sources */,
 				23273A492E2B8674004A52C6 /* DataBootstrapper.swift in Sources */,
@@ -1175,8 +1157,6 @@
 				23273A802E2B8674004A52C6 /* GlassLoadingView.swift in Sources */,
 				23273A812E2B8674004A52C6 /* ClockInGlassModal.swift in Sources */,
 				23273A822E2B8674004A52C6 /* TaskScheduleView.swift in Sources */,
-				23EA710B2E3883570010FA03 /* NovaPredictionEngine.swift in Sources */,
-				23EA710C2E3883570010FA03 /* NovaPromptEngine.swift in Sources */,
 				23273A832E2B8674004A52C6 /* TaskDisplayHelpers.swift in Sources */,
 				23273A842E2B8674004A52C6 /* LoginView.swift in Sources */,
 				23273A852E2B8674004A52C6 /* ContentView.swift in Sources */,

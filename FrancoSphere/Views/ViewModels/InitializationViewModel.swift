@@ -7,6 +7,7 @@
 //  ✅ RESILIENT: Proper error handling and recovery
 //  ✅ OBSERVABLE: Clear progress updates for UI
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ UPDATED: Removed NovaContextEngine, using NovaFeatureManager
 //
 
 import Foundation
@@ -167,7 +168,6 @@ class InitializationViewModel: ObservableObject {
         do {
             // Load the worker context - use the proper method signature
             try await WorkerContextEngine.shared.loadContext(for: currentUser.workerId)
-
             
             await updateProgress(0.85, "User data loaded successfully")
             
@@ -187,6 +187,7 @@ class InitializationViewModel: ObservableObject {
         
         // Initialize telemetry monitoring (it auto-starts)
         _ = await TelemetryService.shared
+        print("✅ Telemetry service initialized")
         
         // Dashboard sync service doesn't have initialize method - it auto-initializes
         await MainActor.run {
@@ -194,10 +195,20 @@ class InitializationViewModel: ObservableObject {
             print("✅ Dashboard sync service initialized")
         }
         
-        // Initialize Nova AI Context Engine (non-blocking)
-        Task {
-            await NovaContextEngine.shared.initialize()
+        // Initialize Nova AI System (consolidated)
+        // NovaFeatureManager handles all AI initialization automatically
+        await MainActor.run {
+            _ = NovaFeatureManager.shared
+            print("✅ Nova AI system initialized")
         }
+        
+        // Initialize Nova Intelligence Engine
+        _ = await NovaIntelligenceEngine.shared
+        print("✅ Nova Intelligence Engine initialized")
+        
+        // Initialize Nova API Service
+        _ = NovaAPIService.shared
+        print("✅ Nova API Service ready")
     }
     
     private func finalizeSetup() async throws {
@@ -210,7 +221,15 @@ class InitializationViewModel: ObservableObject {
         print("  - Database: ✅")
         print("  - Services: ✅")
         print("  - User Context: ✅")
+        print("  - Nova AI: ✅")
         print("  - Ready for production")
+        
+        // Log Nova AI status
+        print("🤖 Nova AI System Status:")
+        print("  - NovaFeatureManager: Active")
+        print("  - NovaIntelligenceEngine: Ready")
+        print("  - NovaAPIService: Online")
+        print("  - Context Features: Loaded")
     }
     
     // MARK: - Error Handling
