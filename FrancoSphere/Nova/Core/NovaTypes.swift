@@ -161,63 +161,9 @@ public enum NovaProcessingState: String, Codable {
     case error = "error"
 }
 
-/// Nova aggregated data structure
-public struct NovaAggregatedData: Codable {
-    public let buildingCount: Int
-    public let taskCount: Int
-    public let workerCount: Int
-    public let completedTaskCount: Int
-    public let urgentTaskCount: Int
-    public let overdueTaskCount: Int
-    public let averageCompletionRate: Double
-    public let timestamp: Date
-    
-    public init(
-        buildingCount: Int,
-        taskCount: Int,
-        workerCount: Int,
-        completedTaskCount: Int = 0,
-        urgentTaskCount: Int = 0,
-        overdueTaskCount: Int = 0,
-        averageCompletionRate: Double = 0.0,
-        timestamp: Date = Date()
-    ) {
-        self.buildingCount = buildingCount
-        self.taskCount = taskCount
-        self.workerCount = workerCount
-        self.completedTaskCount = completedTaskCount
-        self.urgentTaskCount = urgentTaskCount
-        self.overdueTaskCount = overdueTaskCount
-        self.averageCompletionRate = averageCompletionRate
-        self.timestamp = timestamp
-    }
-}
-
-/// Nova recommendation (used by NovaCore)
-public struct NovaRecommendation {
-    public let title: String
-    public let description: String
-    public let priority: CoreTypes.AIPriority  // Using CoreTypes!
-    public let category: CoreTypes.InsightCategory  // Using CoreTypes!
-    public let estimatedImpact: String
-    public let buildingId: String
-    
-    public init(
-        title: String,
-        description: String,
-        priority: CoreTypes.AIPriority,
-        category: CoreTypes.InsightCategory,
-        estimatedImpact: String,
-        buildingId: String
-    ) {
-        self.title = title
-        self.description = description
-        self.priority = priority
-        self.category = category
-        self.estimatedImpact = estimatedImpact
-        self.buildingId = buildingId
-    }
-}
+// NOTE: NovaAggregatedData is defined in NovaDataAggregator.swift
+// NOTE: NovaRecommendation is defined in NovaCore.swift
+// We don't redefine them here to avoid duplicates
 
 // MARK: - Error Types
 
@@ -292,7 +238,7 @@ extension NovaResponse {
     }
     
     /// Get insights by priority
-    public func insights(withPriority priority: CoreTypes.InsightPriority) -> [CoreTypes.IntelligenceInsight] {
+    public func insights(withPriority priority: CoreTypes.AIPriority) -> [CoreTypes.IntelligenceInsight] {
         return insights.filter { $0.priority == priority }
     }
 }
@@ -302,4 +248,4 @@ extension NovaResponse {
 public typealias NovaInsight = CoreTypes.IntelligenceInsight
 public typealias NovaSuggestion = CoreTypes.AISuggestion
 public typealias NovaPriority = CoreTypes.AIPriority
-public typealias NovaInsightType = CoreTypes.InsightType
+public typealias NovaInsightType = CoreTypes.InsightCategory
