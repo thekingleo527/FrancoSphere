@@ -1,13 +1,5 @@
 //
 //  DatabaseInitializer.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/29/25.
-//
-
-
-//
-//  DatabaseInitializer.swift
 //  FrancoSphere v6.0
 //
 //  ✅ CONSOLIDATED: Merged DatabaseStartupCoordinator + UnifiedDataInitializer + UnifiedDataService
@@ -570,8 +562,8 @@ public class DatabaseInitializer: ObservableObject {
         return result
     }
     
-    private func verifyServiceDataFlow() async -> ServiceDataFlow {
-        var dataFlow = ServiceDataFlow()
+    private func verifyServiceDataFlow() async -> DatabaseServiceDataFlow {
+        var dataFlow = DatabaseServiceDataFlow()
         
         do {
             let allTasks = try await taskService.getAllTasks()
@@ -899,7 +891,7 @@ public struct HealthCheckResult {
     let statistics: [String: Any]
 }
 
-public struct ServiceDataFlow {
+public struct DatabaseServiceDataFlow {
     var taskServiceWorking = false
     var workerServiceWorking = false
     var buildingServiceWorking = false

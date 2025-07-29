@@ -88,7 +88,6 @@
 		23273A782E2B8674004A52C6 /* EmergencyContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393E2E2B8674004A52C6 /* EmergencyContactsSheet.swift */; };
 		23273A792E2B8674004A52C6 /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739132E2B8674004A52C6 /* GlassMorphismStyles.swift */; };
 		23273A7A2E2B8674004A52C6 /* FrancoSphereExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */; };
-		23273A7C2E2B8674004A52C6 /* DataInitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F22E2B8674004A52C6 /* DataInitializationView.swift */; };
 		23273A7D2E2B8674004A52C6 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C42E2B8674004A52C6 /* QuickBooksPayrollExporter.swift */; };
 		23273A7E2E2B8674004A52C6 /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394E2E2B8674004A52C6 /* V003_WorkerAssignments.swift */; };
 		23273A7F2E2B8674004A52C6 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F62E2B8674004A52C6 /* TaskDetailView.swift */; };
@@ -372,7 +371,6 @@
 		232739EF2E2B8674004A52C6 /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
 		232739F02E2B8674004A52C6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTaskDetailView.swift; sourceTree = "<group>"; };
-		232739F22E2B8674004A52C6 /* DataInitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataInitializationView.swift; sourceTree = "<group>"; };
 		232739F32E2B8674004A52C6 /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
 		232739F42E2B8674004A52C6 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
 		232739F52E2B8674004A52C6 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -849,7 +847,6 @@
 				232739EF2E2B8674004A52C6 /* ComplianceOverviewView.swift */,
 				232739F02E2B8674004A52C6 /* ContentView.swift */,
 				232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */,
-				232739F22E2B8674004A52C6 /* DataInitializationView.swift */,
 				232739F32E2B8674004A52C6 /* InitializationView.swift */,
 				232739F42E2B8674004A52C6 /* PortfolioOverviewView.swift */,
 				232739F52E2B8674004A52C6 /* ProfileView.swift */,
@@ -1135,7 +1132,6 @@
 				23273A782E2B8674004A52C6 /* EmergencyContactsSheet.swift in Sources */,
 				23273A792E2B8674004A52C6 /* GlassMorphismStyles.swift in Sources */,
 				23273A7A2E2B8674004A52C6 /* FrancoSphereExtensions.swift in Sources */,
-				23273A7C2E2B8674004A52C6 /* DataInitializationView.swift in Sources */,
 				23273A7D2E2B8674004A52C6 /* QuickBooksPayrollExporter.swift in Sources */,
 				23273A7E2E2B8674004A52C6 /* V003_WorkerAssignments.swift in Sources */,
 				23273A7F2E2B8674004A52C6 /* TaskDetailView.swift in Sources */,

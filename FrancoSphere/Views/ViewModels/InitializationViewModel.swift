@@ -2,16 +2,15 @@
 //  InitializationViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ UNIFIED: Single initialization flow with DatabaseStartupCoordinator
-//  ✅ COMPREHENSIVE: Handles all startup tasks in sequence
+//  ✅ UPDATED: Works with new DatabaseInitializer
+//  ✅ SIMPLIFIED: Delegates database work to DatabaseInitializer
+//  ✅ UI-FOCUSED: Handles presentation logic for InitializationView
 //  ✅ RESILIENT: Proper error handling and recovery
-//  ✅ OBSERVABLE: Clear progress updates for UI
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ UPDATED: Removed NovaContextEngine, using NovaFeatureManager
 //
 
 import Foundation
 import SwiftUI
+import Combine
 
 @MainActor
 class InitializationViewModel: ObservableObject {
@@ -21,9 +20,42 @@ class InitializationViewModel: ObservableObject {
     @Published var isComplete: Bool = false
     @Published var initializationError: String?
     
+    // Dependencies
+    private let databaseInitializer = DatabaseInitializer.shared
+    private let authManager = NewAuthManager.shared
+    
+    // Cancellables for subscriptions
+    private var cancellables = Set<AnyCancellable>()
+    
     // Track initialization attempts for retry logic
     private var initializationAttempts = 0
     private let maxAttempts = 3
+    
+    init() {
+        setupSubscriptions()
+    }
+    
+    private func setupSubscriptions() {
+        // Subscribe to DatabaseInitializer progress
+        databaseInitializer.$initializationProgress
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] dbProgress in
+                // Map database progress (0-1) to first 70% of our progress
+                self?.progress = dbProgress * 0.7
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to DatabaseInitializer status
+        databaseInitializer.$currentStep
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] step in
+                // Only update if we're in database phase
+                if self?.progress ?? 0 < 0.7 {
+                    self?.currentStep = step
+                }
+            }
+            .store(in: &cancellables)
+    }
     
     func startInitialization() async {
         guard !isInitializing else { return }
@@ -34,27 +66,24 @@ class InitializationViewModel: ObservableObject {
         initializationAttempts += 1
         
         do {
-            // Step 1: Verify app environment (5%)
-            await updateProgress(0.05, "Checking environment...")
-            try await verifyEnvironment()
+            // Phase 1: Database Initialization (0-70%)
+            // DatabaseInitializer will update our progress through subscriptions
+            if !databaseInitializer.isInitialized {
+                try await databaseInitializer.initializeIfNeeded()
+            } else {
+                // If already initialized, jump to 70%
+                await updateProgress(0.7, "Database ready...")
+            }
             
-            // Step 2: Initialize database system (40%)
-            await updateProgress(0.10, "Initializing database...")
-            try await initializeDatabase()
-            
-            // Step 3: Verify data integrity (20%)
-            await updateProgress(0.50, "Verifying data integrity...")
-            try await verifyDataIntegrity()
-            
-            // Step 4: Load user context if authenticated (20%)
-            await updateProgress(0.70, "Loading user data...")
+            // Phase 2: Load User Context (70-80%)
+            await updateProgress(0.75, "Loading user data...")
             try await loadUserContext()
             
-            // Step 5: Initialize services (10%)
-            await updateProgress(0.90, "Starting services...")
-            try await initializeServices()
+            // Phase 3: Initialize App Services (80-95%)
+            await updateProgress(0.85, "Starting services...")
+            try await initializeAppServices()
             
-            // Step 6: Final setup (5%)
+            // Phase 4: Final Setup (95-100%)
             await updateProgress(0.95, "Finalizing setup...")
             try await finalizeSetup()
             
@@ -70,106 +99,27 @@ class InitializationViewModel: ObservableObject {
             print("✅ FrancoSphere initialization completed successfully")
             
         } catch {
-            handleInitializationError(error)
+            await handleInitializationError(error)
         }
     }
     
     // MARK: - Initialization Steps
     
-    private func verifyEnvironment() async throws {
-        // Check for required directories, permissions, etc.
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-        guard documentsPath != nil else {
-            throw AppInitializationError.environmentError("Cannot access documents directory")
-        }
-        
-        // Verify we can write to documents directory
-        let testFile = documentsPath!.appendingPathComponent("test.tmp")
-        do {
-            try "test".write(to: testFile, atomically: true, encoding: .utf8)
-            try FileManager.default.removeItem(at: testFile)
-        } catch {
-            throw AppInitializationError.environmentError("Cannot write to documents directory")
-        }
-    }
-    
-    private func initializeDatabase() async throws {
-        do {
-            // Use DatabaseStartupCoordinator as the single source of truth
-            try await DatabaseStartupCoordinator.shared.initializeDatabase()
-            
-            await updateProgress(0.30, "Database schema created...")
-            
-            // DatabaseStartupCoordinator already handles data integrity internally
-            // No need to call ensureDataIntegrity separately
-            
-            await updateProgress(0.40, "Database initialized successfully")
-            
-        } catch {
-            // On first attempt, try to recover by re-running initialization
-            if initializationAttempts == 1 {
-                print("⚠️ Database initialization failed, attempting recovery...")
-                // Simply retry initialization as DatabaseStartupCoordinator is idempotent
-                try await DatabaseStartupCoordinator.shared.initializeDatabase()
-            } else {
-                throw AppInitializationError.databaseError("Failed to initialize database: \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    private func verifyDataIntegrity() async throws {
-        await updateProgress(0.55, "Checking workers...")
-        
-        // Verify critical data exists
-        let workerCount = try await GRDBManager.shared.query(
-            "SELECT COUNT(*) as count FROM workers WHERE isActive = 1"
-        ).first?["count"] as? Int64 ?? 0
-        
-        guard workerCount > 0 else {
-            throw AppInitializationError.dataError("No active workers found in database")
-        }
-        
-        await updateProgress(0.60, "Checking buildings...")
-        
-        let buildingCount = try await GRDBManager.shared.query(
-            "SELECT COUNT(*) as count FROM buildings"
-        ).first?["count"] as? Int64 ?? 0
-        
-        guard buildingCount > 0 else {
-            throw AppInitializationError.dataError("No buildings found in database")
-        }
-        
-        await updateProgress(0.65, "Verifying assignments...")
-        
-        // Verify Kevin's assignment specifically
-        let kevinAssignment = try await GRDBManager.shared.query("""
-            SELECT COUNT(*) as count 
-            FROM worker_assignments 
-            WHERE worker_id = '1' AND building_id = '14' AND is_primary = 1
-        """).first?["count"] as? Int64 ?? 0
-        
-        if kevinAssignment == 0 {
-            print("⚠️ Kevin's Rubin Museum assignment missing - will be fixed on next sync")
-            // Don't throw - the system can self-heal this
-        }
-        
-        print("✅ Data integrity verified: \(workerCount) workers, \(buildingCount) buildings")
-    }
-    
     private func loadUserContext() async throws {
         // Only load if user is authenticated
-        guard let currentUser = await NewAuthManager.shared.getCurrentUser() else {
+        guard let currentUser = await authManager.getCurrentUser() else {
             print("ℹ️ No authenticated user, skipping context load")
             return
         }
         
-        await updateProgress(0.75, "Loading worker context...")
-        
         do {
-            // Load the worker context - use the proper method signature
+            // Load the worker context
             try await WorkerContextEngine.shared.loadContext(for: currentUser.workerId)
             
-            await updateProgress(0.85, "User data loaded successfully")
+            // Check if UnifiedDataService needs initialization
+            await UnifiedDataService.shared.checkServicesReady()
+            
+            print("✅ User context loaded successfully")
             
         } catch {
             // Non-critical error - user can still use app
@@ -178,86 +128,123 @@ class InitializationViewModel: ObservableObject {
         }
     }
     
-    private func initializeServices() async throws {
-        // Initialize weather adapter (not WeatherService)
+    private func initializeAppServices() async throws {
+        await updateProgress(0.87, "Initializing weather service...")
+        
+        // Initialize weather adapter
         await MainActor.run {
             _ = WeatherDataAdapter.shared
-            print("✅ Weather adapter initialized")
         }
         
-        // Initialize telemetry monitoring (it auto-starts)
-        _ = await TelemetryService.shared
-        print("✅ Telemetry service initialized")
+        await updateProgress(0.89, "Starting telemetry...")
         
-        // Dashboard sync service doesn't have initialize method - it auto-initializes
+        // Initialize telemetry monitoring
+        _ = await TelemetryService.shared
+        
+        await updateProgress(0.91, "Configuring dashboard sync...")
+        
+        // Dashboard sync service auto-initializes
         await MainActor.run {
             _ = DashboardSyncService.shared
-            print("✅ Dashboard sync service initialized")
         }
         
-        // Initialize Nova AI System (consolidated)
-        // NovaFeatureManager handles all AI initialization automatically
+        await updateProgress(0.93, "Activating Nova AI...")
+        
+        // Initialize Nova AI System
+        await initializeNovaAI()
+        
+        print("✅ All app services initialized")
+    }
+    
+    private func initializeNovaAI() async {
+        // NovaFeatureManager handles all AI initialization
         await MainActor.run {
             _ = NovaFeatureManager.shared
-            print("✅ Nova AI system initialized")
         }
         
         // Initialize Nova Intelligence Engine
         _ = await NovaIntelligenceEngine.shared
-        print("✅ Nova Intelligence Engine initialized")
         
         // Initialize Nova API Service
         _ = NovaAPIService.shared
-        print("✅ Nova API Service ready")
+        
+        print("✅ Nova AI system initialized")
     }
     
     private func finalizeSetup() async throws {
-        // Set initialization flag
+        // Set initialization flags
         UserDefaults.standard.set(true, forKey: "HasCompletedInitialization")
         UserDefaults.standard.set(Date(), forKey: "LastInitializationDate")
         
+        // Perform any data verification if needed
+        if databaseInitializer.dataStatus == .partial {
+            print("⚠️ Database has partial data - fallback mode available")
+        }
+        
         // Log successful initialization
+        await logInitializationSuccess()
+    }
+    
+    private func logInitializationSuccess() async {
+        let stats = try? await databaseInitializer.getDatabaseStatistics()
+        
         print("📱 FrancoSphere v6.0 initialized")
-        print("  - Database: ✅")
+        print("  - Database: ✅ \(databaseInitializer.dataStatus.description)")
         print("  - Services: ✅")
         print("  - User Context: ✅")
         print("  - Nova AI: ✅")
-        print("  - Ready for production")
         
-        // Log Nova AI status
-        print("🤖 Nova AI System Status:")
-        print("  - NovaFeatureManager: Active")
-        print("  - NovaIntelligenceEngine: Ready")
-        print("  - NovaAPIService: Online")
-        print("  - Context Features: Loaded")
+        if let stats = stats {
+            if let workers = stats["workers"] as? [String: Any],
+               let total = workers["total"] as? Int64 {
+                print("  - Workers: \(total)")
+            }
+            if let buildings = stats["buildings"] as? [String: Any],
+               let total = buildings["total"] as? Int64 {
+                print("  - Buildings: \(total)")
+            }
+        }
+        
+        print("  - Ready for production")
     }
     
     // MARK: - Error Handling
     
-    private func handleInitializationError(_ error: Error) {
+    private func handleInitializationError(_ error: Error) async {
         isInitializing = false
         
         let errorMessage: String
-        var isCritical = false
+        var isRecoverable = false
         
-        if let initError = error as? AppInitializationError {
-            errorMessage = initError.localizedDescription
-            isCritical = initError.isCritical
+        // Check if it's a known error type
+        if let dbError = error as? InitializationError {
+            errorMessage = dbError.localizedDescription
+            // Database errors might be recoverable
+            isRecoverable = initializationAttempts < maxAttempts
+        } else if let appError = error as? AppInitializationError {
+            errorMessage = appError.localizedDescription
+            isRecoverable = !appError.isCritical && initializationAttempts < maxAttempts
         } else {
             errorMessage = "Unexpected error: \(error.localizedDescription)"
-            isCritical = true
+            isRecoverable = false
         }
         
         print("❌ Initialization error: \(errorMessage)")
+        print("   Attempt: \(initializationAttempts)/\(maxAttempts)")
+        print("   Recoverable: \(isRecoverable)")
         
-        // For non-critical errors or if we have more attempts, allow retry
-        if !isCritical && initializationAttempts < maxAttempts {
-            // Set error but mark as complete to allow app usage
-            initializationError = errorMessage
-            isComplete = true
+        if isRecoverable {
+            // Show error but allow retry
+            initializationError = "\(errorMessage)\n\nTap to retry (\(initializationAttempts)/\(maxAttempts))"
         } else {
             // Critical error - show error screen
             initializationError = errorMessage
+            
+            // For non-critical database issues, we might still allow app usage
+            if databaseInitializer.isInitialized {
+                print("⚠️ Partial initialization - app may have limited functionality")
+                isComplete = true // Allow app to proceed with warnings
+            }
         }
     }
     
@@ -272,34 +259,47 @@ class InitializationViewModel: ObservableObject {
         // Small delay for visual feedback
         try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
     }
+    
+    // MARK: - Public Methods
+    
+    func retryInitialization() async {
+        initializationError = nil
+        await startInitialization()
+    }
+    
+    func skipInitialization() {
+        // For development/testing only
+        #if DEBUG
+        print("⚠️ Skipping initialization (DEBUG only)")
+        isComplete = true
+        isInitializing = false
+        #endif
+    }
 }
 
-// MARK: - Initialization Errors
+// MARK: - App-Specific Initialization Errors
 
 enum AppInitializationError: LocalizedError {
-    case environmentError(String)
-    case databaseError(String)
-    case dataError(String)
     case serviceError(String)
+    case contextError(String)
+    case configurationError(String)
     
     var errorDescription: String? {
         switch self {
-        case .environmentError(let message):
-            return "Environment Error: \(message)"
-        case .databaseError(let message):
-            return "Database Error: \(message)"
-        case .dataError(let message):
-            return "Data Error: \(message)"
         case .serviceError(let message):
             return "Service Error: \(message)"
+        case .contextError(let message):
+            return "Context Error: \(message)"
+        case .configurationError(let message):
+            return "Configuration Error: \(message)"
         }
     }
     
     var isCritical: Bool {
         switch self {
-        case .environmentError, .databaseError:
+        case .configurationError:
             return true
-        case .dataError, .serviceError:
+        case .serviceError, .contextError:
             return false
         }
     }
