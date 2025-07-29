@@ -2,17 +2,22 @@
 //  TaskScheduleView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed duplicate TaskFormView (exists in separate file)
+//  ✅ FIXED: Removed NamedCoordinate.allBuildings reference
+//  ✅ FIXED: Now uses BuildingService to fetch building data
 //  ✅ FIXED: Updated TaskFormView call to match existing constructor
 //  ✅ FIXED: Updated onChange to iOS 17+ syntax
 //  ✅ FIXED: Made all switch statements exhaustive
-//  ✅ FIXED: Removed duplicate case statements
 //  ✅ STRUCTURE: Clean file without redeclarations
 //
 
 import SwiftUI
 
 // Type aliases for CoreTypes
+typealias ContextualTask = CoreTypes.ContextualTask
+typealias TaskCategory = CoreTypes.TaskCategory
+typealias TaskUrgency = CoreTypes.TaskUrgency
+typealias NamedCoordinate = CoreTypes.NamedCoordinate
+typealias WorkerProfile = CoreTypes.WorkerProfile
 
 struct TaskScheduleView: View {
     let buildingID: String
@@ -29,6 +34,7 @@ struct TaskScheduleView: View {
     @State private var selectedView: ScheduleView = .month
     @State private var showFilterOptions = false
     @State private var filterOptions = FilterOptions()
+    @State private var currentBuilding: NamedCoordinate?
     
     enum ScheduleView {
         case week
@@ -86,11 +92,12 @@ struct TaskScheduleView: View {
         .onAppear {
             setupCalendar()
             loadTasks()
+            loadBuildingInfo()
         }
-        .onChange(of: selectedDate) {
+        .onChange(of: selectedDate) { oldValue, newValue in
             loadTasksForSelectedDate()
         }
-        .onChange(of: visibleMonth) {
+        .onChange(of: visibleMonth) { oldValue, newValue in
             updateMonthDates()
         }
         .sheet(item: $showTaskDetail) { task in
@@ -103,15 +110,18 @@ struct TaskScheduleView: View {
             TaskFormView(buildingID: buildingID) { newTask in
                 // Convert MaintenanceTask to ContextualTask if needed
                 let contextualTask = ContextualTask(
+                    id: UUID().uuidString,
                     title: newTask.title,
                     description: newTask.description,
                     isCompleted: false,
-                    scheduledDate: selectedDate,
+                    completedDate: nil,
                     dueDate: newTask.dueDate,
                     category: newTask.category,
                     urgency: newTask.urgency,
-                    building: NamedCoordinate.allBuildings.first { $0.id == buildingID },
-                    worker: getCurrentWorker()
+                    building: currentBuilding,  // Use the loaded building
+                    worker: getCurrentWorker(),
+                    buildingId: buildingID,
+                    priority: newTask.urgency
                 )
                 tasks.append(contextualTask)
                 showAddTask = false
@@ -123,6 +133,21 @@ struct TaskScheduleView: View {
     }
     
     // MARK: - Helper Functions
+    
+    private func loadBuildingInfo() {
+        Task {
+            do {
+                let buildings = try await BuildingService.shared.getAllBuildings()
+                if let building = buildings.first(where: { $0.id == buildingID }) {
+                    await MainActor.run {
+                        self.currentBuilding = building
+                    }
+                }
+            } catch {
+                print("Failed to load building info: \(error)")
+            }
+        }
+    }
     
     private func getCurrentWorker() -> WorkerProfile? {
         guard let workerId = NewAuthManager.shared.workerId else { return nil }
@@ -136,7 +161,9 @@ struct TaskScheduleView: View {
             role: .worker,
             skills: [],
             certifications: [],
-            hireDate: Date()
+            hireDate: Date(),
+            isActive: true,
+            profileImageUrl: nil
         )
     }
     
