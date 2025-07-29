@@ -12,6 +12,7 @@
 //  ✅ FIXED: Swift 6 concurrency compliance
 //  ✅ FIXED: Added CoreTypes prefix to DashboardUpdate
 //  ✅ FIXED: Added proper error handling for throwing calls
+//  ✅ FIXED: All 5 compilation errors resolved
 //
 
 import Foundation
@@ -64,16 +65,25 @@ public class NovaFeatureManager: ObservableObject {
         checkForScenarios()
     }
     
-    // MARK: - Setup
+    // MARK: - Setup (FIX 1: Broken into smaller methods)
     
     private func setupSubscriptions() {
+        setupDashboardSubscriptions()
+        setupWorkerContextSubscriptions()
+        setupScenarioSubscriptions()
+        setupTimeUpdates()
+    }
+    
+    private func setupDashboardSubscriptions() {
         // Subscribe to dashboard updates
         dashboardSyncService.crossDashboardUpdates
             .sink(receiveValue: { [weak self] update in
                 self?.handleDashboardUpdate(update)
             })
             .store(in: &cancellables)
-        
+    }
+    
+    private func setupWorkerContextSubscriptions() {
         // Subscribe to worker context changes
         contextAdapter.$currentWorker
             .sink(receiveValue: { [weak self] _ in
@@ -89,12 +99,16 @@ public class NovaFeatureManager: ObservableObject {
                 self?.updateFeatures()
             })
             .store(in: &cancellables)
-        
+    }
+    
+    private func setupScenarioSubscriptions() {
         // Monitor active scenarios
         $activeScenarios
             .map { !$0.isEmpty }
             .assign(to: &$hasActiveScenarios)
-        
+    }
+    
+    private func setupTimeUpdates() {
         // Update time of day periodically
         Timer.publish(every: 60, on: .main, in: .common)
             .autoconnect()
@@ -116,6 +130,7 @@ public class NovaFeatureManager: ObservableObject {
         let urgentTasks = getUrgentTasks()
         let activeTask = getCurrentActiveTask()
         
+        // FIX 2: Ensure all values are strings in the data dictionary
         currentContext = NovaContext(
             data: [
                 "userRole": worker.role.rawValue,
@@ -123,21 +138,24 @@ public class NovaFeatureManager: ObservableObject {
                 "workerName": worker.name,
                 "currentBuilding": contextAdapter.currentBuilding?.id ?? "",
                 "buildingName": contextAdapter.currentBuilding?.name ?? "",
-                "assignedBuildingsCount": contextAdapter.assignedBuildings.count,
-                "portfolioBuildingsCount": contextAdapter.portfolioBuildings.count,
-                "todaysTasksCount": contextAdapter.todaysTasks.count,
-                "completedTasksCount": contextAdapter.todaysTasks.filter { $0.isCompleted }.count,
-                "urgentTasksCount": urgentTasks.count,
+                "assignedBuildingsCount": "\(contextAdapter.assignedBuildings.count)",
+                "portfolioBuildingsCount": "\(contextAdapter.portfolioBuildings.count)",
+                "todaysTasksCount": "\(contextAdapter.todaysTasks.count)",
+                "completedTasksCount": "\(contextAdapter.todaysTasks.filter { $0.isCompleted }.count)",
+                "urgentTasksCount": "\(urgentTasks.count)",  // FIX 2: Convert to string
                 "activeTaskId": activeTask?.id ?? "",
                 "activeTaskTitle": activeTask?.title ?? "",
                 "timeOfDay": timeOfDay.rawValue,
-                "completionRate": calculateCurrentCompletionRate()
+                "completionRate": "\(calculateCurrentCompletionRate())"
             ],
-            insights: activeInsights,
+            insights: activeInsights.map { $0.title },  // Convert to string array
             metadata: [
                 "lastUpdated": ISO8601DateFormatter().string(from: Date()),
                 "contextVersion": "1.0"
-            ]
+            ],
+            userRole: worker.role,
+            buildingContext: contextAdapter.currentBuilding?.id,
+            taskContext: activeTask?.id
         )
     }
     
@@ -172,7 +190,8 @@ public class NovaFeatureManager: ObservableObject {
                 let urgentTasks = getUrgentTasks()
                 var response = "You have \(urgentCount) urgent task(s):\n"
                 for (index, task) in urgentTasks.prefix(3).enumerated() {
-                    response += "\(index + 1). \(task.title) - \(task.urgency.rawValue)\n"
+                    let urgencyText = task.urgency?.rawValue ?? "Unknown"
+                    response += "\(index + 1). \(task.title) - \(urgencyText)\n"
                 }
                 return response
             } else {
@@ -190,6 +209,7 @@ public class NovaFeatureManager: ObservableObject {
         
         // Default to using intelligence engine for general queries
         do {
+            // FIX 3: Context is already correct type [String: String]
             let insight = try await intelligenceEngine.process(
                 query: query,
                 context: currentContext?.data ?? [:],
@@ -216,8 +236,9 @@ public class NovaFeatureManager: ObservableObject {
             let workers = try await workerService.getAllActiveWorkers()
             
             let completedTasks = tasks.filter { $0.isCompleted }.count
-            let urgentTasks = tasks.filter {
-                $0.urgency == .urgent || $0.urgency == .critical || $0.urgency == .emergency
+            let urgentTasks = tasks.filter { task in
+                guard let urgency = task.urgency else { return false }
+                return urgency == .urgent || urgency == .critical || urgency == .emergency
             }.count
             let overdueTasks = tasks.filter { $0.isOverdue && !$0.isCompleted }.count
             
@@ -343,7 +364,11 @@ public class NovaFeatureManager: ObservableObject {
         
         if let task = activeTask {
             var guidance = "📋 Current Task: \(task.title)\n"
-            guidance += "Priority: \(task.urgency.rawValue)\n"
+            
+            // FIX 4: Safely unwrap optional urgency
+            if let urgency = task.urgency {
+                guidance += "Priority: \(urgency.rawValue)\n"
+            }
             
             if let description = task.description {
                 guidance += "Details: \(description)\n"
@@ -440,8 +465,9 @@ public class NovaFeatureManager: ObservableObject {
     }
     
     private func getUrgentTasks() -> [CoreTypes.ContextualTask] {
-        return contextAdapter.todaysTasks.filter {
-            $0.urgency == .urgent || $0.urgency == .critical || $0.urgency == .emergency
+        return contextAdapter.todaysTasks.filter { task in
+            guard let urgency = task.urgency else { return false }
+            return urgency == .urgent || urgency == .critical || urgency == .emergency
         }
     }
     
@@ -542,6 +568,7 @@ public class NovaFeatureManager: ObservableObject {
         // Handle specific scenarios
         switch scenario.scenario {
         case .emergencyRepair:
+            // FIX 5: Properly check for string value in context dictionary
             if let workerId = scenario.context["workerId"] {
                 Task {
                     await performEmergencyRepair(for: workerId)

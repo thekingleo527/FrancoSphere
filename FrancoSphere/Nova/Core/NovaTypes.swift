@@ -7,6 +7,7 @@
 //  ✅ NO DUPLICATES: Only Nova-specific types defined here
 //  ✅ CLEAN: No type conversion needed
 //  ✅ ENHANCED: Includes data aggregation and prompt types
+//  ✅ FIXED: NovaContext data field for proper dictionary storage
 //
 
 import Foundation
@@ -17,7 +18,7 @@ import SwiftUI
 /// Nova context for AI operations
 public struct NovaContext: Codable, Hashable, Identifiable, Sendable {
     public let id: UUID
-    public let data: String
+    public let data: [String: String]  // Changed from String to dictionary for structured data
     public let timestamp: Date
     public let insights: [String]
     public let metadata: [String: String]
@@ -27,7 +28,7 @@ public struct NovaContext: Codable, Hashable, Identifiable, Sendable {
     
     public init(
         id: UUID = UUID(),
-        data: String,
+        data: [String: String],  // Changed parameter type
         timestamp: Date = Date(),
         insights: [String] = [],
         metadata: [String: String] = [:],
@@ -37,6 +38,27 @@ public struct NovaContext: Codable, Hashable, Identifiable, Sendable {
     ) {
         self.id = id
         self.data = data
+        self.timestamp = timestamp
+        self.insights = insights
+        self.metadata = metadata
+        self.userRole = userRole
+        self.buildingContext = buildingContext
+        self.taskContext = taskContext
+    }
+    
+    // Convenience initializer for legacy string data
+    public init(
+        id: UUID = UUID(),
+        stringData: String,
+        timestamp: Date = Date(),
+        insights: [String] = [],
+        metadata: [String: String] = [:],
+        userRole: CoreTypes.UserRole? = nil,
+        buildingContext: CoreTypes.BuildingID? = nil,
+        taskContext: String? = nil
+    ) {
+        self.id = id
+        self.data = ["content": stringData]  // Convert string to dictionary
         self.timestamp = timestamp
         self.insights = insights
         self.metadata = metadata
@@ -426,6 +448,11 @@ extension NovaContext {
         return Date().timeIntervalSince(timestamp) > 300
     }
     
+    /// Get context data as a single string (for backward compatibility)
+    public var dataString: String {
+        return data["content"] ?? data.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+    }
+    
     /// Add an insight to the context
     public func withInsight(_ insight: String) -> NovaContext {
         var newInsights = insights
@@ -452,6 +479,22 @@ extension NovaContext {
             timestamp: timestamp,
             insights: insights,
             metadata: newMetadata,
+            userRole: userRole,
+            buildingContext: buildingContext,
+            taskContext: taskContext
+        )
+    }
+    
+    /// Add or update context data
+    public func withData(key: String, value: String) -> NovaContext {
+        var newData = data
+        newData[key] = value
+        return NovaContext(
+            id: id,
+            data: newData,
+            timestamp: timestamp,
+            insights: insights,
+            metadata: metadata,
             userRole: userRole,
             buildingContext: buildingContext,
             taskContext: taskContext
@@ -531,6 +574,15 @@ extension CoreTypes.AIScenarioType {
         case .emergencyRepair: return .red
         case .taskOverdue: return .red
         case .buildingAlert: return .orange
+        }
+    }
+    
+    public var priority: CoreTypes.AIPriority {
+        switch self {
+        case .emergencyRepair: return .critical
+        case .taskOverdue, .clockOutReminder: return .high
+        case .weatherAlert, .inventoryLow, .routineIncomplete: return .medium
+        case .pendingTasks, .buildingAlert: return .low
         }
     }
 }
