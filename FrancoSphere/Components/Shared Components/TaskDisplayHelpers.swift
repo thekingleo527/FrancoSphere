@@ -5,7 +5,7 @@
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Proper optional unwrapping for urgency
 //  ✅ FIXED: Exhaustive switch statements
-//  ✅ FIXED: Correct ContextualTask initializer
+//  ✅ FIXED: Removed non-existent estimatedDuration property
 //
 
 import SwiftUI
@@ -120,19 +120,14 @@ public struct TaskDisplayHelpers {
     
     /// Calculate estimated duration for task
     public static func estimatedDurationText(for task: ContextualTask) -> String {
-        // Use the estimatedDuration property directly (it's not optional)
-        let duration = task.estimatedDuration
-        
-        // If duration is set, use it
-        if duration > 0 {
-            return formatDuration(duration)
-        }
-        
-        // Otherwise, estimate based on urgency
+        // ✅ FIXED: Removed reference to non-existent estimatedDuration property
+        // Estimate duration based on urgency and category
         let baseDuration: TimeInterval
+        
+        // First check urgency for time-sensitive tasks
         if let urgency = task.urgency {
             switch urgency {
-            case .critical, .emergency:  // ✅ FIXED: Handle all cases
+            case .critical, .emergency:
                 baseDuration = 3600 // 1 hour
             case .high, .urgent:
                 baseDuration = 2700 // 45 minutes
@@ -142,7 +137,37 @@ public struct TaskDisplayHelpers {
                 baseDuration = 900  // 15 minutes
             }
         } else {
-            baseDuration = 1800 // Default 30 minutes
+            // Then check category for typical durations
+            if let category = task.category {
+                switch category {
+                case .cleaning:
+                    baseDuration = 1800 // 30 minutes
+                case .maintenance:
+                    baseDuration = 3600 // 1 hour
+                case .repair:
+                    baseDuration = 5400 // 1.5 hours
+                case .inspection:
+                    baseDuration = 1200 // 20 minutes
+                case .sanitation:
+                    baseDuration = 2400 // 40 minutes
+                case .landscaping:
+                    baseDuration = 7200 // 2 hours
+                case .security:
+                    baseDuration = 900  // 15 minutes
+                case .emergency:
+                    baseDuration = 3600 // 1 hour
+                case .installation:
+                    baseDuration = 7200 // 2 hours
+                case .utilities:
+                    baseDuration = 2700 // 45 minutes
+                case .renovation:
+                    baseDuration = 10800 // 3 hours
+                case .administrative:
+                    baseDuration = 1800 // 30 minutes
+                }
+            } else {
+                baseDuration = 1800 // Default 30 minutes
+            }
         }
         
         return formatDuration(baseDuration)
