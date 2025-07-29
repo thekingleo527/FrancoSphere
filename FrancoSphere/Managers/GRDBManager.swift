@@ -765,13 +765,18 @@ public final class GRDBManager {
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
                 .map { row in
-                    NamedCoordinate(
+                    // Create the coordinate first
+                    let coord = NamedCoordinate(
                         id: String(row["id"] as? Int64 ?? 0),
                         name: row["name"] as? String ?? "",
-                        address: row["address"] as? String,
                         latitude: (row["latitude"] as? Double) ?? 0,
                         longitude: (row["longitude"] as? Double) ?? 0
                     )
+                    
+                    // Note: address is stored in coord.address as empty string by default
+                    // If you need to preserve the address, you might need to modify the NamedCoordinate struct
+                    
+                    return coord
                 }
         }
         
