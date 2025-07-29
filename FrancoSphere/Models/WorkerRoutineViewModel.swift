@@ -128,12 +128,7 @@ class WorkerRoutineViewModel: ObservableObject {
     // MARK: - Route Management
     func loadDailyRoutes() async {
         do {
-            // Load routes from real data via WorkerContextEngine
-            do {
-                try await await await contextEngine.refreshData()
-            } catch {
-                print("❌ Failed to refresh context: \(error)")
-            }
+            // Load routes from real data
             dailyRoutes = await fetchRoutesFromDatabase()
         } catch {
             errorMessage = "Failed to load daily routes: \(error.localizedDescription)"
@@ -143,16 +138,27 @@ class WorkerRoutineViewModel: ObservableObject {
     private func fetchRoutesFromDatabase() async -> [CoreTypes.WorkerDailyRoute] {
         // Fetch routes from assigned buildings
         do {
-            let buildings = await await await contextEngine.getAssignedBuildings()
+            // Get current user and their assigned buildings
             let currentUser = await NewAuthManager.shared.getCurrentUser()
             let workerId = currentUser?.workerId ?? ""
             
-            if !buildings.isEmpty {
+            // Get assigned buildings through BuildingService
+            let allBuildings = try await buildingService.getAllBuildings()
+            
+            // Get worker assignments to filter buildings
+            let workerAssignments = try await workerService.getWorkerAssignments(workerId: workerId)
+            let assignedBuildingIds = workerAssignments.map { $0.buildingId }
+            
+            let assignedBuildings = allBuildings.filter { building in
+                assignedBuildingIds.contains(building.id)
+            }
+            
+            if !assignedBuildings.isEmpty {
                 let route = CoreTypes.WorkerDailyRoute(
                     workerId: workerId,
                     date: Date(),
-                    buildings: buildings.map { $0.id },
-                    estimatedDuration: TimeInterval(buildings.count * 1800) // 30 min per building
+                    buildings: assignedBuildings.map { $0.id },
+                    estimatedDuration: TimeInterval(assignedBuildings.count * 1800) // 30 min per building
                 )
                 return [route]
             }
@@ -432,4 +438,36 @@ class WorkerRoutineViewModel: ObservableObject {
 // MARK: - Notification Extensions
 extension Notification.Name {
     static let taskUpdated = Notification.Name("taskUpdated")
+}
+
+// MARK: - WorkerService Extension (if missing methods)
+extension WorkerService {
+    func getWorkerAssignments(workerId: String) async throws -> [CoreTypes.WorkerAssignment] {
+        // Fetch worker assignments from GRDB
+        let rows = try await GRDBManager.shared.query("""
+            SELECT * FROM worker_building_assignments 
+            WHERE worker_id = ? AND is_active = 1
+        """, [workerId])
+        
+        return rows.compactMap { row -> CoreTypes.WorkerAssignment? in
+            guard let buildingId = row["building_id"] as? String else {
+                return nil
+            }
+            
+            // Parse assigned date if available
+            let assignedDate: Date
+            if let dateString = row["assigned_date"] as? String {
+                let formatter = ISO8601DateFormatter()
+                assignedDate = formatter.date(from: dateString) ?? Date()
+            } else {
+                assignedDate = Date()
+            }
+            
+            return CoreTypes.WorkerAssignment(
+                workerId: workerId,
+                buildingId: buildingId,
+                assignedDate: assignedDate
+            )
+        }
+    }
 }

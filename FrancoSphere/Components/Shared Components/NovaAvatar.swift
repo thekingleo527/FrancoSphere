@@ -10,6 +10,7 @@ import SwiftUI
 //  ✅ Integrates AIAssistantImageLoader.circularAIAssistantView
 //  ✅ Maintains sophisticated animations
 //  ✅ Circular image with pulsating effects
+//  ✅ FIXED: iOS 17 onChange syntax and method parameters
 //
 
 import SwiftUI
@@ -84,7 +85,7 @@ struct NovaAvatar: View {
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: breathe)
-        .onChange(of: isBusy) { newValue in
+        .onChange(of: isBusy) { oldValue, newValue in
             if newValue {
                 startBusyAnimation()
             } else {
@@ -95,32 +96,37 @@ struct NovaAvatar: View {
     
     // MARK: - Avatar View using AIAssistantImageLoader
     private var avatarView: some View {
-        AIAssistantImageLoader.circularAIAssistantView(
-            diameter: size.dimension,
-            borderColor: borderColor,
-            borderWidth: borderWidth
-        )
-        .overlay(
-            // Add rotation effect when busy
-            Group {
-                if isBusy {
-                    Circle()
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Color.purple.opacity(0.6),
-                                    Color.blue.opacity(0.4),
-                                    Color.clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
-                        )
-                        .rotationEffect(.degrees(rotationAngle))
-                }
+        ZStack {
+            // Base avatar with custom border
+            AIAssistantImageLoader.circularAIAssistantView(
+                diameter: size.dimension,
+                borderColor: borderColor
+            )
+            
+            // Custom border overlay for width control
+            Circle()
+                .stroke(borderColor, lineWidth: borderWidth)
+                .frame(width: size.dimension, height: size.dimension)
+            
+            // Rotation effect overlay when busy
+            if isBusy {
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.purple.opacity(0.6),
+                                Color.blue.opacity(0.4),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+                    .frame(width: size.dimension, height: size.dimension)
+                    .rotationEffect(.degrees(rotationAngle))
             }
-        )
+        }
     }
     
     // MARK: - Busy Pulse Ring
@@ -420,8 +426,8 @@ struct NovaAvatar_Previews: PreviewProvider {
                         VStack {
                             NovaAvatar(
                                 size: .large,
-                                isBusy: true,
                                 hasUrgentInsights: true,
+                                isBusy: true,
                                 onTap: { print("Busy + Urgent Nova tapped") }
                             )
                             Text("Busy + Urgent")

@@ -10,7 +10,6 @@
 		23273A082E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232738FF2E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift */; };
 		23273A092E2B8674004A52C6 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C52E2B8674004A52C6 /* TaskService.swift */; };
 		23273A0B2E2B8674004A52C6 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */; };
-		23273A0C2E2B8674004A52C6 /* EnhancedMapOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395E2E2B8674004A52C6 /* EnhancedMapOverlay.swift */; };
 		23273A0D2E2B8674004A52C6 /* OperationalDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */; };
 		23273A0F2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BD2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift */; };
 		23273A102E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D62E2B8674004A52C6 /* OperationalDataManager+DatabaseIntegration.swift */; };
@@ -158,7 +157,6 @@
 		23273AC22E2B8674004A52C6 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BB2E2B8674004A52C6 /* DashboardSyncService.swift */; };
 		23273AC32E2B8674004A52C6 /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BA2E2B8674004A52C6 /* DailyOpsReset.swift */; };
 		23273AC52E2B8674004A52C6 /* TodayTasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */; };
-		23273AC62E2B8674004A52C6 /* MapBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395F2E2B8674004A52C6 /* MapBackgroundView.swift */; };
 		23273AC72E2B8674004A52C6 /* UserExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397F2E2B8674004A52C6 /* UserExtensions.swift */; };
 		23273AC82E2B8674004A52C6 /* WorkerMetricsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */; };
 		23273AC92E2B8674004A52C6 /* ModelColorsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739052E2B8674004A52C6 /* ModelColorsExtensions.swift */; };
@@ -297,8 +295,6 @@
 		2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationalDataManager.swift; sourceTree = "<group>"; };
 		2327395B2E2B8674004A52C6 /* UnifiedDataInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataInitializer.swift; sourceTree = "<group>"; };
 		2327395C2E2B8674004A52C6 /* WorkerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerManager.swift; sourceTree = "<group>"; };
-		2327395E2E2B8674004A52C6 /* EnhancedMapOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMapOverlay.swift; sourceTree = "<group>"; };
-		2327395F2E2B8674004A52C6 /* MapBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapBackgroundView.swift; sourceTree = "<group>"; };
 		232739602E2B8674004A52C6 /* MapInteractionHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapInteractionHint.swift; sourceTree = "<group>"; };
 		232739612E2B8674004A52C6 /* MapRevealContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRevealContainer.swift; sourceTree = "<group>"; };
 		232739642E2B8674004A52C6 /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
@@ -626,8 +622,6 @@
 		232739622E2B8674004A52C6 /* Maps */ = {
 			isa = PBXGroup;
 			children = (
-				2327395E2E2B8674004A52C6 /* EnhancedMapOverlay.swift */,
-				2327395F2E2B8674004A52C6 /* MapBackgroundView.swift */,
 				232739602E2B8674004A52C6 /* MapInteractionHint.swift */,
 				232739612E2B8674004A52C6 /* MapRevealContainer.swift */,
 			);
@@ -1092,7 +1086,6 @@
 				23273A082E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift in Sources */,
 				23273A092E2B8674004A52C6 /* TaskService.swift in Sources */,
 				23273A0B2E2B8674004A52C6 /* SyncStatusComponents.swift in Sources */,
-				23273A0C2E2B8674004A52C6 /* EnhancedMapOverlay.swift in Sources */,
 				23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */,
 				23273A0D2E2B8674004A52C6 /* OperationalDataManager.swift in Sources */,
 				23273A0F2E2B8674004A52C6 /* DatabaseStartupCoordinator.swift in Sources */,
@@ -1247,7 +1240,6 @@
 				23273AC22E2B8674004A52C6 /* DashboardSyncService.swift in Sources */,
 				23273AC32E2B8674004A52C6 /* DailyOpsReset.swift in Sources */,
 				23273AC52E2B8674004A52C6 /* TodayTasksViewModel.swift in Sources */,
-				23273AC62E2B8674004A52C6 /* MapBackgroundView.swift in Sources */,
 				23273AC72E2B8674004A52C6 /* UserExtensions.swift in Sources */,
 				23273AC82E2B8674004A52C6 /* WorkerMetricsDTO.swift in Sources */,
 				23273AC92E2B8674004A52C6 /* ModelColorsExtensions.swift in Sources */,
