@@ -4,14 +4,15 @@
 //
 //  ✅ REFACTORED: Services removed, only data types remain
 //  ✅ FIXED: All compilation errors eliminated
-//  ✅ FIXED: Removed duplicate 'color' declarations
-//  ✅ FIXED: Proper enum closures and structure
+//  ✅ FIXED: Removed all color properties - now in FrancoSphereDesign.EnumColors
 //  ✅ ORGANIZED: Clean architecture with data types only
+//
+//  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
+//  Usage: FrancoSphereDesign.EnumColors.taskStatus(.completed)
 //
 
 import Foundation
 import CoreLocation
-import SwiftUI
 import Combine
 
 // MARK: - CoreTypes Namespace
@@ -37,15 +38,6 @@ public struct CoreTypes {
             case .manager: return "Manager"
             case .worker: return "Worker"
             case .client: return "Client"
-            }
-        }
-        
-        public var color: Color {
-            switch self {
-            case .admin: return .red
-            case .manager: return .orange
-            case .worker: return .blue
-            case .client: return .green
             }
         }
     }
@@ -77,15 +69,6 @@ public struct CoreTypes {
         case synced = "Synced"
         case failed = "Failed"
         case offline = "Offline"
-        
-        public var color: Color {
-            switch self {
-            case .synced: return .green
-            case .syncing: return .blue
-            case .failed: return .red
-            case .offline: return .gray
-            }
-        }
     }
     
     public struct CrossDashboardUpdate: Codable {
@@ -153,15 +136,6 @@ public struct CoreTypes {
         case clockedIn = "Clocked In"
         case onBreak = "On Break"
         case offline = "Offline"
-        
-        public var color: Color {
-            switch self {
-            case .available: return .green
-            case .clockedIn: return .blue
-            case .onBreak: return .orange
-            case .offline: return .gray
-            }
-        }
     }
     
     // MARK: - Worker Profile
@@ -350,19 +324,6 @@ public struct CoreTypes {
         case medical = "Medical"
         case educational = "Educational"
         case mixed = "Mixed Use"
-        
-        public var color: Color {
-            switch self {
-            case .office: return .blue
-            case .residential: return .green
-            case .retail: return .purple
-            case .industrial: return .orange
-            case .warehouse: return .brown
-            case .medical: return .red
-            case .educational: return .yellow
-            case .mixed: return .gray
-            }
-        }
     }
     
     public struct BuildingMetrics: Codable, Identifiable {
@@ -587,18 +548,6 @@ public struct CoreTypes {
         case cancelled = "Cancelled"
         case paused = "Paused"
         case waiting = "Waiting"
-        
-        public var color: Color {
-            switch self {
-            case .pending: return .gray
-            case .inProgress: return .blue
-            case .completed: return .green
-            case .overdue: return .red
-            case .cancelled: return .gray
-            case .paused: return .orange
-            case .waiting: return .yellow
-            }
-        }
     }
     
     // MARK: - Contextual Task
@@ -822,15 +771,6 @@ public struct CoreTypes {
         case verified = "Verified"
         case rejected = "Rejected"
         case notRequired = "Not Required"
-        
-        public var color: Color {
-            switch self {
-            case .pending: return .orange
-            case .verified: return .green
-            case .rejected: return .red
-            case .notRequired: return .gray
-            }
-        }
     }
     
     // MARK: - Maintenance Types
@@ -926,15 +866,6 @@ public struct CoreTypes {
         case medium = "Medium"
         case high = "High"
         case extreme = "Extreme"
-        
-        public var color: Color {
-            switch self {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .extreme: return .red
-            }
-        }
     }
     
     // MARK: - Route Types
@@ -1085,15 +1016,6 @@ public struct CoreTypes {
             case .unknown: return "questionmark"
             }
         }
-        
-        public var color: Color {
-            switch self {
-            case .up, .improving: return .green
-            case .down, .declining: return .red
-            case .stable: return .blue
-            case .unknown: return .gray
-            }
-        }
     }
     
     // MARK: - Skill Types
@@ -1111,15 +1033,6 @@ public struct CoreTypes {
             case .expert: return 4
             }
         }
-        
-        public var color: Color {
-            switch self {
-            case .beginner: return .red
-            case .intermediate: return .orange
-            case .advanced: return .yellow
-            case .expert: return .green
-            }
-        }
     }
     
     // MARK: - Inventory Types
@@ -1128,15 +1041,6 @@ public struct CoreTypes {
         case lowStock = "Low Stock"
         case outOfStock = "Out of Stock"
         case ordered = "Ordered"
-        
-        public var color: Color {
-            switch self {
-            case .inStock: return .green
-            case .lowStock: return .orange
-            case .outOfStock: return .red
-            case .ordered: return .blue
-            }
-        }
     }
     
     public enum InventoryCategory: String, Codable, CaseIterable {
@@ -1222,15 +1126,6 @@ public struct CoreTypes {
             case .critical: return 4
             }
         }
-        
-        public var color: Color {  // ✅ Using color directly
-            switch self {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .critical: return .red
-            }
-        }
     }
     
     public enum InsightCategory: String, Codable, CaseIterable {
@@ -1251,18 +1146,6 @@ public struct CoreTypes {
             case .quality: return "star"
             case .operations: return "gear"
             case .maintenance: return "wrench"
-            }
-        }
-        
-        public var color: Color {  // ✅ Using color directly
-            switch self {
-            case .efficiency: return .blue
-            case .cost: return .green
-            case .safety: return .red
-            case .compliance: return .orange
-            case .quality: return .purple
-            case .operations: return .gray
-            case .maintenance: return .yellow
             }
         }
     }
@@ -1593,19 +1476,6 @@ public struct CoreTypes {
         case nonCompliant = "Non-Compliant"
         case atRisk = "At Risk"
         case needsReview = "Needs Review"
-        
-        public var color: Color {  // ✅ Using color directly
-            switch self {
-            case .compliant: return .green
-            case .warning: return .yellow
-            case .violation, .nonCompliant: return .red
-            case .pending, .needsReview: return .orange
-            case .atRisk: return .orange
-            case .open: return .red
-            case .inProgress: return .orange
-            case .resolved: return .blue
-            }
-        }
     }
     
     public enum ComplianceSeverity: String, Codable, CaseIterable {
@@ -1613,15 +1483,6 @@ public struct CoreTypes {
         case medium = "Medium"
         case high = "High"
         case critical = "Critical"
-        
-        public var color: Color {  // ✅ Using color directly
-            switch self {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .critical: return .red
-            }
-        }
     }
     
     public enum ComplianceIssueType: String, Codable, CaseIterable {
@@ -1631,17 +1492,6 @@ public struct CoreTypes {
         case financial = "Financial"
         case operational = "Operational"
         case documentation = "Documentation"
-        
-        public var color: Color {  // ✅ Using color directly
-            switch self {
-            case .safety: return .red
-            case .environmental: return .green
-            case .regulatory: return .blue
-            case .financial: return .orange
-            case .operational: return .purple
-            case .documentation: return .gray
-            }
-        }
     }
     
     public struct ComplianceIssue: Codable, Identifiable {
@@ -1687,15 +1537,6 @@ public struct CoreTypes {
         case warning = "Warning"
         case error = "Error"
         case unknown = "Unknown"
-        
-        public var color: Color {
-            switch self {
-            case .healthy: return .green
-            case .warning: return .yellow
-            case .error: return .red
-            case .unknown: return .gray
-            }
-        }
     }
     
     // MARK: - Supporting Types
@@ -1818,11 +1659,3 @@ public struct AI {
     public typealias Scenario = CoreTypes.AIScenario
     public typealias ScenarioType = CoreTypes.AIScenarioType
 }
-
-// MARK: - Color Property Helpers
-// Note: Each enum defines its own `color` property. If you encounter
-// "Invalid redeclaration of 'color'" errors, it may be due to a protocol
-// extension elsewhere in the codebase adding a color property to all
-// CaseIterable or Codable enums. In that case, either:
-// 1. Remove the conflicting protocol extension, or
-// 2. Use unique property names (e.g., aiPriorityColor, complianceColor)
