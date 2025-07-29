@@ -1,74 +1,134 @@
-// FILE: Components/Shared Components/Building.swift
 //
 //  Building.swift
 //  FrancoSphere
 //
-//  ✅ PHASE-2 COMPILATION FIX - Uses ONLY real-world building data
-//  ✅ No mock data - references actual buildings from OperationalDataManager
-//  ✅ Uses existing NamedCoordinate as canonical building model
+//  ✅ REFACTORED: Consolidated building utilities and extensions
+//  ✅ INTEGRATED: With DatabaseStartupCoordinator seed data
+//  ✅ FIXED: Removed non-existent imageAssetName references
+//  ✅ ADDED: Centralized building image and metadata management
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import CoreLocation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
-// MARK: - Building Model Extensions
+// MARK: - Building Constants
+struct BuildingConstants {
+    
+    // MARK: - Building Metadata (From DatabaseStartupCoordinator)
+    static let buildingData: [String: (name: String, address: String, imageAsset: String)] = [
+        "1": ("12 West 18th Street", "12 W 18th St, New York, NY 10011", "12_West_18th_Street"),
+        "2": ("29-31 East 20th Street", "29-31 E 20th St, New York, NY 10003", "29_31_East_20th_Street"),
+        "3": ("133 East 15th Street", "133 E 15th St, New York, NY 10003", "133_East_15th_Street"),
+        "4": ("104 Franklin Street", "104 Franklin St, New York, NY 10013", "104_Franklin_Street"),
+        "5": ("36 Walker Street", "36 Walker St, New York, NY 10013", "36_Walker_Street"),
+        "6": ("68 Perry Street", "68 Perry St, New York, NY 10014", "68_Perry_Street"),
+        "7": ("136 W 17th Street", "136 W 17th St, New York, NY 10011", "136_West_17th_Street"),
+        "8": ("41 Elizabeth Street", "41 Elizabeth St, New York, NY 10013", "41_Elizabeth_Street"),
+        "9": ("117 West 17th Street", "117 W 17th St, New York, NY 10011", "117_West_17th_Street"),
+        "10": ("123 1st Avenue", "123 1st Ave, New York, NY 10003", "123_1st_Avenue"),
+        "11": ("131 Perry Street", "131 Perry St, New York, NY 10014", "131_Perry_Street"),
+        "12": ("135 West 17th Street", "135 W 17th St, New York, NY 10011", "135West17thStreet"),
+        "13": ("138 West 17th Street", "138 W 17th St, New York, NY 10011", "138West17thStreet"),
+        "14": ("Rubin Museum", "150 W 17th St, New York, NY 10011", "Rubin_Museum_142_148_West_17th_Street"),
+        "15": ("112 West 18th Street", "112 W 18th St, New York, NY 10011", "112_West_18th_Street"),
+        "16": ("Stuyvesant Cove Park", "E 20th St & FDR Dr, New York, NY 10009", "Stuyvesant_Cove_Park")
+    ]
+    
+    // MARK: - Building Type Icons
+    static func getBuildingIcon(for buildingName: String) -> String {
+        let name = buildingName.lowercased()
+        
+        if name.contains("museum") || name.contains("rubin") {
+            return "building.columns.fill"
+        } else if name.contains("park") || name.contains("stuyvesant") || name.contains("cove") {
+            return "leaf.fill"
+        } else if name.contains("perry") || name.contains("elizabeth") || name.contains("walker") {
+            return "house.fill"
+        } else if name.contains("west") || name.contains("east") || name.contains("franklin") {
+            return "building.2.fill"
+        } else if name.contains("avenue") || name.contains("ave") {
+            return "building.fill"
+        } else {
+            return "building.2.fill"
+        }
+    }
+}
+
+// MARK: - NamedCoordinate Extensions
 
 extension NamedCoordinate {
     
     /// Display name with fallback
     var displayName: String {
+        // Try to get official name from constants
+        if let data = BuildingConstants.buildingData[id] {
+            return data.name
+        }
         return name.isEmpty ? "Building \(id)" : name
     }
     
-    /// Short name for UI constraints (8 chars max)
+    /// Short name for UI constraints
     var shortName: String {
-        let words = name.split(separator: " ")
+        let fullName = displayName
+        
+        // Special cases for known buildings
+        switch id {
+        case "14": return "Rubin"
+        case "16": return "Stuyvesant"
+        default: break
+        }
+        
+        // Extract street number and first word
+        let words = fullName.split(separator: " ")
         if words.count >= 2 {
-            return "\(words[0]) \(words[1])".prefix(8).description
+            if let streetNumber = words.first, streetNumber.allSatisfy({ $0.isNumber || $0 == "-" }) {
+                return "\(streetNumber) \(words[1].prefix(3))"
+            }
         }
-        return String(name.prefix(8))
+        
+        return String(fullName.prefix(12))
     }
     
-    /// Building address from real OperationalDataManager dataset (no redeclaration)
+    /// Full address with proper formatting
     var fullAddress: String {
-        // Extract address from actual building names in OperationalDataManager
-        switch name {
-        case "131 Perry Street": return "131 Perry Street, New York, NY"
-        case "68 Perry Street": return "68 Perry Street, New York, NY"
-        case "135–139 West 17th": return "135–139 West 17th Street, New York, NY"
-        case "136 West 17th": return "136 West 17th Street, New York, NY"
-        case "138 West 17th Street": return "138 West 17th Street, New York, NY"
-        case "117 West 17th Street": return "117 West 17th Street, New York, NY"
-        case "112 West 18th Street": return "112 West 18th Street, New York, NY"
-        case "29–31 East 20th": return "29–31 East 20th Street, New York, NY"
-        case "123 1st Ave": return "123 1st Avenue, New York, NY"
-        case "178 Spring": return "178 Spring Street, New York, NY"
-        case "Rubin Museum (142–148 W 17th)": return "142–148 West 17th Street, New York, NY"
-        case "104 Franklin": return "104 Franklin Street, New York, NY"
-        case "Stuyvesant Cove Park": return "Stuyvesant Cove Park, New York, NY"
-        case "133 East 15th Street": return "133 East 15th Street, New York, NY"
-        case "FrancoSphere HQ": return "FrancoSphere Headquarters, New York, NY"
-        case "12 West 18th Street": return "12 West 18th Street, New York, NY"
-        case "36 Walker": return "36 Walker Street, New York, NY"
-        case "41 Elizabeth Street": return "41 Elizabeth Street, New York, NY"
-        case "115 7th Ave": return "115 7th Avenue, New York, NY"
-        default: return "\(name), New York, NY"
+        // First check if address property is populated
+        if !address.isEmpty {
+            return address
         }
+        
+        // Then check our constants
+        if let data = BuildingConstants.buildingData[id] {
+            return data.address
+        }
+        
+        // Fallback
+        return "\(name), New York, NY"
     }
     
-    /// Check if building has required image asset
+    /// Get the image asset name for this building
+    var imageAssetName: String? {
+        return BuildingConstants.buildingData[id]?.imageAsset
+    }
+    
+    /// Check if building has a valid image asset
     var hasValidImageAsset: Bool {
-        return !(imageAssetName?.isEmpty ?? true) && imageAssetName != "placeholder"
+        return imageAssetName != nil
     }
     
-    /// Get fallback image name if primary is missing
-    var fallbackImageName: String {
-        return hasValidImageAsset ? (imageAssetName ?? "building.2.fill") : "building.2.fill"
+    /// Get the appropriate system icon for this building type
+    var buildingIcon: String {
+        return BuildingConstants.getBuildingIcon(for: name)
+    }
+    
+    /// Get a color associated with building type
+    var buildingTypeColor: Color {
+        switch buildingIcon {
+        case "building.columns.fill": return .purple  // Museums
+        case "leaf.fill": return .green              // Parks
+        case "house.fill": return .blue              // Residential
+        case "building.fill": return .orange         // Commercial
+        default: return .gray                        // Default
+        }
     }
 }
 
@@ -86,6 +146,22 @@ extension Array where Element == NamedCoordinate {
         return self.first { $0.id == id }
     }
     
+    /// Find by name (fuzzy match)
+    func building(named name: String) -> NamedCoordinate? {
+        let lowercaseName = name.lowercased()
+        
+        // First try exact match
+        if let exact = self.first(where: { $0.name.lowercased() == lowercaseName }) {
+            return exact
+        }
+        
+        // Then try contains
+        return self.first { building in
+            building.name.lowercased().contains(lowercaseName) ||
+            lowercaseName.contains(building.name.lowercased())
+        }
+    }
+    
     /// Sort by distance from coordinate
     func sortedByDistance(from coordinate: CLLocationCoordinate2D) -> [NamedCoordinate] {
         let fromLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
@@ -95,6 +171,23 @@ extension Array where Element == NamedCoordinate {
             let location2 = CLLocation(latitude: building2.latitude, longitude: building2.longitude)
             
             return fromLocation.distance(from: location1) < fromLocation.distance(from: location2)
+        }
+    }
+    
+    /// Get buildings within radius (in meters)
+    func within(meters: Double, of coordinate: CLLocationCoordinate2D) -> [NamedCoordinate] {
+        let fromLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        return self.filter { building in
+            let buildingLocation = CLLocation(latitude: building.latitude, longitude: building.longitude)
+            return fromLocation.distance(from: buildingLocation) <= meters
+        }
+    }
+    
+    /// Group by building type
+    func groupedByType() -> [String: [NamedCoordinate]] {
+        return Dictionary(grouping: self) { building in
+            building.buildingIcon
         }
     }
     
@@ -109,4 +202,69 @@ extension Array where Element == NamedCoordinate {
         
         return CLLocationCoordinate2D(latitude: avgLat, longitude: avgLon)
     }
+    
+    /// Get bounding region for map
+    var boundingRegion: MKCoordinateRegion? {
+        guard !isEmpty else { return nil }
+        
+        let latitudes = self.map(\.latitude)
+        let longitudes = self.map(\.longitude)
+        
+        guard let minLat = latitudes.min(),
+              let maxLat = latitudes.max(),
+              let minLon = longitudes.min(),
+              let maxLon = longitudes.max() else { return nil }
+        
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        
+        let span = MKCoordinateSpan(
+            latitudeDelta: (maxLat - minLat) * 1.2,  // Add 20% padding
+            longitudeDelta: (maxLon - minLon) * 1.2
+        )
+        
+        return MKCoordinateRegion(center: center, span: span)
+    }
 }
+
+// MARK: - Building Image Helper
+struct BuildingImageHelper {
+    
+    /// Get the image name for a building ID
+    static func imageName(for buildingId: String) -> String? {
+        return BuildingConstants.buildingData[buildingId]?.imageAsset
+    }
+    
+    /// Get a SwiftUI Image for a building
+    static func image(for building: NamedCoordinate) -> Image {
+        if let assetName = building.imageAssetName {
+            return Image(assetName)
+        } else {
+            return Image(systemName: building.buildingIcon)
+        }
+    }
+    
+    /// Check if an image exists in assets
+    static func hasImage(for buildingId: String) -> Bool {
+        guard let assetName = BuildingConstants.buildingData[buildingId]?.imageAsset else {
+            return false
+        }
+        return UIImage(named: assetName) != nil
+    }
+}
+
+// MARK: - SwiftUI Color Extension
+import SwiftUI
+
+extension Color {
+    // Define colors if not already available
+    static let buildingMuseum = Color.purple
+    static let buildingPark = Color.green
+    static let buildingResidential = Color.blue
+    static let buildingCommercial = Color.orange
+}
+
+// MARK: - MapKit Import
+import MapKit

@@ -6,6 +6,7 @@
 //  ✅ USES: Existing TaskUrgency.priorityValue property
 //  ✅ ALIGNED: With current MaintenanceTask structure
 //  ✅ UPDATED: Uses FrancoSphereDesign.EnumColors for all color references
+//  ✅ FIXED: Removed non-existent NamedCoordinate.allBuildings reference
 //
 
 import SwiftUI
@@ -186,29 +187,13 @@ struct TaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingName(for: task.buildingId)
+        BuildingNameHelper.getBuildingName(for: task.buildingId)
     }
     
     private func timeString(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
-    }
-    
-    private func getBuildingName(for buildingId: String) -> String {
-        // Try to find building in allBuildings static data
-        if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingId }) {
-            return building.displayName
-        }
-        
-        // Fallback for common building IDs
-        switch buildingId {
-        case "1": return "12 West 18th"
-        case "14": return "Rubin Museum"
-        case "16": return "Stuyvesant Park"
-        case "17": return "178 Spring St"
-        default: return "Building \(buildingId)"
-        }
     }
 }
 
@@ -393,7 +378,7 @@ struct EnhancedTaskGlassRow: View {
     }
     
     private var buildingName: String {
-        getBuildingName(for: task.buildingId)
+        BuildingNameHelper.getBuildingName(for: task.buildingId)
     }
     
     private func timeString(_ date: Date) -> String {
@@ -401,19 +386,51 @@ struct EnhancedTaskGlassRow: View {
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
     }
+}
+
+// MARK: - Building Name Helper
+struct BuildingNameHelper {
+    // Building ID to Name mapping based on DatabaseStartupCoordinator seed data
+    private static let buildingNames: [String: String] = [
+        "1": "12 West 18th Street",
+        "2": "29-31 East 20th Street",
+        "3": "133 East 15th Street",
+        "4": "104 Franklin Street",
+        "5": "36 Walker Street",
+        "6": "68 Perry Street",
+        "7": "136 W 17th Street",
+        "8": "41 Elizabeth Street",
+        "9": "117 West 17th Street",
+        "10": "123 1st Avenue",
+        "11": "131 Perry Street",
+        "12": "135 West 17th Street",
+        "13": "138 West 17th Street",
+        "14": "Rubin Museum",
+        "15": "112 West 18th Street",
+        "16": "Stuyvesant Cove Park",
+        "17": "178 Spring Street"
+    ]
     
-    private func getBuildingName(for buildingId: String) -> String {
-        if let building = NamedCoordinate.allBuildings.first(where: { $0.id == buildingId }) {
-            return building.displayName
+    static func getBuildingName(for buildingId: String) -> String {
+        // Try to get from mapping
+        if let name = buildingNames[buildingId] {
+            // Return shortened version for UI
+            if name.contains("West") || name.contains("East") {
+                // Extract street number and direction
+                let components = name.components(separatedBy: " ")
+                if components.count >= 3 {
+                    return "\(components[0]) \(components[1]) \(components[2].prefix(3))"
+                }
+            } else if name.contains("Museum") {
+                return "Rubin Museum"
+            } else if name.contains("Park") {
+                return "Stuyvesant Park"
+            }
+            return name
         }
         
-        switch buildingId {
-        case "1": return "12 West 18th"
-        case "14": return "Rubin Museum"
-        case "16": return "Stuyvesant Park"
-        case "17": return "178 Spring St"
-        default: return "Building \(buildingId)"
-        }
+        // Fallback
+        return "Building \(buildingId)"
     }
 }
 

@@ -2,30 +2,24 @@
 //  CoverageInfoCard.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: WorkerService and BuildingService actor usage (removed @StateObject)
-//  ✅ ALIGNED: With existing service patterns used throughout codebase
-//  ✅ ENHANCED: Proper async/await patterns for actor service calls
-//  ✅ Phase 3.1: Coverage Information Cards
+//  ✅ FIXED: Removed unnecessary try-catch block
+//  ✅ FIXED: Updated to use WorkerContextEngine
+//  ✅ FIXED: Removed duplicate imports
+//  ✅ FIXED: Corrected NamedCoordinate initialization
 //
 
 import SwiftUI
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
 import Foundation
 
 struct CoverageInfoCard: View {
     let building: NamedCoordinate
     let onViewFullInfo: () -> Void
     
-    // FIXED: Remove @StateObject wrapper - these are actors, not ObservableObject
+    // Services
     private let workerService = WorkerService.shared
     private let buildingService = BuildingService.shared
     
-    @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     @State private var primaryWorker: String?
     @State private var isLoadingWorkerInfo = false
     
@@ -77,7 +71,7 @@ struct CoverageInfoCard: View {
             Spacer()
             
             // Current worker indicator
-            if let currentWorker = contextAdapter.currentWorker {
+            if let currentWorker = contextEngine.currentWorker {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("You")
                         .font(.caption2)
@@ -254,19 +248,12 @@ struct CoverageInfoCard: View {
     private func loadPrimaryWorkerInfo() async {
         isLoadingWorkerInfo = true
         
-        do {
-            // Get primary worker for this building using existing logic
-            let primaryWorkerName = await getPrimaryWorkerForBuilding(building.id)
-            
-            await MainActor.run {
-                self.primaryWorker = primaryWorkerName
-                self.isLoadingWorkerInfo = false
-            }
-        } catch {
-            await MainActor.run {
-                self.isLoadingWorkerInfo = false
-            }
-            print("❌ Failed to load primary worker info: \(error)")
+        // Get primary worker for this building
+        let primaryWorkerName = await getPrimaryWorkerForBuilding(building.id)
+        
+        await MainActor.run {
+            self.primaryWorker = primaryWorkerName
+            self.isLoadingWorkerInfo = false
         }
     }
     
@@ -473,9 +460,9 @@ struct CoverageInfoCard_Previews: PreviewProvider {
         let sampleBuilding = NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
+            address: "150 W 17th St",
             latitude: 40.7402,
-            longitude: -73.9980,
-            imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
+            longitude: -73.9980
         )
         
         VStack(spacing: 20) {
