@@ -6,51 +6,18 @@
 //  ✅ REAL DATA: Feeds Nova with GRDB-backed insights and analytics
 //  ✅ ALIGNED: With existing service architecture and CoreTypes
 //  ✅ PRODUCTION-READY: Comprehensive error handling and fallback mechanisms
-//  ✅ FIXED: Added missing PromptFocus enum definition
+//  ✅ FIXED: Added missing enhancement methods
 //
 
 import Foundation
-
-// MARK: - Prompt Focus Areas
-public enum PromptFocus: String, CaseIterable {
-    case efficiency = "efficiency"
-    case compliance = "compliance"
-    case maintenance = "maintenance"
-    case cost = "cost"
-    case operations = "operations"
-    case safety = "safety"
-    case quality = "quality"
-    
-    var displayName: String {
-        switch self {
-        case .efficiency: return "Operational Efficiency"
-        case .compliance: return "Regulatory Compliance"
-        case .maintenance: return "Maintenance Planning"
-        case .cost: return "Cost Optimization"
-        case .operations: return "Daily Operations"
-        case .safety: return "Safety Protocols"
-        case .quality: return "Quality Assurance"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .efficiency: return "speedometer"
-        case .compliance: return "checkmark.shield"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .cost: return "dollarsign.circle"
-        case .operations: return "gear"
-        case .safety: return "shield.fill"
-        case .quality: return "star.fill"
-        }
-    }
-}
 
 /// High level interface combining data aggregation and prompt generation for Nova AI
 public actor NovaPredictionEngine {
     nonisolated public static let shared = NovaPredictionEngine()
     
     // MARK: - Dependencies
+    private let aggregator = NovaDataAggregator.shared
+    private let promptEngine = NovaPromptEngine.shared
     private let intelligenceService = IntelligenceService.shared
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
@@ -78,61 +45,22 @@ public actor NovaPredictionEngine {
         do {
             print("🧠 Generating comprehensive portfolio prediction...")
             
-            // Get portfolio intelligence
-            let intelligence = try await buildingService.generatePortfolioIntelligence()
+            // Get aggregated data
+            let data = try await aggregator.aggregatePortfolioData()
+            let basePrompt = await promptEngine.generatePortfolioPrompt(from: data)
             
-            // Build base prompt
-            var prompt = "Portfolio Analysis: "
-            prompt += "\(intelligence.totalBuildings) buildings with "
-            prompt += "\(intelligence.activeWorkers) active workers. "
-            prompt += "Overall completion rate: \(Int(intelligence.completionRate * 100))%. "
+            // Enhance with intelligence insights
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            let enhancedPrompt = await enhancePromptWithInsights(basePrompt, insights: insights)
             
-            // Add critical issues
-            if intelligence.criticalIssues > 0 {
-                prompt += "ATTENTION: \(intelligence.criticalIssues) critical issues require immediate action. "
-            }
-            
-            // Add trend information
-            prompt += "Monthly trend: \(intelligence.monthlyTrend.rawValue). "
-            
-            // Get building metrics for all buildings
-            let buildings = try await buildingService.getAllBuildings()
-            let metricsPromises = buildings.map { building in
-                buildingMetricsService.calculateMetrics(for: building.id)
-            }
-            
-            var totalOverdueTasks = 0
-            var buildingsNeedingAttention = 0
-            
-            for promise in metricsPromises {
-                do {
-                    let metrics = try await promise
-                    totalOverdueTasks += metrics.overdueTasks
-                    if metrics.completionRate < 0.7 || metrics.overdueTasks > 5 {
-                        buildingsNeedingAttention += 1
-                    }
-                } catch {
-                    // Continue with other buildings if one fails
-                    continue
-                }
-            }
-            
-            if totalOverdueTasks > 0 {
-                prompt += "Total overdue tasks across portfolio: \(totalOverdueTasks). "
-            }
-            
-            if buildingsNeedingAttention > 0 {
-                prompt += "\(buildingsNeedingAttention) buildings need immediate attention. "
-            }
-            
-            // Add compliance information
-            prompt += "Compliance score: \(Int(intelligence.complianceScore * 100))%. "
+            // Add real-time metrics
+            let metricsPrompt = await addPortfolioMetrics(to: enhancedPrompt)
             
             // Cache the result
-            lastPortfolioPrediction = (prompt, Date())
+            lastPortfolioPrediction = (metricsPrompt, Date())
             
             print("✅ Portfolio prediction generated successfully")
-            return prompt
+            return metricsPrompt
             
         } catch {
             print("❌ Failed to generate portfolio prediction: \(error)")
@@ -144,25 +72,17 @@ public actor NovaPredictionEngine {
     
     /// Generate portfolio prediction with specific focus area
     public func portfolioPrediction(focus: PromptFocus) async throws -> String {
-        let basePrompt = try await portfolioPrediction()
+        let data = try await aggregator.aggregatePortfolioData()
+        let focusedPrompt = await promptEngine.generatePortfolioPrompt(from: data, focus: focus)
         
-        // Add focus-specific enhancements
-        switch focus {
-        case .efficiency:
-            return await enhanceWithEfficiencyMetrics(basePrompt)
-        case .compliance:
-            return await enhanceWithComplianceData(basePrompt)
-        case .maintenance:
-            return await enhanceWithMaintenanceInsights(basePrompt)
-        case .cost:
-            return await enhanceWithCostAnalysis(basePrompt)
-        case .operations:
-            return basePrompt // Already operations-focused
-        case .safety:
-            return await enhanceWithSafetyMetrics(basePrompt)
-        case .quality:
-            return await enhanceWithQualityMetrics(basePrompt)
-        }
+        // Enhance with intelligence insights
+        let insights = try await intelligenceService.generatePortfolioInsights()
+        let enhancedPrompt = await enhancePromptWithInsights(focusedPrompt, insights: insights)
+        
+        // Cache the result
+        lastPortfolioPrediction = (enhancedPrompt, Date())
+        
+        return enhancedPrompt
     }
     
     // MARK: - Building Predictions
@@ -186,49 +106,30 @@ public actor NovaPredictionEngine {
         do {
             print("🧠 Generating comprehensive building prediction for \(buildingId)...")
             
+            // Get aggregated data
+            let data = try await aggregator.aggregateBuildingData(for: buildingId)
+            let basePrompt = await promptEngine.generateBuildingPrompt(for: buildingId, data: data)
+            
             // Get building details
             guard let building = try await buildingService.getBuilding(buildingId: buildingId) else {
                 throw NovaPredictionError.buildingNotFound(buildingId)
             }
             
-            // Get building metrics
-            let metrics = try await buildingMetricsService.calculateMetrics(for: buildingId)
+            // Enhance with building-specific insights
+            let insights = try await intelligenceService.generateBuildingInsights(for: buildingId)
+            var enhancedPrompt = await enhancePromptWithInsights(basePrompt, insights: insights)
             
-            // Build prompt
-            var prompt = "Building Analysis for \(building.name): "
-            prompt += "Located at \(building.address). "
-            prompt += "Completion rate: \(Int(metrics.completionRate * 100))%. "
-            
-            if metrics.overdueTasks > 0 {
-                prompt += "WARNING: \(metrics.overdueTasks) overdue tasks. "
-            }
-            
-            prompt += "\(metrics.activeWorkers) workers currently active. "
-            prompt += "Overall score: \(Int(metrics.overallScore))/100. "
-            
-            // Add compliance status
-            prompt += metrics.isCompliant ? "Compliance: PASSED. " : "Compliance: NEEDS ATTENTION. "
-            
-            // Add efficiency metrics
-            if metrics.maintenanceEfficiency < 0.7 {
-                prompt += "Maintenance efficiency below target at \(Int(metrics.maintenanceEfficiency * 100))%. "
-            }
-            
-            // Add trend information
-            if metrics.weeklyCompletionTrend > 0 {
-                prompt += "Weekly trend: Improving by \(Int(metrics.weeklyCompletionTrend * 100))%. "
-            } else if metrics.weeklyCompletionTrend < 0 {
-                prompt += "Weekly trend: Declining by \(Int(abs(metrics.weeklyCompletionTrend) * 100))%. "
-            }
+            // Add building metrics
+            enhancedPrompt = await addBuildingMetrics(to: enhancedPrompt, buildingId: buildingId)
             
             // Add building-specific context
-            prompt = await addBuildingContext(to: prompt, building: building)
+            enhancedPrompt = await addBuildingContext(to: enhancedPrompt, building: building)
             
             // Cache the result
-            buildingPredictionCache[buildingId] = (prompt, Date())
+            buildingPredictionCache[buildingId] = (enhancedPrompt, Date())
             
             print("✅ Building prediction generated successfully for \(building.name)")
-            return prompt
+            return enhancedPrompt
             
         } catch {
             print("❌ Failed to generate building prediction: \(error)")
@@ -372,47 +273,109 @@ public actor NovaPredictionEngine {
         }
     }
     
-    // MARK: - Enhancement Methods
+    // MARK: - Enhancement Methods (FIXED: Added missing methods)
     
-    private func enhanceWithEfficiencyMetrics(_ prompt: String) async -> String {
-        var enhanced = prompt + "\n\nEFFICIENCY ANALYSIS: "
+    /// Enhance prompt with intelligence insights
+    private func enhancePromptWithInsights(_ basePrompt: String, insights: [CoreTypes.IntelligenceInsight]) async -> String {
+        var enhanced = basePrompt
         
-        do {
-            let portfolio = try await buildingService.generatePortfolioIntelligence()
-            enhanced += "Portfolio efficiency at \(Int(portfolio.completionRate * 100))%. "
-            
-            // Add worker productivity insights
-            let workers = try await workerService.getAllWorkers()
-            let activeWorkers = workers.filter { $0.isActive }
-            enhanced += "\(activeWorkers.count) active workers. "
-            
-            enhanced += "Recommendations: Focus on task prioritization and route optimization. "
-            
-        } catch {
-            enhanced += "Efficiency metrics calculation in progress. "
+        // Add high priority insights
+        let criticalInsights = insights.filter { $0.priority == .critical }
+        if !criticalInsights.isEmpty {
+            enhanced += " CRITICAL INSIGHTS: "
+            for insight in criticalInsights.prefix(3) {
+                enhanced += "\(insight.title). "
+            }
+        }
+        
+        // Add actionable insights
+        let actionableInsights = insights.filter { $0.actionRequired }
+        if !actionableInsights.isEmpty {
+            enhanced += " ACTION REQUIRED: "
+            for insight in actionableInsights.prefix(2) {
+                enhanced += "\(insight.description) "
+            }
+        }
+        
+        // Add general insights if space allows
+        if insights.count > 0 && criticalInsights.isEmpty && actionableInsights.isEmpty {
+            enhanced += " KEY INSIGHTS: "
+            for insight in insights.prefix(3) {
+                enhanced += "\(insight.title). "
+            }
         }
         
         return enhanced
     }
     
-    private func enhanceWithComplianceData(_ prompt: String) async -> String {
-        return prompt + "\n\nCOMPLIANCE FOCUS: Review all safety protocols, verify documentation completeness, and ensure regulatory requirements are met across all properties."
+    /// Add portfolio metrics to prompt
+    private func addPortfolioMetrics(to prompt: String) async -> String {
+        var enhanced = prompt
+        
+        do {
+            // Get portfolio intelligence
+            let portfolio = try await intelligenceService.generatePortfolioIntelligence()
+            
+            enhanced += " PORTFOLIO METRICS: "
+            enhanced += "\(portfolio.totalBuildings) buildings, "
+            enhanced += "\(portfolio.activeWorkers) active workers, "
+            enhanced += "\(Int(portfolio.completionRate * 100))% completion rate, "
+            
+            if portfolio.criticalIssues > 0 {
+                enhanced += "\(portfolio.criticalIssues) critical issues. "
+            }
+            
+            // Add trend information
+            switch portfolio.monthlyTrend {
+            case .improving:
+                enhanced += "Performance trend: Improving. "
+            case .declining:
+                enhanced += "Performance trend: Declining (attention needed). "
+            case .stable:
+                enhanced += "Performance trend: Stable. "
+            default:
+                break
+            }
+            
+        } catch {
+            // Silently fail, metrics are optional enhancement
+            print("⚠️ Could not add portfolio metrics: \(error)")
+        }
+        
+        return enhanced
     }
     
-    private func enhanceWithMaintenanceInsights(_ prompt: String) async -> String {
-        return prompt + "\n\nMAINTENANCE FOCUS: Prioritize preventive maintenance tasks, schedule equipment inspections, and identify potential issues before they become critical."
-    }
-    
-    private func enhanceWithCostAnalysis(_ prompt: String) async -> String {
-        return prompt + "\n\nCOST OPTIMIZATION: Analyze labor efficiency, identify overtime patterns, review supply usage, and recommend budget-saving opportunities."
-    }
-    
-    private func enhanceWithSafetyMetrics(_ prompt: String) async -> String {
-        return prompt + "\n\nSAFETY FOCUS: Review incident reports, verify safety equipment status, ensure worker training compliance, and identify potential hazards."
-    }
-    
-    private func enhanceWithQualityMetrics(_ prompt: String) async -> String {
-        return prompt + "\n\nQUALITY ASSURANCE: Monitor task completion quality, review customer satisfaction metrics, and ensure service standards are maintained."
+    /// Add building-specific metrics to prompt
+    private func addBuildingMetrics(to prompt: String, buildingId: String) async -> String {
+        var enhanced = prompt
+        
+        do {
+            // Get building metrics
+            let metrics = try await buildingMetricsService.calculateMetrics(for: buildingId)
+            
+            enhanced += " BUILDING METRICS: "
+            enhanced += "Completion rate: \(Int(metrics.completionRate * 100))%, "
+            enhanced += "Active workers: \(metrics.activeWorkers), "
+            
+            if metrics.overdueTasks > 0 {
+                enhanced += "Overdue tasks: \(metrics.overdueTasks), "
+            }
+            
+            if metrics.urgentTasksCount > 0 {
+                enhanced += "Urgent tasks: \(metrics.urgentTasksCount), "
+            }
+            
+            enhanced += "Overall score: \(Int(metrics.overallScore * 100))%. "
+            
+            // Add compliance status
+            enhanced += metrics.isCompliant ? "Compliance: OK. " : "Compliance: ATTENTION NEEDED. "
+            
+        } catch {
+            // Silently fail, metrics are optional enhancement
+            print("⚠️ Could not add building metrics: \(error)")
+        }
+        
+        return enhanced
     }
     
     // MARK: - Context Methods

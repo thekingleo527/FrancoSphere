@@ -5,6 +5,7 @@
 //  ✅ CONVERTED TO GRDB: Uses GRDBManager instead of SQLiteManager
 //  ✅ REAL DATA: Connects to actual database with preserved worker data
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency patterns
+//  ✅ FIXED: String to URL conversion for profileImageUrl
 //
 
 import Foundation
@@ -76,27 +77,49 @@ public actor WorkerService {
         
         let role = UserRole(rawValue: roleString) ?? .worker
         
+        // ✅ FIXED: Convert string path to URL
+        let profileImageUrl: URL? = {
+            if let imagePath = row["profileImagePath"] as? String {
+                return URL(string: imagePath)
+            }
+            return nil
+        }()
+        
+        // Parse skills and certifications from comma-separated strings if available
+        let skills: [String]? = {
+            if let skillsString = row["skills"] as? String {
+                return skillsString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            }
+            return nil
+        }()
+        
+        // Parse hire date
+        let hireDate: Date? = {
+            if let hireDateString = row["hireDate"] as? String {
+                return ISO8601DateFormatter().date(from: hireDateString)
+            }
+            return nil
+        }()
+        
         return WorkerProfile(
             id: String(id),
             name: name,
             email: email,
-            phoneNumber: row["phone"] as? String ?? "",
+            phoneNumber: row["phone"] as? String,
             role: role,
-            skills: [], // Parse from database if needed
-            certifications: [], // Parse from database if needed
-            hireDate: Date(), // Parse from database if needed
+            skills: skills,
+            certifications: [], // Could parse from database similar to skills
+            hireDate: hireDate,
             isActive: (row["isActive"] as? Int64) == 1,
-            profileImageUrl: row["profileImagePath"] as? String
+            profileImageUrl: profileImageUrl
         )
     }
 }
 
-// MARK: - Fixed Method Signatures Extension
+// MARK: - Extended Methods
 extension WorkerService {
-    // FIX: Removed extra closing brace that was causing scope issues
     
     func getWorker(by workerId: String) async throws -> WorkerProfile? {
-        // FIX: Use SQL query instead of ORM methods
         let rows = try await grdbManager.query("""
             SELECT * FROM workers 
             WHERE id = ? AND isActive = 1
@@ -107,7 +130,6 @@ extension WorkerService {
     }
     
     func getBuildingWorkers(buildingId: String) async throws -> [WorkerProfile] {
-        // FIX: Use SQL query with proper join table
         let rows = try await grdbManager.query("""
             SELECT DISTINCT w.*
             FROM workers w
@@ -121,8 +143,7 @@ extension WorkerService {
         }
     }
     
-    // Note: This method name duplicates the one at line 34
-    // Consider renaming to avoid confusion or removing if duplicate
+    // Convenience method that throws if worker not found
     func getWorkerProfileById(workerId: String) async throws -> WorkerProfile {
         guard let profile = try await getWorker(by: workerId) else {
             throw WorkerServiceError.workerNotFound(workerId)
@@ -133,4 +154,11 @@ extension WorkerService {
 
 enum WorkerServiceError: Error {
     case workerNotFound(String)
+    
+    var localizedDescription: String {
+        switch self {
+        case .workerNotFound(let id):
+            return "Worker with ID \(id) not found"
+        }
+    }
 }
