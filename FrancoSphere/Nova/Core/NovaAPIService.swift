@@ -306,15 +306,13 @@ public actor NovaAPIService {
                 insights.append(contentsOf: portfolioInsights.prefix(3)) // Top 3 insights
             }
         } catch {
-            // FIX 2 & 3: Use correct initializer signature
+            // FIX 2 & 3: Use correct IntelligenceInsight initializer
             insights.append(CoreTypes.IntelligenceInsight(
                 title: "Portfolio Analysis",
                 description: "AI-powered insights available for deeper analysis",
-                type: .analytics,  // FIX 3: Use standard InsightCategory case
+                type: .operations,  // Valid InsightCategory case
                 priority: .medium,
-                confidence: 0.8,
-                actionRequired: false,
-                estimatedImpact: "Operational efficiency improvement"
+                actionRequired: false
             ))
         }
         

@@ -8,6 +8,7 @@
 //  ✅ CLEAN: No type conversion needed
 //  ✅ ENHANCED: Includes data aggregation and prompt types
 //  ✅ FIXED: NovaContext data field for proper dictionary storage
+//  ✅ FIXED: Removed Sendable conformance where CoreTypes are non-Sendable
 //
 
 import Foundation
@@ -16,7 +17,7 @@ import SwiftUI
 // MARK: - Nova-Specific Types
 
 /// Nova context for AI operations
-public struct NovaContext: Codable, Hashable, Identifiable, Sendable {
+public struct NovaContext: Codable, Hashable, Identifiable {
     public let id: UUID
     public let data: [String: String]  // Changed from String to dictionary for structured data
     public let timestamp: Date
@@ -69,7 +70,7 @@ public struct NovaContext: Codable, Hashable, Identifiable, Sendable {
 }
 
 /// Nova prompt structure
-public struct NovaPrompt: Identifiable, Codable, Sendable {
+public struct NovaPrompt: Identifiable, Codable {
     public let id: UUID
     public let text: String
     public let priority: CoreTypes.AIPriority
@@ -98,7 +99,7 @@ public struct NovaPrompt: Identifiable, Codable, Sendable {
 }
 
 /// Nova response structure
-public struct NovaResponse: Codable, Identifiable, Sendable {
+public struct NovaResponse: Codable, Identifiable {
     public let id: UUID
     public let success: Bool
     public let message: String
@@ -136,7 +137,7 @@ public struct NovaResponse: Codable, Identifiable, Sendable {
 }
 
 /// Nova-specific action
-public struct NovaAction: Identifiable, Codable, Sendable {
+public struct NovaAction: Identifiable, Codable {
     public let id: UUID
     public let title: String
     public let description: String
@@ -201,7 +202,7 @@ public enum NovaProcessingState: String, Codable, CaseIterable, Sendable {
 // MARK: - Scenario Support Types
 
 /// Nova scenario data for AI-driven scenarios
-public struct NovaScenarioData: Identifiable, Codable, Sendable {
+public struct NovaScenarioData: Identifiable, Codable {
     public let id: UUID
     public let scenario: CoreTypes.AIScenarioType
     public let message: String
@@ -577,12 +578,5 @@ extension CoreTypes.AIScenarioType {
         }
     }
     
-    public var priority: CoreTypes.AIPriority {
-        switch self {
-        case .emergencyRepair: return .critical
-        case .taskOverdue, .clockOutReminder: return .high
-        case .weatherAlert, .inventoryLow, .routineIncomplete: return .medium
-        case .pendingTasks, .buildingAlert: return .low
-        }
-    }
+    // REMOVED: priority property already exists in CoreTypes.AIScenarioType
 }
