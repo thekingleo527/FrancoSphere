@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  Glass overlay for building header with image background
-//  ✅ FINAL FIXED VERSION - All LinearGradient syntax corrected
+//  ✅ FIXED: Works with NamedCoordinate that doesn't have imageAssetName
 //
 
 import SwiftUI
@@ -79,17 +79,17 @@ struct BuildingHeaderGlassOverlay: View {
     
     private var buildingImageBackground: some View {
         Group {
-            // ✅ FIXED: Proper optional handling for imageAssetName
-            if let imageAssetName = building.imageAssetName,
-               !imageAssetName.isEmpty,
-               let uiImage = UIImage(named: imageAssetName) {
+            // ✅ FIXED: Use building ID or name to determine image
+            let imageName = getBuildingImageName()
+            
+            if let uiImage = UIImage(named: imageName) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
                     .frame(height: 280)
                     .clipped()
                     .overlay(
-                        // ✅ FIXED: Using modern LinearGradient syntax
+                        // Gradient overlay for better text readability
                         LinearGradient(
                             colors: [
                                 Color.black.opacity(0.4),
@@ -101,7 +101,7 @@ struct BuildingHeaderGlassOverlay: View {
                         )
                     )
             } else {
-                // ✅ FIXED: Proper Color initialization in fallback gradient
+                // ✅ FIXED: Proper fallback gradient
                 LinearGradient(
                     colors: [
                         Color.blue.opacity(0.3),
@@ -246,6 +246,52 @@ struct BuildingHeaderGlassOverlay: View {
     
     // MARK: - Helper Methods
     
+    /// Determine the image asset name based on building ID or name
+    private func getBuildingImageName() -> String {
+        // Map building IDs to their image assets
+        switch building.id {
+        case "14", "15":
+            return "Rubin_Museum_142_148_West_17th_Street"
+        case "1":
+            return "building_12w18"
+        case "2":
+            return "building_29e20"
+        case "3":
+            return "building_133e15"
+        case "4":
+            return "building_104franklin"
+        case "5":
+            return "building_36walker"
+        case "6":
+            return "building_68perry"
+        case "7":
+            return "building_136w17"
+        case "8":
+            return "building_41elizabeth"
+        case "9":
+            return "building_117w17"
+        case "10":
+            return "building_123first"
+        case "11":
+            return "building_131perry"
+        case "12":
+            return "building_135w17"
+        case "13":
+            return "building_138w17"
+        case "16":
+            return "stuyvesant_park"
+        default:
+            // Try to create a name from the building name
+            let cleanName = building.name
+                .lowercased()
+                .replacingOccurrences(of: " ", with: "_")
+                .replacingOccurrences(of: "(", with: "")
+                .replacingOccurrences(of: ")", with: "")
+                .replacingOccurrences(of: "-", with: "_")
+            return cleanName
+        }
+    }
+    
     private func getFormattedLocation() -> String {
         let district = getDistrict()
         let buildingType = getBuildingType()
@@ -290,23 +336,13 @@ struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
             Color.black.ignoresSafeArea()
             
             VStack {
-                // ✅ FIXED: Create NamedCoordinate without imageAssetName in initializer
-                // The imageAssetName should be set as a property after initialization
-                // or the NamedCoordinate struct should have a proper initializer
                 BuildingHeaderGlassOverlay(
-                    building: {
-                        // Create the coordinate with basic properties
-                        var coord = NamedCoordinate(
-                            id: "15",
-                            name: "Rubin Museum (142-148 W 17th)",
-                            latitude: 40.740370,
-                            longitude: -73.998120
-                        )
-                        // Set the image asset name if it's a mutable property
-                        // If not, you may need to update the NamedCoordinate struct
-                        // to include imageAssetName in its initializer
-                        return coord
-                    }(),
+                    building: NamedCoordinate(
+                        id: "15",
+                        name: "Rubin Museum (142-148 W 17th)",
+                        latitude: 40.740370,
+                        longitude: -73.998120
+                    ),
                     clockedInStatus: (true, 15),
                     onClockAction: {}
                 )
@@ -318,34 +354,44 @@ struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
     }
 }
 
-// MARK: - Usage Notes
+// MARK: - Alternative Solutions
+
 /*
-This component is designed to be used in building detail views where you need
-a visually appealing header with:
+OPTION 1: Extend NamedCoordinate with a computed property
 
-1. Building image background (if available)
-2. Glass morphism overlay effect
-3. Building information display
-4. Clock in/out functionality
-5. Building metrics
-
-Example usage in a building detail view:
-
-```swift
-BuildingHeaderGlassOverlay(
-    building: selectedBuilding,
-    clockedInStatus: (clockInManager.isClockedIn, clockInManager.currentBuildingId),
-    onClockAction: {
-        if clockInManager.isClockedIn {
-            clockInManager.clockOut()
-        } else {
-            clockInManager.clockIn(at: selectedBuilding)
+extension NamedCoordinate {
+    var imageAssetName: String? {
+        // Use the same logic as getBuildingImageName()
+        switch id {
+        case "14", "15": return "Rubin_Museum_142_148_West_17th_Street"
+        // ... etc
+        default: return nil
         }
     }
-)
-```
+}
 
-This component is complementary to HeaderV3B:
-- HeaderV3B: Main app navigation header (worker info, Nova AI)
-- BuildingHeaderGlassOverlay: Building-specific header for detail views
+OPTION 2: Create a wrapper struct
+
+struct BuildingWithImage {
+    let coordinate: NamedCoordinate
+    let imageAssetName: String?
+    
+    init(coordinate: NamedCoordinate) {
+        self.coordinate = coordinate
+        self.imageAssetName = Self.getImageName(for: coordinate)
+    }
+    
+    private static func getImageName(for building: NamedCoordinate) -> String? {
+        // Image mapping logic
+    }
+}
+
+OPTION 3: Pass the image name as a separate parameter
+
+struct BuildingHeaderGlassOverlay: View {
+    let building: NamedCoordinate
+    let buildingImageName: String?  // Pass this separately
+    let clockedInStatus: (isClockedIn: Bool, buildingId: Int64?)
+    let onClockAction: () -> Void
+}
 */
