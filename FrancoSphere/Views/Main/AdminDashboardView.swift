@@ -2,25 +2,27 @@
 //  AdminDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPLETE: Production-ready admin dashboard view
-//  ✅ ALIGNED: With AdminDashboardViewModel (no duplicate definitions)
-//  ✅ REAL-TIME: Cross-dashboard synchronization ready
+//  ✅ REFACTORED: Properly integrated with DashboardSyncService
+//  ✅ ALIGNED: Using correct DashboardUpdate types from sync service
+//  ✅ REAL-TIME: Cross-dashboard synchronization working
 //  ✅ DESIGN: FrancoSphere glass morphism and dark theme
-//  ✅ FIXED: Using CoreTypes.DashboardUpdate consistently
 //
 
 import SwiftUI
 import MapKit
+import Combine
 
 struct AdminDashboardView: View {
     @StateObject private var viewModel = AdminDashboardViewModel()
     @EnvironmentObject private var authManager: NewAuthManager
+    @StateObject private var syncService = DashboardSyncService.shared
     
     // UI State
     @State private var selectedBuildingId: String?
     @State private var showingBuildingIntelligence = false
     @State private var showingPortfolioInsights = false
     @State private var selectedTab: AdminTab = .overview
+    @State private var cancellables = Set<AnyCancellable>()
     
     // Map region for building view
     @State private var region = MKCoordinateRegion(
@@ -48,6 +50,7 @@ struct AdminDashboardView: View {
             .navigationBarHidden(true)
             .task {
                 await viewModel.loadDashboardData()
+                setupSyncSubscriptions()
             }
             .sheet(isPresented: $showingBuildingIntelligence) {
                 buildingIntelligenceSheet
@@ -57,6 +60,56 @@ struct AdminDashboardView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            syncService.enableCrossDashboardSync()
+        }
+    }
+
+    // MARK: - Sync Setup
+    
+    private func setupSyncSubscriptions() {
+        // Subscribe to cross-dashboard updates
+        syncService.crossDashboardUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { update in
+                handleDashboardUpdate(update)
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to admin-specific updates
+        syncService.adminDashboardUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { update in
+                handleAdminUpdate(update)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+        // Handle cross-dashboard updates
+        switch update.type {
+        case .taskCompleted:
+            Task {
+                await viewModel.loadDashboardData()
+            }
+        case .workerClockedIn, .workerClockedOut:
+            Task {
+                await viewModel.loadDashboardData()
+            }
+        case .buildingMetricsChanged:
+            Task {
+                await viewModel.loadDashboardData()
+            }
+        default:
+            break
+        }
+    }
+    
+    private func handleAdminUpdate(_ update: DashboardUpdate) {
+        // Handle admin-specific updates
+        Task {
+            await viewModel.loadDashboardData()
+        }
     }
 
     // MARK: - Header Section
@@ -81,12 +134,18 @@ struct AdminDashboardView: View {
                 // Sync status indicator
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(viewModel.dashboardSyncStatus == .synced ? Color.green : Color.orange)
+                        .fill(syncService.isLive ? Color.green : Color.orange)
                         .frame(width: 8, height: 8)
                     
-                    Text(viewModel.dashboardSyncStatus.description)
+                    Text(syncService.isLive ? "Live" : "Offline")
                         .font(.caption)
                         .foregroundColor(.gray)
+                    
+                    if let lastSync = syncService.lastSyncTime {
+                        Text("• \(lastSync, style: .relative)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
@@ -126,7 +185,7 @@ struct AdminDashboardView: View {
                 AdminSummaryCard(
                     title: "Workers",
                     value: "\(summary.totalWorkers)",
-                    subtitle: "Active workers",
+                    subtitle: "\(viewModel.activeWorkers.count) online",
                     icon: "person.3.fill",
                     color: .green
                 )
@@ -205,8 +264,8 @@ struct AdminDashboardView: View {
     private var overviewContent: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Recent updates section
-                recentUpdatesSection
+                // Live updates section
+                liveUpdatesSection
                 
                 // Building metrics overview
                 buildingMetricsOverview
@@ -218,14 +277,32 @@ struct AdminDashboardView: View {
         }
     }
 
-    private var recentUpdatesSection: some View {
+    private var liveUpdatesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Updates")
-                .font(.headline)
-                .foregroundColor(.white)
+            HStack {
+                Text("Live Updates")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                // Live indicator
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 6, height: 6)
+                        .opacity(syncService.isLive ? 1 : 0.3)
+                    
+                    Text("LIVE")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.green)
+                        .opacity(syncService.isLive ? 1 : 0.3)
+                }
+            }
             
-            if viewModel.crossDashboardUpdates.isEmpty {
-                Text("No recent updates")
+            if syncService.liveAdminAlerts.isEmpty {
+                Text("No recent alerts")
                     .font(.caption)
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity)
@@ -234,8 +311,8 @@ struct AdminDashboardView: View {
                     .cornerRadius(8)
             } else {
                 LazyVStack(spacing: 8) {
-                    ForEach(viewModel.crossDashboardUpdates.prefix(5)) { update in
-                        UpdateRow(update: update)
+                    ForEach(syncService.liveAdminAlerts.prefix(5), id: \.id) { alert in
+                        LiveAlertRow(alert: alert)
                     }
                 }
             }
@@ -263,7 +340,7 @@ struct AdminDashboardView: View {
                     ForEach(viewModel.buildings.prefix(5), id: \.id) { building in
                         BuildingMetricCard(
                             building: building,
-                            metrics: viewModel.getBuildingMetrics(for: building.id)
+                            metrics: syncService.unifiedBuildingMetrics[building.id] ?? viewModel.getBuildingMetrics(for: building.id)
                         )
                     }
                 }
@@ -280,14 +357,29 @@ struct AdminDashboardView: View {
                 
                 Spacer()
                 
-                Text("\(viewModel.activeWorkers.count) online")
-                    .font(.caption)
-                    .foregroundColor(.green)
+                // Live worker count
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 6, height: 6)
+                    
+                    Text("\(viewModel.activeWorkers.count) online")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
             }
             
-            LazyVStack(spacing: 8) {
-                ForEach(viewModel.activeWorkers.prefix(5), id: \.id) { worker in
-                    WorkerStatusRow(worker: worker)
+            if !syncService.liveWorkerUpdates.isEmpty {
+                LazyVStack(spacing: 8) {
+                    ForEach(syncService.liveWorkerUpdates.prefix(5), id: \.id) { update in
+                        LiveWorkerUpdateRow(update: update)
+                    }
+                }
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(viewModel.activeWorkers.prefix(5), id: \.id) { worker in
+                        WorkerStatusRow(worker: worker)
+                    }
                 }
             }
         }
@@ -301,7 +393,7 @@ struct AdminDashboardView: View {
                 ForEach(viewModel.buildings, id: \.id) { building in
                     BuildingAdminCard(
                         building: building,
-                        metrics: viewModel.getBuildingMetrics(for: building.id),
+                        metrics: syncService.unifiedBuildingMetrics[building.id] ?? viewModel.getBuildingMetrics(for: building.id),
                         insights: viewModel.getIntelligenceInsights(for: building.id),
                         onTap: {
                             selectedBuildingId = building.id
@@ -355,6 +447,12 @@ struct AdminDashboardView: View {
             }
             .padding(.horizontal)
             
+            // Unified portfolio intelligence
+            if let portfolio = syncService.unifiedPortfolioIntelligence {
+                PortfolioIntelligenceCard(portfolio: portfolio)
+                    .padding(.horizontal)
+            }
+            
             // Insights list
             if viewModel.portfolioInsights.isEmpty {
                 Spacer()
@@ -405,7 +503,7 @@ struct AdminDashboardView: View {
         }
         .onAppear {
             if let buildingId = selectedBuildingId {
-                _Concurrency.Task {
+                Task {
                     await viewModel.fetchBuildingIntelligence(for: buildingId)
                 }
             }
@@ -417,7 +515,7 @@ struct AdminDashboardView: View {
             IntelligenceInsightsView(
                 insights: viewModel.portfolioInsights
             ) {
-                _Concurrency.Task {
+                Task {
                     await viewModel.loadPortfolioInsights()
                 }
             }
@@ -469,50 +567,126 @@ struct AdminSummaryCard: View {
     }
 }
 
-struct UpdateRow: View {
-    let update: CoreTypes.DashboardUpdate
+struct LiveAlertRow: View {
+    let alert: LiveAdminAlert
     
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: iconForSource(update.source))
-                .font(.caption)
-                .foregroundColor(colorForSource(update.source))
-                .frame(width: 24, height: 24)
-                .background(colorForSource(update.source).opacity(0.2))
-                .clipShape(Circle())
+            Circle()
+                .fill(alert.severity.color)
+                .frame(width: 8, height: 8)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(update.displayDescription)
+                Text(alert.title)
                     .font(.caption)
                     .foregroundColor(.white)
                 
-                Text(update.timestamp, style: .relative)
+                Text(alert.timestamp, style: .relative)
                     .font(.caption2)
                     .foregroundColor(.gray)
             }
             
             Spacer()
+            
+            Text(alert.severity.rawValue)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundColor(alert.severity.color)
         }
         .padding(8)
         .background(.ultraThinMaterial)
         .cornerRadius(8)
     }
+}
+
+struct LiveWorkerUpdateRow: View {
+    let update: LiveWorkerUpdate
     
-    private func iconForSource(_ source: CoreTypes.DashboardUpdate.Source) -> String {
-        switch source {
-        case .admin: return "person.badge.shield.checkmark"
-        case .worker: return "person.fill"
-        case .client: return "building.2"
-        case .system: return "gear"
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.fill")
+                .font(.caption)
+                .foregroundColor(.blue)
+                .frame(width: 24, height: 24)
+                .background(Color.blue.opacity(0.2))
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(update.workerName ?? "Worker") \(update.action)")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                if let buildingName = update.buildingName {
+                    Text("at \(buildingName)")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                }
+            }
+            
+            Spacer()
+            
+            Text(update.timestamp, style: .relative)
+                .font(.caption2)
+                .foregroundColor(.gray)
         }
+        .padding(8)
+        .background(.ultraThinMaterial)
+        .cornerRadius(8)
+    }
+}
+
+struct PortfolioIntelligenceCard: View {
+    let portfolio: CoreTypes.PortfolioIntelligence
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Portfolio Overview")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Image(systemName: portfolio.monthlyTrend.icon)
+                        .font(.caption)
+                    Text(portfolio.monthlyTrend.rawValue)
+                        .font(.caption)
+                }
+                .foregroundColor(trendColor(for: portfolio.monthlyTrend))
+            }
+            
+            HStack(spacing: 16) {
+                MetricItem(
+                    label: "Completion",
+                    value: "\(Int(portfolio.completionRate * 100))%",
+                    color: portfolio.completionRate > 0.8 ? .green : .orange
+                )
+                
+                MetricItem(
+                    label: "Compliance",
+                    value: "\(Int(portfolio.complianceScore * 100))%",
+                    color: portfolio.complianceScore > 0.9 ? .green : .orange
+                )
+                
+                MetricItem(
+                    label: "Critical Issues",
+                    value: "\(portfolio.criticalIssues)",
+                    color: portfolio.criticalIssues > 0 ? .red : .green
+                )
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
     }
     
-    private func colorForSource(_ source: CoreTypes.DashboardUpdate.Source) -> Color {
-        switch source {
-        case .admin: return .blue
-        case .worker: return .green
-        case .client: return .orange
-        case .system: return .gray
+    private func trendColor(for trend: CoreTypes.TrendDirection) -> Color {
+        switch trend {
+        case .up, .improving: return .green
+        case .down, .declining: return .red
+        case .stable, .unknown: return .gray
         }
     }
 }
@@ -542,6 +716,17 @@ struct BuildingMetricCard: View {
                 Text("\(metrics.overdueTasks) overdue")
                     .font(.caption2)
                     .foregroundColor(metrics.overdueTasks > 0 ? .red : .gray)
+                
+                if metrics.hasWorkerOnSite {
+                    HStack(spacing: 2) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 4, height: 4)
+                        Text("On-site")
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                    }
+                }
             } else {
                 Text("Loading...")
                     .font(.caption2)
@@ -633,6 +818,14 @@ struct BuildingAdminCard: View {
                             value: "\(Int(metrics.overallScore))",
                             color: .blue
                         )
+                        
+                        if metrics.hasWorkerOnSite {
+                            MetricItem(
+                                label: "Status",
+                                value: "On-site",
+                                color: .green
+                            )
+                        }
                     }
                 }
             }
@@ -747,12 +940,12 @@ struct IntelligenceInsightCard: View {
             HStack {
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(insight.priority.color)
+                        .fill(FrancoSphereDesign.EnumColors.aiPriority(insight.priority))
                         .frame(width: 6, height: 6)
                     
                     Text(insight.priority.rawValue)
                         .font(.caption2)
-                        .foregroundColor(insight.priority.color)
+                        .foregroundColor(FrancoSphereDesign.EnumColors.aiPriority(insight.priority))
                 }
                 
                 Spacer()
@@ -867,65 +1060,11 @@ enum AdminTab: String, CaseIterable {
     }
 }
 
-// MARK: - Extensions
+// MARK: - Preview
 
-extension CoreTypes.DashboardSyncStatus {
-    var description: String {
-        switch self {
-        case .synced: return "Synced"
-        case .syncing: return "Syncing..."
-        case .failed: return "Sync Failed"
-        case .offline: return "Offline"
-        }
-    }
-}
-
-extension CoreTypes.DashboardUpdate {
-    var displayDescription: String {
-        let sourcePrefix = "[\(displaySource)]"
-        let typeDescription = displayType
-        
-        if !buildingId.isEmpty {
-            return "\(sourcePrefix) \(typeDescription) - Building \(buildingId)"
-        } else if !workerId.isEmpty {
-            return "\(sourcePrefix) \(typeDescription) - Worker \(workerId)"
-        } else {
-            return "\(sourcePrefix) \(typeDescription)"
-        }
-    }
-    
-    var displaySource: String {
-        switch source {
-        case .admin: return "Admin"
-        case .worker: return "Worker"
-        case .client: return "Client"
-        case .system: return "System"
-        }
-    }
-    
-    var displayType: String {
-        switch type {
-        case .taskStarted: return "Task Started"
-        case .taskCompleted: return "Task Completed"
-        case .taskUpdated: return "Task Updated"
-        case .workerClockedIn: return "Worker Clocked In"
-        case .workerClockedOut: return "Worker Clocked Out"
-        case .buildingMetricsChanged: return "Building Metrics Changed"
-        case .inventoryUpdated: return "Inventory Updated"
-        case .complianceStatusChanged: return "Compliance Status Changed"
-        }
-    }
-}
-
-// MARK: - Helper Extensions
-
-extension CoreTypes.AIPriority {
-    var color: Color {
-        switch self {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        }
+struct AdminDashboardView_Previews: PreviewProvider {
+    static var previews: some View {
+        AdminDashboardView()
+            .preferredColorScheme(.dark)
     }
 }
