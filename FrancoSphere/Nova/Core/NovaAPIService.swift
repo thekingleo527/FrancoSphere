@@ -111,8 +111,8 @@ public actor NovaAPIService {
         return NovaResponse(
             success: true,
             message: responseText,
-            actions: actions,
-            insights: insights
+            insights: insights,
+            actions: actions
         )
     }
     
