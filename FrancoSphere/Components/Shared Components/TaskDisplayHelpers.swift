@@ -6,6 +6,28 @@
 //  ✅ FIXED: Proper optional unwrapping for urgency
 //  ✅ FIXED: Exhaustive switch statements
 //  ✅ FIXED: Removed non-existent estimatedDuration property
+//  ✅ FIXED: Removed dependency on deleted ContextualTaskIntelligence extension
+//  ✅ FIXED: Building name now uses actual ContextualTask properties
+//
+//  Note: ContextualTask actual properties:
+//  - id: String
+//  - title: String (not 'name')
+//  - description: String?
+//  - isCompleted: Bool
+//  - completedDate: Date?
+//  - dueDate: Date? (not 'scheduledDate')
+//  - category: TaskCategory?
+//  - urgency: TaskUrgency?
+//  - building: NamedCoordinate?
+//  - worker: WorkerProfile?
+//  - buildingId: String?
+//  - priority: TaskUrgency?
+//
+//  Properties that DON'T exist:
+//  - buildingName (was in deleted extension)
+//  - assignedWorkerId (was in deleted extension)
+//  - estimatedDuration
+//  - scheduledDate
 //
 
 import SwiftUI
@@ -25,7 +47,13 @@ public struct TaskDisplayHelpers {
         } else if let dueDate = task.dueDate, dueDate < Date() {
             return .red // Overdue
         } else if let urgency = task.urgency {
-            return urgency.color
+            // Use the same color logic as in TaskRowView
+            switch urgency {
+            case .low: return .green
+            case .medium: return .orange
+            case .high: return .red
+            case .critical, .urgent, .emergency: return .purple
+            }
         } else {
             return .gray // Default when no urgency
         }
@@ -83,15 +111,15 @@ public struct TaskDisplayHelpers {
     
     /// Get assigned worker ID for display
     public static func assignedWorkerIdText(for task: ContextualTask) -> String {
-        return task.assignedWorkerId ?? task.worker?.id ?? "Unassigned"
+        // ✅ Note: ContextualTask doesn't have assignedWorkerId property
+        // Using worker.id if available
+        return task.worker?.id ?? "Unassigned"
     }
     
     /// Get assigned worker name for display
     public static func assignedWorkerName(for task: ContextualTask) -> String {
         if let worker = task.worker {
             return worker.name
-        } else if let workerId = task.assignedWorkerId {
-            return "Worker \(workerId)"
         } else {
             return "Unassigned"
         }
@@ -101,9 +129,21 @@ public struct TaskDisplayHelpers {
     
     /// Get priority badge view
     public static func priorityBadge(for task: ContextualTask) -> some View {
-        HStack(spacing: 4) {
+        let urgencyColor: Color = {
+            if let urgency = task.urgency {
+                switch urgency {
+                case .low: return .green
+                case .medium: return .orange
+                case .high: return .red
+                case .critical, .urgent, .emergency: return .purple
+                }
+            }
+            return .gray
+        }()
+        
+        return HStack(spacing: 4) {
             Circle()
-                .fill(task.urgency?.color ?? Color.gray)  // ✅ FIXED: Safe unwrapping
+                .fill(urgencyColor)
                 .frame(width: 8, height: 8)
             
             Text(task.urgency?.rawValue ?? "Normal")
@@ -232,12 +272,13 @@ public struct TaskDisplayHelpers {
     
     /// Get building name for task
     public static func buildingName(for task: ContextualTask) -> String {
-        // buildingName is a computed property that returns String (non-optional)
-        // It's defined in ContextualTaskIntelligence.swift extension
-        if !task.buildingName.isEmpty && task.buildingName != "Building nil" {
-            return task.buildingName
+        // ✅ FIXED: Removed MainActor-isolated property access
+        if let building = task.building {
+            return building.name
         } else if let buildingId = task.buildingId, !buildingId.isEmpty {
-            return buildingId
+            // Just show the building ID if we can't resolve the name
+            // Don't try to access MainActor-isolated properties from here
+            return "Building \(buildingId)"
         } else {
             return "Unknown Building"
         }
@@ -292,10 +333,22 @@ extension View {
     
     /// Apply task priority styling
     func taskPriorityStyle(for task: ContextualTask) -> some View {
-        self
+        let urgencyColor: Color = {
+            if let urgency = task.urgency {
+                switch urgency {
+                case .low: return .green
+                case .medium: return .orange
+                case .high: return .red
+                case .critical, .urgent, .emergency: return .purple
+                }
+            }
+            return .gray
+        }()
+        
+        return self
             .overlay(
                 Rectangle()
-                    .fill(task.urgency?.color ?? Color.gray)  // ✅ FIXED: Safe unwrapping
+                    .fill(urgencyColor)
                     .frame(width: 3)
                     .cornerRadius(1.5),
                 alignment: .leading
