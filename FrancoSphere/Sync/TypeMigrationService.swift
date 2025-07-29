@@ -3,469 +3,268 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: Updated to use GRDBManager instead of DatabaseManager
-//  ✅ FIXED: Uses actual UserRole enum cases (no .manager)
+//  ✅ FIXED: Uses actual UserRole enum cases (includes .manager)
 //  ✅ FIXED: ContextualTask.title is String, not optional
+//  ✅ FIXED: All switch statements are now exhaustive
+//  ✅ FIXED: Properly handles optional WorkerProfile.skills
 //  ✅ ALIGNED: With existing type definitions in codebase
 //  ✅ ENHANCED: Dashboard integration and Nova AI preparation
+//  ✅ REFACTORED: Simplified for actual use cases
 //
 
 import Foundation
 
+/// Data validation and migration service for FrancoSphere v6.0
+/// This is a utility service used for:
+/// - Data integrity validation during development
+/// - Migration between app versions
+/// - Preparing data for new features (Nova AI, etc.)
 actor TypeMigrationService {
     static let shared = TypeMigrationService()
     
     // MARK: - Migration Dependencies
-    private let grdbManager = GRDBManager.shared  // ✅ FIXED: Changed from DatabaseManager
+    private let grdbManager = GRDBManager.shared
     private let workerService = WorkerService.shared
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
     private let buildingMetricsService = BuildingMetricsService.shared
     
     // MARK: - Migration Tracking
-    private var migrationHistory: [MigrationRecord] = []
-    private var currentMigrationSession: UUID?
+    private var validationResults: ValidationResults = ValidationResults()
     
     private init() {}
     
-    // MARK: - Public Migration Interface
+    // MARK: - Public Interface
     
-    /// Comprehensive type migration for FrancoSphere v6.0
-    func migrateLegacyTypes() async throws {
-        let sessionId = UUID()
-        currentMigrationSession = sessionId
+    /// Run a comprehensive validation of all data types
+    /// Use this during development or after database changes
+    public func validateDataIntegrity() async throws -> ValidationResults {
+        print("🔍 Starting comprehensive data validation...")
         
-        print("🔄 Starting comprehensive type migration session: \(sessionId)")
+        validationResults = ValidationResults()
         
-        do {
-            // Phase 1: Core Foundation Types
-            try await migrateFoundationTypes()
-            
-            // Phase 2: Three-Dashboard System Types
-            try await migrateDashboardTypes()
-            
-            // Phase 3: Real-Time Integration Types
-            try await migrateRealTimeTypes()
-            
-            // Phase 4: Prepare Nova AI Types (for future)
-            try await prepareNovaAITypes()
-            
-            // Phase 5: Validation and Cleanup
-            try await validateMigrationIntegrity()
-            
-            let summary = await generateMigrationSummary()
-            print("✅ Type migration completed successfully")
-            print("📊 Migration Summary: \(summary)")
-            
-        } catch {
-            print("❌ Type migration failed: \(error)")
-            await recordMigrationFailure(sessionId: sessionId, error: error)
-            throw error
-        }
+        // Validate all data types
+        await validateWorkers()
+        await validateBuildings()
+        await validateTasks()
+        await validateAssignments()
+        
+        print("✅ Validation complete: \(validationResults.summary)")
+        return validationResults
     }
     
-    // MARK: - Phase 1: Foundation Types Migration
-    
-    private func migrateFoundationTypes() async throws {
-        print("📊 Phase 1: Migrating foundation types...")
-        
-        try await migrateWorkerProfiles()
-        try await migrateBuildingData()
-        try await migrateTaskCategories()
-        try await migrateUserRoles()
-        
-        await recordMigrationPhase("Foundation Types", itemsProcessed: 0)
-    }
-    
-    /// Migrate worker profile data with enhanced validation
-    private func migrateWorkerProfiles() async throws {
-        print("👥 Migrating worker profiles...")
+    /// Prepare data for Nova AI integration
+    /// Run this before enabling Nova AI features
+    public func prepareForNovaAI() async throws -> NovaAIReadiness {
+        print("🧠 Preparing data for Nova AI integration...")
         
         let workers = try await workerService.getAllActiveWorkers()
-        var migratedCount = 0
-        var issuesFound = 0
-        
-        for worker in workers {
-            var needsUpdate = false
-            var issues: [String] = []
-            
-            // Validate worker name
-            if worker.name.isEmpty {
-                issues.append("Empty worker name")
-                print("⚠️ Found worker with empty name: \(worker.id)")
-            }
-            
-            // Validate worker role for dashboard compatibility
-            if !isValidUserRole(worker.role) {
-                issues.append("Invalid user role: \(worker.role)")
-                print("⚠️ Found worker with invalid role: \(worker.role)")
-                needsUpdate = true
-            }
-            
-            // Validate email format
-            if !isValidEmail(worker.email) {
-                issues.append("Invalid email format")
-                print("⚠️ Worker \(worker.name) has invalid email: \(worker.email)")
-            }
-            
-            // Validate dashboard permissions
-            if !hasValidDashboardPermissions(worker) {
-                issues.append("Missing dashboard permissions")
-                needsUpdate = true
-            }
-            
-            if needsUpdate {
-                // Could perform automatic fixes here if needed
-                print("🔧 Worker \(worker.name) needs updates: \(issues.joined(separator: ", "))")
-            }
-            
-            migratedCount += 1
-            if !issues.isEmpty {
-                issuesFound += 1
-            }
-        }
-        
-        print("✅ Worker profile migration: \(migratedCount) workers processed, \(issuesFound) issues found")
-    }
-    
-    /// Migrate building data with GPS and asset validation
-    private func migrateBuildingData() async throws {
-        print("🏢 Migrating building data...")
-        
         let buildings = try await buildingService.getAllBuildings()
-        var migratedCount = 0
-        var issuesFound = 0
-        
-        for building in buildings {
-            var issues: [String] = []
-            
-            // Validate building coordinates
-            if building.coordinate.latitude == 0 && building.coordinate.longitude == 0 {
-                issues.append("Invalid GPS coordinates")
-                print("⚠️ Building \(building.name) has invalid coordinates")
-            }
-            
-            // Validate building name
-            if building.name.isEmpty {
-                issues.append("Empty building name")
-                print("⚠️ Found building with empty name: \(building.id)")
-            }
-            
-            // Validate image asset mapping
-            if !hasValidImageAsset(building) {
-                issues.append("Missing image asset")
-                print("⚠️ Building \(building.name) missing image asset")
-            }
-            
-            // Validate dashboard integration readiness
-            if !isDashboardReady(building) {
-                issues.append("Not dashboard ready")
-                print("⚠️ Building \(building.name) not ready for dashboard integration")
-            }
-            
-            migratedCount += 1
-            if !issues.isEmpty {
-                issuesFound += 1
-            }
-        }
-        
-        print("✅ Building data migration: \(migratedCount) buildings processed, \(issuesFound) issues found")
-    }
-    
-    /// Migrate task categories with comprehensive validation
-    private func migrateTaskCategories() async throws {
-        print("📋 Migrating task categories and urgencies...")
-        
         let tasks = try await taskService.getAllTasks()
-        var migratedCount = 0
-        var categoryIssues = 0
-        var urgencyIssues = 0
         
-        for task in tasks {
-            var issues: [String] = []
-            
-            // ✅ FIXED: Safe unwrapping for optional TaskCategory
-            if let category = task.category {
-                if !isValidTaskCategory(category) {
-                    issues.append("Invalid category: \(category)")
-                    categoryIssues += 1
-                }
-            } else {
-                issues.append("Missing task category")
-                categoryIssues += 1
-            }
-            
-            // ✅ FIXED: Safe unwrapping for optional TaskUrgency
-            if let urgency = task.urgency {
-                if !isValidTaskUrgency(urgency) {
-                    issues.append("Invalid urgency: \(urgency)")
-                    urgencyIssues += 1
-                }
-            } else {
-                issues.append("Missing task urgency")
-                urgencyIssues += 1
-            }
-            
-            // Validate dashboard compatibility
-            if !isDashboardCompatible(task) {
-                issues.append("Not dashboard compatible")
-            }
-            
-            // Validate Nova AI readiness
-            if !isNovaAIReady(task) {
-                issues.append("Not Nova AI ready")
-            }
-            
-            migratedCount += 1
-            
-            if !issues.isEmpty {
-                // ✅ FIXED: task.title is String, not optional
-                print("⚠️ Task \(task.title) issues: \(issues.joined(separator: ", "))")
-            }
-        }
+        var readiness = NovaAIReadiness()
         
-        print("✅ Task migration: \(migratedCount) tasks processed")
-        print("   📊 Category issues: \(categoryIssues), Urgency issues: \(urgencyIssues)")
-    }
-    
-    /// Migrate user roles for dashboard compatibility
-    private func migrateUserRoles() async throws {
-        print("🔐 Migrating user roles for dashboard system...")
-        
-        let workers = try await workerService.getAllActiveWorkers()
-        var roleUpdates = 0
-        
+        // Check worker data completeness
         for worker in workers {
-            let dashboardRole = mapToDashboardRole(worker.role)
-            
-            if dashboardRole != worker.role {
-                print("🔄 Updating worker \(worker.name) role: \(worker.role) → \(dashboardRole)")
-                roleUpdates += 1
-                // Could perform role update here if needed
+            if isNovaAICompatible(worker) {
+                readiness.compatibleWorkers += 1
+            } else {
+                readiness.issues.append("Worker \(worker.name) missing required data")
             }
         }
+        readiness.totalWorkers = workers.count
         
-        print("✅ User role migration: \(roleUpdates) role updates recommended")
-    }
-    
-    // MARK: - Phase 2: Dashboard Types Migration
-    
-    private func migrateDashboardTypes() async throws {
-        print("📱 Phase 2: Migrating dashboard-specific types...")
-        
-        try await migrateDashboardRoles()
-        try await migrateDashboardPermissions()
-        try await migratePropertyCardModes()
-        try await validateDashboardIntegration()
-        
-        await recordMigrationPhase("Dashboard Types", itemsProcessed: 0)
-    }
-    
-    private func migrateDashboardRoles() async throws {
-        print("🎭 Migrating dashboard roles...")
-        
-        // Validate Worker/Admin/Client role mappings
-        let workers = try await workerService.getAllActiveWorkers()
-        
-        for worker in workers {
-            let dashboardRoles = getDashboardRoles(for: worker)
-            print("👤 Worker \(worker.name): Dashboard roles \(dashboardRoles)")
-        }
-    }
-    
-    private func migrateDashboardPermissions() async throws {
-        print("🔑 Migrating dashboard permissions...")
-        
-        // Validate dashboard access permissions
-        // This prepares for role-based dashboard access
-    }
-    
-    private func migratePropertyCardModes() async throws {
-        print("🏠 Migrating PropertyCard display modes...")
-        
-        // Validate PropertyCard compatibility for all buildings
-        let buildings = try await buildingService.getAllBuildings()
-        
+        // Check building data completeness
         for building in buildings {
-            let modes = getPropertyCardModes(for: building)
-            if modes.isEmpty {
-                print("⚠️ Building \(building.name) not compatible with any PropertyCard modes")
+            if isNovaAICompatible(building) {
+                readiness.compatibleBuildings += 1
+            } else {
+                readiness.issues.append("Building \(building.name) missing GPS or metadata")
             }
         }
+        readiness.totalBuildings = buildings.count
+        
+        // Check task data completeness
+        for task in tasks {
+            if isNovaAIReady(task) {
+                readiness.compatibleTasks += 1
+            } else {
+                readiness.issues.append("Task '\(task.title)' missing category or urgency")
+            }
+        }
+        readiness.totalTasks = tasks.count
+        
+        print("✅ Nova AI readiness: \(readiness.readinessPercentage)%")
+        return readiness
     }
     
-    private func validateDashboardIntegration() async throws {
-        print("✅ Validating dashboard integration...")
+    /// Validate dashboard compatibility
+    /// Ensures data works with three-dashboard system
+    public func validateDashboardCompatibility() async throws -> DashboardCompatibility {
+        print("📱 Validating dashboard compatibility...")
         
-        // Validate three-dashboard system readiness
-        let dashboardReadiness = await assessDashboardReadiness()
-        print("📊 Dashboard readiness: Worker(\(dashboardReadiness.worker)%), Admin(\(dashboardReadiness.admin)%), Client(\(dashboardReadiness.client)%)")
-    }
-    
-    // MARK: - Phase 3: Real-Time Integration Types
-    
-    private func migrateRealTimeTypes() async throws {
-        print("⚡ Phase 3: Migrating real-time integration types...")
+        var compatibility = DashboardCompatibility()
         
-        try await validateActorCompatibility()
-        try await validateBuildingMetricsIntegration()
-        try await validateRealTimeSubscriptions()
+        // Check worker dashboard requirements
+        let workers = try await workerService.getAllActiveWorkers()
+        compatibility.workerDashboard.total = workers.count
+        compatibility.workerDashboard.compatible = workers.filter { worker in
+            worker.role == .worker && !worker.email.isEmpty
+        }.count
         
-        await recordMigrationPhase("Real-Time Types", itemsProcessed: 0)
-    }
-    
-    private func validateActorCompatibility() async throws {
-        print("🎭 Validating actor pattern compatibility...")
+        // Check admin dashboard requirements
+        compatibility.adminDashboard.total = workers.count
+        compatibility.adminDashboard.compatible = workers.filter { worker in
+            worker.role == .admin || worker.role == .manager
+        }.count
         
-        // Ensure all data types work with actor isolation
-        let actorCompatibility = await assessActorCompatibility()
-        print("📊 Actor compatibility: \(actorCompatibility)%")
-    }
-    
-    private func validateBuildingMetricsIntegration() async throws {
-        print("📊 Validating BuildingMetricsService integration...")
+        // Check client dashboard requirements
+        compatibility.clientDashboard.total = workers.count
+        compatibility.clientDashboard.compatible = workers.filter { worker in
+            worker.role == .client
+        }.count
         
-        // Test BuildingMetricsService with all buildings
+        // Check building metrics compatibility
         let buildings = try await buildingService.getAllBuildings()
         var metricsCompatible = 0
         
         for building in buildings {
             do {
-                let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
-                if isValidBuildingMetrics(metrics) {
-                    metricsCompatible += 1
-                }
+                _ = try await buildingMetricsService.calculateMetrics(for: building.id)
+                metricsCompatible += 1
             } catch {
-                print("⚠️ Building \(building.name) metrics calculation failed: \(error)")
+                compatibility.issues.append("Building \(building.name) metrics failed: \(error)")
             }
         }
         
-        print("✅ Building metrics compatibility: \(metricsCompatible)/\(buildings.count) buildings")
+        compatibility.buildingMetrics = (compatible: metricsCompatible, total: buildings.count)
+        
+        print("✅ Dashboard compatibility validated")
+        return compatibility
     }
     
-    private func validateRealTimeSubscriptions() async throws {
-        print("📡 Validating real-time subscription compatibility...")
-        
-        // Validate Combine integration readiness
-    }
+    // MARK: - Validation Methods
     
-    // MARK: - Phase 4: Nova AI Preparation
-    
-    private func prepareNovaAITypes() async throws {
-        print("🧠 Phase 4: Preparing Nova AI type system...")
+    private func validateWorkers() async {
+        print("👥 Validating workers...")
         
-        try await validateNovaAICompatibility()
-        try await prepareNovaContextTypes()
-        try await prepareNovaPromptTypes()
-        try await prepareNovaIntelligenceTypes()
-        
-        await recordMigrationPhase("Nova AI Preparation", itemsProcessed: 0)
-    }
-    
-    private func validateNovaAICompatibility() async throws {
-        print("🔮 Validating Nova AI compatibility...")
-        
-        // Ensure all existing types work with future Nova AI
-        let workers = try await workerService.getAllActiveWorkers()
-        let buildings = try await buildingService.getAllBuildings()
-        let tasks = try await taskService.getAllTasks()
-        
-        var novaReadyWorkers = 0
-        var novaReadyBuildings = 0
-        var novaReadyTasks = 0
-        
-        for worker in workers {
-            if isNovaAICompatible(worker) {
-                novaReadyWorkers += 1
+        do {
+            let workers = try await workerService.getAllActiveWorkers()
+            validationResults.totalWorkers = workers.count
+            
+            for worker in workers {
+                var issues: [String] = []
+                
+                // Validate required fields
+                if worker.name.isEmpty {
+                    issues.append("Empty name")
+                }
+                
+                if !isValidEmail(worker.email) {
+                    issues.append("Invalid email")
+                }
+                
+                // Validate role
+                if !isValidUserRole(worker.role) {
+                    issues.append("Invalid role")
+                }
+                
+                if issues.isEmpty {
+                    validationResults.validWorkers += 1
+                } else {
+                    validationResults.workerIssues[worker.id] = issues
+                }
             }
+        } catch {
+            validationResults.errors.append("Worker validation failed: \(error)")
         }
+    }
+    
+    private func validateBuildings() async {
+        print("🏢 Validating buildings...")
         
-        for building in buildings {
-            if isNovaAICompatible(building) {
-                novaReadyBuildings += 1
+        do {
+            let buildings = try await buildingService.getAllBuildings()
+            validationResults.totalBuildings = buildings.count
+            
+            for building in buildings {
+                var issues: [String] = []
+                
+                // Validate required fields
+                if building.name.isEmpty {
+                    issues.append("Empty name")
+                }
+                
+                // Validate coordinates
+                if building.latitude == 0 && building.longitude == 0 {
+                    issues.append("Invalid coordinates")
+                }
+                
+                // Check for image asset
+                if building.imageAssetName == nil {
+                    issues.append("Missing image asset")
+                }
+                
+                if issues.isEmpty {
+                    validationResults.validBuildings += 1
+                } else {
+                    validationResults.buildingIssues[building.id] = issues
+                }
             }
+        } catch {
+            validationResults.errors.append("Building validation failed: \(error)")
         }
+    }
+    
+    private func validateTasks() async {
+        print("📋 Validating tasks...")
         
-        for task in tasks {
-            if isNovaAIReady(task) {
-                novaReadyTasks += 1
+        do {
+            let tasks = try await taskService.getAllTasks()
+            validationResults.totalTasks = tasks.count
+            
+            for task in tasks {
+                var issues: [String] = []
+                
+                // Validate required fields
+                if task.title.isEmpty {
+                    issues.append("Empty title")
+                }
+                
+                // Validate optional fields
+                if task.category == nil {
+                    issues.append("Missing category")
+                }
+                
+                if task.urgency == nil {
+                    issues.append("Missing urgency")
+                }
+                
+                if issues.isEmpty {
+                    validationResults.validTasks += 1
+                } else {
+                    validationResults.taskIssues[task.id] = issues
+                }
             }
+        } catch {
+            validationResults.errors.append("Task validation failed: \(error)")
         }
-        
-        print("🧠 Nova AI readiness:")
-        print("   👥 Workers: \(novaReadyWorkers)/\(workers.count)")
-        print("   🏢 Buildings: \(novaReadyBuildings)/\(buildings.count)")
-        print("   📋 Tasks: \(novaReadyTasks)/\(tasks.count)")
     }
     
-    private func prepareNovaContextTypes() async throws {
-        print("🎯 Preparing Nova context types...")
+    private func validateAssignments() async {
+        print("🔗 Validating assignments...")
         
-        // Validate data structures for Nova context aggregation
-    }
-    
-    private func prepareNovaPromptTypes() async throws {
-        print("💬 Preparing Nova prompt types...")
-        
-        // Validate data structures for Nova prompt generation
-    }
-    
-    private func prepareNovaIntelligenceTypes() async throws {
-        print("🧩 Preparing Nova intelligence types...")
-        
-        // Validate data structures for Nova AI intelligence
-    }
-    
-    // MARK: - Phase 5: Migration Validation
-    
-    private func validateMigrationIntegrity() async throws {
-        print("🔍 Phase 5: Validating migration integrity...")
-        
-        try await validateDataConsistency()
-        try await validatePerformanceImpact()
-        try await validateRegressionTests()
-        
-        await recordMigrationPhase("Migration Validation", itemsProcessed: 0)
-    }
-    
-    private func validateDataConsistency() async throws {
-        print("📊 Validating data consistency...")
-        
-        // Comprehensive data integrity checks
-    }
-    
-    private func validatePerformanceImpact() async throws {
-        print("⚡ Validating performance impact...")
-        
-        // Ensure migration doesn't degrade performance
-    }
-    
-    private func validateRegressionTests() async throws {
-        print("🧪 Running regression tests...")
-        
-        // Validate that existing functionality still works
+        // Validate worker-building assignments
+        // This would check the worker_building_assignments table
+        // Implementation depends on specific requirements
     }
     
     // MARK: - Validation Helpers
     
     private func isValidUserRole(_ role: UserRole) -> Bool {
-        // ✅ FIXED: Only use actual UserRole cases
+        // All UserRole cases are valid
         switch role {
-        case .worker, .admin, .client:
-            return true
-        }
-    }
-    
-    private func isValidTaskCategory(_ category: TaskCategory) -> Bool {
-        switch category {
-        case .cleaning, .maintenance, .repair, .sanitation, .inspection,
-             .landscaping, .security, .emergency, .installation, .utilities, .renovation, .administrative:
-            return true
-        }
-    }
-    
-    private func isValidTaskUrgency(_ urgency: TaskUrgency) -> Bool {
-        switch urgency {
-        case .low, .medium, .high, .critical, .emergency, .urgent:
+        case .worker, .admin, .client, .manager:  // ✅ FIXED: Added .manager case
             return true
         }
     }
@@ -476,193 +275,120 @@ actor TypeMigrationService {
         return emailPredicate.evaluate(with: email)
     }
     
-    private func hasValidDashboardPermissions(_ worker: WorkerProfile) -> Bool {
-        // Check if worker has appropriate permissions for dashboard access
-        return true // Placeholder - implement actual permission validation
-    }
-    
-    private func hasValidImageAsset(_ building: NamedCoordinate) -> Bool {
-        // Check if building has associated image asset
-        // Note: NamedCoordinate doesn't have imageAssetName property, this would need to be checked elsewhere
-        return true // Placeholder
-    }
-    
-    private func isDashboardReady(_ building: NamedCoordinate) -> Bool {
-        // Check if building is ready for dashboard integration
-        return building.coordinate.latitude != 0 && building.coordinate.longitude != 0
-    }
-    
-    private func isDashboardCompatible(_ task: ContextualTask) -> Bool {
-        // ✅ FIXED: task.title is String, not optional
-        return !task.title.isEmpty
-    }
-    
-    private func isNovaAIReady(_ task: ContextualTask) -> Bool {
-        // Check if task has sufficient data for Nova AI
-        return task.category != nil && task.urgency != nil
-    }
-    
     private func isNovaAICompatible(_ worker: WorkerProfile) -> Bool {
-        // Check if worker data works with Nova AI
-        return !worker.name.isEmpty && isValidEmail(worker.email)
+        return !worker.name.isEmpty &&
+               isValidEmail(worker.email) &&
+               !(worker.skills?.isEmpty ?? true)  // ✅ FIXED: Properly handle optional skills
     }
     
     private func isNovaAICompatible(_ building: NamedCoordinate) -> Bool {
-        // Check if building data works with Nova AI
-        return isDashboardReady(building)
+        return !building.name.isEmpty &&
+               building.latitude != 0 &&
+               building.longitude != 0
     }
     
-    private func isValidBuildingMetrics(_ metrics: CoreTypes.BuildingMetrics) -> Bool {
-        // Validate building metrics data
-        return metrics.completionRate >= 0 && metrics.completionRate <= 1
-    }
-    
-    private func mapToDashboardRole(_ role: UserRole) -> UserRole {
-        // ✅ FIXED: Map existing roles to dashboard-compatible roles
-        switch role {
-        case .worker:
-            return .worker
-        case .admin:
-            return .admin
-        case .client:
-            return .client
-        }
-    }
-    
-    private func getDashboardRoles(for worker: WorkerProfile) -> [String] {
-        // ✅ FIXED: Determine which dashboard roles a worker can access
-        switch worker.role {
-        case .worker: return ["worker"]
-        case .admin: return ["worker", "admin"]
-        case .client: return ["client"]
-        }
-    }
-    
-    private func getPropertyCardModes(for building: NamedCoordinate) -> [String] {
-        // Determine which PropertyCard modes work for a building
-        if isDashboardReady(building) {
-            return ["dashboard", "admin", "client", "minimal"]
-        } else {
-            return ["minimal"]
-        }
-    }
-    
-    // MARK: - Assessment Methods
-    
-    private func assessDashboardReadiness() async -> (worker: Int, admin: Int, client: Int) {
-        // Assess readiness for each dashboard type
-        return (worker: 85, admin: 75, client: 70) // Placeholder percentages
-    }
-    
-    private func assessActorCompatibility() async -> Int {
-        // Assess actor pattern compatibility
-        return 95 // Placeholder percentage
-    }
-    
-    // MARK: - Migration Tracking
-    
-    private func recordMigrationPhase(_ phase: String, itemsProcessed: Int) async {
-        let record = MigrationRecord(
-            sessionId: currentMigrationSession ?? UUID(),
-            phase: phase,
-            timestamp: Date(),
-            itemsProcessed: itemsProcessed,
-            status: .completed
-        )
-        migrationHistory.append(record)
-    }
-    
-    private func recordMigrationFailure(sessionId: UUID, error: Error) async {
-        let record = MigrationRecord(
-            sessionId: sessionId,
-            phase: "Migration Failed",
-            timestamp: Date(),
-            itemsProcessed: 0,
-            status: .failed,
-            error: error.localizedDescription
-        )
-        migrationHistory.append(record)
-    }
-    
-    private func generateMigrationSummary() async -> String {
-        let completedPhases = migrationHistory.filter { $0.status == .completed }.count
-        let failedPhases = migrationHistory.filter { $0.status == .failed }.count
-        let totalItems = migrationHistory.reduce(0) { $0 + $1.itemsProcessed }
-        
-        return "\(completedPhases) phases completed, \(failedPhases) failed, \(totalItems) items processed"
-    }
-    
-    // MARK: - Migration Status
-    
-    func getMigrationStatus() async -> MigrationStatus {
-        let isComplete = migrationHistory.contains { $0.phase == "Migration Validation" && $0.status == .completed }
-        let lastMigration = migrationHistory.last?.timestamp ?? Date()
-        let totalItems = migrationHistory.reduce(0) { $0 + $1.itemsProcessed }
-        let pendingMigrations = calculatePendingMigrations()
-        
-        return MigrationStatus(
-            isComplete: isComplete,
-            lastMigrationDate: lastMigration,
-            migratedItemsCount: totalItems,
-            pendingMigrationsCount: pendingMigrations,
-            novaAIReadiness: await calculateNovaAIReadiness(),
-            dashboardReadiness: await assessDashboardReadiness()
-        )
-    }
-    
-    private func calculatePendingMigrations() -> Int {
-        // Calculate number of pending migrations
-        return 0 // Placeholder
-    }
-    
-    private func calculateNovaAIReadiness() async -> Int {
-        // Calculate Nova AI readiness percentage
-        return 60 // Placeholder percentage
+    private func isNovaAIReady(_ task: ContextualTask) -> Bool {
+        return !task.title.isEmpty &&
+               task.category != nil &&
+               task.urgency != nil
     }
 }
 
-// MARK: - Migration Types
+// MARK: - Result Types
 
-struct MigrationStatus {
-    let isComplete: Bool
-    let lastMigrationDate: Date
-    let migratedItemsCount: Int
-    let pendingMigrationsCount: Int
-    let novaAIReadiness: Int
-    let dashboardReadiness: (worker: Int, admin: Int, client: Int)
+public struct ValidationResults {
+    var totalWorkers = 0
+    var validWorkers = 0
+    var workerIssues: [String: [String]] = [:]
+    
+    var totalBuildings = 0
+    var validBuildings = 0
+    var buildingIssues: [String: [String]] = [:]
+    
+    var totalTasks = 0
+    var validTasks = 0
+    var taskIssues: [String: [String]] = [:]
+    
+    var errors: [String] = []
     
     var summary: String {
+        let workerPercentage = totalWorkers > 0 ? (validWorkers * 100 / totalWorkers) : 0
+        let buildingPercentage = totalBuildings > 0 ? (validBuildings * 100 / totalBuildings) : 0
+        let taskPercentage = totalTasks > 0 ? (validTasks * 100 / totalTasks) : 0
+        
         return """
-        Migration Complete: \(isComplete)
-        Last Migration: \(lastMigrationDate.formatted(.dateTime))
-        Items Migrated: \(migratedItemsCount)
-        Pending Migrations: \(pendingMigrationsCount)
-        Nova AI Readiness: \(novaAIReadiness)%
-        Dashboard Readiness: Worker(\(dashboardReadiness.worker)%) Admin(\(dashboardReadiness.admin)%) Client(\(dashboardReadiness.client)%)
+        Workers: \(validWorkers)/\(totalWorkers) (\(workerPercentage)%)
+        Buildings: \(validBuildings)/\(totalBuildings) (\(buildingPercentage)%)
+        Tasks: \(validTasks)/\(totalTasks) (\(taskPercentage)%)
+        Errors: \(errors.count)
         """
     }
-}
-
-struct MigrationRecord {
-    let sessionId: UUID
-    let phase: String
-    let timestamp: Date
-    let itemsProcessed: Int
-    let status: MigrationRecordStatus
-    let error: String?
     
-    init(sessionId: UUID, phase: String, timestamp: Date, itemsProcessed: Int, status: MigrationRecordStatus, error: String? = nil) {
-        self.sessionId = sessionId
-        self.phase = phase
-        self.timestamp = timestamp
-        self.itemsProcessed = itemsProcessed
-        self.status = status
-        self.error = error
+    var hasIssues: Bool {
+        return !workerIssues.isEmpty || !buildingIssues.isEmpty || !taskIssues.isEmpty || !errors.isEmpty
     }
 }
 
-enum MigrationRecordStatus {
-    case completed
-    case failed
-    case inProgress
+public struct NovaAIReadiness {
+    var totalWorkers = 0
+    var compatibleWorkers = 0
+    
+    var totalBuildings = 0
+    var compatibleBuildings = 0
+    
+    var totalTasks = 0
+    var compatibleTasks = 0
+    
+    var issues: [String] = []
+    
+    var readinessPercentage: Int {
+        let total = totalWorkers + totalBuildings + totalTasks
+        let compatible = compatibleWorkers + compatibleBuildings + compatibleTasks
+        return total > 0 ? (compatible * 100 / total) : 0
+    }
+    
+    var isReady: Bool {
+        return readinessPercentage >= 80
+    }
 }
+
+public struct DashboardCompatibility {
+    var workerDashboard: (compatible: Int, total: Int) = (0, 0)
+    var adminDashboard: (compatible: Int, total: Int) = (0, 0)
+    var clientDashboard: (compatible: Int, total: Int) = (0, 0)
+    var buildingMetrics: (compatible: Int, total: Int) = (0, 0)
+    var issues: [String] = []
+    
+    var overallCompatibility: Int {
+        let totalCompatible = workerDashboard.compatible + adminDashboard.compatible +
+                            clientDashboard.compatible + buildingMetrics.compatible
+        let totalItems = workerDashboard.total + adminDashboard.total +
+                        clientDashboard.total + buildingMetrics.total
+        return totalItems > 0 ? (totalCompatible * 100 / totalItems) : 0
+    }
+}
+
+// MARK: - Usage Example
+/*
+ // In AppDelegate or during development:
+ 
+ Task {
+     let migrationService = TypeMigrationService.shared
+     
+     // Validate data integrity
+     let validation = try await migrationService.validateDataIntegrity()
+     if validation.hasIssues {
+         print("⚠️ Data validation found issues: \(validation.summary)")
+     }
+     
+     // Check Nova AI readiness
+     let novaReadiness = try await migrationService.prepareForNovaAI()
+     if !novaReadiness.isReady {
+         print("⚠️ Not ready for Nova AI: \(novaReadiness.readinessPercentage)%")
+     }
+     
+     // Validate dashboard compatibility
+     let dashboardCompat = try await migrationService.validateDashboardCompatibility()
+     print("📊 Dashboard compatibility: \(dashboardCompat.overallCompatibility)%")
+ }
+ */

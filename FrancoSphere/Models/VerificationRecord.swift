@@ -1,10 +1,10 @@
-//
 //  VerificationRecord.swift
 //  FrancoSphere
 //
 //  ✅ FIXED: Aligned with CoreTypes.VerificationStatus
 //  ✅ FIXED: TaskCompletionRecord initializer
 //  ✅ FIXED: All enum values corrected
+//  ✅ FIXED: Removed non-existent .needsReview case
 //
 
 import Foundation
@@ -15,7 +15,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
     public let buildingId: String
     public let workerId: String
     public let verificationDate: Date
-    public let status: CoreTypes.VerificationStatus  // ✅ FIXED: Use CoreTypes
+    public let status: CoreTypes.VerificationStatus
     public let notes: String?
     public let photoPaths: [String]
     
@@ -25,7 +25,7 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
         buildingId: String,
         workerId: String,
         verificationDate: Date = Date(),
-        status: CoreTypes.VerificationStatus = .pending,  // ✅ FIXED: CoreTypes
+        status: CoreTypes.VerificationStatus = .pending,
         notes: String? = nil,
         photoPaths: [String] = []
     ) {
@@ -53,12 +53,12 @@ public struct VerificationRecord: Identifiable, Codable, Hashable, Equatable {
 // MARK: - Helper Methods
 extension VerificationRecord {
     
-    // ✅ FIXED: Correct TaskCompletionRecord initializer
     func createCompletionRecord() -> CoreTypes.TaskCompletionRecord {
         return CoreTypes.TaskCompletionRecord(
             taskId: taskId,
             completedDate: verificationDate,
-            workerId: workerId
+            workerId: workerId,
+            verificationStatus: status
         )
     }
     
@@ -75,9 +75,16 @@ extension VerificationRecord {
         )
     }
     
-    // ✅ FIXED: Use .verified instead of .approved
     var isCompleted: Bool {
         return status == .verified
+    }
+    
+    var isPending: Bool {
+        return status == .pending
+    }
+    
+    var isRejected: Bool {
+        return status == .rejected
     }
     
     var formattedDate: String {
@@ -94,6 +101,19 @@ extension VerificationRecord {
     var photoCount: Int {
         return photoPaths.count
     }
+    
+    var statusDescription: String {
+        switch status {
+        case .pending:
+            return "Awaiting verification"
+        case .verified:
+            return "Verified and approved"
+        case .rejected:
+            return "Rejected - needs revision"
+        case .notRequired:
+            return "Verification not required"
+        }
+    }
 }
 
 // MARK: - Codable Conformance (Consistent property names)
@@ -109,7 +129,7 @@ extension VerificationRecord {
         buildingId = try container.decode(String.self, forKey: .buildingId)
         workerId = try container.decode(String.self, forKey: .workerId)
         verificationDate = try container.decode(Date.self, forKey: .verificationDate)
-        status = try container.decode(CoreTypes.VerificationStatus.self, forKey: .status)  // ✅ FIXED
+        status = try container.decode(CoreTypes.VerificationStatus.self, forKey: .status)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         photoPaths = try container.decode([String].self, forKey: .photoPaths)
     }
@@ -135,7 +155,7 @@ extension VerificationRecord {
                 taskId: "task_001",
                 buildingId: "14", // Rubin Museum
                 workerId: "kevin",
-                status: .verified,  // ✅ FIXED: Use .verified instead of .approved
+                status: .verified,
                 notes: "Cleaning completed successfully. All areas thoroughly sanitized.",
                 photoPaths: ["rubin_cleaning_before.jpg", "rubin_cleaning_after.jpg"]
             ),
@@ -151,15 +171,15 @@ extension VerificationRecord {
                 taskId: "task_003",
                 buildingId: "1", // 12 West 18th Street
                 workerId: "kevin",
-                status: .needsReview,  // ✅ FIXED: Use .needsReview instead of .requiresReview
-                notes: "Additional documentation needed for electrical inspection.",
+                status: .pending,  // Changed from .needsReview to .pending
+                notes: "Additional documentation needed for electrical inspection. Pending review.",
                 photoPaths: ["electrical_panel.jpg", "circuit_breaker.jpg"]
             ),
             VerificationRecord(
                 taskId: "task_004",
                 buildingId: "14", // Rubin Museum
                 workerId: "kevin",
-                status: .verified,  // ✅ FIXED: Use .verified instead of .approved
+                status: .verified,
                 notes: "Landscaping maintenance completed. Sidewalk cleaned and cleared.",
                 photoPaths: ["sidewalk_before.jpg", "sidewalk_after.jpg", "garden_maintenance.jpg"]
             ),
@@ -167,9 +187,17 @@ extension VerificationRecord {
                 taskId: "task_005",
                 buildingId: "2", // 29-31 East 20th Street
                 workerId: "kevin",
-                status: .rejected,  // ✅ FIXED: Use .rejected instead of .failed
-                notes: "Task could not be completed due to equipment malfunction.",
+                status: .rejected,
+                notes: "Task could not be completed due to equipment malfunction. Needs rescheduling.",
                 photoPaths: ["equipment_issue.jpg"]
+            ),
+            VerificationRecord(
+                taskId: "task_006",
+                buildingId: "14", // Rubin Museum
+                workerId: "kevin",
+                status: .notRequired,
+                notes: "Routine check - no verification needed for this task type.",
+                photoPaths: []
             )
         ]
     }
@@ -179,9 +207,38 @@ extension VerificationRecord {
             taskId: "sample_task_\(UUID().uuidString.prefix(8))",
             buildingId: buildingId,
             workerId: workerId,
-            status: .verified,  // ✅ FIXED: Use .verified instead of .approved
+            status: .verified,
             notes: "Sample verification record for testing purposes.",
             photoPaths: ["sample_photo_1.jpg", "sample_photo_2.jpg"]
         )
+    }
+}
+
+// MARK: - UI Helpers
+extension VerificationRecord {
+    var statusColor: Color {
+        switch status {
+        case .pending:
+            return .orange
+        case .verified:
+            return .green
+        case .rejected:
+            return .red
+        case .notRequired:
+            return .gray
+        }
+    }
+    
+    var statusIcon: String {
+        switch status {
+        case .pending:
+            return "clock.fill"
+        case .verified:
+            return "checkmark.circle.fill"
+        case .rejected:
+            return "xmark.circle.fill"
+        case .notRequired:
+            return "minus.circle.fill"
+        }
     }
 }

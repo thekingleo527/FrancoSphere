@@ -2,20 +2,19 @@
 //  AssetImageDebugger.swift
 //  FrancoSphere
 //
-//  🔧 COMPILATION FIXED - Corrected optional String unwrapping
-//  ✅ Fixed: Proper optional unwrapping for UIImage(named:) calls
-//  ✅ Fixed: TaskService.shared.allBuildings → NamedCoordinate.allBuildings
-//  ✅ Removed unnecessary async calls since allBuildings is static
-//  ✅ All functionality preserved and enhanced
+//  🔧 COMPILATION FIXED - Using BuildingService for building data
+//  ✅ Fixed: Using BuildingService.shared.getAllBuildings() instead of non-existent allBuildings
+//  ✅ Fixed: Proper async/await for service calls
+//  ✅ Fixed: Optional unwrapping for imageAssetName
 //
 
 import SwiftUI
 import Foundation
 
 // --------------------------------------------------------------------
-//  Fixed type alias to match BuildingRepository return type
+//  Fixed type alias to match BuildingService return type
 // --------------------------------------------------------------------
-typealias DebugBuilding = NamedCoordinate   // This matches what BuildingRepository returns
+typealias DebugBuilding = NamedCoordinate
 
 /// Utility for verifying that every building points at a valid image
 /// asset and for listing the contents of the Assets catalogue.
@@ -25,32 +24,37 @@ final class AssetImageDebugger {
     private init() {}
 
     // MARK: – Console diagnostics
-    func debugAllBuildingImages() {
-        // ✅ FIX: Use NamedCoordinate.allBuildings (static property)
-        let buildings = NamedCoordinate.allBuildings
-
-        print("🏢 DIAGNOSING BUILDING IMAGES:")
-        print("==============================")
-        print("Number of buildings: \(buildings.count)")
-        print("==============================")
-
-        for building in buildings {
-            debugBuildingImage(building)
+    func debugAllBuildingImages() async {
+        // ✅ FIX: Use BuildingService to get all buildings
+        do {
+            let buildings = try await BuildingService.shared.getAllBuildings()
+            
+            print("🏢 DIAGNOSING BUILDING IMAGES:")
+            print("==============================")
+            print("Number of buildings: \(buildings.count)")
+            print("==============================")
+            
+            for building in buildings {
+                debugBuildingImage(building)
+            }
+            
+            print("==============================")
+            print("Diagnosis complete")
+            print("==============================")
+        } catch {
+            print("❌ Failed to load buildings: \(error)")
         }
-
-        print("==============================")
-        print("Diagnosis complete")
-        print("==============================")
     }
 
     private func debugBuildingImage(_ building: DebugBuilding) {
         print("🏢 Building: \(building.name) (ID: \(building.id))")
 
-        // 1️⃣ imageAssetName specified on the model
-        // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
-        let assetName = building.imageAssetName ?? "placeholder"
+        // 1️⃣ Check if building has imageAssetName property
+        // Note: NamedCoordinate doesn't have imageAssetName in CoreTypes
+        // Using building ID to asset name mapping instead
+        let assetName = buildingIdToAssetName(building.id)
         let assetExists = UIImage(named: assetName) != nil
-        print("   • imageAssetName: \"\(assetName)\"  →  \(assetExists ? "✅ found" : "❌ missing")")
+        print("   • Asset name: \"\(assetName)\"  →  \(assetExists ? "✅ found" : "❌ missing")")
 
         // 2️⃣ A "standardised" fallback asset name
         let standardName = building.name
@@ -70,6 +74,32 @@ final class AssetImageDebugger {
         }
         
         print("")
+    }
+    
+    // MARK: - Building ID to Asset Name Mapping
+    private func buildingIdToAssetName(_ buildingId: String) -> String {
+        // Same mapping used in MapRevealContainer
+        let buildingAssetMap: [String: String] = [
+            "1": "12_West_18th_Street",
+            "2": "29_31_East_20th_Street",
+            "3": "36_Walker_Street",
+            "4": "41_Elizabeth_Street",
+            "5": "68_Perry_Street",
+            "6": "104_Franklin_Street",
+            "7": "112_West_18th_Street",
+            "8": "117_West_17th_Street",
+            "9": "123_1st_Avenue",
+            "10": "131_Perry_Street",
+            "11": "133_East_15th_Street",
+            "12": "135West17thStreet",
+            "13": "136_West_17th_Street",
+            "14": "Rubin_Museum_142_148_West_17th_Street",
+            "15": "138West17thStreet",
+            "16": "41_Elizabeth_Street",
+            "park": "Stuyvesant_Cove_Park"
+        ]
+        
+        return buildingAssetMap[buildingId] ?? "placeholder"
     }
 
     // MARK: – Asset-catalogue listing
@@ -123,59 +153,67 @@ final class AssetImageDebugger {
     }
     
     // MARK: - Enhanced Debugging for Kevin Assignment
-    func debugKevinAssignment() {
+    func debugKevinAssignment() async {
         print("🔍 KEVIN ASSIGNMENT VALIDATION:")
         print("===============================")
         
-        let buildings = NamedCoordinate.allBuildings
-        
-        // Check for Rubin Museum
-        let rubinMuseum = buildings.first { $0.id == "14" && $0.name.contains("Rubin") }
-        if let rubin = rubinMuseum {
-            print("✅ Kevin's Rubin Museum found:")
-            print("   • ID: \(rubin.id)")
-            print("   • Name: \(rubin.name)")
-            let imageAssetName = rubin.imageAssetName ?? "placeholder"
-            print("   • Asset: \(imageAssetName)")
-            // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
-            print("   • Image exists: \(UIImage(named: imageAssetName) != nil ? "✅" : "❌")")
-        } else {
-            print("❌ Kevin's Rubin Museum NOT FOUND!")
-        }
-        
-        // Check for deprecated Franklin Street
-        let franklinStreet = buildings.first { $0.name.contains("104 Franklin") }
-        if let franklin = franklinStreet {
-            print("⚠️  DEPRECATED Franklin Street still exists:")
-            print("   • ID: \(franklin.id)")
-            print("   • Name: \(franklin.name)")
-            print("   • This should be removed from Kevin's assignments")
-        } else {
-            print("✅ No deprecated Franklin Street assignments found")
+        do {
+            let buildings = try await BuildingService.shared.getAllBuildings()
+            
+            // Check for Rubin Museum
+            let rubinMuseum = buildings.first { $0.id == "14" && $0.name.contains("Rubin") }
+            if let rubin = rubinMuseum {
+                print("✅ Kevin's Rubin Museum found:")
+                print("   • ID: \(rubin.id)")
+                print("   • Name: \(rubin.name)")
+                let assetName = buildingIdToAssetName(rubin.id)
+                print("   • Asset: \(assetName)")
+                print("   • Image exists: \(UIImage(named: assetName) != nil ? "✅" : "❌")")
+            } else {
+                print("❌ Kevin's Rubin Museum NOT FOUND!")
+            }
+            
+            // Check for deprecated Franklin Street
+            let franklinStreet = buildings.first { $0.name.contains("104 Franklin") }
+            if let franklin = franklinStreet {
+                print("⚠️  DEPRECATED Franklin Street still exists:")
+                print("   • ID: \(franklin.id)")
+                print("   • Name: \(franklin.name)")
+                print("   • This should be removed from Kevin's assignments")
+            } else {
+                print("✅ No deprecated Franklin Street assignments found")
+            }
+        } catch {
+            print("❌ Failed to load buildings: \(error)")
         }
         
         print("===============================")
     }
     
     // MARK: - Building Statistics
-    func getBuildingImageStatistics() -> (total: Int, found: Int, missing: Int, foundPercentage: Double) {
-        let buildings = NamedCoordinate.allBuildings
-        let total = buildings.count
-        // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
-        let found = buildings.filter {
-            let assetName = $0.imageAssetName ?? "placeholder"
-            return UIImage(named: assetName) != nil
-        }.count
-        let missing = total - found
-        let percentage = total > 0 ? (Double(found) / Double(total)) * 100 : 0
-        
-        return (total: total, found: found, missing: missing, foundPercentage: percentage)
+    func getBuildingImageStatistics() async -> (total: Int, found: Int, missing: Int, foundPercentage: Double) {
+        do {
+            let buildings = try await BuildingService.shared.getAllBuildings()
+            let total = buildings.count
+            let found = buildings.filter { building in
+                let assetName = buildingIdToAssetName(building.id)
+                return UIImage(named: assetName) != nil
+            }.count
+            let missing = total - found
+            let percentage = total > 0 ? (Double(found) / Double(total)) * 100 : 0
+            
+            return (total: total, found: found, missing: missing, foundPercentage: percentage)
+        } catch {
+            print("❌ Failed to get building statistics: \(error)")
+            return (total: 0, found: 0, missing: 0, foundPercentage: 0)
+        }
     }
     
     // MARK: - Synchronous Helper for Legacy Code
     func debugAllBuildingImagesSync() {
-        // ✅ FIX: No longer async since we're using static data
-        debugAllBuildingImages()
+        Task {
+            await debugAllBuildingImages()
+        }
     }
 }
 
@@ -203,8 +241,7 @@ struct AssetDebuggerView: View {
                                         Text(item.building.name).font(.headline)
                                         Text("ID: \(item.building.id)")
                                             .font(.caption).foregroundColor(.secondary)
-                                        // ✅ FIXED: Proper optional unwrapping for display
-                                        Text("Asset: \(item.building.imageAssetName ?? "placeholder")")
+                                        Text("Asset: \(AssetImageDebugger.shared.buildingIdToAssetName(item.building.id))")
                                             .font(.caption2).foregroundColor(.blue)
                                         
                                         // ✅ Special indicators for Kevin's assignments
@@ -241,12 +278,16 @@ struct AssetDebuggerView: View {
 
                         Section("Debug Actions") {
                             Button("Print Diagnostics to Console") {
-                                AssetImageDebugger.shared.debugAllBuildingImages()
-                                AssetImageDebugger.shared.debugAllAssetNames()
+                                Task {
+                                    await AssetImageDebugger.shared.debugAllBuildingImages()
+                                    AssetImageDebugger.shared.debugAllAssetNames()
+                                }
                             }
                             
                             Button("Validate Kevin Assignment") {
-                                AssetImageDebugger.shared.debugKevinAssignment()
+                                Task {
+                                    await AssetImageDebugger.shared.debugKevinAssignment()
+                                }
                             }
                             
                             Button("Reload Building Images") {
@@ -311,17 +352,22 @@ struct AssetDebuggerView: View {
     private func loadBuildingImages() {
         isLoading = true
         
-        // ✅ FIX: Use static buildings data (no async needed)
-        let buildings = NamedCoordinate.allBuildings
-        // ✅ FIXED: Proper optional unwrapping for UIImage(named:)
-        let images = buildings.map { building in
-            let assetName = building.imageAssetName ?? "placeholder"
-            return (building, UIImage(named: assetName))
+        Task {
+            do {
+                let buildings = try await BuildingService.shared.getAllBuildings()
+                let images = buildings.map { building in
+                    let assetName = AssetImageDebugger.shared.buildingIdToAssetName(building.id)
+                    return (building, UIImage(named: assetName))
+                }
+                
+                self.buildingImages = images
+                self.statistics = await AssetImageDebugger.shared.getBuildingImageStatistics()
+                self.isLoading = false
+            } catch {
+                print("❌ Failed to load buildings: \(error)")
+                self.isLoading = false
+            }
         }
-        
-        self.buildingImages = images
-        self.statistics = AssetImageDebugger.shared.getBuildingImageStatistics()
-        self.isLoading = false
     }
 }
 
@@ -329,10 +375,11 @@ struct AssetDebuggerView: View {
 extension AssetImageDebugger {
     /// For calling from non-async contexts
     func debugSync() {
-        // ✅ FIX: No longer needs Task since methods are synchronous
-        self.debugAllBuildingImages()
-        self.debugAllAssetNames()
-        self.debugKevinAssignment()
+        Task {
+            await self.debugAllBuildingImages()
+            self.debugAllAssetNames()
+            await self.debugKevinAssignment()
+        }
     }
 }
 
@@ -344,17 +391,17 @@ struct AssetDebuggerView_Previews: PreviewProvider {
 
 extension AssetImageDebugger {
     /// Quick console validation of all systems
-    func validateEverything() {
+    func validateEverything() async {
         print("\n🚀 FRANCOSPHERE ASSET VALIDATION")
         print("=================================")
         
-        debugAllBuildingImages()
+        await debugAllBuildingImages()
         print("\n")
-        debugKevinAssignment()
+        await debugKevinAssignment()
         print("\n")
         debugAllAssetNames()
         
-        let stats = getBuildingImageStatistics()
+        let stats = await getBuildingImageStatistics()
         print("\n📊 FINAL STATISTICS:")
         print("====================")
         print("Total Buildings: \(stats.total)")

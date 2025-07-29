@@ -5,23 +5,20 @@
 //  ✅ FIXED: Dark mode empty state styling
 //  ✅ FIXED: Proper background colors
 //  ✅ ADDED: Better empty state messaging
+//  ✅ FIXED: Compilation errors (address property, getPrimaryBuilding)
+//  ✅ UPDATED: Uses WorkerContextEngine directly
+//  ✅ INTEGRATED: Uses BuildingConstants for image mapping
 //
 
 import SwiftUI
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-// COMPILATION FIX: Add missing imports
 import Foundation
 
 struct AssignedBuildingsView: View {
-    @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     @Environment(\.dismiss) private var dismiss
     
     var assignedBuildings: [NamedCoordinate] {
-        contextAdapter.assignedBuildings
+        contextEngine.assignedBuildings
     }
     
     var body: some View {
@@ -73,6 +70,9 @@ struct AssignedBuildingsView: View {
             
             Button("Contact Supervisor") {
                 // Handle contact supervisor action
+                if let url = URL(string: "mailto:shawn@francomanagementgroup.com?subject=Building%20Assignment%20Request") {
+                    UIApplication.shared.open(url)
+                }
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 12)
@@ -98,7 +98,7 @@ struct AssignedBuildingsView: View {
 
 struct AssignedBuildingRow: View {
     let building: NamedCoordinate
-    @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     
     var body: some View {
         HStack(spacing: 16) {
@@ -107,35 +107,39 @@ struct AssignedBuildingRow: View {
             
             // Building info
             VStack(alignment: .leading, spacing: 6) {
-                Text(building.name)
+                Text(building.displayName)
                     .font(.headline)
                     .foregroundColor(.white)
                     .lineLimit(2)
                 
-                Text(building.address ?? "No address")
+                Text(building.fullAddress)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                 
                 HStack {
-                    if isPrimaryBuilding {
+                    if isCurrentBuilding {
+                        Label("CURRENT", systemImage: "location.fill")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    } else if isPrimaryAssignment {
                         Label("PRIMARY", systemImage: "star.fill")
                             .font(.caption)
                             .foregroundColor(.yellow)
                     } else {
                         Label("Assigned", systemImage: "checkmark.circle.fill")
                             .font(.caption)
-                            .foregroundColor(.green)
+                            .foregroundColor(.blue)
                     }
                     
                     Spacer()
                     
                     // Task count
-                    let taskCount = contextAdapter.getTasksForBuilding(building.id).count
+                    let taskCount = contextEngine.getTasksForBuilding(building.id).count
                     if taskCount > 0 {
                         Text("\(taskCount) tasks")
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.orange)
                     }
                 }
             }
@@ -152,7 +156,8 @@ struct AssignedBuildingRow: View {
     
     private var buildingImage: some View {
         Group {
-            if let image = UIImage(named: buildingImageName) {
+            if let assetName = building.imageAssetName,
+               let image = UIImage(named: assetName) {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -160,44 +165,30 @@ struct AssignedBuildingRow: View {
                     .cornerRadius(8)
             } else {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(building.buildingTypeColor.opacity(0.3))
                     .frame(width: 50, height: 50)
                     .overlay(
-                        Image(systemName: "building.2.fill")
+                        Image(systemName: building.buildingIcon)
                             .font(.system(size: 20))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(building.buildingTypeColor)
                     )
             }
         }
     }
     
-    private var isPrimaryBuilding: Bool {
-        building.id == contextAdapter.getPrimaryBuilding()?.id
+    private var isCurrentBuilding: Bool {
+        // Check if this is the building the worker is currently clocked into
+        return contextEngine.clockInStatus.isClockedIn &&
+               contextEngine.clockInStatus.building?.id == building.id
     }
     
-    private var buildingImageName: String {
-        switch building.id {
-        case "1": return "12_West_18th_Street"
-        case "3": return "135West17thStreet"
-        case "4": return "104_Franklin_Street"
-        case "5": return "138West17thStreet"
-        case "6": return "68_Perry_Street"
-        case "7": return "112_West_18th_Street"
-        case "8": return "41_Elizabeth_Street"
-        case "9": return "117_West_17th_Street"
-        case "10": return "131_Perry_Street"
-        case "13": return "136_West_17th_Street"
-        case "14": return "Rubin_Museum_142_148_West_17th_Street"
-        case "15": return "133_East_15th_Street"
-        case "16": return "Stuyvesant_Cove_Park"
-        case "17": return "178_Spring_Street"
-        case "18": return "36_Walker_Street"
-        case "20": return "FrancoSphere_HQ"
-        default: return "building_placeholder"
-        }
+    private var isPrimaryAssignment: Bool {
+        // Check if this is the first assigned building (primary)
+        return contextEngine.assignedBuildings.first?.id == building.id
     }
 }
 
+// MARK: - Preview
 struct AssignedBuildingsView_Previews: PreviewProvider {
     static var previews: some View {
         AssignedBuildingsView()
