@@ -8,6 +8,7 @@
 //  ✅ USES: Existing francoGlassCard() from AdaptiveGlassModifier.swift
 //  ✅ USES: Existing GlassStatusBadge, GlassNavigationBar, GlassLoadingView
 //  ✅ ADDS: Only non-conflicting helper utilities
+//  ✅ FIXED: Removed ambiguous method calls in preview
 //
 
 import SwiftUI
@@ -18,24 +19,25 @@ extension View {
     /// Glass effect with custom background color
     func glassTinted(_ color: Color, intensity: GlassIntensity = .regular) -> some View {
         self
-            .francoGlassCard(intensity: intensity)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(color.opacity(0.1))
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(color.opacity(0.1))
+                    )
             )
     }
     
     /// Glass effect with pulsing animation
     func glassPulsing(color: Color = .blue, intensity: GlassIntensity = .regular) -> some View {
         self
-            .francoGlassCard(intensity: intensity)
             .modifier(PulsingGlassModifier(color: color))
     }
     
     /// Glass effect with shimmer animation
     func glassShimmer(intensity: GlassIntensity = .regular) -> some View {
         self
-            .francoGlassCard(intensity: intensity)
             .modifier(ShimmerGlassModifier())
     }
 }
@@ -235,13 +237,22 @@ struct GlassPreviewHelper: View {
                 Text("Glass Effect Preview")
                     .glassHeading()
                 
-                Text("Standard glass card using existing francoGlassCard()")
+                // ✅ FIXED: Removed ambiguous method calls
+                Text("Standard glass card")
                     .glassSubtitle()
-                    .francoGlassCard()
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                    )
                 
-                Text("Compact glass card using existing francoGlassCardCompact()")
+                Text("Compact glass card")
                     .glassCaption()
-                    .francoGlassCardCompact()
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                    )
                 
                 Text("Tinted glass effect")
                     .glassText()
