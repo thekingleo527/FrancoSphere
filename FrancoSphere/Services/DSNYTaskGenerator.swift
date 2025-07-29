@@ -3,6 +3,7 @@
 //  FrancoSphere
 //
 //  ✅ V6.0 FIXED: All GRDB access and parameter issues resolved
+//  ✅ FIXED: Added await for async isDatabaseReady() calls
 //
 
 import Foundation
@@ -13,7 +14,7 @@ class DSNYTaskGenerator {
     private init() {}
     
     func generateDSNYTasks(for buildingId: String, date: Date) async throws -> [CoreTypes.MaintenanceTask] {
-        guard GRDBManager.shared.isDatabaseReady() else {
+        guard await GRDBManager.shared.isDatabaseReady() else {  // ✅ FIXED: Added await
             print("⚠️ GRDB not ready")
             return []
         }
@@ -63,7 +64,7 @@ class DSNYTaskGenerator {
     }
     
     func scheduleRecurringDSNYTasks(for buildingId: String) async throws {
-        guard GRDBManager.shared.isDatabaseReady() else {
+        guard await GRDBManager.shared.isDatabaseReady() else {  // ✅ FIXED: Added await
             print("⚠️ GRDB not ready for scheduling")
             return
         }

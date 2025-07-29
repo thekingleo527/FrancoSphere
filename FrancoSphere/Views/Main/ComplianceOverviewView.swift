@@ -7,6 +7,8 @@
 //  ✅ FIXED: Added icon computation for issue types
 //  ✅ FIXED: Correct PortfolioIntelligence initializer
 //  ✅ FIXED: Broke up complex expressions
+//  ✅ FIXED: Removed imageAssetName from NamedCoordinate
+//  ✅ FIXED: Using FrancoSphereDesign.EnumColors for severity colors
 //  ✅ ALIGNED: With CoreTypes definitions and dashboard architecture
 //
 
@@ -623,12 +625,12 @@ struct ComplianceOverviewView: View {
     private func createMockIssues(count: Int) -> [ComplianceIssue] {
         guard count > 0 else { return [] }
         
+        // Fixed: Removed imageAssetName parameter
         let sampleBuilding = NamedCoordinate(
             id: "14",
             name: "Rubin Museum",
             latitude: 40.7402,
-            longitude: -73.9980,
-            imageAssetName: "rubin_museum"
+            longitude: -73.9980
         )
         
         var issues: [ComplianceIssue] = []
@@ -709,7 +711,7 @@ struct CriticalIssueRow: View {
             HStack(spacing: 12) {
                 Image(systemName: issueTypeIcon(issue.type))
                     .font(.title3)
-                    .foregroundColor(issue.severity.color)
+                    .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -773,7 +775,7 @@ struct ComplianceIssueCard: View {
                 HStack {
                     Image(systemName: issueTypeIcon(issue.type))
                         .font(.title3)
-                        .foregroundColor(issue.severity.color)
+                        .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text(issue.type.rawValue)
@@ -840,7 +842,7 @@ struct SeverityBadge: View {
             .foregroundColor(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(severity.color, in: Capsule())
+            .background(FrancoSphereDesign.EnumColors.complianceSeverity(severity), in: Capsule())
     }
 }
 
