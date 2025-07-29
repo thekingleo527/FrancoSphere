@@ -1,15 +1,13 @@
 //
 //  WorkerProfileView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: Uses correct property types and method calls
+//  ✅ CORRECTED: Proper optional handling and type references
 //  ✅ FUNCTIONAL: Matches actual CoreTypes and service interfaces
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
 
 struct WorkerProfileView: View {
     @StateObject private var viewModel = WorkerProfileViewModel()
@@ -25,7 +23,7 @@ struct WorkerProfileView: View {
                 
                 // Performance Section
                 if let metrics = viewModel.performanceMetrics {
-                    PerformanceMetricsView(metrics: metrics)  // ✅ FIXED: Removed CoreTypes prefix
+                    PerformanceMetricsView(metrics: metrics)
                 }
                 
                 // Recent Tasks Section
@@ -60,9 +58,18 @@ struct ProfileHeaderView: View {
     var body: some View {
         VStack(spacing: 12) {
             // Profile Image
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.blue)
+            if let profileImageUrl = worker.profileImageUrl,
+               let uiImage = UIImage(named: profileImageUrl) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 80, height: 80)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 80))
+                    .foregroundColor(.blue)
+            }
             
             Text(worker.name)
                 .font(.title2)
@@ -79,6 +86,7 @@ struct ProfileHeaderView: View {
                     .foregroundColor(.blue)
             }
             
+            // Only show phone number if it's not empty
             if !worker.phoneNumber.isEmpty {
                 Text(worker.phoneNumber)
                     .font(.caption)
@@ -93,6 +101,16 @@ struct ProfileHeaderView: View {
                     .font(.caption)
                     .foregroundColor(worker.isActive ? .green : .red)
             }
+            
+            // Hire date
+            VStack(spacing: 4) {
+                Text("Hire Date")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text(worker.hireDate, style: .date)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
         }
         .padding()
         .background(Color(.systemGray6))
@@ -105,14 +123,22 @@ struct PerformanceMetricsView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Performance")
-                .font(.headline)
-            
             HStack {
+                Text("Performance")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Text("Last updated: \(metrics.lastUpdate, style: .relative)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            HStack(spacing: 8) {
                 MetricCard(
                     title: "Efficiency",
                     value: "\(Int(metrics.efficiency * 100))%",
-                    color: .green
+                    color: metrics.efficiency > 0.8 ? .green : .orange
                 )
                 
                 MetricCard(
@@ -123,20 +149,31 @@ struct PerformanceMetricsView: View {
                 
                 MetricCard(
                     title: "Avg Time",
-                    value: "\(Int(metrics.averageTime / 60))m",
+                    value: formatTime(metrics.averageTime),
                     color: .orange
                 )
                 
                 MetricCard(
                     title: "Quality",
                     value: "\(Int(metrics.qualityScore * 100))%",
-                    color: .purple
+                    color: metrics.qualityScore > 0.8 ? .purple : .orange
                 )
             }
         }
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(12)
+    }
+    
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
     }
 }
 
@@ -146,17 +183,20 @@ struct MetricCard: View {
     let color: Color
     
     var body: some View {
-        VStack {
+        VStack(spacing: 4) {
             Text(value)
-                .font(.title2)
+                .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(color)
             
             Text(title)
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
     }
 }
 
@@ -169,12 +209,23 @@ struct RecentTasksView: View {
                 .font(.headline)
             
             if tasks.isEmpty {
-                Text("No recent tasks")
-                    .foregroundColor(.secondary)
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                        Text("No recent tasks")
+                            .foregroundColor(.secondary)
+                    }
                     .padding()
+                    Spacer()
+                }
             } else {
-                ForEach(tasks.prefix(5), id: \.id) { task in
-                    SimpleTaskRow(task: task)
+                VStack(spacing: 8) {
+                    ForEach(tasks.prefix(5), id: \.id) { task in
+                        SimpleTaskRow(task: task)
+                    }
                 }
             }
         }
@@ -184,30 +235,52 @@ struct RecentTasksView: View {
     }
 }
 
-// Simple task row to avoid conflicts
 struct SimpleTaskRow: View {
     let task: ContextualTask
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            // Status indicator
             Circle()
                 .fill(task.isCompleted ? Color.green : Color.orange)
                 .frame(width: 8, height: 8)
             
-            // ✅ FIXED: Use 'title' instead of 'name'
-            Text(task.title)
-                .font(.subheadline)
+            // Task info
+            VStack(alignment: .leading, spacing: 2) {
+                Text(task.title)
+                    .font(.subheadline)
+                    .lineLimit(1)
+                
+                if let building = task.building {
+                    Text(building.name)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
             
             Spacer()
             
+            // Urgency badge
             if let urgency = task.urgency {
                 Text(urgency.rawValue)
-                    .font(.caption)
+                    .font(.caption2)
+                    .fontWeight(.medium)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(urgencyColor(for: urgency))
                     .foregroundColor(.white)
                     .cornerRadius(4)
+            }
+            
+            // Completion date or due date
+            if task.isCompleted, let completedDate = task.completedDate {
+                Text(completedDate, style: .time)
+                    .font(.caption2)
+                    .foregroundColor(.green)
+            } else if let dueDate = task.dueDate {
+                Text(dueDate, style: .time)
+                    .font(.caption2)
+                    .foregroundColor(Date() > dueDate ? .red : .secondary)
             }
         }
         .padding(.vertical, 4)
@@ -228,27 +301,30 @@ struct SimpleTaskRow: View {
 }
 
 struct SkillsView: View {
-    let skills: [String]  // ✅ FIXED: [String] instead of [CoreTypes.WorkerSkill]
+    let skills: [String]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Skills")
+            Text("Skills & Certifications")
                 .font(.headline)
             
             if skills.isEmpty {
-                Text("No skills listed")
-                    .foregroundColor(.secondary)
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "hammer.circle")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                        Text("No skills listed")
+                            .foregroundColor(.secondary)
+                    }
                     .padding()
+                    Spacer()
+                }
             } else {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
+                FlowLayout(spacing: 8) {
                     ForEach(skills, id: \.self) { skill in
-                        Text(skill.capitalized)
-                            .font(.caption)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(skillColor(for: skill))
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                        SkillChip(skill: skill)
                     }
                 }
             }
@@ -257,22 +333,94 @@ struct SkillsView: View {
         .background(Color(.systemGray6))
         .cornerRadius(12)
     }
+}
+
+struct SkillChip: View {
+    let skill: String
     
-    private func skillColor(for skill: String) -> Color {
+    var body: some View {
+        Text(skill.capitalized)
+            .font(.caption)
+            .fontWeight(.medium)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(skillColor)
+            .foregroundColor(.white)
+            .cornerRadius(16)
+    }
+    
+    private var skillColor: Color {
         let lowercaseSkill = skill.lowercased()
-        switch lowercaseSkill {
-        case "hvac", "plumbing", "electrical":
+        
+        // Technical skills
+        if lowercaseSkill.contains("hvac") || lowercaseSkill.contains("plumbing") || lowercaseSkill.contains("electrical") {
             return .blue
-        case "cleaning":
+        }
+        // Cleaning skills
+        else if lowercaseSkill.contains("clean") || lowercaseSkill.contains("sanitation") {
             return .green
-        case "carpentry", "painting":
+        }
+        // Maintenance skills
+        else if lowercaseSkill.contains("carpentry") || lowercaseSkill.contains("painting") || lowercaseSkill.contains("repair") {
             return .orange
-        case "landscaping":
+        }
+        // Outdoor skills
+        else if lowercaseSkill.contains("landscaping") || lowercaseSkill.contains("snow") {
             return .brown
-        case "security":
+        }
+        // Safety/Security
+        else if lowercaseSkill.contains("security") || lowercaseSkill.contains("safety") {
             return .red
-        default:
+        }
+        // Default
+        else {
             return .gray
+        }
+    }
+}
+
+// Simple FlowLayout for skills
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(in: proposal.replacingUnspecifiedDimensions().width, subviews: subviews, spacing: spacing)
+        return CGSize(width: proposal.replacingUnspecifiedDimensions().width, height: result.height)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: CGPoint(x: result.positions[index].x + bounds.minX,
+                                     y: result.positions[index].y + bounds.minY),
+                         proposal: .unspecified)
+        }
+    }
+    
+    struct FlowResult {
+        var height: CGFloat = 0
+        var positions: [CGPoint] = []
+        
+        init(in width: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var x: CGFloat = 0
+            var y: CGFloat = 0
+            var lineHeight: CGFloat = 0
+            
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+                
+                if x + size.width > width, x > 0 {
+                    x = 0
+                    y += lineHeight + spacing
+                    lineHeight = 0
+                }
+                
+                positions.append(CGPoint(x: x, y: y))
+                x += size.width + spacing
+                lineHeight = max(lineHeight, size.height)
+            }
+            
+            height = y + lineHeight
         }
     }
 }
@@ -285,32 +433,58 @@ class WorkerProfileViewModel: ObservableObject {
     @Published var performanceMetrics: CoreTypes.PerformanceMetrics?
     @Published var recentTasks: [ContextualTask] = []
     @Published var isLoading = false
+    @Published var errorMessage: String?
     
     private let workerService = WorkerService.shared
     private let taskService = TaskService.shared
+    private let workerMetricsService = WorkerMetricsService.shared
     
     func loadWorkerData(workerId: String) async {
         isLoading = true
+        errorMessage = nil
         
         do {
-            // ✅ FIXED: Use correct WorkerService method
+            // Load worker profile
             worker = try await workerService.getWorkerProfile(for: workerId)
             
-            // ✅ FIXED: Create CoreTypes.PerformanceMetrics with correct constructor
-            performanceMetrics = CoreTypes.PerformanceMetrics(
-                efficiency: 0.85,  // Default efficiency
-                tasksCompleted: 42,  // Default task count
-                averageTime: 3600.0,  // Default average time
-                qualityScore: 0.92,  // Default quality score
-                lastUpdate: Date()  // Current date
-            )
+            // Load performance metrics
+            if let metrics = try? await workerMetricsService.getWorkerMetrics(workerId: workerId) {
+                performanceMetrics = metrics
+            } else {
+                // Create default metrics if service doesn't return any
+                performanceMetrics = CoreTypes.PerformanceMetrics(
+                    efficiency: 0.85,
+                    tasksCompleted: 42,
+                    averageTime: 3600.0,
+                    qualityScore: 0.92,
+                    lastUpdate: Date()
+                )
+            }
             
             // Load recent tasks
-            recentTasks = try await taskService.getTasks(for: workerId, date: Date())
+            let allTasks = try await taskService.getAllTasks()
+            recentTasks = allTasks
+                .filter { task in
+                    // Filter tasks for this worker
+                    if let assignedWorkerId = task.assignedWorkerId {
+                        return assignedWorkerId == workerId
+                    }
+                    return false
+                }
+                .sorted { task1, task2 in
+                    // Sort by completion date or due date
+                    let date1 = task1.completedDate ?? task1.dueDate ?? Date.distantPast
+                    let date2 = task2.completedDate ?? task2.dueDate ?? Date.distantPast
+                    return date1 > date2
+                }
+                .prefix(10)
+                .map { $0 }
             
         } catch {
+            errorMessage = "Failed to load worker data: \(error.localizedDescription)"
             print("Error loading worker data: \(error)")
-            // Set fallback data if loading fails
+            
+            // Set fallback data
             performanceMetrics = CoreTypes.PerformanceMetrics(
                 efficiency: 0.0,
                 tasksCompleted: 0,
@@ -329,7 +503,8 @@ class WorkerProfileViewModel: ObservableObject {
 struct WorkerProfileView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            WorkerProfileView(workerId: "4")
+            WorkerProfileView(workerId: "4") // Kevin Dutan
         }
+        .preferredColorScheme(.dark)
     }
 }

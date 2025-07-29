@@ -2,36 +2,69 @@
 //  NovaAIContextManager.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With Nova/Core/NovaTypes.swift types
-//  ✅ ROLE-BASED AI: Framework for contextual AI features
-//  ✅ TASK-AWARE: AI adapts to current work context
-//  ✅ BUILDING-SPECIFIC: Location-aware assistance
-//  ✅ INTELLIGENT ROUTING: Different AI experiences per role
+//  ✅ UPDATED: Aligned with CoreTypes v6.0
+//  ✅ FIXED: Using DashboardUpdate from DashboardSyncService
+//  ✅ FIXED: Using correct IntelligenceService methods
+//  ✅ ENHANCED: Better role-based AI routing
+//  ✅ INTEGRATED: With IntelligenceService and BuildingMetricsService
 //
 
 import Foundation
 import SwiftUI
+import Combine
 
 // MARK: - Nova AI Context System
 
 @MainActor
-class NovaAIContextManager: ObservableObject {
-    static let shared = NovaAIContextManager()
+public class NovaAIContextManager: ObservableObject {
+    public static let shared = NovaAIContextManager()
     
-    @Published var currentContext: AIContext?
-    @Published var availableFeatures: [AIFeature] = []
-    @Published var suggestedActions: [CoreTypes.AISuggestion] = []
+    @Published public var currentContext: AIContext?
+    @Published public var availableFeatures: [AIFeature] = []
+    @Published public var suggestedActions: [CoreTypes.AISuggestion] = []
+    @Published public var activeInsights: [CoreTypes.IntelligenceInsight] = []
+    @Published public var isProcessing = false
     
+    // Dependencies
     private let contextAdapter = WorkerContextEngineAdapter.shared
+    private let intelligenceService = IntelligenceService.shared
+    private let buildingMetricsService = BuildingMetricsService.shared
+    private let dashboardSyncService = DashboardSyncService.shared
+    
+    private var cancellables = Set<AnyCancellable>()
     
     private init() {
+        setupSubscriptions()
         updateContext()
+    }
+    
+    // MARK: - Setup
+    
+    private func setupSubscriptions() {
+        // Subscribe to dashboard updates (using DashboardSyncService's DashboardUpdate type)
+        dashboardSyncService.crossDashboardUpdates
+            .sink { [weak self] update in
+                self?.handleDashboardUpdate(update)
+            }
+            .store(in: &cancellables)
+        
+        // Subscribe to worker context changes
+        contextAdapter.$currentWorker
+            .sink { [weak self] _ in
+                self?.updateContext()
+            }
+            .store(in: &cancellables)
+        
+        contextAdapter.$currentBuilding
+            .sink { [weak self] _ in
+                self?.updateContext()
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Context Management
     
-    func updateContext() {
+    public func updateContext() {
         guard let worker = contextAdapter.currentWorker else { return }
         
         currentContext = AIContext(
@@ -47,6 +80,9 @@ class NovaAIContextManager: ObservableObject {
         
         updateAvailableFeatures()
         generateSuggestions()
+        Task {
+            await refreshIntelligenceInsights()
+        }
     }
     
     // MARK: - Role-Based Feature Sets
@@ -59,8 +95,8 @@ class NovaAIContextManager: ObservableObject {
             availableFeatures = getWorkerFeatures(context: context)
         case .admin:
             availableFeatures = getAdminFeatures(context: context)
-        case .supervisor:
-            availableFeatures = getSupervisorFeatures(context: context)
+        case .manager:
+            availableFeatures = getManagerFeatures(context: context)
         case .client:
             availableFeatures = getClientFeatures(context: context)
         }
@@ -111,6 +147,11 @@ class NovaAIContextManager: ObservableObject {
                     priority: .critical
                 )
             )
+            
+            // Category-specific assistance
+            if let category = task.category {
+                features.append(getTaskCategoryFeature(category: category))
+            }
         }
         
         // Building-specific features
@@ -177,7 +218,7 @@ class NovaAIContextManager: ObservableObject {
                 id: "predictive-maintenance",
                 title: "Predictive Maintenance",
                 description: "Anticipate equipment failures",
-                icon: "crystal.ball",
+                icon: "waveform.path.ecg",
                 category: .predictive,
                 priority: .medium
             ),
@@ -196,13 +237,21 @@ class NovaAIContextManager: ObservableObject {
                 icon: "checkmark.shield",
                 category: .compliance,
                 priority: .high
+            ),
+            AIFeature(
+                id: "strategic-planning",
+                title: "Strategic Planning",
+                description: "Long-term portfolio optimization",
+                icon: "chart.xyaxis.line",
+                category: .strategic,
+                priority: .medium
             )
         ]
     }
     
-    // MARK: - Supervisor AI Features
+    // MARK: - Manager AI Features (Previously Supervisor)
     
-    private func getSupervisorFeatures(context: AIContext) -> [AIFeature] {
+    private func getManagerFeatures(context: AIContext) -> [AIFeature] {
         [
             AIFeature(
                 id: "team-coordination",
@@ -235,6 +284,22 @@ class NovaAIContextManager: ObservableObject {
                 icon: "exclamationmark.triangle",
                 category: .problemSolving,
                 priority: .high
+            ),
+            AIFeature(
+                id: "performance-tracking",
+                title: "Performance Tracking",
+                description: "Worker productivity and efficiency",
+                icon: "speedometer",
+                category: .performance,
+                priority: .medium
+            ),
+            AIFeature(
+                id: "schedule-optimization",
+                title: "Schedule Optimization",
+                description: "Shift planning and task allocation",
+                icon: "calendar",
+                category: .optimization,
+                priority: .medium
             )
         ]
     }
@@ -274,6 +339,22 @@ class NovaAIContextManager: ObservableObject {
                 icon: "speedometer",
                 category: .performance,
                 priority: .medium
+            ),
+            AIFeature(
+                id: "compliance-overview",
+                title: "Compliance Overview",
+                description: "Regulatory status and certifications",
+                icon: "checkmark.shield",
+                category: .compliance,
+                priority: .high
+            ),
+            AIFeature(
+                id: "cost-transparency",
+                title: "Cost Transparency",
+                description: "Maintenance costs and budget tracking",
+                icon: "dollarsign.circle",
+                category: .financial,
+                priority: .medium
             )
         ]
     }
@@ -288,8 +369,8 @@ class NovaAIContextManager: ObservableObject {
             self.suggestedActions = generateWorkerSuggestions(context: context)
         case .admin:
             self.suggestedActions = generateAdminSuggestions(context: context)
-        case .supervisor:
-            self.suggestedActions = generateSupervisorSuggestions(context: context)
+        case .manager:
+            self.suggestedActions = generateManagerSuggestions(context: context)
         case .client:
             self.suggestedActions = generateClientSuggestions(context: context)
         }
@@ -306,7 +387,8 @@ class NovaAIContextManager: ObservableObject {
                     description: "You have \(context.urgentTasks.count) urgent task(s) pending",
                     priority: .high,
                     category: .operations,
-                    actionRequired: true
+                    actionRequired: true,
+                    estimatedImpact: "High"
                 )
             )
         }
@@ -319,7 +401,8 @@ class NovaAIContextManager: ObservableObject {
                     description: "Consider rescheduling outdoor work due to \(weather.description)",
                     priority: .medium,
                     category: .safety,
-                    actionRequired: true
+                    actionRequired: true,
+                    estimatedImpact: "Medium"
                 )
             )
         }
@@ -331,7 +414,78 @@ class NovaAIContextManager: ObservableObject {
                     title: "Building Checklist",
                     description: "Review \(building.name) systems and recent alerts",
                     priority: .medium,
-                    category: .operations
+                    category: .operations,
+                    estimatedImpact: "Low"
+                )
+            )
+        }
+        
+        // Time-based suggestions
+        switch context.timeOfDay {
+        case .morning:
+            suggestions.append(
+                CoreTypes.AISuggestion(
+                    title: "Morning Setup",
+                    description: "Review today's tasks and safety equipment",
+                    priority: .low,
+                    category: .operations,
+                    estimatedImpact: "Low"
+                )
+            )
+        case .evening:
+            suggestions.append(
+                CoreTypes.AISuggestion(
+                    title: "End of Day",
+                    description: "Complete task documentation and secure equipment",
+                    priority: .medium,
+                    category: .operations,
+                    estimatedImpact: "Medium"
+                )
+            )
+        default:
+            break
+        }
+        
+        return suggestions
+    }
+    
+    private func generateAdminSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
+        var suggestions: [CoreTypes.AISuggestion] = []
+        
+        suggestions.append(contentsOf: [
+            CoreTypes.AISuggestion(
+                title: "Performance Review",
+                description: "Analyze portfolio efficiency and worker productivity",
+                priority: .medium,
+                category: .efficiency,
+                estimatedImpact: "High"
+            ),
+            CoreTypes.AISuggestion(
+                title: "Budget Optimization",
+                description: "Identify cost-saving opportunities across buildings",
+                priority: .medium,
+                category: .cost,
+                estimatedImpact: "High"
+            ),
+            CoreTypes.AISuggestion(
+                title: "Compliance Check",
+                description: "Review upcoming compliance deadlines",
+                priority: .high,
+                category: .compliance,
+                actionRequired: true,
+                estimatedImpact: "Critical"
+            )
+        ])
+        
+        // Add portfolio-specific suggestions
+        if context.portfolioBuildings.count > 10 {
+            suggestions.append(
+                CoreTypes.AISuggestion(
+                    title: "Portfolio Analysis",
+                    description: "Large portfolio detected - consider automated scheduling",
+                    priority: .high,
+                    category: .efficiency,
+                    estimatedImpact: "High"
                 )
             )
         }
@@ -339,32 +493,45 @@ class NovaAIContextManager: ObservableObject {
         return suggestions
     }
     
-    private func generateAdminSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
-        [
-            CoreTypes.AISuggestion(
-                title: "Performance Review",
-                description: "Analyze portfolio efficiency and worker productivity",
-                priority: .medium,
-                category: .efficiency
-            ),
-            CoreTypes.AISuggestion(
-                title: "Budget Optimization",
-                description: "Identify cost-saving opportunities",
-                priority: .medium,
-                category: .cost
-            )
-        ]
-    }
-    
-    private func generateSupervisorSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
-        [
+    private func generateManagerSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
+        var suggestions: [CoreTypes.AISuggestion] = []
+        
+        suggestions.append(
             CoreTypes.AISuggestion(
                 title: "Team Check-in",
                 description: "Review worker status and task progress",
                 priority: .medium,
-                category: .operations
+                category: .operations,
+                estimatedImpact: "Medium"
             )
-        ]
+        )
+        
+        // Add task-based suggestions
+        if context.urgentTasks.count > 3 {
+            suggestions.append(
+                CoreTypes.AISuggestion(
+                    title: "Resource Allocation",
+                    description: "Multiple urgent tasks - consider reassigning workers",
+                    priority: .high,
+                    category: .operations,
+                    actionRequired: true,
+                    estimatedImpact: "High"
+                )
+            )
+        }
+        
+        // Quality control reminders
+        suggestions.append(
+            CoreTypes.AISuggestion(
+                title: "Quality Assurance",
+                description: "Review completed tasks for quality standards",
+                priority: .medium,
+                category: .quality,
+                estimatedImpact: "Medium"
+            )
+        )
+        
+        return suggestions
     }
     
     private func generateClientSuggestions(context: AIContext) -> [CoreTypes.AISuggestion] {
@@ -373,9 +540,133 @@ class NovaAIContextManager: ObservableObject {
                 title: "Service Summary",
                 description: "Review this week's maintenance activities",
                 priority: .low,
-                category: .compliance
+                category: .compliance,
+                estimatedImpact: "Low"
+            ),
+            CoreTypes.AISuggestion(
+                title: "Performance Metrics",
+                description: "View building efficiency and cost analysis",
+                priority: .medium,
+                category: .efficiency,
+                estimatedImpact: "Medium"
             )
         ]
+    }
+    
+    // MARK: - Intelligence Integration
+    
+    private func refreshIntelligenceInsights() async {
+        isProcessing = true
+        
+        do {
+            // Get insights based on current context
+            let insights: [CoreTypes.IntelligenceInsight]
+            
+            if let buildingId = currentContext?.currentBuilding?.id {
+                // Get building-specific insights
+                insights = try await intelligenceService.generateBuildingInsights(for: buildingId)
+            } else {
+                // Get portfolio insights
+                insights = try await intelligenceService.generatePortfolioInsights()
+            }
+            
+            await MainActor.run {
+                self.activeInsights = insights
+                self.isProcessing = false
+            }
+            
+            // Check for critical insights
+            let criticalInsights = insights.filter { $0.priority == .critical }
+            if !criticalInsights.isEmpty {
+                await MainActor.run {
+                    self.handleCriticalInsights(criticalInsights)
+                }
+            }
+            
+        } catch {
+            print("Error refreshing intelligence insights: \(error)")
+            await MainActor.run {
+                self.isProcessing = false
+            }
+        }
+    }
+    
+    private func handleCriticalInsights(_ insights: [CoreTypes.IntelligenceInsight]) {
+        // Create high-priority suggestions from critical insights
+        let criticalSuggestions = insights.map { insight in
+            CoreTypes.AISuggestion(
+                title: "Critical: \(insight.title)",
+                description: insight.description,
+                priority: .critical,
+                category: insight.type,
+                actionRequired: true,
+                estimatedImpact: "Critical"
+            )
+        }
+        
+        // Prepend critical suggestions
+        suggestedActions = criticalSuggestions + suggestedActions
+    }
+    
+    // MARK: - Task Category Features
+    
+    private func getTaskCategoryFeature(category: CoreTypes.TaskCategory) -> AIFeature {
+        switch category {
+        case .cleaning:
+            return AIFeature(
+                id: "cleaning-guide",
+                title: "Cleaning Procedures",
+                description: "Best practices and material guidance",
+                icon: "sparkles",
+                category: .taskSpecific,
+                priority: .medium
+            )
+        case .maintenance:
+            return AIFeature(
+                id: "maintenance-guide",
+                title: "Maintenance Procedures",
+                description: "Equipment manuals and schedules",
+                icon: "wrench.and.screwdriver",
+                category: .taskSpecific,
+                priority: .medium
+            )
+        case .repair:
+            return AIFeature(
+                id: "repair-diagnostics",
+                title: "Repair Diagnostics",
+                description: "Troubleshooting and part identification",
+                icon: "hammer",
+                category: .taskSpecific,
+                priority: .high
+            )
+        case .inspection:
+            return AIFeature(
+                id: "inspection-checklist",
+                title: "Inspection Checklist",
+                description: "Compliance points and documentation",
+                icon: "magnifyingglass",
+                category: .taskSpecific,
+                priority: .medium
+            )
+        case .emergency:
+            return AIFeature(
+                id: "emergency-response",
+                title: "Emergency Response",
+                description: "Immediate action protocols",
+                icon: "exclamationmark.triangle.fill",
+                category: .taskSpecific,
+                priority: .critical
+            )
+        default:
+            return AIFeature(
+                id: "general-assistance",
+                title: "Task Assistance",
+                description: "General guidance and support",
+                icon: "questionmark.circle",
+                category: .taskSpecific,
+                priority: .low
+            )
+        }
     }
     
     // MARK: - Helper Methods
@@ -386,7 +677,7 @@ class NovaAIContextManager: ObservableObject {
     
     private func getUrgentTasks() -> [ContextualTask] {
         return contextAdapter.todaysTasks.filter {
-            $0.urgency == .urgent || $0.urgency == .critical
+            $0.urgency == .urgent || $0.urgency == .critical || $0.urgency == .emergency
         }
     }
     
@@ -402,13 +693,127 @@ class NovaAIContextManager: ObservableObject {
     
     private func getCurrentWeather() -> WeatherConditions? {
         // This would integrate with weather service
+        // For now, return nil or mock data
         return nil
+    }
+    
+    // MARK: - Dashboard Update Handling (Using DashboardSyncService's DashboardUpdate)
+    
+    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+        // React to real-time dashboard updates
+        switch update.type {
+        case .taskCompleted, .taskStarted:
+            updateContext()
+        case .buildingMetricsChanged:
+            if update.buildingId == currentContext?.currentBuilding?.id {
+                Task {
+                    await refreshIntelligenceInsights()
+                }
+            }
+        case .workerClockedIn, .workerClockedOut:
+            if update.workerId == contextAdapter.currentWorker?.id {
+                updateContext()
+            }
+        default:
+            break
+        }
+    }
+    
+    // MARK: - Public API
+    
+    public func processUserQuery(_ query: String) async -> String {
+        isProcessing = true
+        
+        // This would integrate with Nova AI service
+        // For now, return a context-aware response
+        let response = await generateContextAwareResponse(for: query)
+        
+        await MainActor.run {
+            self.isProcessing = false
+        }
+        
+        return response
+    }
+    
+    private func generateContextAwareResponse(for query: String) async -> String {
+        guard let context = currentContext else {
+            return "I need more context to help you. Please ensure you're logged in."
+        }
+        
+        // Basic context-aware responses
+        let lowercaseQuery = query.lowercased()
+        
+        if lowercaseQuery.contains("task") || lowercaseQuery.contains("what should i do") {
+            if let task = context.activeTask {
+                return "Your current task is: \(task.title). \(task.description ?? "")"
+            } else {
+                return "You have no active tasks at the moment. Check your task list for upcoming work."
+            }
+        }
+        
+        if lowercaseQuery.contains("building") || lowercaseQuery.contains("where") {
+            if let building = context.currentBuilding {
+                return "You're currently at \(building.name). I can help with building-specific information."
+            } else {
+                return "Please select a building to get location-specific assistance."
+            }
+        }
+        
+        if lowercaseQuery.contains("urgent") || lowercaseQuery.contains("priority") {
+            let urgentCount = context.urgentTasks.count
+            if urgentCount > 0 {
+                return "You have \(urgentCount) urgent task(s). Would you like me to list them?"
+            } else {
+                return "No urgent tasks at the moment. You're all caught up!"
+            }
+        }
+        
+        // Default response
+        return "I'm Nova, your AI assistant. I can help with tasks, building information, safety protocols, and more. What would you like to know?"
+    }
+    
+    // MARK: - Building-Specific Intelligence
+    
+    public func loadBuildingInsights(for buildingId: String) async {
+        isProcessing = true
+        
+        do {
+            let insights = try await intelligenceService.generateBuildingInsights(for: buildingId)
+            await MainActor.run {
+                self.activeInsights = insights
+                self.isProcessing = false
+            }
+        } catch {
+            print("Error loading building insights: \(error)")
+            await MainActor.run {
+                self.isProcessing = false
+            }
+        }
+    }
+    
+    // MARK: - Portfolio Intelligence
+    
+    public func loadPortfolioInsights() async {
+        isProcessing = true
+        
+        do {
+            let insights = try await intelligenceService.generatePortfolioInsights()
+            await MainActor.run {
+                self.activeInsights = insights
+                self.isProcessing = false
+            }
+        } catch {
+            print("Error loading portfolio insights: \(error)")
+            await MainActor.run {
+                self.isProcessing = false
+            }
+        }
     }
 }
 
 // MARK: - Supporting Types (Local to AI Context)
 
-struct AIContext {
+public struct AIContext {
     let userRole: UserRole
     let currentBuilding: NamedCoordinate?
     let activeTask: ContextualTask?
@@ -419,27 +824,28 @@ struct AIContext {
     let weatherConditions: WeatherConditions?
 }
 
-struct AIFeature: Identifiable {
-    let id: String
-    let title: String
-    let description: String
-    let icon: String
-    let category: AIFeatureCategory
-    let priority: CoreTypes.AIPriority
+public struct AIFeature: Identifiable {
+    public let id: String
+    public let title: String
+    public let description: String
+    public let icon: String
+    public let category: AIFeatureCategory
+    public let priority: CoreTypes.AIPriority
 }
 
-enum AIFeatureCategory {
+public enum AIFeatureCategory {
     case fieldAssistance, safety, information, taskSpecific, buildingSpecific
     case weatherAdaptive, analytics, optimization, predictive, financial
     case compliance, teamManagement, qualityAssurance, training, problemSolving
     case reporting, monitoring, serviceManagement, performance, taskManagement
+    case strategic
 }
 
-enum TimeOfDay {
+public enum TimeOfDay {
     case morning, afternoon, evening, night
 }
 
-struct WeatherConditions {
+public struct WeatherConditions {
     let description: String
     let requiresIndoorWork: Bool
     let temperature: Double
@@ -459,6 +865,50 @@ extension CoreTypes.AIPriority {
     }
 }
 
+// MARK: - SwiftUI Integration
+
+extension NovaAIContextManager {
+    /// Get feature by ID
+    public func getFeature(byId id: String) -> AIFeature? {
+        return availableFeatures.first { $0.id == id }
+    }
+    
+    /// Execute feature action
+    public func executeFeature(_ feature: AIFeature) async {
+        // This would trigger the appropriate AI action
+        // For now, just log it
+        print("Executing AI feature: \(feature.title)")
+        
+        // Generate contextual response based on feature
+        let response = await processFeatureRequest(feature)
+        print("AI Response: \(response)")
+    }
+    
+    private func processFeatureRequest(_ feature: AIFeature) async -> String {
+        switch feature.id {
+        case "troubleshooting":
+            return "I'll help you troubleshoot the equipment. What specific issue are you experiencing?"
+        case "safety-protocols":
+            return "Here are the safety protocols for your current location. Always prioritize safety first."
+        case "building-info":
+            return "I can provide building-specific information. What would you like to know?"
+        case "task-guidance":
+            return "Let me guide you through your current task step by step."
+        case "portfolio-analytics":
+            await loadPortfolioInsights()
+            return "Loading portfolio analytics and insights..."
+        case "building-systems":
+            if let buildingId = currentContext?.currentBuilding?.id {
+                await loadBuildingInsights(for: buildingId)
+                return "Loading building system information..."
+            }
+            return "Please select a building first."
+        default:
+            return "How can I assist you with \(feature.title)?"
+        }
+    }
+}
+
 // MARK: - Usage Examples
 
 /*
@@ -468,11 +918,11 @@ extension CoreTypes.AIPriority {
 "Nova, the HVAC system in the east wing is making noise"
 → AI provides: Rubin Museum HVAC troubleshooting guide, safety protocols for museum environment, contact for specialized HVAC vendor
 
-👔 ADMIN (Shawn reviewing portfolio):
+👔 ADMIN (Franco reviewing portfolio):
 "Nova, show me this week's efficiency metrics"
 → AI provides: Portfolio analytics, cost per building, worker productivity scores, maintenance budget analysis
 
-👨‍💼 SUPERVISOR (coordinating team):
+👨‍💼 MANAGER (Shawn coordinating team):
 "Nova, where should I assign the new maintenance request?"
 → AI provides: Worker availability, skill matching, location optimization, workload balancing
 
@@ -487,4 +937,10 @@ Worker: "Nova, it's raining - what should I prioritize?"
 🚨 EMERGENCY-AWARE:
 Worker: "Nova, I found a water leak in the basement"
 → AI provides: Emergency shutdown procedures, vendor contacts, escalation protocols, safety guidelines
+
+🎯 ROLE-SPECIFIC FEATURES:
+- Workers get hands-on assistance and safety guidance
+- Admins get strategic insights and portfolio optimization
+- Managers get team coordination and quality control
+- Clients get transparency and performance metrics
 */
