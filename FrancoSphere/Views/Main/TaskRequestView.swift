@@ -5,6 +5,7 @@
 //  ✅ FIXED: Removed all duplicate type definitions
 //  ✅ FIXED: Now properly imports from CoreTypes
 //  ✅ FIXED: No type ambiguity or redeclaration errors
+//  ✅ FIXED: Added CoreTypes prefix to DashboardUpdate
 //
 
 import SwiftUI
@@ -135,8 +136,9 @@ final class TaskRequestViewModel: ObservableObject {
             // Create task via service
             try await TaskService.shared.createTask(task)
             
+            // ✅ FIXED: Added CoreTypes prefix to DashboardUpdate
             // Broadcast update
-            let dashboardUpdate = DashboardUpdate(
+            let dashboardUpdate = CoreTypes.DashboardUpdate(
                 source: .admin,
                 type: .taskStarted,
                 buildingId: selectedBuildingID,
