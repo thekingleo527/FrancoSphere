@@ -893,7 +893,7 @@ public class NovaFeatureManager: ObservableObject {
     }
     
     // MARK: - Dashboard Updates
-    
+
     private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         // React to dashboard changes
         switch update.type {
@@ -909,9 +909,9 @@ public class NovaFeatureManager: ObservableObject {
             Task {
                 await refreshInsights()
             }
-            // Clear building cache
-            if let buildingId = update.buildingId {
-                predictionCache.removeValue(forKey: "building_\(buildingId)")
+            // Clear building cache - check if buildingId is not empty
+            if !update.buildingId.isEmpty {
+                predictionCache.removeValue(forKey: "building_\(update.buildingId)")
             }
             
         case .workerClockedIn, .workerClockedOut:
