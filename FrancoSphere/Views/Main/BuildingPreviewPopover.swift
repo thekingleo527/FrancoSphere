@@ -4,6 +4,7 @@
 //
 //  ✅ ALIGNED: With current CoreTypes structure
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Removed all incorrect conditional bindings
 //  ✅ REFACTORED: Works with actual NamedCoordinate properties
 //
 
@@ -137,7 +138,8 @@ struct BuildingPreviewPopover: View {
     
     private var buildingInfo: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Building address if available
+            // Building address - address is non-optional String in CoreTypes
+            // Only show if not empty
             if !building.address.isEmpty {
                 HStack {
                     Image(systemName: "location.fill")
@@ -225,7 +227,7 @@ struct BuildingPreviewPopover: View {
                 }
             }
             
-            // Sanitation schedule
+            // Sanitation schedule - nextSanitationDate is optional
             if let sanitationDate = nextSanitationDate {
                 HStack {
                     Image(systemName: "calendar.badge.clock")
@@ -310,12 +312,9 @@ struct BuildingPreviewPopover: View {
                     openTasksCount = openTasks.count
                     
                     if let next = nextSanitation {
-                        // Extract date from task if available
-                        if let startTime = next.startTime {
-                            nextSanitationDate = "Today \(startTime)"
-                        } else {
-                            nextSanitationDate = "Scheduled"
-                        }
+                        // startTime is a computed property that returns a non-optional String
+                        let time = next.startTime  // This is a String like "9:00 AM"
+                        nextSanitationDate = "Today \(time)"
                     } else {
                         nextSanitationDate = nil
                     }

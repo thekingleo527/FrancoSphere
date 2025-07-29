@@ -3,9 +3,8 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECT: Method signatures with proper parentheses
-//  ✅ ALIGNED: Uses GRDBManager execute/query methods correctly
-//  ✅ WORKING: BuildingMetrics integration instead of BuildingAnalytics
+//  ✅ ALIGNED: Uses correct InventoryItem properties
+//  ✅ WORKING: BuildingMetrics integration
 //
 
 import Foundation
@@ -106,30 +105,11 @@ actor BuildingService {
         }
     }
     
-    // MARK: - ✅ FIXED: Method signatures with proper parentheses
+    // MARK: - Building Metrics
     
     func buildingMetrics(buildingId: String) async throws -> CoreTypes.BuildingMetrics? {
         return try await BuildingMetricsService.shared.calculateMetrics(for: buildingId)
     }
-    
-    func getCoreTypes() async throws -> [NamedCoordinate] {
-        return try await getAllBuildings()
-    }
-    
-    func getBuildings(building: String) async throws -> [NamedCoordinate] {
-        return try await searchBuildings(query: building)
-    }
-    
-    func getBuildingData(data: String) async throws -> NamedCoordinate? {
-        return try await getBuilding(buildingId: data)
-    }
-    
-    func updateBuilding(building: String) async throws {
-        // Implementation for building update
-        print("Building update requested for: \(building)")
-    }
-    
-    // MARK: - ✅ FIXED: BuildingMetrics instead of BuildingAnalytics
     
     func getBuildingMetrics(_ buildingId: String) async throws -> CoreTypes.BuildingMetrics {
         return try await BuildingMetricsService.shared.calculateMetrics(for: buildingId)
@@ -144,26 +124,47 @@ actor BuildingService {
         
         let rows = try await grdbManager.query(query, [buildingId])
         return rows.compactMap { row in
-            guard let name = row["name"] as? String,
+            guard let id = row["id"] as? Int64,
+                  let name = row["name"] as? String,
                   let categoryStr = row["category"] as? String,
                   let category = CoreTypes.InventoryCategory(rawValue: categoryStr),
                   let quantity = row["quantity"] as? Int,
-                  let minThreshold = row["minimumQuantity"] as? Int,
-                  let location = row["location"] as? String else {
+                  let minimumQuantity = row["minimumQuantity"] as? Int else {
                 return nil
             }
             
+            // Get optional values with defaults
+            let maxQuantity = row["maxQuantity"] as? Int ?? (minimumQuantity * 3)
+            let unit = row["unit"] as? String ?? "unit"
+            let cost = row["cost"] as? Double ?? 0.0
+            let supplier = row["supplier"] as? String
+            let location = row["location"] as? String
+            let lastRestockedTimestamp = row["lastRestocked"] as? Double
+            let lastRestocked = lastRestockedTimestamp.map { Date(timeIntervalSince1970: $0) }
+            
+            // Determine status based on quantities
+            let status: CoreTypes.RestockStatus
+            if quantity <= 0 {
+                status = .outOfStock
+            } else if quantity <= minimumQuantity {
+                status = .lowStock
+            } else {
+                status = .inStock
+            }
+            
             return CoreTypes.InventoryItem(
-                id: String(row["id"] as? Int64 ?? 0),
+                id: String(id),
                 name: name,
                 category: category,
-                quantity: quantity,
-                minThreshold: minThreshold,
-                location: location,
                 currentStock: quantity,
-                minimumStock: minThreshold,
-                unit: row["unit"] as? String ?? "unit",
-                restockStatus: quantity < minThreshold ? .lowStock : .inStock
+                minimumStock: minimumQuantity,
+                maxStock: maxQuantity,
+                unit: unit,
+                cost: cost,
+                supplier: supplier,
+                location: location,
+                lastRestocked: lastRestocked,
+                status: status
             )
         }
     }
@@ -171,13 +172,26 @@ actor BuildingService {
     func saveInventoryItem(_ item: CoreTypes.InventoryItem, buildingId: String) async throws {
         let query = """
             INSERT OR REPLACE INTO inventory 
-            (id, buildingId, name, quantity, unit, minimumQuantity, category, location)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (id, buildingId, name, quantity, unit, minimumQuantity, maxQuantity, 
+             category, location, cost, supplier, lastRestocked)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
+        let lastRestockedTimestamp = item.lastRestocked?.timeIntervalSince1970
+        
         try await grdbManager.execute(query, [
-            item.id, buildingId, item.name, item.quantity, item.unit,
-            item.minThreshold, item.category.rawValue, item.location
+            item.id,
+            buildingId,
+            item.name,
+            item.currentStock,
+            item.unit,
+            item.minimumStock,
+            item.maxStock,
+            item.category.rawValue,
+            item.location ?? NSNull(),
+            item.cost,
+            item.supplier ?? NSNull(),
+            lastRestockedTimestamp ?? NSNull()
         ])
     }
     
@@ -278,7 +292,7 @@ actor BuildingService {
         }
     }
     
-    // MARK: - ✅ FIXED: Database operations using execute instead of write
+    // MARK: - Database Operations
     
     func updateBuildingData(_ building: NamedCoordinate) async throws {
         let query = """
@@ -318,5 +332,24 @@ actor BuildingService {
             "isCompliant": metrics.isCompliant,
             "lastUpdated": metrics.lastUpdated
         ]
+    }
+    
+    // MARK: - Legacy Method Support
+    
+    func getCoreTypes() async throws -> [NamedCoordinate] {
+        return try await getAllBuildings()
+    }
+    
+    func getBuildings(building: String) async throws -> [NamedCoordinate] {
+        return try await searchBuildings(query: building)
+    }
+    
+    func getBuildingData(data: String) async throws -> NamedCoordinate? {
+        return try await getBuilding(buildingId: data)
+    }
+    
+    func updateBuilding(building: String) async throws {
+        // Implementation for building update by name/query
+        print("Building update requested for: \(building)")
     }
 }
