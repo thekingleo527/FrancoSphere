@@ -132,7 +132,6 @@
 		23273AA22E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */; };
 		23273AA42E2B8674004A52C6 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E22E2B8674004A52C6 /* BuildingMapDetailView.swift */; };
 		23273AA52E2B8674004A52C6 /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398A2E2B8674004A52C6 /* NovaAPIService.swift */; };
-		23273AA62E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C12E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift */; };
 		23273AA72E2B8674004A52C6 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739562E2B8674004A52C6 /* HapticManager.swift */; };
 		23273AA82E2B8674004A52C6 /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739612E2B8674004A52C6 /* MapRevealContainer.swift */; };
 		23273AA92E2B8674004A52C6 /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397E2E2B8674004A52C6 /* SharedTypes.swift */; };
@@ -360,7 +359,6 @@
 		232739BE2E2B8674004A52C6 /* DataBootstrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBootstrapper.swift; sourceTree = "<group>"; };
 		232739BF2E2B8674004A52C6 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
 		232739C02E2B8674004A52C6 /* IntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceService.swift; sourceTree = "<group>"; };
-		232739C12E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "IntelligenceService+OperationalFallback.swift"; sourceTree = "<group>"; };
 		232739C32E2B8674004A52C6 /* QuickBooksOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksOAuthManager.swift; sourceTree = "<group>"; };
 		232739C42E2B8674004A52C6 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
 		232739C52E2B8674004A52C6 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
@@ -811,7 +809,6 @@
 				232739BE2E2B8674004A52C6 /* DataBootstrapper.swift */,
 				232739BF2E2B8674004A52C6 /* DSNYTaskGenerator.swift */,
 				232739C02E2B8674004A52C6 /* IntelligenceService.swift */,
-				232739C12E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift */,
 				232739C32E2B8674004A52C6 /* QuickBooksOAuthManager.swift */,
 				232739C42E2B8674004A52C6 /* QuickBooksPayrollExporter.swift */,
 				232739C52E2B8674004A52C6 /* TaskService.swift */,
@@ -1223,7 +1220,6 @@
 				23273AA22E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift in Sources */,
 				23273AA42E2B8674004A52C6 /* BuildingMapDetailView.swift in Sources */,
 				23273AA52E2B8674004A52C6 /* NovaAPIService.swift in Sources */,
-				23273AA62E2B8674004A52C6 /* IntelligenceService+OperationalFallback.swift in Sources */,
 				23273AA72E2B8674004A52C6 /* HapticManager.swift in Sources */,
 				23273AA82E2B8674004A52C6 /* MapRevealContainer.swift in Sources */,
 				23273AA92E2B8674004A52C6 /* SharedTypes.swift in Sources */,
