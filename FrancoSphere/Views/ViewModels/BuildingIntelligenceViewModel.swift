@@ -35,7 +35,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
     private let operationalData = OperationalDataManager.shared
-    private let buildingMetrics = BuildingMetricsService.shared
+    private let buildingMetricsService = BuildingMetricsService.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
@@ -72,7 +72,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     private func loadBuildingMetrics(_ building: NamedCoordinate) async {
         do {
             // ✅ FIXED: Use correct method name
-            let buildingMetrics = try await buildingMetrics.calculateMetrics(for: building.id)
+            let buildingMetrics = try await buildingMetricsService.calculateMetrics(for: building.id)
             self.metrics = buildingMetrics
         } catch {
             print("⚠️ Failed to load building metrics: \(error)")
@@ -89,8 +89,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
                 urgentTasksCount: 1,
                 hasWorkerOnSite: true,
                 maintenanceEfficiency: 0.85,
-                weeklyCompletionTrend: 0.85
-                // ✅ FIXED: Removed lastActivityDate which doesn't exist
+                weeklyCompletionTrend: 0.05
             )
         }
     }
@@ -134,7 +133,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             // Get all tasks and filter for completed ones in this building
             let allTasks = try await taskService.getAllTasks()
             let completedTasks = allTasks.filter { task in
-                task.isCompleted && task.buildingId == building.id
+                task.isCompleted && (task.buildingId == building.id || task.building?.id == building.id)
             }
             
             // Sort by completion date (most recent first) and limit
@@ -294,7 +293,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         // Create basic worker profiles based on building assignments
         var fallbackWorkers: [WorkerProfile] = []
         
-        // Determine workers based on building name patterns using correct UserRole enum
+        // ✅ FIXED: Changed .supervisor to .manager (which exists in UserRole enum)
         if building.name.contains("Rubin") {
             fallbackWorkers.append(createFallbackWorker(id: "4", name: "Kevin Dutan", role: .worker))
         } else if building.name.contains("Perry") {
@@ -303,7 +302,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             fallbackWorkers.append(createFallbackWorker(id: "6", name: "Luis Lopez", role: .worker))
         } else {
             // Default workers for other buildings
-            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: .supervisor))
+            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: .manager))  // ✅ FIXED: Changed to .manager
             fallbackWorkers.append(createFallbackWorker(id: "2", name: "Edwin Lema", role: .worker))
         }
         
@@ -331,7 +330,6 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     private func createFallbackScheduleData(_ building: NamedCoordinate) async {
         print("📝 Creating fallback schedule for: \(building.name)")
         
-        // ✅ FIXED: Removed unused 'now' variable
         var schedule: [ContextualTask] = []
         
         // Morning tasks (8 AM - 12 PM)
@@ -369,7 +367,6 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     }
     
     /// Create a fallback task with correct ContextualTask initializer
-    /// Create a fallback task with correct ContextualTask initializer
     private func createFallbackTask(
         title: String,
         building: NamedCoordinate,
@@ -385,7 +382,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             scheduledDate = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: today) ?? today
         }
         
-        // ✅ FIXED: Remove buildingName and estimatedDuration parameters
+        // ✅ FIXED: Use correct ContextualTask initializer
         return ContextualTask(
             id: UUID().uuidString,
             title: title,
@@ -395,14 +392,13 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             category: category,
             urgency: .medium,
             building: building,
-            worker: nil as WorkerProfile?,
             buildingId: building.id
         )
     }
     
     /// Create fallback history data when service fails
     private func createFallbackHistoryData(_ building: NamedCoordinate) async {
-        // ✅ FIXED: Remove buildingName and estimatedDuration parameters
+        // ✅ FIXED: Use correct initializer
         let fallbackHistoryTask = ContextualTask(
             id: "fallback-history",
             title: "Previous Maintenance",
@@ -413,7 +409,6 @@ public class BuildingIntelligenceViewModel: ObservableObject {
             category: .maintenance,
             urgency: .medium,
             building: building,
-            worker: nil as WorkerProfile?,
             buildingId: building.id
         )
         
