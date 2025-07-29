@@ -2,8 +2,8 @@
 //  NovaAPIService.swift
 //  FrancoSphere v6.0
 //
-//  Updated to use CoreTypes while preserving all domain knowledge
-//  Includes specific details about Kevin Dutan, Rubin Museum, and portfolio
+//  Nova API Service with domain knowledge about Kevin Dutan, Rubin Museum, and portfolio
+//  Simplified to resolve compilation errors with multiple NovaTypes definitions
 //
 
 import Foundation
@@ -112,9 +112,7 @@ public actor NovaAPIService {
             success: true,
             message: responseText,
             actions: actions,
-            insights: insights,
-            context: context,
-            timestamp: Date()
+            insights: insights
         )
     }
     
@@ -202,62 +200,12 @@ public actor NovaAPIService {
         """
     }
     
-    // MARK: - Insight Generation (Using CoreTypes)
+    // MARK: - Insight Generation
     
-    private func generateInsights(for prompt: NovaPrompt, context: NovaContext) async throws -> [CoreTypes.IntelligenceInsight] {
-        var insights: [CoreTypes.IntelligenceInsight] = []
-        
-        // Generate operational insights
-        if let operationalInsight = await generateOperationalInsight(context: context) {
-            insights.append(operationalInsight)
-        }
-        
-        // Generate efficiency insights
-        if let efficiencyInsight = await generateEfficiencyInsight(context: context) {
-            insights.append(efficiencyInsight)
-        }
-        
-        return insights
-    }
-    
-    private func generateOperationalInsight(context: NovaContext) async -> CoreTypes.IntelligenceInsight? {
-        return CoreTypes.IntelligenceInsight(
-            id: UUID().uuidString,
-            title: "Operational Efficiency",
-            description: "Current operations are running smoothly with optimized worker assignments and task distribution.",
-            type: .operations,
-            priority: .medium,
-            confidence: 0.85,
-            timestamp: Date(),
-            source: "Nova AI",
-            impactScore: 0.7,
-            affectedEntityId: nil,
-            affectedEntityType: nil,
-            suggestedActions: [
-                "Review current worker-building assignments for optimization opportunities",
-                "Analyze task completion patterns for efficiency gains"
-            ]
-        )
-    }
-    
-    private func generateEfficiencyInsight(context: NovaContext) async -> CoreTypes.IntelligenceInsight? {
-        return CoreTypes.IntelligenceInsight(
-            id: UUID().uuidString,
-            title: "Resource Optimization",
-            description: "Potential for 15% efficiency improvement through schedule optimization and cross-training initiatives.",
-            type: .efficiency,
-            priority: .high,
-            confidence: 0.78,
-            timestamp: Date(),
-            source: "Nova AI",
-            impactScore: 0.85,
-            affectedEntityId: nil,
-            affectedEntityType: nil,
-            suggestedActions: [
-                "Implement cross-training program for specialized tasks",
-                "Optimize daily schedules based on task proximity"
-            ]
-        )
+    private func generateInsights(for prompt: NovaPrompt, context: NovaContext) async throws -> [NovaInsight] {
+        // Return empty array until we resolve which NovaInsight type definition to use
+        // The project has multiple conflicting NovaTypes.swift files
+        return []
     }
     
     // MARK: - Action Generation
@@ -272,8 +220,7 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "View Building Details",
                 description: "Access complete building information and metrics",
-                actionType: .navigate,
-                priority: prompt.priority
+                actionType: .navigate
             ))
         }
         
@@ -282,8 +229,7 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "View Tasks",
                 description: "Navigate to task management interface",
-                actionType: .navigate,
-                priority: prompt.priority
+                actionType: .navigate
             ))
         }
         
@@ -292,8 +238,7 @@ public actor NovaAPIService {
             actions.append(NovaAction(
                 title: "Optimize Schedule",
                 description: "Analyze current schedules for optimization opportunities",
-                actionType: .schedule,
-                priority: .high
+                actionType: .schedule
             ))
         }
         
@@ -301,8 +246,7 @@ public actor NovaAPIService {
         actions.append(NovaAction(
             title: "Get Help",
             description: "Access Nova AI documentation and features",
-            actionType: .review,
-            priority: .low
+            actionType: .review
         ))
         
         return actions
@@ -344,13 +288,13 @@ public actor NovaAPIService {
         }
         
         return NovaContext(
-            data: ["buildingId": "14", "type": "building"],
-            timestamp: Date(),
+            data: "Building management context with portfolio overview - Building ID: 14 (Rubin Museum)",
             insights: insights,
             metadata: [
                 "context_type": "building",
                 "source": "portfolio_data",
-                "specialization": "museum_operations"
+                "specialization": "museum_operations",
+                "buildingId": "14"
             ]
         )
     }
@@ -365,50 +309,57 @@ public actor NovaAPIService {
         }
         
         return NovaContext(
-            data: ["workerId": "4", "type": "worker", "name": "Kevin Dutan"],
-            timestamp: Date(),
+            data: "Worker management context - Worker ID: 4 (Kevin Dutan) - Museum Specialist",
             insights: insights,
             metadata: [
                 "context_type": "worker",
                 "source": "team_data",
-                "specialization": "museum_operations"
+                "specialization": "museum_operations",
+                "workerId": "4",
+                "workerName": "Kevin Dutan"
             ]
         )
     }
     
     private func generatePortfolioContext(from text: String) async -> NovaContext {
         return NovaContext(
-            data: [
-                "type": "portfolio",
-                "buildingCount": String(BUILDING_COUNT),
-                "workerCount": String(WORKER_COUNT),
-                "taskCount": String(TASK_COUNT)
-            ],
-            timestamp: Date(),
+            data: "Portfolio management context - \(BUILDING_COUNT) buildings, \(WORKER_COUNT) workers, \(TASK_COUNT) tasks",
             insights: [
                 "Portfolio performance analysis",
                 "Operational efficiency metrics",
                 "Resource utilization patterns"
             ],
-            metadata: ["context_type": "portfolio", "source": "aggregate_data"]
+            metadata: [
+                "context_type": "portfolio",
+                "source": "aggregate_data",
+                "buildingCount": String(BUILDING_COUNT),
+                "workerCount": String(WORKER_COUNT),
+                "taskCount": String(TASK_COUNT)
+            ]
         )
     }
     
     private func generateTaskContext(from text: String) async -> NovaContext {
         return NovaContext(
-            data: ["type": "task", "totalTasks": String(TASK_COUNT)],
-            timestamp: Date(),
+            data: "Task management context - \(TASK_COUNT) total tasks across portfolio",
             insights: ["Task distribution analysis", "Priority optimization"],
-            metadata: ["context_type": "task", "source": "task_data"]
+            metadata: [
+                "context_type": "task",
+                "source": "task_data",
+                "totalTasks": String(TASK_COUNT)
+            ]
         )
     }
     
     private func generateGeneralContext(from text: String) async -> NovaContext {
         return NovaContext(
-            data: ["type": "general", "query": text],
-            timestamp: Date(),
+            data: "General assistance context - Query: \(text)",
             insights: ["System features overview", "Available assistance options"],
-            metadata: ["context_type": "general", "source": "system_info"]
+            metadata: [
+                "context_type": "general",
+                "source": "system_info",
+                "originalQuery": text
+            ]
         )
     }
 }
