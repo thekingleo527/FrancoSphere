@@ -7,12 +7,11 @@
 //  ✅ NO HARDCODED: No mock data, all real workers from OperationalDataManager
 //  ✅ PROPER TYPES: Correct property names and constructors
 //  ✅ ANIMATION: Fixed SwiftUI animation syntax
+//  ✅ ROLES: Fixed UserRole cases to match CoreTypes
 //
 
 import Foundation
 import SwiftUI
-
-// MARK: - Import Error Types
 
 // MARK: - Initialization Status View
 struct InitializationStatusView: View {
@@ -83,7 +82,7 @@ struct InitializationStatusView: View {
                     ForEach(realWorkers.prefix(3), id: \.id) { worker in
                         HStack {
                             Circle()
-                                .fill(worker.role == .admin ? Color.orange : Color.blue)
+                                .fill(roleColor(for: worker.role))
                                 .frame(width: 8, height: 8)
                             
                             Text(worker.name)
@@ -91,7 +90,7 @@ struct InitializationStatusView: View {
                             
                             Spacer()
                             
-                            Text(worker.role.rawValue.capitalized)
+                            Text(worker.displayRole)
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -118,6 +117,21 @@ struct InitializationStatusView: View {
             Task {
                 await loadRealData()
             }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func roleColor(for role: CoreTypes.UserRole) -> Color {
+        switch role {
+        case .admin:
+            return .orange
+        case .manager:
+            return .purple
+        case .worker:
+            return .blue
+        case .client:
+            return .green
         }
     }
     
@@ -154,7 +168,7 @@ struct InitializationStatusView: View {
             
             // Print first few workers to verify real data
             for (index, worker) in realWorkers.prefix(3).enumerated() {
-                print("   - Worker \(index + 1): \(worker.name) (\(worker.email))")
+                print("   - Worker \(index + 1): \(worker.name) (\(worker.email)) - Role: \(worker.role.rawValue)")
             }
             
         } catch {
@@ -170,7 +184,6 @@ struct InitializationStatusView: View {
     
     private func updateProgress(_ newProgress: Double, _ message: String) async {
         await MainActor.run {
-            // ✅ FIXED: Correct SwiftUI animation syntax
             withAnimation(.easeInOut(duration: 0.3)) {
                 self.progress = newProgress
                 self.loadingMessage = message
@@ -201,6 +214,16 @@ class DatabaseVerificationHelper {
             
             if hasKevin && hasEdwin {
                 print("✅ Real data verified: Found Kevin and Edwin in database")
+                print("   - Total workers in database: \(workers.count)")
+                
+                // Log role distribution
+                let roleCount = Dictionary(grouping: workers, by: { $0.role })
+                    .mapValues { $0.count }
+                print("   - Role distribution:")
+                for (role, count) in roleCount {
+                    print("     • \(role.rawValue): \(count) workers")
+                }
+                
                 return true
             } else {
                 print("⚠️ Real data check: Kevin=\(hasKevin), Edwin=\(hasEdwin)")
@@ -218,7 +241,7 @@ class DatabaseVerificationHelper {
             let workers = try await WorkerService.shared.getAllActiveWorkers()
             print("📧 Real Worker Emails from Database:")
             for worker in workers {
-                print("   - \(worker.name): \(worker.email)")
+                print("   - \(worker.name): \(worker.email) [\(worker.role.rawValue)]")
             }
         } catch {
             print("❌ Failed to log worker emails: \(error)")
@@ -233,10 +256,10 @@ extension WorkerProfile {
         switch role {
         case .admin:
             return "Administrator"
+        case .manager:
+            return "Manager"  // Changed from Supervisor
         case .worker:
             return "Field Worker"
-        case .supervisor:
-            return "Supervisor"
         case .client:
             return "Client"
         }

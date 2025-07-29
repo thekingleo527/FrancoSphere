@@ -3,7 +3,7 @@
 //  FrancoSphere
 //
 //  Glass overlay for building header with image background
-//  ✅ FIXED VERSION - Corrected initializer and preview issues
+//  ✅ FINAL FIXED VERSION - All LinearGradient syntax corrected
 //
 
 import SwiftUI
@@ -89,13 +89,13 @@ struct BuildingHeaderGlassOverlay: View {
                     .frame(height: 280)
                     .clipped()
                     .overlay(
-                        // Gradient overlay for better text readability
+                        // ✅ FIXED: Using modern LinearGradient syntax
                         LinearGradient(
-                            gradient: Gradient(colors: [
+                            colors: [
                                 Color.black.opacity(0.4),
                                 Color.clear,
                                 Color.black.opacity(0.6)
-                            ]),
+                            ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
