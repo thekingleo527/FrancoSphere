@@ -603,15 +603,21 @@ public class NovaFeatureManager: ObservableObject {
         
         // Extract all values before the Timer closure to avoid Sendable issues
         let scenarioId = scenario.id
-        let scenarioType = scenario.scenario
+        let scenarioTypeRawValue = scenario.scenario.rawValue  // Convert to String
         let message = scenario.message
         let actionText = scenario.actionText
-        let priority = scenario.priority
+        let priorityRawValue = scenario.priority.rawValue  // Convert to String
         let context = scenario.context
         
         let timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
             Task { @MainActor in
                 // Recreate the scenario from the captured primitive values
+                // Convert back from raw values
+                guard let scenarioType = CoreTypes.AIScenarioType(rawValue: scenarioTypeRawValue),
+                      let priority = CoreTypes.AIPriority(rawValue: priorityRawValue) else {
+                    return
+                }
+                
                 let recreatedScenario = NovaScenarioData(
                     scenario: scenarioType,
                     message: message,

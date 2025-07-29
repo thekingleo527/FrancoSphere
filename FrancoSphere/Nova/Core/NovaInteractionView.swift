@@ -7,6 +7,7 @@
 //  ✅ IMPROVED: Rich UI with glass effects and animations
 //  ✅ UNIFIED: All AI functionality in one sophisticated interface
 //  ✅ UPDATED: Removed dependency on deleted NovaAIIntegrationService
+//  ✅ UPDATED: Integrated NovaAvatar component for better animations
 //
 
 import SwiftUI
@@ -30,6 +31,7 @@ struct NovaInteractionView: View {
     @State private var showContextualData = false
     @State private var activeScenarios: [CoreTypes.AIScenario] = []
     @State private var expandedMessageIds: Set<String> = []
+    @State private var showNovaAssistant = false
     
     // MARK: - Services
     private let novaAPI = NovaAPIService.shared
@@ -136,65 +138,20 @@ struct NovaInteractionView: View {
     
     private var novaHeader: some View {
         VStack(spacing: 16) {
-            // Nova Avatar with status ring
-            ZStack {
-                // Animated background rings
-                ForEach(0..<3) { index in
-                    Circle()
-                        .stroke(
-                            LinearGradient(
-                                colors: [statusColor.opacity(0.3), statusColor.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
-                        )
-                        .frame(width: 80 + CGFloat(index * 20), height: 80 + CGFloat(index * 20))
-                        .scaleEffect(processingState == .processing ? 1.1 : 1.0)
-                        .opacity(processingState == .processing ? 1.0 : 0.3)
-                        .animation(
-                            .easeInOut(duration: 1.5)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(index) * 0.3),
-                            value: processingState
-                        )
+            // Nova Avatar with enhanced animations
+            NovaAvatar(
+                size: .large,
+                isActive: processingState != .idle,
+                hasUrgentInsights: hasHighPriorityScenarios,
+                isBusy: processingState == .processing,
+                onTap: {
+                    showContextualData.toggle()
+                },
+                onLongPress: {
+                    showNovaAssistant = true
                 }
-                
-                // Main avatar
-                Circle()
-                    .fill(LinearGradient(
-                        colors: [Color.purple, Color.blue],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ))
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        // AI Assistant Image
-                        Group {
-                            if let aiImage = AIAssistantImageLoader.loadAIAssistantImage() {
-                                Image(uiImage: aiImage)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(Circle())
-                            } else {
-                                Image(systemName: "brain")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                    )
-                
-                // Status indicator
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 16, height: 16)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.black, lineWidth: 2)
-                    )
-                    .offset(x: 28, y: -28)
-            }
+            )
+            .shadow(color: statusColor.opacity(0.5), radius: 10)
             
             // Status text with context
             VStack(spacing: 4) {
@@ -997,25 +954,31 @@ struct NovaInteractionView: View {
     }
     
     @MainActor
-    private func buildContextData() async -> String {
-        var contextParts: [String] = []
+    private func buildContextData() async -> [String: String] {
+        var contextData: [String: String] = [:]
         
         if let worker = contextAdapter.currentWorker {
-            contextParts.append("Worker: \(worker.name) (ID: \(worker.id))")
+            contextData["workerName"] = worker.name
+            contextData["workerId"] = worker.id
+            contextData["workerRole"] = worker.role.rawValue
         }
         
         if let building = contextAdapter.currentBuilding {
-            contextParts.append("Current Building: \(building.name)")
+            contextData["currentBuilding"] = building.name
+            contextData["currentBuildingId"] = building.id
         }
         
-        contextParts.append("Assigned Buildings: \(contextAdapter.assignedBuildings.count)")
-        contextParts.append("Today's Tasks: \(contextAdapter.todaysTasks.count)")
+        contextData["assignedBuildings"] = String(contextAdapter.assignedBuildings.count)
+        contextData["todaysTasks"] = String(contextAdapter.todaysTasks.count)
         
         if let urgentCount = urgentTaskCount {
-            contextParts.append("Urgent Tasks: \(urgentCount)")
+            contextData["urgentTasks"] = String(urgentCount)
         }
         
-        return contextParts.joined(separator: ", ")
+        contextData["timeOfDay"] = getTimeBasedGreeting()
+        contextData["completedTasks"] = String(contextAdapter.todaysTasks.filter { $0.isCompleted }.count)
+        
+        return contextData
     }
     
     @MainActor
@@ -1362,6 +1325,12 @@ struct NovaActionButtons: View {
             case .report:
                 print("Report: \(action.title)")
                 // Handle reporting
+            case .assign:
+                print("Assign: \(action.title)")
+                // Handle assignment
+            case .notify:
+                print("Notify: \(action.title)")
+                // Handle notification
             }
         }
     }
@@ -1383,9 +1352,9 @@ struct NovaInsightsView: View {
             
             ForEach(insights) { insight in
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: insight.category.icon)
+                    Image(systemName: insight.type.icon)
                         .font(.caption)
-                        .foregroundColor(insight.category.color)
+                        .foregroundColor(insight.type.color)
                         .frame(width: 20)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -1449,13 +1418,44 @@ struct NovaProcessingIndicator: View {
 
 extension NovaPriority {
     var displayName: String {
-        return self.rawValue
+        switch self {
+        case .low: return "Low"
+        case .medium: return "Medium"
+        case .high: return "High"
+        case .critical: return "Critical"
+        }
     }
     
-    var icon: String {
-        return systemImageName
+    var systemImageName: String {
+        switch self {
+        case .low: return "arrow.down.circle"
+        case .medium: return "minus.circle"
+        case .high: return "arrow.up.circle"
+        case .critical: return "exclamationmark.circle.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .low: return .green
+        case .medium: return .yellow
+        case .high: return .orange
+        case .critical: return .red
+        }
     }
 }
+    
+    var color: Color {
+        switch self {
+        case .efficiency: return .blue
+        case .cost: return .green
+        case .safety: return .red
+        case .compliance: return .orange
+        case .quality: return .purple
+        case .operations: return .gray
+        case .maintenance: return .yellow
+        }
+    }
 
 extension View {
     func francoGlassCard(intensity: Material = .ultraThinMaterial) -> some View {
