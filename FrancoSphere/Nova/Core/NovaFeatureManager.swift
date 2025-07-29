@@ -6,6 +6,7 @@
 //  ✅ ENHANCED: Added scenario support from AIScenarioSheetView
 //  ✅ ENHANCED: Added emergency repair functionality
 //  ✅ ENHANCED: Added reminder scheduling
+//  ✅ FIXED: Swift 6 concurrency compliance
 //
 
 import Foundation
@@ -139,8 +140,10 @@ public class NovaFeatureManager: ObservableObject {
         print("⏰ Scheduling reminder for scenario: \(scenario.scenario.rawValue) in \(minutes) minutes")
         
         let timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
-            self?.addScenario(scenario)
-            self?.reminderTimers.removeValue(forKey: scenario.id)
+            Task { @MainActor in
+                self?.addScenario(scenario)
+                self?.reminderTimers.removeValue(forKey: scenario.id)
+            }
         }
         
         reminderTimers[scenario.id] = timer
@@ -199,7 +202,7 @@ public class NovaFeatureManager: ObservableObject {
     
     // MARK: - Scenario Detection
     
-    private func checkForScenarios() {
+    public func checkForScenarios() {
         guard let worker = contextAdapter.currentWorker else { return }
         
         // Check for Kevin's missing buildings scenario
@@ -559,6 +562,25 @@ public class NovaFeatureManager: ObservableObject {
         
         return suggestions
     }
+    
+    // MARK: - Public Helper Methods
+    
+    /// Get feature by ID
+    public func getFeature(byId id: String) -> NovaAIFeature? {
+        return availableFeatures.first { $0.id == id }
+    }
+    
+    /// Check if should show Kevin emergency repair
+    public var shouldShowEmergencyRepair: Bool {
+        let workerId = contextAdapter.currentWorker?.id ?? ""
+        let buildings = contextAdapter.assignedBuildings
+        return workerId == "worker_001" && buildings.isEmpty
+    }
+    
+    /// Cleanup timers on deallocation
+    deinit {
+        reminderTimers.values.forEach { $0.invalidate() }
+    }
 }
 
 // MARK: - Supporting Types
@@ -578,25 +600,4 @@ public enum NovaAIFeatureCategory {
     case compliance, teamManagement, qualityAssurance, training, problemSolving
     case reporting, monitoring, serviceManagement, performance, taskManagement
     case strategic
-}
-
-// MARK: - SwiftUI Integration
-
-extension NovaFeatureManager {
-    /// Get feature by ID
-    public func getFeature(byId id: String) -> NovaAIFeature? {
-        return availableFeatures.first { $0.id == id }
-    }
-    
-    /// Check if should show Kevin emergency repair
-    public var shouldShowEmergencyRepair: Bool {
-        let workerId = contextAdapter.currentWorker?.id ?? ""
-        let buildings = contextAdapter.assignedBuildings
-        return workerId == "worker_001" && buildings.isEmpty
-    }
-    
-    /// Cleanup
-    deinit {
-        reminderTimers.values.forEach { $0.invalidate() }
-    }
 }

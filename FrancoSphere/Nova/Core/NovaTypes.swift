@@ -14,7 +14,7 @@ import SwiftUI
 // MARK: - Nova-Specific Types Only
 
 /// Nova context for AI operations
-public struct NovaContext: Codable, Hashable, Identifiable {
+public struct NovaContext: Codable, Hashable, Identifiable, Sendable {
     public let id: UUID
     public let data: String
     public let timestamp: Date
@@ -46,7 +46,7 @@ public struct NovaContext: Codable, Hashable, Identifiable {
 }
 
 /// Nova prompt structure
-public struct NovaPrompt: Identifiable, Codable {
+public struct NovaPrompt: Identifiable, Codable, Sendable {
     public let id: UUID
     public let text: String
     public let priority: CoreTypes.AIPriority  // Using CoreTypes!
@@ -72,7 +72,7 @@ public struct NovaPrompt: Identifiable, Codable {
 }
 
 /// Nova response structure
-public struct NovaResponse: Codable, Identifiable {
+public struct NovaResponse: Codable, Identifiable, Sendable {
     public let id: UUID
     public let success: Bool
     public let message: String
@@ -104,7 +104,7 @@ public struct NovaResponse: Codable, Identifiable {
 }
 
 /// Nova-specific action (no CoreTypes equivalent)
-public struct NovaAction: Identifiable, Codable {
+public struct NovaAction: Identifiable, Codable, Sendable {
     public let id: UUID
     public let title: String
     public let description: String
@@ -165,7 +165,7 @@ public enum NovaProcessingState: String, Codable {
 // MARK: - Scenario Support Types
 
 /// Nova scenario data for AI-driven scenarios
-public struct NovaScenarioData: Identifiable, Codable {
+public struct NovaScenarioData: Identifiable, Codable, Sendable {
     public let id: UUID
     public let scenario: CoreTypes.AIScenarioType
     public let message: String
@@ -194,7 +194,7 @@ public struct NovaScenarioData: Identifiable, Codable {
 }
 
 /// Emergency repair state for tracking repair progress
-public struct NovaEmergencyRepairState {
+public struct NovaEmergencyRepairState: Sendable {
     public var isActive: Bool = false
     public var progress: Double = 0.0
     public var message: String = ""
