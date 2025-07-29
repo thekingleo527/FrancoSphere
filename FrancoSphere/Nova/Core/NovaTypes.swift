@@ -1,45 +1,54 @@
 //
 //  NovaTypes.swift
-//  FrancoSphere v6.0 - Nova AI Core Types
+//  FrancoSphere v6.0
 //
-//  ✅ AUTHORITATIVE: Single source of truth for all Nova types
-//  ✅ FIXED: Resolves NovaContext redeclaration ambiguity
-//  ✅ COMPREHENSIVE: All Nova AI types in one place
+//  ✅ SIMPLIFIED: Uses CoreTypes for all shared concepts
+//  ✅ NO DUPLICATES: Only Nova-specific types defined here
+//  ✅ CLEAN: No type conversion needed
 //
 
 import Foundation
 import SwiftUI
 
-// MARK: - Core Nova Context (AUTHORITATIVE DEFINITION)
+// MARK: - Nova-Specific Types Only
+
+/// Nova context for AI operations
 public struct NovaContext: Codable, Hashable, Identifiable {
     public let id: UUID
     public let data: String
     public let timestamp: Date
     public let insights: [String]
     public let metadata: [String: String]
+    public let userRole: CoreTypes.UserRole?
+    public let buildingContext: CoreTypes.BuildingID?
+    public let taskContext: String?
     
     public init(
         id: UUID = UUID(),
         data: String,
         timestamp: Date = Date(),
         insights: [String] = [],
-        metadata: [String: String] = [:]
+        metadata: [String: String] = [:],
+        userRole: CoreTypes.UserRole? = nil,
+        buildingContext: CoreTypes.BuildingID? = nil,
+        taskContext: String? = nil
     ) {
         self.id = id
         self.data = data
         self.timestamp = timestamp
         self.insights = insights
         self.metadata = metadata
+        self.userRole = userRole
+        self.buildingContext = buildingContext
+        self.taskContext = taskContext
     }
-    
-    public static let empty = NovaContext(data: "")
 }
 
-// MARK: - Nova Prompt System
-public struct NovaPrompt: Identifiable, Codable, Hashable {
+/// Nova prompt structure
+public struct NovaPrompt: Identifiable, Codable {
     public let id: UUID
     public let text: String
-    public let priority: NovaPriority
+    public let priority: CoreTypes.AIPriority  // Using CoreTypes!
     public let context: NovaContext?
     public let createdAt: Date
     public let expiresAt: Date?
@@ -47,7 +56,7 @@ public struct NovaPrompt: Identifiable, Codable, Hashable {
     public init(
         id: UUID = UUID(),
         text: String,
-        priority: NovaPriority = .medium,
+        priority: CoreTypes.AIPriority = .medium,
         context: NovaContext? = nil,
         createdAt: Date = Date(),
         expiresAt: Date? = nil
@@ -61,308 +70,236 @@ public struct NovaPrompt: Identifiable, Codable, Hashable {
     }
 }
 
-// MARK: - Nova Priority System
-public enum NovaPriority: String, Codable, CaseIterable, Hashable {
-    case low = "Low"
-    case medium = "Medium"
-    case high = "High"
-    case urgent = "Urgent"
-    case critical = "Critical"
+/// Nova response structure
+public struct NovaResponse: Codable, Identifiable {
+    public let id: UUID
+    public let success: Bool
+    public let message: String
+    public let insights: [CoreTypes.IntelligenceInsight]  // Using CoreTypes!
+    public let actions: [NovaAction]
+    public let confidence: Double
+    public let timestamp: Date
+    public let processingTime: TimeInterval?
     
-    public var numericValue: Int {
-        switch self {
-        case .critical: return 5
-        case .urgent: return 4
-        case .high: return 3
-        case .medium: return 2
-        case .low: return 1
-        }
-    }
-    
-    public var color: Color {
-        switch self {
-        case .critical: return .purple
-        case .urgent: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-    
-    public var systemImageName: String {
-        switch self {
-        case .critical: return "exclamationmark.triangle.fill"
-        case .urgent: return "exclamationmark.circle.fill"
-        case .high: return "exclamationmark.circle"
-        case .medium: return "info.circle"
-        case .low: return "info.circle"
-        }
+    public init(
+        id: UUID = UUID(),
+        success: Bool,
+        message: String,
+        insights: [CoreTypes.IntelligenceInsight] = [],
+        actions: [NovaAction] = [],
+        confidence: Double = 1.0,
+        timestamp: Date = Date(),
+        processingTime: TimeInterval? = nil
+    ) {
+        self.id = id
+        self.success = success
+        self.message = message
+        self.insights = insights
+        self.actions = actions
+        self.confidence = confidence
+        self.timestamp = timestamp
+        self.processingTime = processingTime
     }
 }
 
-// MARK: - Nova Action System
-public struct NovaAction: Identifiable, Codable, Hashable {
+/// Nova-specific action (no CoreTypes equivalent)
+public struct NovaAction: Identifiable, Codable {
     public let id: UUID
     public let title: String
     public let description: String
     public let actionType: NovaActionType
-    public let priority: NovaPriority
-    public let estimatedDuration: TimeInterval
-    public let requiredSkills: [String]
+    public let parameters: [String: String]
+    public let estimatedDuration: TimeInterval?
     
     public init(
         id: UUID = UUID(),
         title: String,
         description: String,
         actionType: NovaActionType,
-        priority: NovaPriority = .medium,
-        estimatedDuration: TimeInterval = 300, // 5 minutes default
-        requiredSkills: [String] = []
+        parameters: [String: String] = [:],
+        estimatedDuration: TimeInterval? = nil
     ) {
         self.id = id
         self.title = title
         self.description = description
         self.actionType = actionType
-        self.priority = priority
+        self.parameters = parameters
         self.estimatedDuration = estimatedDuration
-        self.requiredSkills = requiredSkills
     }
 }
 
-// MARK: - Nova Action Types
-public enum NovaActionType: String, Codable, CaseIterable, Hashable {
-    case navigate = "Navigate"
-    case complete = "Complete"
-    case review = "Review"
-    case schedule = "Schedule"
-    case contact = "Contact"
-    case emergency = "Emergency"
-    case maintenance = "Maintenance"
-    case inspection = "Inspection"
-    case documentation = "Documentation"
-    case analysis = "Analysis"
+/// Nova action types (no CoreTypes equivalent)
+public enum NovaActionType: String, Codable, CaseIterable {
+    case navigate = "navigate"
+    case schedule = "schedule"
+    case assign = "assign"
+    case notify = "notify"
+    case analysis = "analysis"
+    case report = "report"
+    case review = "review"
+    case complete = "complete"
     
     public var icon: String {
         switch self {
-        case .navigate: return "arrow.right.circle"
+        case .navigate: return "location.fill"
+        case .schedule: return "calendar"
+        case .assign: return "person.badge.plus"
+        case .notify: return "bell.fill"
+        case .analysis: return "chart.line.uptrend.xyaxis"
+        case .report: return "doc.text.fill"
+        case .review: return "magnifyingglass"
         case .complete: return "checkmark.circle"
-        case .review: return "magnifyingglass.circle"
-        case .schedule: return "calendar.circle"
-        case .contact: return "person.circle"
-        case .emergency: return "exclamationmark.triangle"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .inspection: return "list.bullet.clipboard"
-        case .documentation: return "doc.circle"
-        case .analysis: return "chart.line.uptrend.xyaxis.circle"
         }
     }
 }
 
-// MARK: - Nova Intelligence Types
-public struct NovaInsight: Identifiable, Codable, Hashable {
-    public let id: UUID
-    public let title: String
-    public let description: String
-    public let category: NovaInsightCategory
-    public let priority: NovaPriority
-    public let confidence: Double
-    public let actionable: Bool
-    public let suggestedActions: [NovaAction]
-    public let createdAt: Date
-    
-    public init(
-        id: UUID = UUID(),
-        title: String,
-        description: String,
-        category: NovaInsightCategory,
-        priority: NovaPriority = .medium,
-        confidence: Double = 0.8,
-        actionable: Bool = true,
-        suggestedActions: [NovaAction] = [],
-        createdAt: Date = Date()
-    ) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.category = category
-        self.priority = priority
-        self.confidence = confidence
-        self.actionable = actionable
-        self.suggestedActions = suggestedActions
-        self.createdAt = createdAt
-    }
-}
-
-// MARK: - Nova Insight Categories
-public enum NovaInsightCategory: String, Codable, CaseIterable, Hashable {
-    case performance = "Performance"
-    case maintenance = "Maintenance"
-    case efficiency = "Efficiency"
-    case compliance = "Compliance"
-    case safety = "Safety"
-    case cost = "Cost"
-    case quality = "Quality"
-    case prediction = "Prediction"
-    
-    public var color: Color {
-        switch self {
-        case .performance: return .blue
-        case .maintenance: return .orange
-        case .efficiency: return .green
-        case .compliance: return .purple
-        case .safety: return .red
-        case .cost: return .yellow
-        case .quality: return .indigo
-        case .prediction: return .mint
-        }
-    }
-    
-    public var icon: String {
-        switch self {
-        case .performance: return "speedometer"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .efficiency: return "gauge.badge.plus"
-        case .compliance: return "checkmark.shield"
-        case .safety: return "shield"
-        case .cost: return "dollarsign.circle"
-        case .quality: return "star.circle"
-        case .prediction: return "crystal.ball"
-        }
-    }
-}
-
-// MARK: - Nova Response Types
-public struct NovaResponse: Codable, Hashable {
-    public let success: Bool
-    public let message: String
-    public let actions: [NovaAction]
-    public let insights: [NovaInsight]
-    public let context: NovaContext?
-    public let timestamp: Date
-    
-    public init(
-        success: Bool,
-        message: String,
-        actions: [NovaAction] = [],
-        insights: [NovaInsight] = [],
-        context: NovaContext? = nil,
-        timestamp: Date = Date()
-    ) {
-        self.success = success
-        self.message = message
-        self.actions = actions
-        self.insights = insights
-        self.context = context
-        self.timestamp = timestamp
-    }
-    
-    public static let empty = NovaResponse(success: false, message: "No response")
-}
-
-// MARK: - Nova Data Structures
-public struct NovaDataPoint: Codable, Hashable {
-    public let timestamp: Date
-    public let value: Double
-    public let category: String
-    public let metadata: [String: String]
-    
-    public init(timestamp: Date = Date(), value: Double, category: String, metadata: [String: String] = [:]) {
-        self.timestamp = timestamp
-        self.value = value
-        self.category = category
-        self.metadata = metadata
-    }
-}
-
-public struct NovaPattern: Identifiable, Codable, Hashable {
-    public let id: UUID
-    public let name: String
-    public let description: String
-    public let confidence: Double
-    public let frequency: NovaPatternFrequency
-    public let dataPoints: [NovaDataPoint]
-    public let discoveredAt: Date
-    
-    public init(
-        id: UUID = UUID(),
-        name: String,
-        description: String,
-        confidence: Double,
-        frequency: NovaPatternFrequency,
-        dataPoints: [NovaDataPoint] = [],
-        discoveredAt: Date = Date()
-    ) {
-        self.id = id
-        self.name = name
-        self.description = description
-        self.confidence = confidence
-        self.frequency = frequency
-        self.dataPoints = dataPoints
-        self.discoveredAt = discoveredAt
-    }
-}
-
-public enum NovaPatternFrequency: String, Codable, CaseIterable, Hashable {
-    case hourly = "Hourly"
-    case daily = "Daily"
-    case weekly = "Weekly"
-    case monthly = "Monthly"
-    case seasonal = "Seasonal"
-    case irregular = "Irregular"
-}
-
-// MARK: - Convenience Extensions
-extension NovaContext {
-    public func withAdditionalInsight(_ insight: String) -> NovaContext {
-        var newInsights = self.insights
-        newInsights.append(insight)
-        return NovaContext(
-            id: self.id,
-            data: self.data,
-            timestamp: self.timestamp,
-            insights: newInsights,
-            metadata: self.metadata
-        )
-    }
-    
-    public func withMetadata(key: String, value: String) -> NovaContext {
-        var newMetadata = self.metadata
-        newMetadata[key] = value
-        return NovaContext(
-            id: self.id,
-            data: self.data,
-            timestamp: self.timestamp,
-            insights: self.insights,
-            metadata: newMetadata
-        )
-    }
-}
-
-extension NovaPrompt {
-    public var isExpired: Bool {
-        guard let expiresAt = expiresAt else { return false }
-        return Date() > expiresAt
-    }
-    
-    public var isUrgent: Bool {
-        return priority.numericValue >= 4
-    }
-}
-
-extension NovaInsight {
-    public var isHighPriority: Bool {
-        return priority.numericValue >= 3
-    }
-    
-    public var hasActions: Bool {
-        return !suggestedActions.isEmpty
-    }
-}
-
-// MARK: - Nova Processing State
+/// Nova processing state
 public enum NovaProcessingState: String, Codable {
     case idle = "idle"
     case processing = "processing"
     case completed = "completed"
     case error = "error"
 }
+
+/// Nova aggregated data structure
+public struct NovaAggregatedData: Codable {
+    public let buildingCount: Int
+    public let taskCount: Int
+    public let workerCount: Int
+    public let completedTaskCount: Int
+    public let urgentTaskCount: Int
+    public let overdueTaskCount: Int
+    public let averageCompletionRate: Double
+    public let timestamp: Date
+    
+    public init(
+        buildingCount: Int,
+        taskCount: Int,
+        workerCount: Int,
+        completedTaskCount: Int = 0,
+        urgentTaskCount: Int = 0,
+        overdueTaskCount: Int = 0,
+        averageCompletionRate: Double = 0.0,
+        timestamp: Date = Date()
+    ) {
+        self.buildingCount = buildingCount
+        self.taskCount = taskCount
+        self.workerCount = workerCount
+        self.completedTaskCount = completedTaskCount
+        self.urgentTaskCount = urgentTaskCount
+        self.overdueTaskCount = overdueTaskCount
+        self.averageCompletionRate = averageCompletionRate
+        self.timestamp = timestamp
+    }
+}
+
+/// Nova recommendation (used by NovaCore)
+public struct NovaRecommendation {
+    public let title: String
+    public let description: String
+    public let priority: CoreTypes.AIPriority  // Using CoreTypes!
+    public let category: CoreTypes.InsightCategory  // Using CoreTypes!
+    public let estimatedImpact: String
+    public let buildingId: String
+    
+    public init(
+        title: String,
+        description: String,
+        priority: CoreTypes.AIPriority,
+        category: CoreTypes.InsightCategory,
+        estimatedImpact: String,
+        buildingId: String
+    ) {
+        self.title = title
+        self.description = description
+        self.priority = priority
+        self.category = category
+        self.estimatedImpact = estimatedImpact
+        self.buildingId = buildingId
+    }
+}
+
+// MARK: - Error Types
+
+public enum NovaError: Error, LocalizedError {
+    case invalidContext
+    case promptTooLong(Int)
+    case responseTimeout
+    case rateLimitExceeded
+    case serviceUnavailable
+    case processingFailed(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidContext:
+            return "Invalid context provided to Nova"
+        case .promptTooLong(let length):
+            return "Prompt too long: \(length) characters"
+        case .responseTimeout:
+            return "Nova response timed out"
+        case .rateLimitExceeded:
+            return "Nova rate limit exceeded"
+        case .serviceUnavailable:
+            return "Nova service temporarily unavailable"
+        case .processingFailed(let reason):
+            return "Nova processing failed: \(reason)"
+        }
+    }
+}
+
+// MARK: - Convenience Extensions
+
+extension NovaContext {
+    /// Check if context is expired (older than 5 minutes)
+    public var isExpired: Bool {
+        return Date().timeIntervalSince(timestamp) > 300
+    }
+    
+    /// Add an insight to the context
+    public func withInsight(_ insight: String) -> NovaContext {
+        var newInsights = insights
+        newInsights.append(insight)
+        return NovaContext(
+            id: id,
+            data: data,
+            timestamp: timestamp,
+            insights: newInsights,
+            metadata: metadata,
+            userRole: userRole,
+            buildingContext: buildingContext,
+            taskContext: taskContext
+        )
+    }
+}
+
+extension NovaPrompt {
+    /// Check if prompt has expired
+    public var isExpired: Bool {
+        guard let expiresAt = expiresAt else { return false }
+        return Date() > expiresAt
+    }
+    
+    /// Check if prompt is high priority
+    public var isHighPriority: Bool {
+        return priority == .high || priority == .critical
+    }
+}
+
+extension NovaResponse {
+    /// Check if response has critical insights
+    public var hasCriticalInsights: Bool {
+        return insights.contains { $0.priority == .critical }
+    }
+    
+    /// Get insights by priority
+    public func insights(withPriority priority: CoreTypes.InsightPriority) -> [CoreTypes.IntelligenceInsight] {
+        return insights.filter { $0.priority == priority }
+    }
+}
+
+// MARK: - Type Aliases for Clarity
+
+public typealias NovaInsight = CoreTypes.IntelligenceInsight
+public typealias NovaSuggestion = CoreTypes.AISuggestion
+public typealias NovaPriority = CoreTypes.AIPriority
+public typealias NovaInsightType = CoreTypes.InsightType

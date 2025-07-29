@@ -214,6 +214,7 @@
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 		23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */; };
 		23EA71022E3860C40010FA03 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71012E3860C40010FA03 /* UnifiedDataService.swift */; };
+		23EA71042E387B790010FA03 /* NovaIntelligenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -441,6 +442,7 @@
 		238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
 		23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardViewModel.swift; sourceTree = "<group>"; };
 		23EA71012E3860C40010FA03 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
+		23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaIntelligenceEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -713,6 +715,7 @@
 		2327398F2E2B8674004A52C6 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */,
 				232739892E2B8674004A52C6 /* NovaAIContextManager.swift */,
 				2327398A2E2B8674004A52C6 /* NovaAPIService.swift */,
 				2327398B2E2B8674004A52C6 /* NovaContextEngine.swift */,
@@ -1293,6 +1296,7 @@
 				23273AB32E2B8674004A52C6 /* PortfolioOverviewView.swift in Sources */,
 				23273AB42E2B8674004A52C6 /* ClockInManager.swift in Sources */,
 				23273AB52E2B8674004A52C6 /* FrancoSphereDesign.swift in Sources */,
+				23EA71042E387B790010FA03 /* NovaIntelligenceEngine.swift in Sources */,
 				23273AB62E2B8674004A52C6 /* WeatherDashboardComponent.swift in Sources */,
 				23273AB72E2B8674004A52C6 /* ClientDashboardTemplate.swift in Sources */,
 				23273AB82E2B8674004A52C6 /* ModelExtensions.swift in Sources */,

@@ -5,11 +5,11 @@
 //  ✅ FIXED: Building image mapping with fallbacks
 //  ✅ FIXED: Dark mode compatibility
 //  ✅ FIXED: Copy changes from "My Sites" to "Portfolio"
+//  ✅ FIXED: Aligned with CoreTypes.BuildingMetrics properties
+//  ✅ FIXED: Removed redundant type aliases
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
 
 struct PropertyCard: View {
     let building: NamedCoordinate
@@ -89,7 +89,7 @@ struct PropertyCard: View {
         VStack(alignment: .leading, spacing: 8) {
             if let metrics = metrics {
                 HStack {
-                    Label("Portfolio", systemImage: "building.2.fill")  // CHANGED FROM "Today's Tasks"
+                    Label("Portfolio", systemImage: "building.2.fill")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
@@ -122,7 +122,7 @@ struct PropertyCard: View {
                     
                     Spacer()
                     
-                    Text("\(Int(metrics.efficiency))%")
+                    Text("\(Int(metrics.maintenanceEfficiency * 100))%")
                         .font(.caption)
                         .foregroundColor(efficiencyColor)
                 }
@@ -139,7 +139,7 @@ struct PropertyCard: View {
                         .foregroundColor(.white)
                 }
                 
-                if metrics.overdueCount > 0 {
+                if metrics.overdueTasks > 0 {
                     HStack {
                         Label("Overdue", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
@@ -147,7 +147,7 @@ struct PropertyCard: View {
                         
                         Spacer()
                         
-                        Text("\(metrics.overdueCount)")
+                        Text("\(metrics.overdueTasks)")
                             .font(.caption)
                             .foregroundColor(.red)
                     }
@@ -170,9 +170,9 @@ struct PropertyCard: View {
                     
                     Spacer()
                     
-                    Text("\(Int(metrics.complianceScore))%")
+                    Text(metrics.isCompliant ? "Compliant" : "Review Needed")
                         .font(.caption)
-                        .foregroundColor(complianceColor)
+                        .foregroundColor(metrics.isCompliant ? .green : .orange)
                 }
                 
                 HStack {
@@ -187,15 +187,15 @@ struct PropertyCard: View {
                         .foregroundColor(.white)
                 }
                 
-                if metrics.requiresReview {
+                if metrics.urgentTasksCount > 0 {
                     HStack {
-                        Label("Review", systemImage: "flag.fill")
+                        Label("Urgent", systemImage: "flag.fill")
                             .font(.caption)
                             .foregroundColor(.orange)
                         
                         Spacer()
                         
-                        Text("Required")
+                        Text("\(metrics.urgentTasksCount)")
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
@@ -237,7 +237,7 @@ struct PropertyCard: View {
         case "18": return "36_Walker_Street"
         case "19": return "115_7th_Avenue"
         case "20": return "FrancoSphere_HQ"
-        default: 
+        default:
             print("⚠️ No image found for building ID: \(building.id)")
             return "building_placeholder"
         }
@@ -254,18 +254,9 @@ struct PropertyCard: View {
     
     private var efficiencyColor: Color {
         guard let metrics = metrics else { return .gray }
-        switch Int(metrics.efficiency) {
+        switch Int(metrics.maintenanceEfficiency * 100) {
         case 90...100: return .green
         case 70...89: return .yellow
-        default: return .red
-        }
-    }
-    
-    private var complianceColor: Color {
-        guard let metrics = metrics else { return .gray }
-        switch Int(metrics.complianceScore) {
-        case 95...100: return .green
-        case 80...94: return .yellow
         default: return .red
         }
     }
@@ -284,16 +275,16 @@ struct PropertyCard_Previews: PreviewProvider {
                     longitude: -73.9978
                 ),
                 metrics: BuildingMetrics(
-                    pendingTasks: 3,
+                    buildingId: "14",
                     completionRate: 0.75,
-                    efficiency: 85,
+                    overdueTasks: 1,
+                    totalTasks: 12,
                     activeWorkers: 2,
-                    overdueCount: 1,
-                    complianceScore: 92,
                     overallScore: 4.2,
-                    requiresReview: false
+                    pendingTasks: 3,
+                    urgentTasksCount: 1
                 ),
-                mode: .worker,
+                mode: PropertyCard.PropertyCardMode.worker,
                 onTap: {}
             )
             
@@ -305,7 +296,7 @@ struct PropertyCard_Previews: PreviewProvider {
                     longitude: -73.9936
                 ),
                 metrics: nil,
-                mode: .worker,
+                mode: PropertyCard.PropertyCardMode.worker,
                 onTap: {}
             )
         }

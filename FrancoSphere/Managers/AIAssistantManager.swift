@@ -1,29 +1,32 @@
 //
-//
 //  AIAssistantManager.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Aligned with actual CoreTypes.AISuggestion constructor
-//  ✅ FIXED: Corrected AIScenario property access (using .scenario not missing properties)
-//  ✅ FIXED: Corrected AIScenarioData property access (no .data property exists)
-//  ✅ FIXED: Updated ScenarioType to match actual AIScenarioType enum cases
-//  ✅ FIXED: Removed duplicate method declarations
+//  ✅ FIXED: No duplicate types or conflicting definitions
+//  ✅ FIXED: Proper switch statement structure
+//  ✅ FIXED: Using correct CoreTypes.AIScenario properties
+//  ✅ ALIGNED: Works alongside NovaAIContextManager
+//
+//  This manager handles simple AI scenario tracking and suggestions,
+//  while NovaAIContextManager handles the more sophisticated context-aware AI features.
 //
 
 import Foundation
 import SwiftUI
 import Combine
 
+/// Simple AI Assistant Manager for scenario tracking
+/// Works alongside the more sophisticated NovaAIContextManager
 @MainActor
 class AIAssistantManager: ObservableObject {
     static let shared = AIAssistantManager()
     
     // MARK: - Published Properties
-    @Published var activeScenarios: [AIScenario] = []
+    @Published var activeScenarios: [CoreTypes.AIScenario] = []
     @Published var hasActiveScenarios: Bool = false
     @Published var suggestions: [CoreTypes.AISuggestion] = []
-    @Published var currentScenario: AIScenario?
-    @Published var currentScenarioData: AIScenarioData?
+    @Published var currentScenario: CoreTypes.AIScenario?
+    @Published var currentScenarioContext: [String: Any] = [:]  // Generic context storage
     @Published var isProcessing: Bool = false
     
     // MARK: - Private Properties
@@ -46,15 +49,22 @@ class AIAssistantManager: ObservableObject {
     
     // MARK: - Scenario Management
     func addScenario(_ scenarioType: String) {
-        // ✅ FIXED: Use correct AIScenario constructor
-        let scenario = AIScenario(
-            scenario: scenarioType,
-            description: "AI scenario: \(scenarioType)",
-            priority: .medium
+        // Convert string to AIScenarioType
+        guard let type = mapStringToScenarioType(scenarioType) else {
+            print("⚠️ Unknown scenario type: \(scenarioType)")
+            return
+        }
+        
+        // Use correct AIScenario constructor
+        let scenario = CoreTypes.AIScenario(
+            type: type,
+            title: generateTitle(for: type),
+            description: generateDescription(for: type)
         )
+        
         activeScenarios.append(scenario)
         hasActiveScenarios = !activeScenarios.isEmpty
-        print("📱 Added AI scenario: \(scenarioType)")
+        print("📱 Added AI scenario: \(scenario.title)")
     }
     
     func dismissScenario(_ scenarioId: String) {
@@ -67,13 +77,80 @@ class AIAssistantManager: ObservableObject {
         suggestions.removeAll()
         hasActiveScenarios = false
         currentScenario = nil
-        currentScenarioData = nil
+        currentScenarioContext.removeAll()
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func mapStringToScenarioType(_ string: String) -> CoreTypes.AIScenarioType? {
+        switch string {
+        case "clock_out_reminder":
+            return .clockOutReminder
+        case "weather_alert":
+            return .weatherAlert
+        case "inventory_low":
+            return .inventoryLow
+        case "routine_incomplete":
+            return .routineIncomplete
+        case "pending_tasks":
+            return .pendingTasks
+        case "emergency_repair":
+            return .emergencyRepair
+        case "task_overdue":
+            return .taskOverdue
+        case "building_alert":
+            return .buildingAlert
+        default:
+            return nil
+        }
+    }
+    
+    private func generateTitle(for type: CoreTypes.AIScenarioType) -> String {
+        switch type {
+        case .clockOutReminder:
+            return "Clock Out Reminder"
+        case .weatherAlert:
+            return "Weather Alert"
+        case .inventoryLow:
+            return "Low Inventory"
+        case .routineIncomplete:
+            return "Incomplete Routine"
+        case .pendingTasks:
+            return "Pending Tasks"
+        case .emergencyRepair:
+            return "Emergency Repair"
+        case .taskOverdue:
+            return "Overdue Task"
+        case .buildingAlert:
+            return "Building Alert"
+        }
+    }
+    
+    private func generateDescription(for type: CoreTypes.AIScenarioType) -> String {
+        switch type {
+        case .clockOutReminder:
+            return "Remember to clock out when your shift ends"
+        case .weatherAlert:
+            return "Weather conditions may affect work schedule"
+        case .inventoryLow:
+            return "Supplies running low and need restocking"
+        case .routineIncomplete:
+            return "Some routine tasks haven't been completed"
+        case .pendingTasks:
+            return "You have tasks waiting for completion"
+        case .emergencyRepair:
+            return "Urgent repair needed immediately"
+        case .taskOverdue:
+            return "Task is past its due date"
+        case .buildingAlert:
+            return "Building requires attention"
+        }
     }
     
     // MARK: - Suggestion Generation
-    private func generateSuggestions(for scenarioType: String) -> [CoreTypes.AISuggestion] {
-        switch scenarioType {
-        case ScenarioType.routineIncomplete:
+    private func generateSuggestions(for type: CoreTypes.AIScenarioType) -> [CoreTypes.AISuggestion] {
+        switch type {
+        case .routineIncomplete:
             return [
                 CoreTypes.AISuggestion(
                     title: "Review Incomplete Tasks",
@@ -89,7 +166,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.pendingTasks:
+        case .pendingTasks:
             return [
                 CoreTypes.AISuggestion(
                     title: "Prioritize Tasks",
@@ -105,7 +182,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.weatherAlert:
+        case .weatherAlert:
             return [
                 CoreTypes.AISuggestion(
                     title: "Check Weather Impact",
@@ -121,7 +198,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.clockOutReminder:
+        case .clockOutReminder:
             return [
                 CoreTypes.AISuggestion(
                     title: "Clock Out",
@@ -131,7 +208,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.inventoryLow:
+        case .inventoryLow:
             return [
                 CoreTypes.AISuggestion(
                     title: "Order Supplies",
@@ -147,7 +224,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.emergencyRepair:
+        case .emergencyRepair:
             return [
                 CoreTypes.AISuggestion(
                     title: "Emergency Protocol",
@@ -163,7 +240,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.taskOverdue:
+        case .taskOverdue:
             return [
                 CoreTypes.AISuggestion(
                     title: "Immediate Action",
@@ -179,7 +256,7 @@ class AIAssistantManager: ObservableObject {
                 )
             ]
         
-        case ScenarioType.buildingAlert:
+        case .buildingAlert:
             return [
                 CoreTypes.AISuggestion(
                     title: "Investigate Alert",
@@ -194,25 +271,14 @@ class AIAssistantManager: ObservableObject {
                     category: .operations
                 )
             ]
-        
-        default:
-            return [
-                CoreTypes.AISuggestion(
-                    title: "General Assistance",
-                    description: "Nova AI is here to help",
-                    priority: .low,
-                    category: .operations
-                )
-            ]
         }
     }
     
     // MARK: - Scenario Processing
-    func processScenario(_ scenario: AIScenario) {
+    func processScenario(_ scenario: CoreTypes.AIScenario) {
         isProcessing = true
         currentScenario = scenario
-        // ✅ FIXED: Use .scenario property (exists in AIScenario)
-        suggestions = generateSuggestions(for: scenario.scenario)
+        suggestions = generateSuggestions(for: scenario.type)
         
         // Simulate processing delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -220,12 +286,12 @@ class AIAssistantManager: ObservableObject {
         }
     }
     
-    func processScenarioData(_ data: AIScenarioData) {
-        currentScenarioData = data
+    // Process additional context for scenarios
+    func processScenarioContext(_ context: [String: Any]) {
+        currentScenarioContext = context
         
-        // ✅ FIXED: AIScenarioData has .message property, not .data
-        // Generate contextual suggestions based on scenario message
-        if let message = currentScenarioData?.message {
+        // Generate contextual suggestions based on context message
+        if let message = context["message"] as? String {
             suggestions = generateContextualSuggestions(for: message)
         }
     }
@@ -335,42 +401,36 @@ class AIAssistantManager: ObservableObject {
     // MARK: - Utility Methods
     func dismissCurrentScenario() {
         currentScenario = nil
-        currentScenarioData = nil
+        currentScenarioContext.removeAll()
         suggestions.removeAll()
     }
     
-    func hasActiveScenario(ofType type: String) -> Bool {
-        // ✅ FIXED: Use .scenario property
-        return activeScenarios.contains { $0.scenario == type }
+    func hasActiveScenario(ofType type: CoreTypes.AIScenarioType) -> Bool {
+        return activeScenarios.contains { $0.type == type }
     }
     
-    func getActiveScenarios(ofType type: String) -> [AIScenario] {
-        // ✅ FIXED: Use .scenario property
-        return activeScenarios.filter { $0.scenario == type }
+    func getActiveScenarios(ofType type: CoreTypes.AIScenarioType) -> [CoreTypes.AIScenario] {
+        return activeScenarios.filter { $0.type == type }
     }
     
     // MARK: - Debug Methods
     func debugPrintStatus() {
         print("🤖 AI Assistant Status:")
         print("  Active scenarios: \(activeScenarios.count)")
-        // ✅ FIXED: Use .scenario property
-        print("  Current scenario: \(currentScenario?.scenario ?? "None")")
+        print("  Current scenario: \(currentScenario?.type.rawValue ?? "None")")
         print("  Suggestions: \(suggestions.count)")
         print("  Processing: \(isProcessing)")
     }
-}
-
-// MARK: - ✅ FIXED: Updated Scenario Types to match actual AIScenarioType enum
-extension AIAssistantManager {
-    enum ScenarioType {
-        // ✅ FIXED: These match the actual AIScenarioType cases from AIScenarioSheetView.swift
-        static let routineIncomplete = "routine_incomplete"
-        static let pendingTasks = "pending_tasks"
-        static let weatherAlert = "weather_alert"
-        static let clockOutReminder = "clock_out_reminder"
-        static let inventoryLow = "inventory_low"
-        static let emergencyRepair = "emergency_repair"
-        static let taskOverdue = "task_overdue"
-        static let buildingAlert = "building_alert"
+    
+    // MARK: - Context Helpers
+    
+    /// Get typed value from scenario context
+    func getContextValue<T>(_ key: String, as type: T.Type) -> T? {
+        return currentScenarioContext[key] as? T
+    }
+    
+    /// Update scenario context
+    func updateContext(key: String, value: Any) {
+        currentScenarioContext[key] = value
     }
 }
