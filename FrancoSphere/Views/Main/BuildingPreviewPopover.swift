@@ -4,7 +4,7 @@
 //
 //  ✅ ALIGNED: With current CoreTypes structure
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Removed all incorrect conditional bindings
+//  ✅ FIXED: Uses buildingId instead of buildingName
 //  ✅ REFACTORED: Works with actual NamedCoordinate properties
 //
 
@@ -286,8 +286,9 @@ struct BuildingPreviewPopover: View {
                 self.tasks = allTasks
             }
             
+            // ✅ FIXED: Use buildingId instead of buildingName
             let buildingTasks = tasks.filter { task in
-                task.buildingName == building.name || task.buildingId == building.id
+                task.buildingId == building.id
             }
             
             // Filter open tasks using TaskStatus enum
@@ -312,9 +313,15 @@ struct BuildingPreviewPopover: View {
                     openTasksCount = openTasks.count
                     
                     if let next = nextSanitation {
-                        // startTime is a computed property that returns a non-optional String
-                        let time = next.startTime  // This is a String like "9:00 AM"
-                        nextSanitationDate = "Today \(time)"
+                        // Use dueDate if available, otherwise just show "Today"
+                        if let dueDate = next.dueDate {
+                            let formatter = DateFormatter()
+                            formatter.timeStyle = .short
+                            let time = formatter.string(from: dueDate)
+                            nextSanitationDate = "Today \(time)"
+                        } else {
+                            nextSanitationDate = "Today"
+                        }
                     } else {
                         nextSanitationDate = nil
                     }
@@ -400,3 +407,25 @@ struct BuildingPreviewPopover_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
+
+// MARK: - Notes
+/*
+CONTEXTUAL TASK PROPERTIES:
+Based on compilation errors, ContextualTask has these properties:
+- buildingId (String?) - NOT buildingName
+- status (TaskStatus enum with .completed, .cancelled, etc.)
+- category (TaskCategory enum with .sanitation, etc.)
+- title (String)
+- description (String)
+- isCompleted (Bool)
+- dueDate (Date?)
+- urgency (TaskUrgency)
+
+Properties that DON'T exist:
+- buildingName
+- startTime
+- scheduledDate
+
+The task filtering now correctly uses buildingId to match tasks
+with the current building, and uses dueDate for timing information.
+*/
