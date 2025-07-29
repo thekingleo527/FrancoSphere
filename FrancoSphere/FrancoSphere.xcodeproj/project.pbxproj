@@ -7,190 +7,188 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		23273A082E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232738FF2E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift */; };
-		23273A092E2B8674004A52C6 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C52E2B8674004A52C6 /* TaskService.swift */; };
-		23273A0B2E2B8674004A52C6 /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */; };
-		23273A0D2E2B8674004A52C6 /* OperationalDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */; };
-		23273A112E2B8674004A52C6 /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739552E2B8674004A52C6 /* GRDBManager.swift */; };
-		23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DE2E2B8674004A52C6 /* SignUpView.swift */; };
-		23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739102E2B8674004A52C6 /* GlassDeckContainer.swift */; };
-		23273A162E2B8674004A52C6 /* NewAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739582E2B8674004A52C6 /* NewAuthManager.swift */; };
-		23273A182E2B8674004A52C6 /* InitializationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A012E2B8674004A52C6 /* InitializationViewModel.swift */; };
-		23273A192E2B8674004A52C6 /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398D2E2B8674004A52C6 /* NovaInteractionView.swift */; };
-		23273A1B2E2B8674004A52C6 /* PropertyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392F2E2B8674004A52C6 /* PropertyCard.swift */; };
-		23273A1C2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391B2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift */; };
-		23273A1D2E2B8674004A52C6 /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327395C2E2B8674004A52C6 /* WorkerManager.swift */; };
-		23273A1E2E2B8674004A52C6 /* TimeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394A2E2B8674004A52C6 /* TimeStatus.swift */; };
-		23273A202E2B8674004A52C6 /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E52E2B8674004A52C6 /* BuildingTaskDetailView.swift */; };
-		23273A212E2B8674004A52C6 /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E32E2B8674004A52C6 /* BuildingSelectionView.swift */; };
-		23273A232E2B8674004A52C6 /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DC2E2B8674004A52C6 /* ForgotPasswordView.swift */; };
-		23273A242E2B8674004A52C6 /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E72E2B8674004A52C6 /* MaintenanceHistoryView.swift */; };
-		23273A262E2B8674004A52C6 /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F82E2B8674004A52C6 /* TaskTimelineView.swift */; };
-		23273A272E2B8674004A52C6 /* BuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E42E2B8674004A52C6 /* BuildingsView.swift */; };
-		23273A2A2E2B8674004A52C6 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393C2E2B8674004A52C6 /* WorkersInlineList.swift */; };
-		23273A2C2E2B8674004A52C6 /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D72E2B8674004A52C6 /* TypeMigrationService.swift */; };
-		23273A2D2E2B8674004A52C6 /* TimelineProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739062E2B8674004A52C6 /* TimelineProgressBar.swift */; };
-		23273A2E2E2B8674004A52C6 /* AssetImageDebugger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739512E2B8674004A52C6 /* AssetImageDebugger.swift */; };
-		23273A2F2E2B8674004A52C6 /* AssignedBuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E02E2B8674004A52C6 /* AssignedBuildingsView.swift */; };
-		23273A302E2B8674004A52C6 /* BuildingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FF2E2B8674004A52C6 /* BuildingDetailViewModel.swift */; };
-		23273A312E2B8674004A52C6 /* VerificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739802E2B8674004A52C6 /* VerificationRecord.swift */; };
-		23273A332E2B8674004A52C6 /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392E2E2B8674004A52C6 /* ProfileBadge.swift */; };
-		23273A342E2B8674004A52C6 /* WorkerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739822E2B8674004A52C6 /* WorkerActionType.swift */; };
-		23273A352E2B8674004A52C6 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739322E2B8674004A52C6 /* RoutinePriority.swift */; };
-		23273A362E2B8674004A52C6 /* BuildingPreviewPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739ED2E2B8674004A52C6 /* BuildingPreviewPopover.swift */; };
-		23273A372E2B8674004A52C6 /* DataSynchronizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */; };
-		23273A382E2B8674004A52C6 /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E92E2B8674004A52C6 /* TaskFormView.swift */; };
-		23273A392E2B8674004A52C6 /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D02E2B8674004A52C6 /* QuickActionMenu.swift */; };
-		23273A3A2E2B8674004A52C6 /* TaskService+OperationalFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C62E2B8674004A52C6 /* TaskService+OperationalFallback.swift */; };
-		23273A3B2E2B8674004A52C6 /* BuildingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B82E2B8674004A52C6 /* BuildingService.swift */; };
-		23273A3C2E2B8674004A52C6 /* WeatherDataAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CB2E2B8674004A52C6 /* WeatherDataAdapter.swift */; };
-		23273A3D2E2B8674004A52C6 /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739262E2B8674004A52C6 /* FrancoSphereColors.swift */; };
-		23273A3E2E2B8674004A52C6 /* GlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739122E2B8674004A52C6 /* GlassModal.swift */; };
-		23273A402E2B8674004A52C6 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739572E2B8674004A52C6 /* LocationManager.swift */; };
-		23273A412E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390A2E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift */; };
-		23273A432E2B8674004A52C6 /* InitializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739292E2B8674004A52C6 /* InitializationStatus.swift */; };
-		23273A442E2B8674004A52C6 /* TimeBasedTaskFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C82E2B8674004A52C6 /* TimeBasedTaskFilter.swift */; };
-		23273A462E2B8674004A52C6 /* WorkerFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B52E2B8674004A52C6 /* WorkerFeedbackManager.swift */; };
-		23273A472E2B8674004A52C6 /* NovaTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398E2E2B8674004A52C6 /* NovaTypes.swift */; };
-		23273A4A2E2B8674004A52C6 /* MapInteractionHint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739602E2B8674004A52C6 /* MapInteractionHint.swift */; };
-		23273A4B2E2B8674004A52C6 /* TaskRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F72E2B8674004A52C6 /* TaskRequestView.swift */; };
-		23273A4D2E2B8674004A52C6 /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390E2E2B8674004A52C6 /* GlassButtonModifier.swift */; };
-		23273A4E2E2B8674004A52C6 /* GlassStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739152E2B8674004A52C6 /* GlassStatusBadge.swift */; };
-		23273A4F2E2B8674004A52C6 /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FA2E2B8674004A52C6 /* WorkerProfileView.swift */; };
-		23273A502E2B8674004A52C6 /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C02E2B8674004A52C6 /* IntelligenceService.swift */; };
-		23273A522E2B8674004A52C6 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739332E2B8674004A52C6 /* StatCard.swift */; };
-		23273A532E2B8674004A52C6 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739A72E2B8674004A52C6 /* TestRealDataIntegration.swift */; };
-		23273A552E2B8674004A52C6 /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */; };
-		23273A582E2B8674004A52C6 /* WorkerContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739842E2B8674004A52C6 /* WorkerContextEngine.swift */; };
-		23273A592E2B8674004A52C6 /* TrackableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D22E2B8674004A52C6 /* TrackableScrollView.swift */; };
-		23273A5B2E2B8674004A52C6 /* AIAssistantImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739002E2B8674004A52C6 /* AIAssistantImageLoader.swift */; };
-		23273A5C2E2B8674004A52C6 /* BuildingStatsGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390B2E2B8674004A52C6 /* BuildingStatsGlassCard.swift */; };
-		23273A5D2E2B8674004A52C6 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390F2E2B8674004A52C6 /* GlassCard.swift */; };
-		23273A5E2E2B8674004A52C6 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739592E2B8674004A52C6 /* NotificationManager.swift */; };
-		23273A5F2E2B8674004A52C6 /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739182E2B8674004A52C6 /* GlassTypes.swift */; };
-		23273A602E2B8674004A52C6 /* BuildingIntelligenceDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739682E2B8674004A52C6 /* BuildingIntelligenceDTO.swift */; };
-		23273A612E2B8674004A52C6 /* GlassTransitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739172E2B8674004A52C6 /* GlassTransitions.swift */; };
-		23273A622E2B8674004A52C6 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C72E2B8674004A52C6 /* TelemetryService.swift */; };
-		23273A642E2B8674004A52C6 /* MyAssignedBuildingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392B2E2B8674004A52C6 /* MyAssignedBuildingsSection.swift */; };
-		23273A652E2B8674004A52C6 /* TodaysTasksGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739072E2B8674004A52C6 /* TodaysTasksGlassCard.swift */; };
-		23273A662E2B8674004A52C6 /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739252E2B8674004A52C6 /* CoverageInfoCard.swift */; };
-		23273A672E2B8674004A52C6 /* DatabaseMigrationFix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739542E2B8674004A52C6 /* DatabaseMigrationFix.swift */; };
-		23273A682E2B8674004A52C6 /* Building.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739232E2B8674004A52C6 /* Building.swift */; };
-		23273A692E2B8674004A52C6 /* TodaysProgressDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739362E2B8674004A52C6 /* TodaysProgressDetailView.swift */; };
-		23273A6A2E2B8674004A52C6 /* AdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */; };
-		23273A6B2E2B8674004A52C6 /* SchemaMigrationPatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739422E2B8674004A52C6 /* SchemaMigrationPatch.swift */; };
-		23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */; };
-		23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CD2E2B8674004A52C6 /* WorkerService.swift */; };
-		23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739272E2B8674004A52C6 /* HeroStatusCard.swift */; };
-		23273A752E2B8674004A52C6 /* FrancoSphereModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739792E2B8674004A52C6 /* FrancoSphereModels.swift */; };
-		23273A762E2B8674004A52C6 /* IntelligencePreviewPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391D2E2B8674004A52C6 /* IntelligencePreviewPanel.swift */; };
-		23273A772E2B8674004A52C6 /* V012.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394B2E2B8674004A52C6 /* V012.swift */; };
-		23273A782E2B8674004A52C6 /* EmergencyContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393E2E2B8674004A52C6 /* EmergencyContactsSheet.swift */; };
-		23273A792E2B8674004A52C6 /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739132E2B8674004A52C6 /* GlassMorphismStyles.swift */; };
-		23273A7A2E2B8674004A52C6 /* FrancoSphereExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */; };
-		23273A7D2E2B8674004A52C6 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C42E2B8674004A52C6 /* QuickBooksPayrollExporter.swift */; };
-		23273A7E2E2B8674004A52C6 /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394E2E2B8674004A52C6 /* V003_WorkerAssignments.swift */; };
-		23273A7F2E2B8674004A52C6 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F62E2B8674004A52C6 /* TaskDetailView.swift */; };
-		23273A802E2B8674004A52C6 /* GlassLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739112E2B8674004A52C6 /* GlassLoadingView.swift */; };
-		23273A812E2B8674004A52C6 /* ClockInGlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390C2E2B8674004A52C6 /* ClockInGlassModal.swift */; };
-		23273A822E2B8674004A52C6 /* TaskScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739EA2E2B8674004A52C6 /* TaskScheduleView.swift */; };
-		23273A832E2B8674004A52C6 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739342E2B8674004A52C6 /* TaskDisplayHelpers.swift */; };
-		23273A842E2B8674004A52C6 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DD2E2B8674004A52C6 /* LoginView.swift */; };
-		23273A852E2B8674004A52C6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F02E2B8674004A52C6 /* ContentView.swift */; };
-		23273A862E2B8674004A52C6 /* WorkerConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739832E2B8674004A52C6 /* WorkerConstants.swift */; };
-		23273A872E2B8674004A52C6 /* TaskTimelineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739352E2B8674004A52C6 /* TaskTimelineRow.swift */; };
-		23273A882E2B8674004A52C6 /* CoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739642E2B8674004A52C6 /* CoreTypes.swift */; };
-		23273A8A2E2B8674004A52C6 /* BuildingIntelligencePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */; };
-		23273A8C2E2B8674004A52C6 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F52E2B8674004A52C6 /* ProfileView.swift */; };
-		23273A8D2E2B8674004A52C6 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739442E2B8674004A52C6 /* FrancoSphereApp.swift */; };
-		23273A8E2E2B8674004A52C6 /* WeatherTaskTimelineCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739082E2B8674004A52C6 /* WeatherTaskTimelineCard.swift */; };
-		23273A912E2B8674004A52C6 /* ImportHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397A2E2B8674004A52C6 /* ImportHelper.swift */; };
-		23273A922E2B8674004A52C6 /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739C32E2B8674004A52C6 /* QuickBooksOAuthManager.swift */; };
-		23273A932E2B8674004A52C6 /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */; };
-		23273A942E2B8674004A52C6 /* InventoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E62E2B8674004A52C6 /* InventoryView.swift */; };
-		23273A952E2B8674004A52C6 /* BuildingIntelligenceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A002E2B8674004A52C6 /* BuildingIntelligenceViewModel.swift */; };
-		23273A962E2B8674004A52C6 /* AdminDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FE2E2B8674004A52C6 /* AdminDashboardViewModel.swift */; };
-		23273A972E2B8674004A52C6 /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739162E2B8674004A52C6 /* GlassTabBar.swift */; };
-		23273A982E2B8674004A52C6 /* MaintenanceTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E82E2B8674004A52C6 /* MaintenanceTaskView.swift */; };
-		23273A9A2E2B8674004A52C6 /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739EC2E2B8674004A52C6 /* AdminDashboardView.swift */; };
-		23273A9B2E2B8674004A52C6 /* WorkerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739CC2E2B8674004A52C6 /* WorkerMetricsService.swift */; };
-		23273A9C2E2B8674004A52C6 /* ComplianceDataDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */; };
-		23273A9D2E2B8674004A52C6 /* TaskDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A022E2B8674004A52C6 /* TaskDetailViewModel.swift */; };
-		23273A9E2E2B8674004A52C6 /* BuildingMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B72E2B8674004A52C6 /* BuildingMetricsService.swift */; };
-		23273A9F2E2B8674004A52C6 /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F92E2B8674004A52C6 /* WorkerDashboardView.swift */; };
-		23273AA02E2B8674004A52C6 /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D12E2B8674004A52C6 /* RouteStatItem.swift */; };
-		23273AA22E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */; };
-		23273AA42E2B8674004A52C6 /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E22E2B8674004A52C6 /* BuildingMapDetailView.swift */; };
-		23273AA52E2B8674004A52C6 /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398A2E2B8674004A52C6 /* NovaAPIService.swift */; };
-		23273AA72E2B8674004A52C6 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739562E2B8674004A52C6 /* HapticManager.swift */; };
-		23273AA82E2B8674004A52C6 /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739612E2B8674004A52C6 /* MapRevealContainer.swift */; };
-		23273AA92E2B8674004A52C6 /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397E2E2B8674004A52C6 /* SharedTypes.swift */; };
-		23273AAA2E2B8674004A52C6 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392D2E2B8674004A52C6 /* NovaAvatar.swift */; };
-		23273AAC2E2B8674004A52C6 /* BuildingFeatureConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B12E2B8674004A52C6 /* BuildingFeatureConfiguration.swift */; };
-		23273AAD2E2B8674004A52C6 /* CurrentBuildingStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739012E2B8674004A52C6 /* CurrentBuildingStatusCard.swift */; };
-		23273AAE2E2B8674004A52C6 /* TodaysRoutineSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739372E2B8674004A52C6 /* TodaysRoutineSummaryView.swift */; };
-		23273AAF2E2B8674004A52C6 /* GlassNavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739142E2B8674004A52C6 /* GlassNavigationBar.swift */; };
-		23273AB02E2B8674004A52C6 /* EnhancedClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739022E2B8674004A52C6 /* EnhancedClockInGlassCard.swift */; };
-		23273AB12E2B8674004A52C6 /* SecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739AA2E2B8674004A52C6 /* SecurityManager.swift */; };
-		23273AB22E2B8674004A52C6 /* ClientDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739EE2E2B8674004A52C6 /* ClientDashboardView.swift */; };
-		23273AB32E2B8674004A52C6 /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F42E2B8674004A52C6 /* PortfolioOverviewView.swift */; };
-		23273AB42E2B8674004A52C6 /* ClockInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739522E2B8674004A52C6 /* ClockInManager.swift */; };
-		23273AB52E2B8674004A52C6 /* FrancoSphereDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739032E2B8674004A52C6 /* FrancoSphereDesign.swift */; };
-		23273AB62E2B8674004A52C6 /* WeatherDashboardComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739382E2B8674004A52C6 /* WeatherDashboardComponent.swift */; };
-		23273AB82E2B8674004A52C6 /* ModelExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397D2E2B8674004A52C6 /* ModelExtensions.swift */; };
-		23273AB92E2B8674004A52C6 /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739F32E2B8674004A52C6 /* InitializationView.swift */; };
-		23273ABB2E2B8674004A52C6 /* DatabaseSchemaVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739412E2B8674004A52C6 /* DatabaseSchemaVerifier.swift */; };
-		23273ABD2E2B8674004A52C6 /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E12E2B8674004A52C6 /* BuildingDetailView.swift */; };
-		23273ABE2E2B8674004A52C6 /* PressableGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739192E2B8674004A52C6 /* PressableGlassCard.swift */; };
-		23273ABF2E2B8674004A52C6 /* WeatherTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739392E2B8674004A52C6 /* WeatherTasksSection.swift */; };
-		23273AC02E2B8674004A52C6 /* WorkerRoutineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739872E2B8674004A52C6 /* WorkerRoutineViewModel.swift */; };
-		23273AC22E2B8674004A52C6 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BB2E2B8674004A52C6 /* DashboardSyncService.swift */; };
-		23273AC32E2B8674004A52C6 /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BA2E2B8674004A52C6 /* DailyOpsReset.swift */; };
-		23273AC52E2B8674004A52C6 /* TodayTasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */; };
-		23273AC72E2B8674004A52C6 /* UserExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327397F2E2B8674004A52C6 /* UserExtensions.swift */; };
-		23273AC82E2B8674004A52C6 /* WorkerMetricsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */; };
-		23273AC92E2B8674004A52C6 /* ModelColorsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739052E2B8674004A52C6 /* ModelColorsExtensions.swift */; };
-		23273ACA2E2B8674004A52C6 /* WorkerAssignmentEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739B32E2B8674004A52C6 /* WorkerAssignmentEngine.swift */; };
-		23273ACB2E2B8674004A52C6 /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739BF2E2B8674004A52C6 /* DSNYTaskGenerator.swift */; };
-		23273ACD2E2B8674004A52C6 /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327390D2E2B8674004A52C6 /* GlassButton.swift */; };
-		23273ACE2E2B8674004A52C6 /* TaskCategoryGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327391A2E2B8674004A52C6 /* TaskCategoryGlassCard.swift */; };
-		23273ACF2E2B8674004A52C6 /* WorkerEventOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739D82E2B8674004A52C6 /* WorkerEventOutbox.swift */; };
-		23273AD02E2B8674004A52C6 /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739EF2E2B8674004A52C6 /* ComplianceOverviewView.swift */; };
-		23273AD12E2B8674004A52C6 /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392C2E2B8674004A52C6 /* MySitesCard.swift */; };
-		23273AD22E2B8674004A52C6 /* DatabaseMigrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327394D2E2B8674004A52C6 /* DatabaseMigrations.swift */; };
-		23273AD32E2B8674004A52C6 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739282E2B8674004A52C6 /* ImagePicker.swift */; };
-		23273AD42E2B8674004A52C6 /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739042E2B8674004A52C6 /* HeaderV3B.swift */; };
-		23273AD52E2B8674004A52C6 /* WeatherViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327393A2E2B8674004A52C6 /* WeatherViewModifier.swift */; };
-		23273AD72E2B8674004A52C6 /* FilteredTaskResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739772E2B8674004A52C6 /* FilteredTaskResult.swift */; };
-		23273AD82E2B8674004A52C6 /* 29_31_East_20th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739922E2B8674004A52C6 /* 29_31_East_20th_Street.jpg */; };
-		23273AD92E2B8674004A52C6 /* 135West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2327399C2E2B8674004A52C6 /* 135West17thStreet.jpg */; };
-		23273ADA2E2B8674004A52C6 /* 36_Walker_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739932E2B8674004A52C6 /* 36_Walker_Street.jpg */; };
-		23273ADB2E2B8674004A52C6 /* 123_1st_Avenue.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739992E2B8674004A52C6 /* 123_1st_Avenue.jpg */; };
-		23273ADC2E2B8674004A52C6 /* 68_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739952E2B8674004A52C6 /* 68_Perry_Street.jpg */; };
-		23273ADD2E2B8674004A52C6 /* 131_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2327399A2E2B8674004A52C6 /* 131_Perry_Street.jpg */; };
-		23273ADE2E2B8674004A52C6 /* Stuyvesant_Cove_Park.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739A22E2B8674004A52C6 /* Stuyvesant_Cove_Park.jpg */; };
-		23273ADF2E2B8674004A52C6 /* update_rubin_museum_id.sql in Resources */ = {isa = PBXBuildFile; fileRef = 232739A82E2B8674004A52C6 /* update_rubin_museum_id.sql */; };
-		23273AE02E2B8674004A52C6 /* 104_Franklin_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739962E2B8674004A52C6 /* 104_Franklin_Street.jpg */; };
-		23273AE12E2B8674004A52C6 /* 117_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739982E2B8674004A52C6 /* 117_West_17th_Street.jpg */; };
-		23273AE22E2B8674004A52C6 /* 136_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2327399D2E2B8674004A52C6 /* 136_West_17th_Street.jpg */; };
-		23273AE32E2B8674004A52C6 /* 12_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739912E2B8674004A52C6 /* 12_West_18th_Street.jpg */; };
-		23273AE42E2B8674004A52C6 /* Rubin_Museum_142_148_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739A12E2B8674004A52C6 /* Rubin_Museum_142_148_West_17th_Street.jpg */; };
-		23273AE52E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 232739942E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg */; };
-		23273AE62E2B8674004A52C6 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 232739A02E2B8674004A52C6 /* AppIcon.png */; };
-		23273AE72E2B8674004A52C6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 232739A42E2B8674004A52C6 /* Preview Assets.xcassets */; };
-		23273AE82E2B8674004A52C6 /* 112_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 232739972E2B8674004A52C6 /* 112_West_18th_Street.jpg */; };
-		23273AE92E2B8674004A52C6 /* 133_East_15th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2327399B2E2B8674004A52C6 /* 133_East_15th_Street.jpg */; };
-		23273AEA2E2B8674004A52C6 /* 138West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2327399E2E2B8674004A52C6 /* 138West17thStreet.jpg */; };
-		23273AEB2E2B8674004A52C6 /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 2327399F2E2B8674004A52C6 /* AIAssistant.png */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
-		238DBE8E2E2CCC9900D6B671 /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */; };
+		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
+		23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD82E39885600F4A10F /* TaskDetailView.swift */; };
+		23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F312E39885600F4A10F /* GlassMorphismStyles.swift */; };
+		23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB02E39885600F4A10F /* RouteStatItem.swift */; };
+		23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F062E39885600F4A10F /* MySitesCard.swift */; };
+		23779FE42E39885600F4A10F /* QuickBooksOAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA42E39885600F4A10F /* QuickBooksOAuthManager.swift */; };
+		23779FE52E39885600F4A10F /* ModelColorsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F232E39885600F4A10F /* ModelColorsExtensions.swift */; };
+		23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F362E39885600F4A10F /* GlassTypes.swift */; };
+		23779FE72E39885600F4A10F /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */; };
+		23779FE82E39885600F4A10F /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC42E39885600F4A10F /* BuildingDetailView.swift */; };
+		23779FE92E39885600F4A10F /* PropertyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F072E39885600F4A10F /* PropertyCard.swift */; };
+		23779FEA2E39885600F4A10F /* TaskTimelineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F152E39885600F4A10F /* TaskTimelineRow.swift */; };
+		23779FEB2E39885600F4A10F /* BuildingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F9F2E39885600F4A10F /* BuildingService.swift */; };
+		23779FEC2E39885600F4A10F /* WorkerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FAC2E39885600F4A10F /* WorkerMetricsService.swift */; };
+		23779FED2E39885600F4A10F /* EnhancedClockInGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */; };
+		23779FEE2E39885600F4A10F /* WeatherTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F192E39885600F4A10F /* WeatherTasksSection.swift */; };
+		23779FEF2E39885600F4A10F /* InitializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F0F2E39885600F4A10F /* InitializationStatus.swift */; };
+		23779FF02E39885600F4A10F /* WorkerAssignmentEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F992E39885600F4A10F /* WorkerAssignmentEngine.swift */; };
+		23779FF12E39885600F4A10F /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA02E39885600F4A10F /* DailyOpsReset.swift */; };
+		23779FF22E39885600F4A10F /* SecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F492E39885600F4A10F /* SecurityManager.swift */; };
+		23779FF32E39885600F4A10F /* CoreTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F592E39885600F4A10F /* CoreTypes.swift */; };
+		23779FF42E39885600F4A10F /* DatabaseInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F4E2E39885600F4A10F /* DatabaseInitializer.swift */; };
+		23779FF52E39885600F4A10F /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F762E39885600F4A10F /* NovaInteractionView.swift */; };
+		23779FF62E39885600F4A10F /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F422E39885600F4A10F /* GRDBManager.swift */; };
+		23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F6B2E39885600F4A10F /* UserExtensions.swift */; };
+		23779FF82E39885600F4A10F /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */; };
+		23779FF92E39885600F4A10F /* BuildingFeatureConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F932E39885600F4A10F /* BuildingFeatureConfiguration.swift */; };
+		23779FFA2E39885600F4A10F /* ComplianceDataDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F5C2E39885600F4A10F /* ComplianceDataDTO.swift */; };
+		23779FFB2E39885600F4A10F /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F052E39885600F4A10F /* HeroStatusCard.swift */; };
+		23779FFC2E39885600F4A10F /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F082E39885600F4A10F /* StatCard.swift */; };
+		23779FFD2E39885600F4A10F /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD42E39885600F4A10F /* DashboardTaskDetailView.swift */; };
+		23779FFE2E39885600F4A10F /* FrancoSphereDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F212E39885600F4A10F /* FrancoSphereDesign.swift */; };
+		23779FFF2E39885600F4A10F /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC82E39885600F4A10F /* BuildingTaskDetailView.swift */; };
+		2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F262E39885600F4A10F /* WeatherTaskTimelineCard.swift */; };
+		2377A0012E39885600F4A10F /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA52E39885600F4A10F /* QuickBooksPayrollExporter.swift */; };
+		2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F3E2E39885600F4A10F /* EmergencyContactsSheet.swift */; };
+		2377A0032E39885600F4A10F /* NovaImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F752E39885600F4A10F /* NovaImageLoader.swift */; };
+		2377A0042E39885600F4A10F /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD72E39885600F4A10F /* ProfileView.swift */; };
+		2377A0052E39885600F4A10F /* DSNYTaskGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA22E39885600F4A10F /* DSNYTaskGenerator.swift */; };
+		2377A0072E39885600F4A10F /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F132E39885600F4A10F /* RoutinePriority.swift */; };
+		2377A0082E39885600F4A10F /* WorkerConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F6E2E39885600F4A10F /* WorkerConstants.swift */; };
+		2377A0092E39885600F4A10F /* ForgotPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FBF2E39885600F4A10F /* ForgotPasswordView.swift */; };
+		2377A00A2E39885600F4A10F /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F692E39885600F4A10F /* SharedTypes.swift */; };
+		2377A00B2E39885600F4A10F /* ClockInGlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2A2E39885600F4A10F /* ClockInGlassModal.swift */; };
+		2377A00C2E39885600F4A10F /* GlassNavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F322E39885600F4A10F /* GlassNavigationBar.swift */; };
+		2377A00D2E39885600F4A10F /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA82E39885600F4A10F /* TelemetryService.swift */; };
+		2377A00E2E39885600F4A10F /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FAA2E39885600F4A10F /* UnifiedDataService.swift */; };
+		2377A00F2E39885600F4A10F /* NovaAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F702E39885600F4A10F /* NovaAPIService.swift */; };
+		2377A0102E39885600F4A10F /* BuildingPreviewPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD02E39885600F4A10F /* BuildingPreviewPopover.swift */; };
+		2377A0112E39885600F4A10F /* BuildingIntelligencePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F0C2E39885600F4A10F /* BuildingIntelligencePanel.swift */; };
+		2377A0122E39885600F4A10F /* GlassDeckContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2E2E39885600F4A10F /* GlassDeckContainer.swift */; };
+		2377A0132E39885600F4A10F /* TaskTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDA2E39885600F4A10F /* TaskTimelineView.swift */; };
+		2377A0142E39885600F4A10F /* BuildingStatsGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F292E39885600F4A10F /* BuildingStatsGlassCard.swift */; };
+		2377A0152E39885600F4A10F /* NovaTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F732E39885600F4A10F /* NovaTypes.swift */; };
+		2377A0162E39885600F4A10F /* TodaysProgressDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F162E39885600F4A10F /* TodaysProgressDetailView.swift */; };
+		2377A0172E39885600F4A10F /* CLLocationCoordinate2DExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F612E39885600F4A10F /* CLLocationCoordinate2DExtension.swift */; };
+		2377A0182E39885600F4A10F /* WorkerFeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F9C2E39885600F4A10F /* WorkerFeedbackManager.swift */; };
+		2377A0192E39885600F4A10F /* FrancoSphereModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F662E39885600F4A10F /* FrancoSphereModels.swift */; };
+		2377A01A2E39885600F4A10F /* InitializationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD52E39885600F4A10F /* InitializationView.swift */; };
+		2377A01B2E39885600F4A10F /* GlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F342E39885600F4A10F /* GlassTabBar.swift */; };
+		2377A01C2E39885600F4A10F /* BuildingMapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC52E39885600F4A10F /* BuildingMapDetailView.swift */; };
+		2377A01D2E39885600F4A10F /* TrackableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB12E39885600F4A10F /* TrackableScrollView.swift */; };
+		2377A01E2E39885600F4A10F /* ClientDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD12E39885600F4A10F /* ClientDashboardView.swift */; };
+		2377A01F2E39885600F4A10F /* QBConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F5F2E39885600F4A10F /* QBConnectionStatus.swift */; };
+		2377A0202E39885600F4A10F /* WeatherViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1A2E39885600F4A10F /* WeatherViewModifier.swift */; };
+		2377A0212E39885600F4A10F /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F542E39885600F4A10F /* WorkerManager.swift */; };
+		2377A0222E39885600F4A10F /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC62E39885600F4A10F /* BuildingSelectionView.swift */; };
+		2377A0232E39885600F4A10F /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F572E39885600F4A10F /* MapRevealContainer.swift */; };
+		2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCD2E39885600F4A10F /* TaskScheduleView.swift */; };
+		2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */; };
+		2377A0262E39885600F4A10F /* TaskService+OperationalFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA72E39885600F4A10F /* TaskService+OperationalFallback.swift */; };
+		2377A0272E39885600F4A10F /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F8F2E39885600F4A10F /* TestRealDataIntegration.swift */; };
+		2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F352E39885600F4A10F /* GlassTransitions.swift */; };
+		2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCF2E39885600F4A10F /* AdminDashboardView.swift */; };
+		2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDC2E39885600F4A10F /* WorkerProfileView.swift */; };
+		2377A02B2E39885600F4A10F /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2D2E39885600F4A10F /* GlassCard.swift */; };
+		2377A02C2E39885600F4A10F /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F502E39885600F4A10F /* LocationManager.swift */; };
+		2377A02D2E39885600F4A10F /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1B2E39885600F4A10F /* WorkersInlineList.swift */; };
+		2377A02E2E39885600F4A10F /* GlassLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2F2E39885600F4A10F /* GlassLoadingView.swift */; };
+		2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F042E39885600F4A10F /* CoverageInfoCard.swift */; };
+		2377A0302E39885600F4A10F /* WeatherDataAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FAB2E39885600F4A10F /* WeatherDataAdapter.swift */; };
+		2377A0312E39885600F4A10F /* GlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F302E39885600F4A10F /* GlassModal.swift */; };
+		2377A0322E39885600F4A10F /* FrancoSphereImports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F652E39885600F4A10F /* FrancoSphereImports.swift */; };
+		2377A0332E39885600F4A10F /* IntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA32E39885600F4A10F /* IntelligenceService.swift */; };
+		2377A0342E39885600F4A10F /* WorkerAssignmentGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F392E39885600F4A10F /* WorkerAssignmentGlassCard.swift */; };
+		2377A0352E39885600F4A10F /* TimeBasedTaskFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA92E39885600F4A10F /* TimeBasedTaskFilter.swift */; };
+		2377A0362E39885600F4A10F /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F622E39885600F4A10F /* ComplianceIssue.swift */; };
+		2377A0372E39885600F4A10F /* BuildingMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F9E2E39885600F4A10F /* BuildingMetricsService.swift */; };
+		2377A0382E39885600F4A10F /* ClockInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F4C2E39885600F4A10F /* ClockInManager.swift */; };
+		2377A0392E39885600F4A10F /* TimeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FBA2E39885600F4A10F /* TimeStatus.swift */; };
+		2377A03A2E39885600F4A10F /* ImportHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F672E39885600F4A10F /* ImportHelper.swift */; };
+		2377A03B2E39885600F4A10F /* V012.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FBB2E39885600F4A10F /* V012.swift */; };
+		2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F972E39885600F4A10F /* WorkerContextEngine.swift */; };
+		2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F642E39885600F4A10F /* FrancoSphereExtensions.swift */; };
+		2377A03E2E39885600F4A10F /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F0E2E39885600F4A10F /* ImagePicker.swift */; };
+		2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2B2E39885600F4A10F /* GlassButton.swift */; };
+		2377A0402E39885600F4A10F /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F482E39885600F4A10F /* AuthManager.swift */; };
+		2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */; };
+		2377A0422E39885600F4A10F /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB42E39885600F4A10F /* TypeMigrationService.swift */; };
+		2377A0432E39885600F4A10F /* TodaysRoutineSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F172E39885600F4A10F /* TodaysRoutineSummaryView.swift */; };
+		2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCC2E39885600F4A10F /* TaskFormView.swift */; };
+		2377A0452E39885600F4A10F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD32E39885600F4A10F /* ContentView.swift */; };
+		2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F222E39885600F4A10F /* HeaderV3B.swift */; };
+		2377A0472E39885600F4A10F /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2C2E39885600F4A10F /* GlassButtonModifier.swift */; };
+		2377A0482E39885600F4A10F /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F0D2E39885600F4A10F /* FrancoSphereColors.swift */; };
+		2377A0492E39885600F4A10F /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F112E39885600F4A10F /* NovaAvatar.swift */; };
+		2377A04A2E39885600F4A10F /* AssignedBuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC32E39885600F4A10F /* AssignedBuildingsView.swift */; };
+		2377A04B2E39885600F4A10F /* Building.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F0B2E39885600F4A10F /* Building.swift */; };
+		2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCA2E39885600F4A10F /* MaintenanceHistoryView.swift */; };
+		2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F452E39885600F4A10F /* V003_WorkerAssignments.swift */; };
+		2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F382E39885600F4A10F /* TaskCategoryGlassCard.swift */; };
+		2377A04F2E39885600F4A10F /* TimelineProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F242E39885600F4A10F /* TimelineProgressBar.swift */; };
+		2377A0502E39885600F4A10F /* TaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F532E39885600F4A10F /* TaskManager.swift */; };
+		2377A0512E39885600F4A10F /* ModelExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F682E39885600F4A10F /* ModelExtensions.swift */; };
+		2377A0522E39885600F4A10F /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA12E39885600F4A10F /* DashboardSyncService.swift */; };
+		2377A0532E39885600F4A10F /* NovaFeatureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F712E39885600F4A10F /* NovaFeatureManager.swift */; };
+		2377A0542E39885600F4A10F /* OperationalDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F522E39885600F4A10F /* OperationalDataManager.swift */; };
+		2377A0552E39885600F4A10F /* BuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC72E39885600F4A10F /* BuildingsView.swift */; };
+		2377A0562E39885600F4A10F /* PressableGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F372E39885600F4A10F /* PressableGlassCard.swift */; };
+		2377A0572E39885600F4A10F /* IntelligencePreviewPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F3B2E39885600F4A10F /* IntelligencePreviewPanel.swift */; };
+		2377A0582E39885600F4A10F /* AssetImageDebugger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F4B2E39885600F4A10F /* AssetImageDebugger.swift */; };
+		2377A0592E39885600F4A10F /* AdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F0A2E39885600F4A10F /* AdaptiveGlassModifier.swift */; };
+		2377A05A2E39885600F4A10F /* WorkerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F6D2E39885600F4A10F /* WorkerActionType.swift */; };
+		2377A05B2E39885600F4A10F /* WorkerMetricsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F5D2E39885600F4A10F /* WorkerMetricsDTO.swift */; };
+		2377A05C2E39885600F4A10F /* QuickActionMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FAF2E39885600F4A10F /* QuickActionMenu.swift */; };
+		2377A05D2E39885600F4A10F /* MyAssignedBuildingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F102E39885600F4A10F /* MyAssignedBuildingsSection.swift */; };
+		2377A05E2E39885600F4A10F /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FAD2E39885600F4A10F /* WorkerService.swift */; };
+		2377A05F2E39885600F4A10F /* DatabaseSchemaVerifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB72E39885600F4A10F /* DatabaseSchemaVerifier.swift */; };
+		2377A0602E39885600F4A10F /* TodaysTasksGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F252E39885600F4A10F /* TodaysTasksGlassCard.swift */; };
+		2377A0612E39885600F4A10F /* VerificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F6C2E39885600F4A10F /* VerificationRecord.swift */; };
+		2377A0622E39885600F4A10F /* SyncStatusComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F3C2E39885600F4A10F /* SyncStatusComponents.swift */; };
+		2377A0632E39885600F4A10F /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F122E39885600F4A10F /* ProfileBadge.swift */; };
+		2377A0642E39885600F4A10F /* DataSynchronizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB32E39885600F4A10F /* DataSynchronizationService.swift */; };
+		2377A0652E39885600F4A10F /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FA62E39885600F4A10F /* TaskService.swift */; };
+		2377A0662E39885600F4A10F /* TaskRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD92E39885600F4A10F /* TaskRequestView.swift */; };
+		2377A0672E39885600F4A10F /* BuildingHeaderGlassOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F282E39885600F4A10F /* BuildingHeaderGlassOverlay.swift */; };
+		2377A0682E39885600F4A10F /* SchemaMigrationPatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB82E39885600F4A10F /* SchemaMigrationPatch.swift */; };
+		2377A0692E39885600F4A10F /* BuildingIntelligenceDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F5B2E39885600F4A10F /* BuildingIntelligenceDTO.swift */; };
+		2377A06A2E39885600F4A10F /* CurrentBuildingStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1F2E39885600F4A10F /* CurrentBuildingStatusCard.swift */; };
+		2377A06B2E39885600F4A10F /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F142E39885600F4A10F /* TaskDisplayHelpers.swift */; };
+		2377A06C2E39885600F4A10F /* WeatherDashboardComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F182E39885600F4A10F /* WeatherDashboardComponent.swift */; };
+		2377A06D2E39885600F4A10F /* InventoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC92E39885600F4A10F /* InventoryView.swift */; };
+		2377A06E2E39885600F4A10F /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC12E39885600F4A10F /* SignUpView.swift */; };
+		2377A06F2E39885600F4A10F /* FilteredTaskResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F632E39885600F4A10F /* FilteredTaskResult.swift */; };
+		2377A0702E39885600F4A10F /* WorkerEventOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */; };
+		2377A0712E39885600F4A10F /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F512E39885600F4A10F /* NotificationManager.swift */; };
+		2377A0722E39885600F4A10F /* GlassStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F332E39885600F4A10F /* GlassStatusBadge.swift */; };
+		2377A0732E39885600F4A10F /* NovaIntelligenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F722E39885600F4A10F /* NovaIntelligenceEngine.swift */; };
+		2377A0742E39885600F4A10F /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F4F2E39885600F4A10F /* HapticManager.swift */; };
+		2377A0752E39885600F4A10F /* MaintenanceTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCB2E39885600F4A10F /* MaintenanceTaskView.swift */; };
+		2377A0762E39885600F4A10F /* MapInteractionHint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F562E39885600F4A10F /* MapInteractionHint.swift */; };
+		2377A0772E39885600F4A10F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 23779F8C2E39885600F4A10F /* Preview Assets.xcassets */; };
+		2377A0782E39885600F4A10F /* 131_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F822E39885600F4A10F /* 131_Perry_Street.jpg */; };
+		2377A0792E39885600F4A10F /* Stuyvesant_Cove_Park.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F8A2E39885600F4A10F /* Stuyvesant_Cove_Park.jpg */; };
+		2377A07A2E39885600F4A10F /* 112_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F7F2E39885600F4A10F /* 112_West_18th_Street.jpg */; };
+		2377A07B2E39885600F4A10F /* update_rubin_museum_id.sql in Resources */ = {isa = PBXBuildFile; fileRef = 23779F902E39885600F4A10F /* update_rubin_museum_id.sql */; };
+		2377A07C2E39885600F4A10F /* 104_Franklin_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F7E2E39885600F4A10F /* 104_Franklin_Street.jpg */; };
+		2377A07D2E39885600F4A10F /* 12_West_18th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F792E39885600F4A10F /* 12_West_18th_Street.jpg */; };
+		2377A07E2E39885600F4A10F /* 68_Perry_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F7D2E39885600F4A10F /* 68_Perry_Street.jpg */; };
+		2377A07F2E39885600F4A10F /* ClockInManager.swift.integration_backup in Resources */ = {isa = PBXBuildFile; fileRef = 23779F4D2E39885600F4A10F /* ClockInManager.swift.integration_backup */; };
+		2377A0802E39885600F4A10F /* 36_Walker_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F7B2E39885600F4A10F /* 36_Walker_Street.jpg */; };
+		2377A0812E39885600F4A10F /* 136_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F852E39885600F4A10F /* 136_West_17th_Street.jpg */; };
+		2377A0822E39885600F4A10F /* 135West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F842E39885600F4A10F /* 135West17thStreet.jpg */; };
+		2377A0832E39885600F4A10F /* 41_Elizabeth_Street.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F7C2E39885600F4A10F /* 41_Elizabeth_Street.jpeg */; };
+		2377A0842E39885600F4A10F /* 117_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F802E39885600F4A10F /* 117_West_17th_Street.jpg */; };
+		2377A0852E39885600F4A10F /* 29_31_East_20th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F7A2E39885600F4A10F /* 29_31_East_20th_Street.jpg */; };
+		2377A0862E39885600F4A10F /* AIAssistant.png in Resources */ = {isa = PBXBuildFile; fileRef = 23779F872E39885600F4A10F /* AIAssistant.png */; };
+		2377A0872E39885600F4A10F /* Rubin_Museum_142_148_West_17th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F892E39885600F4A10F /* Rubin_Museum_142_148_West_17th_Street.jpg */; };
+		2377A0882E39885600F4A10F /* 123_1st_Avenue.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F812E39885600F4A10F /* 123_1st_Avenue.jpg */; };
+		2377A0892E39885600F4A10F /* 133_East_15th_Street.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F832E39885600F4A10F /* 133_East_15th_Street.jpg */; };
+		2377A08A2E39885600F4A10F /* 138West17thStreet.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23779F862E39885600F4A10F /* 138West17thStreet.jpg */; };
+		2377A08B2E39885600F4A10F /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 23779F882E39885600F4A10F /* AppIcon.png */; };
+		2377A09B2E398AA800F4A10F /* BuildingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0902E398AA800F4A10F /* BuildingDetailViewModel.swift */; };
+		2377A09C2E398AA800F4A10F /* ClientDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0942E398AA800F4A10F /* ClientDashboardViewModel.swift */; };
+		2377A09D2E398AA800F4A10F /* WorkerRoutineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0972E398AA800F4A10F /* WorkerRoutineViewModel.swift */; };
+		2377A09E2E398AA800F4A10F /* AdminDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0932E398AA800F4A10F /* AdminDashboardViewModel.swift */; };
+		2377A09F2E398AA800F4A10F /* InitializationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0992E398AA800F4A10F /* InitializationViewModel.swift */; };
+		2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0952E398AA800F4A10F /* WorkerDashboardViewModel.swift */; };
+		2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0912E398AA800F4A10F /* BuildingIntelligenceViewModel.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
-		23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */; };
-		23EA71022E3860C40010FA03 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71012E3860C40010FA03 /* UnifiedDataService.swift */; };
-		23EA71042E387B790010FA03 /* NovaIntelligenceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */; };
-		23EA71062E387D6B0010FA03 /* NovaFeatureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA71052E387D6B0010FA03 /* NovaFeatureManager.swift */; };
-		23EA710E2E397EDC0010FA03 /* DatabaseInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EA710D2E397EDC0010FA03 /* DatabaseInitializer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -211,190 +209,188 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		232738FF2E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
-		232739002E2B8674004A52C6 /* AIAssistantImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantImageLoader.swift; sourceTree = "<group>"; };
-		232739012E2B8674004A52C6 /* CurrentBuildingStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentBuildingStatusCard.swift; sourceTree = "<group>"; };
-		232739022E2B8674004A52C6 /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
-		232739032E2B8674004A52C6 /* FrancoSphereDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereDesign.swift; sourceTree = "<group>"; };
-		232739042E2B8674004A52C6 /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
-		232739052E2B8674004A52C6 /* ModelColorsExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelColorsExtensions.swift; sourceTree = "<group>"; };
-		232739062E2B8674004A52C6 /* TimelineProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineProgressBar.swift; sourceTree = "<group>"; };
-		232739072E2B8674004A52C6 /* TodaysTasksGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysTasksGlassCard.swift; sourceTree = "<group>"; };
-		232739082E2B8674004A52C6 /* WeatherTaskTimelineCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTaskTimelineCard.swift; sourceTree = "<group>"; };
-		2327390A2E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHeaderGlassOverlay.swift; sourceTree = "<group>"; };
-		2327390B2E2B8674004A52C6 /* BuildingStatsGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingStatsGlassCard.swift; sourceTree = "<group>"; };
-		2327390C2E2B8674004A52C6 /* ClockInGlassModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInGlassModal.swift; sourceTree = "<group>"; };
-		2327390D2E2B8674004A52C6 /* GlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButton.swift; sourceTree = "<group>"; };
-		2327390E2E2B8674004A52C6 /* GlassButtonModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButtonModifier.swift; sourceTree = "<group>"; };
-		2327390F2E2B8674004A52C6 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
-		232739102E2B8674004A52C6 /* GlassDeckContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassDeckContainer.swift; sourceTree = "<group>"; };
-		232739112E2B8674004A52C6 /* GlassLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassLoadingView.swift; sourceTree = "<group>"; };
-		232739122E2B8674004A52C6 /* GlassModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassModal.swift; sourceTree = "<group>"; };
-		232739132E2B8674004A52C6 /* GlassMorphismStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassMorphismStyles.swift; sourceTree = "<group>"; };
-		232739142E2B8674004A52C6 /* GlassNavigationBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassNavigationBar.swift; sourceTree = "<group>"; };
-		232739152E2B8674004A52C6 /* GlassStatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStatusBadge.swift; sourceTree = "<group>"; };
-		232739162E2B8674004A52C6 /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
-		232739172E2B8674004A52C6 /* GlassTransitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTransitions.swift; sourceTree = "<group>"; };
-		232739182E2B8674004A52C6 /* GlassTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTypes.swift; sourceTree = "<group>"; };
-		232739192E2B8674004A52C6 /* PressableGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressableGlassCard.swift; sourceTree = "<group>"; };
-		2327391A2E2B8674004A52C6 /* TaskCategoryGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskCategoryGlassCard.swift; sourceTree = "<group>"; };
-		2327391B2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentGlassCard.swift; sourceTree = "<group>"; };
-		2327391D2E2B8674004A52C6 /* IntelligencePreviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligencePreviewPanel.swift; sourceTree = "<group>"; };
-		2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
-		232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
-		232739232E2B8674004A52C6 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
-		232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
-		232739252E2B8674004A52C6 /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
-		232739262E2B8674004A52C6 /* FrancoSphereColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereColors.swift; sourceTree = "<group>"; };
-		232739272E2B8674004A52C6 /* HeroStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeroStatusCard.swift; sourceTree = "<group>"; };
-		232739282E2B8674004A52C6 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
-		232739292E2B8674004A52C6 /* InitializationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationStatus.swift; sourceTree = "<group>"; };
-		2327392B2E2B8674004A52C6 /* MyAssignedBuildingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAssignedBuildingsSection.swift; sourceTree = "<group>"; };
-		2327392C2E2B8674004A52C6 /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
-		2327392D2E2B8674004A52C6 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
-		2327392E2E2B8674004A52C6 /* ProfileBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBadge.swift; sourceTree = "<group>"; };
-		2327392F2E2B8674004A52C6 /* PropertyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCard.swift; sourceTree = "<group>"; };
-		232739322E2B8674004A52C6 /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
-		232739332E2B8674004A52C6 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
-		232739342E2B8674004A52C6 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
-		232739352E2B8674004A52C6 /* TaskTimelineRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineRow.swift; sourceTree = "<group>"; };
-		232739362E2B8674004A52C6 /* TodaysProgressDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysProgressDetailView.swift; sourceTree = "<group>"; };
-		232739372E2B8674004A52C6 /* TodaysRoutineSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysRoutineSummaryView.swift; sourceTree = "<group>"; };
-		232739382E2B8674004A52C6 /* WeatherDashboardComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDashboardComponent.swift; sourceTree = "<group>"; };
-		232739392E2B8674004A52C6 /* WeatherTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTasksSection.swift; sourceTree = "<group>"; };
-		2327393A2E2B8674004A52C6 /* WeatherViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewModifier.swift; sourceTree = "<group>"; };
-		2327393C2E2B8674004A52C6 /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
-		2327393E2E2B8674004A52C6 /* EmergencyContactsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyContactsSheet.swift; sourceTree = "<group>"; };
-		232739412E2B8674004A52C6 /* DatabaseSchemaVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSchemaVerifier.swift; sourceTree = "<group>"; };
-		232739422E2B8674004A52C6 /* SchemaMigrationPatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaMigrationPatch.swift; sourceTree = "<group>"; };
-		232739442E2B8674004A52C6 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
-		2327394A2E2B8674004A52C6 /* TimeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeStatus.swift; sourceTree = "<group>"; };
-		2327394B2E2B8674004A52C6 /* V012.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V012.swift; sourceTree = "<group>"; };
-		2327394D2E2B8674004A52C6 /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
-		2327394E2E2B8674004A52C6 /* V003_WorkerAssignments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V003_WorkerAssignments.swift; sourceTree = "<group>"; };
-		232739512E2B8674004A52C6 /* AssetImageDebugger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetImageDebugger.swift; sourceTree = "<group>"; };
-		232739522E2B8674004A52C6 /* ClockInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInManager.swift; sourceTree = "<group>"; };
-		232739542E2B8674004A52C6 /* DatabaseMigrationFix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationFix.swift; sourceTree = "<group>"; };
-		232739552E2B8674004A52C6 /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
-		232739562E2B8674004A52C6 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
-		232739572E2B8674004A52C6 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		232739582E2B8674004A52C6 /* NewAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewAuthManager.swift; sourceTree = "<group>"; };
-		232739592E2B8674004A52C6 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationalDataManager.swift; sourceTree = "<group>"; };
-		2327395C2E2B8674004A52C6 /* WorkerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerManager.swift; sourceTree = "<group>"; };
-		232739602E2B8674004A52C6 /* MapInteractionHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapInteractionHint.swift; sourceTree = "<group>"; };
-		232739612E2B8674004A52C6 /* MapRevealContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRevealContainer.swift; sourceTree = "<group>"; };
-		232739642E2B8674004A52C6 /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
-		232739682E2B8674004A52C6 /* BuildingIntelligenceDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceDTO.swift; sourceTree = "<group>"; };
-		232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceDataDTO.swift; sourceTree = "<group>"; };
-		2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
-		2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
-		232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
-		232739772E2B8674004A52C6 /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
-		232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereExtensions.swift; sourceTree = "<group>"; };
-		232739792E2B8674004A52C6 /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
-		2327397A2E2B8674004A52C6 /* ImportHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportHelper.swift; sourceTree = "<group>"; };
-		2327397D2E2B8674004A52C6 /* ModelExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExtensions.swift; sourceTree = "<group>"; };
-		2327397E2E2B8674004A52C6 /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
-		2327397F2E2B8674004A52C6 /* UserExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExtensions.swift; sourceTree = "<group>"; };
-		232739802E2B8674004A52C6 /* VerificationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerificationRecord.swift; sourceTree = "<group>"; };
-		232739822E2B8674004A52C6 /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
-		232739832E2B8674004A52C6 /* WorkerConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerConstants.swift; sourceTree = "<group>"; };
-		232739842E2B8674004A52C6 /* WorkerContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngine.swift; sourceTree = "<group>"; };
-		232739872E2B8674004A52C6 /* WorkerRoutineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineViewModel.swift; sourceTree = "<group>"; };
-		2327398A2E2B8674004A52C6 /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
-		2327398D2E2B8674004A52C6 /* NovaInteractionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaInteractionView.swift; sourceTree = "<group>"; };
-		2327398E2E2B8674004A52C6 /* NovaTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaTypes.swift; sourceTree = "<group>"; };
-		232739912E2B8674004A52C6 /* 12_West_18th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 12_West_18th_Street.jpg; sourceTree = "<group>"; };
-		232739922E2B8674004A52C6 /* 29_31_East_20th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 29_31_East_20th_Street.jpg; sourceTree = "<group>"; };
-		232739932E2B8674004A52C6 /* 36_Walker_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 36_Walker_Street.jpg; sourceTree = "<group>"; };
-		232739942E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 41_Elizabeth_Street.jpeg; sourceTree = "<group>"; };
-		232739952E2B8674004A52C6 /* 68_Perry_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 68_Perry_Street.jpg; sourceTree = "<group>"; };
-		232739962E2B8674004A52C6 /* 104_Franklin_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 104_Franklin_Street.jpg; sourceTree = "<group>"; };
-		232739972E2B8674004A52C6 /* 112_West_18th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 112_West_18th_Street.jpg; sourceTree = "<group>"; };
-		232739982E2B8674004A52C6 /* 117_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 117_West_17th_Street.jpg; sourceTree = "<group>"; };
-		232739992E2B8674004A52C6 /* 123_1st_Avenue.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 123_1st_Avenue.jpg; sourceTree = "<group>"; };
-		2327399A2E2B8674004A52C6 /* 131_Perry_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 131_Perry_Street.jpg; sourceTree = "<group>"; };
-		2327399B2E2B8674004A52C6 /* 133_East_15th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 133_East_15th_Street.jpg; sourceTree = "<group>"; };
-		2327399C2E2B8674004A52C6 /* 135West17thStreet.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 135West17thStreet.jpg; sourceTree = "<group>"; };
-		2327399D2E2B8674004A52C6 /* 136_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 136_West_17th_Street.jpg; sourceTree = "<group>"; };
-		2327399E2E2B8674004A52C6 /* 138West17thStreet.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 138West17thStreet.jpg; sourceTree = "<group>"; };
-		2327399F2E2B8674004A52C6 /* AIAssistant.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIAssistant.png; sourceTree = "<group>"; };
-		232739A02E2B8674004A52C6 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
-		232739A12E2B8674004A52C6 /* Rubin_Museum_142_148_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Rubin_Museum_142_148_West_17th_Street.jpg; sourceTree = "<group>"; };
-		232739A22E2B8674004A52C6 /* Stuyvesant_Cove_Park.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Stuyvesant_Cove_Park.jpg; sourceTree = "<group>"; };
-		232739A42E2B8674004A52C6 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		232739A72E2B8674004A52C6 /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
-		232739A82E2B8674004A52C6 /* update_rubin_museum_id.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = update_rubin_museum_id.sql; sourceTree = "<group>"; };
-		232739AA2E2B8674004A52C6 /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
-		232739B12E2B8674004A52C6 /* BuildingFeatureConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingFeatureConfiguration.swift; sourceTree = "<group>"; };
-		232739B32E2B8674004A52C6 /* WorkerAssignmentEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentEngine.swift; sourceTree = "<group>"; };
-		232739B52E2B8674004A52C6 /* WorkerFeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerFeedbackManager.swift; sourceTree = "<group>"; };
-		232739B72E2B8674004A52C6 /* BuildingMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMetricsService.swift; sourceTree = "<group>"; };
-		232739B82E2B8674004A52C6 /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
-		232739BA2E2B8674004A52C6 /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
-		232739BB2E2B8674004A52C6 /* DashboardSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSyncService.swift; sourceTree = "<group>"; };
-		232739BF2E2B8674004A52C6 /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
-		232739C02E2B8674004A52C6 /* IntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceService.swift; sourceTree = "<group>"; };
-		232739C32E2B8674004A52C6 /* QuickBooksOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksOAuthManager.swift; sourceTree = "<group>"; };
-		232739C42E2B8674004A52C6 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
-		232739C52E2B8674004A52C6 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
-		232739C62E2B8674004A52C6 /* TaskService+OperationalFallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskService+OperationalFallback.swift"; sourceTree = "<group>"; };
-		232739C72E2B8674004A52C6 /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
-		232739C82E2B8674004A52C6 /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
-		232739CB2E2B8674004A52C6 /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
-		232739CC2E2B8674004A52C6 /* WorkerMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsService.swift; sourceTree = "<group>"; };
-		232739CD2E2B8674004A52C6 /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
-		232739D02E2B8674004A52C6 /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
-		232739D12E2B8674004A52C6 /* RouteStatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStatItem.swift; sourceTree = "<group>"; };
-		232739D22E2B8674004A52C6 /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
-		232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
-		232739D72E2B8674004A52C6 /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
-		232739D82E2B8674004A52C6 /* WorkerEventOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerEventOutbox.swift; sourceTree = "<group>"; };
-		232739DC2E2B8674004A52C6 /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
-		232739DD2E2B8674004A52C6 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
-		232739DE2E2B8674004A52C6 /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
-		232739E02E2B8674004A52C6 /* AssignedBuildingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignedBuildingsView.swift; sourceTree = "<group>"; };
-		232739E12E2B8674004A52C6 /* BuildingDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailView.swift; sourceTree = "<group>"; };
-		232739E22E2B8674004A52C6 /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
-		232739E32E2B8674004A52C6 /* BuildingSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingSelectionView.swift; sourceTree = "<group>"; };
-		232739E42E2B8674004A52C6 /* BuildingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingsView.swift; sourceTree = "<group>"; };
-		232739E52E2B8674004A52C6 /* BuildingTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingTaskDetailView.swift; sourceTree = "<group>"; };
-		232739E62E2B8674004A52C6 /* InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryView.swift; sourceTree = "<group>"; };
-		232739E72E2B8674004A52C6 /* MaintenanceHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceHistoryView.swift; sourceTree = "<group>"; };
-		232739E82E2B8674004A52C6 /* MaintenanceTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceTaskView.swift; sourceTree = "<group>"; };
-		232739E92E2B8674004A52C6 /* TaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFormView.swift; sourceTree = "<group>"; };
-		232739EA2E2B8674004A52C6 /* TaskScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskScheduleView.swift; sourceTree = "<group>"; };
-		232739EC2E2B8674004A52C6 /* AdminDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardView.swift; sourceTree = "<group>"; };
-		232739ED2E2B8674004A52C6 /* BuildingPreviewPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingPreviewPopover.swift; sourceTree = "<group>"; };
-		232739EE2E2B8674004A52C6 /* ClientDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardView.swift; sourceTree = "<group>"; };
-		232739EF2E2B8674004A52C6 /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
-		232739F02E2B8674004A52C6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTaskDetailView.swift; sourceTree = "<group>"; };
-		232739F32E2B8674004A52C6 /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
-		232739F42E2B8674004A52C6 /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
-		232739F52E2B8674004A52C6 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		232739F62E2B8674004A52C6 /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
-		232739F72E2B8674004A52C6 /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
-		232739F82E2B8674004A52C6 /* TaskTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineView.swift; sourceTree = "<group>"; };
-		232739F92E2B8674004A52C6 /* WorkerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardView.swift; sourceTree = "<group>"; };
-		232739FA2E2B8674004A52C6 /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
-		232739FE2E2B8674004A52C6 /* AdminDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardViewModel.swift; sourceTree = "<group>"; };
-		232739FF2E2B8674004A52C6 /* BuildingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailViewModel.swift; sourceTree = "<group>"; };
-		23273A002E2B8674004A52C6 /* BuildingIntelligenceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceViewModel.swift; sourceTree = "<group>"; };
-		23273A012E2B8674004A52C6 /* InitializationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationViewModel.swift; sourceTree = "<group>"; };
-		23273A022E2B8674004A52C6 /* TaskDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewModel.swift; sourceTree = "<group>"; };
-		23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTasksViewModel.swift; sourceTree = "<group>"; };
-		23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardViewModel.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
-		23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardViewModel.swift; sourceTree = "<group>"; };
-		23EA71012E3860C40010FA03 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
-		23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaIntelligenceEngine.swift; sourceTree = "<group>"; };
-		23EA71052E387D6B0010FA03 /* NovaFeatureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaFeatureManager.swift; sourceTree = "<group>"; };
-		23EA710D2E397EDC0010FA03 /* DatabaseInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializer.swift; sourceTree = "<group>"; };
+		23779F042E39885600F4A10F /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
+		23779F052E39885600F4A10F /* HeroStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeroStatusCard.swift; sourceTree = "<group>"; };
+		23779F062E39885600F4A10F /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
+		23779F072E39885600F4A10F /* PropertyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCard.swift; sourceTree = "<group>"; };
+		23779F082E39885600F4A10F /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
+		23779F0A2E39885600F4A10F /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
+		23779F0B2E39885600F4A10F /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
+		23779F0C2E39885600F4A10F /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
+		23779F0D2E39885600F4A10F /* FrancoSphereColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereColors.swift; sourceTree = "<group>"; };
+		23779F0E2E39885600F4A10F /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
+		23779F0F2E39885600F4A10F /* InitializationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationStatus.swift; sourceTree = "<group>"; };
+		23779F102E39885600F4A10F /* MyAssignedBuildingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAssignedBuildingsSection.swift; sourceTree = "<group>"; };
+		23779F112E39885600F4A10F /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
+		23779F122E39885600F4A10F /* ProfileBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBadge.swift; sourceTree = "<group>"; };
+		23779F132E39885600F4A10F /* RoutinePriority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinePriority.swift; sourceTree = "<group>"; };
+		23779F142E39885600F4A10F /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
+		23779F152E39885600F4A10F /* TaskTimelineRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineRow.swift; sourceTree = "<group>"; };
+		23779F162E39885600F4A10F /* TodaysProgressDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysProgressDetailView.swift; sourceTree = "<group>"; };
+		23779F172E39885600F4A10F /* TodaysRoutineSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysRoutineSummaryView.swift; sourceTree = "<group>"; };
+		23779F182E39885600F4A10F /* WeatherDashboardComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDashboardComponent.swift; sourceTree = "<group>"; };
+		23779F192E39885600F4A10F /* WeatherTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTasksSection.swift; sourceTree = "<group>"; };
+		23779F1A2E39885600F4A10F /* WeatherViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewModifier.swift; sourceTree = "<group>"; };
+		23779F1B2E39885600F4A10F /* WorkersInlineList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkersInlineList.swift; sourceTree = "<group>"; };
+		23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
+		23779F1F2E39885600F4A10F /* CurrentBuildingStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentBuildingStatusCard.swift; sourceTree = "<group>"; };
+		23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
+		23779F212E39885600F4A10F /* FrancoSphereDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereDesign.swift; sourceTree = "<group>"; };
+		23779F222E39885600F4A10F /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
+		23779F232E39885600F4A10F /* ModelColorsExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelColorsExtensions.swift; sourceTree = "<group>"; };
+		23779F242E39885600F4A10F /* TimelineProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineProgressBar.swift; sourceTree = "<group>"; };
+		23779F252E39885600F4A10F /* TodaysTasksGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysTasksGlassCard.swift; sourceTree = "<group>"; };
+		23779F262E39885600F4A10F /* WeatherTaskTimelineCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTaskTimelineCard.swift; sourceTree = "<group>"; };
+		23779F282E39885600F4A10F /* BuildingHeaderGlassOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHeaderGlassOverlay.swift; sourceTree = "<group>"; };
+		23779F292E39885600F4A10F /* BuildingStatsGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingStatsGlassCard.swift; sourceTree = "<group>"; };
+		23779F2A2E39885600F4A10F /* ClockInGlassModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInGlassModal.swift; sourceTree = "<group>"; };
+		23779F2B2E39885600F4A10F /* GlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButton.swift; sourceTree = "<group>"; };
+		23779F2C2E39885600F4A10F /* GlassButtonModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButtonModifier.swift; sourceTree = "<group>"; };
+		23779F2D2E39885600F4A10F /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
+		23779F2E2E39885600F4A10F /* GlassDeckContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassDeckContainer.swift; sourceTree = "<group>"; };
+		23779F2F2E39885600F4A10F /* GlassLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassLoadingView.swift; sourceTree = "<group>"; };
+		23779F302E39885600F4A10F /* GlassModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassModal.swift; sourceTree = "<group>"; };
+		23779F312E39885600F4A10F /* GlassMorphismStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassMorphismStyles.swift; sourceTree = "<group>"; };
+		23779F322E39885600F4A10F /* GlassNavigationBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassNavigationBar.swift; sourceTree = "<group>"; };
+		23779F332E39885600F4A10F /* GlassStatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStatusBadge.swift; sourceTree = "<group>"; };
+		23779F342E39885600F4A10F /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
+		23779F352E39885600F4A10F /* GlassTransitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTransitions.swift; sourceTree = "<group>"; };
+		23779F362E39885600F4A10F /* GlassTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTypes.swift; sourceTree = "<group>"; };
+		23779F372E39885600F4A10F /* PressableGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressableGlassCard.swift; sourceTree = "<group>"; };
+		23779F382E39885600F4A10F /* TaskCategoryGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskCategoryGlassCard.swift; sourceTree = "<group>"; };
+		23779F392E39885600F4A10F /* WorkerAssignmentGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentGlassCard.swift; sourceTree = "<group>"; };
+		23779F3B2E39885600F4A10F /* IntelligencePreviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligencePreviewPanel.swift; sourceTree = "<group>"; };
+		23779F3C2E39885600F4A10F /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
+		23779F3E2E39885600F4A10F /* EmergencyContactsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyContactsSheet.swift; sourceTree = "<group>"; };
+		23779F422E39885600F4A10F /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
+		23779F452E39885600F4A10F /* V003_WorkerAssignments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V003_WorkerAssignments.swift; sourceTree = "<group>"; };
+		23779F482E39885600F4A10F /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		23779F492E39885600F4A10F /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
+		23779F4B2E39885600F4A10F /* AssetImageDebugger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetImageDebugger.swift; sourceTree = "<group>"; };
+		23779F4C2E39885600F4A10F /* ClockInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInManager.swift; sourceTree = "<group>"; };
+		23779F4D2E39885600F4A10F /* ClockInManager.swift.integration_backup */ = {isa = PBXFileReference; lastKnownFileType = text; path = ClockInManager.swift.integration_backup; sourceTree = "<group>"; };
+		23779F4E2E39885600F4A10F /* DatabaseInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseInitializer.swift; sourceTree = "<group>"; };
+		23779F4F2E39885600F4A10F /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		23779F502E39885600F4A10F /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		23779F512E39885600F4A10F /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		23779F522E39885600F4A10F /* OperationalDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationalDataManager.swift; sourceTree = "<group>"; };
+		23779F532E39885600F4A10F /* TaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskManager.swift; sourceTree = "<group>"; };
+		23779F542E39885600F4A10F /* WorkerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerManager.swift; sourceTree = "<group>"; };
+		23779F562E39885600F4A10F /* MapInteractionHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapInteractionHint.swift; sourceTree = "<group>"; };
+		23779F572E39885600F4A10F /* MapRevealContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRevealContainer.swift; sourceTree = "<group>"; };
+		23779F592E39885600F4A10F /* CoreTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTypes.swift; sourceTree = "<group>"; };
+		23779F5B2E39885600F4A10F /* BuildingIntelligenceDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceDTO.swift; sourceTree = "<group>"; };
+		23779F5C2E39885600F4A10F /* ComplianceDataDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceDataDTO.swift; sourceTree = "<group>"; };
+		23779F5D2E39885600F4A10F /* WorkerMetricsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsDTO.swift; sourceTree = "<group>"; };
+		23779F5F2E39885600F4A10F /* QBConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QBConnectionStatus.swift; sourceTree = "<group>"; };
+		23779F612E39885600F4A10F /* CLLocationCoordinate2DExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationCoordinate2DExtension.swift; sourceTree = "<group>"; };
+		23779F622E39885600F4A10F /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
+		23779F632E39885600F4A10F /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
+		23779F642E39885600F4A10F /* FrancoSphereExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereExtensions.swift; sourceTree = "<group>"; };
+		23779F652E39885600F4A10F /* FrancoSphereImports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereImports.swift; sourceTree = "<group>"; };
+		23779F662E39885600F4A10F /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
+		23779F672E39885600F4A10F /* ImportHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportHelper.swift; sourceTree = "<group>"; };
+		23779F682E39885600F4A10F /* ModelExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExtensions.swift; sourceTree = "<group>"; };
+		23779F692E39885600F4A10F /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
+		23779F6B2E39885600F4A10F /* UserExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExtensions.swift; sourceTree = "<group>"; };
+		23779F6C2E39885600F4A10F /* VerificationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerificationRecord.swift; sourceTree = "<group>"; };
+		23779F6D2E39885600F4A10F /* WorkerActionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerActionType.swift; sourceTree = "<group>"; };
+		23779F6E2E39885600F4A10F /* WorkerConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerConstants.swift; sourceTree = "<group>"; };
+		23779F702E39885600F4A10F /* NovaAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAPIService.swift; sourceTree = "<group>"; };
+		23779F712E39885600F4A10F /* NovaFeatureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaFeatureManager.swift; sourceTree = "<group>"; };
+		23779F722E39885600F4A10F /* NovaIntelligenceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaIntelligenceEngine.swift; sourceTree = "<group>"; };
+		23779F732E39885600F4A10F /* NovaTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaTypes.swift; sourceTree = "<group>"; };
+		23779F752E39885600F4A10F /* NovaImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaImageLoader.swift; sourceTree = "<group>"; };
+		23779F762E39885600F4A10F /* NovaInteractionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaInteractionView.swift; sourceTree = "<group>"; };
+		23779F792E39885600F4A10F /* 12_West_18th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 12_West_18th_Street.jpg; sourceTree = "<group>"; };
+		23779F7A2E39885600F4A10F /* 29_31_East_20th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 29_31_East_20th_Street.jpg; sourceTree = "<group>"; };
+		23779F7B2E39885600F4A10F /* 36_Walker_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 36_Walker_Street.jpg; sourceTree = "<group>"; };
+		23779F7C2E39885600F4A10F /* 41_Elizabeth_Street.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 41_Elizabeth_Street.jpeg; sourceTree = "<group>"; };
+		23779F7D2E39885600F4A10F /* 68_Perry_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 68_Perry_Street.jpg; sourceTree = "<group>"; };
+		23779F7E2E39885600F4A10F /* 104_Franklin_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 104_Franklin_Street.jpg; sourceTree = "<group>"; };
+		23779F7F2E39885600F4A10F /* 112_West_18th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 112_West_18th_Street.jpg; sourceTree = "<group>"; };
+		23779F802E39885600F4A10F /* 117_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 117_West_17th_Street.jpg; sourceTree = "<group>"; };
+		23779F812E39885600F4A10F /* 123_1st_Avenue.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 123_1st_Avenue.jpg; sourceTree = "<group>"; };
+		23779F822E39885600F4A10F /* 131_Perry_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 131_Perry_Street.jpg; sourceTree = "<group>"; };
+		23779F832E39885600F4A10F /* 133_East_15th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 133_East_15th_Street.jpg; sourceTree = "<group>"; };
+		23779F842E39885600F4A10F /* 135West17thStreet.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 135West17thStreet.jpg; sourceTree = "<group>"; };
+		23779F852E39885600F4A10F /* 136_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 136_West_17th_Street.jpg; sourceTree = "<group>"; };
+		23779F862E39885600F4A10F /* 138West17thStreet.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = 138West17thStreet.jpg; sourceTree = "<group>"; };
+		23779F872E39885600F4A10F /* AIAssistant.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AIAssistant.png; sourceTree = "<group>"; };
+		23779F882E39885600F4A10F /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
+		23779F892E39885600F4A10F /* Rubin_Museum_142_148_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Rubin_Museum_142_148_West_17th_Street.jpg; sourceTree = "<group>"; };
+		23779F8A2E39885600F4A10F /* Stuyvesant_Cove_Park.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Stuyvesant_Cove_Park.jpg; sourceTree = "<group>"; };
+		23779F8C2E39885600F4A10F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		23779F8F2E39885600F4A10F /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
+		23779F902E39885600F4A10F /* update_rubin_museum_id.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = update_rubin_museum_id.sql; sourceTree = "<group>"; };
+		23779F932E39885600F4A10F /* BuildingFeatureConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingFeatureConfiguration.swift; sourceTree = "<group>"; };
+		23779F972E39885600F4A10F /* WorkerContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngine.swift; sourceTree = "<group>"; };
+		23779F992E39885600F4A10F /* WorkerAssignmentEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAssignmentEngine.swift; sourceTree = "<group>"; };
+		23779F9C2E39885600F4A10F /* WorkerFeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerFeedbackManager.swift; sourceTree = "<group>"; };
+		23779F9E2E39885600F4A10F /* BuildingMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMetricsService.swift; sourceTree = "<group>"; };
+		23779F9F2E39885600F4A10F /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
+		23779FA02E39885600F4A10F /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
+		23779FA12E39885600F4A10F /* DashboardSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSyncService.swift; sourceTree = "<group>"; };
+		23779FA22E39885600F4A10F /* DSNYTaskGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYTaskGenerator.swift; sourceTree = "<group>"; };
+		23779FA32E39885600F4A10F /* IntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligenceService.swift; sourceTree = "<group>"; };
+		23779FA42E39885600F4A10F /* QuickBooksOAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksOAuthManager.swift; sourceTree = "<group>"; };
+		23779FA52E39885600F4A10F /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
+		23779FA62E39885600F4A10F /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
+		23779FA72E39885600F4A10F /* TaskService+OperationalFallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskService+OperationalFallback.swift"; sourceTree = "<group>"; };
+		23779FA82E39885600F4A10F /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
+		23779FA92E39885600F4A10F /* TimeBasedTaskFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedTaskFilter.swift; sourceTree = "<group>"; };
+		23779FAA2E39885600F4A10F /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
+		23779FAB2E39885600F4A10F /* WeatherDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataAdapter.swift; sourceTree = "<group>"; };
+		23779FAC2E39885600F4A10F /* WorkerMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerMetricsService.swift; sourceTree = "<group>"; };
+		23779FAD2E39885600F4A10F /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
+		23779FAF2E39885600F4A10F /* QuickActionMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionMenu.swift; sourceTree = "<group>"; };
+		23779FB02E39885600F4A10F /* RouteStatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStatItem.swift; sourceTree = "<group>"; };
+		23779FB12E39885600F4A10F /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
+		23779FB32E39885600F4A10F /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
+		23779FB42E39885600F4A10F /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
+		23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerEventOutbox.swift; sourceTree = "<group>"; };
+		23779FB72E39885600F4A10F /* DatabaseSchemaVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSchemaVerifier.swift; sourceTree = "<group>"; };
+		23779FB82E39885600F4A10F /* SchemaMigrationPatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaMigrationPatch.swift; sourceTree = "<group>"; };
+		23779FBA2E39885600F4A10F /* TimeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeStatus.swift; sourceTree = "<group>"; };
+		23779FBB2E39885600F4A10F /* V012.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V012.swift; sourceTree = "<group>"; };
+		23779FBF2E39885600F4A10F /* ForgotPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgotPasswordView.swift; sourceTree = "<group>"; };
+		23779FC02E39885600F4A10F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		23779FC12E39885600F4A10F /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
+		23779FC32E39885600F4A10F /* AssignedBuildingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignedBuildingsView.swift; sourceTree = "<group>"; };
+		23779FC42E39885600F4A10F /* BuildingDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailView.swift; sourceTree = "<group>"; };
+		23779FC52E39885600F4A10F /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
+		23779FC62E39885600F4A10F /* BuildingSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingSelectionView.swift; sourceTree = "<group>"; };
+		23779FC72E39885600F4A10F /* BuildingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingsView.swift; sourceTree = "<group>"; };
+		23779FC82E39885600F4A10F /* BuildingTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingTaskDetailView.swift; sourceTree = "<group>"; };
+		23779FC92E39885600F4A10F /* InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryView.swift; sourceTree = "<group>"; };
+		23779FCA2E39885600F4A10F /* MaintenanceHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceHistoryView.swift; sourceTree = "<group>"; };
+		23779FCB2E39885600F4A10F /* MaintenanceTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceTaskView.swift; sourceTree = "<group>"; };
+		23779FCC2E39885600F4A10F /* TaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFormView.swift; sourceTree = "<group>"; };
+		23779FCD2E39885600F4A10F /* TaskScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskScheduleView.swift; sourceTree = "<group>"; };
+		23779FCF2E39885600F4A10F /* AdminDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardView.swift; sourceTree = "<group>"; };
+		23779FD02E39885600F4A10F /* BuildingPreviewPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingPreviewPopover.swift; sourceTree = "<group>"; };
+		23779FD12E39885600F4A10F /* ClientDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardView.swift; sourceTree = "<group>"; };
+		23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
+		23779FD32E39885600F4A10F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		23779FD42E39885600F4A10F /* DashboardTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTaskDetailView.swift; sourceTree = "<group>"; };
+		23779FD52E39885600F4A10F /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
+		23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
+		23779FD72E39885600F4A10F /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		23779FD82E39885600F4A10F /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
+		23779FD92E39885600F4A10F /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
+		23779FDA2E39885600F4A10F /* TaskTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineView.swift; sourceTree = "<group>"; };
+		23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardView.swift; sourceTree = "<group>"; };
+		23779FDC2E39885600F4A10F /* WorkerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerProfileView.swift; sourceTree = "<group>"; };
+		2377A0902E398AA800F4A10F /* BuildingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailViewModel.swift; sourceTree = "<group>"; };
+		2377A0912E398AA800F4A10F /* BuildingIntelligenceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligenceViewModel.swift; sourceTree = "<group>"; };
+		2377A0932E398AA800F4A10F /* AdminDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardViewModel.swift; sourceTree = "<group>"; };
+		2377A0942E398AA800F4A10F /* ClientDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardViewModel.swift; sourceTree = "<group>"; };
+		2377A0952E398AA800F4A10F /* WorkerDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardViewModel.swift; sourceTree = "<group>"; };
+		2377A0972E398AA800F4A10F /* WorkerRoutineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineViewModel.swift; sourceTree = "<group>"; };
+		2377A0992E398AA800F4A10F /* InitializationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -426,463 +422,589 @@
 		232736DA2E2B8564004A52C6 = {
 			isa = PBXGroup;
 			children = (
-				232739402E2B8674004A52C6 /* Components */,
-				232739432E2B8674004A52C6 /* Data */,
-				232739442E2B8674004A52C6 /* FrancoSphereApp.swift */,
-				2327395D2E2B8674004A52C6 /* Managers */,
-				232739622E2B8674004A52C6 /* Maps */,
-				232739882E2B8674004A52C6 /* Models */,
-				232739902E2B8674004A52C6 /* Nova */,
-				232739A62E2B8674004A52C6 /* Resources */,
-				232739A92E2B8674004A52C6 /* Scripts */,
-				232739AB2E2B8674004A52C6 /* Security */,
-				232739CE2E2B8674004A52C6 /* Services */,
-				232739D32E2B8674004A52C6 /* SharedViews */,
-				232739D92E2B8674004A52C6 /* Sync */,
-				232739DB2E2B8674004A52C6 /* Utilities */,
-				23273A072E2B8674004A52C6 /* Views */,
+				2377A09A2E398AA800F4A10F /* ViewModels */,
+				23779F402E39885600F4A10F /* Components */,
+				23779F412E39885600F4A10F /* Data */,
+				23779F552E39885600F4A10F /* Managers */,
+				23779F582E39885600F4A10F /* Maps */,
+				23779F6F2E39885600F4A10F /* Models */,
+				23779F782E39885600F4A10F /* Nova */,
+				23779F8E2E39885600F4A10F /* Resources */,
+				23779F912E39885600F4A10F /* Scripts */,
+				23779F922E39885600F4A10F /* Security */,
+				23779FAE2E39885600F4A10F /* Services */,
+				23779FB22E39885600F4A10F /* SharedViews */,
+				23779FB62E39885600F4A10F /* Sync */,
+				23779FBE2E39885600F4A10F /* Utilities */,
+				23779FDE2E39885600F4A10F /* Views */,
 				23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */,
 				23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */,
 				23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */,
 			);
 			sourceTree = "<group>";
 		};
-		232739092E2B8674004A52C6 /* Design */ = {
+		23779F092E39885600F4A10F /* Cards */ = {
 			isa = PBXGroup;
 			children = (
-				232738FF2E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift */,
-				232739002E2B8674004A52C6 /* AIAssistantImageLoader.swift */,
-				232739012E2B8674004A52C6 /* CurrentBuildingStatusCard.swift */,
-				232739022E2B8674004A52C6 /* EnhancedClockInGlassCard.swift */,
-				232739032E2B8674004A52C6 /* FrancoSphereDesign.swift */,
-				232739042E2B8674004A52C6 /* HeaderV3B.swift */,
-				232739052E2B8674004A52C6 /* ModelColorsExtensions.swift */,
-				232739062E2B8674004A52C6 /* TimelineProgressBar.swift */,
-				232739072E2B8674004A52C6 /* TodaysTasksGlassCard.swift */,
-				232739082E2B8674004A52C6 /* WeatherTaskTimelineCard.swift */,
+				23779F042E39885600F4A10F /* CoverageInfoCard.swift */,
+				23779F052E39885600F4A10F /* HeroStatusCard.swift */,
+				23779F062E39885600F4A10F /* MySitesCard.swift */,
+				23779F072E39885600F4A10F /* PropertyCard.swift */,
+				23779F082E39885600F4A10F /* StatCard.swift */,
 			);
-			path = Design;
+			path = Cards;
 			sourceTree = "<group>";
 		};
-		2327391C2E2B8674004A52C6 /* Glass */ = {
+		23779F1C2E39885600F4A10F /* Shared Components */ = {
 			isa = PBXGroup;
 			children = (
-				2327390A2E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift */,
-				2327390B2E2B8674004A52C6 /* BuildingStatsGlassCard.swift */,
-				2327390C2E2B8674004A52C6 /* ClockInGlassModal.swift */,
-				2327390D2E2B8674004A52C6 /* GlassButton.swift */,
-				2327390E2E2B8674004A52C6 /* GlassButtonModifier.swift */,
-				2327390F2E2B8674004A52C6 /* GlassCard.swift */,
-				232739102E2B8674004A52C6 /* GlassDeckContainer.swift */,
-				232739112E2B8674004A52C6 /* GlassLoadingView.swift */,
-				232739122E2B8674004A52C6 /* GlassModal.swift */,
-				232739132E2B8674004A52C6 /* GlassMorphismStyles.swift */,
-				232739142E2B8674004A52C6 /* GlassNavigationBar.swift */,
-				232739152E2B8674004A52C6 /* GlassStatusBadge.swift */,
-				232739162E2B8674004A52C6 /* GlassTabBar.swift */,
-				232739172E2B8674004A52C6 /* GlassTransitions.swift */,
-				232739182E2B8674004A52C6 /* GlassTypes.swift */,
-				232739192E2B8674004A52C6 /* PressableGlassCard.swift */,
-				2327391A2E2B8674004A52C6 /* TaskCategoryGlassCard.swift */,
-				2327391B2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift */,
-			);
-			path = Glass;
-			sourceTree = "<group>";
-		};
-		2327391F2E2B8674004A52C6 /* Intelligence */ = {
-			isa = PBXGroup;
-			children = (
-				2327391D2E2B8674004A52C6 /* IntelligencePreviewPanel.swift */,
-				2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */,
-			);
-			path = Intelligence;
-			sourceTree = "<group>";
-		};
-		2327393D2E2B8674004A52C6 /* Shared Components */ = {
-			isa = PBXGroup;
-			children = (
-				232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */,
-				232739232E2B8674004A52C6 /* Building.swift */,
-				232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */,
-				232739252E2B8674004A52C6 /* CoverageInfoCard.swift */,
-				232739262E2B8674004A52C6 /* FrancoSphereColors.swift */,
-				232739272E2B8674004A52C6 /* HeroStatusCard.swift */,
-				232739282E2B8674004A52C6 /* ImagePicker.swift */,
-				232739292E2B8674004A52C6 /* InitializationStatus.swift */,
-				2327392B2E2B8674004A52C6 /* MyAssignedBuildingsSection.swift */,
-				2327392C2E2B8674004A52C6 /* MySitesCard.swift */,
-				2327392D2E2B8674004A52C6 /* NovaAvatar.swift */,
-				2327392E2E2B8674004A52C6 /* ProfileBadge.swift */,
-				2327392F2E2B8674004A52C6 /* PropertyCard.swift */,
-				232739322E2B8674004A52C6 /* RoutinePriority.swift */,
-				232739332E2B8674004A52C6 /* StatCard.swift */,
-				232739342E2B8674004A52C6 /* TaskDisplayHelpers.swift */,
-				232739352E2B8674004A52C6 /* TaskTimelineRow.swift */,
-				232739362E2B8674004A52C6 /* TodaysProgressDetailView.swift */,
-				232739372E2B8674004A52C6 /* TodaysRoutineSummaryView.swift */,
-				232739382E2B8674004A52C6 /* WeatherDashboardComponent.swift */,
-				232739392E2B8674004A52C6 /* WeatherTasksSection.swift */,
-				2327393A2E2B8674004A52C6 /* WeatherViewModifier.swift */,
-				2327393C2E2B8674004A52C6 /* WorkersInlineList.swift */,
+				23779F0A2E39885600F4A10F /* AdaptiveGlassModifier.swift */,
+				23779F0B2E39885600F4A10F /* Building.swift */,
+				23779F0C2E39885600F4A10F /* BuildingIntelligencePanel.swift */,
+				23779F0D2E39885600F4A10F /* FrancoSphereColors.swift */,
+				23779F0E2E39885600F4A10F /* ImagePicker.swift */,
+				23779F0F2E39885600F4A10F /* InitializationStatus.swift */,
+				23779F102E39885600F4A10F /* MyAssignedBuildingsSection.swift */,
+				23779F112E39885600F4A10F /* NovaAvatar.swift */,
+				23779F122E39885600F4A10F /* ProfileBadge.swift */,
+				23779F132E39885600F4A10F /* RoutinePriority.swift */,
+				23779F142E39885600F4A10F /* TaskDisplayHelpers.swift */,
+				23779F152E39885600F4A10F /* TaskTimelineRow.swift */,
+				23779F162E39885600F4A10F /* TodaysProgressDetailView.swift */,
+				23779F172E39885600F4A10F /* TodaysRoutineSummaryView.swift */,
+				23779F182E39885600F4A10F /* WeatherDashboardComponent.swift */,
+				23779F192E39885600F4A10F /* WeatherTasksSection.swift */,
+				23779F1A2E39885600F4A10F /* WeatherViewModifier.swift */,
+				23779F1B2E39885600F4A10F /* WorkersInlineList.swift */,
 			);
 			path = "Shared Components";
 			sourceTree = "<group>";
 		};
-		2327393F2E2B8674004A52C6 /* Sheets */ = {
+		23779F1D2E39885600F4A10F /* Common */ = {
 			isa = PBXGroup;
 			children = (
-				2327393E2E2B8674004A52C6 /* EmergencyContactsSheet.swift */,
+				23779F1C2E39885600F4A10F /* Shared Components */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		23779F272E39885600F4A10F /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */,
+				23779F1F2E39885600F4A10F /* CurrentBuildingStatusCard.swift */,
+				23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */,
+				23779F212E39885600F4A10F /* FrancoSphereDesign.swift */,
+				23779F222E39885600F4A10F /* HeaderV3B.swift */,
+				23779F232E39885600F4A10F /* ModelColorsExtensions.swift */,
+				23779F242E39885600F4A10F /* TimelineProgressBar.swift */,
+				23779F252E39885600F4A10F /* TodaysTasksGlassCard.swift */,
+				23779F262E39885600F4A10F /* WeatherTaskTimelineCard.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		23779F3A2E39885600F4A10F /* Glass */ = {
+			isa = PBXGroup;
+			children = (
+				23779F282E39885600F4A10F /* BuildingHeaderGlassOverlay.swift */,
+				23779F292E39885600F4A10F /* BuildingStatsGlassCard.swift */,
+				23779F2A2E39885600F4A10F /* ClockInGlassModal.swift */,
+				23779F2B2E39885600F4A10F /* GlassButton.swift */,
+				23779F2C2E39885600F4A10F /* GlassButtonModifier.swift */,
+				23779F2D2E39885600F4A10F /* GlassCard.swift */,
+				23779F2E2E39885600F4A10F /* GlassDeckContainer.swift */,
+				23779F2F2E39885600F4A10F /* GlassLoadingView.swift */,
+				23779F302E39885600F4A10F /* GlassModal.swift */,
+				23779F312E39885600F4A10F /* GlassMorphismStyles.swift */,
+				23779F322E39885600F4A10F /* GlassNavigationBar.swift */,
+				23779F332E39885600F4A10F /* GlassStatusBadge.swift */,
+				23779F342E39885600F4A10F /* GlassTabBar.swift */,
+				23779F352E39885600F4A10F /* GlassTransitions.swift */,
+				23779F362E39885600F4A10F /* GlassTypes.swift */,
+				23779F372E39885600F4A10F /* PressableGlassCard.swift */,
+				23779F382E39885600F4A10F /* TaskCategoryGlassCard.swift */,
+				23779F392E39885600F4A10F /* WorkerAssignmentGlassCard.swift */,
+			);
+			path = Glass;
+			sourceTree = "<group>";
+		};
+		23779F3D2E39885600F4A10F /* Intelligence */ = {
+			isa = PBXGroup;
+			children = (
+				23779F3B2E39885600F4A10F /* IntelligencePreviewPanel.swift */,
+				23779F3C2E39885600F4A10F /* SyncStatusComponents.swift */,
+			);
+			path = Intelligence;
+			sourceTree = "<group>";
+		};
+		23779F3F2E39885600F4A10F /* Sheets */ = {
+			isa = PBXGroup;
+			children = (
+				23779F3E2E39885600F4A10F /* EmergencyContactsSheet.swift */,
 			);
 			path = Sheets;
 			sourceTree = "<group>";
 		};
-		232739402E2B8674004A52C6 /* Components */ = {
+		23779F402E39885600F4A10F /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				232739092E2B8674004A52C6 /* Design */,
-				2327391C2E2B8674004A52C6 /* Glass */,
-				2327391F2E2B8674004A52C6 /* Intelligence */,
-				2327393D2E2B8674004A52C6 /* Shared Components */,
-				2327393F2E2B8674004A52C6 /* Sheets */,
+				23779F092E39885600F4A10F /* Cards */,
+				23779F1D2E39885600F4A10F /* Common */,
+				23779F272E39885600F4A10F /* Design */,
+				23779F3A2E39885600F4A10F /* Glass */,
+				23779F3D2E39885600F4A10F /* Intelligence */,
+				23779F3F2E39885600F4A10F /* Sheets */,
 			);
 			path = Components;
 			sourceTree = "<group>";
 		};
-		232739432E2B8674004A52C6 /* Data */ = {
+		23779F412E39885600F4A10F /* Data */ = {
 			isa = PBXGroup;
 			children = (
-				232739412E2B8674004A52C6 /* DatabaseSchemaVerifier.swift */,
-				232739422E2B8674004A52C6 /* SchemaMigrationPatch.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
 		};
-		2327394C2E2B8674004A52C6 /* Extensions */ = {
+		23779F432E39885600F4A10F /* Database */ = {
 			isa = PBXGroup;
 			children = (
-				2327394A2E2B8674004A52C6 /* TimeStatus.swift */,
-				2327394B2E2B8674004A52C6 /* V012.swift */,
+				23779F422E39885600F4A10F /* GRDBManager.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
+		23779F442E39885600F4A10F /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
 			);
 			path = Extensions;
 			sourceTree = "<group>";
 		};
-		2327394F2E2B8674004A52C6 /* Migrations */ = {
+		23779F462E39885600F4A10F /* Migrations */ = {
 			isa = PBXGroup;
 			children = (
-				2327394D2E2B8674004A52C6 /* DatabaseMigrations.swift */,
-				2327394E2E2B8674004A52C6 /* V003_WorkerAssignments.swift */,
+				23779F452E39885600F4A10F /* V003_WorkerAssignments.swift */,
 			);
 			path = Migrations;
 			sourceTree = "<group>";
 		};
-		2327395D2E2B8674004A52C6 /* Managers */ = {
+		23779F472E39885600F4A10F /* Operations */ = {
 			isa = PBXGroup;
 			children = (
-				23EA710D2E397EDC0010FA03 /* DatabaseInitializer.swift */,
-				2327394C2E2B8674004A52C6 /* Extensions */,
-				2327394F2E2B8674004A52C6 /* Migrations */,
-				232739512E2B8674004A52C6 /* AssetImageDebugger.swift */,
-				232739522E2B8674004A52C6 /* ClockInManager.swift */,
-				232739542E2B8674004A52C6 /* DatabaseMigrationFix.swift */,
-				232739552E2B8674004A52C6 /* GRDBManager.swift */,
-				232739562E2B8674004A52C6 /* HapticManager.swift */,
-				232739572E2B8674004A52C6 /* LocationManager.swift */,
-				232739582E2B8674004A52C6 /* NewAuthManager.swift */,
-				232739592E2B8674004A52C6 /* NotificationManager.swift */,
-				2327395A2E2B8674004A52C6 /* OperationalDataManager.swift */,
-				2327395C2E2B8674004A52C6 /* WorkerManager.swift */,
+			);
+			path = Operations;
+			sourceTree = "<group>";
+		};
+		23779F4A2E39885600F4A10F /* System */ = {
+			isa = PBXGroup;
+			children = (
+				23779F482E39885600F4A10F /* AuthManager.swift */,
+				23779F492E39885600F4A10F /* SecurityManager.swift */,
+			);
+			path = System;
+			sourceTree = "<group>";
+		};
+		23779F552E39885600F4A10F /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				23779F432E39885600F4A10F /* Database */,
+				23779F442E39885600F4A10F /* Extensions */,
+				23779F462E39885600F4A10F /* Migrations */,
+				23779F472E39885600F4A10F /* Operations */,
+				23779F4A2E39885600F4A10F /* System */,
+				23779F4B2E39885600F4A10F /* AssetImageDebugger.swift */,
+				23779F4C2E39885600F4A10F /* ClockInManager.swift */,
+				23779F4D2E39885600F4A10F /* ClockInManager.swift.integration_backup */,
+				23779F4E2E39885600F4A10F /* DatabaseInitializer.swift */,
+				23779F4F2E39885600F4A10F /* HapticManager.swift */,
+				23779F502E39885600F4A10F /* LocationManager.swift */,
+				23779F512E39885600F4A10F /* NotificationManager.swift */,
+				23779F522E39885600F4A10F /* OperationalDataManager.swift */,
+				23779F532E39885600F4A10F /* TaskManager.swift */,
+				23779F542E39885600F4A10F /* WorkerManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
 		};
-		232739622E2B8674004A52C6 /* Maps */ = {
+		23779F582E39885600F4A10F /* Maps */ = {
 			isa = PBXGroup;
 			children = (
-				232739602E2B8674004A52C6 /* MapInteractionHint.swift */,
-				232739612E2B8674004A52C6 /* MapRevealContainer.swift */,
+				23779F562E39885600F4A10F /* MapInteractionHint.swift */,
+				23779F572E39885600F4A10F /* MapRevealContainer.swift */,
 			);
 			path = Maps;
 			sourceTree = "<group>";
 		};
-		232739662E2B8674004A52C6 /* Core */ = {
+		23779F5A2E39885600F4A10F /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				232739642E2B8674004A52C6 /* CoreTypes.swift */,
+				23779F592E39885600F4A10F /* CoreTypes.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
 		};
-		2327396B2E2B8674004A52C6 /* DTOs */ = {
+		23779F5E2E39885600F4A10F /* DTOs */ = {
 			isa = PBXGroup;
 			children = (
-				232739682E2B8674004A52C6 /* BuildingIntelligenceDTO.swift */,
-				232739692E2B8674004A52C6 /* ComplianceDataDTO.swift */,
-				2327396A2E2B8674004A52C6 /* WorkerMetricsDTO.swift */,
+				23779F5B2E39885600F4A10F /* BuildingIntelligenceDTO.swift */,
+				23779F5C2E39885600F4A10F /* ComplianceDataDTO.swift */,
+				23779F5D2E39885600F4A10F /* WorkerMetricsDTO.swift */,
 			);
 			path = DTOs;
 			sourceTree = "<group>";
 		};
-		2327396E2E2B8674004A52C6 /* Enums */ = {
+		23779F602E39885600F4A10F /* Enums */ = {
 			isa = PBXGroup;
 			children = (
-				2327396D2E2B8674004A52C6 /* QBConnectionStatus.swift */,
+				23779F5F2E39885600F4A10F /* QBConnectionStatus.swift */,
 			);
 			path = Enums;
 			sourceTree = "<group>";
 		};
-		232739882E2B8674004A52C6 /* Models */ = {
+		23779F6F2E39885600F4A10F /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				238DBE8C2E2C288A00D6B671 /* ComplianceIssue.swift */,
-				232739662E2B8674004A52C6 /* Core */,
-				2327396B2E2B8674004A52C6 /* DTOs */,
-				2327396E2E2B8674004A52C6 /* Enums */,
-				232739722E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift */,
-				232739772E2B8674004A52C6 /* FilteredTaskResult.swift */,
-				232739782E2B8674004A52C6 /* FrancoSphereExtensions.swift */,
-				232739792E2B8674004A52C6 /* FrancoSphereModels.swift */,
-				2327397A2E2B8674004A52C6 /* ImportHelper.swift */,
-				2327397D2E2B8674004A52C6 /* ModelExtensions.swift */,
-				2327397E2E2B8674004A52C6 /* SharedTypes.swift */,
-				2327397F2E2B8674004A52C6 /* UserExtensions.swift */,
-				232739802E2B8674004A52C6 /* VerificationRecord.swift */,
-				232739822E2B8674004A52C6 /* WorkerActionType.swift */,
-				232739832E2B8674004A52C6 /* WorkerConstants.swift */,
-				232739842E2B8674004A52C6 /* WorkerContextEngine.swift */,
-				232739872E2B8674004A52C6 /* WorkerRoutineViewModel.swift */,
+				23779F5A2E39885600F4A10F /* Core */,
+				23779F5E2E39885600F4A10F /* DTOs */,
+				23779F602E39885600F4A10F /* Enums */,
+				23779F612E39885600F4A10F /* CLLocationCoordinate2DExtension.swift */,
+				23779F622E39885600F4A10F /* ComplianceIssue.swift */,
+				23779F632E39885600F4A10F /* FilteredTaskResult.swift */,
+				23779F642E39885600F4A10F /* FrancoSphereExtensions.swift */,
+				23779F652E39885600F4A10F /* FrancoSphereImports.swift */,
+				23779F662E39885600F4A10F /* FrancoSphereModels.swift */,
+				23779F672E39885600F4A10F /* ImportHelper.swift */,
+				23779F682E39885600F4A10F /* ModelExtensions.swift */,
+				23779F692E39885600F4A10F /* SharedTypes.swift */,
+				23779F6B2E39885600F4A10F /* UserExtensions.swift */,
+				23779F6C2E39885600F4A10F /* VerificationRecord.swift */,
+				23779F6D2E39885600F4A10F /* WorkerActionType.swift */,
+				23779F6E2E39885600F4A10F /* WorkerConstants.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		2327398F2E2B8674004A52C6 /* Core */ = {
+		23779F742E39885600F4A10F /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				23EA71052E387D6B0010FA03 /* NovaFeatureManager.swift */,
-				23EA71032E387B790010FA03 /* NovaIntelligenceEngine.swift */,
-				2327398A2E2B8674004A52C6 /* NovaAPIService.swift */,
-				2327398D2E2B8674004A52C6 /* NovaInteractionView.swift */,
-				2327398E2E2B8674004A52C6 /* NovaTypes.swift */,
+				23779F702E39885600F4A10F /* NovaAPIService.swift */,
+				23779F712E39885600F4A10F /* NovaFeatureManager.swift */,
+				23779F722E39885600F4A10F /* NovaIntelligenceEngine.swift */,
+				23779F732E39885600F4A10F /* NovaTypes.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
 		};
-		232739902E2B8674004A52C6 /* Nova */ = {
+		23779F772E39885600F4A10F /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				2327398F2E2B8674004A52C6 /* Core */,
+				23779F752E39885600F4A10F /* NovaImageLoader.swift */,
+				23779F762E39885600F4A10F /* NovaInteractionView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		23779F782E39885600F4A10F /* Nova */ = {
+			isa = PBXGroup;
+			children = (
+				23779F742E39885600F4A10F /* Core */,
+				23779F772E39885600F4A10F /* UI */,
 			);
 			path = Nova;
 			sourceTree = "<group>";
 		};
-		232739A32E2B8674004A52C6 /* Assets.xassets */ = {
+		23779F8B2E39885600F4A10F /* Assets.xassets */ = {
 			isa = PBXGroup;
 			children = (
-				232739912E2B8674004A52C6 /* 12_West_18th_Street.jpg */,
-				232739922E2B8674004A52C6 /* 29_31_East_20th_Street.jpg */,
-				232739932E2B8674004A52C6 /* 36_Walker_Street.jpg */,
-				232739942E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg */,
-				232739952E2B8674004A52C6 /* 68_Perry_Street.jpg */,
-				232739962E2B8674004A52C6 /* 104_Franklin_Street.jpg */,
-				232739972E2B8674004A52C6 /* 112_West_18th_Street.jpg */,
-				232739982E2B8674004A52C6 /* 117_West_17th_Street.jpg */,
-				232739992E2B8674004A52C6 /* 123_1st_Avenue.jpg */,
-				2327399A2E2B8674004A52C6 /* 131_Perry_Street.jpg */,
-				2327399B2E2B8674004A52C6 /* 133_East_15th_Street.jpg */,
-				2327399C2E2B8674004A52C6 /* 135West17thStreet.jpg */,
-				2327399D2E2B8674004A52C6 /* 136_West_17th_Street.jpg */,
-				2327399E2E2B8674004A52C6 /* 138West17thStreet.jpg */,
-				2327399F2E2B8674004A52C6 /* AIAssistant.png */,
-				232739A02E2B8674004A52C6 /* AppIcon.png */,
-				232739A12E2B8674004A52C6 /* Rubin_Museum_142_148_West_17th_Street.jpg */,
-				232739A22E2B8674004A52C6 /* Stuyvesant_Cove_Park.jpg */,
+				23779F792E39885600F4A10F /* 12_West_18th_Street.jpg */,
+				23779F7A2E39885600F4A10F /* 29_31_East_20th_Street.jpg */,
+				23779F7B2E39885600F4A10F /* 36_Walker_Street.jpg */,
+				23779F7C2E39885600F4A10F /* 41_Elizabeth_Street.jpeg */,
+				23779F7D2E39885600F4A10F /* 68_Perry_Street.jpg */,
+				23779F7E2E39885600F4A10F /* 104_Franklin_Street.jpg */,
+				23779F7F2E39885600F4A10F /* 112_West_18th_Street.jpg */,
+				23779F802E39885600F4A10F /* 117_West_17th_Street.jpg */,
+				23779F812E39885600F4A10F /* 123_1st_Avenue.jpg */,
+				23779F822E39885600F4A10F /* 131_Perry_Street.jpg */,
+				23779F832E39885600F4A10F /* 133_East_15th_Street.jpg */,
+				23779F842E39885600F4A10F /* 135West17thStreet.jpg */,
+				23779F852E39885600F4A10F /* 136_West_17th_Street.jpg */,
+				23779F862E39885600F4A10F /* 138West17thStreet.jpg */,
+				23779F872E39885600F4A10F /* AIAssistant.png */,
+				23779F882E39885600F4A10F /* AppIcon.png */,
+				23779F892E39885600F4A10F /* Rubin_Museum_142_148_West_17th_Street.jpg */,
+				23779F8A2E39885600F4A10F /* Stuyvesant_Cove_Park.jpg */,
 			);
 			path = Assets.xassets;
 			sourceTree = "<group>";
 		};
-		232739A52E2B8674004A52C6 /* Preview Content */ = {
+		23779F8D2E39885600F4A10F /* Preview Content */ = {
 			isa = PBXGroup;
 			children = (
-				232739A42E2B8674004A52C6 /* Preview Assets.xcassets */,
+				23779F8C2E39885600F4A10F /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		232739A62E2B8674004A52C6 /* Resources */ = {
+		23779F8E2E39885600F4A10F /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				232739A32E2B8674004A52C6 /* Assets.xassets */,
-				232739A52E2B8674004A52C6 /* Preview Content */,
+				23779F8B2E39885600F4A10F /* Assets.xassets */,
+				23779F8D2E39885600F4A10F /* Preview Content */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		232739A92E2B8674004A52C6 /* Scripts */ = {
+		23779F912E39885600F4A10F /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
-				232739A72E2B8674004A52C6 /* TestRealDataIntegration.swift */,
-				232739A82E2B8674004A52C6 /* update_rubin_museum_id.sql */,
+				23779F8F2E39885600F4A10F /* TestRealDataIntegration.swift */,
+				23779F902E39885600F4A10F /* update_rubin_museum_id.sql */,
 			);
 			path = Scripts;
 			sourceTree = "<group>";
 		};
-		232739AB2E2B8674004A52C6 /* Security */ = {
+		23779F922E39885600F4A10F /* Security */ = {
 			isa = PBXGroup;
 			children = (
-				232739AA2E2B8674004A52C6 /* SecurityManager.swift */,
 			);
 			path = Security;
 			sourceTree = "<group>";
 		};
-		232739B22E2B8674004A52C6 /* Configuration */ = {
+		23779F942E39885600F4A10F /* Configuration */ = {
 			isa = PBXGroup;
 			children = (
-				232739B12E2B8674004A52C6 /* BuildingFeatureConfiguration.swift */,
+				23779F932E39885600F4A10F /* BuildingFeatureConfiguration.swift */,
 			);
 			path = Configuration;
 			sourceTree = "<group>";
 		};
-		232739B42E2B8674004A52C6 /* Migration */ = {
+		23779F952E39885600F4A10F /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				232739B32E2B8674004A52C6 /* WorkerAssignmentEngine.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		23779F962E39885600F4A10F /* Integration */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Integration;
+			sourceTree = "<group>";
+		};
+		23779F982E39885600F4A10F /* Intelligence */ = {
+			isa = PBXGroup;
+			children = (
+				23779F972E39885600F4A10F /* WorkerContextEngine.swift */,
+			);
+			path = Intelligence;
+			sourceTree = "<group>";
+		};
+		23779F9A2E39885600F4A10F /* Migration */ = {
+			isa = PBXGroup;
+			children = (
+				23779F992E39885600F4A10F /* WorkerAssignmentEngine.swift */,
 			);
 			path = Migration;
 			sourceTree = "<group>";
 		};
-		232739B62E2B8674004A52C6 /* RealTime */ = {
+		23779F9B2E39885600F4A10F /* Operations */ = {
 			isa = PBXGroup;
 			children = (
-				232739B52E2B8674004A52C6 /* WorkerFeedbackManager.swift */,
+			);
+			path = Operations;
+			sourceTree = "<group>";
+		};
+		23779F9D2E39885600F4A10F /* RealTime */ = {
+			isa = PBXGroup;
+			children = (
+				23779F9C2E39885600F4A10F /* WorkerFeedbackManager.swift */,
 			);
 			path = RealTime;
 			sourceTree = "<group>";
 		};
-		232739CE2E2B8674004A52C6 /* Services */ = {
+		23779FAE2E39885600F4A10F /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				23EA71012E3860C40010FA03 /* UnifiedDataService.swift */,
-				232739B22E2B8674004A52C6 /* Configuration */,
-				232739B42E2B8674004A52C6 /* Migration */,
-				232739B62E2B8674004A52C6 /* RealTime */,
-				232739B72E2B8674004A52C6 /* BuildingMetricsService.swift */,
-				232739B82E2B8674004A52C6 /* BuildingService.swift */,
-				232739BA2E2B8674004A52C6 /* DailyOpsReset.swift */,
-				232739BB2E2B8674004A52C6 /* DashboardSyncService.swift */,
-				232739BF2E2B8674004A52C6 /* DSNYTaskGenerator.swift */,
-				232739C02E2B8674004A52C6 /* IntelligenceService.swift */,
-				232739C32E2B8674004A52C6 /* QuickBooksOAuthManager.swift */,
-				232739C42E2B8674004A52C6 /* QuickBooksPayrollExporter.swift */,
-				232739C52E2B8674004A52C6 /* TaskService.swift */,
-				232739C62E2B8674004A52C6 /* TaskService+OperationalFallback.swift */,
-				232739C72E2B8674004A52C6 /* TelemetryService.swift */,
-				232739C82E2B8674004A52C6 /* TimeBasedTaskFilter.swift */,
-				232739CB2E2B8674004A52C6 /* WeatherDataAdapter.swift */,
-				232739CC2E2B8674004A52C6 /* WorkerMetricsService.swift */,
-				232739CD2E2B8674004A52C6 /* WorkerService.swift */,
+				23779F942E39885600F4A10F /* Configuration */,
+				23779F952E39885600F4A10F /* Core */,
+				23779F962E39885600F4A10F /* Integration */,
+				23779F982E39885600F4A10F /* Intelligence */,
+				23779F9A2E39885600F4A10F /* Migration */,
+				23779F9B2E39885600F4A10F /* Operations */,
+				23779F9D2E39885600F4A10F /* RealTime */,
+				23779F9E2E39885600F4A10F /* BuildingMetricsService.swift */,
+				23779F9F2E39885600F4A10F /* BuildingService.swift */,
+				23779FA02E39885600F4A10F /* DailyOpsReset.swift */,
+				23779FA12E39885600F4A10F /* DashboardSyncService.swift */,
+				23779FA22E39885600F4A10F /* DSNYTaskGenerator.swift */,
+				23779FA32E39885600F4A10F /* IntelligenceService.swift */,
+				23779FA42E39885600F4A10F /* QuickBooksOAuthManager.swift */,
+				23779FA52E39885600F4A10F /* QuickBooksPayrollExporter.swift */,
+				23779FA62E39885600F4A10F /* TaskService.swift */,
+				23779FA72E39885600F4A10F /* TaskService+OperationalFallback.swift */,
+				23779FA82E39885600F4A10F /* TelemetryService.swift */,
+				23779FA92E39885600F4A10F /* TimeBasedTaskFilter.swift */,
+				23779FAA2E39885600F4A10F /* UnifiedDataService.swift */,
+				23779FAB2E39885600F4A10F /* WeatherDataAdapter.swift */,
+				23779FAC2E39885600F4A10F /* WorkerMetricsService.swift */,
+				23779FAD2E39885600F4A10F /* WorkerService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
 		};
-		232739D32E2B8674004A52C6 /* SharedViews */ = {
+		23779FB22E39885600F4A10F /* SharedViews */ = {
 			isa = PBXGroup;
 			children = (
-				232739D02E2B8674004A52C6 /* QuickActionMenu.swift */,
-				232739D12E2B8674004A52C6 /* RouteStatItem.swift */,
-				232739D22E2B8674004A52C6 /* TrackableScrollView.swift */,
+				23779FAF2E39885600F4A10F /* QuickActionMenu.swift */,
+				23779FB02E39885600F4A10F /* RouteStatItem.swift */,
+				23779FB12E39885600F4A10F /* TrackableScrollView.swift */,
 			);
 			path = SharedViews;
 			sourceTree = "<group>";
 		};
-		232739D92E2B8674004A52C6 /* Sync */ = {
+		23779FB62E39885600F4A10F /* Sync */ = {
 			isa = PBXGroup;
 			children = (
-				232739D52E2B8674004A52C6 /* DataSynchronizationService.swift */,
-				232739D72E2B8674004A52C6 /* TypeMigrationService.swift */,
-				232739D82E2B8674004A52C6 /* WorkerEventOutbox.swift */,
+				23779FB32E39885600F4A10F /* DataSynchronizationService.swift */,
+				23779FB42E39885600F4A10F /* TypeMigrationService.swift */,
+				23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */,
 			);
 			path = Sync;
 			sourceTree = "<group>";
 		};
-		232739DB2E2B8674004A52C6 /* Utilities */ = {
+		23779FB92E39885600F4A10F /* Database */ = {
 			isa = PBXGroup;
 			children = (
+				23779FB72E39885600F4A10F /* DatabaseSchemaVerifier.swift */,
+				23779FB82E39885600F4A10F /* SchemaMigrationPatch.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
+		23779FBC2E39885600F4A10F /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				23779FBA2E39885600F4A10F /* TimeStatus.swift */,
+				23779FBB2E39885600F4A10F /* V012.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		23779FBD2E39885600F4A10F /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		23779FBE2E39885600F4A10F /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				23779FB92E39885600F4A10F /* Database */,
+				23779FBC2E39885600F4A10F /* Extensions */,
+				23779FBD2E39885600F4A10F /* Helpers */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
 		};
-		232739DF2E2B8674004A52C6 /* Auth */ = {
+		23779FC22E39885600F4A10F /* Auth */ = {
 			isa = PBXGroup;
 			children = (
-				232739DC2E2B8674004A52C6 /* ForgotPasswordView.swift */,
-				232739DD2E2B8674004A52C6 /* LoginView.swift */,
-				232739DE2E2B8674004A52C6 /* SignUpView.swift */,
+				23779FBF2E39885600F4A10F /* ForgotPasswordView.swift */,
+				23779FC02E39885600F4A10F /* LoginView.swift */,
+				23779FC12E39885600F4A10F /* SignUpView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
 		};
-		232739EB2E2B8674004A52C6 /* Buildings */ = {
+		23779FCE2E39885600F4A10F /* Buildings */ = {
 			isa = PBXGroup;
 			children = (
-				232739E02E2B8674004A52C6 /* AssignedBuildingsView.swift */,
-				232739E12E2B8674004A52C6 /* BuildingDetailView.swift */,
-				232739E22E2B8674004A52C6 /* BuildingMapDetailView.swift */,
-				232739E32E2B8674004A52C6 /* BuildingSelectionView.swift */,
-				232739E42E2B8674004A52C6 /* BuildingsView.swift */,
-				232739E52E2B8674004A52C6 /* BuildingTaskDetailView.swift */,
-				232739E62E2B8674004A52C6 /* InventoryView.swift */,
-				232739E72E2B8674004A52C6 /* MaintenanceHistoryView.swift */,
-				232739E82E2B8674004A52C6 /* MaintenanceTaskView.swift */,
-				232739E92E2B8674004A52C6 /* TaskFormView.swift */,
-				232739EA2E2B8674004A52C6 /* TaskScheduleView.swift */,
+				23779FC32E39885600F4A10F /* AssignedBuildingsView.swift */,
+				23779FC42E39885600F4A10F /* BuildingDetailView.swift */,
+				23779FC52E39885600F4A10F /* BuildingMapDetailView.swift */,
+				23779FC62E39885600F4A10F /* BuildingSelectionView.swift */,
+				23779FC72E39885600F4A10F /* BuildingsView.swift */,
+				23779FC82E39885600F4A10F /* BuildingTaskDetailView.swift */,
+				23779FC92E39885600F4A10F /* InventoryView.swift */,
+				23779FCA2E39885600F4A10F /* MaintenanceHistoryView.swift */,
+				23779FCB2E39885600F4A10F /* MaintenanceTaskView.swift */,
+				23779FCC2E39885600F4A10F /* TaskFormView.swift */,
+				23779FCD2E39885600F4A10F /* TaskScheduleView.swift */,
 			);
 			path = Buildings;
 			sourceTree = "<group>";
 		};
-		232739FB2E2B8674004A52C6 /* Main */ = {
+		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
-				232739EC2E2B8674004A52C6 /* AdminDashboardView.swift */,
-				232739ED2E2B8674004A52C6 /* BuildingPreviewPopover.swift */,
-				232739EE2E2B8674004A52C6 /* ClientDashboardView.swift */,
-				232739EF2E2B8674004A52C6 /* ComplianceOverviewView.swift */,
-				232739F02E2B8674004A52C6 /* ContentView.swift */,
-				232739F12E2B8674004A52C6 /* DashboardTaskDetailView.swift */,
-				232739F32E2B8674004A52C6 /* InitializationView.swift */,
-				232739F42E2B8674004A52C6 /* PortfolioOverviewView.swift */,
-				232739F52E2B8674004A52C6 /* ProfileView.swift */,
-				232739F62E2B8674004A52C6 /* TaskDetailView.swift */,
-				232739F72E2B8674004A52C6 /* TaskRequestView.swift */,
-				232739F82E2B8674004A52C6 /* TaskTimelineView.swift */,
-				232739F92E2B8674004A52C6 /* WorkerDashboardView.swift */,
-				232739FA2E2B8674004A52C6 /* WorkerProfileView.swift */,
+				23779FCF2E39885600F4A10F /* AdminDashboardView.swift */,
+				23779FD02E39885600F4A10F /* BuildingPreviewPopover.swift */,
+				23779FD12E39885600F4A10F /* ClientDashboardView.swift */,
+				23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */,
+				23779FD32E39885600F4A10F /* ContentView.swift */,
+				23779FD42E39885600F4A10F /* DashboardTaskDetailView.swift */,
+				23779FD52E39885600F4A10F /* InitializationView.swift */,
+				23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */,
+				23779FD72E39885600F4A10F /* ProfileView.swift */,
+				23779FD82E39885600F4A10F /* TaskDetailView.swift */,
+				23779FD92E39885600F4A10F /* TaskRequestView.swift */,
+				23779FDA2E39885600F4A10F /* TaskTimelineView.swift */,
+				23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */,
+				23779FDC2E39885600F4A10F /* WorkerProfileView.swift */,
 			);
 			path = Main;
 			sourceTree = "<group>";
 		};
-		23273A062E2B8674004A52C6 /* ViewModels */ = {
+		23779FDE2E39885600F4A10F /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				23EA70F92E3827550010FA03 /* ClientDashboardViewModel.swift */,
-				232739FE2E2B8674004A52C6 /* AdminDashboardViewModel.swift */,
-				232739FF2E2B8674004A52C6 /* BuildingDetailViewModel.swift */,
-				23273A002E2B8674004A52C6 /* BuildingIntelligenceViewModel.swift */,
-				23273A012E2B8674004A52C6 /* InitializationViewModel.swift */,
-				23273A022E2B8674004A52C6 /* TaskDetailViewModel.swift */,
-				23273A032E2B8674004A52C6 /* TodayTasksViewModel.swift */,
-				23273A042E2B8674004A52C6 /* WorkerDashboardViewModel.swift */,
-			);
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		23273A072E2B8674004A52C6 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				232739DF2E2B8674004A52C6 /* Auth */,
-				232739EB2E2B8674004A52C6 /* Buildings */,
-				232739FB2E2B8674004A52C6 /* Main */,
-				23273A062E2B8674004A52C6 /* ViewModels */,
+				23779FC22E39885600F4A10F /* Auth */,
+				23779FCE2E39885600F4A10F /* Buildings */,
+				23779FDD2E39885600F4A10F /* Main */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		2377A0922E398AA800F4A10F /* Building */ = {
+			isa = PBXGroup;
+			children = (
+				2377A0902E398AA800F4A10F /* BuildingDetailViewModel.swift */,
+				2377A0912E398AA800F4A10F /* BuildingIntelligenceViewModel.swift */,
+			);
+			path = Building;
+			sourceTree = "<group>";
+		};
+		2377A0962E398AA800F4A10F /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				2377A0932E398AA800F4A10F /* AdminDashboardViewModel.swift */,
+				2377A0942E398AA800F4A10F /* ClientDashboardViewModel.swift */,
+				2377A0952E398AA800F4A10F /* WorkerDashboardViewModel.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		2377A0982E398AA800F4A10F /* Task */ = {
+			isa = PBXGroup;
+			children = (
+				2377A0972E398AA800F4A10F /* WorkerRoutineViewModel.swift */,
+			);
+			path = Task;
+			sourceTree = "<group>";
+		};
+		2377A09A2E398AA800F4A10F /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				2377A0922E398AA800F4A10F /* Building */,
+				2377A0962E398AA800F4A10F /* Dashboard */,
+				2377A0982E398AA800F4A10F /* Task */,
+				2377A0992E398AA800F4A10F /* InitializationViewModel.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -963,6 +1085,7 @@
 					};
 					232736EF2E2B8565004A52C6 = {
 						CreatedOnToolsVersion = 16.4;
+						LastSwiftMigration = 1640;
 						TestTargetID = 232736E22E2B8564004A52C6;
 					};
 					232736F92E2B8565004A52C6 = {
@@ -1000,26 +1123,27 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				23273AD82E2B8674004A52C6 /* 29_31_East_20th_Street.jpg in Resources */,
-				23273AD92E2B8674004A52C6 /* 135West17thStreet.jpg in Resources */,
-				23273ADA2E2B8674004A52C6 /* 36_Walker_Street.jpg in Resources */,
-				23273ADB2E2B8674004A52C6 /* 123_1st_Avenue.jpg in Resources */,
-				23273ADC2E2B8674004A52C6 /* 68_Perry_Street.jpg in Resources */,
-				23273ADD2E2B8674004A52C6 /* 131_Perry_Street.jpg in Resources */,
-				23273ADE2E2B8674004A52C6 /* Stuyvesant_Cove_Park.jpg in Resources */,
-				23273ADF2E2B8674004A52C6 /* update_rubin_museum_id.sql in Resources */,
-				23273AE02E2B8674004A52C6 /* 104_Franklin_Street.jpg in Resources */,
-				23273AE12E2B8674004A52C6 /* 117_West_17th_Street.jpg in Resources */,
-				23273AE22E2B8674004A52C6 /* 136_West_17th_Street.jpg in Resources */,
-				23273AE32E2B8674004A52C6 /* 12_West_18th_Street.jpg in Resources */,
-				23273AE42E2B8674004A52C6 /* Rubin_Museum_142_148_West_17th_Street.jpg in Resources */,
-				23273AE52E2B8674004A52C6 /* 41_Elizabeth_Street.jpeg in Resources */,
-				23273AE62E2B8674004A52C6 /* AppIcon.png in Resources */,
-				23273AE72E2B8674004A52C6 /* Preview Assets.xcassets in Resources */,
-				23273AE82E2B8674004A52C6 /* 112_West_18th_Street.jpg in Resources */,
-				23273AE92E2B8674004A52C6 /* 133_East_15th_Street.jpg in Resources */,
-				23273AEA2E2B8674004A52C6 /* 138West17thStreet.jpg in Resources */,
-				23273AEB2E2B8674004A52C6 /* AIAssistant.png in Resources */,
+				2377A0772E39885600F4A10F /* Preview Assets.xcassets in Resources */,
+				2377A0782E39885600F4A10F /* 131_Perry_Street.jpg in Resources */,
+				2377A0792E39885600F4A10F /* Stuyvesant_Cove_Park.jpg in Resources */,
+				2377A07A2E39885600F4A10F /* 112_West_18th_Street.jpg in Resources */,
+				2377A07B2E39885600F4A10F /* update_rubin_museum_id.sql in Resources */,
+				2377A07C2E39885600F4A10F /* 104_Franklin_Street.jpg in Resources */,
+				2377A07D2E39885600F4A10F /* 12_West_18th_Street.jpg in Resources */,
+				2377A07E2E39885600F4A10F /* 68_Perry_Street.jpg in Resources */,
+				2377A07F2E39885600F4A10F /* ClockInManager.swift.integration_backup in Resources */,
+				2377A0802E39885600F4A10F /* 36_Walker_Street.jpg in Resources */,
+				2377A0812E39885600F4A10F /* 136_West_17th_Street.jpg in Resources */,
+				2377A0822E39885600F4A10F /* 135West17thStreet.jpg in Resources */,
+				2377A0832E39885600F4A10F /* 41_Elizabeth_Street.jpeg in Resources */,
+				2377A0842E39885600F4A10F /* 117_West_17th_Street.jpg in Resources */,
+				2377A0852E39885600F4A10F /* 29_31_East_20th_Street.jpg in Resources */,
+				2377A0862E39885600F4A10F /* AIAssistant.png in Resources */,
+				2377A0872E39885600F4A10F /* Rubin_Museum_142_148_West_17th_Street.jpg in Resources */,
+				2377A0882E39885600F4A10F /* 123_1st_Avenue.jpg in Resources */,
+				2377A0892E39885600F4A10F /* 133_East_15th_Street.jpg in Resources */,
+				2377A08A2E39885600F4A10F /* 138West17thStreet.jpg in Resources */,
+				2377A08B2E39885600F4A10F /* AppIcon.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1046,167 +1170,164 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				238DBE8E2E2CCC9900D6B671 /* ComplianceIssue.swift in Sources */,
-				23273A082E2B8674004A52C6 /* AbstractFrancoSphereLogo.swift in Sources */,
-				23273A092E2B8674004A52C6 /* TaskService.swift in Sources */,
-				23273A0B2E2B8674004A52C6 /* SyncStatusComponents.swift in Sources */,
-				23EA70FA2E3827550010FA03 /* ClientDashboardViewModel.swift in Sources */,
-				23273A0D2E2B8674004A52C6 /* OperationalDataManager.swift in Sources */,
-				23273A112E2B8674004A52C6 /* GRDBManager.swift in Sources */,
-				23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */,
-				23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */,
-				23273A162E2B8674004A52C6 /* NewAuthManager.swift in Sources */,
-				23273A182E2B8674004A52C6 /* InitializationViewModel.swift in Sources */,
-				23273A192E2B8674004A52C6 /* NovaInteractionView.swift in Sources */,
-				23273A1B2E2B8674004A52C6 /* PropertyCard.swift in Sources */,
-				23273A1C2E2B8674004A52C6 /* WorkerAssignmentGlassCard.swift in Sources */,
-				23273A1D2E2B8674004A52C6 /* WorkerManager.swift in Sources */,
-				23273A1E2E2B8674004A52C6 /* TimeStatus.swift in Sources */,
-				23273A202E2B8674004A52C6 /* BuildingTaskDetailView.swift in Sources */,
-				23273A212E2B8674004A52C6 /* BuildingSelectionView.swift in Sources */,
-				23273A232E2B8674004A52C6 /* ForgotPasswordView.swift in Sources */,
-				23273A242E2B8674004A52C6 /* MaintenanceHistoryView.swift in Sources */,
-				23273A262E2B8674004A52C6 /* TaskTimelineView.swift in Sources */,
-				23273A272E2B8674004A52C6 /* BuildingsView.swift in Sources */,
-				23EA71062E387D6B0010FA03 /* NovaFeatureManager.swift in Sources */,
-				23273A2A2E2B8674004A52C6 /* WorkersInlineList.swift in Sources */,
-				23273A2C2E2B8674004A52C6 /* TypeMigrationService.swift in Sources */,
-				23273A2D2E2B8674004A52C6 /* TimelineProgressBar.swift in Sources */,
-				23EA71022E3860C40010FA03 /* UnifiedDataService.swift in Sources */,
-				23273A2E2E2B8674004A52C6 /* AssetImageDebugger.swift in Sources */,
-				23273A2F2E2B8674004A52C6 /* AssignedBuildingsView.swift in Sources */,
-				23273A302E2B8674004A52C6 /* BuildingDetailViewModel.swift in Sources */,
-				23273A312E2B8674004A52C6 /* VerificationRecord.swift in Sources */,
-				23EA710E2E397EDC0010FA03 /* DatabaseInitializer.swift in Sources */,
-				23273A332E2B8674004A52C6 /* ProfileBadge.swift in Sources */,
-				23273A342E2B8674004A52C6 /* WorkerActionType.swift in Sources */,
-				23273A352E2B8674004A52C6 /* RoutinePriority.swift in Sources */,
-				23273A362E2B8674004A52C6 /* BuildingPreviewPopover.swift in Sources */,
-				23273A372E2B8674004A52C6 /* DataSynchronizationService.swift in Sources */,
-				23273A382E2B8674004A52C6 /* TaskFormView.swift in Sources */,
-				23273A392E2B8674004A52C6 /* QuickActionMenu.swift in Sources */,
-				23273A3A2E2B8674004A52C6 /* TaskService+OperationalFallback.swift in Sources */,
-				23273A3B2E2B8674004A52C6 /* BuildingService.swift in Sources */,
-				23273A3C2E2B8674004A52C6 /* WeatherDataAdapter.swift in Sources */,
-				23273A3D2E2B8674004A52C6 /* FrancoSphereColors.swift in Sources */,
-				23273A3E2E2B8674004A52C6 /* GlassModal.swift in Sources */,
-				23273A402E2B8674004A52C6 /* LocationManager.swift in Sources */,
-				23273A412E2B8674004A52C6 /* BuildingHeaderGlassOverlay.swift in Sources */,
-				23273A432E2B8674004A52C6 /* InitializationStatus.swift in Sources */,
-				23273A442E2B8674004A52C6 /* TimeBasedTaskFilter.swift in Sources */,
-				23273A462E2B8674004A52C6 /* WorkerFeedbackManager.swift in Sources */,
-				23273A472E2B8674004A52C6 /* NovaTypes.swift in Sources */,
-				23273A4A2E2B8674004A52C6 /* MapInteractionHint.swift in Sources */,
-				23273A4B2E2B8674004A52C6 /* TaskRequestView.swift in Sources */,
-				23273A4D2E2B8674004A52C6 /* GlassButtonModifier.swift in Sources */,
-				23273A4E2E2B8674004A52C6 /* GlassStatusBadge.swift in Sources */,
-				23273A4F2E2B8674004A52C6 /* WorkerProfileView.swift in Sources */,
-				23273A502E2B8674004A52C6 /* IntelligenceService.swift in Sources */,
-				23273A522E2B8674004A52C6 /* StatCard.swift in Sources */,
-				23273A532E2B8674004A52C6 /* TestRealDataIntegration.swift in Sources */,
-				23273A552E2B8674004A52C6 /* DashboardTaskDetailView.swift in Sources */,
-				23273A582E2B8674004A52C6 /* WorkerContextEngine.swift in Sources */,
-				23273A592E2B8674004A52C6 /* TrackableScrollView.swift in Sources */,
-				23273A5B2E2B8674004A52C6 /* AIAssistantImageLoader.swift in Sources */,
-				23273A5C2E2B8674004A52C6 /* BuildingStatsGlassCard.swift in Sources */,
-				23273A5D2E2B8674004A52C6 /* GlassCard.swift in Sources */,
-				23273A5E2E2B8674004A52C6 /* NotificationManager.swift in Sources */,
-				23273A5F2E2B8674004A52C6 /* GlassTypes.swift in Sources */,
-				23273A602E2B8674004A52C6 /* BuildingIntelligenceDTO.swift in Sources */,
-				23273A612E2B8674004A52C6 /* GlassTransitions.swift in Sources */,
-				23273A622E2B8674004A52C6 /* TelemetryService.swift in Sources */,
-				23273A642E2B8674004A52C6 /* MyAssignedBuildingsSection.swift in Sources */,
-				23273A652E2B8674004A52C6 /* TodaysTasksGlassCard.swift in Sources */,
-				23273A662E2B8674004A52C6 /* CoverageInfoCard.swift in Sources */,
-				23273A672E2B8674004A52C6 /* DatabaseMigrationFix.swift in Sources */,
-				23273A682E2B8674004A52C6 /* Building.swift in Sources */,
-				23273A692E2B8674004A52C6 /* TodaysProgressDetailView.swift in Sources */,
-				23273A6A2E2B8674004A52C6 /* AdaptiveGlassModifier.swift in Sources */,
-				23273A6B2E2B8674004A52C6 /* SchemaMigrationPatch.swift in Sources */,
-				23273A6E2E2B8674004A52C6 /* WorkerDashboardViewModel.swift in Sources */,
-				23273A712E2B8674004A52C6 /* WorkerService.swift in Sources */,
-				23273A722E2B8674004A52C6 /* HeroStatusCard.swift in Sources */,
-				23273A752E2B8674004A52C6 /* FrancoSphereModels.swift in Sources */,
-				23273A762E2B8674004A52C6 /* IntelligencePreviewPanel.swift in Sources */,
-				23273A772E2B8674004A52C6 /* V012.swift in Sources */,
-				23273A782E2B8674004A52C6 /* EmergencyContactsSheet.swift in Sources */,
-				23273A792E2B8674004A52C6 /* GlassMorphismStyles.swift in Sources */,
-				23273A7A2E2B8674004A52C6 /* FrancoSphereExtensions.swift in Sources */,
-				23273A7D2E2B8674004A52C6 /* QuickBooksPayrollExporter.swift in Sources */,
-				23273A7E2E2B8674004A52C6 /* V003_WorkerAssignments.swift in Sources */,
-				23273A7F2E2B8674004A52C6 /* TaskDetailView.swift in Sources */,
-				23273A802E2B8674004A52C6 /* GlassLoadingView.swift in Sources */,
-				23273A812E2B8674004A52C6 /* ClockInGlassModal.swift in Sources */,
-				23273A822E2B8674004A52C6 /* TaskScheduleView.swift in Sources */,
-				23273A832E2B8674004A52C6 /* TaskDisplayHelpers.swift in Sources */,
-				23273A842E2B8674004A52C6 /* LoginView.swift in Sources */,
-				23273A852E2B8674004A52C6 /* ContentView.swift in Sources */,
-				23273A862E2B8674004A52C6 /* WorkerConstants.swift in Sources */,
-				23273A872E2B8674004A52C6 /* TaskTimelineRow.swift in Sources */,
-				23273A882E2B8674004A52C6 /* CoreTypes.swift in Sources */,
-				23273A8A2E2B8674004A52C6 /* BuildingIntelligencePanel.swift in Sources */,
-				23273A8C2E2B8674004A52C6 /* ProfileView.swift in Sources */,
-				23273A8D2E2B8674004A52C6 /* FrancoSphereApp.swift in Sources */,
-				23273A8E2E2B8674004A52C6 /* WeatherTaskTimelineCard.swift in Sources */,
-				23273A912E2B8674004A52C6 /* ImportHelper.swift in Sources */,
-				23273A922E2B8674004A52C6 /* QuickBooksOAuthManager.swift in Sources */,
-				23273A932E2B8674004A52C6 /* QBConnectionStatus.swift in Sources */,
-				23273A942E2B8674004A52C6 /* InventoryView.swift in Sources */,
-				23273A952E2B8674004A52C6 /* BuildingIntelligenceViewModel.swift in Sources */,
-				23273A962E2B8674004A52C6 /* AdminDashboardViewModel.swift in Sources */,
-				23273A972E2B8674004A52C6 /* GlassTabBar.swift in Sources */,
-				23273A982E2B8674004A52C6 /* MaintenanceTaskView.swift in Sources */,
-				23273A9A2E2B8674004A52C6 /* AdminDashboardView.swift in Sources */,
-				23273A9B2E2B8674004A52C6 /* WorkerMetricsService.swift in Sources */,
-				23273A9C2E2B8674004A52C6 /* ComplianceDataDTO.swift in Sources */,
-				23273A9D2E2B8674004A52C6 /* TaskDetailViewModel.swift in Sources */,
-				23273A9E2E2B8674004A52C6 /* BuildingMetricsService.swift in Sources */,
-				23273A9F2E2B8674004A52C6 /* WorkerDashboardView.swift in Sources */,
-				23273AA02E2B8674004A52C6 /* RouteStatItem.swift in Sources */,
-				23273AA22E2B8674004A52C6 /* CLLocationCoordinate2DExtension.swift in Sources */,
-				23273AA42E2B8674004A52C6 /* BuildingMapDetailView.swift in Sources */,
-				23273AA52E2B8674004A52C6 /* NovaAPIService.swift in Sources */,
-				23273AA72E2B8674004A52C6 /* HapticManager.swift in Sources */,
-				23273AA82E2B8674004A52C6 /* MapRevealContainer.swift in Sources */,
-				23273AA92E2B8674004A52C6 /* SharedTypes.swift in Sources */,
-				23273AAA2E2B8674004A52C6 /* NovaAvatar.swift in Sources */,
-				23273AAC2E2B8674004A52C6 /* BuildingFeatureConfiguration.swift in Sources */,
-				23273AAD2E2B8674004A52C6 /* CurrentBuildingStatusCard.swift in Sources */,
-				23273AAE2E2B8674004A52C6 /* TodaysRoutineSummaryView.swift in Sources */,
-				23273AAF2E2B8674004A52C6 /* GlassNavigationBar.swift in Sources */,
-				23273AB02E2B8674004A52C6 /* EnhancedClockInGlassCard.swift in Sources */,
-				23273AB12E2B8674004A52C6 /* SecurityManager.swift in Sources */,
-				23273AB22E2B8674004A52C6 /* ClientDashboardView.swift in Sources */,
-				23273AB32E2B8674004A52C6 /* PortfolioOverviewView.swift in Sources */,
-				23273AB42E2B8674004A52C6 /* ClockInManager.swift in Sources */,
-				23273AB52E2B8674004A52C6 /* FrancoSphereDesign.swift in Sources */,
-				23EA71042E387B790010FA03 /* NovaIntelligenceEngine.swift in Sources */,
-				23273AB62E2B8674004A52C6 /* WeatherDashboardComponent.swift in Sources */,
-				23273AB82E2B8674004A52C6 /* ModelExtensions.swift in Sources */,
-				23273AB92E2B8674004A52C6 /* InitializationView.swift in Sources */,
-				23273ABB2E2B8674004A52C6 /* DatabaseSchemaVerifier.swift in Sources */,
-				23273ABD2E2B8674004A52C6 /* BuildingDetailView.swift in Sources */,
-				23273ABE2E2B8674004A52C6 /* PressableGlassCard.swift in Sources */,
-				23273ABF2E2B8674004A52C6 /* WeatherTasksSection.swift in Sources */,
-				23273AC02E2B8674004A52C6 /* WorkerRoutineViewModel.swift in Sources */,
-				23273AC22E2B8674004A52C6 /* DashboardSyncService.swift in Sources */,
-				23273AC32E2B8674004A52C6 /* DailyOpsReset.swift in Sources */,
-				23273AC52E2B8674004A52C6 /* TodayTasksViewModel.swift in Sources */,
-				23273AC72E2B8674004A52C6 /* UserExtensions.swift in Sources */,
-				23273AC82E2B8674004A52C6 /* WorkerMetricsDTO.swift in Sources */,
-				23273AC92E2B8674004A52C6 /* ModelColorsExtensions.swift in Sources */,
-				23273ACA2E2B8674004A52C6 /* WorkerAssignmentEngine.swift in Sources */,
-				23273ACB2E2B8674004A52C6 /* DSNYTaskGenerator.swift in Sources */,
-				23273ACD2E2B8674004A52C6 /* GlassButton.swift in Sources */,
-				23273ACE2E2B8674004A52C6 /* TaskCategoryGlassCard.swift in Sources */,
-				23273ACF2E2B8674004A52C6 /* WorkerEventOutbox.swift in Sources */,
-				23273AD02E2B8674004A52C6 /* ComplianceOverviewView.swift in Sources */,
-				23273AD12E2B8674004A52C6 /* MySitesCard.swift in Sources */,
-				23273AD22E2B8674004A52C6 /* DatabaseMigrations.swift in Sources */,
-				23273AD32E2B8674004A52C6 /* ImagePicker.swift in Sources */,
-				23273AD42E2B8674004A52C6 /* HeaderV3B.swift in Sources */,
-				23273AD52E2B8674004A52C6 /* WeatherViewModifier.swift in Sources */,
-				23273AD72E2B8674004A52C6 /* FilteredTaskResult.swift in Sources */,
+				23779FDF2E39885600F4A10F /* LoginView.swift in Sources */,
+				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
+				23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */,
+				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
+				23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */,
+				23779FE42E39885600F4A10F /* QuickBooksOAuthManager.swift in Sources */,
+				23779FE52E39885600F4A10F /* ModelColorsExtensions.swift in Sources */,
+				23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */,
+				23779FE72E39885600F4A10F /* ComplianceOverviewView.swift in Sources */,
+				23779FE82E39885600F4A10F /* BuildingDetailView.swift in Sources */,
+				23779FE92E39885600F4A10F /* PropertyCard.swift in Sources */,
+				2377A09B2E398AA800F4A10F /* BuildingDetailViewModel.swift in Sources */,
+				2377A09C2E398AA800F4A10F /* ClientDashboardViewModel.swift in Sources */,
+				2377A09D2E398AA800F4A10F /* WorkerRoutineViewModel.swift in Sources */,
+				2377A09E2E398AA800F4A10F /* AdminDashboardViewModel.swift in Sources */,
+				2377A09F2E398AA800F4A10F /* InitializationViewModel.swift in Sources */,
+				2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */,
+				2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */,
+				23779FEA2E39885600F4A10F /* TaskTimelineRow.swift in Sources */,
+				23779FEB2E39885600F4A10F /* BuildingService.swift in Sources */,
+				23779FEC2E39885600F4A10F /* WorkerMetricsService.swift in Sources */,
+				23779FED2E39885600F4A10F /* EnhancedClockInGlassCard.swift in Sources */,
+				23779FEE2E39885600F4A10F /* WeatherTasksSection.swift in Sources */,
+				23779FEF2E39885600F4A10F /* InitializationStatus.swift in Sources */,
+				23779FF02E39885600F4A10F /* WorkerAssignmentEngine.swift in Sources */,
+				23779FF12E39885600F4A10F /* DailyOpsReset.swift in Sources */,
+				23779FF22E39885600F4A10F /* SecurityManager.swift in Sources */,
+				23779FF32E39885600F4A10F /* CoreTypes.swift in Sources */,
+				23779FF42E39885600F4A10F /* DatabaseInitializer.swift in Sources */,
+				23779FF52E39885600F4A10F /* NovaInteractionView.swift in Sources */,
+				23779FF62E39885600F4A10F /* GRDBManager.swift in Sources */,
+				23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */,
+				23779FF82E39885600F4A10F /* PortfolioOverviewView.swift in Sources */,
+				23779FF92E39885600F4A10F /* BuildingFeatureConfiguration.swift in Sources */,
+				23779FFA2E39885600F4A10F /* ComplianceDataDTO.swift in Sources */,
+				23779FFB2E39885600F4A10F /* HeroStatusCard.swift in Sources */,
+				23779FFC2E39885600F4A10F /* StatCard.swift in Sources */,
+				23779FFD2E39885600F4A10F /* DashboardTaskDetailView.swift in Sources */,
+				23779FFE2E39885600F4A10F /* FrancoSphereDesign.swift in Sources */,
+				23779FFF2E39885600F4A10F /* BuildingTaskDetailView.swift in Sources */,
+				2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */,
+				2377A0012E39885600F4A10F /* QuickBooksPayrollExporter.swift in Sources */,
+				2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */,
+				2377A0032E39885600F4A10F /* NovaImageLoader.swift in Sources */,
+				2377A0042E39885600F4A10F /* ProfileView.swift in Sources */,
+				2377A0052E39885600F4A10F /* DSNYTaskGenerator.swift in Sources */,
+				2377A0072E39885600F4A10F /* RoutinePriority.swift in Sources */,
+				2377A0082E39885600F4A10F /* WorkerConstants.swift in Sources */,
+				2377A0092E39885600F4A10F /* ForgotPasswordView.swift in Sources */,
+				2377A00A2E39885600F4A10F /* SharedTypes.swift in Sources */,
+				2377A00B2E39885600F4A10F /* ClockInGlassModal.swift in Sources */,
+				2377A00C2E39885600F4A10F /* GlassNavigationBar.swift in Sources */,
+				2377A00D2E39885600F4A10F /* TelemetryService.swift in Sources */,
+				2377A00E2E39885600F4A10F /* UnifiedDataService.swift in Sources */,
+				2377A00F2E39885600F4A10F /* NovaAPIService.swift in Sources */,
+				2377A0102E39885600F4A10F /* BuildingPreviewPopover.swift in Sources */,
+				2377A0112E39885600F4A10F /* BuildingIntelligencePanel.swift in Sources */,
+				2377A0122E39885600F4A10F /* GlassDeckContainer.swift in Sources */,
+				2377A0132E39885600F4A10F /* TaskTimelineView.swift in Sources */,
+				2377A0142E39885600F4A10F /* BuildingStatsGlassCard.swift in Sources */,
+				2377A0152E39885600F4A10F /* NovaTypes.swift in Sources */,
+				2377A0162E39885600F4A10F /* TodaysProgressDetailView.swift in Sources */,
+				2377A0172E39885600F4A10F /* CLLocationCoordinate2DExtension.swift in Sources */,
+				2377A0182E39885600F4A10F /* WorkerFeedbackManager.swift in Sources */,
+				2377A0192E39885600F4A10F /* FrancoSphereModels.swift in Sources */,
+				2377A01A2E39885600F4A10F /* InitializationView.swift in Sources */,
+				2377A01B2E39885600F4A10F /* GlassTabBar.swift in Sources */,
+				2377A01C2E39885600F4A10F /* BuildingMapDetailView.swift in Sources */,
+				2377A01D2E39885600F4A10F /* TrackableScrollView.swift in Sources */,
+				2377A01E2E39885600F4A10F /* ClientDashboardView.swift in Sources */,
+				2377A01F2E39885600F4A10F /* QBConnectionStatus.swift in Sources */,
+				2377A0202E39885600F4A10F /* WeatherViewModifier.swift in Sources */,
+				2377A0212E39885600F4A10F /* WorkerManager.swift in Sources */,
+				2377A0222E39885600F4A10F /* BuildingSelectionView.swift in Sources */,
+				2377A0232E39885600F4A10F /* MapRevealContainer.swift in Sources */,
+				2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */,
+				2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */,
+				2377A0262E39885600F4A10F /* TaskService+OperationalFallback.swift in Sources */,
+				2377A0272E39885600F4A10F /* TestRealDataIntegration.swift in Sources */,
+				2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */,
+				2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */,
+				2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */,
+				2377A02B2E39885600F4A10F /* GlassCard.swift in Sources */,
+				2377A02C2E39885600F4A10F /* LocationManager.swift in Sources */,
+				2377A02D2E39885600F4A10F /* WorkersInlineList.swift in Sources */,
+				2377A02E2E39885600F4A10F /* GlassLoadingView.swift in Sources */,
+				2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */,
+				2377A0302E39885600F4A10F /* WeatherDataAdapter.swift in Sources */,
+				2377A0312E39885600F4A10F /* GlassModal.swift in Sources */,
+				2377A0322E39885600F4A10F /* FrancoSphereImports.swift in Sources */,
+				2377A0332E39885600F4A10F /* IntelligenceService.swift in Sources */,
+				2377A0342E39885600F4A10F /* WorkerAssignmentGlassCard.swift in Sources */,
+				2377A0352E39885600F4A10F /* TimeBasedTaskFilter.swift in Sources */,
+				2377A0362E39885600F4A10F /* ComplianceIssue.swift in Sources */,
+				2377A0372E39885600F4A10F /* BuildingMetricsService.swift in Sources */,
+				2377A0382E39885600F4A10F /* ClockInManager.swift in Sources */,
+				2377A0392E39885600F4A10F /* TimeStatus.swift in Sources */,
+				2377A03A2E39885600F4A10F /* ImportHelper.swift in Sources */,
+				2377A03B2E39885600F4A10F /* V012.swift in Sources */,
+				2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */,
+				2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */,
+				2377A03E2E39885600F4A10F /* ImagePicker.swift in Sources */,
+				2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */,
+				2377A0402E39885600F4A10F /* AuthManager.swift in Sources */,
+				2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */,
+				2377A0422E39885600F4A10F /* TypeMigrationService.swift in Sources */,
+				2377A0432E39885600F4A10F /* TodaysRoutineSummaryView.swift in Sources */,
+				2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */,
+				2377A0452E39885600F4A10F /* ContentView.swift in Sources */,
+				2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */,
+				2377A0472E39885600F4A10F /* GlassButtonModifier.swift in Sources */,
+				2377A0482E39885600F4A10F /* FrancoSphereColors.swift in Sources */,
+				2377A0492E39885600F4A10F /* NovaAvatar.swift in Sources */,
+				2377A04A2E39885600F4A10F /* AssignedBuildingsView.swift in Sources */,
+				2377A04B2E39885600F4A10F /* Building.swift in Sources */,
+				2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */,
+				2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */,
+				2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */,
+				2377A04F2E39885600F4A10F /* TimelineProgressBar.swift in Sources */,
+				2377A0502E39885600F4A10F /* TaskManager.swift in Sources */,
+				2377A0512E39885600F4A10F /* ModelExtensions.swift in Sources */,
+				2377A0522E39885600F4A10F /* DashboardSyncService.swift in Sources */,
+				2377A0532E39885600F4A10F /* NovaFeatureManager.swift in Sources */,
+				2377A0542E39885600F4A10F /* OperationalDataManager.swift in Sources */,
+				2377A0552E39885600F4A10F /* BuildingsView.swift in Sources */,
+				2377A0562E39885600F4A10F /* PressableGlassCard.swift in Sources */,
+				2377A0572E39885600F4A10F /* IntelligencePreviewPanel.swift in Sources */,
+				2377A0582E39885600F4A10F /* AssetImageDebugger.swift in Sources */,
+				2377A0592E39885600F4A10F /* AdaptiveGlassModifier.swift in Sources */,
+				2377A05A2E39885600F4A10F /* WorkerActionType.swift in Sources */,
+				2377A05B2E39885600F4A10F /* WorkerMetricsDTO.swift in Sources */,
+				2377A05C2E39885600F4A10F /* QuickActionMenu.swift in Sources */,
+				2377A05D2E39885600F4A10F /* MyAssignedBuildingsSection.swift in Sources */,
+				2377A05E2E39885600F4A10F /* WorkerService.swift in Sources */,
+				2377A05F2E39885600F4A10F /* DatabaseSchemaVerifier.swift in Sources */,
+				2377A0602E39885600F4A10F /* TodaysTasksGlassCard.swift in Sources */,
+				2377A0612E39885600F4A10F /* VerificationRecord.swift in Sources */,
+				2377A0622E39885600F4A10F /* SyncStatusComponents.swift in Sources */,
+				2377A0632E39885600F4A10F /* ProfileBadge.swift in Sources */,
+				2377A0642E39885600F4A10F /* DataSynchronizationService.swift in Sources */,
+				2377A0652E39885600F4A10F /* TaskService.swift in Sources */,
+				2377A0662E39885600F4A10F /* TaskRequestView.swift in Sources */,
+				2377A0672E39885600F4A10F /* BuildingHeaderGlassOverlay.swift in Sources */,
+				2377A0682E39885600F4A10F /* SchemaMigrationPatch.swift in Sources */,
+				2377A0692E39885600F4A10F /* BuildingIntelligenceDTO.swift in Sources */,
+				2377A06A2E39885600F4A10F /* CurrentBuildingStatusCard.swift in Sources */,
+				2377A06B2E39885600F4A10F /* TaskDisplayHelpers.swift in Sources */,
+				2377A06C2E39885600F4A10F /* WeatherDashboardComponent.swift in Sources */,
+				2377A06D2E39885600F4A10F /* InventoryView.swift in Sources */,
+				2377A06E2E39885600F4A10F /* SignUpView.swift in Sources */,
+				2377A06F2E39885600F4A10F /* FilteredTaskResult.swift in Sources */,
+				2377A0702E39885600F4A10F /* WorkerEventOutbox.swift in Sources */,
+				2377A0712E39885600F4A10F /* NotificationManager.swift in Sources */,
+				2377A0722E39885600F4A10F /* GlassStatusBadge.swift in Sources */,
+				2377A0732E39885600F4A10F /* NovaIntelligenceEngine.swift in Sources */,
+				2377A0742E39885600F4A10F /* HapticManager.swift in Sources */,
+				2377A0752E39885600F4A10F /* MaintenanceTaskView.swift in Sources */,
+				2377A0762E39885600F4A10F /* MapInteractionHint.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1421,6 +1542,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X82DB5QT3S;
@@ -1430,6 +1552,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.fmg.FrancoSphereTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FrancoSphere.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FrancoSphere";
@@ -1440,6 +1563,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X82DB5QT3S;

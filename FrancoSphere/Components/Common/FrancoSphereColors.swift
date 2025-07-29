@@ -1,4 +1,4 @@
-// FILE: Shared Components/FrancoSphereColors.swift
+// FILE: Common/FrancoSphereColors.swift
 //
 //  FrancoSphereColors.swift
 //  FrancoSphere

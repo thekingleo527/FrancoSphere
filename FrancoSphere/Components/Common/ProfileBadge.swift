@@ -1,4 +1,4 @@
-// FILE: Components/Shared Components/ProfileBadge.swift
+// FILE: Components/Common/ProfileBadge.swift
 //
 //  ProfileBadge.swift
 //  FrancoSphere

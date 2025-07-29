@@ -1,2 +1,0 @@
-./Managers/DatabaseMigrationFix.swift
-./Managers/NewAuthManager.swift

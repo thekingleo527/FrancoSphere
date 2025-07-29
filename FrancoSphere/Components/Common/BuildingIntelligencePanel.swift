@@ -901,7 +901,7 @@ struct IntelligenceLoadingView: View {
 
 // MARK: - Fixed BuildingIntelligenceViewModel Integration
 // Note: This assumes the BuildingIntelligenceViewModel from earlier artifact exists
-// If not, create it in Views/ViewModels/BuildingIntelligenceViewModel.swift
+// If not, create it in ViewModels/BuildingIntelligenceViewModel.swift
 
 // MARK: - Preview
 
