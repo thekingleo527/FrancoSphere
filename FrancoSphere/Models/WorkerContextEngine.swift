@@ -2,11 +2,13 @@
 //  WorkerContextEngine.swift
 //  FrancoSphere v6.0 - CONSOLIDATED VERSION
 //
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Removed unnecessary nil coalescing operators
+//  ✅ FIXED: DashboardUpdate properly namespaced
 //  ✅ CONSOLIDATED: All WorkerContextEngine functionality in one place
 //  ✅ REMOVED: Duplicate code and redundant extensions
 //  ✅ ENHANCED: Combined best features from all versions
 //  ✅ CLEAN: Single source of truth for worker context
-//  ✅ FIXED: All 7 compilation errors resolved
 //
 
 import Foundation
@@ -26,13 +28,13 @@ public final class WorkerContextEngine: ObservableObject {
     public static let shared = WorkerContextEngine()
     
     // MARK: - Published Properties for SwiftUI
-    @Published public var currentWorker: WorkerProfile?
-    @Published public var currentBuilding: NamedCoordinate?
-    @Published public var assignedBuildings: [NamedCoordinate] = []
-    @Published public var portfolioBuildings: [NamedCoordinate] = []
-    @Published public var todaysTasks: [ContextualTask] = []
+    @Published public var currentWorker: CoreTypes.WorkerProfile?
+    @Published public var currentBuilding: CoreTypes.NamedCoordinate?
+    @Published public var assignedBuildings: [CoreTypes.NamedCoordinate] = []
+    @Published public var portfolioBuildings: [CoreTypes.NamedCoordinate] = []
+    @Published public var todaysTasks: [CoreTypes.ContextualTask] = []
     @Published public var taskProgress: CoreTypes.TaskProgress?
-    @Published public var clockInStatus: (isClockedIn: Bool, building: NamedCoordinate?) = (false, nil)
+    @Published public var clockInStatus: (isClockedIn: Bool, building: CoreTypes.NamedCoordinate?) = (false, nil)
     @Published public var isLoading = false
     @Published public var lastError: Error?
     @Published public var hasPendingScenario = false
@@ -72,7 +74,7 @@ public final class WorkerContextEngine: ObservableObject {
             } else {
                 // Fallback to operational data
                 let workerName = WorkerConstants.getWorkerName(id: workerId)
-                self.currentWorker = WorkerProfile(
+                self.currentWorker = CoreTypes.WorkerProfile(
                     id: workerId,
                     name: workerName,
                     email: "\(workerId)@francosphere.com",
@@ -90,7 +92,7 @@ public final class WorkerContextEngine: ObservableObject {
             self.portfolioBuildings = try await buildingService.getAllBuildings()
             
             // 3. Load assigned buildings from operational data
-            var assignedBuildingsList: [NamedCoordinate] = []
+            var assignedBuildingsList: [CoreTypes.NamedCoordinate] = []
             let workerName = currentWorker?.name ?? WorkerConstants.getWorkerName(id: workerId)
             let operationalTasks = operationalData.getRealWorldTasks(for: workerName)
             let uniqueBuildingNames = Set(operationalTasks.map { $0.building })
@@ -151,15 +153,15 @@ public final class WorkerContextEngine: ObservableObject {
     private func generateContextualTasks(
         for workerId: String,
         workerName: String,
-        assignedBuildings: [NamedCoordinate],
+        assignedBuildings: [CoreTypes.NamedCoordinate],
         realWorldAssignments: [OperationalDataTaskAssignment]
-    ) -> [ContextualTask] {
-        var tasks: [ContextualTask] = []
+    ) -> [CoreTypes.ContextualTask] {
+        var tasks: [CoreTypes.ContextualTask] = []
         
         for (index, operational) in realWorldAssignments.enumerated() {
             let building = findBuildingForTask(operational.building, in: assignedBuildings)
             
-            let task = ContextualTask(
+            let task = CoreTypes.ContextualTask(
                 id: "op_task_\(workerId)_\(index)",
                 title: operational.taskName,
                 description: "Operational: \(operational.taskName) at \(operational.building)",
@@ -189,10 +191,11 @@ public final class WorkerContextEngine: ObservableObject {
         let clockStatus = await clockInManager.getClockInStatus(for: workerId)
         
         if let session = clockStatus.session {
+            // Fixed: Removed unnecessary nil coalescing operators
             let building = findBuildingById(session.buildingId) ??
-                NamedCoordinate(
-                    id: session.buildingId ?? "unknown",
-                    name: session.buildingName ?? "Unknown Building",
+                CoreTypes.NamedCoordinate(
+                    id: session.buildingId,  // Already non-optional
+                    name: session.buildingName,  // Already non-optional
                     address: "",  // ClockInSession doesn't have address
                     latitude: session.location?.latitude ?? 0,
                     longitude: session.location?.longitude ?? 0
@@ -206,7 +209,7 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     // MARK: - Building Helpers
-    private func findBuildingByName(_ name: String, in buildings: [NamedCoordinate]) -> NamedCoordinate? {
+    private func findBuildingByName(_ name: String, in buildings: [CoreTypes.NamedCoordinate]) -> CoreTypes.NamedCoordinate? {
         let lowercaseName = name.lowercased()
         
         // First try exact match
@@ -222,13 +225,13 @@ public final class WorkerContextEngine: ObservableObject {
         }
     }
     
-    private func findBuildingById(_ id: String?) -> NamedCoordinate? {
+    private func findBuildingById(_ id: String?) -> CoreTypes.NamedCoordinate? {
         guard let id = id else { return nil }
         return portfolioBuildings.first { $0.id == id } ??
                assignedBuildings.first { $0.id == id }
     }
     
-    private func findBuildingForTask(_ buildingName: String, in buildings: [NamedCoordinate]) -> NamedCoordinate? {
+    private func findBuildingForTask(_ buildingName: String, in buildings: [CoreTypes.NamedCoordinate]) -> CoreTypes.NamedCoordinate? {
         return findBuildingByName(buildingName, in: buildings) ??
                findBuildingByName(buildingName, in: portfolioBuildings)
     }
@@ -271,7 +274,7 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     /// Get tasks for a specific building
-    public func getTasksForBuilding(_ buildingId: String) -> [ContextualTask] {
+    public func getTasksForBuilding(_ buildingId: String) -> [CoreTypes.ContextualTask] {
         return todaysTasks.filter { $0.buildingId == buildingId }
     }
     
@@ -299,7 +302,7 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     /// Get buildings that need attention
-    public func getBuildingsNeedingAttention() -> [NamedCoordinate] {
+    public func getBuildingsNeedingAttention() -> [CoreTypes.NamedCoordinate] {
         let buildingIds = todaysTasks
             .filter { !$0.isCompleted && ($0.urgency == .high || $0.urgency == .critical) }
             .compactMap { $0.buildingId }
@@ -318,11 +321,11 @@ public final class WorkerContextEngine: ObservableObject {
     }
     
     // MARK: - Access Methods (Legacy Support)
-    public func getCurrentWorker() -> WorkerProfile? { return currentWorker }
-    public func getCurrentBuilding() -> NamedCoordinate? { return currentBuilding }
-    public func getAssignedBuildings() -> [NamedCoordinate] { return assignedBuildings }
-    public func getPortfolioBuildings() -> [NamedCoordinate] { return portfolioBuildings }
-    public func getTodaysTasks() -> [ContextualTask] { return todaysTasks }
+    public func getCurrentWorker() -> CoreTypes.WorkerProfile? { return currentWorker }
+    public func getCurrentBuilding() -> CoreTypes.NamedCoordinate? { return currentBuilding }
+    public func getAssignedBuildings() -> [CoreTypes.NamedCoordinate] { return assignedBuildings }
+    public func getPortfolioBuildings() -> [CoreTypes.NamedCoordinate] { return portfolioBuildings }
+    public func getTodaysTasks() -> [CoreTypes.ContextualTask] { return todaysTasks }
     public func getTaskProgress() -> CoreTypes.TaskProgress? { return taskProgress }
     
     // MARK: - Private Update Methods
@@ -344,14 +347,15 @@ public final class WorkerContextEngine: ObservableObject {
         // Notify DashboardSyncService
         if let workerId = currentWorker?.id,
            let task = todaysTasks.first(where: { $0.id == taskId }) {
-            let update = DashboardUpdate(
-                source: .worker,
-                type: isCompleted ? .taskCompleted : .taskStarted,
+            // Fixed: Properly namespaced DashboardUpdate
+            let update = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: isCompleted ? CoreTypes.DashboardUpdate.UpdateType.taskCompleted : CoreTypes.DashboardUpdate.UpdateType.taskStarted,
                 buildingId: task.buildingId ?? "",
                 workerId: workerId,
                 data: ["taskId": taskId]
             )
-            await DashboardSyncService.shared.broadcastWorkerUpdate(update)
+            DashboardSyncService.shared.broadcastWorkerUpdate(update)
         }
     }
     
@@ -395,7 +399,7 @@ public final class WorkerContextEngine: ObservableObject {
     
     // MARK: - Mapping Helpers
     
-    private func mapOperationalCategory(_ category: String) -> TaskCategory? {
+    private func mapOperationalCategory(_ category: String) -> CoreTypes.TaskCategory? {
         switch category.lowercased() {
         case "cleaning": return .cleaning
         case "maintenance": return .maintenance
@@ -410,7 +414,7 @@ public final class WorkerContextEngine: ObservableObject {
         }
     }
     
-    private func mapOperationalUrgency(_ skillLevel: String) -> TaskUrgency? {
+    private func mapOperationalUrgency(_ skillLevel: String) -> CoreTypes.TaskUrgency? {
         switch skillLevel.lowercased() {
         case "basic": return .low
         case "intermediate": return .medium
@@ -441,7 +445,7 @@ public enum WorkerContextError: Error, LocalizedError {
 
 // MARK: - Helper Extensions
 
-extension TaskUrgency {
+extension CoreTypes.TaskUrgency {
     var numericValue: Int {
         switch self {
         case .low: return 1
@@ -475,7 +479,9 @@ public typealias WorkerContextEngineAdapter = WorkerContextEngine
  ✅ Fixed TaskService.getTasksForWorker - removed date parameter
  ✅ Fixed ContextualTask initializer - removed extra parameters
  ✅ Fixed ClockInManager method - using getClockInStatus instead of getCurrentSession
- ✅ Fixed DashboardUpdate type - removed CoreTypes prefix
+ ✅ Fixed DashboardUpdate type - properly namespaced as CoreTypes.DashboardUpdate
  ✅ Fixed notification names - made them unique to avoid conflicts
  ✅ Fixed ClockInSession - removed non-existent address property
+ ✅ Fixed nil coalescing operators - removed unnecessary usage with non-optional values
+ ✅ Added CoreTypes namespace to all type references for consistency
  */
