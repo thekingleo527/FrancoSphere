@@ -2,8 +2,8 @@
 //  NovaAIContextManager.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: DashboardUpdate properly namespaced as CoreTypes.DashboardUpdate
 //  ✅ UPDATED: Aligned with CoreTypes v6.0
-//  ✅ FIXED: Using DashboardUpdate from DashboardSyncService
 //  ✅ FIXED: Using correct IntelligenceService methods
 //  ✅ ENHANCED: Better role-based AI routing
 //  ✅ INTEGRATED: With IntelligenceService and BuildingMetricsService
@@ -41,7 +41,7 @@ public class NovaAIContextManager: ObservableObject {
     // MARK: - Setup
     
     private func setupSubscriptions() {
-        // Subscribe to dashboard updates (using DashboardSyncService's DashboardUpdate type)
+        // Subscribe to dashboard updates
         dashboardSyncService.crossDashboardUpdates
             .sink { [weak self] update in
                 self?.handleDashboardUpdate(update)
@@ -671,11 +671,11 @@ public class NovaAIContextManager: ObservableObject {
     
     // MARK: - Helper Methods
     
-    private func getCurrentActiveTask() -> ContextualTask? {
+    private func getCurrentActiveTask() -> CoreTypes.ContextualTask? {
         return contextAdapter.todaysTasks.first { !$0.isCompleted }
     }
     
-    private func getUrgentTasks() -> [ContextualTask] {
+    private func getUrgentTasks() -> [CoreTypes.ContextualTask] {
         return contextAdapter.todaysTasks.filter {
             $0.urgency == .urgent || $0.urgency == .critical || $0.urgency == .emergency
         }
@@ -697,9 +697,9 @@ public class NovaAIContextManager: ObservableObject {
         return nil
     }
     
-    // MARK: - Dashboard Update Handling (Using DashboardSyncService's DashboardUpdate)
+    // MARK: - Dashboard Update Handling
     
-    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         // React to real-time dashboard updates
         switch update.type {
         case .taskCompleted, .taskStarted:
@@ -814,12 +814,12 @@ public class NovaAIContextManager: ObservableObject {
 // MARK: - Supporting Types (Local to AI Context)
 
 public struct AIContext {
-    let userRole: UserRole
-    let currentBuilding: NamedCoordinate?
-    let activeTask: ContextualTask?
-    let assignedBuildings: [NamedCoordinate]
-    let portfolioBuildings: [NamedCoordinate]
-    let urgentTasks: [ContextualTask]
+    let userRole: CoreTypes.UserRole
+    let currentBuilding: CoreTypes.NamedCoordinate?
+    let activeTask: CoreTypes.ContextualTask?
+    let assignedBuildings: [CoreTypes.NamedCoordinate]
+    let portfolioBuildings: [CoreTypes.NamedCoordinate]
+    let urgentTasks: [CoreTypes.ContextualTask]
     let timeOfDay: TimeOfDay
     let weatherConditions: WeatherConditions?
 }
