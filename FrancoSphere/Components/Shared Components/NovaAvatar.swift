@@ -3,24 +3,23 @@ import SwiftUI
 // All Nova types (NovaContext, NovaPrompt, etc.) come from NovaTypes.swift
 
 //
-//  NovaAvatar.swift - PHASE-2 FIXED VERSION
+//  NovaAvatar.swift - UNIFIED VERSION
 //  FrancoSphere
 //
-//  ✅ Fixed to load AIAssistant image from Assets
-//  ✅ Added pulsating ring when isBusy
-//  ✅ Circular image loading with fallback
+//  ✅ Uses Size enum pattern
+//  ✅ Integrates AIAssistantImageLoader.circularAIAssistantView
+//  ✅ Maintains sophisticated animations
+//  ✅ Circular image with pulsating effects
 //
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 // MARK: - Nova Avatar Component
 struct NovaAvatar: View {
     // Configuration
-    let size: CGFloat
-    let showStatus: Bool
-    let hasUrgentInsight: Bool
+    let size: Size
+    let isActive: Bool
+    let hasUrgentInsights: Bool
     let isBusy: Bool
     let onTap: () -> Void
     let onLongPress: () -> Void
@@ -33,16 +32,16 @@ struct NovaAvatar: View {
     @State private var busyPulse = false
     
     init(
-        size: CGFloat = 60,
-        showStatus: Bool = true,
-        hasUrgentInsight: Bool = false,
+        size: Size = .large,
+        isActive: Bool = false,
+        hasUrgentInsights: Bool = false,
         isBusy: Bool = false,
         onTap: @escaping () -> Void = {},
         onLongPress: @escaping () -> Void = {}
     ) {
         self.size = size
-        self.showStatus = showStatus
-        self.hasUrgentInsight = hasUrgentInsight
+        self.isActive = isActive
+        self.hasUrgentInsights = hasUrgentInsights
         self.isBusy = isBusy
         self.onTap = onTap
         self.onLongPress = onLongPress
@@ -50,19 +49,22 @@ struct NovaAvatar: View {
     
     var body: some View {
         ZStack {
-            // ✅ FIXED: Pulsating ring when busy
+            // Pulsating ring when busy
             if isBusy {
                 busyPulseRing
             }
             
-            // Main avatar
+            // Main avatar using AIAssistantImageLoader
             avatarView
-                .frame(width: size, height: size)
-                .clipShape(Circle())
                 .overlay(glowEffect)
                 .overlay(urgentPulseRing)
                 .scaleEffect(breathe ? 1.03 : 0.97)
-                .shadow(color: glowColor.opacity(glowOpacity), radius: 12, x: 0, y: 4)
+                .shadow(
+                    color: glowColor.opacity(glowOpacity),
+                    radius: size.shadowRadius,
+                    x: 0,
+                    y: size.shadowOffset
+                )
                 .onAppear {
                     startBreathingAnimation()
                     if isBusy {
@@ -73,9 +75,12 @@ struct NovaAvatar: View {
                 .onLongPressGesture { onLongPress() }
             
             // Status badge
-            if showStatus {
+            if isActive || hasUrgentInsights || isBusy {
                 statusBadge
-                    .offset(x: size * 0.35, y: -size * 0.35)
+                    .offset(
+                        x: size.dimension * 0.35,
+                        y: -size.dimension * 0.35
+                    )
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: breathe)
@@ -88,40 +93,37 @@ struct NovaAvatar: View {
         }
     }
     
-    // MARK: - ✅ FIXED: Avatar Image (loads AIAssistant from Assets)
+    // MARK: - Avatar View using AIAssistantImageLoader
     private var avatarView: some View {
-        ZStack {
-            // Background gradient (fallback)
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.blue.opacity(0.8),
-                            Color.purple.opacity(0.6)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            
-            // ✅ FIXED: Load AIAssistant image from Assets
-            if let aiAssistantImage = UIImage(named: "AIAssistant") {
-                Image(uiImage: aiAssistantImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: size, height: size)
-                    .clipShape(Circle())
-            } else {
-                // Fallback to system icon if image not found
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: size * 0.5, weight: .medium))
-                    .foregroundColor(.white)
-                    .rotationEffect(.degrees(rotationAngle))
+        AIAssistantImageLoader.circularAIAssistantView(
+            diameter: size.dimension,
+            borderColor: borderColor,
+            borderWidth: borderWidth
+        )
+        .overlay(
+            // Add rotation effect when busy
+            Group {
+                if isBusy {
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.purple.opacity(0.6),
+                                    Color.blue.opacity(0.4),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2
+                        )
+                        .rotationEffect(.degrees(rotationAngle))
+                }
             }
-        }
+        )
     }
     
-    // MARK: - ✅ NEW: Busy Pulse Ring
+    // MARK: - Busy Pulse Ring
     private var busyPulseRing: some View {
         Circle()
             .stroke(
@@ -135,11 +137,15 @@ struct NovaAvatar: View {
                 ),
                 lineWidth: 3
             )
-            .frame(width: size + 16, height: size + 16)
+            .frame(
+                width: size.dimension + 16,
+                height: size.dimension + 16
+            )
             .scaleEffect(busyPulse ? 1.2 : 1.0)
             .opacity(busyPulse ? 0.0 : 0.8)
             .animation(
-                Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                Animation.easeInOut(duration: 1.0)
+                    .repeatForever(autoreverses: false),
                 value: busyPulse
             )
     }
@@ -166,14 +172,18 @@ struct NovaAvatar: View {
     // MARK: - Urgent Pulse Ring
     private var urgentPulseRing: some View {
         Group {
-            if hasUrgentInsight {
+            if hasUrgentInsights {
                 Circle()
                     .stroke(Color.orange, lineWidth: 2)
-                    .frame(width: size + 8, height: size + 8)
+                    .frame(
+                        width: size.dimension + 8,
+                        height: size.dimension + 8
+                    )
                     .scaleEffect(pulseScale)
                     .opacity(2.0 - pulseScale)
                     .animation(
-                        Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                        Animation.easeInOut(duration: 1.0)
+                            .repeatForever(autoreverses: false),
                         value: pulseScale
                     )
                     .onAppear {
@@ -188,40 +198,58 @@ struct NovaAvatar: View {
         ZStack {
             Circle()
                 .fill(statusBadgeColor)
-                .frame(width: size * 0.25, height: size * 0.25)
+                .frame(
+                    width: size.badgeSize,
+                    height: size.badgeSize
+                )
                 .overlay(
                     Circle()
                         .stroke(Color.white, lineWidth: 1)
                 )
             
-            if isBusy {
-                Image(systemName: "brain")
-                    .font(.system(size: size * 0.12, weight: .bold))
-                    .foregroundColor(.white)
-            } else if hasUrgentInsight {
-                Image(systemName: "exclamationmark")
-                    .font(.system(size: size * 0.12, weight: .bold))
-                    .foregroundColor(.white)
-            } else {
-                Image(systemName: "checkmark")
-                    .font(.system(size: size * 0.12, weight: .bold))
-                    .foregroundColor(.white)
-            }
+            statusIcon
+                .font(.system(size: size.badgeIconSize, weight: .bold))
+                .foregroundColor(.white)
         }
     }
     
     // MARK: - Computed Properties
     
+    private var borderColor: Color {
+        if hasUrgentInsights { return .orange }
+        if isBusy { return .purple }
+        if isActive { return .green }
+        return .purple
+    }
+    
+    private var borderWidth: CGFloat {
+        isActive || hasUrgentInsights || isBusy ? 2 : 1
+    }
+    
     private var glowColor: Color {
         if isBusy { return .purple }
-        if hasUrgentInsight { return .orange }
+        if hasUrgentInsights { return .orange }
+        if isActive { return .green }
         return .blue
     }
     
     private var statusBadgeColor: Color {
         if isBusy { return .purple }
-        if hasUrgentInsight { return .orange }
-        return .green
+        if hasUrgentInsights { return .orange }
+        if isActive { return .green }
+        return .blue
+    }
+    
+    private var statusIcon: Image {
+        if isBusy {
+            return Image(systemName: "brain")
+        } else if hasUrgentInsights {
+            return Image(systemName: "exclamationmark")
+        } else if isActive {
+            return Image(systemName: "waveform")
+        } else {
+            return Image(systemName: "checkmark")
+        }
     }
     
     // MARK: - Animation Methods
@@ -229,14 +257,14 @@ struct NovaAvatar: View {
     private func startBreathingAnimation() {
         withAnimation(
             Animation.easeInOut(duration: 2.0)
-            .repeatForever(autoreverses: true)
+                .repeatForever(autoreverses: true)
         ) {
             breathe = true
         }
         
         withAnimation(
             Animation.easeInOut(duration: 3.0)
-            .repeatForever(autoreverses: true)
+                .repeatForever(autoreverses: true)
         ) {
             glowOpacity = 0.8
         }
@@ -245,14 +273,14 @@ struct NovaAvatar: View {
     private func startBusyAnimation() {
         withAnimation(
             Animation.easeInOut(duration: 1.0)
-            .repeatForever(autoreverses: false)
+                .repeatForever(autoreverses: false)
         ) {
             busyPulse = true
         }
         
         withAnimation(
             Animation.linear(duration: 4.0)
-            .repeatForever(autoreverses: false)
+                .repeatForever(autoreverses: false)
         ) {
             rotationAngle = 360
         }
@@ -264,48 +292,44 @@ struct NovaAvatar: View {
     }
 }
 
-// MARK: - Animation Helper Views
-
-struct PulseRing: View {
-    let color: Color
-    let size: CGFloat
-    let lineWidth: CGFloat
-    let animationDuration: Double
-    let maxScale: CGFloat
-    let opacity: Double
-    
-    @State private var isAnimating = false
-    
-    init(
-        color: Color,
-        size: CGFloat,
-        lineWidth: CGFloat = 2,
-        animationDuration: Double = 1.0,
-        maxScale: CGFloat = 1.3,
-        opacity: Double = 0.6
-    ) {
-        self.color = color
-        self.size = size
-        self.lineWidth = lineWidth
-        self.animationDuration = animationDuration
-        self.maxScale = maxScale
-        self.opacity = opacity
-    }
-    
-    var body: some View {
-        Circle()
-            .stroke(color, lineWidth: lineWidth)
-            .frame(width: size, height: size)
-            .scaleEffect(isAnimating ? maxScale : 1.0)
-            .opacity(isAnimating ? 0 : opacity)
-            .onAppear {
-                withAnimation(
-                    Animation.easeOut(duration: animationDuration)
-                    .repeatForever(autoreverses: false)
-                ) {
-                    isAnimating = true
-                }
+// MARK: - Size Enum
+extension NovaAvatar {
+    enum Size {
+        case small   // 40x40
+        case medium  // 50x50
+        case large   // 60x60
+        
+        var dimension: CGFloat {
+            switch self {
+            case .small: return 40
+            case .medium: return 50
+            case .large: return 60
             }
+        }
+        
+        var badgeSize: CGFloat {
+            dimension * 0.25
+        }
+        
+        var badgeIconSize: CGFloat {
+            dimension * 0.12
+        }
+        
+        var shadowRadius: CGFloat {
+            switch self {
+            case .small: return 8
+            case .medium: return 10
+            case .large: return 12
+            }
+        }
+        
+        var shadowOffset: CGFloat {
+            switch self {
+            case .small: return 2
+            case .medium: return 3
+            case .large: return 4
+            }
+        }
     }
 }
 
@@ -316,40 +340,100 @@ struct NovaAvatar_Previews: PreviewProvider {
             Color.black.ignoresSafeArea()
             
             VStack(spacing: 40) {
-                // Regular state
-                NovaAvatar(
-                    size: 60,
-                    showStatus: true,
-                    hasUrgentInsight: false,
-                    isBusy: false,
-                    onTap: { print("Nova tapped") },
-                    onLongPress: { print("Nova long pressed") }
-                )
-                
-                // With urgent insight
-                NovaAvatar(
-                    size: 60,
-                    hasUrgentInsight: true,
-                    onTap: { print("Urgent Nova tapped") }
-                )
-                
-                // Busy state
-                NovaAvatar(
-                    size: 60,
-                    isBusy: true,
-                    onTap: { print("Busy Nova tapped") }
-                )
-                
-                // Different sizes
+                // Size variations
                 HStack(spacing: 30) {
-                    NovaAvatar(size: 44)
-                    NovaAvatar(size: 80)
-                    NovaAvatar(size: 100, isBusy: true)
+                    VStack {
+                        NovaAvatar(size: .small)
+                        Text("Small")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
+                    VStack {
+                        NovaAvatar(size: .medium)
+                        Text("Medium")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
+                    VStack {
+                        NovaAvatar(size: .large)
+                        Text("Large")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+                
+                Divider()
+                    .background(Color.white.opacity(0.2))
+                
+                // State variations
+                VStack(spacing: 20) {
+                    HStack(spacing: 30) {
+                        VStack {
+                            NovaAvatar(
+                                size: .large,
+                                isActive: true,
+                                onTap: { print("Active Nova tapped") }
+                            )
+                            Text("Active")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        
+                        VStack {
+                            NovaAvatar(
+                                size: .large,
+                                hasUrgentInsights: true,
+                                onTap: { print("Urgent Nova tapped") }
+                            )
+                            Text("Urgent")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        
+                        VStack {
+                            NovaAvatar(
+                                size: .large,
+                                isBusy: true,
+                                onTap: { print("Busy Nova tapped") }
+                            )
+                            Text("Busy")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+                    
+                    HStack(spacing: 30) {
+                        VStack {
+                            NovaAvatar(
+                                size: .large,
+                                isActive: true,
+                                hasUrgentInsights: true,
+                                onTap: { print("Active + Urgent Nova tapped") }
+                            )
+                            Text("Active + Urgent")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        
+                        VStack {
+                            NovaAvatar(
+                                size: .large,
+                                isBusy: true,
+                                hasUrgentInsights: true,
+                                onTap: { print("Busy + Urgent Nova tapped") }
+                            )
+                            Text("Busy + Urgent")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
                 }
                 
                 Text("Tap any Nova avatar to test interactions")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(.white.opacity(0.5))
             }
         }
         .preferredColorScheme(.dark)

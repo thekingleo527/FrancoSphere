@@ -2,116 +2,273 @@
 //  UnifiedDataInitializer.swift
 //  FrancoSphere v6.0
 //
-//  ✅ COMPLETE: Single source of truth for app initialization
-//  ✅ GRDB: Integrates with OperationalDataManager
-//  ✅ REAL-TIME: Automatic database seeding on first launch
+//  ✅ UPDATED: Thin wrapper around DatabaseStartupCoordinator
+//  ✅ UI-FOCUSED: Provides progress tracking for SwiftUI
+//  ✅ SIMPLIFIED: Delegates all database work to coordinator
 //
 
 import Foundation
 import SwiftUI
 
 @MainActor
-class UnifiedDataInitializer: ObservableObject {
-    static let shared = UnifiedDataInitializer()
+public class UnifiedDataInitializer: ObservableObject {
+    public static let shared = UnifiedDataInitializer()
     
-    @Published var isInitialized = false
-    @Published var initializationProgress: Double = 0.0
-    @Published var currentStep = "Preparing..."
-    @Published var error: Error?
+    // UI State
+    @Published public var isInitialized = false
+    @Published public var initializationProgress: Double = 0.0
+    @Published public var currentStep = "Preparing..."
+    @Published public var error: Error?
     
-    private let hasInitializedKey = "FrancoSphere_HasInitialized_v6"
+    // Coordinator
+    private let databaseCoordinator = DatabaseStartupCoordinator.shared
     
     private init() {}
     
-    func initializeIfNeeded() async throws {
-        guard !isInitialized else { return }
-        
-        // Check if already initialized
-        if UserDefaults.standard.bool(forKey: hasInitializedKey) {
-            isInitialized = true
+    // MARK: - Public Methods
+    
+    /// Initialize the app if needed (called from App launch)
+    public func initializeIfNeeded() async throws {
+        guard !isInitialized else {
+            print("✅ App already initialized")
             return
         }
         
         error = nil
         
         do {
-            // Step 1: Database setup (20%)
-            currentStep = "Setting up database..."
-            initializationProgress = 0.2
+            // Step 1: Database Initialization (0-60%)
+            currentStep = "Initializing database..."
+            initializationProgress = 0.1
             
-            try await SeedDatabase.runMigrations()
+            // Let DatabaseStartupCoordinator handle ALL database setup
+            try await databaseCoordinator.initializeDatabase()
             
-            // Step 2: Import operational data (60%)
-            currentStep = "Importing operational data..."
             initializationProgress = 0.6
             
-            let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
-            print("✅ Imported \(imported) tasks, \(errors.count) errors")
+            // Step 2: Import Additional Data (60-80%)
+            currentStep = "Importing operational data..."
+            initializationProgress = 0.7
             
-            // Step 3: Verify data integrity (80%)
-            currentStep = "Verifying data integrity..."
-            initializationProgress = 0.8
-            
-            let verification = await verifyDataIntegrity()
-            if !verification.success {
-                throw InitializationError.dataVerificationFailed(verification.message)
+            // Import any additional operational data not in seed
+            if await shouldImportOperationalData() {
+                let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
+                print("✅ Imported \(imported) additional tasks, \(errors.count) errors")
             }
             
-            // Step 4: Complete (100%)
-            currentStep = "Initialization complete"
-            initializationProgress = 1.0
+            initializationProgress = 0.8
             
-            UserDefaults.standard.set(true, forKey: hasInitializedKey)
+            // Step 3: Verify Health (80-90%)
+            currentStep = "Verifying system health..."
+            initializationProgress = 0.85
+            
+            let healthCheck = await databaseCoordinator.performHealthCheck()
+            guard healthCheck.isHealthy else {
+                throw InitializationError.healthCheckFailed(healthCheck.message)
+            }
+            
+            initializationProgress = 0.9
+            
+            // Step 4: Start Background Services (90-100%)
+            currentStep = "Starting services..."
+            initializationProgress = 0.95
+            
+            await startBackgroundServices()
+            
+            // Complete
+            currentStep = "Ready"
+            initializationProgress = 1.0
             isInitialized = true
+            
+            print("✅ UnifiedDataInitializer: App initialization complete")
             
         } catch {
             self.error = error
+            currentStep = "Initialization failed"
+            print("❌ UnifiedDataInitializer: \(error)")
             throw error
         }
     }
     
+    /// Get current database statistics
+    public func getDatabaseStatistics() async throws -> [String: Any] {
+        return try await databaseCoordinator.getDatabaseStatistics()
+    }
+    
+    /// Check if the system is healthy
+    public func isSystemHealthy() async -> Bool {
+        let health = await databaseCoordinator.performHealthCheck()
+        return health.isHealthy
+    }
+    
+    // MARK: - Debug Methods
+    
     #if DEBUG
-    func resetAndReinitialize() async throws {
-        UserDefaults.standard.removeObject(forKey: hasInitializedKey)
+    /// Reset and reinitialize for testing
+    public func resetAndReinitialize() async throws {
+        print("⚠️ UnifiedDataInitializer: Resetting app...")
+        
         isInitialized = false
         initializationProgress = 0.0
         currentStep = "Resetting..."
+        error = nil
         
-        // Reset OperationalDataManager
+        // Reset database through coordinator
+        try await databaseCoordinator.resetAndReinitialize()
+        
+        // Reset operational data manager
         await OperationalDataManager.shared.reset()
         
         // Reinitialize
         try await initializeIfNeeded()
     }
+    
+    /// Force reimport operational data
+    public func forceReimportOperationalData() async throws {
+        currentStep = "Reimporting data..."
+        let (imported, errors) = try await OperationalDataManager.shared.importRoutinesAndDSNY()
+        print("✅ Force reimported \(imported) tasks, \(errors.count) errors")
+    }
     #endif
     
-    private func verifyDataIntegrity() async -> (success: Bool, message: String) {
+    // MARK: - Private Methods
+    
+    /// Check if we need to import additional operational data
+    private func shouldImportOperationalData() async -> Bool {
         do {
+            // Check if we already have DSNY tasks
             let tasks = try await TaskService.shared.getAllTasks()
-            let workers = try await WorkerService.shared.getAllActiveWorkers()
-            let buildings = try await BuildingService.shared.getAllBuildings()
+            let dsnyTasks = tasks.filter { $0.category == "dsny" }
             
-            let message = """
-            ✅ Data verification passed:
-            - Tasks: \(tasks.count)
-            - Workers: \(workers.count)  
-            - Buildings: \(buildings.count)
-            """
-            
-            return (true, message)
+            // If we have fewer than expected DSNY tasks, import
+            return dsnyTasks.count < 50  // Adjust threshold as needed
         } catch {
-            return (false, "Data verification failed: \(error.localizedDescription)")
+            // If we can't check, assume we need to import
+            return true
+        }
+    }
+    
+    /// Start background services after initialization
+    private func startBackgroundServices() async {
+        // Start any background services that need initialization
+        
+        // Example: Start metrics calculation
+        Task {
+            try? await BuildingMetricsService.shared.updateMetricsCache()
+        }
+        
+        // Example: Start notification scheduling
+        Task {
+            await NotificationManager.shared.scheduleTaskReminders()
+        }
+        
+        // Example: Start weather updates
+        Task {
+            try? await WeatherDataAdapter.shared.updateWeatherForAllBuildings()
         }
     }
 }
 
-enum InitializationError: LocalizedError {
-    case dataVerificationFailed(String)
+// MARK: - Error Types
+
+public enum InitializationError: LocalizedError {
+    case healthCheckFailed(String)
+    case dataImportFailed(String)
+    case serviceStartupFailed(String)
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
-        case .dataVerificationFailed(let message):
-            return "Data verification failed: \(message)"
+        case .healthCheckFailed(let message):
+            return "System health check failed: \(message)"
+        case .dataImportFailed(let message):
+            return "Data import failed: \(message)"
+        case .serviceStartupFailed(let message):
+            return "Service startup failed: \(message)"
         }
+    }
+}
+
+// MARK: - SwiftUI View for Initialization
+
+public struct InitializationView: View {
+    @ObservedObject private var initializer = UnifiedDataInitializer.shared
+    
+    public var body: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            
+            // Logo
+            Image("FrancoSphereLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 150, height: 150)
+            
+            Text("FrancoSphere")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            // Progress
+            VStack(spacing: 15) {
+                Text(initializer.currentStep)
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                ProgressView(value: initializer.initializationProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(width: 250)
+                
+                Text("\(Int(initializer.initializationProgress * 100))%")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.top, 30)
+            
+            // Error display
+            if let error = initializer.error {
+                VStack(spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.largeTitle)
+                        .foregroundColor(.red)
+                    
+                    Text("Initialization Failed")
+                        .font(.headline)
+                        .foregroundColor(.red)
+                    
+                    Text(error.localizedDescription)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    #if DEBUG
+                    Button("Retry") {
+                        Task {
+                            try? await initializer.resetAndReinitialize()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    #endif
+                }
+                .padding(.top)
+            }
+            
+            Spacer()
+        }
+        .padding()
+        .task {
+            do {
+                try await initializer.initializeIfNeeded()
+            } catch {
+                print("Initialization failed: \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - Preview
+
+struct InitializationView_Previews: PreviewProvider {
+    static var previews: some View {
+        InitializationView()
     }
 }

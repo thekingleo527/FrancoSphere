@@ -2,12 +2,10 @@
 //  WorkerDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CLEANED: Removed duplicate imports
-//  ✅ VISUAL: Glassmorphism and floating cards
-//  ✅ INTEGRATION: Uses existing WorkerContextEngineAdapter
-//  ✅ NOVA AI: Fully integrated assistant
-//  ✅ PRODUCTION READY: All functionality maintained
+//  ✅ FIXED: iOS 17 Map API implementation
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: With existing WorkerContextEngineAdapter
+//  ✅ INTEGRATED: Nova AI assistant
 //
 
 import Foundation
@@ -275,7 +273,9 @@ struct WorkerDashboardView: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .francoGlassCard()
+        .francoCardPadding()
+        .francoGlassBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.glassCard)
     }
     
     // MARK: - Clock In Glass Card
@@ -307,11 +307,7 @@ struct WorkerDashboardView: View {
                         ForEach(contextAdapter.assignedBuildings.prefix(3), id: \.id) { building in
                             Button(action: {
                                 Task {
-                                    do {
-                                        try await viewModel.clockIn(at: building)
-                                    } catch {
-                                        print("❌ Failed to clock in: \(error)")
-                                    }
+                                    await viewModel.clockIn(at: building)
                                 }
                             }) {
                                 Text(building.name)
@@ -328,7 +324,9 @@ struct WorkerDashboardView: View {
                 }
             }
         }
-        .francoGlassCard()
+        .francoCardPadding()
+        .francoGlassBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.glassCard)
     }
     
     // MARK: - Progress Overview Card
@@ -372,7 +370,9 @@ struct WorkerDashboardView: View {
             }
             .frame(height: 8)
         }
-        .francoGlassCard()
+        .francoCardPadding()
+        .francoGlassBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.glassCard)
     }
     
     // MARK: - My Buildings Section
@@ -411,22 +411,16 @@ struct WorkerDashboardView: View {
     private func glassBuildingCard(for building: NamedCoordinate) -> some View {
         Button(action: { navigateToBuilding(building) }) {
             VStack(spacing: 12) {
-                // Building image - FIXED: imageAssetName is optional
-                AsyncImage(url: building.imageAssetName.flatMap { URL(string: $0) }) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "building.2.fill")
-                                .font(.title)
-                                .foregroundColor(.gray.opacity(0.5))
-                        )
-                }
-                .frame(height: 100)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                // Building image placeholder since imageAssetName is not available
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .overlay(
+                        Image(systemName: "building.2.fill")
+                            .font(.title)
+                            .foregroundColor(.gray.opacity(0.5))
+                    )
+                    .frame(height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(building.name)
@@ -447,7 +441,9 @@ struct WorkerDashboardView: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .francoGlassCardCompact()
+        .padding(12)
+        .francoPropertyCardBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
     }
     
     // MARK: - Floating Insights Section
@@ -497,7 +493,9 @@ struct WorkerDashboardView: View {
             
             Spacer()
         }
-        .francoGlassCardCompact(intensity: .thick)
+        .padding(12)
+        .francoPropertyCardBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
     }
     
     // MARK: - Map Bubble Markers
@@ -530,7 +528,6 @@ struct WorkerDashboardView: View {
         return "\(first)\(last)"
     }
     
-    // FIXED: Implement getUrgentTaskCount() properly
     private func getUrgentTaskCount() -> Int {
         return contextAdapter.todaysTasks.filter { task in
             guard let urgency = task.urgency else { return false }
@@ -541,17 +538,13 @@ struct WorkerDashboardView: View {
     private func loadWorkerSpecificData() async {
         await viewModel.loadInitialData()
         
-        // Update worker name from contextAdapter
         workerName = contextAdapter.currentWorker?.name ?? "Worker"
         
-        // Determine primary building for current worker
         let primary = determinePrimaryBuilding(for: contextAdapter.currentWorker?.id)
         
-        // Update UI state
         self.showOnlyMyBuildings = true
         self.primaryBuilding = primary
         
-        // Update map region
         updateMapRegion()
         
         print("✅ Worker dashboard loaded: \(contextAdapter.assignedBuildings.count) buildings, primary: \(primary?.name ?? "none")")

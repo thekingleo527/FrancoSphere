@@ -2,10 +2,10 @@
 //  MyAssignedBuildingsSection.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: BuildingMetricsService actor usage (removed @StateObject)
-//  ✅ FIXED: Uses CoreTypes.BuildingMetrics instead of BuildingMetrics
-//  ✅ ALIGNED: With existing BuildingMetricsService actor pattern
-//  ✅ ENHANCED: Proper async/await patterns for actor service calls
+//  ✅ GLASS MORPHISM: Aligned with v6.0 design language
+//  ✅ FIXED: Removed imageAssetName references (not in NamedCoordinate)
+//  ✅ ENHANCED: Grid layout matching WorkerDashboardView
+//  ✅ METRICS: Retained real-time building metrics display
 //
 
 import SwiftUI
@@ -16,7 +16,7 @@ struct MyAssignedBuildingsSection: View {
     let onBuildingTap: (NamedCoordinate) -> Void
     let onShowAllBuildings: () -> Void
     
-    // FIXED: Remove @StateObject wrapper - BuildingMetricsService is an actor, not ObservableObject
+    // Service references
     private let buildingMetricsService = BuildingMetricsService.shared
     
     @State private var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
@@ -24,42 +24,35 @@ struct MyAssignedBuildingsSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader
+            // Glass header
+            glassHeader
             
             if buildings.isEmpty {
-                emptyState
+                glassEmptyState
             } else {
-                buildingsList
+                // Grid layout matching WorkerDashboardView
+                buildingsGrid
             }
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .task {
             await loadAllBuildingMetrics()
         }
     }
     
-    // MARK: - Section Header
+    // MARK: - Glass Header
     
-    private var sectionHeader: some View {
+    private var glassHeader: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("My Buildings")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Text("\(buildings.count) assigned building\(buildings.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+            Text("My Buildings")
+                .font(.headline)
+                .foregroundColor(.white)
             
             Spacer()
             
-            // Coverage access button
             Button(action: onShowAllBuildings) {
                 HStack(spacing: 4) {
-                    Text("View All")
-                    Image(systemName: "arrow.right.circle")
+                    Text("All")
+                    Image(systemName: "chevron.right")
                 }
                 .font(.caption)
                 .foregroundColor(.blue)
@@ -67,12 +60,15 @@ struct MyAssignedBuildingsSection: View {
         }
     }
     
-    // MARK: - Buildings List
+    // MARK: - Buildings Grid
     
-    private var buildingsList: some View {
-        LazyVStack(spacing: 12) {
+    private var buildingsGrid: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: 16) {
             ForEach(buildings, id: \.id) { building in
-                MyBuildingCard(
+                GlassBuildingMetricCard(
                     building: building,
                     isPrimary: building.id == primaryBuilding?.id,
                     metrics: buildingMetrics[building.id],
@@ -83,25 +79,27 @@ struct MyAssignedBuildingsSection: View {
         }
     }
     
-    // MARK: - Empty State
+    // MARK: - Glass Empty State
     
-    private var emptyState: some View {
-        VStack(spacing: 12) {
+    private var glassEmptyState: some View {
+        VStack(spacing: 16) {
             Image(systemName: "building.2")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary.opacity(0.6))
+                .font(.system(size: 48))
+                .foregroundColor(.gray.opacity(0.5))
             
             Text("No Buildings Assigned")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.white)
             
-            Text("Contact your supervisor to get building assignments.")
+            Text("Contact your supervisor to get building assignments")
                 .font(.caption)
-                .foregroundColor(.secondary.opacity(0.8))
+                .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity, minHeight: 80)
-        .padding()
+        .frame(maxWidth: .infinity, minHeight: 200)
+        .francoCardPadding()
+        .francoGlassBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.glassCard)
     }
     
     // MARK: - Metrics Loading
@@ -113,7 +111,6 @@ struct MyAssignedBuildingsSection: View {
             for building in buildings {
                 group.addTask {
                     do {
-                        // FIXED: Proper async actor call to BuildingMetricsService
                         let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
                         return (building.id, metrics)
                     } catch {
@@ -134,9 +131,9 @@ struct MyAssignedBuildingsSection: View {
     }
 }
 
-// MARK: - My Building Card Component
+// MARK: - Glass Building Metric Card
 
-struct MyBuildingCard: View {
+struct GlassBuildingMetricCard: View {
     let building: NamedCoordinate
     let isPrimary: Bool
     let metrics: CoreTypes.BuildingMetrics?
@@ -145,166 +142,191 @@ struct MyBuildingCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
-                // Building image
-                buildingImage
+            VStack(spacing: 12) {
+                // Building icon placeholder (no imageAssetName in NamedCoordinate)
+                buildingIcon
                 
                 // Building info
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    // Name and primary badge
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(building.name)
-                            .font(.subheadline)
+                            .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
                             .lineLimit(2)
-                        
-                        Spacer()
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         if isPrimary {
-                            primaryBadge
+                            GlassStatusBadge(
+                                text: "PRIMARY",
+                                style: .success,
+                                size: .small
+                            )
                         }
                     }
                     
-                    // Metrics display
+                    Spacer()
+                    
+                    // Metrics section
                     if isLoadingMetrics {
-                        loadingMetrics
+                        loadingState
                     } else if let metrics = metrics {
-                        buildingMetrics(metrics)
+                        metricsDisplay(metrics)
                     } else {
-                        Text("Metrics unavailable")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        noMetricsState
                     }
                 }
-                
-                // Navigation indicator
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isPrimary ? .blue.opacity(0.2) : .gray.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isPrimary ? .blue : .clear, lineWidth: 1)
-                    )
-            )
         }
         .buttonStyle(PlainButtonStyle())
+        .padding(12)
+        .frame(height: 160)
+        .francoPropertyCardBackground()
+        .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
+        .overlay(
+            // Glow effect for primary building
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isPrimary ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 2)
+                .shadow(color: isPrimary ? .blue.opacity(0.5) : .clear, radius: 5)
+        )
     }
     
-    // MARK: - Building Image
+    // MARK: - Building Icon
     
-    private var buildingImage: some View {
-        AsyncImage(url: URL(string: building.imageAssetName ?? "")) { image in
-            image
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        } placeholder: {
-            Rectangle()
-                .fill(.gray.opacity(0.3))
-                .overlay(
-                    Image(systemName: "building.2")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                )
+    private var buildingIcon: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .overlay(
+                Image(systemName: getBuildingIcon())
+                    .font(.title)
+                    .foregroundColor(.gray.opacity(0.5))
+            )
+            .frame(height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+    
+    private func getBuildingIcon() -> String {
+        let name = building.name.lowercased()
+        
+        if name.contains("museum") || name.contains("rubin") {
+            return "building.columns.fill"
+        } else if name.contains("park") || name.contains("cove") {
+            return "tree.fill"
+        } else if name.contains("perry") || name.contains("elizabeth") {
+            return "house.fill"
+        } else {
+            return "building.2.fill"
         }
-        .frame(width: 50, height: 50)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
     
-    // MARK: - Primary Badge
+    // MARK: - Loading State
     
-    private var primaryBadge: some View {
-        Text("PRIMARY")
-            .font(.caption2)
-            .fontWeight(.bold)
-            .foregroundColor(.blue)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background(.blue.opacity(0.2))
-            .clipShape(Capsule())
-    }
-    
-    // MARK: - Loading Metrics
-    
-    private var loadingMetrics: some View {
-        HStack(spacing: 8) {
+    private var loadingState: some View {
+        HStack(spacing: 4) {
             ProgressView()
-                .scaleEffect(0.6)
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(0.7)
             
-            Text("Loading metrics...")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Text("Loading...")
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.7))
         }
     }
     
-    // MARK: - Building Metrics Display
+    // MARK: - No Metrics State
     
-    private func buildingMetrics(_ metrics: CoreTypes.BuildingMetrics) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                // Completion indicator
-                HStack(spacing: 4) {
+    private var noMetricsState: some View {
+        Text("Tap to view details")
+            .font(.caption2)
+            .foregroundColor(.white.opacity(0.5))
+    }
+    
+    // MARK: - Metrics Display
+    
+    private func metricsDisplay(_ metrics: CoreTypes.BuildingMetrics) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Completion rate with visual indicator
+            HStack(spacing: 6) {
+                // Progress ring
+                ZStack {
                     Circle()
-                        .fill(completionColor(metrics.completionRate))
-                        .frame(width: 8, height: 8)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 3)
+                        .frame(width: 20, height: 20)
                     
-                    Text("\(Int(metrics.completionRate * 100))% complete")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Circle()
+                        .trim(from: 0, to: metrics.completionRate)
+                        .stroke(
+                            completionGradient(metrics.completionRate),
+                            style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                        )
+                        .frame(width: 20, height: 20)
+                        .rotationEffect(.degrees(-90))
                 }
                 
-                Spacer()
-                
-                // Worker status
-                if metrics.hasWorkerOnSite {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 6, height: 6)
-                        
-                        Text("Worker on site")
-                            .font(.caption2)
-                            .foregroundColor(.green)
-                    }
-                }
+                Text("\(Int(metrics.completionRate * 100))%")
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
             }
             
-            // Task summary
-            if metrics.pendingTasks > 0 || metrics.overdueTasks > 0 {
-                HStack {
-                    if metrics.pendingTasks > 0 {
-                        Text("\(metrics.pendingTasks) pending")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                    }
-                    
-                    if metrics.overdueTasks > 0 {
-                        Text("\(metrics.overdueTasks) overdue")
+            // Task status
+            HStack(spacing: 12) {
+                if metrics.overdueTasks > 0 {
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 5, height: 5)
+                        Text("\(metrics.overdueTasks)")
                             .font(.caption2)
                             .foregroundColor(.red)
                     }
                 }
-            } else {
-                Text("All tasks complete")
-                    .font(.caption2)
-                    .foregroundColor(.green)
+                
+                if metrics.pendingTasks > 0 {
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(Color.orange)
+                            .frame(width: 5, height: 5)
+                        Text("\(metrics.pendingTasks)")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                }
+                
+                if metrics.hasWorkerOnSite {
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 5, height: 5)
+                            .shadow(color: .green, radius: 2)
+                        Text("Live")
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                    }
+                }
             }
         }
     }
     
     // MARK: - Helper Methods
     
-    private func completionColor(_ rate: Double) -> Color {
-        switch rate {
-        case 0.9...1.0: return .green
-        case 0.7..<0.9: return .blue
-        case 0.5..<0.7: return .orange
-        default: return .red
-        }
+    private func completionGradient(_ rate: Double) -> LinearGradient {
+        let colors: [Color] = {
+            switch rate {
+            case 0.9...1.0: return [.green, .mint]
+            case 0.7..<0.9: return [.blue, .cyan]
+            case 0.5..<0.7: return [.orange, .yellow]
+            default: return [.red, .orange]
+            }
+        }()
+        
+        return LinearGradient(
+            colors: colors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 
@@ -316,50 +338,54 @@ struct MyAssignedBuildingsSection_Previews: PreviewProvider {
             NamedCoordinate(
                 id: "14",
                 name: "Rubin Museum",
+                address: "150 W 17th St, New York, NY 10011",
                 latitude: 40.7402,
-                longitude: -73.9980,
-                imageAssetName: "Rubin_Museum_142_148_West_17th_Street"
+                longitude: -73.9980
             ),
             NamedCoordinate(
                 id: "1",
                 name: "12 West 18th Street",
+                address: "40 West 18th St, New York, NY 10011",
                 latitude: 40.7398,
-                longitude: -73.9972,
-                imageAssetName: "12_West_18th_Street"
+                longitude: -73.9972
             ),
             NamedCoordinate(
                 id: "10",
                 name: "131 Perry Street",
+                address: "131 Perry St, New York, NY 10014",
                 latitude: 40.7348,
-                longitude: -74.0063,
-                imageAssetName: "131_Perry_Street"
+                longitude: -74.0063
             )
         ]
         
-        let primaryBuilding = sampleBuildings[0]
-        
-        VStack(spacing: 20) {
-            MyAssignedBuildingsSection(
-                buildings: sampleBuildings,
-                primaryBuilding: primaryBuilding,
-                onBuildingTap: { building in
-                    print("Building tapped: \(building.name)")
-                },
-                onShowAllBuildings: {
-                    print("Show all buildings tapped")
-                }
-            )
+        ZStack {
+            // Dark background
+            Color.black.ignoresSafeArea()
             
-            // Empty state preview
-            MyAssignedBuildingsSection(
-                buildings: [],
-                primaryBuilding: nil,
-                onBuildingTap: { _ in },
-                onShowAllBuildings: { }
-            )
+            VStack(spacing: 20) {
+                // With buildings
+                MyAssignedBuildingsSection(
+                    buildings: sampleBuildings,
+                    primaryBuilding: sampleBuildings[0],
+                    onBuildingTap: { building in
+                        print("Building tapped: \(building.name)")
+                    },
+                    onShowAllBuildings: {
+                        print("Show all buildings tapped")
+                    }
+                )
+                .padding(.horizontal, 20)
+                
+                // Empty state
+                MyAssignedBuildingsSection(
+                    buildings: [],
+                    primaryBuilding: nil,
+                    onBuildingTap: { _ in },
+                    onShowAllBuildings: { }
+                )
+                .padding(.horizontal, 20)
+            }
         }
-        .padding()
-        .background(Color.black)
-        .previewLayout(.sizeThatFits)
+        .preferredColorScheme(.dark)
     }
 }
