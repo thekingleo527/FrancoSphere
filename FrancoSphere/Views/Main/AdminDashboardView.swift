@@ -2,6 +2,9 @@
 //  AdminDashboardView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Proper type references for DashboardUpdate and nested types
+//  ✅ FIXED: Parameter naming to avoid SwiftUI Alert type conflict
 //  ✅ REFACTORED: Properly integrated with DashboardSyncService
 //  ✅ ALIGNED: Using correct DashboardUpdate types from sync service
 //  ✅ REAL-TIME: Cross-dashboard synchronization working
@@ -85,7 +88,7 @@ struct AdminDashboardView: View {
             .store(in: &cancellables)
     }
     
-    private func handleDashboardUpdate(_ update: DashboardUpdate) {
+    private func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
         // Handle cross-dashboard updates
         switch update.type {
         case .taskCompleted:
@@ -105,7 +108,7 @@ struct AdminDashboardView: View {
         }
     }
     
-    private func handleAdminUpdate(_ update: DashboardUpdate) {
+    private func handleAdminUpdate(_ update: CoreTypes.DashboardUpdate) {
         // Handle admin-specific updates
         Task {
             await viewModel.loadDashboardData()
@@ -312,7 +315,7 @@ struct AdminDashboardView: View {
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(syncService.liveAdminAlerts.prefix(5), id: \.id) { alert in
-                        LiveAlertRow(alert: alert)
+                        LiveAlertRow(adminAlert: alert)
                     }
                 }
             }
@@ -372,7 +375,7 @@ struct AdminDashboardView: View {
             if !syncService.liveWorkerUpdates.isEmpty {
                 LazyVStack(spacing: 8) {
                     ForEach(syncService.liveWorkerUpdates.prefix(5), id: \.id) { update in
-                        LiveWorkerUpdateRow(update: update)
+                        LiveWorkerUpdateRow(workerUpdate: update)
                     }
                 }
             } else {
@@ -568,30 +571,30 @@ struct AdminSummaryCard: View {
 }
 
 struct LiveAlertRow: View {
-    let alert: LiveAdminAlert
+    let adminAlert: DashboardSyncService.LiveAdminAlert
     
     var body: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(alert.severity.color)
+                .fill(adminAlert.severity.color)
                 .frame(width: 8, height: 8)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(alert.title)
+                Text(adminAlert.title)
                     .font(.caption)
                     .foregroundColor(.white)
                 
-                Text(alert.timestamp, style: .relative)
+                Text(adminAlert.timestamp, style: .relative)
                     .font(.caption2)
                     .foregroundColor(.gray)
             }
             
             Spacer()
             
-            Text(alert.severity.rawValue)
+            Text(adminAlert.severity.rawValue)
                 .font(.caption2)
                 .fontWeight(.medium)
-                .foregroundColor(alert.severity.color)
+                .foregroundColor(adminAlert.severity.color)
         }
         .padding(8)
         .background(.ultraThinMaterial)
@@ -600,7 +603,7 @@ struct LiveAlertRow: View {
 }
 
 struct LiveWorkerUpdateRow: View {
-    let update: LiveWorkerUpdate
+    let workerUpdate: DashboardSyncService.LiveWorkerUpdate
     
     var body: some View {
         HStack(spacing: 12) {
@@ -612,11 +615,11 @@ struct LiveWorkerUpdateRow: View {
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(update.workerName ?? "Worker") \(update.action)")
+                Text("\(workerUpdate.workerName ?? "Worker") \(workerUpdate.action)")
                     .font(.caption)
                     .foregroundColor(.white)
                 
-                if let buildingName = update.buildingName {
+                if let buildingName = workerUpdate.buildingName {
                     Text("at \(buildingName)")
                         .font(.caption2)
                         .foregroundColor(.gray)
@@ -625,7 +628,7 @@ struct LiveWorkerUpdateRow: View {
             
             Spacer()
             
-            Text(update.timestamp, style: .relative)
+            Text(workerUpdate.timestamp, style: .relative)
                 .font(.caption2)
                 .foregroundColor(.gray)
         }
@@ -692,7 +695,7 @@ struct PortfolioIntelligenceCard: View {
 }
 
 struct BuildingMetricCard: View {
-    let building: NamedCoordinate
+    let building: CoreTypes.NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
     
     var body: some View {
@@ -741,7 +744,7 @@ struct BuildingMetricCard: View {
 }
 
 struct WorkerStatusRow: View {
-    let worker: WorkerProfile
+    let worker: CoreTypes.WorkerProfile
     
     var body: some View {
         HStack(spacing: 12) {
@@ -755,7 +758,7 @@ struct WorkerStatusRow: View {
             
             Spacer()
             
-            Text(worker.role.rawValue.capitalized)
+            Text(worker.role.displayName)
                 .font(.caption2)
                 .foregroundColor(.gray)
         }
@@ -766,7 +769,7 @@ struct WorkerStatusRow: View {
 }
 
 struct BuildingAdminCard: View {
-    let building: NamedCoordinate
+    let building: CoreTypes.NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
     let insights: [CoreTypes.IntelligenceInsight]
     let onTap: () -> Void
@@ -858,7 +861,7 @@ struct MetricItem: View {
 }
 
 struct WorkerAdminCard: View {
-    let worker: WorkerProfile
+    let worker: CoreTypes.WorkerProfile
     
     var body: some View {
         HStack(spacing: 12) {
@@ -880,7 +883,7 @@ struct WorkerAdminCard: View {
                     .foregroundColor(.white)
                 
                 HStack(spacing: 8) {
-                    Text(worker.role.rawValue.capitalized)
+                    Text(worker.role.displayName)
                         .font(.caption)
                         .foregroundColor(.gray)
                     
