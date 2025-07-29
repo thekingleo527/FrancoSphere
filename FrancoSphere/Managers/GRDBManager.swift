@@ -2,7 +2,9 @@
 //  GRDBManager.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Added public type aliases to resolve visibility issues
+//  ✅ FIXED: Use CoreTypes namespace for all type references
+//  ✅ COMPLETE: Full authentication + operational database manager
+//  ✅ SINGLE SOURCE: One manager for everything
 //
 
 import Foundation
@@ -758,14 +760,14 @@ public final class GRDBManager {
     }
     
     // MARK: - Real-time Observation (FIXED for Swift 6)
-    // ✅ FIXED: Now returns public types
+    // ✅ FIXED: Use CoreTypes namespace in return types
     
-    public func observeBuildings() -> AnyPublisher<[NamedCoordinate], Error> {
+    public func observeBuildings() -> AnyPublisher<[CoreTypes.NamedCoordinate], Error> {
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
                 .map { row in
-                    // Create the coordinate first
-                    let coord = NamedCoordinate(
+                    // Create the coordinate using CoreTypes namespace
+                    let coord = CoreTypes.NamedCoordinate(
                         id: String(row["id"] as? Int64 ?? 0),
                         name: row["name"] as? String ?? "",
                         latitude: (row["latitude"] as? Double) ?? 0,
@@ -782,7 +784,7 @@ public final class GRDBManager {
         return observation.publisher(in: dbPool).eraseToAnyPublisher()
     }
     
-    public func observeTasks(for buildingId: String) -> AnyPublisher<[ContextualTask], Error> {
+    public func observeTasks(for buildingId: String) -> AnyPublisher<[CoreTypes.ContextualTask], Error> {
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: """
                 SELECT t.*, b.name as buildingName, w.name as workerName 
@@ -802,12 +804,12 @@ public final class GRDBManager {
     }
     
     // Helper method for task conversion
-    public func contextualTaskFromRow(_ row: Row) -> ContextualTask? {
+    public func contextualTaskFromRow(_ row: Row) -> CoreTypes.ContextualTask? {
         guard let title = row["title"] as? String else { return nil }
         
         // Convert category string to enum with safe fallback
         let categoryString = row["category"] as? String ?? "maintenance"
-        let category: TaskCategory? = {
+        let category: CoreTypes.TaskCategory? = {
             switch categoryString.lowercased() {
             case "maintenance": return .maintenance
             case "cleaning": return .cleaning
@@ -827,7 +829,7 @@ public final class GRDBManager {
         
         // Convert urgency string to enum with safe fallback
         let urgencyString = row["urgency"] as? String ?? "medium"
-        let urgency: TaskUrgency? = {
+        let urgency: CoreTypes.TaskUrgency? = {
             switch urgencyString.lowercased() {
             case "low": return .low
             case "medium": return .medium
@@ -844,10 +846,10 @@ public final class GRDBManager {
         let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
         
         // Create NamedCoordinate for building (if we have building data)
-        let building: NamedCoordinate? = {
+        let building: CoreTypes.NamedCoordinate? = {
             if let buildingName = row["buildingName"] as? String,
                let buildingId = row["buildingId"] as? Int64 {
-                return NamedCoordinate(
+                return CoreTypes.NamedCoordinate(
                     id: String(buildingId),
                     name: buildingName,
                     latitude: 0,
@@ -857,7 +859,7 @@ public final class GRDBManager {
             return nil
         }()
         
-        return ContextualTask(
+        return CoreTypes.ContextualTask(
             id: String(row["id"] as? Int64 ?? 0),
             title: title,
             description: row["description"] as? String,

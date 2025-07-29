@@ -2,25 +2,26 @@
 //  TaskTimelineView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Proper ContextualTask property access
-//  ✅ FIXED: Correct MaintenanceTask constructor calls
-//  ✅ FIXED: Optional unwrapping and type conversions
+//  ✅ REFACTORED: Uses CoreTypes.ContextualTask consistently
+//  ✅ OPTIMIZED: Efficient data loading for specific worker
+//  ✅ INTEGRATED: Cross-dashboard sync support
+//  ✅ ENHANCED: Nova AI insights integration
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
+import Combine
 
 // MARK: - Task Timeline View
 
 struct TaskTimelineView: View {
     let workerId: String
+    let workerName: String?
     
     @StateObject private var viewModel = TaskTimelineViewModel()
     @State private var selectedDate = Date()
     @State private var showingFilters = false
-    @State private var showingTaskDetail: MaintenanceTask?
+    @State private var showingTaskDetail: CoreTypes.ContextualTask?
+    @State private var showingNovaInsights = false
     
     private let calendar = Calendar.current
     private let dateFormatter: DateFormatter = {
@@ -44,28 +45,44 @@ struct TaskTimelineView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Filter") {
-                        showingFilters = true
+                    Menu {
+                        Button(action: { showingFilters = true }) {
+                            Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                        }
+                        
+                        Button(action: { showingNovaInsights = true }) {
+                            Label("AI Insights", systemImage: "brain")
+                        }
+                        
+                        Button(action: { refreshTasks() }) {
+                            Label("Refresh", systemImage: "arrow.clockwise")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
             .sheet(isPresented: $showingFilters) {
-                TaskFilterView(filterOptions: viewModel.filterOptions) { updatedOptions in
-                    viewModel.filterOptions = updatedOptions
-                }
+                TaskFilterView(filterOptions: $viewModel.filterOptions)
             }
             .sheet(item: $showingTaskDetail) { task in
-                TaskDetailView(task: convertToContextualTask(task))
+                NavigationView {
+                    TaskDetailView(task: task)
+                }
+            }
+            .sheet(isPresented: $showingNovaInsights) {
+                NovaTaskInsightsView(workerId: workerId, date: selectedDate)
             }
             .onAppear {
-                Task {
-                    await viewModel.loadTasks(for: workerId, date: selectedDate)
-                }
+                viewModel.initialize(workerId: workerId, workerName: workerName)
+                loadTasksForSelectedDate()
             }
-            .onChange(of: selectedDate) { newDate in
-                Task {
-                    await viewModel.loadTasks(for: workerId, date: newDate)
-                }
+            .onChange(of: selectedDate) { _, newDate in
+                loadTasksForSelectedDate()
+            }
+            .onReceive(viewModel.dashboardUpdatePublisher) { _ in
+                // Refresh when cross-dashboard updates occur
+                loadTasksForSelectedDate()
             }
         }
     }
@@ -74,23 +91,49 @@ struct TaskTimelineView: View {
     
     private var datePickerHeader: some View {
         VStack(spacing: 12) {
-            DatePicker("Select Date", selection: $selectedDate, displayedComponents: .date)
-                .datePickerStyle(.compact)
-                .padding(.horizontal)
+            // Date navigation
+            HStack {
+                Button(action: { moveDate(by: -1) }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
+                
+                DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
+                
+                Button(action: { moveDate(by: 1) }) {
+                    Image(systemName: "chevron.right")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
+                
+                Spacer()
+                
+                Button("Today") {
+                    selectedDate = Date()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.horizontal)
             
             if !viewModel.isLoading {
                 taskSummaryView
             }
         }
         .padding(.bottom)
-        .background(.ultraThinMaterial)
+        .background(Color(.systemBackground))
+        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 2)
     }
     
     private var taskSummaryView: some View {
         HStack(spacing: 20) {
-            taskSummaryItem("Total", count: viewModel.totalTasksForDate(selectedDate), color: .blue)
-            taskSummaryItem("Completed", count: viewModel.completedTasksForDate(selectedDate), color: .green)
-            taskSummaryItem("Overdue", count: viewModel.overdueTasksForDate(selectedDate), color: .red)
+            taskSummaryItem("Total", count: viewModel.taskStats.total, color: .blue)
+            taskSummaryItem("Completed", count: viewModel.taskStats.completed, color: .green)
+            taskSummaryItem("Pending", count: viewModel.taskStats.pending, color: .orange)
+            taskSummaryItem("Overdue", count: viewModel.taskStats.overdue, color: .red)
         }
         .padding(.horizontal)
     }
@@ -105,13 +148,14 @@ struct TaskTimelineView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
+        .frame(maxWidth: .infinity)
     }
     
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-            Text("Loading tasks...")
+            Text("Loading timeline...")
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -119,59 +163,106 @@ struct TaskTimelineView: View {
     
     private var taskTimelineContent: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
-                let tasksForDate = viewModel.tasksForDate(selectedDate)
-                
-                if tasksForDate.isEmpty {
-                    emptyStateView
-                } else {
-                    ForEach(Array(tasksForDate.enumerated()), id: \.element.id) { index, task in
-                        taskTimelineRow(task: task, isLast: index == tasksForDate.count - 1)
+            if viewModel.filteredTasks.isEmpty {
+                emptyStateView
+                    .padding(.top, 60)
+            } else {
+                LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                    // Group tasks by time
+                    ForEach(viewModel.taskGroups, id: \.0) { timeGroup, tasks in
+                        Section {
+                            ForEach(Array(tasks.enumerated()), id: \.element.id) { index, task in
+                                taskTimelineRow(
+                                    task: task,
+                                    isFirst: index == 0,
+                                    isLast: index == tasks.count - 1,
+                                    isLastGroup: timeGroup == viewModel.taskGroups.last?.0
+                                )
+                            }
+                        } header: {
+                            timeGroupHeader(timeGroup)
+                        }
                     }
                 }
+                .padding()
             }
-            .padding()
         }
+    }
+    
+    private func timeGroupHeader(_ timeGroup: String) -> some View {
+        Text(timeGroup)
+            .font(.headline)
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(.systemBackground).opacity(0.95))
     }
     
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "calendar.badge.exclamationmark")
+            Image(systemName: viewModel.hasActiveTasks ? "line.3.horizontal.decrease.circle" : "calendar.badge.exclamationmark")
                 .font(.system(size: 60))
                 .foregroundColor(.gray)
             
-            Text("No tasks scheduled")
+            Text(viewModel.hasActiveTasks ? "No tasks match filters" : "No tasks scheduled")
                 .font(.title2)
                 .fontWeight(.medium)
             
-            Text("There are no tasks scheduled for \(dateFormatter.string(from: selectedDate))")
+            Text(emptyStateMessage)
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+            
+            if viewModel.hasActiveTasks {
+                Button("Clear Filters") {
+                    viewModel.clearFilters()
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
-        .padding(.top, 60)
     }
     
-    private func taskTimelineRow(task: MaintenanceTask, isLast: Bool) -> some View {
+    private var emptyStateMessage: String {
+        if viewModel.hasActiveTasks {
+            return "Try adjusting your filters to see more tasks"
+        } else {
+            return "There are no tasks scheduled for \(dateFormatter.string(from: selectedDate))"
+        }
+    }
+    
+    private func taskTimelineRow(task: CoreTypes.ContextualTask, isFirst: Bool, isLast: Bool, isLastGroup: Bool) -> some View {
         HStack(alignment: .top, spacing: 16) {
-            timelineIndicator(for: task, isLast: isLast)
+            timelineIndicator(for: task, isFirst: isFirst, isLast: isLast && isLastGroup)
+            
             TaskTimelineCard(task: task) {
                 showingTaskDetail = task
             }
+            .transition(.scale.combined(with: .opacity))
         }
         .padding(.vertical, 8)
     }
     
-    private func timelineIndicator(for task: MaintenanceTask, isLast: Bool) -> some View {
+    private func timelineIndicator(for task: CoreTypes.ContextualTask, isFirst: Bool, isLast: Bool) -> some View {
         VStack(spacing: 0) {
-            Rectangle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 2, height: 20)
+            if !isFirst {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 2, height: 20)
+            }
             
-            Circle()
-                .fill(task.isCompleted ? Color.green : urgencyColor(task.urgency))
-                .frame(width: 12, height: 12)
-                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            ZStack {
+                Circle()
+                    .fill(indicatorColor(for: task))
+                    .frame(width: 16, height: 16)
+                
+                if task.isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .shadow(color: indicatorColor(for: task).opacity(0.3), radius: 3)
             
             if !isLast {
                 Rectangle()
@@ -179,108 +270,156 @@ struct TaskTimelineView: View {
                     .frame(width: 2)
             }
         }
+        .frame(width: 20)
     }
     
-    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
-        switch urgency {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
-        case .urgent: return .purple
-        case .critical: return .red
-        case .emergency: return .red
+    private func indicatorColor(for task: CoreTypes.ContextualTask) -> Color {
+        if task.isCompleted {
+            return .green
+        } else if isOverdue(task) {
+            return .red
+        } else {
+            return FrancoSphereDesign.EnumColors.taskUrgency(task.urgency ?? .medium)
         }
     }
     
-    // ✅ FIXED: Simple ContextualTask conversion with correct parameter order
-    private func convertToContextualTask(_ task: MaintenanceTask) -> ContextualTask {
-        return ContextualTask(
-            id: task.id,
-            title: task.title,
-            isCompleted: task.isCompleted,
-            buildingId: task.buildingId
-        )
+    private func isOverdue(_ task: CoreTypes.ContextualTask) -> Bool {
+        guard let dueDate = task.dueDate, !task.isCompleted else { return false }
+        return dueDate < Date()
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func moveDate(by days: Int) {
+        if let newDate = calendar.date(byAdding: .day, value: days, to: selectedDate) {
+            selectedDate = newDate
+        }
+    }
+    
+    private func loadTasksForSelectedDate() {
+        Task {
+            await viewModel.loadTasks(for: selectedDate)
+        }
+    }
+    
+    private func refreshTasks() {
+        Task {
+            await viewModel.refreshTasks(for: selectedDate)
+        }
     }
 }
 
 // MARK: - Task Timeline Card
 
 struct TaskTimelineCard: View {
-    let task: MaintenanceTask
+    let task: CoreTypes.ContextualTask
     let onTap: () -> Void
+    
+    @State private var isPressed = false
     
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(timeRange)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
-                        
+                // Header
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(task.title)
                             .font(.headline)
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.leading)
+                        
+                        if let building = task.building {
+                            Label(building.name, systemImage: "building.2")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                     
                     Spacer()
                     
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(statusText)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(statusColor)
-                            .cornerRadius(8)
-                    }
+                    statusBadge
                 }
                 
-                if !task.description.isEmpty {
-                    Text(task.description)
+                // Description
+                if let description = task.description, !description.isEmpty {
+                    Text(description)
                         .font(.body)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
                 
-                HStack {
+                // Footer badges
+                HStack(spacing: 8) {
                     categoryBadge
+                    urgencyBadge
+                    
                     Spacer()
-                    if !task.buildingId.isEmpty {
-                        Label("Building \(task.buildingId)", systemImage: "building.2")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    
+                    if let dueDate = task.dueDate {
+                        timeDisplay(for: dueDate)
                     }
                 }
             }
             .padding()
-            .background(.ultraThinMaterial)
+            .background(cardBackground)
             .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .shadow(color: shadowColor, radius: isPressed ? 2 : 4, y: isPressed ? 1 : 2)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
         }
         .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0.1) {
+            // Action handled by button
+        } onPressingChanged: { pressing in
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = pressing
+            }
+        }
     }
     
-    private var timeRange: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        
-        if let start = task.startTime, let end = task.endTime {
-            return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
-        } else if let start = task.startTime {
-            return "Starting \(formatter.string(from: start))"
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(.secondarySystemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(borderColor, lineWidth: 1)
+            )
+    }
+    
+    private var borderColor: Color {
+        if task.isCompleted {
+            return .green.opacity(0.3)
+        } else if isOverdue {
+            return .red.opacity(0.3)
         } else {
-            return "All day"
+            return Color(.separator).opacity(0.5)
         }
+    }
+    
+    private var shadowColor: Color {
+        if task.isCompleted {
+            return .green.opacity(0.1)
+        } else if isOverdue {
+            return .red.opacity(0.1)
+        } else {
+            return .black.opacity(0.1)
+        }
+    }
+    
+    private var statusBadge: some View {
+        Text(statusText)
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(statusColor)
+            .cornerRadius(8)
     }
     
     private var statusText: String {
         if task.isCompleted {
             return "Completed"
-        } else if task.isPastDue {
+        } else if isOverdue {
             return "Overdue"
         } else {
             return "Pending"
@@ -290,48 +429,74 @@ struct TaskTimelineCard: View {
     private var statusColor: Color {
         if task.isCompleted {
             return .green
-        } else if task.isPastDue {
+        } else if isOverdue {
             return .red
         } else {
-            return urgencyColor(task.urgency)
+            return .orange
         }
+    }
+    
+    private var isOverdue: Bool {
+        guard let dueDate = task.dueDate, !task.isCompleted else { return false }
+        return dueDate < Date()
     }
     
     private var categoryBadge: some View {
-        Text(task.category.rawValue)
-            .font(.caption2)
-            .fontWeight(.medium)
-            .foregroundColor(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(categoryColor(task.category))
-            .cornerRadius(6)
-    }
-    
-    private func categoryColor(_ category: TaskCategory) -> Color {
-        switch category {
-        case .cleaning: return .blue
-        case .maintenance: return .orange
-        case .repair: return .red
-        case .sanitation: return .green
-        case .inspection: return .purple
-        case .landscaping: return .green
-        case .security: return .red
-        case .emergency: return .red
-        case .installation: return .blue
-        case .utilities: return .yellow
-        case .renovation: return .brown
+        Group {
+            if let category = task.category {
+                Label(category.rawValue.capitalized, systemImage: categoryIcon(category))
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.EnumColors.taskCategory(category))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(FrancoSphereDesign.EnumColors.taskCategory(category).opacity(0.1))
+                    .cornerRadius(6)
+            }
         }
     }
     
-    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
-        switch urgency {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
-        case .urgent: return .purple
-        case .critical: return .red
-        case .emergency: return .red
+    private var urgencyBadge: some View {
+        Group {
+            if let urgency = task.urgency {
+                Text(urgency.rawValue.capitalized)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                    .cornerRadius(6)
+            }
+        }
+    }
+    
+    private func timeDisplay(for date: Date) -> some View {
+        Label(timeFormatter.string(from: date), systemImage: "clock")
+            .font(.caption)
+            .foregroundColor(.secondary)
+    }
+    
+    private var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }
+    
+    private func categoryIcon(_ category: CoreTypes.TaskCategory) -> String {
+        switch category {
+        case .cleaning: return "sparkles"
+        case .maintenance: return "wrench.and.screwdriver"
+        case .repair: return "hammer"
+        case .sanitation: return "trash"
+        case .inspection: return "magnifyingglass"
+        case .landscaping: return "leaf"
+        case .security: return "shield"
+        case .emergency: return "exclamationmark.triangle.fill"
+        case .installation: return "plus.square"
+        case .utilities: return "bolt"
+        case .renovation: return "building.2"
+        case .administrative: return "folder"
         }
     }
 }
@@ -340,134 +505,169 @@ struct TaskTimelineCard: View {
 
 @MainActor
 class TaskTimelineViewModel: ObservableObject {
-    @Published var tasksByDate: [String: [MaintenanceTask]] = [:]
+    @Published var tasks: [CoreTypes.ContextualTask] = []
     @Published var isLoading = false
     @Published var filterOptions = TaskFilterOptions()
+    @Published var taskStats = TaskStats()
     
+    private var workerId: String = ""
+    private var workerName: String?
     private let taskService = TaskService.shared
-    private let buildingService = BuildingService.shared
+    private let dashboardSyncService = DashboardSyncService.shared
+    private var cancellables = Set<AnyCancellable>()
     
-    func loadTasks(for workerId: String, date: Date) async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            let contextualTasks = try await taskService.getAllTasks()
-            
-            // Filter tasks for the specific worker and date
-            let filteredTasks = contextualTasks.filter { task in
-                let isAssignedToWorker = task.assignedWorkerId == workerId
-                
-                let isForDate: Bool
-                if let dueDate = task.dueDate {
-                    isForDate = Calendar.current.isDate(dueDate, inSameDayAs: date)
-                } else {
-                    // ✅ FIXED: If no due date, include task for today only
-                    isForDate = Calendar.current.isDate(Date(), inSameDayAs: date)
-                }
-                
-                return isAssignedToWorker && isForDate
-            }
-            
-            let maintenanceTasks = filteredTasks.compactMap { contextualTask -> MaintenanceTask? in
-                // ✅ FIXED: Correct MaintenanceTask constructor with proper parameter order
-                return MaintenanceTask(
-                    id: contextualTask.id,
-                    title: contextualTask.title ?? "Untitled Task",
-                    description: contextualTask.description ?? "",
-                    category: contextualTask.category ?? .maintenance,
-                    urgency: contextualTask.urgency ?? .medium,
-                    buildingId: contextualTask.buildingId ?? "",
-                    assignedWorkerId: contextualTask.assignedWorkerId,
-                    isCompleted: contextualTask.isCompleted,
-                    dueDate: contextualTask.dueDate,
-                    estimatedDuration: 3600,
-                    recurrence: .none,
-                    status: contextualTask.isCompleted ? .verified : .pending
-                )
-            }
-            
-            let dateKey = formatDateForKey(date)
-            tasksByDate[dateKey] = maintenanceTasks.sorted { task1, task2 in
-                let time1 = task1.startTime ?? task1.dueDate ?? Date.distantPast
-                let time2 = task2.startTime ?? task2.dueDate ?? Date.distantPast
-                return time1 < time2
-            }
-            
-        } catch {
-            print("❌ Failed to load tasks: \(error)")
-            tasksByDate[formatDateForKey(date)] = []
-        }
-    }
-    
-    func tasksForDate(_ date: Date) -> [MaintenanceTask] {
-        let dateKey = formatDateForKey(date)
-        let tasks = tasksByDate[dateKey] ?? []
-        
-        return tasks.filter { task in
+    // Computed properties
+    var filteredTasks: [CoreTypes.ContextualTask] {
+        tasks.filter { task in
             if !filterOptions.showCompleted && task.isCompleted { return false }
-            if !filterOptions.categories.contains(task.category) { return false }
-            if !filterOptions.urgencies.contains(task.urgency) { return false }
+            if let category = task.category, !filterOptions.categories.contains(category) { return false }
+            if let urgency = task.urgency, !filterOptions.urgencies.contains(urgency) { return false }
             return true
         }
     }
     
-    func totalTasksForDate(_ date: Date) -> Int {
-        tasksByDate[formatDateForKey(date)]?.count ?? 0
+    var taskGroups: [(String, [CoreTypes.ContextualTask])] {
+        let groups = Dictionary(grouping: filteredTasks) { task -> String in
+            if task.isCompleted {
+                return "Completed"
+            } else if isOverdue(task) {
+                return "Overdue"
+            } else if let dueDate = task.dueDate, Calendar.current.isDateInToday(dueDate) {
+                return "Today"
+            } else {
+                return "Upcoming"
+            }
+        }
+        
+        let order = ["Overdue", "Today", "Upcoming", "Completed"]
+        return order.compactMap { key in
+            if let tasks = groups[key] {
+                return (key, tasks.sorted { ($0.dueDate ?? Date.distantFuture) < ($1.dueDate ?? Date.distantFuture) })
+            }
+            return nil
+        }
     }
     
-    func completedTasksForDate(_ date: Date) -> Int {
-        tasksByDate[formatDateForKey(date)]?.filter { $0.isCompleted }.count ?? 0
+    var hasActiveTasks: Bool {
+        !tasks.isEmpty
     }
     
-    func overdueTasksForDate(_ date: Date) -> Int {
-        tasksByDate[formatDateForKey(date)]?.filter { $0.isPastDue && !$0.isCompleted }.count ?? 0
+    var dashboardUpdatePublisher: AnyPublisher<CoreTypes.DashboardUpdate, Never> {
+        dashboardSyncService.crossDashboardUpdates
+            .filter { [weak self] update in
+                guard let self = self else { return false }
+                // Listen for task-related updates for this worker
+                return update.workerId == self.workerId &&
+                       (update.type == .taskCompleted || update.type == .taskStarted)
+            }
+            .eraseToAnyPublisher()
     }
     
-    private func formatDateForKey(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+    // MARK: - Initialization
+    
+    func initialize(workerId: String, workerName: String?) {
+        self.workerId = workerId
+        self.workerName = workerName
+    }
+    
+    // MARK: - Data Loading
+    
+    func loadTasks(for date: Date) async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            // Load tasks for specific worker
+            let allTasks = try await taskService.getTasksForWorker(workerId)
+            
+            // Filter for selected date
+            let calendar = Calendar.current
+            tasks = allTasks.filter { task in
+                if let dueDate = task.dueDate {
+                    return calendar.isDate(dueDate, inSameDayAs: date)
+                }
+                return false
+            }
+            
+            updateTaskStats()
+            
+        } catch {
+            print("❌ Failed to load timeline tasks: \(error)")
+            tasks = []
+        }
+    }
+    
+    func refreshTasks(for date: Date) async {
+        // Broadcast refresh request
+        let update = CoreTypes.DashboardUpdate(
+            source: .worker,
+            type: .buildingMetricsChanged,
+            buildingId: "",
+            workerId: workerId,
+            data: ["action": "refresh", "date": ISO8601DateFormatter().string(from: date)]
+        )
+        dashboardSyncService.broadcastWorkerUpdate(update)
+        
+        // Reload tasks
+        await loadTasks(for: date)
+    }
+    
+    func clearFilters() {
+        filterOptions = TaskFilterOptions()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func updateTaskStats() {
+        taskStats = TaskStats(
+            total: tasks.count,
+            completed: tasks.filter { $0.isCompleted }.count,
+            pending: tasks.filter { !$0.isCompleted && !isOverdue($0) }.count,
+            overdue: tasks.filter { isOverdue($0) }.count
+        )
+    }
+    
+    private func isOverdue(_ task: CoreTypes.ContextualTask) -> Bool {
+        guard let dueDate = task.dueDate, !task.isCompleted else { return false }
+        return dueDate < Date()
     }
 }
 
 // MARK: - Supporting Types
 
+struct TaskStats {
+    var total: Int = 0
+    var completed: Int = 0
+    var pending: Int = 0
+    var overdue: Int = 0
+}
+
 struct TaskFilterOptions {
     var showCompleted = true
-    var categories: Set<TaskCategory> = Set(TaskCategory.allCases)
-    var urgencies: Set<TaskUrgency> = Set(TaskUrgency.allCases)
+    var categories: Set<CoreTypes.TaskCategory> = Set(CoreTypes.TaskCategory.allCases)
+    var urgencies: Set<CoreTypes.TaskUrgency> = Set(CoreTypes.TaskUrgency.allCases)
 }
 
 struct TaskFilterView: View {
-    let filterOptions: TaskFilterOptions
-    let onUpdate: (TaskFilterOptions) -> Void
-    
-    @State private var localOptions: TaskFilterOptions
+    @Binding var filterOptions: TaskFilterOptions
     @Environment(\.dismiss) private var dismiss
-    
-    init(filterOptions: TaskFilterOptions, onUpdate: @escaping (TaskFilterOptions) -> Void) {
-        self.filterOptions = filterOptions
-        self.onUpdate = onUpdate
-        self._localOptions = State(initialValue: filterOptions)
-    }
     
     var body: some View {
         NavigationView {
             Form {
                 Section("Display Options") {
-                    Toggle("Show Completed Tasks", isOn: $localOptions.showCompleted)
+                    Toggle("Show Completed Tasks", isOn: $filterOptions.showCompleted)
                 }
                 
                 Section("Categories") {
-                    ForEach(TaskCategory.allCases, id: \.self) { category in
-                        Toggle(category.rawValue, isOn: Binding(
-                            get: { localOptions.categories.contains(category) },
+                    ForEach(CoreTypes.TaskCategory.allCases, id: \.self) { category in
+                        Toggle(category.rawValue.capitalized, isOn: Binding(
+                            get: { filterOptions.categories.contains(category) },
                             set: { isOn in
                                 if isOn {
-                                    localOptions.categories.insert(category)
-                                } else if localOptions.categories.count > 1 {
-                                    localOptions.categories.remove(category)
+                                    filterOptions.categories.insert(category)
+                                } else if filterOptions.categories.count > 1 {
+                                    filterOptions.categories.remove(category)
                                 }
                             }
                         ))
@@ -475,14 +675,14 @@ struct TaskFilterView: View {
                 }
                 
                 Section("Urgency Levels") {
-                    ForEach(TaskUrgency.allCases, id: \.self) { urgency in
-                        Toggle(urgency.rawValue, isOn: Binding(
-                            get: { localOptions.urgencies.contains(urgency) },
+                    ForEach(CoreTypes.TaskUrgency.allCases, id: \.self) { urgency in
+                        Toggle(urgency.rawValue.capitalized, isOn: Binding(
+                            get: { filterOptions.urgencies.contains(urgency) },
                             set: { isOn in
                                 if isOn {
-                                    localOptions.urgencies.insert(urgency)
-                                } else if localOptions.urgencies.count > 1 {
-                                    localOptions.urgencies.remove(urgency)
+                                    filterOptions.urgencies.insert(urgency)
+                                } else if filterOptions.urgencies.count > 1 {
+                                    filterOptions.urgencies.remove(urgency)
                                 }
                             }
                         ))
@@ -494,11 +694,116 @@ struct TaskFilterView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        onUpdate(localOptions)
                         dismiss()
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Nova AI Insights View
+
+struct NovaTaskInsightsView: View {
+    let workerId: String
+    let date: Date
+    
+    @State private var insights: [CoreTypes.IntelligenceInsight] = []
+    @State private var isLoading = true
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            Group {
+                if isLoading {
+                    ProgressView("Analyzing tasks...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if insights.isEmpty {
+                    ContentUnavailableView(
+                        "No Insights Available",
+                        systemImage: "brain",
+                        description: Text("Nova AI couldn't generate insights for this date")
+                    )
+                } else {
+                    List(insights) { insight in
+                        NovaInsightRow(insight: insight)
+                    }
+                }
+            }
+            .navigationTitle("AI Task Insights")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .task {
+                await loadInsights()
+            }
+        }
+    }
+    
+    private func loadInsights() async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            let novaInsights = try await NovaIntelligenceEngine.shared.generateTaskTimelineInsights(
+                workerId: workerId,
+                date: date
+            )
+            insights = novaInsights
+        } catch {
+            print("Failed to load Nova insights: \(error)")
+            insights = []
+        }
+    }
+}
+
+struct NovaInsightRow: View {
+    let insight: CoreTypes.IntelligenceInsight
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: iconForCategory(insight.category))
+                    .foregroundColor(colorForPriority(insight.priority))
+                
+                Text(insight.title)
+                    .font(.headline)
+            }
+            
+            Text(insight.description)
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            if insight.actionRequired {
+                Label("Action Required", systemImage: "exclamationmark.circle.fill")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func iconForCategory(_ category: CoreTypes.InsightCategory) -> String {
+        switch category {
+        case .efficiency: return "speedometer"
+        case .cost: return "dollarsign.circle"
+        case .safety: return "shield"
+        case .compliance: return "checkmark.shield"
+        case .quality: return "star"
+        case .operations: return "gearshape.2"
+        case .maintenance: return "wrench.and.screwdriver"
+        }
+    }
+    
+    private func colorForPriority(_ priority: CoreTypes.AIPriority) -> Color {
+        switch priority {
+        case .low: return .green
+        case .medium: return .orange
+        case .high: return .red
+        case .critical: return .red
         }
     }
 }

@@ -2,10 +2,9 @@
 //  BuildingsView.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ Shows a searchable list of all portfolio buildings
-//  ✅ Proper optional handling and async/await patterns
-//  ✅ Compatible with current BuildingService API
+//  ✅ REFACTORED: Uses real BuildingDetailView instead of placeholder
+//  ✅ FIXED: Compilation errors resolved
+//  ✅ PURPOSE: Portfolio-wide building browser for admins/managers
 //
 
 import SwiftUI
@@ -19,12 +18,24 @@ struct BuildingsView: View {
     @State private var searchText = ""
     @State private var errorMessage: String?
     
+    // Services
+    private let buildingService = BuildingService.shared
+    
     // Filter helper
     private var filteredBuildings: [NamedCoordinate] {
         guard !searchText.isEmpty else { return buildings }
         return buildings.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
+            $0.name.localizedCaseInsensitiveContains(searchText) ||
+            $0.address.localizedCaseInsensitiveContains(searchText)
         }
+    }
+    
+    // Building count by type
+    private var buildingStats: (total: Int, residential: Int, commercial: Int) {
+        let total = buildings.count
+        let residential = buildings.filter { $0.name.contains("Perry") || $0.name.contains("Elizabeth") || $0.name.contains("Walker") }.count
+        let commercial = buildings.filter { $0.name.contains("Museum") || $0.name.contains("Park") || $0.name.contains("West") }.count
+        return (total, residential, commercial)
     }
     
     // MARK: – UI
@@ -32,12 +43,19 @@ struct BuildingsView: View {
         NavigationView {
             VStack(spacing: 0) {
                 
+                // 📊 Portfolio Stats
+                if !buildings.isEmpty {
+                    portfolioStatsView
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                }
+                
                 // 🔍 Search bar
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
                     
-                    TextField("Search buildings", text: $searchText)
+                    TextField("Search buildings or addresses", text: $searchText)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                 }
@@ -57,69 +75,122 @@ struct BuildingsView: View {
                 // 📋 List of buildings or loading indicator
                 if isLoading {
                     Spacer()
-                    ProgressView("Loading buildings...")
+                    ProgressView("Loading portfolio...")
                         .progressViewStyle(CircularProgressViewStyle())
                     Spacer()
                 } else if filteredBuildings.isEmpty {
-                    Spacer()
-                    VStack(spacing: 20) {
-                        Image(systemName: "building.2.crop.circle")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        
-                        if searchText.isEmpty {
-                            Text("No buildings available")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                        } else {
-                            Text("No buildings match '\(searchText)'")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            
-                            Button("Clear Search") {
-                                searchText = ""
-                            }
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                    Spacer()
+                    emptyStateView
                 } else {
                     List(filteredBuildings, id: \.id) { building in
                         NavigationLink {
-                            // Use BuildingDetailPlaceholder for now
-                            BuildingDetailPlaceholder(building: building)
+                            // ✅ Use the real BuildingDetailView
+                            BuildingDetailView(building: building)
                         } label: {
-                            // Building row view
                             buildingRow(for: building)
                         }
                     }
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Buildings")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Building Portfolio")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { Task { await loadBuildings() } }) {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(isLoading)
+                }
+            }
             .task {
                 await loadBuildings()
             }
         }
     }
     
+    // MARK: - Portfolio Stats View
+    private var portfolioStatsView: some View {
+        HStack(spacing: 16) {
+            // Use the existing StatCard from the project
+            StatCard(
+                title: "Total",
+                value: "\(buildingStats.total)",
+                trend: nil,
+                icon: "building.2"
+            )
+            
+            StatCard(
+                title: "Residential",
+                value: "\(buildingStats.residential)",
+                trend: nil,
+                icon: "house"
+            )
+            
+            StatCard(
+                title: "Commercial",
+                value: "\(buildingStats.commercial)",
+                trend: nil,
+                icon: "building"
+            )
+        }
+        .padding(.vertical, 8)
+    }
+    
+    // MARK: - Empty State View
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: "building.2.crop.circle")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            
+            if searchText.isEmpty {
+                Text("No buildings in portfolio")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                Text("Buildings will appear here once added to the system")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            } else {
+                Text("No buildings match '\(searchText)'")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                Button("Clear Search") {
+                    searchText = ""
+                }
+                .buttonStyle(.bordered)
+            }
+            
+            Spacer()
+        }
+    }
+    
     // MARK: - Building Row View
     private func buildingRow(for building: NamedCoordinate) -> some View {
         HStack(spacing: 12) {
-            // ✅ FIXED: Proper optional handling for imageAssetName
+            // Building image or icon
             if let imageAssetName = building.imageAssetName,
                let uiImage = UIImage(named: imageAssetName) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 50, height: 50)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
             } else {
-                Image(systemName: "building.2.crop.circle")
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .foregroundColor(.blue)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.systemGray5))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: iconForBuilding(building))
+                        .font(.title2)
+                        .foregroundColor(.gray)
+                }
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -127,35 +198,87 @@ struct BuildingsView: View {
                     .font(.headline)
                     .lineLimit(1)
                 
-                // Show coordinates or address if available
-                if let address = building.address {
-                    Text(address)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                } else {
-                    Text("Lat: \(building.latitude, specifier: "%.4f"), Lng: \(building.longitude, specifier: "%.4f")")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
+                // Address - it's not optional
+                Text(building.address)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
                 
-                // Building ID badge
-                Text("ID: \(building.id)")
-                    .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(4)
+                // Building type badge
+                HStack(spacing: 4) {
+                    Image(systemName: iconForBuilding(building))
+                        .font(.caption2)
+                    
+                    Text(buildingType(building))
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(colorForBuilding(building).opacity(0.2))
+                .foregroundColor(colorForBuilding(building))
+                .cornerRadius(6)
             }
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            // Status indicator
+            VStack(alignment: .trailing, spacing: 4) {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                // Show if it's a special building
+                if building.name.contains("Rubin") {
+                    Text("Museum")
+                        .font(.caption2)
+                        .foregroundColor(.purple)
+                } else if building.name.contains("Park") {
+                    Text("Park")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                }
+            }
         }
         .padding(.vertical, 4)
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func iconForBuilding(_ building: NamedCoordinate) -> String {
+        if building.name.contains("Museum") {
+            return "building.columns"
+        } else if building.name.contains("Park") {
+            return "leaf"
+        } else if building.name.contains("Perry") || building.name.contains("Elizabeth") {
+            return "house"
+        } else {
+            return "building"
+        }
+    }
+    
+    private func buildingType(_ building: NamedCoordinate) -> String {
+        if building.name.contains("Museum") {
+            return "Cultural"
+        } else if building.name.contains("Park") {
+            return "Recreation"
+        } else if building.name.contains("Perry") || building.name.contains("Elizabeth") {
+            return "Residential"
+        } else {
+            return "Commercial"
+        }
+    }
+    
+    private func colorForBuilding(_ building: NamedCoordinate) -> Color {
+        if building.name.contains("Museum") {
+            return .purple
+        } else if building.name.contains("Park") {
+            return .green
+        } else if building.name.contains("Perry") || building.name.contains("Elizabeth") {
+            return .blue
+        } else {
+            return .orange
+        }
     }
     
     // MARK: - Data Loading
@@ -164,219 +287,30 @@ struct BuildingsView: View {
         errorMessage = nil
         
         do {
-            // ✅ FIXED: Add try await for BuildingService.shared.getAllBuildings()
-            let loadedBuildings = try await BuildingService.shared.getAllBuildings()
+            let loadedBuildings = try await buildingService.getAllBuildings()
             
             // Update on main thread
             await MainActor.run {
-                self.buildings = loadedBuildings
+                self.buildings = loadedBuildings.sorted { $0.name < $1.name }
                 self.isLoading = false
             }
         } catch {
             await MainActor.run {
                 self.errorMessage = "Failed to load buildings: \(error.localizedDescription)"
                 self.isLoading = false
+                
+                // Fallback to production buildings from CoreTypes if service fails
+                #if DEBUG
+                self.buildings = CoreTypes.productionBuildings
+                #endif
             }
         }
     }
 }
 
-// MARK: - Building Detail Placeholder
-struct BuildingDetailPlaceholder: View {
-    let building: NamedCoordinate
-    @State private var assignedWorkers: String = "Loading..."
-    @State private var isLoadingData = true
-    @State private var workerProfiles: [WorkerProfile] = []
-    
-    var body: some View {
-        ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [
-                    Color(red: 0.05, green: 0.1, blue: 0.25),
-                    Color(red: 0.15, green: 0.2, blue: 0.35)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Building image placeholder
-                    buildingImageView
-                    
-                    // Building info card - using manual glass effect
-                    buildingInfoCard
-                    
-                    Spacer(minLength: 100)
-                }
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .preferredColorScheme(.dark)
-        .task {
-            await loadBuildingData()
-        }
-    }
-    
-    // MARK: - Building Image View
-    private var buildingImageView: some View {
-        Group {
-            // ✅ FIXED: Proper optional handling for imageAssetName
-            if let imageAssetName = building.imageAssetName,
-               let image = UIImage(named: imageAssetName) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 250)
-                    .clipped()
-                    .overlay(
-                        LinearGradient(
-                            colors: [.clear, .black.opacity(0.6)],
-                            startPoint: .center,
-                            endPoint: .bottom
-                        )
-                    )
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 250)
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white.opacity(0.5))
-                    )
-            }
-        }
-    }
-    
-    // MARK: - Building Info Card
-    private var buildingInfoCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(building.name)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            
-            HStack {
-                Image(systemName: "location.fill")
-                    .foregroundColor(.blue)
-                if let address = building.address {
-                    Text(address)
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
-                } else {
-                    Text("Lat: \(building.latitude, specifier: "%.4f"), Lng: \(building.longitude, specifier: "%.4f")")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
-                }
-            }
-            
-            HStack {
-                Image(systemName: "number")
-                    .foregroundColor(.blue)
-                Text("Building ID: \(building.id)")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
-            }
-            
-            Divider()
-                .background(Color.white.opacity(0.3))
-            
-            // Assigned Workers
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Assigned Workers")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                if isLoadingData {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                } else if workerProfiles.isEmpty {
-                    Text("No workers assigned")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.6))
-                } else {
-                    ForEach(workerProfiles, id: \.id) { worker in
-                        HStack {
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.blue.opacity(0.8))
-                                .font(.caption)
-                            Text(worker.name)
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.8))
-                            Text("(\(worker.role.rawValue.capitalized))")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.6))
-                        }
-                    }
-                }
-            }
-            
-            // Additional building metrics could go here
-            if !workerProfiles.isEmpty {
-                Divider()
-                    .background(Color.white.opacity(0.3))
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Quick Stats")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    HStack {
-                        Image(systemName: "person.2.fill")
-                            .foregroundColor(.green.opacity(0.8))
-                            .font(.caption)
-                        Text("\(workerProfiles.count) worker(s) assigned")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    
-                    HStack {
-                        Image(systemName: "clock.fill")
-                            .foregroundColor(.orange.opacity(0.8))
-                            .font(.caption)
-                        Text("Active building operations")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.15),
-                                    Color.white.opacity(0.05),
-                                    Color.clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
-        )
-        .padding(.horizontal)
-    }
-    
-    // MARK: - Data Loading
-    private func loadBuildingData() async {
-        isLoadingData = true
-        
-        do {
-            //
-        }
+// MARK: - Preview
+struct BuildingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        BuildingsView()
     }
 }
