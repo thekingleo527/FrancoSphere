@@ -6,31 +6,17 @@
 //  ✅ Uses title (not name), urgency enum (not urgencyLevel), building object (not buildingId)
 //  ✅ Proper filter syntax for modern Swift arrays
 //  ✅ Real operational data integration
+//  ✅ FIXED: Removed imageAssetName reference
+//  ✅ FIXED: Corrected async/await syntax
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
 import Foundation
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
-
-// COMPILATION FIX: Add missing imports
-import Foundation
-
-// Type aliases for CoreTypes
 
 struct BuildingMapDetailView: View {
     let building: NamedCoordinate
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var contextEngine = WorkerContextEngineAdapter.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared  // ✅ FIXED: Use consolidated engine
     
     @State private var tasks: [ContextualTask] = []
     @State private var isLoading = true
@@ -105,8 +91,9 @@ struct BuildingMapDetailView: View {
     private var buildingHeader: some View {
         VStack(spacing: 12) {
             // Building image
-            if let imageAssetName = building.imageAssetName, !imageAssetName.isEmpty {
-                Image(imageAssetName)
+            // ✅ FIXED: Try to load image based on building name
+            if let buildingImage = getBuildingImage() {
+                Image(uiImage: buildingImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 150)
@@ -130,7 +117,7 @@ struct BuildingMapDetailView: View {
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                 
-                Text(building.address ?? building.name)
+                Text(building.address)
                     .font(.callout)
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
@@ -219,18 +206,54 @@ struct BuildingMapDetailView: View {
         }
     }
     
+    // MARK: - Helper Methods
+    
+    private func getBuildingImage() -> UIImage? {
+        // Try standardized name based on building name
+        let standardName = building.name
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: "(", with: "")
+            .replacingOccurrences(of: ")", with: "")
+            .lowercased()
+        
+        // Try exact match first
+        if let image = UIImage(named: standardName) {
+            return image
+        }
+        
+        // Try with "building_" prefix
+        if let image = UIImage(named: "building_\(standardName)") {
+            return image
+        }
+        
+        // Try simplified name
+        let simplifiedName = building.name
+            .components(separatedBy: " ")
+            .first?
+            .lowercased() ?? ""
+        
+        if !simplifiedName.isEmpty,
+           let image = UIImage(named: "building_\(simplifiedName)") {
+            return image
+        }
+        
+        // No image found
+        return nil
+    }
+    
     // MARK: - Data Loading
     
     private func loadBuildingData() {
         Task {
-            // ✅ FIXED: Use todaysTasks property instead of getTodaysTasks() method
-            let allTasks = await await contextEngine.todaysTasks
+            // ✅ FIXED: Removed double await
+            let allTasks = contextEngine.todaysTasks
             
             await MainActor.run {
-                // ✅ FIXED: Filter tasks using actual ContextualTask structure
+                // Filter tasks for this building
                 tasks = allTasks.filter { task in
                     // Match by building object comparison
-                    task.building?.id == building.id || task.building?.name == building.name
+                    task.building?.id == building.id || task.buildingId == building.id
                 }
                 isLoading = false
             }
@@ -296,46 +319,5 @@ struct BuildingTaskRow: View {
     
     // ✅ FIXED: Handle TaskUrgency enum properly (not urgencyLevel string)
     private func getUrgencyDisplay(_ urgency: TaskUrgency?) -> String {
-        return urgency?.rawValue.capitalized ?? "Medium"
-    }
-    
-    private func getUrgencyColor(_ urgency: TaskUrgency?) -> Color {
-        guard let urgency = urgency else { return .white.opacity(0.7) }
-        
-        switch urgency {
-        case .high, .urgent, .critical, .emergency:
-            return .red
-        case .medium:
-            return .orange
-        case .low:
-            return .green
-        }
-    }
-}
-
-struct BuildingStatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(.white.opacity(0.7))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }

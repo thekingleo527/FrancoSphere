@@ -1,10 +1,10 @@
 //
-//  MapRevealContainer.swift - COMPLETELY FIXED FOR iOS 17
+//  MapRevealContainer.swift - FIXED FOR iOS 17+
 //  FrancoSphere
 //
-//  ✅ Fixed iOS 17 Map API compatibility
-//  ✅ Fixed MapAnnotationProtocol conformance
-//  ✅ Fixed closure argument issues
+//  ✅ Fixed iOS 17+ Map API with new MapContentBuilder syntax
+//  ✅ Fixed NamedCoordinate initializer (no imageAssetName)
+//  ✅ Uses new Annotation instead of deprecated MapAnnotation
 //
 
 import SwiftUI
@@ -20,9 +20,11 @@ struct MapRevealContainer: View {
     let currentBuildingId: String?
     let focusBuildingId: String?
     
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 40.7308, longitude: -73.9973),
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
     )
     
     var body: some View {
@@ -79,21 +81,29 @@ struct MapRevealContainer: View {
         .ignoresSafeArea(.all, edges: .bottom)
     }
     
-    // MARK: - ✅ FIXED: Map View with correct iOS 17 Map API
+    // MARK: - ✅ FIXED: Map View with iOS 17+ API
     
     private var mapView: some View {
-        Map(coordinateRegion: $region, annotationItems: buildings, annotationContent: { building in
-            MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)) {
-                BuildingMapMarker(
-                    building: building,
-                    isSelected: building.id == currentBuildingId,
-                    isFocused: building.id == focusBuildingId,
-                    onTap: {
-                        onBuildingTap(building)
-                    }
-                )
+        Map(position: $position) {
+            ForEach(buildings, id: \.id) { building in
+                Annotation(
+                    building.name,
+                    coordinate: CLLocationCoordinate2D(
+                        latitude: building.latitude,
+                        longitude: building.longitude
+                    )
+                ) {
+                    BuildingMapMarker(
+                        building: building,
+                        isSelected: building.id == currentBuildingId,
+                        isFocused: building.id == focusBuildingId,
+                        onTap: {
+                            onBuildingTap(building)
+                        }
+                    )
+                }
             }
-        })
+        }
         .mapStyle(.standard(elevation: .realistic))
     }
     
@@ -272,30 +282,30 @@ struct MapRevealContainer_Previews: PreviewProvider {
             NamedCoordinate(
                 id: "1",
                 name: "12 West 18th Street",
+                address: "12 W 18th St, New York, NY 10011",
                 latitude: 40.7397,
-                longitude: -73.9944,
-                imageAssetName: "12_West_18th_Street"
+                longitude: -73.9944
             ),
             NamedCoordinate(
                 id: "2",
                 name: "29-31 East 20th Street",
+                address: "29-31 E 20th St, New York, NY 10003",
                 latitude: 40.7389,
-                longitude: -73.9863,
-                imageAssetName: "29_31_East_20th_Street"
+                longitude: -73.9863
             ),
             NamedCoordinate(
                 id: "3",
                 name: "117 West 17th Street",
+                address: "117 W 17th St, New York, NY 10011",
                 latitude: 40.7396,
-                longitude: -73.9970,
-                imageAssetName: "117_West_17th_Street"
+                longitude: -73.9970
             ),
             NamedCoordinate(
                 id: "4",
                 name: "131 Perry Street",
+                address: "131 Perry St, New York, NY 10014",
                 latitude: 40.7321,
-                longitude: -74.0038,
-                imageAssetName: "131_Perry_Street"
+                longitude: -74.0038
             )
         ]
         
