@@ -19,7 +19,6 @@
 		23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739DE2E2B8674004A52C6 /* SignUpView.swift */; };
 		23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739102E2B8674004A52C6 /* GlassDeckContainer.swift */; };
 		23273A162E2B8674004A52C6 /* NewAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739582E2B8674004A52C6 /* NewAuthManager.swift */; };
-		23273A172E2B8674004A52C6 /* AIAssistantManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739502E2B8674004A52C6 /* AIAssistantManager.swift */; };
 		23273A182E2B8674004A52C6 /* InitializationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23273A012E2B8674004A52C6 /* InitializationViewModel.swift */; };
 		23273A192E2B8674004A52C6 /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327398D2E2B8674004A52C6 /* NovaInteractionView.swift */; };
 		23273A1B2E2B8674004A52C6 /* PropertyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392F2E2B8674004A52C6 /* PropertyCard.swift */; };
@@ -41,7 +40,6 @@
 		23273A2F2E2B8674004A52C6 /* AssignedBuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739E02E2B8674004A52C6 /* AssignedBuildingsView.swift */; };
 		23273A302E2B8674004A52C6 /* BuildingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739FF2E2B8674004A52C6 /* BuildingDetailViewModel.swift */; };
 		23273A312E2B8674004A52C6 /* VerificationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739802E2B8674004A52C6 /* VerificationRecord.swift */; };
-		23273A322E2B8674004A52C6 /* AIScenarioSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739222E2B8674004A52C6 /* AIScenarioSheetView.swift */; };
 		23273A332E2B8674004A52C6 /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2327392E2E2B8674004A52C6 /* ProfileBadge.swift */; };
 		23273A342E2B8674004A52C6 /* WorkerActionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739822E2B8674004A52C6 /* WorkerActionType.swift */; };
 		23273A352E2B8674004A52C6 /* RoutinePriority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232739322E2B8674004A52C6 /* RoutinePriority.swift */; };
@@ -263,7 +261,6 @@
 		2327391D2E2B8674004A52C6 /* IntelligencePreviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntelligencePreviewPanel.swift; sourceTree = "<group>"; };
 		2327391E2E2B8674004A52C6 /* SyncStatusComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusComponents.swift; sourceTree = "<group>"; };
 		232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
-		232739222E2B8674004A52C6 /* AIScenarioSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScenarioSheetView.swift; sourceTree = "<group>"; };
 		232739232E2B8674004A52C6 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
 		232739252E2B8674004A52C6 /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
@@ -295,7 +292,6 @@
 		2327394B2E2B8674004A52C6 /* V012.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V012.swift; sourceTree = "<group>"; };
 		2327394D2E2B8674004A52C6 /* DatabaseMigrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrations.swift; sourceTree = "<group>"; };
 		2327394E2E2B8674004A52C6 /* V003_WorkerAssignments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V003_WorkerAssignments.swift; sourceTree = "<group>"; };
-		232739502E2B8674004A52C6 /* AIAssistantManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantManager.swift; sourceTree = "<group>"; };
 		232739512E2B8674004A52C6 /* AssetImageDebugger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetImageDebugger.swift; sourceTree = "<group>"; };
 		232739522E2B8674004A52C6 /* ClockInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInManager.swift; sourceTree = "<group>"; };
 		232739542E2B8674004A52C6 /* DatabaseMigrationFix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrationFix.swift; sourceTree = "<group>"; };
@@ -544,7 +540,6 @@
 			isa = PBXGroup;
 			children = (
 				232739202E2B8674004A52C6 /* AdaptiveGlassModifier.swift */,
-				232739222E2B8674004A52C6 /* AIScenarioSheetView.swift */,
 				232739232E2B8674004A52C6 /* Building.swift */,
 				232739242E2B8674004A52C6 /* BuildingIntelligencePanel.swift */,
 				232739252E2B8674004A52C6 /* CoverageInfoCard.swift */,
@@ -624,7 +619,6 @@
 			children = (
 				2327394C2E2B8674004A52C6 /* Extensions */,
 				2327394F2E2B8674004A52C6 /* Migrations */,
-				232739502E2B8674004A52C6 /* AIAssistantManager.swift */,
 				232739512E2B8674004A52C6 /* AssetImageDebugger.swift */,
 				232739522E2B8674004A52C6 /* ClockInManager.swift */,
 				232739542E2B8674004A52C6 /* DatabaseMigrationFix.swift */,
@@ -1123,7 +1117,6 @@
 				23273A142E2B8674004A52C6 /* SignUpView.swift in Sources */,
 				23273A152E2B8674004A52C6 /* GlassDeckContainer.swift in Sources */,
 				23273A162E2B8674004A52C6 /* NewAuthManager.swift in Sources */,
-				23273A172E2B8674004A52C6 /* AIAssistantManager.swift in Sources */,
 				23273A182E2B8674004A52C6 /* InitializationViewModel.swift in Sources */,
 				23273A192E2B8674004A52C6 /* NovaInteractionView.swift in Sources */,
 				23273A1B2E2B8674004A52C6 /* PropertyCard.swift in Sources */,
@@ -1147,7 +1140,6 @@
 				23273A2F2E2B8674004A52C6 /* AssignedBuildingsView.swift in Sources */,
 				23273A302E2B8674004A52C6 /* BuildingDetailViewModel.swift in Sources */,
 				23273A312E2B8674004A52C6 /* VerificationRecord.swift in Sources */,
-				23273A322E2B8674004A52C6 /* AIScenarioSheetView.swift in Sources */,
 				23273A332E2B8674004A52C6 /* ProfileBadge.swift in Sources */,
 				23273A342E2B8674004A52C6 /* WorkerActionType.swift in Sources */,
 				23273A352E2B8674004A52C6 /* RoutinePriority.swift in Sources */,

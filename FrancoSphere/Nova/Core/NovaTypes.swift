@@ -5,6 +5,7 @@
 //  ✅ SIMPLIFIED: Uses CoreTypes for all shared concepts
 //  ✅ NO DUPLICATES: Only Nova-specific types defined here
 //  ✅ CLEAN: No type conversion needed
+//  ✅ ENHANCED: Added scenario support types
 //
 
 import Foundation
@@ -161,9 +162,56 @@ public enum NovaProcessingState: String, Codable {
     case error = "error"
 }
 
-// NOTE: NovaAggregatedData is defined in NovaDataAggregator.swift
-// NOTE: NovaRecommendation is defined in NovaCore.swift
-// We don't redefine them here to avoid duplicates
+// MARK: - Scenario Support Types
+
+/// Nova scenario data for AI-driven scenarios
+public struct NovaScenarioData: Identifiable, Codable {
+    public let id: UUID
+    public let scenario: CoreTypes.AIScenarioType
+    public let message: String
+    public let actionText: String
+    public let createdAt: Date
+    public let priority: CoreTypes.AIPriority
+    public let context: [String: String]
+    
+    public init(
+        id: UUID = UUID(),
+        scenario: CoreTypes.AIScenarioType,
+        message: String,
+        actionText: String,
+        createdAt: Date = Date(),
+        priority: CoreTypes.AIPriority? = nil,
+        context: [String: String] = [:]
+    ) {
+        self.id = id
+        self.scenario = scenario
+        self.message = message
+        self.actionText = actionText
+        self.createdAt = createdAt
+        self.priority = priority ?? scenario.priority
+        self.context = context
+    }
+}
+
+/// Emergency repair state for tracking repair progress
+public struct NovaEmergencyRepairState {
+    public var isActive: Bool = false
+    public var progress: Double = 0.0
+    public var message: String = ""
+    public var workerId: String?
+    
+    public init(
+        isActive: Bool = false,
+        progress: Double = 0.0,
+        message: String = "",
+        workerId: String? = nil
+    ) {
+        self.isActive = isActive
+        self.progress = progress
+        self.message = message
+        self.workerId = workerId
+    }
+}
 
 // MARK: - Error Types
 
@@ -243,9 +291,75 @@ extension NovaResponse {
     }
 }
 
+extension NovaScenarioData {
+    /// Check if scenario is high priority
+    public var isHighPriority: Bool {
+        return priority == .high || priority == .critical
+    }
+    
+    /// Get scenario icon
+    public var icon: String {
+        return scenario.icon
+    }
+    
+    /// Get scenario display title
+    public var displayTitle: String {
+        return scenario.displayTitle
+    }
+    
+    /// Get scenario color
+    public var color: Color {
+        return scenario.color
+    }
+}
+
 // MARK: - Type Aliases for Clarity
 
 public typealias NovaInsight = CoreTypes.IntelligenceInsight
 public typealias NovaSuggestion = CoreTypes.AISuggestion
 public typealias NovaPriority = CoreTypes.AIPriority
 public typealias NovaInsightType = CoreTypes.InsightCategory
+public typealias NovaScenarioType = CoreTypes.AIScenarioType
+
+// MARK: - Extension to AIScenarioType for UI Support
+
+extension CoreTypes.AIScenarioType {
+    public var icon: String {
+        switch self {
+        case .clockOutReminder: return "clock.arrow.circlepath"
+        case .weatherAlert: return "cloud.rain.fill"
+        case .inventoryLow: return "shippingbox.fill"
+        case .routineIncomplete: return "exclamationmark.circle.fill"
+        case .pendingTasks: return "list.bullet.clipboard.fill"
+        case .emergencyRepair: return "wrench.and.screwdriver.fill"
+        case .taskOverdue: return "clock.badge.exclamationmark"
+        case .buildingAlert: return "building.2.fill"
+        }
+    }
+    
+    public var displayTitle: String {
+        switch self {
+        case .clockOutReminder: return "Clock Out Reminder"
+        case .weatherAlert: return "Weather Alert"
+        case .inventoryLow: return "Inventory Low"
+        case .routineIncomplete: return "Routine Incomplete"
+        case .pendingTasks: return "Pending Tasks"
+        case .emergencyRepair: return "Emergency Repair"
+        case .taskOverdue: return "Task Overdue"
+        case .buildingAlert: return "Building Alert"
+        }
+    }
+    
+    public var color: Color {
+        switch self {
+        case .clockOutReminder: return .red
+        case .weatherAlert: return .yellow
+        case .inventoryLow: return .orange
+        case .routineIncomplete: return .orange
+        case .pendingTasks: return .blue
+        case .emergencyRepair: return .red
+        case .taskOverdue: return .red
+        case .buildingAlert: return .orange
+        }
+    }
+}
