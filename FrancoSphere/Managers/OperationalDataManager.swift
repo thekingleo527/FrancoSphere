@@ -441,7 +441,7 @@ public class OperationalDataManager: ObservableObject {
     }
     
     // MARK: - NEW: Trend Analysis
-    
+
     /// Calculate trend for a metric over specified days
     public func calculateTrend(for metricName: String, days: Int) -> CoreTypes.TrendDirection {
         guard let history = metricsHistory[metricName] else {
@@ -462,14 +462,13 @@ public class OperationalDataManager: ObservableObject {
         let changePercent = ((avgSecond - avgFirst) / avgFirst) * 100
         
         if changePercent > 5 {
-            return .increasing
+            return .improving  // ✅ FIXED: Was .increasing
         } else if changePercent < -5 {
-            return .decreasing
+            return .declining  // ✅ FIXED: Was .decreasing
         } else {
             return .stable
         }
     }
-    
     /// Record metric value for trend analysis
     public func recordMetricValue(metricName: String, value: Double) {
         if metricsHistory[metricName] == nil {
