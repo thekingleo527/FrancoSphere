@@ -131,10 +131,8 @@ class InitializationViewModel: ObservableObject {
     private func initializeAppServices() async throws {
         await updateProgress(0.87, "Initializing weather service...")
         
-        // Initialize weather adapter
-        await MainActor.run {
-            _ = WeatherDataAdapter.shared
-        }
+        // Initialize weather adapter - no await needed for synchronous code
+        _ = WeatherDataAdapter.shared
         
         await updateProgress(0.89, "Starting telemetry...")
         
@@ -143,10 +141,8 @@ class InitializationViewModel: ObservableObject {
         
         await updateProgress(0.91, "Configuring dashboard sync...")
         
-        // Dashboard sync service auto-initializes
-        await MainActor.run {
-            _ = DashboardSyncService.shared
-        }
+        // Dashboard sync service auto-initializes - no await needed
+        _ = DashboardSyncService.shared
         
         await updateProgress(0.93, "Activating Nova AI...")
         
@@ -157,10 +153,8 @@ class InitializationViewModel: ObservableObject {
     }
     
     private func initializeNovaAI() async {
-        // NovaFeatureManager handles all AI initialization
-        await MainActor.run {
-            _ = NovaFeatureManager.shared
-        }
+        // NovaFeatureManager handles all AI initialization - no await needed
+        _ = NovaFeatureManager.shared
         
         // Initialize Nova Intelligence Engine
         _ = await NovaIntelligenceEngine.shared
@@ -177,8 +171,20 @@ class InitializationViewModel: ObservableObject {
         UserDefaults.standard.set(Date(), forKey: "LastInitializationDate")
         
         // Perform any data verification if needed
-        if databaseInitializer.dataStatus == .partial {
+        // Use pattern matching since DataStatus might not be Equatable
+        switch databaseInitializer.dataStatus {
+        case .partial:
             print("⚠️ Database has partial data - fallback mode available")
+        case .complete:
+            print("✅ Database has complete data")
+        case .empty:
+            print("⚠️ Database is empty - using fallback mode")
+        case .syncing:
+            print("⚠️ Database is still syncing")
+        case .error(let message):
+            print("❌ Database error: \(message)")
+        case .unknown:
+            print("❓ Database status unknown")
         }
         
         // Log successful initialization

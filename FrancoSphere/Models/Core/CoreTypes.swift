@@ -1613,29 +1613,29 @@ public typealias TaskID = CoreTypes.TaskID
 public typealias AssignmentID = CoreTypes.AssignmentID
 public typealias RoleID = CoreTypes.RoleID
 
-// Type aliases for all types
+// Type aliases for types that don't conflict
 public typealias UserRole = CoreTypes.UserRole
 public typealias NamedCoordinate = CoreTypes.NamedCoordinate
 public typealias WorkerProfile = CoreTypes.WorkerProfile
 public typealias ContextualTask = CoreTypes.ContextualTask
 // ✅ FIXED: Removed conflicting DashboardUpdate alias - use CoreTypes.DashboardUpdate directly
 public typealias ActionEvidence = CoreTypes.ActionEvidence
-public typealias BuildingMetrics = CoreTypes.BuildingMetrics
-public typealias MaintenanceTask = CoreTypes.MaintenanceTask
+// ❌ REMOVED: BuildingMetrics - conflicts with existing type
+// ❌ REMOVED: MaintenanceTask - conflicts with existing type
 public typealias BuildingType = CoreTypes.BuildingType
 public typealias AIScenarioType = CoreTypes.AIScenarioType
 public typealias AIScenario = CoreTypes.AIScenario
-public typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
-public typealias TaskProgress = CoreTypes.TaskProgress
+// ❌ REMOVED: FrancoWorkerAssignment - conflicts with existing type
+// ❌ REMOVED: TaskProgress - conflicts with existing type
 public typealias TrendDirection = CoreTypes.TrendDirection
-public typealias TaskCategory = CoreTypes.TaskCategory
-public typealias TaskUrgency = CoreTypes.TaskUrgency
+// ❌ REMOVED: TaskCategory - conflicts with existing type
+// ❌ REMOVED: TaskUrgency - conflicts with existing type
 public typealias TaskStatus = CoreTypes.TaskStatus
-public typealias WeatherCondition = CoreTypes.WeatherCondition
-public typealias InventoryItem = CoreTypes.InventoryItem
-public typealias InventoryCategory = CoreTypes.InventoryCategory
+// ❌ REMOVED: WeatherCondition - conflicts with existing type
+// ❌ REMOVED: InventoryItem - conflicts with existing type
+// ❌ REMOVED: InventoryCategory - conflicts with existing type
 public typealias RestockStatus = CoreTypes.RestockStatus
-public typealias ComplianceStatus = CoreTypes.ComplianceStatus
+// ❌ REMOVED: ComplianceStatus - conflicts with existing type
 public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
 public typealias DashboardSyncStatus = CoreTypes.DashboardSyncStatus
 public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
