@@ -12,6 +12,8 @@
 		2326C1EA2E3AAF330080F005 /* BuildingInventoryComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E92E3AAF330080F005 /* BuildingInventoryComponents.swift */; };
 		2326C1EC2E3AAFE90080F005 /* BuildingRoutineComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1EB2E3AAFE90080F005 /* BuildingRoutineComponents.swift */; };
 		2326C1EE2E3AB0D10080F005 /* BuildingTeamComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1ED2E3AB0D10080F005 /* BuildingTeamComponents.swift */; };
+		2326C1F02E3AB3D40080F005 /* BuildingHistoryComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1EF2E3AB3D40080F005 /* BuildingHistoryComponents.swift */; };
+		2326C1F22E3AB5840080F005 /* BuildingPhotoComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F12E3AB5840080F005 /* BuildingPhotoComponents.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -218,6 +220,8 @@
 		2326C1E92E3AAF330080F005 /* BuildingInventoryComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingInventoryComponents.swift; sourceTree = "<group>"; };
 		2326C1EB2E3AAFE90080F005 /* BuildingRoutineComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingRoutineComponents.swift; sourceTree = "<group>"; };
 		2326C1ED2E3AB0D10080F005 /* BuildingTeamComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingTeamComponents.swift; sourceTree = "<group>"; };
+		2326C1EF2E3AB3D40080F005 /* BuildingHistoryComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingHistoryComponents.swift; sourceTree = "<group>"; };
+		2326C1F12E3AB5840080F005 /* BuildingPhotoComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingPhotoComponents.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -430,6 +434,8 @@
 		2326C1E72E3AAB860080F005 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
+				2326C1F12E3AB5840080F005 /* BuildingPhotoComponents.swift */,
+				2326C1EF2E3AB3D40080F005 /* BuildingHistoryComponents.swift */,
 				2326C1ED2E3AB0D10080F005 /* BuildingTeamComponents.swift */,
 				2326C1EB2E3AAFE90080F005 /* BuildingRoutineComponents.swift */,
 				2326C1E92E3AAF330080F005 /* BuildingInventoryComponents.swift */,
@@ -1204,6 +1210,7 @@
 				23779FF32E39885600F4A10F /* CoreTypes.swift in Sources */,
 				23779FF52E39885600F4A10F /* NovaInteractionView.swift in Sources */,
 				23779FF62E39885600F4A10F /* GRDBManager.swift in Sources */,
+				2326C1F02E3AB3D40080F005 /* BuildingHistoryComponents.swift in Sources */,
 				23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */,
 				23779FF82E39885600F4A10F /* PortfolioOverviewView.swift in Sources */,
 				23779FF92E39885600F4A10F /* BuildingFeatureConfiguration.swift in Sources */,
@@ -1341,6 +1348,7 @@
 				2377A0722E39885600F4A10F /* GlassStatusBadge.swift in Sources */,
 				2377A0732E39885600F4A10F /* NovaIntelligenceEngine.swift in Sources */,
 				23A1B96A2E3993390011F091 /* TaskManager.swift in Sources */,
+				2326C1F22E3AB5840080F005 /* BuildingPhotoComponents.swift in Sources */,
 				2377A0742E39885600F4A10F /* HapticManager.swift in Sources */,
 				2377A0752E39885600F4A10F /* MaintenanceTaskView.swift in Sources */,
 				2377A0762E39885600F4A10F /* MapInteractionHint.swift in Sources */,
