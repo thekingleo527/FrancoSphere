@@ -6,6 +6,7 @@
 //  ✅ PRODUCTION READY: Real database operations only
 //  ✅ GRDB POWERED: Uses GRDBManager for all operations
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -153,22 +154,22 @@ actor TaskService {
         ])
         
         // Record completion details
-        try await recordTaskCompletion(taskId: taskId, evidence: evidence)
+        try await recordTaskCompletion(taskId: taskId, evidence: evidence, workerId: task.assignedWorkerId)
         
         // Broadcast update
         if let workerId = task.assignedWorkerId {
             let update = CoreTypes.DashboardUpdate(
                 source: CoreTypes.DashboardUpdate.Source.worker,
                 type: CoreTypes.DashboardUpdate.UpdateType.taskCompleted,
-                buildingId: task.buildingId,
+                buildingId: task.buildingId ?? "",  // ✅ FIXED: Provide default empty string
                 workerId: workerId,
                 data: [
                     "taskId": taskId,
                     "taskTitle": task.title,
                     "completionTime": ISO8601DateFormatter().string(from: Date()),
-                    "evidenceType": evidence.evidenceType.rawValue,
+                    "evidenceDescription": evidence.description,  // ✅ FIXED: Use description instead of non-existent evidenceType
                     "photoCount": String(evidence.photoURLs.count),
-                    "hasNotes": String(!evidence.notes.isEmpty)
+                    "hasPhotos": String(!evidence.photoURLs.isEmpty)  // ✅ FIXED: Check photos instead of non-existent notes
                 ]
             )
             
@@ -202,15 +203,17 @@ actor TaskService {
         ])
         
         // Broadcast creation
+        // ✅ FIXED: Use taskStarted instead of non-existent taskCreated
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.taskCreated,
-            buildingId: task.buildingId,
-            workerId: task.assignedWorkerId,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskStarted,  // ✅ Changed from taskCreated
+            buildingId: task.buildingId ?? "",  // ✅ FIXED: Provide default empty string
+            workerId: task.assignedWorkerId ?? "",  // ✅ FIXED: Provide default empty string
             data: [
                 "taskId": taskId,
                 "taskTitle": task.title,
-                "category": task.category?.rawValue ?? "maintenance"
+                "category": task.category?.rawValue ?? "maintenance",
+                "action": "created"  // ✅ Added to indicate this is a creation
             ]
         )
         
@@ -253,8 +256,8 @@ actor TaskService {
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
             type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,
-            buildingId: task.buildingId,
-            workerId: task.assignedWorkerId,
+            buildingId: task.buildingId ?? "",  // ✅ FIXED: Provide default empty string
+            workerId: task.assignedWorkerId ?? "",  // ✅ FIXED: Provide default empty string
             data: ["taskId": task.id, "taskTitle": task.title]
         )
         
@@ -269,12 +272,17 @@ actor TaskService {
         try await grdbManager.execute("DELETE FROM routine_tasks WHERE id = ?", [taskId])
         
         // Broadcast deletion
+        // ✅ FIXED: Use taskUpdated with action instead of non-existent taskDeleted
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.taskDeleted,
-            buildingId: task.buildingId,
-            workerId: task.assignedWorkerId,
-            data: ["taskId": taskId, "taskTitle": task.title]
+            type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,  // ✅ Changed from taskDeleted
+            buildingId: task.buildingId ?? "",  // ✅ FIXED: Provide default empty string
+            workerId: task.assignedWorkerId ?? "",  // ✅ FIXED: Provide default empty string
+            data: [
+                "taskId": taskId,
+                "taskTitle": task.title,
+                "action": "deleted"  // ✅ Added to indicate deletion
+            ]
         )
         
         await DashboardSyncService.shared.broadcastAdminUpdate(update)
@@ -514,6 +522,7 @@ actor TaskService {
         // Extract priority (fallback to urgency if not set)
         let priority = (row["priority"] as? String).flatMap(TaskUrgency.init(rawValue:)) ?? urgency
         
+        // ✅ FIXED: Removed assignedWorkerName - not part of ContextualTask constructor
         let task = ContextualTask(
             id: String(id),
             title: title,
@@ -526,9 +535,8 @@ actor TaskService {
             building: building,
             worker: worker,
             buildingId: building?.id ?? (row["buildingId"] as? String),
-            priority: priority,
             assignedWorkerId: worker?.id ?? (row["workerId"] as? String),
-            assignedWorkerName: worker?.name ?? (row["worker_name"] as? String)
+            priority: priority
         )
         
         return task
@@ -539,9 +547,10 @@ actor TaskService {
         return ISO8601DateFormatter().date(from: dateString)
     }
     
-    private func recordTaskCompletion(taskId: String, evidence: ActionEvidence) async throws {
+    private func recordTaskCompletion(taskId: String, evidence: ActionEvidence, workerId: String?) async throws {
         let completionId = UUID().uuidString
         
+        // ✅ FIXED: Use workerId parameter instead of non-existent evidence.workerId
         try await grdbManager.execute("""
             INSERT INTO task_completions
             (id, task_id, worker_id, completion_time, notes, created_at)
@@ -549,9 +558,9 @@ actor TaskService {
         """, [
             completionId,
             taskId,
-            evidence.workerId ?? "",
+            workerId ?? "",  // ✅ Use the workerId parameter
             ISO8601DateFormatter().string(from: Date()),
-            evidence.notes,
+            evidence.description,  // ✅ FIXED: Use description instead of non-existent notes
             ISO8601DateFormatter().string(from: Date())
         ])
         
@@ -565,7 +574,7 @@ actor TaskService {
                 UUID().uuidString,
                 completionId,
                 taskId,
-                evidence.workerId ?? "",
+                workerId ?? "",  // ✅ Use the workerId parameter
                 photoURL.path,
                 ISO8601DateFormatter().string(from: Date())
             ])
@@ -675,6 +684,7 @@ extension TaskService {
             throw TaskServiceError.templateNotFound
         }
         
+        // ✅ FIXED: Correct argument order - assignedWorkerId before priority
         let task = ContextualTask(
             id: UUID().uuidString,
             title: template.name,
@@ -687,10 +697,32 @@ extension TaskService {
             building: nil,
             worker: nil,
             buildingId: buildingId,
-            priority: template.defaultUrgency,
-            assignedWorkerId: workerId
+            assignedWorkerId: workerId,  // ✅ Moved before priority
+            priority: template.defaultUrgency
         )
         
         try await createTask(task)
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES
+/*
+ ✅ FIXED Lines 163, 208, 209, 256, 257, 275, 276: Optional String unwrapping
+    - Added default empty string "" for optional buildingId and workerId values
+ 
+ ✅ FIXED Lines 169, 171, 552, 554, 568: ActionEvidence property access
+    - ActionEvidence doesn't have evidenceType, notes, or workerId properties
+    - Used description instead of notes
+    - Used photoURLs.isEmpty check instead of notes check
+    - Added workerId as parameter to recordTaskCompletion
+ 
+ ✅ FIXED Lines 207, 274: Missing UpdateType enum cases
+    - Changed taskCreated → taskStarted (with action: "created")
+    - Changed taskDeleted → taskUpdated (with action: "deleted")
+ 
+ ✅ FIXED Line 531: Extra argument in ContextualTask constructor
+    - Removed assignedWorkerName which is not a valid parameter
+ 
+ ✅ FIXED Line 691: Argument order in ContextualTask constructor
+    - Moved assignedWorkerId before priority to match constructor signature
+ */

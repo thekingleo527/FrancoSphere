@@ -619,7 +619,9 @@ class DailyOpsReset: ObservableObject {
     private func generateTasksFromTemplates(for date: Date) async throws {
         print("📅 Generating tasks from templates for \(date.formatted(date: .abbreviated, time: .omitted))...")
         
-        let generated = try await GRDBManager.shared.database.write { db -> Int in
+        let generated = try await GRDBManager.shared.database.write { [weak self] db -> Int in
+            guard let self = self else { return 0 }
+            
             // Read all active templates
             let templates = try Row.fetchAll(db, sql: """
                 SELECT * FROM routine_templates 
@@ -631,7 +633,7 @@ class DailyOpsReset: ObservableObject {
             var skipped = 0
             
             for template in templates {
-                if shouldGenerateTask(template: template, date: date) {
+                if DailyOpsReset.shouldGenerateTask(template: template, date: date) {
                     // Check if task already exists for today
                     let templateId = template["id"] ?? ""
                     
@@ -697,7 +699,7 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    private nonisolated func shouldGenerateTask(template: Row, date: Date) -> Bool {
+    private static func shouldGenerateTask(template: Row, date: Date) -> Bool {
         let frequency: String = template["frequency"] ?? "daily"
         let frequencyLower = frequency.lowercased()
         let calendar = Calendar.current
@@ -752,7 +754,7 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    private nonisolated func getDayAbbreviation(_ weekday: Int) -> String {
+    private static func getDayAbbreviation(_ weekday: Int) -> String {
         switch weekday {
         case 1: return "sun"
         case 2: return "mon"

@@ -1455,7 +1455,7 @@ public class OperationalDataManager: ObservableObject {
     }
     
     /// Get current data integrity information
-    public func getDataIntegrityInfo() -> DataIntegrityInfo {
+    private func getDataIntegrityInfo() -> DataIntegrityInfo {
         return DataIntegrityInfo(
             version: Self.dataVersion,
             taskCount: realWorldTasks.count,
