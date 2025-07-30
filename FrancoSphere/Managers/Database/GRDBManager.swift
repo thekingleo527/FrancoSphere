@@ -1,3 +1,4 @@
+
 //  GRDBManager.swift
 //  FrancoSphere v6.0
 //
@@ -509,8 +510,13 @@ public final class GRDBManager {
     }
 
     public func inTransaction<T>(_ block: @escaping (Database) throws -> T) async throws -> T {
-        return try await dbPool.writeInTransaction { db in
-            return try block(db)
+        return try await dbPool.write { db in
+            var result: T?
+            try db.inTransaction {
+                result = try block(db)
+                return .commit
+            }
+            return result!
         }
     }
     
@@ -531,17 +537,10 @@ public final class GRDBManager {
     
     public func resetDatabase() async throws {
         try await dbPool.write { db in
-            // Drop all tables
-            let tables = try String.fetchAll(db, sql: """
-                SELECT name FROM sqlite_master 
-                WHERE type='table' AND name NOT LIKE 'sqlite_%'
-            """)
-            
+            let tables = try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
             for table in tables {
                 try db.execute(sql: "DROP TABLE IF EXISTS \(table)")
             }
-            
-            // Recreate all tables
             try self.createTables(db)
         }
     }
@@ -576,7 +575,6 @@ public final class GRDBManager {
                 id: Int(idString) ?? 0,
                 name: row["name"] as? String ?? "",
                 email: email,
-                password: "",
                 role: row["role"] as? String ?? "worker",
                 workerId: idString,
                 displayName: row["display_name"] as? String,
@@ -608,7 +606,7 @@ public final class GRDBManager {
         
         let idString = row["id"] as? String ?? "0"
         return AuthenticatedUser(
-            id: Int(idString) ?? 0, name: row["name"] as? String ?? "", email: row["email"] as? String ?? "", password: "",
+            id: Int(idString) ?? 0, name: row["name"] as? String ?? "", email: row["email"] as? String ?? "",
             role: row["role"] as? String ?? "worker", workerId: idString, displayName: row["display_name"] as? String,
             timezone: row["timezone"] as? String ?? "America/New_York"
         )
@@ -640,7 +638,7 @@ public final class GRDBManager {
     private func recordLoginAttempt(email: String, success: Bool, reason: String?) async {
         let workerRows = try? await query("SELECT id FROM workers WHERE email = ?", [email])
         let workerId = workerRows?.first?["id"] as? String
-        try? await execute("INSERT INTO login_history (worker_id, email, login_time, success, failure_reason, ip_address, device_info) VALUES (?, ?, datetime('now'), ?, ?, ?, ?)", [workerId, email, success ? 1 : 0, reason, "127.0.0.1", "iOS App"])
+        try? await execute("INSERT INTO login_history (worker_id, email, login_time, success, failure_reason, ip_address, device_info) VALUES (?, ?, datetime('now'), ?, ?, ?, ?)", [workerId as Any, email, success ? 1 : 0, reason as Any, "127.0.0.1", "iOS App"])
     }
     
     // MARK: - Real-time Observation
@@ -672,7 +670,7 @@ public final class GRDBManager {
             dueDate: (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             category: (row["category"] as? String).flatMap(CoreTypes.TaskCategory.init(rawValue:)),
             urgency: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)),
-            building: (row["buildingName"] as? String).map { CoreTypes.NamedCoordinate(id: row["buildingId"], name: $0, latitude: 0, longitude: 0) },
+            building: (row["buildingName"] as? String).map { CoreTypes.NamedCoordinate(id: row["buildingId"], name: $0, address: "", latitude: 0, longitude: 0) },
             worker: (row["workerName"] as? String).map { CoreTypes.WorkerProfile(id: row["workerId"], name: $0, email: "", role: .worker) },
             buildingId: row["buildingId"], assignedWorkerId: row["workerId"],
             priority: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:))
