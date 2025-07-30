@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		2326C1E52E3AA63D0080F005 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E42E3AA63D0080F005 /* ImagePicker.swift */; };
 		2326C1E82E3AAB860080F005 /* BuildingDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E62E3AAB860080F005 /* BuildingDetailComponents.swift */; };
+		2326C1EA2E3AAF330080F005 /* BuildingInventoryComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E92E3AAF330080F005 /* BuildingInventoryComponents.swift */; };
+		2326C1EC2E3AAFE90080F005 /* BuildingRoutineComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1EB2E3AAFE90080F005 /* BuildingRoutineComponents.swift */; };
+		2326C1EE2E3AB0D10080F005 /* BuildingTeamComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1ED2E3AB0D10080F005 /* BuildingTeamComponents.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -212,6 +215,9 @@
 /* Begin PBXFileReference section */
 		2326C1E42E3AA63D0080F005 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
 		2326C1E62E3AAB860080F005 /* BuildingDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailComponents.swift; sourceTree = "<group>"; };
+		2326C1E92E3AAF330080F005 /* BuildingInventoryComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingInventoryComponents.swift; sourceTree = "<group>"; };
+		2326C1EB2E3AAFE90080F005 /* BuildingRoutineComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingRoutineComponents.swift; sourceTree = "<group>"; };
+		2326C1ED2E3AB0D10080F005 /* BuildingTeamComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingTeamComponents.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -424,6 +430,9 @@
 		2326C1E72E3AAB860080F005 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
+				2326C1ED2E3AB0D10080F005 /* BuildingTeamComponents.swift */,
+				2326C1EB2E3AAFE90080F005 /* BuildingRoutineComponents.swift */,
+				2326C1E92E3AAF330080F005 /* BuildingInventoryComponents.swift */,
 				2326C1E62E3AAB860080F005 /* BuildingDetailComponents.swift */,
 			);
 			path = Supporting;
@@ -1290,7 +1299,9 @@
 				2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */,
 				2377A0472E39885600F4A10F /* GlassButtonModifier.swift in Sources */,
 				2377A04A2E39885600F4A10F /* AssignedBuildingsView.swift in Sources */,
+				2326C1EA2E3AAF330080F005 /* BuildingInventoryComponents.swift in Sources */,
 				2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */,
+				2326C1EE2E3AB0D10080F005 /* BuildingTeamComponents.swift in Sources */,
 				2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */,
 				2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */,
 				2377A04F2E39885600F4A10F /* TimelineProgressBar.swift in Sources */,
@@ -1303,6 +1314,7 @@
 				2377A0562E39885600F4A10F /* PressableGlassCard.swift in Sources */,
 				2377A0572E39885600F4A10F /* IntelligencePreviewPanel.swift in Sources */,
 				2377A0582E39885600F4A10F /* AssetImageDebugger.swift in Sources */,
+				2326C1EC2E3AAFE90080F005 /* BuildingRoutineComponents.swift in Sources */,
 				23A1B9862E3994540011F091 /* TelemetryService.swift in Sources */,
 				23A1B9872E3994540011F091 /* TimeBasedTaskFilter.swift in Sources */,
 				23A1B9882E3994540011F091 /* DailyOpsReset.swift in Sources */,
