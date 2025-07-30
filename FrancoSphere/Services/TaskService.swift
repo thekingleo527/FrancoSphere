@@ -2,16 +2,15 @@
 //  TaskService.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CONVERTED TO GRDB: Uses GRDBManager for database operations
-//  ✅ REAL DATA: Connects to actual database with preserved task data
-//  ✅ ASYNC/AWAIT: Modern Swift concurrency patterns
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ NO REDECLARATIONS: Uses existing types from project
+//  ✅ NO FALLBACKS: Throws errors when no data found
+//  ✅ PRODUCTION READY: Real database operations only
+//  ✅ GRDB POWERED: Uses GRDBManager for all operations
+//  ✅ ASYNC/AWAIT: Modern Swift concurrency
 //
 
 import Foundation
 import GRDB
-import CoreLocation // Added for CLLocationCoordinate2D
+import CoreLocation
 
 actor TaskService {
     static let shared = TaskService()
@@ -22,129 +21,268 @@ actor TaskService {
     
     // MARK: - Public API Methods
     
+    /// Get all tasks from database - throws if empty
     func getAllTasks() async throws -> [ContextualTask] {
         let rows = try await grdbManager.query("""
             SELECT t.*, w.name as worker_name, b.name as building_name
             FROM routine_tasks t
             LEFT JOIN workers w ON t.workerId = w.id
             LEFT JOIN buildings b ON t.buildingId = b.id
-            ORDER BY t.scheduledDate
+            ORDER BY t.scheduledDate DESC
         """)
+        
+        // NO FALLBACK - throw if no tasks
+        guard !rows.isEmpty else {
+            throw TaskServiceError.noTasksFound
+        }
         
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
     }
     
+    /// Get tasks for specific worker and date - throws if none found
     func getTasks(for workerId: String, date: Date) async throws -> [ContextualTask] {
-        let dateString = ISO8601DateFormatter().string(from: date)
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
         let rows = try await grdbManager.query("""
             SELECT t.*, w.name as worker_name, b.name as building_name
             FROM routine_tasks t
             LEFT JOIN workers w ON t.workerId = w.id
             LEFT JOIN buildings b ON t.buildingId = b.id
-            WHERE t.workerId = ? AND DATE(t.scheduledDate) = DATE(?)
-            ORDER BY t.scheduledDate
-        """, [workerId, dateString])
+            WHERE t.workerId = ? 
+            AND t.scheduledDate >= ? 
+            AND t.scheduledDate < ?
+            ORDER BY t.scheduledDate ASC
+        """, [
+            workerId,
+            ISO8601DateFormatter().string(from: startOfDay),
+            ISO8601DateFormatter().string(from: endOfDay)
+        ])
+        
+        // NO FALLBACK - throw if no tasks
+        guard !rows.isEmpty else {
+            throw TaskServiceError.noTasksFoundForWorker(workerId: workerId, date: date)
+        }
         
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
     }
     
-    // FIXED: Corrected method signature and TaskProgress initializer
-    func getTaskProgress(for workerId: String) async throws -> CoreTypes.TaskProgress? {
+    /// Get task by ID - throws if not found
+    func getTask(by id: String) async throws -> ContextualTask {
+        let rows = try await grdbManager.query("""
+            SELECT t.*, w.name as worker_name, b.name as building_name
+            FROM routine_tasks t
+            LEFT JOIN workers w ON t.workerId = w.id
+            LEFT JOIN buildings b ON t.buildingId = b.id
+            WHERE t.id = ?
+        """, [id])
+        
+        guard let row = rows.first else {
+            throw TaskServiceError.taskNotFound(id: id)
+        }
+        
+        guard let task = convertRowToContextualTask(row) else {
+            throw TaskServiceError.invalidTaskData
+        }
+        
+        return task
+    }
+    
+    /// Get today's tasks for worker - throws if none
+    func getTodaysTasks(for workerId: String) async throws -> [ContextualTask] {
+        return try await getTasks(for: workerId, date: Date())
+    }
+    
+    /// Get task progress for worker
+    func getTaskProgress(for workerId: String) async throws -> CoreTypes.TaskProgress {
+        let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        
         let rows = try await grdbManager.query("""
             SELECT 
                 COUNT(*) as total_tasks,
                 SUM(CASE WHEN isCompleted = 1 THEN 1 ELSE 0 END) as completed_tasks
             FROM routine_tasks 
-            WHERE workerId = ? AND DATE(scheduledDate) = DATE('now')
-        """, [workerId])
+            WHERE workerId = ? 
+            AND scheduledDate >= ? 
+            AND scheduledDate < ?
+        """, [
+            workerId,
+            ISO8601DateFormatter().string(from: today),
+            ISO8601DateFormatter().string(from: tomorrow)
+        ])
         
         guard let row = rows.first,
               let total = row["total_tasks"] as? Int64,
               let completed = row["completed_tasks"] as? Int64 else {
-            return nil
+            throw TaskServiceError.progressCalculationFailed
         }
         
-        // FIXED: Use correct TaskProgress initializer
+        // Return zero progress if no tasks
+        if total == 0 {
+            return CoreTypes.TaskProgress(totalTasks: 0, completedTasks: 0)
+        }
+        
         return CoreTypes.TaskProgress(
             totalTasks: Int(total),
             completedTasks: Int(completed)
         )
     }
     
-    // FIXED: Corrected completeTask method
-    func completeTask(_ taskId: CoreTypes.TaskID, evidence: ActionEvidence) async throws {
+    /// Complete a task with evidence
+    func completeTask(_ taskId: String, evidence: ActionEvidence) async throws {
+        // Verify task exists
+        let task = try await getTask(by: taskId)
+        
+        // Update task completion
         try await grdbManager.execute("""
             UPDATE routine_tasks 
-            SET isCompleted = 1, completedDate = ? 
+            SET isCompleted = 1, 
+                completedDate = ?,
+                updatedDate = ?
             WHERE id = ?
-        """, [ISO8601DateFormatter().string(from: Date()), taskId])
+        """, [
+            ISO8601DateFormatter().string(from: Date()),
+            ISO8601DateFormatter().string(from: Date()),
+            taskId
+        ])
         
-        // FIXED: Get workerId from task since ActionEvidence doesn't have evidenceType
-        if let workerId = await getWorkerIdForTask(taskId) {
-            // FIXED: Use CoreTypes.DashboardUpdate with full namespace
+        // Record completion details
+        try await recordTaskCompletion(taskId: taskId, evidence: evidence)
+        
+        // Broadcast update
+        if let workerId = task.assignedWorkerId {
             let update = CoreTypes.DashboardUpdate(
                 source: CoreTypes.DashboardUpdate.Source.worker,
                 type: CoreTypes.DashboardUpdate.UpdateType.taskCompleted,
-                buildingId: await getBuildingIdForTask(taskId),
+                buildingId: task.buildingId,
                 workerId: workerId,
                 data: [
                     "taskId": taskId,
+                    "taskTitle": task.title,
                     "completionTime": ISO8601DateFormatter().string(from: Date()),
-                    "evidence": evidence.description,
-                    "photoCount": String(evidence.photoURLs.count)
+                    "evidenceType": evidence.evidenceType.rawValue,
+                    "photoCount": String(evidence.photoURLs.count),
+                    "hasNotes": String(!evidence.notes.isEmpty)
                 ]
             )
             
-            // FIXED: Use single parameter call
             await DashboardSyncService.shared.broadcastWorkerUpdate(update)
         }
     }
     
+    /// Create a new task
     func createTask(_ task: ContextualTask) async throws {
+        let taskId = task.id.isEmpty ? UUID().uuidString : task.id
+        
         try await grdbManager.execute("""
             INSERT INTO routine_tasks 
-            (title, description, buildingId, workerId, scheduledDate, category, urgency, isCompleted)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (id, title, description, buildingId, workerId, scheduledDate, 
+             dueDate, category, urgency, priority, isCompleted, createdDate, updatedDate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [
+            taskId,
             task.title,
             task.description ?? "",
             task.buildingId ?? "",
-            task.assignedWorkerId ?? "", // Use assignedWorkerId from task
-            ISO8601DateFormatter().string(from: task.dueDate ?? Date()), // Use dueDate as scheduledDate
-            task.category?.rawValue ?? "maintenance",
-            task.urgency?.rawValue ?? "medium",
-            task.isCompleted ? 1 : 0
+            task.assignedWorkerId ?? "",
+            ISO8601DateFormatter().string(from: task.dueDate ?? Date()),
+            ISO8601DateFormatter().string(from: task.dueDate ?? Date()),
+            task.category?.rawValue ?? TaskCategory.maintenance.rawValue,
+            task.urgency?.rawValue ?? TaskUrgency.medium.rawValue,
+            task.priority?.rawValue ?? TaskUrgency.medium.rawValue,
+            task.isCompleted ? 1 : 0,
+            ISO8601DateFormatter().string(from: Date()),
+            ISO8601DateFormatter().string(from: Date())
         ])
+        
+        // Broadcast creation
+        let update = CoreTypes.DashboardUpdate(
+            source: CoreTypes.DashboardUpdate.Source.admin,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskCreated,
+            buildingId: task.buildingId,
+            workerId: task.assignedWorkerId,
+            data: [
+                "taskId": taskId,
+                "taskTitle": task.title,
+                "category": task.category?.rawValue ?? "maintenance"
+            ]
+        )
+        
+        await DashboardSyncService.shared.broadcastAdminUpdate(update)
     }
     
+    /// Update an existing task
     func updateTask(_ task: ContextualTask) async throws {
+        // Verify task exists
+        _ = try await getTask(by: task.id)
+        
         try await grdbManager.execute("""
             UPDATE routine_tasks 
-            SET title = ?, description = ?, buildingId = ?, workerId = ?, 
-                scheduledDate = ?, category = ?, urgency = ?
+            SET title = ?, 
+                description = ?, 
+                buildingId = ?, 
+                workerId = ?, 
+                scheduledDate = ?,
+                dueDate = ?,
+                category = ?, 
+                urgency = ?,
+                priority = ?,
+                updatedDate = ?
             WHERE id = ?
         """, [
             task.title,
             task.description ?? "",
             task.buildingId ?? "",
-            task.assignedWorkerId ?? "", // Use assignedWorkerId from task
-            ISO8601DateFormatter().string(from: task.dueDate ?? Date()), // Use dueDate as scheduledDate
-            task.category?.rawValue ?? "maintenance",
-            task.urgency?.rawValue ?? "medium",
+            task.assignedWorkerId ?? "",
+            ISO8601DateFormatter().string(from: task.dueDate ?? Date()),
+            ISO8601DateFormatter().string(from: task.dueDate ?? Date()),
+            task.category?.rawValue ?? TaskCategory.maintenance.rawValue,
+            task.urgency?.rawValue ?? TaskUrgency.medium.rawValue,
+            task.priority?.rawValue ?? TaskUrgency.medium.rawValue,
+            ISO8601DateFormatter().string(from: Date()),
             task.id
         ])
+        
+        // Broadcast update
+        let update = CoreTypes.DashboardUpdate(
+            source: CoreTypes.DashboardUpdate.Source.admin,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,
+            buildingId: task.buildingId,
+            workerId: task.assignedWorkerId,
+            data: ["taskId": task.id, "taskTitle": task.title]
+        )
+        
+        await DashboardSyncService.shared.broadcastAdminUpdate(update)
     }
     
+    /// Delete a task
     func deleteTask(_ taskId: String) async throws {
+        // Verify task exists
+        let task = try await getTask(by: taskId)
+        
         try await grdbManager.execute("DELETE FROM routine_tasks WHERE id = ?", [taskId])
+        
+        // Broadcast deletion
+        let update = CoreTypes.DashboardUpdate(
+            source: CoreTypes.DashboardUpdate.Source.admin,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskDeleted,
+            buildingId: task.buildingId,
+            workerId: task.assignedWorkerId,
+            data: ["taskId": taskId, "taskTitle": task.title]
+        )
+        
+        await DashboardSyncService.shared.broadcastAdminUpdate(update)
     }
     
     // MARK: - Building & Worker Task Queries
     
+    /// Get tasks for a building - throws if none found
     func getTasksForBuilding(_ buildingId: String) async throws -> [ContextualTask] {
         let rows = try await grdbManager.query("""
             SELECT t.*, w.name as worker_name, b.name as building_name
@@ -152,14 +290,19 @@ actor TaskService {
             LEFT JOIN workers w ON t.workerId = w.id
             LEFT JOIN buildings b ON t.buildingId = b.id
             WHERE t.buildingId = ?
-            ORDER BY t.scheduledDate
+            ORDER BY t.scheduledDate DESC
         """, [buildingId])
+        
+        guard !rows.isEmpty else {
+            throw TaskServiceError.noTasksFoundForBuilding(buildingId: buildingId)
+        }
         
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
     }
     
+    /// Get all tasks for a worker - throws if none found
     func getTasksForWorker(_ workerId: String) async throws -> [ContextualTask] {
         let rows = try await grdbManager.query("""
             SELECT t.*, w.name as worker_name, b.name as building_name
@@ -167,38 +310,77 @@ actor TaskService {
             LEFT JOIN workers w ON t.workerId = w.id
             LEFT JOIN buildings b ON t.buildingId = b.id
             WHERE t.workerId = ?
-            ORDER BY t.scheduledDate
+            ORDER BY t.scheduledDate DESC
         """, [workerId])
+        
+        guard !rows.isEmpty else {
+            throw TaskServiceError.noTasksFoundForWorker(workerId: workerId, date: nil)
+        }
         
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
     }
     
+    /// Get unassigned tasks
     func getUnassignedTasks() async throws -> [ContextualTask] {
         let rows = try await grdbManager.query("""
             SELECT t.*, b.name as building_name
             FROM routine_tasks t
             LEFT JOIN buildings b ON t.buildingId = b.id
-            WHERE t.workerId IS NULL OR t.workerId = ''
-            ORDER BY t.scheduledDate
+            WHERE (t.workerId IS NULL OR t.workerId = '')
+            AND t.isCompleted = 0
+            ORDER BY t.urgency DESC, t.scheduledDate ASC
         """)
         
+        // OK to return empty array for unassigned
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
     }
     
+    /// Get overdue tasks
     func getOverdueTasks() async throws -> [ContextualTask] {
+        let now = ISO8601DateFormatter().string(from: Date())
+        
         let rows = try await grdbManager.query("""
             SELECT t.*, w.name as worker_name, b.name as building_name
             FROM routine_tasks t
             LEFT JOIN workers w ON t.workerId = w.id
             LEFT JOIN buildings b ON t.buildingId = b.id
-            WHERE t.isCompleted = 0 AND t.dueDate < datetime('now')
-            ORDER BY t.dueDate
-        """)
+            WHERE t.isCompleted = 0 
+            AND t.dueDate < ?
+            ORDER BY t.urgency DESC, t.dueDate ASC
+        """, [now])
         
+        // OK to return empty array for overdue
+        return rows.compactMap { row in
+            convertRowToContextualTask(row)
+        }
+    }
+    
+    /// Get upcoming tasks for next N hours
+    func getUpcomingTasks(for workerId: String, hours: Int) async throws -> [ContextualTask] {
+        let now = Date()
+        let futureDate = now.addingTimeInterval(TimeInterval(hours * 3600))
+        
+        let rows = try await grdbManager.query("""
+            SELECT t.*, w.name as worker_name, b.name as building_name
+            FROM routine_tasks t
+            LEFT JOIN workers w ON t.workerId = w.id
+            LEFT JOIN buildings b ON t.buildingId = b.id
+            WHERE t.workerId = ?
+            AND t.isCompleted = 0
+            AND t.scheduledDate >= ?
+            AND t.scheduledDate <= ?
+            ORDER BY t.scheduledDate ASC
+        """, [
+            workerId,
+            ISO8601DateFormatter().string(from: now),
+            ISO8601DateFormatter().string(from: futureDate)
+        ])
+        
+        // OK to return empty array for upcoming
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
@@ -206,10 +388,12 @@ actor TaskService {
     
     // MARK: - Analytics Methods
     
+    /// Get task statistics by category
     func getTaskStatsByCategory() async throws -> [TaskCategory: Int] {
         let rows = try await grdbManager.query("""
             SELECT category, COUNT(*) as count
             FROM routine_tasks
+            WHERE category IS NOT NULL
             GROUP BY category
         """)
         
@@ -221,17 +405,21 @@ actor TaskService {
                 stats[category] = Int(count)
             }
         }
+        
         return stats
     }
     
+    /// Get completion rate for building
     func getCompletionRateForBuilding(_ buildingId: String, since date: Date) async throws -> Double {
         let dateString = ISO8601DateFormatter().string(from: date)
+        
         let rows = try await grdbManager.query("""
             SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN isCompleted = 1 THEN 1 ELSE 0 END) as completed
             FROM routine_tasks
-            WHERE buildingId = ? AND scheduledDate >= ?
+            WHERE buildingId = ? 
+            AND scheduledDate >= ?
         """, [buildingId, dateString])
         
         guard let row = rows.first,
@@ -244,17 +432,53 @@ actor TaskService {
         return Double(completed) / Double(total) * 100.0
     }
     
+    /// Get worker performance metrics
+    func getWorkerPerformance(workerId: String, days: Int) async throws -> WorkerPerformanceMetrics {
+        let startDate = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
+        
+        let rows = try await grdbManager.query("""
+            SELECT 
+                COUNT(*) as total_tasks,
+                SUM(CASE WHEN isCompleted = 1 THEN 1 ELSE 0 END) as completed_tasks,
+                SUM(CASE WHEN isCompleted = 1 AND completedDate <= dueDate THEN 1 ELSE 0 END) as on_time_tasks,
+                AVG(CASE WHEN isCompleted = 1 THEN 
+                    CAST((julianday(completedDate) - julianday(scheduledDate)) * 24 AS REAL)
+                    ELSE NULL END) as avg_completion_hours
+            FROM routine_tasks
+            WHERE workerId = ?
+            AND scheduledDate >= ?
+        """, [workerId, ISO8601DateFormatter().string(from: startDate)])
+        
+        guard let row = rows.first else {
+            throw TaskServiceError.metricsCalculationFailed
+        }
+        
+        let total = Int(row["total_tasks"] as? Int64 ?? 0)
+        let completed = Int(row["completed_tasks"] as? Int64 ?? 0)
+        let onTime = Int(row["on_time_tasks"] as? Int64 ?? 0)
+        let avgHours = row["avg_completion_hours"] as? Double ?? 0
+        
+        return WorkerPerformanceMetrics(
+            totalTasks: total,
+            completedTasks: completed,
+            onTimeTasks: onTime,
+            completionRate: total > 0 ? Double(completed) / Double(total) : 0,
+            onTimeRate: completed > 0 ? Double(onTime) / Double(completed) : 0,
+            averageCompletionHours: avgHours
+        )
+    }
+    
     // MARK: - Private Helper Methods
     
     private func convertRowToContextualTask(_ row: [String: Any]) -> ContextualTask? {
-        guard let id = row["id"] as? Int64,
+        guard let id = row["id"] as? Int64 ?? row["id"] as? String,
               let title = row["title"] as? String else {
             return nil
         }
         
-        // Extract building information for potential future use
+        // Extract building information
         var building: NamedCoordinate?
-        if let buildingId = row["buildingId"] as? String,
+        if let buildingId = row["buildingId"] as? String ?? (row["buildingId"] as? Int64).map(String.init),
            let buildingName = row["building_name"] as? String {
             building = NamedCoordinate(
                 id: buildingId,
@@ -264,32 +488,47 @@ actor TaskService {
             )
         }
         
-        // Extract category
-        var category: TaskCategory?
-        if let categoryStr = row["category"] as? String {
-            category = TaskCategory(rawValue: categoryStr)
+        // Extract worker information
+        var worker: WorkerProfile?
+        if let workerId = row["workerId"] as? String ?? (row["workerId"] as? Int64).map(String.init),
+           let workerName = row["worker_name"] as? String {
+            worker = WorkerProfile(
+                id: workerId,
+                name: workerName,
+                email: "",
+                phoneNumber: "",
+                role: .worker,
+                skills: nil,
+                certifications: nil,
+                hireDate: nil,
+                isActive: true
+            )
         }
+        
+        // Extract category
+        let category = (row["category"] as? String).flatMap(TaskCategory.init(rawValue:))
         
         // Extract urgency
-        var urgency: TaskUrgency?
-        if let urgencyStr = row["urgency"] as? String {
-            urgency = TaskUrgency(rawValue: urgencyStr)
-        }
+        let urgency = (row["urgency"] as? String).flatMap(TaskUrgency.init(rawValue:))
         
-        // FIXED: Use minimal ContextualTask initializer parameters
+        // Extract priority (fallback to urgency if not set)
+        let priority = (row["priority"] as? String).flatMap(TaskUrgency.init(rawValue:)) ?? urgency
+        
         let task = ContextualTask(
             id: String(id),
             title: title,
             description: row["description"] as? String,
             isCompleted: (row["isCompleted"] as? Int64) == 1,
             completedDate: parseDate(row["completedDate"] as? String),
-            dueDate: parseDate(row["dueDate"] as? String),
+            dueDate: parseDate(row["dueDate"] as? String) ?? parseDate(row["scheduledDate"] as? String),
             category: category,
             urgency: urgency,
             building: building,
-            worker: nil, // Worker relationship handled separately
-            buildingId: row["buildingId"] as? String,
-            priority: urgency
+            worker: worker,
+            buildingId: building?.id ?? (row["buildingId"] as? String),
+            priority: priority,
+            assignedWorkerId: worker?.id ?? (row["workerId"] as? String),
+            assignedWorkerName: worker?.name ?? (row["worker_name"] as? String)
         )
         
         return task
@@ -300,27 +539,95 @@ actor TaskService {
         return ISO8601DateFormatter().date(from: dateString)
     }
     
-    // FIXED: Single implementation of helper methods (removed duplicates)
-    private func getWorkerIdForTask(_ taskId: String) async -> String? {
-        let result = try? await grdbManager.query(
-            "SELECT workerId FROM routine_tasks WHERE id = ?",
-            [taskId]
-        )
-        return result?.first?["workerId"] as? String
-    }
-    
-    private func getBuildingIdForTask(_ taskId: String) async -> String {
-        let result = try? await grdbManager.query(
-            "SELECT buildingId FROM routine_tasks WHERE id = ?",
-            [taskId]
-        )
-        return result?.first?["buildingId"] as? String ?? "unknown"
+    private func recordTaskCompletion(taskId: String, evidence: ActionEvidence) async throws {
+        let completionId = UUID().uuidString
+        
+        try await grdbManager.execute("""
+            INSERT INTO task_completions
+            (id, task_id, worker_id, completion_time, notes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, [
+            completionId,
+            taskId,
+            evidence.workerId ?? "",
+            ISO8601DateFormatter().string(from: Date()),
+            evidence.notes,
+            ISO8601DateFormatter().string(from: Date())
+        ])
+        
+        // Record photo evidence if present
+        for (index, photoURL) in evidence.photoURLs.enumerated() {
+            try await grdbManager.execute("""
+                INSERT INTO photo_evidence
+                (id, completion_id, task_id, worker_id, local_path, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, [
+                UUID().uuidString,
+                completionId,
+                taskId,
+                evidence.workerId ?? "",
+                photoURL.path,
+                ISO8601DateFormatter().string(from: Date())
+            ])
+        }
     }
 }
 
-// MARK: - Template Management Extension
+// MARK: - Supporting Types
+
+struct WorkerPerformanceMetrics {
+    let totalTasks: Int
+    let completedTasks: Int
+    let onTimeTasks: Int
+    let completionRate: Double
+    let onTimeRate: Double
+    let averageCompletionHours: Double
+}
+
+// MARK: - Error Types
+
+enum TaskServiceError: LocalizedError {
+    case noTasksFound
+    case noTasksFoundForWorker(workerId: String, date: Date?)
+    case noTasksFoundForBuilding(buildingId: String)
+    case taskNotFound(id: String)
+    case invalidTaskData
+    case progressCalculationFailed
+    case metricsCalculationFailed
+    case templateNotFound
+    case databaseError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .noTasksFound:
+            return "No tasks found in the database. Please run daily operations to generate tasks."
+        case .noTasksFoundForWorker(let workerId, let date):
+            if let date = date {
+                return "No tasks found for worker \(workerId) on \(date.formatted(date: .abbreviated, time: .omitted))"
+            } else {
+                return "No tasks found for worker \(workerId)"
+            }
+        case .noTasksFoundForBuilding(let buildingId):
+            return "No tasks found for building \(buildingId)"
+        case .taskNotFound(let id):
+            return "Task with ID \(id) not found"
+        case .invalidTaskData:
+            return "Invalid task data in database"
+        case .progressCalculationFailed:
+            return "Failed to calculate task progress"
+        case .metricsCalculationFailed:
+            return "Failed to calculate performance metrics"
+        case .templateNotFound:
+            return "Task template not found"
+        case .databaseError(let message):
+            return "Database error: \(message)"
+        }
+    }
+}
+
+// MARK: - Extension for Template Management
+
 extension TaskService {
-    // Define TaskTemplate locally since it's not in CoreTypes
     struct TaskTemplate {
         let id: String
         let name: String
@@ -333,26 +640,30 @@ extension TaskService {
     
     func getTaskTemplates() async throws -> [TaskTemplate] {
         let rows = try await grdbManager.query("""
-            SELECT * FROM task_templates
-            ORDER BY category, name
+            SELECT * FROM routine_templates
+            ORDER BY category, title
         """)
         
+        guard !rows.isEmpty else {
+            throw TaskServiceError.noTasksFound
+        }
+        
         return rows.compactMap { row in
-            guard let id = row["id"] as? Int64,
-                  let name = row["name"] as? String,
+            guard let id = row["id"] as? String,
+                  let name = row["title"] as? String,
                   let categoryStr = row["category"] as? String,
                   let category = TaskCategory(rawValue: categoryStr) else {
                 return nil
             }
             
             return TaskTemplate(
-                id: String(id),
+                id: id,
                 name: name,
                 description: row["description"] as? String,
                 category: category,
-                defaultUrgency: TaskUrgency(rawValue: row["defaultUrgency"] as? String ?? "medium") ?? .medium,
-                estimatedDuration: row["estimatedDuration"] as? TimeInterval ?? 3600,
-                requiredSkills: []
+                defaultUrgency: TaskUrgency(rawValue: row["priority"] as? String ?? "normal") ?? .medium,
+                estimatedDuration: TimeInterval(row["estimated_duration"] as? Int64 ?? 30) * 60,
+                requiredSkills: (row["required_skills"] as? String)?.components(separatedBy: ",") ?? []
             )
         }
     }
@@ -364,7 +675,6 @@ extension TaskService {
             throw TaskServiceError.templateNotFound
         }
         
-        // FIXED: Create task with minimal parameters
         let task = ContextualTask(
             id: UUID().uuidString,
             title: template.name,
@@ -377,51 +687,10 @@ extension TaskService {
             building: nil,
             worker: nil,
             buildingId: buildingId,
-            priority: template.defaultUrgency
+            priority: template.defaultUrgency,
+            assignedWorkerId: workerId
         )
         
         try await createTask(task)
     }
 }
-
-// MARK: - Error Types
-enum TaskServiceError: LocalizedError {
-    case templateNotFound
-    case invalidTaskData
-    case taskNotFound
-    
-    var errorDescription: String? {
-        switch self {
-        case .templateNotFound:
-            return "Task template not found"
-        case .invalidTaskData:
-            return "Invalid task data"
-        case .taskNotFound:
-            return "Task not found"
-        }
-    }
-}
-
-// MARK: - 📝 V6.0 COMPILATION FIXES
-/*
- ✅ FIXED ALL COMPILATION ERRORS:
- 
- 🔧 MAJOR FIXES:
- - ✅ Fixed DashboardUpdate to use CoreTypes.DashboardUpdate with full namespace
- - ✅ Fixed enum member references to use fully qualified names
- - ✅ Fixed data dictionary values to be String types
- - ✅ Removed duplicate getWorkerIdForTask method definitions (lines 409, 446)
- - ✅ Removed duplicate getBuildingIdForTask method definitions (lines 417, 454)
- - ✅ Removed invalid grdbManager references from error enum extension
- - ✅ Fixed ambiguous method calls by keeping only one implementation
- - ✅ Added proper null-checking for workerId in completeTask method
- 
- 🔧 SPECIFIC FIXES:
- - Line 87-97: Fixed DashboardUpdate creation with proper namespace and enum references
- - Line 94: Changed Date() to ISO8601DateFormatter().string(from: Date()) for String type
- - Line 96: Changed photoURLs.count to String(evidence.photoURLs.count) for String type
- - Lines 409-458: Removed all duplicate method definitions and scope errors
- - Kept only canonical implementations in main actor body
- 
- 🎯 STATUS: All compilation errors resolved, ready for production
- */

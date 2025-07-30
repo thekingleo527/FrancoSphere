@@ -187,6 +187,9 @@
 		23A1B9962E39968F0011F091 /* TaskDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9952E39968F0011F091 /* TaskDetailViewModel.swift */; };
 		23A1B9982E3997130011F091 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9972E3997130011F091 /* NovaAvatar.swift */; };
 		23A1B99C2E39A0EF0011F091 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */; };
+		23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */; };
+		23C839A22E39E6C000C6866E /* MigrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C839A12E39E6C000C6866E /* MigrationView.swift */; };
+		23C839A42E39E74300C6866E /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C839A32E39E74300C6866E /* TestMigrationFlow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -387,6 +390,9 @@
 		23A1B9952E39968F0011F091 /* TaskDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewModel.swift; sourceTree = "<group>"; };
 		23A1B9972E3997130011F091 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
 		23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
+		23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalIDs.swift; sourceTree = "<group>"; };
+		23C839A12E39E6C000C6866E /* MigrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationView.swift; sourceTree = "<group>"; };
+		23C839A32E39E74300C6866E /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -652,6 +658,7 @@
 		23779F6F2E39885600F4A10F /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */,
 				23779F5A2E39885600F4A10F /* Core */,
 				23779F5E2E39885600F4A10F /* DTOs */,
 				23779F602E39885600F4A10F /* Enums */,
@@ -793,6 +800,8 @@
 		23779F9A2E39885600F4A10F /* Migration */ = {
 			isa = PBXGroup;
 			children = (
+				23C839A32E39E74300C6866E /* TestMigrationFlow.swift */,
+				23C839A12E39E6C000C6866E /* MigrationView.swift */,
 				23779F992E39885600F4A10F /* WorkerAssignmentEngine.swift */,
 			);
 			path = Migration;
@@ -1187,6 +1196,7 @@
 				23779FFD2E39885600F4A10F /* DashboardTaskDetailView.swift in Sources */,
 				23779FFE2E39885600F4A10F /* FrancoSphereDesign.swift in Sources */,
 				23779FFF2E39885600F4A10F /* BuildingTaskDetailView.swift in Sources */,
+				23C839A22E39E6C000C6866E /* MigrationView.swift in Sources */,
 				2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */,
 				2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */,
 				2377A0032E39885600F4A10F /* NovaImageLoader.swift in Sources */,
@@ -1238,6 +1248,8 @@
 				2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */,
 				2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */,
 				23A1B98C2E3994760011F091 /* IntelligenceService.swift in Sources */,
+				23C839A42E39E74300C6866E /* TestMigrationFlow.swift in Sources */,
+				23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */,
 				23A1B98D2E3994760011F091 /* WorkerMetricsService.swift in Sources */,
 				2377A0272E39885600F4A10F /* TestRealDataIntegration.swift in Sources */,
 				2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */,
