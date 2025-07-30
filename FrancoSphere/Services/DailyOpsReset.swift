@@ -5,6 +5,7 @@
 //  ✅ PRODUCTION READY: Complete one-time migration and daily operations
 //  ✅ SAFE: Transaction-wrapped with rollback support
 //  ✅ VERIFIED: Checksum validation and comprehensive error handling
+//  ✅ FIXED: Actor isolation for shouldGenerateTask method
 //
 
 import Foundation
@@ -699,7 +700,8 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    private static func shouldGenerateTask(template: Row, date: Date) -> Bool {
+    // ✅ FIXED: Marked as nonisolated to allow calls from non-isolated context
+    private nonisolated static func shouldGenerateTask(template: Row, date: Date) -> Bool {
         let frequency: String = template["frequency"] ?? "daily"
         let frequencyLower = frequency.lowercased()
         let calendar = Calendar.current
@@ -754,7 +756,8 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    private static func getDayAbbreviation(_ weekday: Int) -> String {
+    // ✅ FIXED: Marked as nonisolated since it's called from shouldGenerateTask
+    private nonisolated static func getDayAbbreviation(_ weekday: Int) -> String {
         switch weekday {
         case 1: return "sun"
         case 2: return "mon"
@@ -877,3 +880,11 @@ struct WorkerCapability {
     let requiresPhotoForSanitation: Bool
     let simplifiedInterface: Bool
 }
+
+// MARK: - 📝 COMPILATION FIXES
+/*
+ ✅ FIXED Line 636: Actor isolation for shouldGenerateTask
+    - Marked shouldGenerateTask as nonisolated static method
+    - Also marked getDayAbbreviation as nonisolated since it's called from shouldGenerateTask
+    - This allows the methods to be called from within the database write block
+ */
