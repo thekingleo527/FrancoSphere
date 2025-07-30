@@ -1,11 +1,12 @@
 //
-//  NewAuthManager.swift
+//  AuthManager.swift
 //  FrancoSphere v6.0
 //
-//  ✅ SECURE: Uses Keychain for session storage
-//  ✅ INTEGRATED: Uses GRDBManager's authentication
+//  ✅ PHASE 2 COMPLIANT: Secure authentication with Keychain storage
 //  ✅ BIOMETRIC: Face ID/Touch ID support
-//  ✅ SESSION MANAGEMENT: Proper expiration and refresh
+//  ✅ SESSION MANAGEMENT: Token expiration and refresh
+//  ✅ ROLE-BASED ACCESS: Proper permission handling
+//  ✅ NO HARDCODED CREDENTIALS: All passwords hashed and stored securely
 //
 
 import Foundation
@@ -14,86 +15,106 @@ import SwiftUI
 import LocalAuthentication
 import Security
 
+// MARK: - Notifications
 extension Notification.Name {
     static let userDidLogin = Notification.Name("userDidLogin")
     static let userDidLogout = Notification.Name("userDidLogout")
     static let sessionExpired = Notification.Name("sessionExpired")
+    static let sessionRefreshed = Notification.Name("sessionRefreshed")
 }
 
+// MARK: - AuthManager
 @MainActor
-public class NewAuthManager: ObservableObject {
-    public static let shared = NewAuthManager()
+public class AuthManager: ObservableObject {
+    public static let shared = AuthManager()
     
     // MARK: - Published Properties
     @Published public private(set) var currentUser: CoreTypes.User?
+    @Published public private(set) var isAuthenticated = false
     @Published public private(set) var isLoading = false
+    @Published public private(set) var authError: AuthError?
     @Published public private(set) var biometricType: LABiometryType = .none
     @Published public private(set) var isBiometricEnabled = false
+    @Published public private(set) var sessionStatus: SessionStatus = .none
     
     // MARK: - Public Properties
-    public var isAuthenticated: Bool { currentUser != nil && isSessionValid }
-    public var userRole: String { currentUser?.role ?? "worker" }
-    public var workerId: String? { currentUser?.workerId }
-    public var currentWorkerName: String { currentUser?.name ?? "Unknown" }
+    public var userRole: CoreTypes.UserRole? {
+        guard let roleString = currentUser?.role else { return nil }
+        return CoreTypes.UserRole(rawValue: roleString)
+    }
+    
+    public var workerId: CoreTypes.WorkerID? {
+        currentUser?.workerId
+    }
+    
+    public var currentWorkerName: String {
+        currentUser?.name ?? "Unknown"
+    }
+    
+    public var hasAdminAccess: Bool {
+        userRole == .admin || userRole == .manager
+    }
+    
+    public var hasWorkerAccess: Bool {
+        userRole == .worker || hasAdminAccess
+    }
     
     // MARK: - Private Properties
-    private let securityManager = SecurityManager.shared
     private let grdbManager = GRDBManager.shared
     private let laContext = LAContext()
+    private var cancellables = Set<AnyCancellable>()
     
-    private var sessionId: String?
-    private var sessionExpirationTimer: Timer?
-    private var isSessionValid = false
+    // Session management
+    private var sessionToken: String?
+    private var refreshToken: String?
+    private var sessionExpirationDate: Date?
+    private var sessionTimer: Timer?
     
     // Keychain keys
-    private let sessionKey = "francosphere_session"
-    private let biometricEnabledKey = "francosphere_biometric_enabled"
+    private let keychainService = "com.francosphere.auth"
+    private let sessionTokenKey = "sessionToken"
+    private let refreshTokenKey = "refreshToken"
+    private let biometricEnabledKey = "biometricEnabled"
+    private let lastAuthenticatedUserKey = "lastAuthenticatedUser"
+    
+    // Security settings
+    private let sessionDuration: TimeInterval = 8 * 60 * 60 // 8 hours
+    private let sessionRefreshThreshold: TimeInterval = 30 * 60 // 30 minutes before expiry
+    private let maxLoginAttempts = 5
+    private var loginAttempts = 0
     
     private init() {
         setupBiometrics()
         restoreSession()
-        startSessionMonitoring()
-    }
-    
-    // MARK: - Biometric Setup
-    
-    private func setupBiometrics() {
-        var error: NSError?
-        let canEvaluate = laContext.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
-        
-        if canEvaluate {
-            biometricType = laContext.biometryType
-            isBiometricEnabled = UserDefaults.standard.bool(forKey: biometricEnabledKey)
-        } else {
-            biometricType = .none
-            isBiometricEnabled = false
-        }
-        
-        print("🔐 Biometric setup: type=\(biometricType.rawValue), enabled=\(isBiometricEnabled)")
+        setupSessionMonitoring()
     }
     
     // MARK: - Public Methods
     
-    public func getCurrentUser() async -> CoreTypes.User? {
-        return currentUser
-    }
-    
-    /// Login with email and password
-    public func login(email: String, password: String) async throws {
+    /// Authenticate with email and password
+    public func authenticate(email: String, password: String) async throws {
+        // Check for too many login attempts
+        guard loginAttempts < maxLoginAttempts else {
+            throw AuthError.tooManyAttempts
+        }
+        
         isLoading = true
+        authError = nil
         defer { isLoading = false }
         
-        // Use GRDBManager's secure authentication
-        let result = await grdbManager.authenticateWorker(email: email, password: password)
-        
-        switch result {
-        case .success(let authenticatedUser):
-            // Create session
-            do {
-                let sessionId = try await grdbManager.createSession(
-                    for: authenticatedUser.workerId,
-                    deviceInfo: getDeviceInfo()
-                )
+        do {
+            // Authenticate with database
+            let result = await grdbManager.authenticateWorker(email: email, password: password)
+            
+            switch result {
+            case .success(let authenticatedUser):
+                // Create session
+                let session = try await createSession(for: (
+                    workerId: authenticatedUser.workerId,
+                    name: authenticatedUser.name,
+                    email: authenticatedUser.email,
+                    role: authenticatedUser.role
+                ))
                 
                 // Create CoreTypes.User
                 let user = CoreTypes.User(
@@ -104,41 +125,54 @@ public class NewAuthManager: ObservableObject {
                     role: authenticatedUser.role
                 )
                 
-                // Store session securely
-                try await storeSession(user: user, sessionId: sessionId)
+                // Store session in keychain
+                try await storeSession(session: session, user: user)
                 
                 // Update state
                 self.currentUser = user
-                self.sessionId = sessionId
-                self.isSessionValid = true
+                self.isAuthenticated = true
+                self.sessionStatus = .active
+                self.loginAttempts = 0
                 
-                print("✅ Login successful for: \(user.name)")
+                // Store last authenticated user for biometric login
+                UserDefaults.standard.set(email, forKey: lastAuthenticatedUserKey)
+                
+                // Start session monitoring
+                startSessionTimer()
+                
+                print("✅ Authentication successful for \(user.name)")
                 NotificationCenter.default.post(name: .userDidLogin, object: nil, userInfo: ["user": user])
                 
-                // Ask about biometric enrollment
+                // Prompt for biometric enrollment if available
                 if biometricType != .none && !isBiometricEnabled {
-                    await promptBiometricEnrollment()
+                    Task {
+                        try? await promptBiometricEnrollment()
+                    }
                 }
                 
-            } catch {
-                throw AuthError.sessionCreationFailed
+            case .failure(let message):
+                loginAttempts += 1
+                throw AuthError.authenticationFailed(message)
             }
-            
-        case .failure(let message):
-            throw AuthError.authenticationFailed(message)
+        } catch {
+            authError = error as? AuthError ?? .unknown(error.localizedDescription)
+            throw error
         }
     }
     
-    /// Login with biometrics
-    public func loginWithBiometrics() async throws {
+    /// Authenticate with biometrics
+    public func authenticateWithBiometrics() async throws {
         guard isBiometricEnabled else {
             throw AuthError.biometricsNotEnabled
         }
         
-        // Retrieve stored session
-        guard let sessionData = try await retrieveSessionFromKeychain() else {
-            throw AuthError.noStoredSession
+        guard let lastEmail = UserDefaults.standard.string(forKey: lastAuthenticatedUserKey) else {
+            throw AuthError.noStoredCredentials
         }
+        
+        isLoading = true
+        authError = nil
+        defer { isLoading = false }
         
         // Authenticate with biometrics
         let reason = "Authenticate to access FrancoSphere"
@@ -150,38 +184,38 @@ public class NewAuthManager: ObservableObject {
             )
             
             if success {
-                // Validate session is still active
-                if let validatedUser = try await grdbManager.validateSession(sessionData.sessionId) {
-                    // Create CoreTypes.User
-                    let user = CoreTypes.User(
-                        id: validatedUser.workerId,
-                        workerId: validatedUser.workerId,
-                        name: validatedUser.name,
-                        email: validatedUser.email,
-                        role: validatedUser.role
-                    )
-                    
-                    // Update state
-                    self.currentUser = user
-                    self.sessionId = sessionData.sessionId
-                    self.isSessionValid = true
-                    
-                    print("✅ Biometric login successful for: \(user.name)")
-                    NotificationCenter.default.post(name: .userDidLogin, object: nil, userInfo: ["user": user])
+                // Retrieve stored session
+                if let session = try await retrieveStoredSession() {
+                    // Validate session is still active
+                    if session.expirationDate > Date() {
+                        // Restore user session
+                        self.currentUser = session.user
+                        self.sessionToken = session.token
+                        self.refreshToken = session.refreshToken
+                        self.sessionExpirationDate = session.expirationDate
+                        self.isAuthenticated = true
+                        self.sessionStatus = .active
+                        
+                        startSessionTimer()
+                        
+                        print("✅ Biometric authentication successful")
+                        NotificationCenter.default.post(name: .userDidLogin, object: nil, userInfo: ["user": session.user])
+                    } else {
+                        // Session expired, try to refresh
+                        try await refreshSession()
+                    }
                 } else {
-                    // Session expired
-                    try await clearSession()
-                    throw AuthError.sessionExpired
+                    throw AuthError.noStoredSession
                 }
             }
-        } catch {
+        } catch let error as LAError {
             throw AuthError.biometricAuthenticationFailed(error.localizedDescription)
         }
     }
     
     /// Enable biometric authentication
     public func enableBiometrics() async throws {
-        guard currentUser != nil, sessionId != nil else {
+        guard isAuthenticated else {
             throw AuthError.notAuthenticated
         }
         
@@ -189,7 +223,7 @@ public class NewAuthManager: ObservableObject {
             throw AuthError.biometricsNotAvailable
         }
         
-        let reason = "Enable biometric authentication for FrancoSphere"
+        let reason = "Enable \(biometricTypeString) for faster authentication"
         
         do {
             let success = try await laContext.evaluatePolicy(
@@ -200,7 +234,7 @@ public class NewAuthManager: ObservableObject {
             if success {
                 UserDefaults.standard.set(true, forKey: biometricEnabledKey)
                 isBiometricEnabled = true
-                print("✅ Biometrics enabled")
+                print("✅ Biometrics enabled successfully")
             }
         } catch {
             throw AuthError.biometricEnrollmentFailed(error.localizedDescription)
@@ -214,105 +248,194 @@ public class NewAuthManager: ObservableObject {
         print("🔐 Biometrics disabled")
     }
     
-    /// Logout
+    /// Logout current user
     public func logout() async {
-        guard let user = currentUser else { return }
-        
-        // Logout from database
-        if let workerId = user.workerId {
+        // Clear session from database
+        if let workerId = currentUser?.workerId {
             try? await grdbManager.logout(workerId: workerId)
         }
         
-        // Clear session
-        try? await clearSession()
+        // Clear keychain
+        clearKeychain()
         
-        // Update state
+        // Clear state
+        let previousUser = currentUser
         currentUser = nil
-        sessionId = nil
-        isSessionValid = false
+        sessionToken = nil
+        refreshToken = nil
+        sessionExpirationDate = nil
+        isAuthenticated = false
+        sessionStatus = .none
+        authError = nil
         
-        print("👋 \(user.name) logged out.")
+        // Stop session timer
+        sessionTimer?.invalidate()
+        sessionTimer = nil
+        
+        if let user = previousUser {
+            print("👋 \(user.name) logged out")
+        }
+        
         NotificationCenter.default.post(name: .userDidLogout, object: nil)
     }
     
-    /// Refresh session
+    /// Refresh the current session
     public func refreshSession() async throws {
-        guard let sessionId = sessionId else {
+        guard let refreshToken = refreshToken else {
             throw AuthError.noActiveSession
         }
         
-        if let validatedUser = try await grdbManager.validateSession(sessionId) {
-            // Session still valid, update last activity
-            isSessionValid = true
-        } else {
-            // Session expired
-            isSessionValid = false
-            try await clearSession()
-            throw AuthError.sessionExpired
+        sessionStatus = .refreshing
+        
+        do {
+            // In production, this would call an API endpoint
+            // For now, we'll extend the session locally
+            let newExpirationDate = Date().addingTimeInterval(sessionDuration)
+            self.sessionExpirationDate = newExpirationDate
+            self.sessionStatus = .active
+            
+            // Update stored session
+            if let user = currentUser,
+               let token = sessionToken {
+                let session = Session(
+                    token: token,
+                    refreshToken: refreshToken,
+                    expirationDate: newExpirationDate,
+                    user: user
+                )
+                try await storeSession(session: session, user: user)
+            }
+            
+            NotificationCenter.default.post(name: .sessionRefreshed, object: nil)
+            print("✅ Session refreshed successfully")
+        } catch {
+            sessionStatus = .expired
+            throw AuthError.sessionRefreshFailed
         }
+    }
+    
+    /// Check if user has permission for specific action
+    public func hasPermission(for permission: Permission) -> Bool {
+        guard let role = userRole else { return false }
+        return permission.allowedRoles.contains(role)
+    }
+    
+    /// Validate current session
+    public func validateSession() async -> Bool {
+        guard isAuthenticated,
+              let expirationDate = sessionExpirationDate else {
+            return false
+        }
+        
+        // Check if session is expired
+        if Date() > expirationDate {
+            sessionStatus = .expired
+            await handleSessionExpired()
+            return false
+        }
+        
+        // Check if session needs refresh
+        let timeUntilExpiry = expirationDate.timeIntervalSinceNow
+        if timeUntilExpiry < sessionRefreshThreshold {
+            do {
+                try await refreshSession()
+            } catch {
+                print("⚠️ Failed to refresh session: \(error)")
+            }
+        }
+        
+        return true
     }
     
     // MARK: - Private Methods
     
-    private func storeSession(user: CoreTypes.User, sessionId: String) async throws {
-        let sessionData = SessionData(
-            user: user,
-            sessionId: sessionId,
-            createdAt: Date(),
-            expiresAt: Date().addingTimeInterval(24 * 60 * 60) // 24 hours
+    private func setupBiometrics() {
+        var error: NSError?
+        let canEvaluate = laContext.canEvaluatePolicy(
+            .deviceOwnerAuthenticationWithBiometrics,
+            error: &error
         )
         
-        let encoder = JSONEncoder()
-        let data = try encoder.encode(sessionData)
-        
-        // Store in Keychain using SecurityManager
-        Task {
-            try await securityManager.storeInKeychain(
-                data,
-                key: sessionKey,
-                expiration: sessionData.expiresAt
-            )
+        if canEvaluate {
+            biometricType = laContext.biometryType
+            isBiometricEnabled = UserDefaults.standard.bool(forKey: biometricEnabledKey)
+        } else {
+            biometricType = .none
+            isBiometricEnabled = false
         }
+        
+        print("🔐 Biometric setup - Type: \(biometricTypeString), Enabled: \(isBiometricEnabled)")
     }
     
-    private func retrieveSessionFromKeychain() async throws -> SessionData? {
-        let data = try await Task {
-            try await securityManager.getFromKeychain(key: sessionKey)
-        }.value
+    private func createSession(for authenticatedWorker: (workerId: String, name: String, email: String, role: String)) async throws -> Session {
+        // Generate tokens (in production, these would come from the server)
+        let sessionToken = UUID().uuidString
+        let refreshToken = UUID().uuidString
+        let expirationDate = Date().addingTimeInterval(sessionDuration)
         
-        guard let data = data else { return nil }
+        // Create session in database
+        let sessionId = try await grdbManager.createSession(
+            for: authenticatedWorker.workerId,
+            deviceInfo: getDeviceInfo()
+        )
+        
+        self.sessionToken = sessionToken
+        self.refreshToken = refreshToken
+        self.sessionExpirationDate = expirationDate
+        
+        return Session(
+            token: sessionToken,
+            refreshToken: refreshToken,
+            expirationDate: expirationDate,
+            user: CoreTypes.User(
+                id: authenticatedWorker.workerId,
+                workerId: authenticatedWorker.workerId,
+                name: authenticatedWorker.name,
+                email: authenticatedWorker.email,
+                role: authenticatedWorker.role
+            )
+        )
+    }
+    
+    private func storeSession(session: Session, user: CoreTypes.User) async throws {
+        // Store tokens in keychain
+        try storeInKeychain(session.token, for: sessionTokenKey)
+        try storeInKeychain(session.refreshToken, for: refreshTokenKey)
+        
+        // Store session data
+        let encoder = JSONEncoder()
+        let sessionData = try encoder.encode(session)
+        try storeInKeychain(sessionData, for: "session")
+    }
+    
+    private func retrieveStoredSession() async throws -> Session? {
+        guard let sessionData = try? getFromKeychain(key: "session") as? Data else {
+            return nil
+        }
         
         let decoder = JSONDecoder()
-        return try decoder.decode(SessionData.self, from: data)
-    }
-    
-    private func clearSession() async throws {
-        Task {
-            try await securityManager.deleteFromKeychain(key: sessionKey)
-        }
-        sessionExpirationTimer?.invalidate()
-        sessionExpirationTimer = nil
+        return try decoder.decode(Session.self, from: sessionData)
     }
     
     private func restoreSession() {
         Task {
             do {
-                if let sessionData = try await retrieveSessionFromKeychain() {
-                    // Check if session is still valid
-                    if Date() < sessionData.expiresAt {
-                        // Validate with database
-                        if let validatedUser = try await grdbManager.validateSession(sessionData.sessionId) {
-                            self.currentUser = sessionData.user
-                            self.sessionId = sessionData.sessionId
-                            self.isSessionValid = true
-                            print("✅ Restored session for \(sessionData.user.name)")
-                        } else {
-                            // Session invalid in database
-                            try await clearSession()
-                        }
+                if let session = try await retrieveStoredSession() {
+                    // Validate session
+                    if session.expirationDate > Date() {
+                        self.currentUser = session.user
+                        self.sessionToken = session.token
+                        self.refreshToken = session.refreshToken
+                        self.sessionExpirationDate = session.expirationDate
+                        self.isAuthenticated = true
+                        self.sessionStatus = .active
+                        
+                        startSessionTimer()
+                        
+                        print("✅ Session restored for \(session.user.name)")
                     } else {
                         // Session expired
-                        try await clearSession()
+                        clearKeychain()
                     }
                 }
             } catch {
@@ -321,33 +444,43 @@ public class NewAuthManager: ObservableObject {
         }
     }
     
-    private func startSessionMonitoring() {
-        // Check session validity every 5 minutes
-        sessionExpirationTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { _ in
-            Task { [weak self] in
-                do {
-                    try await self?.refreshSession()
-                } catch {
-                    print("⚠️ Session refresh failed: \(error)")
-                    if case AuthError.sessionExpired = error {
-                        await self?.handleSessionExpired()
-                    }
+    private func setupSessionMonitoring() {
+        // Monitor app lifecycle
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                Task {
+                    await self?.validateSession()
                 }
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+            .sink { [weak self] _ in
+                self?.sessionTimer?.invalidate()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func startSessionTimer() {
+        sessionTimer?.invalidate()
+        
+        // Check session every minute
+        sessionTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.validateSession()
             }
         }
     }
     
     private func handleSessionExpired() async {
         await logout()
-        await MainActor.run {
-            NotificationCenter.default.post(name: .sessionExpired, object: nil)
-        }
+        NotificationCenter.default.post(name: .sessionExpired, object: nil)
     }
     
-    private func promptBiometricEnrollment() async {
-        // This would show a UI prompt asking if user wants to enable biometrics
-        // For now, we'll just print
-        print("🔐 Would you like to enable \(biometricTypeString) for faster login?")
+    private func promptBiometricEnrollment() async throws {
+        // In a real app, this would show a proper UI dialog
+        // For now, we'll auto-enable if the user agrees
+        try await enableBiometrics()
     }
     
     private var biometricTypeString: String {
@@ -363,80 +496,19 @@ public class NewAuthManager: ObservableObject {
         let device = UIDevice.current
         return "\(device.model) - iOS \(device.systemVersion)"
     }
-}
-
-// MARK: - Supporting Types
-
-private struct SessionData: Codable {
-    let user: CoreTypes.User
-    let sessionId: String
-    let createdAt: Date
-    let expiresAt: Date
-}
-
-// MARK: - Enhanced Auth Errors
-
-public enum AuthError: LocalizedError {
-    case authenticationFailed(String)
-    case sessionCreationFailed
-    case sessionExpired
-    case noActiveSession
-    case noStoredSession
-    case notAuthenticated
-    case biometricsNotAvailable
-    case biometricsNotEnabled
-    case biometricAuthenticationFailed(String)
-    case biometricEnrollmentFailed(String)
-    case keychainError(String)
     
-    public var errorDescription: String? {
-        switch self {
-        case .authenticationFailed(let message):
-            return message
-        case .sessionCreationFailed:
-            return "Failed to create session"
-        case .sessionExpired:
-            return "Your session has expired. Please log in again."
-        case .noActiveSession:
-            return "No active session found"
-        case .noStoredSession:
-            return "No stored session found. Please log in with your credentials."
-        case .notAuthenticated:
-            return "You must be logged in to perform this action"
-        case .biometricsNotAvailable:
-            return "Biometric authentication is not available on this device"
-        case .biometricsNotEnabled:
-            return "Biometric authentication is not enabled"
-        case .biometricAuthenticationFailed(let message):
-            return "Biometric authentication failed: \(message)"
-        case .biometricEnrollmentFailed(let message):
-            return "Failed to enable biometrics: \(message)"
-        case .keychainError(let message):
-            return "Secure storage error: \(message)"
-        }
-    }
-}
-
-// MARK: - SecurityManager Extension
-
-extension SecurityManager {
-    /// Store data in keychain (made available for NewAuthManager)
-    func storeInKeychain(_ data: Data, key: String, expiration: Date? = nil) async throws {
-        // This is a wrapper to expose the private method
-        // In production, you'd modify SecurityManager to make this public
-        
-        var query: [String: Any] = [
+    // MARK: - Keychain Methods
+    
+    private func storeInKeychain(_ data: Data, for key: String) throws {
+        let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         
-        if let expiration = expiration {
-            let expirationData = try JSONEncoder().encode(expiration)
-            query[kSecAttrComment as String] = expirationData.base64EncodedString()
-        }
-        
+        // Delete existing item
         SecItemDelete(query as CFDictionary)
         
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -445,13 +517,19 @@ extension SecurityManager {
         }
     }
     
-    /// Retrieve data from keychain
-    func getFromKeychain(key: String) async throws -> Data? {
+    private func storeInKeychain(_ string: String, for key: String) throws {
+        guard let data = string.data(using: .utf8) else {
+            throw AuthError.keychainError("Failed to encode string")
+        }
+        try storeInKeychain(data, for: key)
+    }
+    
+    private func getFromKeychain(key: String) throws -> Any? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
-            kSecReturnAttributes as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         
@@ -466,34 +544,120 @@ extension SecurityManager {
             throw AuthError.keychainError("Failed to retrieve from keychain: \(status)")
         }
         
-        guard let resultDict = result as? [String: Any],
-              let data = resultDict[kSecValueData as String] as? Data else {
-            throw AuthError.keychainError("Invalid keychain data")
-        }
-        
-        // Check expiration
-        if let expirationString = resultDict[kSecAttrComment as String] as? String,
-           let expirationData = Data(base64Encoded: expirationString),
-           let expiration = try? JSONDecoder().decode(Date.self, from: expirationData),
-           expiration < Date() {
-            
-            try await deleteFromKeychain(key: key)
-            throw AuthError.sessionExpired
-        }
-        
-        return data
+        return result
     }
     
-    /// Delete from keychain
-    func deleteFromKeychain(key: String) async throws {
+    private func clearKeychain() {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key
+            kSecAttrService as String: keychainService
         ]
         
-        let status = SecItemDelete(query as CFDictionary)
-        if status != errSecSuccess && status != errSecItemNotFound {
-            throw AuthError.keychainError("Failed to delete from keychain: \(status)")
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
+// MARK: - Supporting Types
+
+public enum SessionStatus {
+    case none
+    case active
+    case refreshing
+    case expired
+}
+
+public struct Permission {
+    let name: String
+    let allowedRoles: Set<CoreTypes.UserRole>
+    
+    // Common permissions
+    static let viewAllBuildings = Permission(
+        name: "view_all_buildings",
+        allowedRoles: [.admin, .manager, .client]
+    )
+    
+    static let assignTasks = Permission(
+        name: "assign_tasks",
+        allowedRoles: [.admin, .manager]
+    )
+    
+    static let viewFinancials = Permission(
+        name: "view_financials",
+        allowedRoles: [.admin, .client]
+    )
+    
+    static let manageWorkers = Permission(
+        name: "manage_workers",
+        allowedRoles: [.admin, .manager]
+    )
+    
+    static let completeTasks = Permission(
+        name: "complete_tasks",
+        allowedRoles: [.admin, .manager, .worker]
+    )
+}
+
+private struct Session: Codable {
+    let token: String
+    let refreshToken: String
+    let expirationDate: Date
+    let user: CoreTypes.User
+}
+
+// Note: AuthenticatedUser type is defined elsewhere in the project (likely in GRDBManager)
+// We use a tuple in createSession to avoid naming conflicts
+
+// MARK: - Auth Errors
+
+public enum AuthError: LocalizedError {
+    case authenticationFailed(String)
+    case sessionCreationFailed
+    case sessionExpired
+    case sessionRefreshFailed
+    case noActiveSession
+    case noStoredSession
+    case noStoredCredentials
+    case notAuthenticated
+    case biometricsNotAvailable
+    case biometricsNotEnabled
+    case biometricAuthenticationFailed(String)
+    case biometricEnrollmentFailed(String)
+    case keychainError(String)
+    case tooManyAttempts
+    case unknown(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .authenticationFailed(let message):
+            return "Authentication failed: \(message)"
+        case .sessionCreationFailed:
+            return "Failed to create session"
+        case .sessionExpired:
+            return "Your session has expired. Please log in again."
+        case .sessionRefreshFailed:
+            return "Failed to refresh session"
+        case .noActiveSession:
+            return "No active session found"
+        case .noStoredSession:
+            return "No stored session found"
+        case .noStoredCredentials:
+            return "No stored credentials found. Please log in with your email and password."
+        case .notAuthenticated:
+            return "You must be logged in to perform this action"
+        case .biometricsNotAvailable:
+            return "Biometric authentication is not available on this device"
+        case .biometricsNotEnabled:
+            return "Biometric authentication is not enabled"
+        case .biometricAuthenticationFailed(let message):
+            return "Biometric authentication failed: \(message)"
+        case .biometricEnrollmentFailed(let message):
+            return "Failed to enable biometrics: \(message)"
+        case .keychainError(let message):
+            return "Secure storage error: \(message)"
+        case .tooManyAttempts:
+            return "Too many failed login attempts. Please try again later."
+        case .unknown(let message):
+            return "An unknown error occurred: \(message)"
         }
     }
 }
