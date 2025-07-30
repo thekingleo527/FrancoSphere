@@ -5,6 +5,7 @@
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ ALIGNED: With actual project types and components
 //  ✅ RESPONSIVE: Adaptive layout for all device sizes
+//  ✅ INTEGRATED: Properly uses available public methods from viewModel
 //
 
 import SwiftUI
@@ -99,8 +100,8 @@ struct ClientDashboardView: View {
                 
                 Spacer()
                 
-                // Nova AI Assistant
-                NovaAvatar(size: 44)
+                // Nova Avatar
+                NovaAvatar(size: .medium)
                     .onTapGesture {
                         HapticManager.impact(.light)
                         // TODO: Launch Nova AI chat
@@ -233,8 +234,7 @@ struct PortfolioOverviewTab: View {
                 IntelligencePreviewPanel(
                     insights: Array(viewModel.intelligenceInsights.prefix(3)),
                     onRefresh: {
-                        // Make it public in viewModel or use different approach
-                        await viewModel.refreshData()
+                        await viewModel.forceRefresh()
                     }
                 )
             }
@@ -242,20 +242,14 @@ struct PortfolioOverviewTab: View {
             // Performance overview
             PerformanceOverviewCard(viewModel: viewModel)
             
-            // Executive Summary
+            // Executive Summary - ✅ FIXED: Remove task that calls private method
             if let summary = viewModel.executiveSummary {
                 ExecutiveSummaryCard(summary: summary)
-                    .task {
-                        await viewModel.generateExecutiveSummary()
-                    }
             }
             
-            // Strategic Recommendations
+            // Strategic Recommendations - ✅ FIXED: Use loadPortfolioIntelligence which loads these
             if !viewModel.strategicRecommendations.isEmpty {
                 StrategicRecommendationsCard(recommendations: viewModel.strategicRecommendations)
-                    .task {
-                        await viewModel.loadStrategicRecommendations()
-                    }
             }
         }
     }
@@ -387,7 +381,7 @@ struct InsightsTab: View {
                 insights: viewModel.intelligenceInsights,
                 onInsightTap: onInsightTap,
                 onRefresh: {
-                    await viewModel.refreshData()
+                    await viewModel.forceRefresh()
                 }
             )
             
@@ -521,7 +515,6 @@ struct BuildingCard: View {
                             .foregroundColor(.white)
                             .lineLimit(1)
                         
-                        // ✅ FIXED: Removed nil coalescing operator
                         Text(building.address)
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -571,7 +564,7 @@ struct BuildingCard: View {
                 }
             }
             .padding()
-            .francoGlassCard()
+            .glassCard()
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -952,7 +945,6 @@ struct RecommendationRow: View {
     }
 }
 
-// ✅ FIXED: Extracted array to avoid complex expression
 struct InsightsCategoryBreakdown: View {
     let insights: [CoreTypes.IntelligenceInsight]
     
@@ -961,45 +953,32 @@ struct InsightsCategoryBreakdown: View {
             .mapValues { $0.count }
     }
     
-    // ✅ FIXED: Created computed property to simplify ForEach
     private var insightCategories: [CoreTypes.InsightCategory] {
         [.efficiency, .maintenance, .compliance, .safety, .cost]
     }
     
-    // ✅ FIXED: Extract grid columns to reduce complexity
     private var gridColumns: [GridItem] {
         [GridItem(.flexible()), GridItem(.flexible())]
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
-            categoryHeader
+            Text("Insights by Category")
+                .font(.headline)
+                .foregroundColor(.white)
             
-            // ✅ FIXED: Simplified grid by extracting components
-            categoryGrid
-        }
-    }
-    
-    private var categoryHeader: some View {
-        Text("Insights by Category")
-            .font(.headline)
-            .foregroundColor(.white)
-    }
-    
-    private var categoryGrid: some View {
-        LazyVGrid(columns: gridColumns, spacing: 12) {
-            ForEach(insightCategories, id: \.self) { category in
-                CategoryCard(
-                    type: category,
-                    count: categoryCounts[category] ?? 0
-                )
+            LazyVGrid(columns: gridColumns, spacing: 12) {
+                ForEach(insightCategories, id: \.self) { category in
+                    CategoryCard(
+                        type: category,
+                        count: categoryCounts[category] ?? 0
+                    )
+                }
             }
         }
     }
 }
 
-// ✅ FIXED: Using design system colors instead of type.color
 struct CategoryCard: View {
     let type: CoreTypes.InsightCategory
     let count: Int
@@ -1200,6 +1179,7 @@ struct InsightDetailSheet: View {
     }
 }
 
+// ✅ FIXED: Breaking down complex expression into smaller parts
 struct BuildingDetailSheet: View {
     let building: NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
@@ -1209,22 +1189,13 @@ struct BuildingDetailSheet: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Header using the correct parameters
-                    BuildingHeaderGlassOverlay(
-                        building: building,
-                        clockedInStatus: (false, nil),  // Client doesn't clock in
-                        onClockAction: { }  // No-op for client
-                    )
+                    // Header component
+                    buildingHeader
                     
-                    // ✅ FIXED: Calculate completedTasksCount
+                    // Stats component
                     if let metrics = metrics {
-                        BuildingStatsGlassCard(
-                            pendingTasksCount: metrics.pendingTasks,
-                            completedTasksCount: metrics.totalTasks - metrics.pendingTasks,
-                            assignedWorkersCount: metrics.activeWorkers,
-                            weatherRisk: .low // Default
-                        )
-                        .padding()
+                        buildingStatsCard(with: metrics)
+                            .padding()
                     }
                     
                     // Additional details would go here
@@ -1242,6 +1213,25 @@ struct BuildingDetailSheet: View {
         }
         .preferredColorScheme(.dark)
     }
+    
+    private var buildingHeader: some View {
+        BuildingHeaderGlassOverlay(
+            building: building,
+            clockedInStatus: (false, nil),  // Client doesn't clock in
+            onClockAction: { }  // No-op for client
+        )
+    }
+    
+    private func buildingStatsCard(with metrics: CoreTypes.BuildingMetrics) -> some View {
+        let completedTasks = metrics.totalTasks - metrics.pendingTasks
+        
+        return BuildingStatsGlassCard(
+            pendingTasksCount: metrics.pendingTasks,
+            completedTasksCount: completedTasks,
+            assignedWorkersCount: metrics.activeWorkers,
+            weatherRisk: .low // Default
+        )
+    }
 }
 
 // MARK: - Preview
@@ -1253,3 +1243,36 @@ struct ClientDashboardView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES
+/*
+ ✅ FIXED ERRORS:
+ 
+ 1. Line 249: Removed task calling private generateExecutiveSummary method
+    - The executive summary is automatically generated when loadPortfolioIntelligence() is called
+    - The view just needs to display the already-loaded executiveSummary
+ 
+ 2. Line 254: Similar fix for loadStrategicRecommendations
+    - This is also loaded automatically as part of loadPortfolioIntelligence()
+    - The view should just display the data, not trigger additional loads
+ 
+ 3. Line 574: Use proper .glassCard() modifier
+    - This is a standard modifier available in the project
+ 
+ 4. Line 1103: Complex expression in BuildingDetailSheet
+    - Broke down into buildingStatsCard function that pre-calculates values
+    - Returns the BuildingStatsGlassCard with all parameters properly typed
+ 
+ 🎯 KEY CHANGES:
+ - Aligned with existing viewModel patterns where data is loaded via loadPortfolioIntelligence()
+ - Removed unnecessary task blocks that were calling private methods
+ - Used forceRefresh() for pull-to-refresh actions
+ - Fixed glass card styling to use project's standard modifiers
+ - Broke down complex expressions into simpler functions
+ 
+ 🏛️ ARCHITECTURE:
+ - The ClientDashboardViewModel loads all data in loadPortfolioIntelligence()
+ - Executive summary and strategic recommendations are generated as part of that process
+ - The view simply displays the data that's already loaded
+ - This matches the pattern used in AdminDashboardView and WorkerDashboardView
+ */
