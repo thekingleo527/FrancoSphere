@@ -1,13 +1,5 @@
 //
 //  InventoryService.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/30/25.
-//
-
-
-//
-//  InventoryService.swift
 //  FrancoSphere v6.0
 //
 //  ✅ NO FALLBACKS: Throws errors when no data found
@@ -15,6 +7,7 @@
 //  ✅ GRDB POWERED: Uses GRDBManager for all operations
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency
 //  ✅ INTEGRATED: Full DashboardSyncService integration
+//  ✅ FIXED: Resolved all compilation errors
 //
 
 import Foundation
@@ -67,6 +60,7 @@ actor InventoryService {
     func createInventoryItem(_ item: CoreTypes.InventoryItem, buildingId: String) async throws {
         let itemId = item.id.isEmpty ? UUID().uuidString : item.id
         
+        // ✅ FIXED: Properly handle optionals without implicit coercion
         try await grdbManager.execute("""
             INSERT INTO inventory_items 
             (id, building_id, name, description, category, current_stock, 
@@ -86,14 +80,14 @@ actor InventoryService {
             item.maxStock,
             item.unit,
             item.cost,
-            item.supplier as Any,
-            nil, // supplier_sku
-            item.location as Any,
+            item.supplier ?? NSNull(), // ✅ FIXED: Use NSNull() for nil database values
+            NSNull(), // supplier_sku
+            item.location ?? NSNull(), // ✅ FIXED: Use NSNull() for nil database values
             item.minimumStock, // reorder_point defaults to minimum
             item.maxStock - item.minimumStock, // reorder_quantity
             item.status.rawValue,
             1, // is_active
-            nil // notes
+            NSNull() // notes
         ])
         
         // Check if low stock alert needed
@@ -117,6 +111,7 @@ actor InventoryService {
         // Get building ID from existing item
         let buildingId = try await getBuildingIdForItem(item.id)
         
+        // ✅ FIXED: Properly handle optionals
         try await grdbManager.execute("""
             UPDATE inventory_items 
             SET name = ?, category = ?, current_stock = ?, minimum_stock = ?,
@@ -131,8 +126,8 @@ actor InventoryService {
             item.maxStock,
             item.unit,
             item.cost,
-            item.supplier as Any,
-            item.location as Any,
+            item.supplier ?? NSNull(),
+            item.location ?? NSNull(),
             item.status.rawValue,
             item.id
         ])
@@ -290,7 +285,7 @@ actor InventoryService {
             totalCost += item.cost * Double(quantity)
         }
         
-        // Create request
+        // Create request - ✅ FIXED: Properly handle optional
         try await grdbManager.execute("""
             INSERT INTO supply_requests 
             (id, request_number, building_id, requested_by, priority, status,
@@ -304,7 +299,7 @@ actor InventoryService {
             priority,
             items.count,
             totalCost,
-            notes as Any
+            notes ?? NSNull()
         ])
         
         // Add request items
@@ -323,7 +318,7 @@ actor InventoryService {
                 quantity,
                 item.cost,
                 item.cost * Double(quantity),
-                itemNotes as Any
+                itemNotes ?? NSNull()
             ])
         }
         
@@ -675,12 +670,8 @@ actor InventoryService {
             data: data
         )
         
-        DashboardSyncService.shared.onInventoryUpdated(
-            buildingId: buildingId,
-            itemId: itemId,
-            newQuantity: newQuantity ?? 0
-        )
-        
+        // ✅ FIXED: Removed call to non-existent onInventoryUpdated method
+        // Just broadcast the update directly
         if workerId != nil {
             DashboardSyncService.shared.broadcastWorkerUpdate(update)
         } else {
@@ -774,6 +765,21 @@ struct InventoryUsageStats {
     let dailyAverageUsage: Double
 }
 
+// ✅ FIXED: Define SupplyUsage type that was missing
+public struct SupplyUsage: Codable, Hashable {
+    public let itemId: String
+    public let itemName: String
+    public let quantity: Int
+    public let unit: String
+    
+    public init(itemId: String, itemName: String, quantity: Int, unit: String) {
+        self.itemId = itemId
+        self.itemName = itemName
+        self.quantity = quantity
+        self.unit = unit
+    }
+}
+
 // MARK: - Error Types
 
 enum InventoryServiceError: LocalizedError {
@@ -809,7 +815,7 @@ extension InventoryService {
     func recordSuppliesUsedForTask(
         taskId: String,
         workerId: String,
-        suppliesUsed: [CoreTypes.SupplyUsage]
+        suppliesUsed: [SupplyUsage]  // ✅ FIXED: Use local SupplyUsage type
     ) async throws {
         for supply in suppliesUsed {
             try await recordUsage(
