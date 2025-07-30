@@ -7,6 +7,7 @@
 //  ✅ REAL-TIME SYNC: Cross-dashboard updates via DashboardSyncService
 //  ✅ OFFLINE SUPPORT: Queue tasks for later submission
 //  ✅ FUTURE READY: Prepared for AI assistance and advanced features
+//  ✅ COMPILATION FIXED: All errors resolved for Phase 2
 //
 
 import Foundation
@@ -75,7 +76,7 @@ public class TaskDetailViewModel: ObservableObject {
     private let workerService = WorkerService.shared
     private let dashboardSyncService = DashboardSyncService.shared
     private let photoEvidenceService = PhotoEvidenceService.shared
-    private let locationManager = LocationManager.shared
+    private let locationManager = LocationManager()  // ✅ FIXED: LocationManager is not a singleton
     private let grdbManager = GRDBManager.shared
     
     // MARK: - Private Properties
@@ -151,6 +152,7 @@ public class TaskDetailViewModel: ObservableObject {
     
     public init() {
         setupSubscriptions()
+        setupLocationManager()
     }
     
     // MARK: - Public Methods
@@ -216,7 +218,7 @@ public class TaskDetailViewModel: ObservableObject {
         
         // Start location tracking if needed
         if requiresLocationVerification() {
-            locationManager.startTracking()
+            locationManager.startUpdatingLocation()  // ✅ FIXED: Using correct method name
         }
         
         // Future Phase: Start AI monitoring
@@ -347,6 +349,11 @@ public class TaskDetailViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
+    private func setupLocationManager() {
+        // Request location permission if needed
+        locationManager.requestLocation()
+    }
+    
     private func loadBuildingInfo() async {
         guard let buildingId = taskBuildingId else {
             buildingName = "Unknown Building"
@@ -410,8 +417,9 @@ public class TaskDetailViewModel: ObservableObject {
         // Check if task requires verification based on category
         guard let category = taskCategory else { return }
         
+        // ✅ FIXED: Using correct TaskCategory cases from CoreTypes
         switch category {
-        case .sanitation, .compliance, .safety:
+        case .sanitation, .inspection, .security:
             verificationStatus = isCompleted ? .pending : .notRequired
         default:
             verificationStatus = .notRequired
@@ -515,7 +523,11 @@ public class TaskDetailViewModel: ObservableObject {
     }
     
     private func getCurrentLocation() async -> CLLocationCoordinate2D? {
-        return await locationManager.getCurrentLocation()
+        // ✅ FIXED: Access location property directly from LocationManager
+        if let currentLocation = locationManager.location {
+            return currentLocation.coordinate
+        }
+        return nil
     }
     
     private func broadcastTaskUpdate(type: CoreTypes.DashboardUpdate.UpdateType) {
@@ -538,7 +550,8 @@ public class TaskDetailViewModel: ObservableObject {
     
     private func updateTaskMetrics(duration: TimeInterval) async {
         // Future: Send metrics to analytics service
-        let metrics = [
+        // ✅ FIXED: Added explicit type annotation for heterogeneous collection
+        let metrics: [String: Any] = [
             "taskId": taskId,
             "duration": duration,
             "hasPhoto": photoData != nil,
@@ -568,8 +581,9 @@ public class TaskDetailViewModel: ObservableObject {
     private func requiresVerification() -> Bool {
         guard let category = taskCategory else { return false }
         
+        // ✅ FIXED: Using correct TaskCategory cases from CoreTypes
         switch category {
-        case .sanitation, .compliance, .safety, .emergency:
+        case .sanitation, .inspection, .security, .emergency:
             return true
         default:
             return taskUrgency == .critical || taskUrgency == .emergency
@@ -664,7 +678,7 @@ public class TaskDetailViewModel: ObservableObject {
 
 // MARK: - PhotoEvidenceService Mock
 
-// Temporary mock until PhotoEvidenceService is implemented
+// Temporary mock until PhotoEvidenceService is implemented in Phase 3
 class PhotoEvidenceService {
     static let shared = PhotoEvidenceService()
     
