@@ -1,4 +1,3 @@
-//
 //  InitializationViewModel.swift
 //  FrancoSphere v6.0
 //
@@ -6,6 +5,7 @@
 //  ✅ SIMPLIFIED: Delegates database work to DatabaseInitializer
 //  ✅ UI-FOCUSED: Handles presentation logic for InitializationView
 //  ✅ RESILIENT: Proper error handling and recovery
+//  ✅ FIXED: Aligned with NewAuthManager and singleton service architecture.
 //
 
 import Foundation
@@ -81,7 +81,7 @@ class InitializationViewModel: ObservableObject {
             
             // Phase 3: Initialize App Services (80-95%)
             await updateProgress(0.85, "Starting services...")
-            try await initializeAppServices()
+            initializeAppServices()
             
             // Phase 4: Final Setup (95-100%)
             await updateProgress(0.95, "Finalizing setup...")
@@ -107,7 +107,8 @@ class InitializationViewModel: ObservableObject {
     
     private func loadUserContext() async throws {
         // Only load if user is authenticated
-        guard let currentUser = await authManager.getCurrentUser() else {
+        // FIXED: Access the 'currentUser' property directly, it is not an async function.
+        guard let currentUser = authManager.currentUser else {
             print("ℹ️ No authenticated user, skipping context load")
             return
         }
@@ -115,9 +116,6 @@ class InitializationViewModel: ObservableObject {
         do {
             // Load the worker context
             try await WorkerContextEngine.shared.loadContext(for: currentUser.workerId)
-            
-            // Check if UnifiedDataService needs initialization
-            await UnifiedDataService.shared.checkServicesReady()
             
             print("✅ User context loaded successfully")
             
@@ -128,38 +126,29 @@ class InitializationViewModel: ObservableObject {
         }
     }
     
-    private func initializeAppServices() async throws {
-        await updateProgress(0.87, "Initializing weather service...")
+    private func initializeAppServices() {
+        // These are synchronous calls that trigger the singleton initializers.
+        // `await` is not needed just to access the .shared instance.
         
-        // Initialize weather adapter - no await needed for synchronous code
+        Task { await updateProgress(0.87, "Initializing weather service...") }
         _ = WeatherDataAdapter.shared
         
-        await updateProgress(0.89, "Starting telemetry...")
+        Task { await updateProgress(0.89, "Starting telemetry...") }
+        _ = TelemetryService.shared
         
-        // Initialize telemetry monitoring
-        _ = await TelemetryService.shared
-        
-        await updateProgress(0.91, "Configuring dashboard sync...")
-        
-        // Dashboard sync service auto-initializes - no await needed
+        Task { await updateProgress(0.91, "Configuring dashboard sync...") }
         _ = DashboardSyncService.shared
         
-        await updateProgress(0.93, "Activating Nova AI...")
-        
-        // Initialize Nova AI System
-        await initializeNovaAI()
+        Task { await updateProgress(0.93, "Activating Nova AI...") }
+        initializeNovaAI()
         
         print("✅ All app services initialized")
     }
     
-    private func initializeNovaAI() async {
-        // NovaFeatureManager handles all AI initialization - no await needed
+    private func initializeNovaAI() {
+        // FIXED: Accessing .shared is synchronous.
         _ = NovaFeatureManager.shared
-        
-        // Initialize Nova Intelligence Engine
-        _ = await NovaIntelligenceEngine.shared
-        
-        // Initialize Nova API Service
+        _ = NovaIntelligenceEngine.shared
         _ = NovaAPIService.shared
         
         print("✅ Nova AI system initialized")
@@ -170,28 +159,12 @@ class InitializationViewModel: ObservableObject {
         UserDefaults.standard.set(true, forKey: "HasCompletedInitialization")
         UserDefaults.standard.set(Date(), forKey: "LastInitializationDate")
         
-        // Perform any data verification if needed
-        // Use pattern matching since DataStatus might not be Equatable
-        switch databaseInitializer.dataStatus {
-        case .partial:
-            print("⚠️ Database has partial data - fallback mode available")
-        case .complete:
-            print("✅ Database has complete data")
-        case .empty:
-            print("⚠️ Database is empty - using fallback mode")
-        case .syncing:
-            print("⚠️ Database is still syncing")
-        case .error(let message):
-            print("❌ Database error: \(message)")
-        case .unknown:
-            print("❓ Database status unknown")
-        }
-        
         // Log successful initialization
         await logInitializationSuccess()
     }
     
     private func logInitializationSuccess() async {
+        // This is an async call, so 'await' is correct here.
         let stats = try? await databaseInitializer.getDatabaseStatistics()
         
         print("📱 FrancoSphere v6.0 initialized")
@@ -222,10 +195,8 @@ class InitializationViewModel: ObservableObject {
         let errorMessage: String
         var isRecoverable = false
         
-        // Check if it's a known error type
         if let dbError = error as? InitializationError {
             errorMessage = dbError.localizedDescription
-            // Database errors might be recoverable
             isRecoverable = initializationAttempts < maxAttempts
         } else if let appError = error as? AppInitializationError {
             errorMessage = appError.localizedDescription
@@ -240,16 +211,12 @@ class InitializationViewModel: ObservableObject {
         print("   Recoverable: \(isRecoverable)")
         
         if isRecoverable {
-            // Show error but allow retry
             initializationError = "\(errorMessage)\n\nTap to retry (\(initializationAttempts)/\(maxAttempts))"
         } else {
-            // Critical error - show error screen
             initializationError = errorMessage
-            
-            // For non-critical database issues, we might still allow app usage
             if databaseInitializer.isInitialized {
                 print("⚠️ Partial initialization - app may have limited functionality")
-                isComplete = true // Allow app to proceed with warnings
+                isComplete = true
             }
         }
     }
@@ -261,9 +228,7 @@ class InitializationViewModel: ObservableObject {
             self.progress = newProgress
             self.currentStep = message
         }
-        
-        // Small delay for visual feedback
-        try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+        try? await Task.sleep(nanoseconds: 50_000_000)
     }
     
     // MARK: - Public Methods
@@ -274,7 +239,6 @@ class InitializationViewModel: ObservableObject {
     }
     
     func skipInitialization() {
-        // For development/testing only
         #if DEBUG
         print("⚠️ Skipping initialization (DEBUG only)")
         isComplete = true
@@ -292,21 +256,16 @@ enum AppInitializationError: LocalizedError {
     
     var errorDescription: String? {
         switch self {
-        case .serviceError(let message):
-            return "Service Error: \(message)"
-        case .contextError(let message):
-            return "Context Error: \(message)"
-        case .configurationError(let message):
-            return "Configuration Error: \(message)"
+        case .serviceError(let message): return "Service Error: \(message)"
+        case .contextError(let message): return "Context Error: \(message)"
+        case .configurationError(let message): return "Configuration Error: \(message)"
         }
     }
     
     var isCritical: Bool {
         switch self {
-        case .configurationError:
-            return true
-        case .serviceError, .contextError:
-            return false
+        case .configurationError: return true
+        case .serviceError, .contextError: return false
         }
     }
 }

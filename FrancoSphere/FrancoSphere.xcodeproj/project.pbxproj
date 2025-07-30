@@ -183,7 +183,6 @@
 		23A1B97D2E3994260011F091 /* DashboardSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9782E3994260011F091 /* DashboardSyncService.swift */; };
 		23A1B97E2E3994260011F091 /* WorkerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B97B2E3994260011F091 /* WorkerService.swift */; };
 		23A1B97F2E3994260011F091 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9792E3994260011F091 /* TaskService.swift */; };
-		23A1B9802E3994260011F091 /* UnifiedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B97A2E3994260011F091 /* UnifiedDataService.swift */; };
 		23A1B9862E3994540011F091 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9832E3994540011F091 /* TelemetryService.swift */; };
 		23A1B9872E3994540011F091 /* TimeBasedTaskFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9842E3994540011F091 /* TimeBasedTaskFilter.swift */; };
 		23A1B9882E3994540011F091 /* DailyOpsReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9812E3994540011F091 /* DailyOpsReset.swift */; };
@@ -393,7 +392,6 @@
 		23A1B9772E3994260011F091 /* BuildingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingService.swift; sourceTree = "<group>"; };
 		23A1B9782E3994260011F091 /* DashboardSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSyncService.swift; sourceTree = "<group>"; };
 		23A1B9792E3994260011F091 /* TaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskService.swift; sourceTree = "<group>"; };
-		23A1B97A2E3994260011F091 /* UnifiedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDataService.swift; sourceTree = "<group>"; };
 		23A1B97B2E3994260011F091 /* WorkerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerService.swift; sourceTree = "<group>"; };
 		23A1B9812E3994540011F091 /* DailyOpsReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyOpsReset.swift; sourceTree = "<group>"; };
 		23A1B9832E3994540011F091 /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
@@ -876,7 +874,6 @@
 				23A1B9772E3994260011F091 /* BuildingService.swift */,
 				23A1B9782E3994260011F091 /* DashboardSyncService.swift */,
 				23A1B9792E3994260011F091 /* TaskService.swift */,
-				23A1B97A2E3994260011F091 /* UnifiedDataService.swift */,
 				23A1B97B2E3994260011F091 /* WorkerService.swift */,
 			);
 			path = Services;
@@ -1305,7 +1302,6 @@
 				23A1B97D2E3994260011F091 /* DashboardSyncService.swift in Sources */,
 				23A1B97E2E3994260011F091 /* WorkerService.swift in Sources */,
 				23A1B97F2E3994260011F091 /* TaskService.swift in Sources */,
-				23A1B9802E3994260011F091 /* UnifiedDataService.swift in Sources */,
 				2377A03A2E39885600F4A10F /* ImportHelper.swift in Sources */,
 				2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */,
 				2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */,
