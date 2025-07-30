@@ -6,6 +6,7 @@
 //  ✅ FIXED: Removed redundant custom components
 //  ✅ ENHANCED: Proper architecture with persistent header
 //  ✅ INTEGRATED: MapRevealContainer with layered content
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -16,20 +17,21 @@ import CoreLocation
 struct WorkerDashboardView: View {
     // MARK: - State Objects
     @StateObject private var viewModel = WorkerDashboardViewModel()
-    @StateObject private var contextEngine = WorkerContextEngine.shared
+    @ObservedObject private var contextEngine = WorkerContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     
     // MARK: - State Variables
     @State private var showBuildingList = false
     @State private var showProfileView = false
     @State private var showBuildingDetail = false
-    @State private var selectedBuilding: NamedCoordinate?
+    @State private var selectedBuilding: CoreTypes.NamedCoordinate?
     @State private var showNovaAssistant = false
     @State private var showOnlyMyBuildings = true
-    @State private var primaryBuilding: NamedCoordinate?
-    @State private var selectedTask: MaintenanceTask?
+    @State private var primaryBuilding: CoreTypes.NamedCoordinate?
+    @State private var selectedTask: CoreTypes.ContextualTask?
     @State private var showTaskDetail = false
     @State private var showEmergencyContacts = false
+    @State private var isNovaProcessing = false
     
     var body: some View {
         MapRevealContainer(
@@ -61,7 +63,7 @@ struct WorkerDashboardView: View {
                         workerName: contextEngine.currentWorker?.name ?? "",
                         nextTaskName: getNextTaskName(),
                         showClockPill: contextEngine.clockInStatus.isClockedIn,
-                        isNovaProcessing: contextEngine.isProcessing,
+                        isNovaProcessing: isNovaProcessing,
                         onProfileTap: { showProfileView = true },
                         onNovaPress: { showNovaAssistant = true },
                         onNovaLongPress: { showNovaAssistant = true }
@@ -75,7 +77,7 @@ struct WorkerDashboardView: View {
                             HeroStatusCard(
                                 worker: contextEngine.currentWorker,
                                 building: contextEngine.currentBuilding,
-                                weather: contextEngine.weatherData,
+                                weather: viewModel.weatherData,
                                 progress: getTaskProgress(),
                                 clockInStatus: getClockInStatus(),
                                 capabilities: getWorkerCapabilities(),
@@ -93,8 +95,11 @@ struct WorkerDashboardView: View {
                                 TodaysTasksGlassCard(
                                     tasks: contextEngine.todaysTasks.map { convertToMaintenanceTask($0) },
                                     onTaskTap: { task in
-                                        selectedTask = task
-                                        showTaskDetail = true
+                                        // Convert back to ContextualTask for selectedTask
+                                        if let contextualTask = contextEngine.todaysTasks.first(where: { $0.id == task.id }) {
+                                            selectedTask = contextualTask
+                                            showTaskDetail = true
+                                        }
                                     }
                                 )
                                 .padding(.horizontal, 20)
@@ -139,14 +144,20 @@ struct WorkerDashboardView: View {
         }
         .sheet(isPresented: $showBuildingDetail) {
             if let building = selectedBuilding {
-                BuildingDetailView(building: building)
-                    .onDisappear {
-                        selectedBuilding = nil
-                    }
+                BuildingDetailView(
+                    buildingId: building.id,
+                    buildingName: building.name,
+                    buildingAddress: building.address ?? ""
+                )
+                .onDisappear {
+                    selectedBuilding = nil
+                }
             }
         }
         .sheet(isPresented: $showProfileView) {
-            WorkerProfileView()
+            if let workerId = authManager.workerId {
+                WorkerProfileView(workerId: workerId)
+            }
         }
         .sheet(isPresented: $showNovaAssistant) {
             NovaInteractionView()
@@ -195,7 +206,7 @@ struct WorkerDashboardView: View {
         }
     }
     
-    private func glassBuildingCard(for building: NamedCoordinate) -> some View {
+    private func glassBuildingCard(for building: CoreTypes.NamedCoordinate) -> some View {
         Button(action: {
             selectedBuilding = building
             showBuildingDetail = true
@@ -339,7 +350,7 @@ struct WorkerDashboardView: View {
             }
             
             // Weather-based insights
-            if let weather = contextEngine.weatherData,
+            if let weather = viewModel.weatherData,
                weather.outdoorWorkRisk != .low {
                 insightCard(
                     title: "Weather Alert",
@@ -392,7 +403,7 @@ struct WorkerDashboardView: View {
     // MARK: - Building Image Helper
     
     @ViewBuilder
-    private func buildingImage(for building: NamedCoordinate) -> some View {
+    private func buildingImage(for building: CoreTypes.NamedCoordinate) -> some View {
         let buildingAssetMap: [String: String] = [
             "1": "12_West_18th_Street",
             "2": "29_31_East_20th_Street",
@@ -440,10 +451,8 @@ struct WorkerDashboardView: View {
     
     private func getTaskProgress() -> CoreTypes.TaskProgress {
         CoreTypes.TaskProgress(
-            id: UUID().uuidString,
             totalTasks: contextEngine.todaysTasks.count,
-            completedTasks: contextEngine.todaysTasks.filter { $0.isCompleted }.count,
-            lastUpdated: Date()
+            completedTasks: contextEngine.todaysTasks.filter { $0.isCompleted }.count
         )
     }
     
@@ -453,7 +462,7 @@ struct WorkerDashboardView: View {
             return .clockedIn(
                 building: building.name,
                 buildingId: building.id,
-                time: contextEngine.clockInStatus.time ?? Date(),
+                time: viewModel.clockInTime ?? Date(),
                 location: CLLocation(
                     latitude: building.latitude,
                     longitude: building.longitude
@@ -490,8 +499,6 @@ struct WorkerDashboardView: View {
             return .error("Sync failed")
         case .offline:
             return .offline
-        case .pending:
-            return .syncing(progress: 0.1)
         }
     }
     
@@ -570,9 +577,8 @@ struct WorkerDashboardView: View {
     private func loadWorkerSpecificData() async {
         await viewModel.loadInitialData()
         
-        // Load context for current worker
-        if let currentUser = await authManager.getCurrentUser() {
-            let workerId = currentUser.workerId
+        // Load context for current worker using the correct property access
+        if let workerId = authManager.workerId {
             try? await contextEngine.loadContext(for: workerId)
         }
         
@@ -583,7 +589,7 @@ struct WorkerDashboardView: View {
         print("✅ Worker dashboard loaded: \(contextEngine.assignedBuildings.count) buildings, primary: \(primary?.name ?? "none")")
     }
     
-    private func determinePrimaryBuilding(for workerId: String?) -> NamedCoordinate? {
+    private func determinePrimaryBuilding(for workerId: String?) -> CoreTypes.NamedCoordinate? {
         let buildings = contextEngine.assignedBuildings
         guard let workerId = workerId else { return buildings.first }
         
@@ -601,11 +607,11 @@ struct WorkerDashboardView: View {
     
     // MARK: - Task Conversion Helper
     
-    private func convertToMaintenanceTask(_ contextualTask: ContextualTask) -> MaintenanceTask {
-        let status: TaskStatus = contextualTask.isCompleted ? .completed :
+    private func convertToMaintenanceTask(_ contextualTask: CoreTypes.ContextualTask) -> CoreTypes.MaintenanceTask {
+        let status: CoreTypes.TaskStatus = contextualTask.isCompleted ? .completed :
                                 (contextualTask.isOverdue ? .overdue : .pending)
         
-        return MaintenanceTask(
+        return CoreTypes.MaintenanceTask(
             id: contextualTask.id,
             title: contextualTask.title,
             description: contextualTask.description ?? "",
