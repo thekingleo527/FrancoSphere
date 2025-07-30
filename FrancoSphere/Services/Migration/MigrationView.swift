@@ -632,7 +632,15 @@ struct MigrationView_Previews: PreviewProvider {
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Error")
                 .onAppear {
-                    DailyOpsReset.shared.migrationError = MigrationError.importFailed("Network connection lost")
+                    // Option 1: Use the error type from DailyOpsReset
+                    // DailyOpsReset.shared.migrationError = DailyOpsReset.DailyOpsError.importFailed("Network connection lost")
+                    
+                    // Option 2: Just set a simple error for preview
+                    DailyOpsReset.shared.migrationError = NSError(
+                        domain: "MigrationPreview",
+                        code: -1,
+                        userInfo: [NSLocalizedDescriptionKey: "Network connection lost"]
+                    )
                 }
         }
     }

@@ -153,7 +153,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             data: [
                 "taskId": task.id,
                 "completionTime": ISO8601DateFormatter().string(from: Date()),
-                "evidence": taskEvidence.description ?? "Task completed",
+                "evidence": taskEvidence.description,  // ✅ FIXED: Removed unnecessary ??
                 "photoCount": String(taskEvidence.photoURLs.count)
             ]
         )
@@ -167,7 +167,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         guard let workerId = currentWorkerId else { return }
         
         // Update local state
-        if let taskIndex = todaysTasks.firstIndex(where: { $0.id == task.id }) {
+        if todaysTasks.contains(where: { $0.id == task.id }) {  // ✅ FIXED: No unused variable
             print("✅ Task started: \(task.title)")
         }
         
@@ -301,9 +301,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     private func loadWorkerProfile(workerId: String) async {
         do {
             // Get worker profile from worker service
-            if let profile = try await workerService.getWorker(by: workerId) {
-                workerProfile = profile
-            }
+            workerProfile = try await workerService.getWorkerProfile(for: workerId)  // ✅ FIXED: Correct method name
         } catch {
             print("⚠️ Failed to load worker profile: \(error)")
         }

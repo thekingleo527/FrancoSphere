@@ -1614,7 +1614,6 @@ public typealias AssignmentID = CoreTypes.AssignmentID
 public typealias RoleID = CoreTypes.RoleID
 
 // Type aliases for types that don't conflict
-public typealias UserRole = CoreTypes.UserRole
 public typealias NamedCoordinate = CoreTypes.NamedCoordinate
 public typealias WorkerProfile = CoreTypes.WorkerProfile
 public typealias ContextualTask = CoreTypes.ContextualTask

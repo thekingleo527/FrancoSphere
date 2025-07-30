@@ -81,7 +81,6 @@
 		2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2B2E39885600F4A10F /* GlassButton.swift */; };
 		2377A0402E39885600F4A10F /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F482E39885600F4A10F /* AuthManager.swift */; };
 		2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */; };
-		2377A0422E39885600F4A10F /* TypeMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB42E39885600F4A10F /* TypeMigrationService.swift */; };
 		2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCC2E39885600F4A10F /* TaskFormView.swift */; };
 		2377A0452E39885600F4A10F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD32E39885600F4A10F /* ContentView.swift */; };
 		2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F222E39885600F4A10F /* HeaderV3B.swift */; };
@@ -311,7 +310,6 @@
 		23779FB02E39885600F4A10F /* RouteStatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteStatItem.swift; sourceTree = "<group>"; };
 		23779FB12E39885600F4A10F /* TrackableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackableScrollView.swift; sourceTree = "<group>"; };
 		23779FB32E39885600F4A10F /* DataSynchronizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSynchronizationService.swift; sourceTree = "<group>"; };
-		23779FB42E39885600F4A10F /* TypeMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeMigrationService.swift; sourceTree = "<group>"; };
 		23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerEventOutbox.swift; sourceTree = "<group>"; };
 		23779FB72E39885600F4A10F /* DatabaseSchemaVerifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseSchemaVerifier.swift; sourceTree = "<group>"; };
 		23779FB82E39885600F4A10F /* SchemaMigrationPatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaMigrationPatch.swift; sourceTree = "<group>"; };
@@ -864,7 +862,6 @@
 			isa = PBXGroup;
 			children = (
 				23779FB32E39885600F4A10F /* DataSynchronizationService.swift */,
-				23779FB42E39885600F4A10F /* TypeMigrationService.swift */,
 				23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */,
 			);
 			path = Sync;
@@ -1275,7 +1272,6 @@
 				2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */,
 				2377A0402E39885600F4A10F /* AuthManager.swift in Sources */,
 				2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */,
-				2377A0422E39885600F4A10F /* TypeMigrationService.swift in Sources */,
 				2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */,
 				2377A0452E39885600F4A10F /* ContentView.swift in Sources */,
 				23A1B9682E39931D0011F091 /* WorkerManager.swift in Sources */,
