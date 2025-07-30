@@ -2,10 +2,9 @@
 //  FrancoSphereApp.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CLEAN: Single startup system integration
-//  ✅ ORGANIZED: Uses existing InitializationViewModel
-//  ✅ SIMPLE: Clear initialization flow
-//  ✅ PRODUCTION: Ready for deployment
+//  ✅ FIXED: Single initialization path
+//  ✅ CLEAN: Clear flow - Initialize → Authenticate → Route
+//  ✅ SIMPLE: No duplicate logic
 //
 
 import SwiftUI
@@ -20,34 +19,26 @@ struct FrancoSphereApp: App {
         WindowGroup {
             ZStack {
                 if !initializationViewModel.isComplete {
+                    // Step 1: Initialize the app
                     InitializationView(viewModel: initializationViewModel)
                 } else if authManager.isAuthenticated {
-                    authenticatedView
+                    // Step 2: Show authenticated content
+                    ContentView()
+                        .environmentObject(authManager)
+                        .environmentObject(dataSyncService)
                 } else {
+                    // Step 3: Show login if not authenticated
                     LoginView()
                         .environmentObject(authManager)
                 }
             }
             .preferredColorScheme(.dark)
-            .environmentObject(authManager)
-            .environmentObject(dataSyncService)
             .task {
+                // Start initialization if needed
                 if !initializationViewModel.isInitializing && !initializationViewModel.isComplete {
                     await initializationViewModel.startInitialization()
                 }
             }
-        }
-    }
-    
-    @ViewBuilder
-    private var authenticatedView: some View {
-        switch authManager.userRole {
-        case "admin":
-            AdminDashboardView()
-        case "client":
-            ClientDashboardView()
-        default: // worker
-            WorkerDashboardView()
         }
     }
 }
