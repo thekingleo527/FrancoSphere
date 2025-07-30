@@ -5,6 +5,7 @@
 //  ✅ PRODUCTION READY: Complete database manager with migration support
 //  ✅ COMPLETE: Full authentication + operational database manager
 //  ✅ SINGLE SOURCE: One manager for everything
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -543,9 +544,12 @@ public final class GRDBManager {
     
     public func inTransaction<T>(_ block: @escaping (Database) throws -> T) async throws -> T {
         return try await dbPool.write { db in
-            return try db.inTransaction {
-                return try block(db)
+            var result: T!
+            try db.inTransaction {
+                result = try block(db)
+                return .commit
             }
+            return result
         }
     }
     
@@ -984,14 +988,14 @@ public final class GRDBManager {
     }
     
     // MARK: - Real-time Observation
-    
+
     public func observeBuildings() -> AnyPublisher<[CoreTypes.NamedCoordinate], Error> {
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
                 .map { row in
                     CoreTypes.NamedCoordinate(
-                        id: row["id"] as? String ?? "",
-                        name: row["name"] as? String ?? "",
+                        id: (row["id"] as? String) ?? "",
+                        name: (row["name"] as? String) ?? "",
                         latitude: (row["latitude"] as? Double) ?? 0,
                         longitude: (row["longitude"] as? Double) ?? 0
                     )
@@ -1000,7 +1004,7 @@ public final class GRDBManager {
         
         return observation.publisher(in: dbPool).eraseToAnyPublisher()
     }
-    
+
     public func observeTasks(for buildingId: String) -> AnyPublisher<[CoreTypes.ContextualTask], Error> {
         let observation = ValueObservation.tracking { db in
             try Row.fetchAll(db, sql: """
@@ -1019,13 +1023,14 @@ public final class GRDBManager {
         
         return observation.publisher(in: dbPool).eraseToAnyPublisher()
     }
-    
+
     // Helper method for task conversion
     public func contextualTaskFromRow(_ row: Row) -> CoreTypes.ContextualTask? {
+        // Properly cast the title
         guard let title = row["title"] as? String else { return nil }
         
         // Convert category string to enum
-        let categoryString = row["category"] as? String ?? "maintenance"
+        let categoryString = (row["category"] as? String) ?? "maintenance"
         let category: CoreTypes.TaskCategory? = {
             switch categoryString.lowercased() {
             case "maintenance": return .maintenance
@@ -1045,7 +1050,7 @@ public final class GRDBManager {
         }()
         
         // Convert priority/urgency
-        let priorityString = row["priority"] as? String ?? "normal"
+        let priorityString = (row["priority"] as? String) ?? "normal"
         let urgency: CoreTypes.TaskUrgency? = {
             switch priorityString.lowercased() {
             case "low": return .low
@@ -1076,17 +1081,17 @@ public final class GRDBManager {
         }()
         
         return CoreTypes.ContextualTask(
-            id: row["id"] as? String ?? "",
+            id: (row["id"] as? String) ?? "",
             title: title,
             description: row["description"] as? String,
-            isCompleted: (row["status"] as? String ?? "pending") == "completed",
+            isCompleted: ((row["status"] as? String) ?? "pending") == "completed",
             completedDate: completedDate,
             dueDate: dueDate,
             category: category,
             urgency: urgency,
             building: building,
             worker: nil,
-            buildingId: row["building_id"] as? String ?? "",
+            buildingId: (row["building_id"] as? String) ?? "",
             priority: urgency
         )
     }
@@ -1189,10 +1194,5 @@ public enum UserRole: String, CaseIterable {
     case superAdmin = "super_admin"
 }
 
-// MARK: - Row Extensions
-
-extension Row {
-    subscript(column: String) -> DatabaseValue {
-        return self[Column(column)]
-    }
-}
+// ✅ FIXED: Removed ambiguous Row extension that was causing compilation errors
+// GRDB's Row already has proper subscript support built-in
