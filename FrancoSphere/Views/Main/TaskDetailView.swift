@@ -7,6 +7,7 @@
 //  ✅ REAL-TIME UPDATES: Progress tracking and sync
 //  ✅ GLASS MORPHISM: Beautiful UI with FrancoSphere design
 //  ✅ ERROR HANDLING: Comprehensive user feedback
+//  ✅ FIXED: Removed duplicate GlassCard and PhotoCaptureView
 //
 
 import SwiftUI
@@ -105,11 +106,16 @@ struct TaskDetailView: View {
             Text(viewModel.successMessage ?? "Task completed successfully")
         }
         .sheet(isPresented: $showPhotoCapture) {
-            PhotoCaptureView { image in
-                Task {
-                    await viewModel.capturePhoto(image)
-                }
-            }
+            // ✅ FIXED: Using ImagePicker from ImagePicker.swift
+            ImagePicker(
+                image: .constant(nil),
+                onImagePicked: { image in
+                    Task {
+                        await viewModel.capturePhoto(image)
+                    }
+                },
+                sourceType: .camera
+            )
         }
         .photosPicker(
             isPresented: $showPhotoLibrary,
@@ -136,6 +142,7 @@ struct TaskDetailView: View {
     // MARK: - View Components
     
     private var taskHeaderCard: some View {
+        // ✅ FIXED: Using GlassCard from Components/Glass/GlassCard.swift
         GlassCard {
             VStack(alignment: .leading, spacing: 16) {
                 // Title and Category
@@ -685,57 +692,6 @@ struct TaskDetailView: View {
 
 // MARK: - Supporting Views
 
-struct GlassCard<Content: View>: View {
-    let content: Content
-    
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-    
-    var body: some View {
-        content
-            .francoGlassBackground()
-            .francoShadow()
-    }
-}
-
-struct PhotoCaptureView: UIViewControllerRepresentable {
-    @Environment(\.dismiss) private var dismiss
-    let onCapture: (UIImage) -> Void
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: PhotoCaptureView
-        
-        init(_ parent: PhotoCaptureView) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.onCapture(image)
-            }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
-        }
-    }
-}
-
 struct LoadingOverlay: View {
     var body: some View {
         ZStack {
@@ -758,6 +714,11 @@ struct LoadingOverlay: View {
             )
         }
     }
+}
+
+struct MapPin: Identifiable {
+    let id = UUID()
+    let coordinate: CLLocationCoordinate2D
 }
 
 // MARK: - Preview

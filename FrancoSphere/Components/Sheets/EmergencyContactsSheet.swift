@@ -87,7 +87,7 @@ struct EmergencyContactsSheet: View {
                 .foregroundColor(.white)
             
             VStack(spacing: 8) {
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "911 Emergency Services",
                     subtitle: "Police, Fire, Medical",
                     number: "911",
@@ -96,7 +96,7 @@ struct EmergencyContactsSheet: View {
                     isPrimary: true
                 )
                 
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "Poison Control",
                     subtitle: "24/7 Poison Emergency",
                     number: "1-800-222-1222",
@@ -118,7 +118,7 @@ struct EmergencyContactsSheet: View {
                 .foregroundColor(.white)
             
             VStack(spacing: 8) {
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "Franco Management",
                     subtitle: "Primary building management",
                     number: "(555) 123-4567",
@@ -126,7 +126,7 @@ struct EmergencyContactsSheet: View {
                     color: .blue
                 )
                 
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "Property Security",
                     subtitle: "24/7 security services",
                     number: "(555) 234-5678",
@@ -134,7 +134,7 @@ struct EmergencyContactsSheet: View {
                     color: .orange
                 )
                 
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "Maintenance Emergency",
                     subtitle: "After-hours maintenance",
                     number: "(555) 345-6789",
@@ -156,7 +156,7 @@ struct EmergencyContactsSheet: View {
                 .foregroundColor(.white)
             
             VStack(spacing: 8) {
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "Con Edison Gas Emergency",
                     subtitle: "Gas leaks and emergencies",
                     number: "1-800-752-6633",
@@ -164,7 +164,7 @@ struct EmergencyContactsSheet: View {
                     color: .orange
                 )
                 
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "NYC Water Emergency",
                     subtitle: "Water main breaks",
                     number: "311",
@@ -172,7 +172,7 @@ struct EmergencyContactsSheet: View {
                     color: .blue
                 )
                 
-                EmergencyContactRow(
+                EmergencyContactCardRow(
                     title: "Electrical Emergency",
                     subtitle: "Power outages and electrical",
                     number: "1-800-752-6633",
@@ -187,7 +187,8 @@ struct EmergencyContactsSheet: View {
     }
 }
 
-struct EmergencyContactRow: View {
+// Renamed to avoid conflicts
+struct EmergencyContactCardRow: View {
     let title: String
     let subtitle: String
     let number: String

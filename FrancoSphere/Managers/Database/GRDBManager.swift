@@ -1,4 +1,3 @@
-//
 //  GRDBManager.swift
 //  FrancoSphere v6.0
 //
@@ -245,6 +244,35 @@ public final class GRDBManager {
             )
         """)
 
+        // Legacy compatibility tables needed by other services
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS worker_assignments (
+                worker_id TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                worker_name TEXT,
+                building_name TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (worker_id, building_id)
+            )
+        """)
+        
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                buildingId TEXT,
+                workerId TEXT,
+                isCompleted INTEGER DEFAULT 0,
+                scheduledDate TEXT,
+                dueDate TEXT,
+                category TEXT,
+                urgency TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         // --- INVENTORY SYSTEM TABLES (NEW & ENHANCED) ---
 
         // Inventory items (ENHANCED)
@@ -350,7 +378,7 @@ public final class GRDBManager {
                 status TEXT DEFAULT 'pending',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (request_id) REFERENCES supply_requests(id) ON DELETE CASCADE,
-                FOREIGN KEY (item_id) REFERENCES inventory_items(id)
+                FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
             )
         """)
 
@@ -368,7 +396,7 @@ public final class GRDBManager {
                 resolved_at TEXT,
                 resolved_by TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (item_id) REFERENCES inventory_items(id),
+                FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE,
                 FOREIGN KEY (building_id) REFERENCES buildings(id),
                 FOREIGN KEY (resolved_by) REFERENCES workers(id)
             )
@@ -522,24 +550,17 @@ public final class GRDBManager {
     
     public func authenticateWorker(email: String, password: String) async -> AuthenticationResult {
         do {
-            // Check if account is locked
             if try await isAccountLocked(email: email) {
                 await recordLoginAttempt(email: email, success: false, reason: "Account locked")
                 return .failure("Account is temporarily locked due to multiple failed attempts")
             }
             
-            // Fetch worker
-            let rows = try await query("""
-                SELECT * FROM workers 
-                WHERE email = ? AND isActive = 1
-            """, [email])
-            
+            let rows = try await query("SELECT * FROM workers WHERE email = ? AND isActive = 1", [email])
             guard let row = rows.first else {
                 await recordLoginAttempt(email: email, success: false, reason: "User not found")
                 return .failure("Invalid credentials")
             }
             
-            // Verify password
             let storedPassword = row["password"] as? String ?? ""
             guard storedPassword == password else {
                 try await incrementLoginAttempts(email: email)
@@ -547,240 +568,114 @@ public final class GRDBManager {
                 return .failure("Invalid credentials")
             }
             
-            // Success - reset attempts and update last login
-            try await execute("""
-                UPDATE workers 
-                SET loginAttempts = 0, 
-                    lockedUntil = NULL,
-                    lastLogin = datetime('now'),
-                    updated_at = datetime('now')
-                WHERE email = ?
-            """, [email])
-            
+            try await execute("UPDATE workers SET loginAttempts = 0, lockedUntil = NULL, lastLogin = datetime('now'), updated_at = datetime('now') WHERE email = ?", [email])
             await recordLoginAttempt(email: email, success: true, reason: nil)
             
-            // Create authenticated user object
             let idString = row["id"] as? String ?? "0"
             let user = AuthenticatedUser(
                 id: Int(idString) ?? 0,
                 name: row["name"] as? String ?? "",
                 email: email,
-                password: "", // Don't return password
+                password: "",
                 role: row["role"] as? String ?? "worker",
                 workerId: idString,
                 displayName: row["display_name"] as? String,
                 timezone: row["timezone"] as? String ?? "America/New_York"
             )
-            
             return .success(user)
-            
         } catch {
-            print("❌ Authentication error: \(error)")
             return .failure("Authentication failed: \(error.localizedDescription)")
         }
     }
     
     public func createSession(for workerId: String, deviceInfo: String = "iOS App") async throws -> String {
         let sessionId = UUID().uuidString
-        let expiresAt = Date().addingTimeInterval(24 * 60 * 60) // 24 hours
-        
-        try await execute("""
-            INSERT INTO user_sessions 
-            (session_id, worker_id, device_info, ip_address, login_time, last_activity, expires_at, is_active)
-            VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?, 1)
-        """, [sessionId, workerId, deviceInfo, "127.0.0.1", ISO8601DateFormatter().string(from: expiresAt)])
-        
+        let expiresAt = Date().addingTimeInterval(24 * 60 * 60)
+        try await execute("INSERT INTO user_sessions (session_id, worker_id, device_info, ip_address, login_time, last_activity, expires_at, is_active) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?, 1)", [sessionId, workerId, deviceInfo, "127.0.0.1", ISO8601DateFormatter().string(from: expiresAt)])
         return sessionId
     }
     
     public func validateSession(_ sessionId: String) async throws -> AuthenticatedUser? {
-        let rows = try await query("""
-            SELECT 
-                w.*, s.expires_at
-            FROM user_sessions s
-            JOIN workers w ON s.worker_id = w.id
-            WHERE s.session_id = ? AND s.is_active = 1 AND w.isActive = 1
-        """, [sessionId])
-        
+        let rows = try await query("SELECT w.*, s.expires_at FROM user_sessions s JOIN workers w ON s.worker_id = w.id WHERE s.session_id = ? AND s.is_active = 1 AND w.isActive = 1", [sessionId])
         guard let row = rows.first else { return nil }
         
-        // Check if session expired
-        if let expiresAtString = row["expires_at"] as? String,
-           let expiresAt = ISO8601DateFormatter().date(from: expiresAtString),
-           Date() > expiresAt {
-            // Deactivate expired session
+        if let expiresAtString = row["expires_at"] as? String, let expiresAt = ISO8601DateFormatter().date(from: expiresAtString), Date() > expiresAt {
             try await execute("UPDATE user_sessions SET is_active = 0 WHERE session_id = ?", [sessionId])
             return nil
         }
         
-        // Update last activity
-        try await execute("""
-            UPDATE user_sessions 
-            SET last_activity = datetime('now') 
-            WHERE session_id = ?
-        """, [sessionId])
+        try await execute("UPDATE user_sessions SET last_activity = datetime('now') WHERE session_id = ?", [sessionId])
         
         let idString = row["id"] as? String ?? "0"
         return AuthenticatedUser(
-            id: Int(idString) ?? 0,
-            name: row["name"] as? String ?? "",
-            email: row["email"] as? String ?? "",
-            password: "", // Don't return password
-            role: row["role"] as? String ?? "worker",
-            workerId: idString,
-            displayName: row["display_name"] as? String,
+            id: Int(idString) ?? 0, name: row["name"] as? String ?? "", email: row["email"] as? String ?? "", password: "",
+            role: row["role"] as? String ?? "worker", workerId: idString, displayName: row["display_name"] as? String,
             timezone: row["timezone"] as? String ?? "America/New_York"
         )
     }
     
     public func logout(workerId: String) async throws {
-        try await execute("""
-            UPDATE user_sessions 
-            SET is_active = 0, last_activity = datetime('now')
-            WHERE worker_id = ? AND is_active = 1
-        """, [workerId])
+        try await execute("UPDATE user_sessions SET is_active = 0, last_activity = datetime('now') WHERE worker_id = ? AND is_active = 1", [workerId])
     }
     
-    // MARK: - Security Features (Private)
-    
     private func isAccountLocked(email: String) async throws -> Bool {
-        let rows = try await query("""
-            SELECT loginAttempts, lockedUntil FROM workers WHERE email = ?
-        """, [email])
-        
+        let rows = try await query("SELECT loginAttempts, lockedUntil FROM workers WHERE email = ?", [email])
         guard let row = rows.first else { return false }
-        
         let attempts = row["loginAttempts"] as? Int64 ?? 0
-        let lockedUntilString = row["lockedUntil"] as? String
-        
-        if attempts >= 5 {
-            if let lockedUntilString = lockedUntilString,
-               let lockedUntil = ISO8601DateFormatter().date(from: lockedUntilString),
-               Date() < lockedUntil {
-                return true
-            } else {
-                // Reset if lock period expired
-                try await execute("""
-                    UPDATE workers SET loginAttempts = 0, lockedUntil = NULL WHERE email = ?
-                """, [email])
-            }
+        if attempts >= 5, let lockedUntilString = row["lockedUntil"] as? String, let lockedUntil = ISO8601DateFormatter().date(from: lockedUntilString), Date() < lockedUntil {
+            return true
         }
-        
         return false
     }
     
     private func incrementLoginAttempts(email: String) async throws {
+        try await execute("UPDATE workers SET loginAttempts = loginAttempts + 1, updated_at = datetime('now') WHERE email = ?", [email])
         let rows = try await query("SELECT loginAttempts FROM workers WHERE email = ?", [email])
-        let currentAttempts = rows.first?["loginAttempts"] as? Int64 ?? 0
-        let newAttempts = currentAttempts + 1
-        
-        var lockedUntil: String? = nil
-        if newAttempts >= 5 {
-            // Lock for 30 minutes
+        if (rows.first?["loginAttempts"] as? Int64 ?? 0) >= 5 {
             let lockTime = Date().addingTimeInterval(30 * 60)
-            lockedUntil = ISO8601DateFormatter().string(from: lockTime)
+            try await execute("UPDATE workers SET lockedUntil = ? WHERE email = ?", [ISO8601DateFormatter().string(from: lockTime), email])
         }
-        
-        try await execute("""
-            UPDATE workers 
-            SET loginAttempts = ?, lockedUntil = ?, updated_at = datetime('now')
-            WHERE email = ?
-        """, [newAttempts, lockedUntil as Any, email])
     }
     
     private func recordLoginAttempt(email: String, success: Bool, reason: String?) async {
-        do {
-            let workerRows = try await query("SELECT id FROM workers WHERE email = ?", [email])
-            let workerId = workerRows.first?["id"] as? String
-            
-            try await execute("""
-                INSERT INTO login_history 
-                (worker_id, email, login_time, success, failure_reason, ip_address, device_info)
-                VALUES (?, ?, datetime('now'), ?, ?, ?, ?)
-            """, [workerId as Any, email, success ? 1 : 0, reason as Any, "127.0.0.1", "iOS App"])
-        } catch {
-            print("⚠️ Failed to record login attempt: \(error)")
-        }
+        let workerRows = try? await query("SELECT id FROM workers WHERE email = ?", [email])
+        let workerId = workerRows?.first?["id"] as? String
+        try? await execute("INSERT INTO login_history (worker_id, email, login_time, success, failure_reason, ip_address, device_info) VALUES (?, ?, datetime('now'), ?, ?, ?, ?)", [workerId, email, success ? 1 : 0, reason, "127.0.0.1", "iOS App"])
     }
     
     // MARK: - Real-time Observation
     
     public func observeBuildings() -> AnyPublisher<[CoreTypes.NamedCoordinate], Error> {
-        let observation = ValueObservation.tracking { db in
-            try Row.fetchAll(db, sql: "SELECT * FROM buildings ORDER BY name")
-                .map { row in
-                    CoreTypes.NamedCoordinate(
-                        id: (row["id"] as? String) ?? "",
-                        name: (row["name"] as? String) ?? "",
-                        address: (row["address"] as? String) ?? "",
-                        latitude: (row["latitude"] as? Double) ?? 0,
-                        longitude: (row["longitude"] as? Double) ?? 0
-                    )
-                }
-        }
-        
-        return observation.publisher(in: dbPool).eraseToAnyPublisher()
+        ValueObservation.tracking { db in
+            try Row.fetchAll(db, sql: "SELECT id, name, address, latitude, longitude FROM buildings ORDER BY name").map { row in
+                CoreTypes.NamedCoordinate(
+                    id: row["id"], name: row["name"], address: row["address"],
+                    latitude: row["latitude"] ?? 0.0, longitude: row["longitude"] ?? 0.0
+                )
+            }
+        }.publisher(in: dbPool).eraseToAnyPublisher()
     }
 
     public func observeTasks(for buildingId: String) -> AnyPublisher<[CoreTypes.ContextualTask], Error> {
-        let observation = ValueObservation.tracking { db in
-            try Row.fetchAll(db, sql: """
-                SELECT t.*, b.name as buildingName, w.name as workerName 
-                FROM routine_tasks t
-                LEFT JOIN buildings b ON t.buildingId = b.id
-                LEFT JOIN workers w ON t.workerId = w.id
-                WHERE t.buildingId = ?
-                ORDER BY t.scheduledDate
-                """, arguments: [buildingId])
-                .map { row in
-                    self.contextualTaskFromRow(row)
-                }
-                .compactMap { $0 }
-        }
-        
-        return observation.publisher(in: dbPool).eraseToAnyPublisher()
+        ValueObservation.tracking { db in
+            try Row.fetchAll(db, sql: "SELECT t.*, b.name as buildingName, w.name as workerName FROM routine_tasks t LEFT JOIN buildings b ON t.buildingId = b.id LEFT JOIN workers w ON t.workerId = w.id WHERE t.buildingId = ? ORDER BY t.scheduledDate", arguments: [buildingId])
+                .compactMap { self.contextualTaskFromRow($0) }
+        }.publisher(in: dbPool).eraseToAnyPublisher()
     }
 
-    // Helper method for task conversion
     public func contextualTaskFromRow(_ row: Row) -> CoreTypes.ContextualTask? {
-        guard let title = row["title"] as? String else { return nil }
-        
-        let categoryString = row["category"] as? String ?? "maintenance"
-        let category: CoreTypes.TaskCategory? = CoreTypes.TaskCategory(rawValue: categoryString.lowercased())
-        
-        let urgencyString = row["urgency"] as? String ?? "medium"
-        let urgency: CoreTypes.TaskUrgency? = CoreTypes.TaskUrgency(rawValue: urgencyString.lowercased())
-        
-        let completedDate = (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) }
-        let dueDate = (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) }
-        
-        let building: CoreTypes.NamedCoordinate? = {
-            if let buildingName = row["buildingName"] as? String,
-               let buildingId = row["buildingId"] as? String {
-                return CoreTypes.NamedCoordinate(
-                    id: buildingId,
-                    name: buildingName,
-                    address: "",
-                    latitude: 0,
-                    longitude: 0
-                )
-            }
-            return nil
-        }()
-        
+        guard let id = row["id"] as? String, let title = row["title"] as? String else { return nil }
         return CoreTypes.ContextualTask(
-            id: (row["id"] as? String) ?? UUID().uuidString,
-            title: title,
-            description: row["description"] as? String,
+            id: id, title: title, description: row["description"],
             isCompleted: (row["isCompleted"] as? Int64 ?? 0) > 0,
-            completedDate: completedDate,
-            dueDate: dueDate,
-            category: category,
-            urgency: urgency,
-            building: building,
-            worker: nil,
-            buildingId: (row["buildingId"] as? String) ?? "",
-            priority: urgency
+            completedDate: (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) },
+            dueDate: (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
+            category: (row["category"] as? String).flatMap(CoreTypes.TaskCategory.init(rawValue:)),
+            urgency: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)),
+            building: (row["buildingName"] as? String).map { CoreTypes.NamedCoordinate(id: row["buildingId"], name: $0, latitude: 0, longitude: 0) },
+            worker: (row["workerName"] as? String).map { CoreTypes.WorkerProfile(id: row["workerId"], name: $0, email: "", role: .worker) },
+            buildingId: row["buildingId"], assignedWorkerId: row["workerId"],
+            priority: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:))
         )
     }
 
@@ -789,99 +684,38 @@ public final class GRDBManager {
     public func generateSupplyRequestNumber() async throws -> String {
         let year = Calendar.current.component(.year, from: Date())
         let month = String(format: "%02d", Calendar.current.component(.month, from: Date()))
-        
-        let rows = try await query("""
-            SELECT COUNT(*) as count FROM supply_requests 
-            WHERE strftime('%Y-%m', created_at) = ?
-        """, ["\(year)-\(month)"])
-        
+        let rows = try await query("SELECT COUNT(*) as count FROM supply_requests WHERE strftime('%Y-%m', created_at) = ?", ["\(year)-\(month)"])
         let count = (rows.first?["count"] as? Int64 ?? 0) + 1
         return "SR-\(year)\(month)-\(String(format: "%04d", count))"
     }
 
     public func checkLowStockItems(for buildingId: String) async throws -> [[String: Any]] {
-        return try await query("""
-            SELECT * FROM inventory_items 
-            WHERE building_id = ? 
-            AND is_active = 1 
-            AND current_stock <= minimum_stock
-            ORDER BY (CAST(current_stock AS REAL) / CAST(minimum_stock AS REAL)) ASC
-        """, [buildingId])
+        return try await query("SELECT * FROM inventory_items WHERE building_id = ? AND is_active = 1 AND current_stock <= minimum_stock ORDER BY (CAST(current_stock AS REAL) / CAST(minimum_stock AS REAL)) ASC", [buildingId])
     }
 
     public func getInventoryValue(for buildingId: String) async throws -> Double {
-        let rows = try await query("""
-            SELECT SUM(current_stock * cost) as total_value 
-            FROM inventory_items 
-            WHERE building_id = ? AND is_active = 1
-        """, [buildingId])
-        
+        let rows = try await query("SELECT SUM(current_stock * cost) as total_value FROM inventory_items WHERE building_id = ? AND is_active = 1", [buildingId])
         return rows.first?["total_value"] as? Double ?? 0.0
     }
 
-    public func recordInventoryTransaction(
-        itemId: String,
-        type: String,
-        quantity: Int,
-        workerId: String,
-        taskId: String? = nil,
-        reason: String? = nil,
-        notes: String? = nil
-    ) async throws {
+    public func recordInventoryTransaction(itemId: String, type: String, quantity: Int, workerId: String, taskId: String? = nil, reason: String? = nil, notes: String? = nil) async throws {
         try await inTransaction { db in
-            // Get current stock and other details in one query
-            let itemRow = try Row.fetchOne(db, sql: """
-                SELECT current_stock, minimum_stock, name, building_id 
-                FROM inventory_items WHERE id = ?
-            """, arguments: [itemId])
-            
-            guard let currentStock = itemRow?["current_stock"] as? Int else {
-                throw DatabaseError.itemNotFound(itemId)
-            }
+            let itemRow = try Row.fetchOne(db, sql: "SELECT current_stock, minimum_stock, name, building_id FROM inventory_items WHERE id = ?", arguments: [itemId])
+            guard let currentStock = itemRow?["current_stock"] as? Int else { throw DatabaseError.itemNotFound(itemId) }
             
             let quantityBefore = currentStock
             let quantityChange = (type == "use" || type == "waste") ? -quantity : quantity
             let quantityAfter = quantityBefore + quantityChange
             
-            // Record the transaction
-            try db.execute(sql: """
-                INSERT INTO inventory_transactions 
-                (id, item_id, worker_id, task_id, transaction_type, quantity,
-                 quantity_before, quantity_after, reason, notes, performed_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-            """, arguments: [
-                UUID().uuidString, itemId, workerId, taskId, type, quantity,
-                quantityBefore, quantityAfter, reason, notes, workerId
-            ])
+            try db.execute(sql: "INSERT INTO inventory_transactions (id, item_id, worker_id, task_id, transaction_type, quantity, quantity_before, quantity_after, reason, notes, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))", arguments: [UUID().uuidString, itemId, workerId, taskId, type, quantity, quantityBefore, quantityAfter, reason, notes, workerId])
             
-            // Update the item's stock level and potentially the last_restocked date
-            try db.execute(sql: """
-                UPDATE inventory_items 
-                SET current_stock = ?, 
-                    updated_at = datetime('now'),
-                    status = CASE 
-                               WHEN ? <= 0 THEN 'out_of_stock'
-                               WHEN ? <= minimum_stock THEN 'low_stock'
-                               ELSE 'in_stock'
-                           END,
-                    last_restocked = CASE WHEN ? = 'restock' THEN datetime('now') ELSE last_restocked END
-                WHERE id = ?
-            """, arguments: [quantityAfter, quantityAfter, quantityAfter, type, itemId])
+            try db.execute(sql: "UPDATE inventory_items SET current_stock = ?, updated_at = datetime('now'), status = CASE WHEN ? <= 0 THEN 'out_of_stock' WHEN ? <= minimum_stock THEN 'low_stock' ELSE 'in_stock' END, last_restocked = CASE WHEN ? = 'restock' THEN datetime('now') ELSE last_restocked END WHERE id = ?", arguments: [quantityAfter, quantityAfter, quantityAfter, type, itemId])
             
-            // Check if a new low stock alert is needed (only if stock is now low but wasn't before)
             let minimumStock = itemRow?["minimum_stock"] as? Int ?? 0
             if quantityAfter <= minimumStock && quantityBefore > minimumStock {
                 let itemName = itemRow?["name"] as? String ?? "Item"
                 let buildingId = itemRow?["building_id"] as? String ?? "Unknown"
-                try db.execute(sql: """
-                    INSERT INTO inventory_alerts 
-                    (id, item_id, building_id, alert_type, threshold_value, 
-                     current_value, message, created_at)
-                    VALUES (?, ?, ?, 'low_stock', ?, ?, ?, datetime('now'))
-                """, arguments: [
-                    UUID().uuidString, itemId, buildingId, minimumStock,
-                    quantityAfter, "Low stock alert for \(itemName)"
-                ])
+                try db.execute(sql: "INSERT INTO inventory_alerts (id, item_id, building_id, alert_type, threshold_value, current_value, message, created_at) VALUES (?, ?, ?, 'low_stock', ?, ?, ?, datetime('now'))", arguments: [UUID().uuidString, itemId, buildingId, minimumStock, quantityAfter, "Low stock alert for \(itemName)"])
             }
         }
     }
@@ -914,21 +748,19 @@ public enum AuthenticationResult {
     case failure(String)
 }
 
-public struct AuthenticatedUser: Codable {
+public struct AuthenticatedUser: Codable, Equatable {
     public let id: Int
     public let name: String
     public let email: String
-    public let password: String
     public let role: String
     public let workerId: String
     public let displayName: String?
     public let timezone: String
     
-    public init(id: Int, name: String, email: String, password: String, role: String, workerId: String, displayName: String? = nil, timezone: String = "America/New_York") {
+    public init(id: Int, name: String, email: String, role: String, workerId: String, displayName: String? = nil, timezone: String = "America/New_York") {
         self.id = id
         self.name = name
         self.email = email
-        self.password = password
         self.role = role
         self.workerId = workerId
         self.displayName = displayName
@@ -938,7 +770,7 @@ public struct AuthenticatedUser: Codable {
 
 // MARK: - UserRole Enum (for compatibility)
 
-public enum UserRole: String, CaseIterable {
+public enum UserRole: String, Codable, CaseIterable {
     case worker = "worker"
     case admin = "admin"
     case client = "client"

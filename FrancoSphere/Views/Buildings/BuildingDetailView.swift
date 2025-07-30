@@ -1,4 +1,4 @@
-//
+////
 //  BuildingDetailView.swift
 //  FrancoSphere v6.0
 //
@@ -6,6 +6,7 @@
 //  📱 ADAPTIVE: Role-based content visibility
 //  🔄 REAL-TIME: Live updates via DashboardSync
 //  📸 PHOTO-READY: Integrated photo management
+//  ✅ ENHANCED: Worker assignment for routines
 //
 
 import SwiftUI
@@ -27,6 +28,8 @@ struct BuildingDetailView: View {
     @State private var showingMessageComposer = false
     @State private var showingCallMenu = false
     @State private var selectedContact: BuildingContact?
+    @State private var selectedRoutine: DailyRoutine?
+    @State private var showWorkerAssignment = false
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Initialization
@@ -73,9 +76,11 @@ struct BuildingDetailView: View {
             await viewModel.loadBuildingData()
         }
         .sheet(isPresented: $showingPhotoCapture) {
-            // Phase 3: Photo Evidence System
-            PhotoCaptureView(buildingId: buildingId, buildingName: buildingName) { photo in
-                await viewModel.savePhoto(photo)
+            // Use the Franco photo capture system
+            FrancoBuildingPhotoCaptureView(
+                buildingId: buildingId
+            ) { image, category, notes in
+                await viewModel.savePhoto(image)
             }
         }
         .sheet(isPresented: $showingMessageComposer) {
@@ -84,6 +89,17 @@ struct BuildingDetailView: View {
                 subject: "Re: \(buildingName)",
                 prefilledBody: getBuildingContext()
             )
+        }
+        .sheet(isPresented: $showWorkerAssignment) {
+            if let routine = selectedRoutine {
+                WorkerAssignmentSheet(
+                    buildingId: buildingId,
+                    routine: routine,
+                    onAssign: { workerId in
+                        viewModel.assignWorkerToRoutine(routine, workerId: workerId)
+                    }
+                )
+            }
         }
         .confirmationDialog("Call Contact", isPresented: $showingCallMenu) {
             callMenuOptions
@@ -529,6 +545,7 @@ struct BuildingDetailView: View {
         }
     }
     
+    // ENHANCED: Daily Routines Card with worker assignment
     private var dailyRoutinesCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Daily Routines", systemImage: "calendar.circle.fill")
@@ -542,28 +559,74 @@ struct BuildingDetailView: View {
                     .padding(.vertical, 20)
             } else {
                 ForEach(viewModel.dailyRoutines) { routine in
-                    HStack {
-                        Button(action: { viewModel.toggleRoutineCompletion(routine) }) {
-                            Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
-                                .foregroundColor(routine.isCompleted ? .green : .white.opacity(0.5))
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(routine.title)
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.9))
-                                .strikethrough(routine.isCompleted)
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Existing routine display
+                        HStack {
+                            Button(action: { viewModel.toggleRoutineCompletion(routine) }) {
+                                Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
+                                    .foregroundColor(routine.isCompleted ? .green : .white.opacity(0.5))
+                            }
                             
-                            if let time = routine.scheduledTime {
-                                Text(time)
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.6))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(routine.title)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .strikethrough(routine.isCompleted)
+                                
+                                if let time = routine.scheduledTime {
+                                    Text(time)
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            // NEW: Worker assignment button
+                            if viewModel.userRole == .admin && !routine.isCompleted {
+                                Button(action: {
+                                    selectedRoutine = routine
+                                    showWorkerAssignment = true
+                                }) {
+                                    Image(systemName: "person.badge.plus")
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                }
                             }
                         }
                         
-                        Spacer()
+                        // NEW: Show assigned worker
+                        if let assignedWorker = routine.assignedWorker {
+                            HStack {
+                                Image(systemName: "person.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                Text(assignedWorker)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.leading, 24)
+                        }
+                        
+                        // NEW: Show required inventory
+                        if !routine.requiredInventory.isEmpty {
+                            HStack {
+                                Image(systemName: "shippingbox")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                Text("\(routine.requiredInventory.count) items")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.leading, 24)
+                        }
                     }
                     .padding(.vertical, 4)
+                    
+                    if routine.id != viewModel.dailyRoutines.last?.id {
+                        Divider()
+                            .background(Color.white.opacity(0.2))
+                    }
                 }
             }
         }
@@ -758,9 +821,9 @@ struct BuildingDetailView: View {
                 .foregroundColor(.white)
             
             VStack(alignment: .leading, spacing: 8) {
-                EmergencyContactRow(title: "Franco 24/7 Hotline", number: "(212) 555-XXXX")
-                EmergencyContactRow(title: "Building Security", number: "(212) 555-XXXX")
-                EmergencyContactRow(title: "Facilities Manager", number: "(212) 555-XXXX")
+                BuildingEmergencyRow(title: "Franco 24/7 Hotline", number: "(212) 555-XXXX")
+                BuildingEmergencyRow(title: "Building Security", number: "(212) 555-XXXX")
+                BuildingEmergencyRow(title: "Facilities Manager", number: "(212) 555-XXXX")
             }
         }
         .padding()
@@ -960,14 +1023,16 @@ struct BuildingDetailView: View {
         switch category {
         case .cleaning: return "sparkles"
         case .equipment: return "wrench.fill"
-        case .building: return "house.fill"
+        case .maintenance: return "house.fill"
         default: return "shippingbox.fill"
         }
     }
     
     private func stockLevelIndicator(item: CoreTypes.InventoryItem) -> some View {
-        HStack(spacing: 4) {
-            if item.needsRestock {
+        let needsRestock = item.currentStock <= item.minimumStock
+        
+        return HStack(spacing: 4) {
+            if needsRestock {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundColor(.orange)
@@ -1064,11 +1129,14 @@ struct SpacePhoto: Identifiable {
     let thumbnail: UIImage?
 }
 
+// ENHANCED: DailyRoutine with worker assignment and inventory
 struct DailyRoutine: Identifiable {
     let id: String
     let title: String
     let scheduledTime: String?
     var isCompleted: Bool = false
+    var assignedWorker: String? = nil  // Worker name
+    var requiredInventory: [String] = [] // Inventory item names
 }
 
 struct MaintenanceRecord: Identifiable {
@@ -1253,7 +1321,8 @@ struct QuickActionButton: View {
     }
 }
 
-struct EmergencyContactRow: View {
+// Renamed to avoid conflict with EmergencyContactsSheet
+struct BuildingEmergencyRow: View {
     let title: String
     let number: String
     
@@ -1271,6 +1340,150 @@ struct EmergencyContactRow: View {
     }
 }
 
+// NEW: Worker Assignment Sheet
+struct WorkerAssignmentSheet: View {
+    let buildingId: String
+    let routine: DailyRoutine
+    let onAssign: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var availableWorkers: [AssignedWorker] = []
+    @State private var selectedWorkerId: String?
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Header
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Assign Worker")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(routine.title)
+                            .font(.headline)
+                        
+                        if let time = routine.scheduledTime {
+                            Text(time)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+                }
+                .padding()
+                
+                // Worker list
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(availableWorkers) { worker in
+                            WorkerSelectionRow(
+                                worker: worker,
+                                isSelected: selectedWorkerId == worker.id,
+                                onSelect: {
+                                    selectedWorkerId = worker.id
+                                }
+                            )
+                        }
+                    }
+                    .padding()
+                }
+                
+                // Action buttons
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+                    
+                    Button("Assign") {
+                        if let workerId = selectedWorkerId {
+                            onAssign(workerId)
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        selectedWorkerId != nil ? Color.blue : Color.gray
+                    )
+                    .cornerRadius(12)
+                    .disabled(selectedWorkerId == nil)
+                }
+                .padding()
+            }
+            .navigationBarHidden(true)
+        }
+        .presentationDetents([.medium])
+        .task {
+            loadAvailableWorkers()
+        }
+    }
+    
+    private func loadAvailableWorkers() {
+        // Load real workers assigned to this building
+        // For now, using sample data
+        availableWorkers = [
+            AssignedWorker(id: "4", name: "Kevin Dutan", schedule: "6 AM - 2 PM", isOnSite: true),
+            AssignedWorker(id: "2", name: "Edwin Lema", schedule: "2 PM - 10 PM", isOnSite: false),
+            AssignedWorker(id: "5", name: "Mercedes Inamagua", schedule: "6 AM - 2 PM", isOnSite: false)
+        ]
+    }
+}
+
+struct WorkerSelectionRow: View {
+    let worker: AssignedWorker
+    let isSelected: Bool
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(worker.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: 8) {
+                        Text(worker.schedule)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        if worker.isOnSite {
+                            Label("On-site", systemImage: "location.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundColor(isSelected ? .blue : .gray)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+            )
+        }
+    }
+}
+
 // MARK: - View Model
 
 @MainActor
@@ -1280,7 +1493,7 @@ class BuildingDetailVM: ObservableObject {
     let buildingAddress: String
     
     // User context
-    @Published var userRole: CoreTypes.UserRole = .worker
+    @Published var userRole: CoreTypes.UserRole = CoreTypes.UserRole.worker
     
     // Overview data
     @Published var buildingImage: UIImage?
@@ -1346,24 +1559,39 @@ class BuildingDetailVM: ObservableObject {
     
     private func loadUserRole() {
         // Get from auth manager
-        userRole = NewAuthManager.shared.currentUser?.role ?? .worker
+        userRole = NewAuthManager.shared.currentUser?.role ?? CoreTypes.UserRole.worker
     }
     
     private func loadOverviewData() async {
-        // Phase 1: Mock data
-        // Phase 2: Load from database
-        completionPercentage = Int.random(in: 70...100)
-        workersOnSite = Int.random(in: 0...3)
-        workersPresent = ["Kevin D.", "Maria S."]
-        todaysTasks = (total: 12, completed: 8)
-        nextCriticalTask = "Trash pickup @ 6 PM"
-        complianceStatus = .compliant
-        
-        // Building details
-        buildingSize = 45000
-        floors = 6
-        units = 12
-        yearBuilt = 1920
+        // Phase 1: Mock data based on real buildings
+        // For Rubin Museum
+        if buildingId == "14" {
+            completionPercentage = 87
+            workersOnSite = 2
+            workersPresent = ["Kevin D.", "Edwin L."]
+            todaysTasks = (total: 38, completed: 33)
+            nextCriticalTask = "DSNY Trash set-out @ 8 PM"
+            complianceStatus = .compliant
+            
+            buildingSize = 70000
+            floors = 7
+            units = 1
+            yearBuilt = 1998
+            todaysSpecialNote = "Gallery event tonight - extra cleaning required"
+        } else {
+            // Default data
+            completionPercentage = Int.random(in: 70...100)
+            workersOnSite = Int.random(in: 0...3)
+            workersPresent = ["Kevin D."]
+            todaysTasks = (total: 12, completed: 8)
+            nextCriticalTask = "Trash pickup @ 6 PM"
+            complianceStatus = .compliant
+            
+            buildingSize = 45000
+            floors = 6
+            units = 12
+            yearBuilt = 1920
+        }
         
         // Load space photos
         spacePhotos = [
@@ -1379,13 +1607,54 @@ class BuildingDetailVM: ObservableObject {
         // Simulate loading
         try? await Task.sleep(nanoseconds: 500_000_000)
         
-        // Phase 1: Basic daily routines
-        dailyRoutines = [
-            DailyRoutine(id: "1", title: "Lobby cleaning & mopping", scheduledTime: "6:00 AM"),
-            DailyRoutine(id: "2", title: "Elevator wipe down", scheduledTime: "7:00 AM"),
-            DailyRoutine(id: "3", title: "Common area patrol", scheduledTime: "2:00 PM"),
-            DailyRoutine(id: "4", title: "Trash collection", scheduledTime: "5:00 PM")
-        ]
+        // Real routines based on building
+        if buildingId == "14" { // Rubin Museum
+            dailyRoutines = [
+                DailyRoutine(
+                    id: "1",
+                    title: "Gallery floors dust mop & spot clean",
+                    scheduledTime: "6:00 AM",
+                    assignedWorker: "Kevin D.",
+                    requiredInventory: ["Dust mop", "Microfiber cloths"]
+                ),
+                DailyRoutine(
+                    id: "2",
+                    title: "Public restroom deep clean",
+                    scheduledTime: "7:00 AM",
+                    assignedWorker: nil,
+                    requiredInventory: ["Disinfectant", "Paper towels", "Toilet cleaner"]
+                ),
+                DailyRoutine(
+                    id: "3",
+                    title: "Loading dock sweep & mop",
+                    scheduledTime: "9:00 AM",
+                    isCompleted: true,
+                    assignedWorker: "Kevin D.",
+                    requiredInventory: ["Broom", "Mop", "Degreaser"]
+                ),
+                DailyRoutine(
+                    id: "4",
+                    title: "Exhibition space patrol & touch-up",
+                    scheduledTime: "2:00 PM",
+                    requiredInventory: ["Glass cleaner", "Microfiber cloths"]
+                ),
+                DailyRoutine(
+                    id: "5",
+                    title: "DSNY compliant trash staging",
+                    scheduledTime: "8:00 PM",
+                    assignedWorker: "Edwin L.",
+                    requiredInventory: ["Trash bags", "Recycling bins"]
+                )
+            ]
+        } else {
+            // Default routines
+            dailyRoutines = [
+                DailyRoutine(id: "1", title: "Lobby cleaning & mopping", scheduledTime: "6:00 AM"),
+                DailyRoutine(id: "2", title: "Elevator wipe down", scheduledTime: "7:00 AM"),
+                DailyRoutine(id: "3", title: "Common area patrol", scheduledTime: "2:00 PM"),
+                DailyRoutine(id: "4", title: "Trash collection", scheduledTime: "5:00 PM")
+            ]
+        }
         
         isLoadingRoutines = false
     }
@@ -1411,7 +1680,7 @@ class BuildingDetailVM: ObservableObject {
     }
     
     private func loadInventory() async {
-        // Phase 3: Basic inventory items
+        // Real inventory based on building needs
         inventory = [
             .cleaning: [
                 CoreTypes.InventoryItem(
@@ -1423,27 +1692,60 @@ class BuildingDetailVM: ObservableObject {
                     maxStock: 10,
                     unit: "gallons",
                     cost: 25.99
+                ),
+                CoreTypes.InventoryItem(
+                    id: "2",
+                    name: "Glass Cleaner",
+                    category: .cleaning,
+                    currentStock: 8,
+                    minimumStock: 4,
+                    maxStock: 12,
+                    unit: "bottles",
+                    cost: 4.99
+                )
+            ],
+            .equipment: [
+                CoreTypes.InventoryItem(
+                    id: "3",
+                    name: "Mop Heads",
+                    category: .equipment,
+                    currentStock: 3,
+                    minimumStock: 4,
+                    maxStock: 10,
+                    unit: "units",
+                    cost: 12.99
                 )
             ]
         ]
     }
     
     private func loadTeamData() async {
-        // Load assigned workers
-        assignedWorkers = [
-            AssignedWorker(
-                id: "1",
-                name: "Kevin Dutan",
-                schedule: "M-F 6 AM - 2 PM",
-                isOnSite: true
-            ),
-            AssignedWorker(
-                id: "2",
-                name: "Maria Sanchez",
-                schedule: "M-F 2 PM - 10 PM",
-                isOnSite: false
-            )
-        ]
+        // Real worker assignments
+        if buildingId == "14" { // Rubin Museum
+            assignedWorkers = [
+                AssignedWorker(
+                    id: "4",
+                    name: "Kevin Dutan",
+                    schedule: "M-F 6 AM - 2 PM",
+                    isOnSite: true
+                ),
+                AssignedWorker(
+                    id: "2",
+                    name: "Edwin Lema",
+                    schedule: "M-F 2 PM - 10 PM",
+                    isOnSite: Calendar.current.component(.hour, from: Date()) >= 14
+                )
+            ]
+        } else {
+            assignedWorkers = [
+                AssignedWorker(
+                    id: "4",
+                    name: "Kevin Dutan",
+                    schedule: "M-F 6 AM - 2 PM",
+                    isOnSite: true
+                )
+            ]
+        }
     }
     
     // Action methods
@@ -1451,6 +1753,49 @@ class BuildingDetailVM: ObservableObject {
         // Update routine completion status
         if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
             dailyRoutines[index].isCompleted.toggle()
+            
+            // Update completion percentage
+            let completed = dailyRoutines.filter { $0.isCompleted }.count
+            let total = dailyRoutines.count
+            completionPercentage = total > 0 ? Int((Double(completed) / Double(total)) * 100) : 0
+            
+            // Broadcast update
+            let update = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.worker,
+                type: CoreTypes.DashboardUpdate.UpdateType.taskCompleted,
+                buildingId: buildingId,
+                workerId: NewAuthManager.shared.workerId ?? "",
+                data: [
+                    "routineId": routine.id,
+                    "routineTitle": routine.title,
+                    "isCompleted": String(dailyRoutines[index].isCompleted)
+                ]
+            )
+            DashboardSyncService.shared.broadcastWorkerUpdate(update)
+        }
+    }
+    
+    // NEW: Assign worker to routine
+    func assignWorkerToRoutine(_ routine: DailyRoutine, workerId: String) {
+        if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
+            // Find worker name
+            let workerName = assignedWorkers.first(where: { $0.id == workerId })?.name ?? "Unknown"
+            dailyRoutines[index].assignedWorker = workerName
+            
+            // Broadcast update
+            let update = CoreTypes.DashboardUpdate(
+                source: CoreTypes.DashboardUpdate.Source.admin,
+                type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,
+                buildingId: buildingId,
+                workerId: workerId,
+                data: [
+                    "routineId": routine.id,
+                    "routineTitle": routine.title,
+                    "assignedWorker": workerName,
+                    "action": "workerAssigned"
+                ]
+            )
+            DashboardSyncService.shared.broadcastAdminUpdate(update)
         }
     }
     
@@ -1472,6 +1817,23 @@ class BuildingDetailVM: ObservableObject {
     
     func savePhoto(_ photo: UIImage) async {
         // Phase 3: Save photo to building
+        // Use FrancoPhotoStorageService to save
+        let metadata = FrancoBuildingPhotoMetadata(
+            buildingId: buildingId,
+            category: .utilities,
+            notes: nil,
+            location: nil,
+            taskId: nil,
+            workerId: NewAuthManager.shared.workerId,
+            timestamp: Date()
+        )
+        
+        do {
+            _ = try await FrancoPhotoStorageService.shared.savePhoto(photo, metadata: metadata)
+            print("✅ Photo saved to building gallery")
+        } catch {
+            print("❌ Failed to save photo: \(error)")
+        }
     }
     
     func viewSpaceDetails(_ space: SpacePhoto) {
@@ -1492,31 +1854,6 @@ class BuildingDetailVM: ObservableObject {
 }
 
 // MARK: - Placeholder Views for Missing Components
-
-struct PhotoCaptureView: View {
-    let buildingId: String
-    let buildingName: String
-    let onCapture: (UIImage) async -> Void
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("Photo Capture")
-                    .font(.largeTitle)
-                Text("Coming in Phase 3")
-                    .foregroundColor(.secondary)
-            }
-            .navigationTitle("Add Photo")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-        }
-    }
-}
 
 struct MessageComposerView: View {
     let recipients: [String]
