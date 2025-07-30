@@ -2,6 +2,7 @@
 //  BuildingIntelligenceViewModel.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Clock-in status tuple handling on line 201
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ CORRECTED: Uses existing method names from services
 //  ✅ ALIGNED: With actual CoreTypes.BuildingMetrics constructor
@@ -190,16 +191,19 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         }
     }
     
-    /// Get currently on-site workers
+    /// Get currently on-site workers (FIXED)
     private func getCurrentWorkersOnSite(_ building: NamedCoordinate, from workers: [WorkerProfile]) async -> [WorkerProfile] {
         // Check clock-in status for each worker
         var onSiteWorkers: [WorkerProfile] = []
         
         for worker in workers {
-            let status = await ClockInManager.shared.getClockInStatus(for: worker.id)
-            if status.isClockedIn,
-               let session = status.session,
-               session.buildingId == building.id {
+            // ✅ FIXED: Properly destructure the tuple returned by getClockInStatus
+            let (isClockedIn, clockedInBuilding) = await ClockInManager.shared.getClockInStatus(for: worker.id)
+            
+            // Check if worker is clocked in at this specific building
+            if isClockedIn,
+               let clockedInBuilding = clockedInBuilding,
+               clockedInBuilding.id == building.id {
                 onSiteWorkers.append(worker)
             }
         }
@@ -416,3 +420,13 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         self.patterns = ["Standard maintenance patterns", "Regular completion rate"]
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES
+/*
+ ✅ FIXED Line 201: Clock-in status tuple handling
+    - Changed from trying to access .session property to properly destructuring the tuple
+    - getClockInStatus returns (isClockedIn: Bool, building: NamedCoordinate?)
+    - Now correctly checks if the worker is clocked in at the specific building
+ 
+ ✅ All other fixes remain as documented in the original file
+ */

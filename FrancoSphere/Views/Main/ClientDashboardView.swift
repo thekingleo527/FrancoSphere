@@ -564,7 +564,7 @@ struct BuildingCard: View {
                 }
             }
             .padding()
-            .glassCard()
+            .francoGlassCard(intensity: GlassIntensity.thin)  // ✅ FIXED: Explicit GlassIntensity type
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -1194,8 +1194,7 @@ struct BuildingDetailSheet: View {
                     
                     // Stats component
                     if let metrics = metrics {
-                        buildingStatsCard(with: metrics)
-                            .padding()
+                        buildingStatsSection(metrics: metrics)
                     }
                     
                     // Additional details would go here
@@ -1222,15 +1221,19 @@ struct BuildingDetailSheet: View {
         )
     }
     
-    private func buildingStatsCard(with metrics: CoreTypes.BuildingMetrics) -> some View {
+    // ✅ FIXED: Simplified stats section to avoid complex expressions
+    @ViewBuilder
+    private func buildingStatsSection(metrics: CoreTypes.BuildingMetrics) -> some View {
         let completedTasks = metrics.totalTasks - metrics.pendingTasks
+        let weatherRisk = BuildingStatsGlassCard.WeatherRiskLevel.low
         
-        return BuildingStatsGlassCard(
+        BuildingStatsGlassCard(
             pendingTasksCount: metrics.pendingTasks,
             completedTasksCount: completedTasks,
             assignedWorkersCount: metrics.activeWorkers,
-            weatherRisk: .low // Default
+            weatherRisk: weatherRisk
         )
+        .padding()
     }
 }
 
@@ -1248,27 +1251,31 @@ struct ClientDashboardView_Previews: PreviewProvider {
 /*
  ✅ FIXED ERRORS:
  
- 1. Line 249: Removed task calling private generateExecutiveSummary method
+ 1. Line 567: Fixed ambiguous 'thin' error
+    - Changed from: .francoGlassCard(intensity: .thin)
+    - Changed to: .francoGlassCard(intensity: GlassIntensity.thin)
+    - Made the type explicit to avoid ambiguity with other enums
+ 
+ 2. Line 1076: Fixed complex expression error
+    - Broke down the BuildingStatsGlassCard initialization into separate steps
+    - Pre-calculated completedTasks before using it
+    - Declared weatherRisk variable separately
+    - Used a separate function buildingStatsSection to simplify the view
+ 
+ 3. Line 249: Removed task calling private generateExecutiveSummary method
     - The executive summary is automatically generated when loadPortfolioIntelligence() is called
     - The view just needs to display the already-loaded executiveSummary
  
- 2. Line 254: Similar fix for loadStrategicRecommendations
+ 4. Line 254: Similar fix for loadStrategicRecommendations
     - This is also loaded automatically as part of loadPortfolioIntelligence()
     - The view should just display the data, not trigger additional loads
  
- 3. Line 574: Use proper .glassCard() modifier
-    - This is a standard modifier available in the project
- 
- 4. Line 1103: Complex expression in BuildingDetailSheet
-    - Broke down into buildingStatsCard function that pre-calculates values
-    - Returns the BuildingStatsGlassCard with all parameters properly typed
- 
  🎯 KEY CHANGES:
+ - Made GlassIntensity type explicit to avoid ambiguity
+ - Broke down complex expressions into simpler, pre-calculated values
  - Aligned with existing viewModel patterns where data is loaded via loadPortfolioIntelligence()
  - Removed unnecessary task blocks that were calling private methods
  - Used forceRefresh() for pull-to-refresh actions
- - Fixed glass card styling to use project's standard modifiers
- - Broke down complex expressions into simpler functions
  
  🏛️ ARCHITECTURE:
  - The ClientDashboardViewModel loads all data in loadPortfolioIntelligence()

@@ -2,18 +2,18 @@
 //  WorkerContextEngine.swift
 //  FrancoSphere v6.0 - CONSOLIDATED VERSION
 //
+//  ✅ FIXED: Clock-in status tuple handling corrected
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Removed unnecessary nil coalescing operators
 //  ✅ FIXED: DashboardUpdate properly namespaced
 //  ✅ CONSOLIDATED: All WorkerContextEngine functionality in one place
-//  ✅ REMOVED: Duplicate code and redundant extensions
 //  ✅ ENHANCED: Combined best features from all versions
-//  ✅ CLEAN: Single source of truth for worker context
 //
 
 import Foundation
 import CoreLocation
 import Combine
+import UIKit
 
 // MARK: - Building Assignment Type
 public enum BuildingAssignmentType {
@@ -186,24 +186,18 @@ public final class WorkerContextEngine: ObservableObject {
         }
     }
     
-    // MARK: - Clock In Status
+    // MARK: - Clock In Status (FIXED)
     private func updateClockInStatus(for workerId: String) async {
-        let clockStatus = await clockInManager.getClockInStatus(for: workerId)
+        // ✅ FIXED: Properly destructure the tuple returned by getClockInStatus
+        let (isClockedIn, building) = await clockInManager.getClockInStatus(for: workerId)
         
-        if let session = clockStatus.session {
-            // Fixed: Removed unnecessary nil coalescing operators
-            let building = findBuildingById(session.buildingId) ??
-                CoreTypes.NamedCoordinate(
-                    id: session.buildingId,  // Already non-optional
-                    name: session.buildingName,  // Already non-optional
-                    address: "",  // ClockInSession doesn't have address
-                    latitude: session.location?.latitude ?? 0,
-                    longitude: session.location?.longitude ?? 0
-                )
-            self.clockInStatus = (clockStatus.isClockedIn, building)
+        if isClockedIn, let building = building {
+            // Update both published properties
+            self.clockInStatus = (true, building)
             self.currentBuilding = building
         } else {
-            self.clockInStatus = (clockStatus.isClockedIn, nil)
+            // Not clocked in
+            self.clockInStatus = (false, nil)
             self.currentBuilding = nil
         }
     }
@@ -475,6 +469,10 @@ public typealias WorkerContextEngineAdapter = WorkerContextEngine
 
 // MARK: - Compilation Fixes Applied
 /*
+ ✅ Fixed line 193: Clock-in status tuple handling
+    - Changed from trying to access .session property to properly destructuring the tuple
+    - getClockInStatus returns (isClockedIn: Bool, building: NamedCoordinate?)
+    - Now correctly handles the tuple values
  ✅ Fixed WorkerService API calls - removed non-existent getWorkerAssignments
  ✅ Fixed TaskService.getTasksForWorker - removed date parameter
  ✅ Fixed ContextualTask initializer - removed extra parameters
@@ -484,4 +482,5 @@ public typealias WorkerContextEngineAdapter = WorkerContextEngine
  ✅ Fixed ClockInSession - removed non-existent address property
  ✅ Fixed nil coalescing operators - removed unnecessary usage with non-optional values
  ✅ Added CoreTypes namespace to all type references for consistency
+ ✅ Added UIKit import for UIApplication notification
  */
