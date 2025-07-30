@@ -62,6 +62,10 @@ class DailyOpsReset: ObservableObject {
         currentStep = 0
         migrationError = nil
         
+        defer {
+            isMigrating = false
+        }
+        
         do {
             // Step 1: Create backup
             currentStep = 1
@@ -82,53 +86,53 @@ class DailyOpsReset: ObservableObject {
             // Transaction-wrapped migration
             try await GRDBManager.shared.database.write { db in
                 // Step 3: Import workers
-                if !UserDefaults.standard.bool(forKey: migrationKeys.hasImportedWorkers) {
-                    currentStep = 3
-                    migrationStatus = "Importing workers..."
-                    migrationProgress = 0.3
+                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasImportedWorkers) {
+                    self.currentStep = 3
+                    self.migrationStatus = "Importing workers..."
+                    self.migrationProgress = 0.3
                     
-                    try await importWorkers(db: db)
-                    UserDefaults.standard.set(true, forKey: migrationKeys.hasImportedWorkers)
+                    try self.importWorkers(db: db)
+                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasImportedWorkers)
                 }
                 
                 // Step 4: Import buildings
-                if !UserDefaults.standard.bool(forKey: migrationKeys.hasImportedBuildings) {
-                    currentStep = 4
-                    migrationStatus = "Importing buildings..."
-                    migrationProgress = 0.4
+                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasImportedBuildings) {
+                    self.currentStep = 4
+                    self.migrationStatus = "Importing buildings..."
+                    self.migrationProgress = 0.4
                     
-                    try await importBuildings(db: db)
-                    UserDefaults.standard.set(true, forKey: migrationKeys.hasImportedBuildings)
+                    try self.importBuildings(db: db)
+                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasImportedBuildings)
                 }
                 
                 // Step 5: Import routine templates
-                if !UserDefaults.standard.bool(forKey: migrationKeys.hasImportedTemplates) {
-                    currentStep = 5
-                    migrationStatus = "Importing routine templates..."
-                    migrationProgress = 0.6
+                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasImportedTemplates) {
+                    self.currentStep = 5
+                    self.migrationStatus = "Importing routine templates..."
+                    self.migrationProgress = 0.6
                     
-                    try await importRoutineTemplates(db: db)
-                    UserDefaults.standard.set(true, forKey: migrationKeys.hasImportedTemplates)
+                    try self.importRoutineTemplates(db: db)
+                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasImportedTemplates)
                 }
                 
                 // Step 6: Create worker assignments
-                if !UserDefaults.standard.bool(forKey: migrationKeys.hasCreatedAssignments) {
-                    currentStep = 6
-                    migrationStatus = "Creating worker assignments..."
-                    migrationProgress = 0.8
+                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasCreatedAssignments) {
+                    self.currentStep = 6
+                    self.migrationStatus = "Creating worker assignments..."
+                    self.migrationProgress = 0.8
                     
-                    try await createWorkerAssignments(db: db)
-                    UserDefaults.standard.set(true, forKey: migrationKeys.hasCreatedAssignments)
+                    try self.createWorkerAssignments(db: db)
+                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasCreatedAssignments)
                 }
                 
                 // Step 7: Setup worker capabilities
-                if !UserDefaults.standard.bool(forKey: migrationKeys.hasSetupCapabilities) {
-                    currentStep = 7
-                    migrationStatus = "Setting up worker capabilities..."
-                    migrationProgress = 0.9
+                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasSetupCapabilities) {
+                    self.currentStep = 7
+                    self.migrationStatus = "Setting up worker capabilities..."
+                    self.migrationProgress = 0.9
                     
-                    try await setupWorkerCapabilities(db: db)
-                    UserDefaults.standard.set(true, forKey: migrationKeys.hasSetupCapabilities)
+                    try self.setupWorkerCapabilities(db: db)
+                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasSetupCapabilities)
                 }
             }
             
@@ -156,8 +160,6 @@ class DailyOpsReset: ObservableObject {
             migrationStatus = "Migration failed: \(error.localizedDescription)"
             print("❌ Migration failed: \(error)")
             throw error
-        } finally {
-            isMigrating = false
         }
     }
     
@@ -238,13 +240,23 @@ class DailyOpsReset: ObservableObject {
         }
     }
     
-    private func importWorkers(db: Database) async throws {
+    private func importWorkers(db: Database) throws {
         print("👥 Importing workers...")
         
         var imported = 0
         
-        // Import from canonical IDs
-        for (id, name) in CanonicalIDs.Workers.nameMap {
+        // Import from canonical IDs using OperationalDataManager's definition
+        let nameMap = [
+            "1": "Greg Hutson",
+            "2": "Edwin Lema",
+            "4": "Kevin Dutan",
+            "5": "Mercedes Inamagua",
+            "6": "Luis Lopez",
+            "7": "Angel Guirachocha",
+            "8": "Shawn Magloire"
+        ]
+        
+        for (id, name) in nameMap {
             let userId = UUID().uuidString
             
             try db.execute(sql: """
@@ -286,13 +298,33 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Imported \(imported) workers")
     }
     
-    private func importBuildings(db: Database) async throws {
+    private func importBuildings(db: Database) throws {
         print("🏢 Importing buildings...")
         
         var imported = 0
         
-        // Import from canonical IDs
-        for (id, buildingInfo) in CanonicalIDs.Buildings.detailMap {
+        // Building details
+        let buildingDetails: [(id: String, name: String, address: String, type: String, floors: Int, hasElevator: Bool, hasDoorman: Bool, latitude: Double, longitude: Double)] = [
+            ("1", "12 West 18th Street", "12 West 18th Street, New York, NY 10011", "commercial", 6, true, false, 40.7388, -73.9939),
+            ("2", "36 Walker Street", "36 Walker Street, New York, NY 10013", "residential", 5, true, false, 40.7178, -74.0020),
+            ("3", "41 Elizabeth Street", "41 Elizabeth Street, New York, NY 10013", "mixed", 4, false, false, 40.7166, -73.9964),
+            ("4", "68 Perry Street", "68 Perry Street, New York, NY 10014", "residential", 4, false, true, 40.7355, -74.0045),
+            ("5", "104 Franklin Street", "104 Franklin Street, New York, NY 10013", "commercial", 8, true, false, 40.7170, -74.0094),
+            ("6", "112 West 18th Street", "112 West 18th Street, New York, NY 10011", "residential", 5, true, false, 40.7398, -73.9972),
+            ("7", "117 West 17th Street", "117 West 17th Street, New York, NY 10011", "commercial", 12, true, true, 40.7385, -73.9968),
+            ("8", "123 1st Avenue", "123 1st Avenue, New York, NY 10003", "mixed", 6, true, false, 40.7272, -73.9844),
+            ("9", "131 Perry Street", "131 Perry Street, New York, NY 10014", "residential", 3, false, false, 40.7352, -74.0075),
+            ("10", "133 East 15th Street", "133 East 15th Street, New York, NY 10003", "residential", 6, true, true, 40.7338, -73.9868),
+            ("11", "135 West 17th Street", "135 West 17th Street, New York, NY 10011", "residential", 4, false, false, 40.7384, -73.9975),
+            ("12", "136 West 17th Street", "136 West 17th Street, New York, NY 10011", "residential", 4, false, false, 40.7383, -73.9976),
+            ("13", "138 West 17th Street", "138 West 17th Street, New York, NY 10011", "residential", 4, false, false, 40.7382, -73.9977),
+            ("14", "Rubin Museum", "150 West 17th Street, New York, NY 10011", "cultural", 7, true, true, 40.7390, -73.9975),
+            ("15", "29-31 East 20th Street", "29-31 East 20th Street, New York, NY 10003", "commercial", 5, true, false, 40.7388, -73.9889),
+            ("16", "Stuyvesant Cove Park", "Stuyvesant Cove Park, New York, NY 10009", "park", 1, false, false, 40.7338, -73.9738),
+            ("17", "178 Spring Street", "178 Spring Street, New York, NY 10012", "mixed", 5, true, false, 40.7247, -74.0023)
+        ]
+        
+        for (id, name, address, type, floors, hasElevator, hasDoorman, latitude, longitude) in buildingDetails {
             try db.execute(sql: """
                 INSERT OR IGNORE INTO buildings (
                     id, name, address, type, floors,
@@ -301,14 +333,14 @@ class DailyOpsReset: ObservableObject {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, arguments: [
                 id,
-                buildingInfo.name,
-                buildingInfo.address,
-                buildingInfo.type ?? "residential",
-                buildingInfo.floors ?? 5,
-                buildingInfo.hasElevator ?? true,
-                buildingInfo.hasDoorman ?? false,
-                buildingInfo.latitude,
-                buildingInfo.longitude,
+                name,
+                address,
+                type,
+                floors,
+                hasElevator,
+                hasDoorman,
+                latitude,
+                longitude,
                 "default-client", // Will be updated when clients are imported
                 Date().ISO8601Format(),
                 Date().ISO8601Format()
@@ -320,7 +352,7 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Imported \(imported) buildings")
     }
     
-    private func importRoutineTemplates(db: Database) async throws {
+    private func importRoutineTemplates(db: Database) throws {
         print("📋 Importing routine templates...")
         
         let tasks = OperationalDataManager.shared.getAllRealWorldTasks()
@@ -328,7 +360,7 @@ class DailyOpsReset: ObservableObject {
         var skipped = 0
         
         // Group tasks by worker and building to create templates
-        var templateMap: [String: OperationalDataManager.OperationalDataTaskAssignment] = [:]
+        var templateMap: [String: OperationalDataTaskAssignment] = [:]
         
         for task in tasks {
             // Validate IDs exist
@@ -362,14 +394,14 @@ class DailyOpsReset: ObservableObject {
                 task.workerId,
                 task.buildingId,
                 task.taskName,
-                task.description ?? "Routine maintenance task",
+                "Routine maintenance task",
                 task.category ?? "general",
                 task.recurrence ?? "daily",
-                task.estimatedDuration ?? 15,
+                task.estimatedDuration,
                 task.requiresPhoto ? 1 : 0,
                 determinePriority(task),
-                task.timeWindow?.startHour ?? 0,
-                task.timeWindow?.endHour ?? 23,
+                task.startHour ?? 0,
+                task.endHour ?? 23,
                 task.daysOfWeek ?? "mon,tue,wed,thu,fri",
                 Date().ISO8601Format(),
                 Date().ISO8601Format()
@@ -381,7 +413,7 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Imported \(imported) routine templates (skipped \(skipped) invalid)")
     }
     
-    private func createWorkerAssignments(db: Database) async throws {
+    private func createWorkerAssignments(db: Database) throws {
         print("🔗 Creating worker-building assignments...")
         
         let tasks = OperationalDataManager.shared.getAllRealWorldTasks()
@@ -419,13 +451,13 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Created \(created) worker-building assignments")
     }
     
-    private func setupWorkerCapabilities(db: Database) async throws {
+    private func setupWorkerCapabilities(db: Database) throws {
         print("⚙️ Setting up worker capabilities...")
         
         let capabilities = [
             // Kevin - Power user
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.kevinDutan,
+                workerId: "4",
                 canUploadPhotos: true,
                 canAddNotes: true,
                 canViewMap: true,
@@ -435,7 +467,7 @@ class DailyOpsReset: ObservableObject {
             ),
             // Mercedes - Simplified interface
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.mercedesInamagua,
+                workerId: "5",
                 canUploadPhotos: false,
                 canAddNotes: false,
                 canViewMap: true,
@@ -445,7 +477,7 @@ class DailyOpsReset: ObservableObject {
             ),
             // Edwin - Standard user
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.edwinLema,
+                workerId: "2",
                 canUploadPhotos: true,
                 canAddNotes: true,
                 canViewMap: true,
@@ -455,7 +487,7 @@ class DailyOpsReset: ObservableObject {
             ),
             // Greg - Standard user
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.gregHutson,
+                workerId: "1",
                 canUploadPhotos: true,
                 canAddNotes: true,
                 canViewMap: true,
@@ -465,7 +497,7 @@ class DailyOpsReset: ObservableObject {
             ),
             // Luis - Basic user
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.luisLopez,
+                workerId: "6",
                 canUploadPhotos: true,
                 canAddNotes: false,
                 canViewMap: false,
@@ -475,7 +507,7 @@ class DailyOpsReset: ObservableObject {
             ),
             // Angel - Basic user
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.angelGuirachocha,
+                workerId: "7",
                 canUploadPhotos: true,
                 canAddNotes: false,
                 canViewMap: false,
@@ -485,7 +517,7 @@ class DailyOpsReset: ObservableObject {
             ),
             // Shawn - Standard user
             WorkerCapability(
-                workerId: CanonicalIDs.Workers.shawnMagloire,
+                workerId: "8",
                 canUploadPhotos: true,
                 canAddNotes: true,
                 canViewMap: true,
@@ -536,7 +568,7 @@ class DailyOpsReset: ObservableObject {
             var skipped = 0
             
             for template in templates {
-                if shouldGenerateTask(template: template, date: date) {
+                if self.shouldGenerateTask(template: template, date: date) {
                     // Check if task already exists for today
                     let existingCount = try Int.fetchOne(db, sql: """
                         SELECT COUNT(*) FROM routine_tasks
@@ -633,7 +665,7 @@ class DailyOpsReset: ObservableObject {
             // Check for custom patterns like "mon,wed,fri"
             if frequency.contains(",") {
                 let dayAbbrev = getDayAbbreviation(weekday).lowercased()
-                return frequency.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }.contains(dayAbbrev)
+                return frequency.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }.contains(dayAbbrev)
             }
             return false
         }
@@ -681,7 +713,7 @@ class DailyOpsReset: ObservableObject {
                 )
             """)
             
-            print("   ✓ Cleaned up: \(deletedTasks.changes) tasks, \(deletedSessions.changes) sessions, \(deletedPhotos.changes) photos")
+            print("   ✓ Cleaned up old data")
         }
     }
     
@@ -689,10 +721,10 @@ class DailyOpsReset: ObservableObject {
         print("📊 Updating daily metrics...")
         
         // Trigger metrics recalculation for all buildings
-        let buildingIds = CanonicalIDs.Buildings.idMap.keys
+        let buildingIds = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"]
         
         for buildingId in buildingIds {
-            try await BuildingMetricsService.shared.calculateMetrics(for: String(buildingId))
+            _ = try await BuildingMetricsService.shared.calculateMetrics(for: buildingId)
         }
         
         print("   ✓ Updated metrics for \(buildingIds.count) buildings")
@@ -700,7 +732,7 @@ class DailyOpsReset: ObservableObject {
     
     // MARK: - Helper Methods
     
-    private func determinePriority(_ task: OperationalDataManager.OperationalDataTaskAssignment) -> String {
+    private func determinePriority(_ task: OperationalDataTaskAssignment) -> String {
         // Priority logic based on task attributes
         if task.taskName.lowercased().contains("emergency") {
             return "urgent"
@@ -722,7 +754,7 @@ struct OperationalDataBackup: Codable {
     let timestamp: Date
     let checksum: String
     let taskCount: Int
-    let tasks: [OperationalDataManager.OperationalDataTaskAssignment]
+    let tasks: [OperationalDataTaskAssignment]
     let workerNames: [String]
     let buildingNames: [String]
 }
@@ -754,253 +786,5 @@ enum MigrationError: LocalizedError {
         case .databaseError(let reason):
             return "Database error: \(reason)"
         }
-    }
-}
-
-// MARK: - Canonical IDs (Referenced from Phase 1.1)
-
-struct CanonicalIDs {
-    struct Workers {
-        static let gregHutson = "1"
-        static let edwinLema = "2"
-        static let kevinDutan = "4"
-        static let mercedesInamagua = "5"
-        static let luisLopez = "6"
-        static let angelGuirachocha = "7"
-        static let shawnMagloire = "8"
-        
-        static let nameMap: [String: String] = [
-            gregHutson: "Greg Hutson",
-            edwinLema: "Edwin Lema",
-            kevinDutan: "Kevin Dutan",
-            mercedesInamagua: "Mercedes Inamagua",
-            luisLopez: "Luis Lopez",
-            angelGuirachocha: "Angel Guirachocha",
-            shawnMagloire: "Shawn Magloire"
-        ]
-    }
-    
-    struct Buildings {
-        static let westEighteenth12 = "1"
-        static let walker36 = "2"
-        static let elizabeth41 = "3"
-        static let perry68 = "4"
-        static let franklin104 = "5"
-        static let westSeventeenth112 = "6"
-        static let westSeventeenth117 = "7"
-        static let firstAvenue123 = "8"
-        static let perry131 = "9"
-        static let eastFifteenth133 = "10"
-        static let westSeventeenth135 = "11"
-        static let westSeventeenth136 = "12"
-        static let westSeventeenth138 = "13"
-        static let rubinMuseum = "14"
-        static let eastTwentieth29_31 = "15"
-        static let stuyvesantCove = "16"
-        static let springStreet178 = "17"
-        
-        static let idMap: [String: String] = [
-            westEighteenth12: "12 West 18th Street",
-            walker36: "36 Walker Street",
-            elizabeth41: "41 Elizabeth Street",
-            perry68: "68 Perry Street",
-            franklin104: "104 Franklin Street",
-            westSeventeenth112: "112 West 18th Street",
-            westSeventeenth117: "117 West 17th Street",
-            firstAvenue123: "123 1st Avenue",
-            perry131: "131 Perry Street",
-            eastFifteenth133: "133 East 15th Street",
-            westSeventeenth135: "135 West 17th Street",
-            westSeventeenth136: "136 West 17th Street",
-            westSeventeenth138: "138 West 17th Street",
-            rubinMuseum: "Rubin Museum",
-            eastTwentieth29_31: "29-31 East 20th Street",
-            stuyvesantCove: "Stuyvesant Cove Park",
-            springStreet178: "178 Spring Street"
-        ]
-        
-        struct BuildingInfo {
-            let name: String
-            let address: String
-            let type: String?
-            let floors: Int?
-            let hasElevator: Bool?
-            let hasDoorman: Bool?
-            let latitude: Double
-            let longitude: Double
-        }
-        
-        static let detailMap: [String: BuildingInfo] = [
-            westEighteenth12: BuildingInfo(
-                name: "12 West 18th Street",
-                address: "12 West 18th Street, New York, NY 10011",
-                type: "commercial",
-                floors: 6,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7388,
-                longitude: -73.9939
-            ),
-            walker36: BuildingInfo(
-                name: "36 Walker Street",
-                address: "36 Walker Street, New York, NY 10013",
-                type: "residential",
-                floors: 5,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7178,
-                longitude: -74.0020
-            ),
-            elizabeth41: BuildingInfo(
-                name: "41 Elizabeth Street",
-                address: "41 Elizabeth Street, New York, NY 10013",
-                type: "mixed",
-                floors: 4,
-                hasElevator: false,
-                hasDoorman: false,
-                latitude: 40.7166,
-                longitude: -73.9964
-            ),
-            perry68: BuildingInfo(
-                name: "68 Perry Street",
-                address: "68 Perry Street, New York, NY 10014",
-                type: "residential",
-                floors: 4,
-                hasElevator: false,
-                hasDoorman: true,
-                latitude: 40.7355,
-                longitude: -74.0045
-            ),
-            franklin104: BuildingInfo(
-                name: "104 Franklin Street",
-                address: "104 Franklin Street, New York, NY 10013",
-                type: "commercial",
-                floors: 8,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7170,
-                longitude: -74.0094
-            ),
-            westSeventeenth112: BuildingInfo(
-                name: "112 West 18th Street",
-                address: "112 West 18th Street, New York, NY 10011",
-                type: "residential",
-                floors: 5,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7398,
-                longitude: -73.9972
-            ),
-            westSeventeenth117: BuildingInfo(
-                name: "117 West 17th Street",
-                address: "117 West 17th Street, New York, NY 10011",
-                type: "commercial",
-                floors: 12,
-                hasElevator: true,
-                hasDoorman: true,
-                latitude: 40.7385,
-                longitude: -73.9968
-            ),
-            firstAvenue123: BuildingInfo(
-                name: "123 1st Avenue",
-                address: "123 1st Avenue, New York, NY 10003",
-                type: "mixed",
-                floors: 6,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7272,
-                longitude: -73.9844
-            ),
-            perry131: BuildingInfo(
-                name: "131 Perry Street",
-                address: "131 Perry Street, New York, NY 10014",
-                type: "residential",
-                floors: 3,
-                hasElevator: false,
-                hasDoorman: false,
-                latitude: 40.7352,
-                longitude: -74.0075
-            ),
-            eastFifteenth133: BuildingInfo(
-                name: "133 East 15th Street",
-                address: "133 East 15th Street, New York, NY 10003",
-                type: "residential",
-                floors: 6,
-                hasElevator: true,
-                hasDoorman: true,
-                latitude: 40.7338,
-                longitude: -73.9868
-            ),
-            westSeventeenth135: BuildingInfo(
-                name: "135 West 17th Street",
-                address: "135 West 17th Street, New York, NY 10011",
-                type: "residential",
-                floors: 4,
-                hasElevator: false,
-                hasDoorman: false,
-                latitude: 40.7384,
-                longitude: -73.9975
-            ),
-            westSeventeenth136: BuildingInfo(
-                name: "136 West 17th Street",
-                address: "136 West 17th Street, New York, NY 10011",
-                type: "residential",
-                floors: 4,
-                hasElevator: false,
-                hasDoorman: false,
-                latitude: 40.7383,
-                longitude: -73.9976
-            ),
-            westSeventeenth138: BuildingInfo(
-                name: "138 West 17th Street",
-                address: "138 West 17th Street, New York, NY 10011",
-                type: "residential",
-                floors: 4,
-                hasElevator: false,
-                hasDoorman: false,
-                latitude: 40.7382,
-                longitude: -73.9977
-            ),
-            rubinMuseum: BuildingInfo(
-                name: "Rubin Museum",
-                address: "150 West 17th Street, New York, NY 10011",
-                type: "cultural",
-                floors: 7,
-                hasElevator: true,
-                hasDoorman: true,
-                latitude: 40.7390,
-                longitude: -73.9975
-            ),
-            eastTwentieth29_31: BuildingInfo(
-                name: "29-31 East 20th Street",
-                address: "29-31 East 20th Street, New York, NY 10003",
-                type: "commercial",
-                floors: 5,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7388,
-                longitude: -73.9889
-            ),
-            stuyvesantCove: BuildingInfo(
-                name: "Stuyvesant Cove Park",
-                address: "Stuyvesant Cove Park, New York, NY 10009",
-                type: "park",
-                floors: nil,
-                hasElevator: nil,
-                hasDoorman: nil,
-                latitude: 40.7338,
-                longitude: -73.9738
-            ),
-            springStreet178: BuildingInfo(
-                name: "178 Spring Street",
-                address: "178 Spring Street, New York, NY 10012",
-                type: "mixed",
-                floors: 5,
-                hasElevator: true,
-                hasDoorman: false,
-                latitude: 40.7247,
-                longitude: -74.0023
-            )
-        ]
     }
 }
