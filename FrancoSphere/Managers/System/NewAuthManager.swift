@@ -1,5 +1,5 @@
 //
-//  AuthManager.swift
+//  NewAuthManager.swift
 //  FrancoSphere v6.0
 //
 //  ✅ PHASE 2 COMPLIANT: Secure authentication with Keychain storage
@@ -23,10 +23,10 @@ extension Notification.Name {
     static let sessionRefreshed = Notification.Name("sessionRefreshed")
 }
 
-// MARK: - AuthManager
+// MARK: - NewAuthManager
 @MainActor
-public class AuthManager: ObservableObject {
-    public static let shared = AuthManager()
+public class NewAuthManager: ObservableObject {
+    public static let shared = NewAuthManager()
     
     // MARK: - Published Properties
     @Published public private(set) var currentUser: CoreTypes.User?

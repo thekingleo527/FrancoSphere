@@ -79,7 +79,7 @@
 		2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F972E39885600F4A10F /* WorkerContextEngine.swift */; };
 		2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F642E39885600F4A10F /* FrancoSphereExtensions.swift */; };
 		2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2B2E39885600F4A10F /* GlassButton.swift */; };
-		2377A0402E39885600F4A10F /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F482E39885600F4A10F /* AuthManager.swift */; };
+		2377A0402E39885600F4A10F /* NewAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F482E39885600F4A10F /* NewAuthManager.swift */; };
 		2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */; };
 		2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCC2E39885600F4A10F /* TaskFormView.swift */; };
 		2377A0452E39885600F4A10F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD32E39885600F4A10F /* ContentView.swift */; };
@@ -249,7 +249,7 @@
 		23779F3E2E39885600F4A10F /* EmergencyContactsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyContactsSheet.swift; sourceTree = "<group>"; };
 		23779F422E39885600F4A10F /* GRDBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRDBManager.swift; sourceTree = "<group>"; };
 		23779F452E39885600F4A10F /* V003_WorkerAssignments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V003_WorkerAssignments.swift; sourceTree = "<group>"; };
-		23779F482E39885600F4A10F /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		23779F482E39885600F4A10F /* NewAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewAuthManager.swift; sourceTree = "<group>"; };
 		23779F492E39885600F4A10F /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
 		23779F4B2E39885600F4A10F /* AssetImageDebugger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetImageDebugger.swift; sourceTree = "<group>"; };
 		23779F4F2E39885600F4A10F /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
@@ -591,7 +591,7 @@
 		23779F4A2E39885600F4A10F /* System */ = {
 			isa = PBXGroup;
 			children = (
-				23779F482E39885600F4A10F /* AuthManager.swift */,
+				23779F482E39885600F4A10F /* NewAuthManager.swift */,
 				23779F492E39885600F4A10F /* SecurityManager.swift */,
 			);
 			path = System;
@@ -1270,7 +1270,7 @@
 				2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */,
 				2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */,
 				2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */,
-				2377A0402E39885600F4A10F /* AuthManager.swift in Sources */,
+				2377A0402E39885600F4A10F /* NewAuthManager.swift in Sources */,
 				2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */,
 				2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */,
 				2377A0452E39885600F4A10F /* ContentView.swift in Sources */,
