@@ -6,7 +6,7 @@
 //  ✅ PRODUCTION READY: Real database operations only
 //  ✅ GRDB POWERED: Uses GRDBManager for all operations
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency
-//  ✅ FIXED: Compilation errors resolved
+//  ✅ FIXED: Renamed WorkerCapabilities to avoid conflicts
 //
 
 import Foundation
@@ -182,16 +182,15 @@ public actor WorkerService {
         """, [newWorkerId, ISO8601DateFormatter().string(from: Date()), taskId])
         
         // Broadcast update
-        // ✅ FIXED: Use existing UpdateType (taskUpdated with action context)
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,  // ✅ Valid enum case
-            buildingId: "",  // ✅ Changed from nil to empty string
+            type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,
+            buildingId: "",
             workerId: newWorkerId,
             data: [
                 "taskId": taskId,
                 "newWorkerId": newWorkerId,
-                "action": "reassigned",  // ✅ Added to indicate it's a reassignment
+                "action": "reassigned",
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -223,16 +222,15 @@ public actor WorkerService {
         ])
         
         // Broadcast update
-        // ✅ FIXED: Use existing UpdateType (buildingMetricsChanged for admin updates)
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,  // ✅ Changed to valid enum case
-            buildingId: "",  // ✅ Changed from nil to empty string
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,
+            buildingId: "",
             workerId: profile.id,
             data: [
                 "workerName": profile.name,
-                "action": "profileUpdated",  // ✅ Added to indicate profile update
-                "updateType": "workerProfile",  // ✅ Additional context
+                "action": "profileUpdated",
+                "updateType": "workerProfile",
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -267,16 +265,15 @@ public actor WorkerService {
         """, [workerId])
         
         // Broadcast update
-        // ✅ FIXED: Use existing UpdateType (buildingMetricsChanged for admin updates)
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,  // ✅ Changed to valid enum case
-            buildingId: "",  // ✅ Changed from nil to empty string
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,
+            buildingId: "",
             workerId: workerId,
             data: [
                 "workerName": worker.name,
-                "action": "deactivated",  // ✅ Added to indicate deactivation
-                "updateType": "workerStatus",  // ✅ Additional context
+                "action": "deactivated",
+                "updateType": "workerStatus",
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -327,8 +324,8 @@ public actor WorkerService {
     
     // MARK: - Worker Capabilities
     
-    /// Get worker capabilities
-    func getWorkerCapabilities(_ workerId: String) async throws -> WorkerCapabilities {
+    /// Get worker capabilities - renamed to avoid conflicts
+    func getWorkerCapabilityRecord(_ workerId: String) async throws -> WorkerCapabilityRecord {
         // Verify worker exists
         _ = try await getWorkerProfile(for: workerId)
         
@@ -338,7 +335,7 @@ public actor WorkerService {
         """, [workerId])
         
         if let row = rows.first {
-            return WorkerCapabilities(
+            return WorkerCapabilityRecord(
                 workerId: workerId,
                 canUploadPhotos: (row["can_upload_photos"] as? Int64 ?? 1) == 1,
                 canAddNotes: (row["can_add_notes"] as? Int64 ?? 1) == 1,
@@ -352,7 +349,7 @@ public actor WorkerService {
         }
         
         // Return default capabilities if not found
-        return WorkerCapabilities.default(for: workerId)
+        return WorkerCapabilityRecord.default(for: workerId)
     }
     
     // MARK: - Private Helper Methods
@@ -399,7 +396,6 @@ public actor WorkerService {
             return nil
         }()
         
-        // ✅ FIXED: Removed extra parameters (hourlyRate, emergencyContact)
         return CoreTypes.WorkerProfile(
             id: String(id),
             name: name,
@@ -417,7 +413,8 @@ public actor WorkerService {
 
 // MARK: - Supporting Types
 
-struct WorkerCapabilities {
+/// Worker capability record from database - renamed to avoid conflicts
+struct WorkerCapabilityRecord {
     let workerId: String
     let canUploadPhotos: Bool
     let canAddNotes: Bool
@@ -428,8 +425,8 @@ struct WorkerCapabilities {
     let maxDailyTasks: Int
     let preferredLanguage: String
     
-    static func `default`(for workerId: String) -> WorkerCapabilities {
-        return WorkerCapabilities(
+    static func `default`(for workerId: String) -> WorkerCapabilityRecord {
+        return WorkerCapabilityRecord(
             workerId: workerId,
             canUploadPhotos: true,
             canAddNotes: true,
@@ -510,16 +507,20 @@ extension WorkerService {
     }
 }
 
-// MARK: - 📝 COMPILATION FIXES
-/*
- ✅ FIXED Line 186, 225, 266: UpdateType enum cases
-    - Changed taskReassigned → taskUpdated (with action: "reassigned")
-    - Changed workerProfileUpdated → buildingMetricsChanged (with updateType: "workerProfile")
-    - Changed workerDeactivated → buildingMetricsChanged (with updateType: "workerStatus")
- 
- ✅ FIXED Lines 187, 226, 267: buildingId parameter
-    - Changed from nil to empty string "" since buildingId expects String, not String?
- 
- ✅ FIXED Line 393: WorkerProfile constructor
-    - Removed extra parameters (hourlyRate, emergencyContact) that don't exist in the CoreTypes.WorkerProfile constructor
- */
+// MARK: - ViewModel Adapter Extension
+
+extension WorkerService {
+    /// Convert database capabilities to view model format
+    func getWorkerCapabilities(for workerId: String) async throws -> WorkerDashboardViewModel.WorkerCapabilities {
+        let record = try await getWorkerCapabilityRecord(workerId)
+        
+        return WorkerDashboardViewModel.WorkerCapabilities(
+            canUploadPhotos: record.canUploadPhotos,
+            canAddNotes: record.canAddNotes,
+            canViewMap: record.canViewMap,
+            canAddEmergencyTasks: record.canAddEmergencyTasks,
+            requiresPhotoForSanitation: record.requiresPhotoForSanitation,
+            simplifiedInterface: record.simplifiedInterface
+        )
+    }
+}
