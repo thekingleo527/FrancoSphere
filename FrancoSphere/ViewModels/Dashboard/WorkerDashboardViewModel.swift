@@ -6,12 +6,23 @@
 //  ✅ FIXED: Corrected method signatures
 //  ✅ ENHANCED: Proper async handling
 //  ✅ FIXED: Added missing enum cases
+//  ✅ FIXED: Removed duplicate code and declarations
 //
 
 import Foundation
 import SwiftUI
 import Combine
 import CoreLocation
+
+// MARK: - Supporting Types (Moved to top to avoid conflicts)
+
+public enum BuildingAccessType {
+    case assigned
+    case coverage
+    case unknown
+}
+
+// MARK: - Main View Model
 
 @MainActor
 public class WorkerDashboardViewModel: ObservableObject {
@@ -69,7 +80,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     private var weatherUpdateTimer: Timer?
     private var currentWorkerId: String?
     
-    // MARK: - Types
+    // MARK: - Nested Types
     
     public struct WorkerCapabilities {
         let canUploadPhotos: Bool
@@ -747,256 +758,8 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     /// Check if worker can access building
     public func canAccessBuilding(_ buildingId: String) -> Bool {
-        return getBuildingAccessType(for: buildingId) != .unknown
+        return getBuildingAccessType(for: buildingId) != BuildingAccessType.unknown
     }
-}
-
-// MARK: - Supporting Types
-
-public enum BuildingAccessType {
-    case assigned
-    case coverage
-    case unknown
-}
-
-// MARK: - Preview Helpers
-
-#if DEBUG
-extension WorkerDashboardViewModel {
-    static func preview() -> WorkerDashboardViewModel {
-        let viewModel = WorkerDashboardViewModel()
-        
-        // Mock data for previews
-        viewModel.assignedBuildings = [
-            CoreTypes.NamedCoordinate(
-                id: "14",
-                name: "Rubin Museum",
-                address: "150 W 17th St, New York, NY 10011",
-                latitude: 40.7397,
-                longitude: -73.9978
-            )
-        ]
-        
-        let rubinMuseum = CoreTypes.NamedCoordinate(
-            id: "14",
-            name: "Rubin Museum",
-            address: "150 W 17th St, New York, NY 10011",
-            latitude: 40.7397,
-            longitude: -73.9978
-        )
-        
-        viewModel.todaysTasks = [
-            CoreTypes.ContextualTask(
-                id: "task1",
-                title: "HVAC Inspection",
-                description: "Check HVAC system in main gallery",
-                isCompleted: false,
-                completedDate: nil,
-                dueDate: Date().addingTimeInterval(3600),
-                category: .maintenance,
-                urgency: .high,
-                building: rubinMuseum,
-                worker: nil,
-                buildingId: "14",
-                priority: .high
-            )
-        ]
-        
-        viewModel.taskProgress = CoreTypes.TaskProgress(
-            totalTasks: 5,
-            completedTasks: 2
-        )
-        
-        viewModel.weatherData = CoreTypes.WeatherData(
-            id: UUID().uuidString,
-            temperature: 32,
-            condition: "Snowy",
-            humidity: 0.85,
-            windSpeed: 15,
-            outdoorWorkRisk: .high,
-            timestamp: Date()
-        )
-        
-        viewModel.workerCapabilities = WorkerCapabilities(
-            canUploadPhotos: true,
-            canAddNotes: true,
-            canViewMap: true,
-            canAddEmergencyTasks: true,
-            requiresPhotoForSanitation: true,
-            simplifiedInterface: false
-        )
-        
-        return viewModel
-    }
-}
-#endif                workerId: currentWorkerId ?? "",
-                data: [
-                    "buildingId": buildingId,
-                    "completionRate": String(metrics.completionRate),
-                    "overdueTasks": String(metrics.overdueTasks)
-                ]
-            )
-            dashboardSyncService.broadcastWorkerUpdate(metricsUpdate)
-        } catch {
-            print("⚠️ Failed to update building metrics: \(error)")
-        }
-    }
-    
-    private func setLoadingState(_ loading: Bool) async {
-        isLoading = loading
-        if !loading {
-            errorMessage = nil
-        }
-    }
-    
-    private func setError(_ message: String) async {
-        errorMessage = message
-        isLoading = false
-        dashboardSyncStatus = .failed
-    }
-    
-    // MARK: - Dashboard Sync Integration
-    
-    private func setupDashboardSyncSubscriptions() {
-        // Subscribe to cross-dashboard updates
-        dashboardSyncService.crossDashboardUpdates
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] update in
-                self?.handleCrossDashboardUpdate(update)
-            }
-            .store(in: &cancellables)
-        
-        // Subscribe to admin dashboard updates
-        dashboardSyncService.adminDashboardUpdates
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] update in
-                self?.handleAdminDashboardUpdate(update)
-            }
-            .store(in: &cancellables)
-        
-        // Subscribe to client dashboard updates
-        dashboardSyncService.clientDashboardUpdates
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] update in
-                self?.handleClientDashboardUpdate(update)
-            }
-            .store(in: &cancellables)
-    }
-    
-    private func handleCrossDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
-        recentUpdates.append(update)
-        
-        // Keep only recent updates (last 20)
-        if recentUpdates.count > 20 {
-            recentUpdates = Array(recentUpdates.suffix(20))
-        }
-        
-        // Handle specific update types
-        switch update.type {
-        case .taskStarted:
-            if update.workerId == currentWorkerId {
-                Task { @MainActor in
-                    await refreshData()
-                }
-            }
-        case .buildingMetricsChanged:
-            Task { @MainActor in
-                await loadBuildingMetricsData()
-            }
-        case .complianceStatusChanged:
-            // Refresh if it affects our buildings
-            if assignedBuildings.contains(where: { $0.id == update.buildingId }) {
-                Task { @MainActor in
-                    await refreshData()
-                }
-            }
-        default:
-            break
-        }
-    }
-    
-    private func handleAdminDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
-        switch update.type {
-        case .buildingMetricsChanged:
-            if !update.buildingId.isEmpty,
-               assignedBuildings.contains(where: { $0.id == update.buildingId }) {
-                Task { @MainActor in
-                    await updateBuildingMetrics(buildingId: update.buildingId)
-                }
-            }
-        default:
-            break
-        }
-    }
-    
-    private func handleClientDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
-        switch update.type {
-        case .complianceStatusChanged:
-            if !update.buildingId.isEmpty,
-               assignedBuildings.contains(where: { $0.id == update.buildingId }) {
-                Task { @MainActor in
-                    await refreshData()
-                }
-            }
-        default:
-            break
-        }
-    }
-    
-    // MARK: - Auto-refresh Setup
-    
-    private func setupAutoRefresh() {
-        // Create timer with weak self capture
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            
-            Task { @MainActor in
-                // Check loading state on main actor
-                guard !self.isLoading else { return }
-                await self.refreshData()
-            }
-        }
-    }
-    
-    // MARK: - Public Accessors for UI
-    
-    /// Get building access type for UI display
-    public func getBuildingAccessType(for buildingId: String) -> BuildingAccessType {
-        if assignedBuildings.contains(where: { $0.id == buildingId }) {
-            return .assigned
-        } else if portfolioBuildings.contains(where: { $0.id == buildingId }) {
-            return .coverage
-        } else {
-            return .unknown
-        }
-    }
-    
-    /// Get tasks for a specific building
-    public func getTasksForBuilding(_ buildingId: String) -> [CoreTypes.ContextualTask] {
-        return todaysTasks.filter { $0.buildingId == buildingId }
-    }
-    
-    /// Get completion rate for a specific building
-    public func getBuildingCompletionRate(_ buildingId: String) -> Double {
-        let buildingTasks = getTasksForBuilding(buildingId)
-        guard !buildingTasks.isEmpty else { return 0.0 }
-        
-        let completed = buildingTasks.filter { $0.isCompleted }.count
-        return Double(completed) / Double(buildingTasks.count)
-    }
-    
-    /// Check if worker can access building
-    public func canAccessBuilding(_ buildingId: String) -> Bool {
-        return getBuildingAccessType(for: buildingId) != .unknown
-    }
-}
-
-// MARK: - Supporting Types
-
-public enum BuildingAccessType {
-    case assigned
-    case coverage
-    case unknown
 }
 
 // MARK: - Preview Helpers
