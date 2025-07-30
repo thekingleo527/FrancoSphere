@@ -10,9 +10,9 @@ import SwiftUI
 import MapKit
 import MessageUI
 
-// MARK: - Message Composer
+// MARK: - Building Message Composer (Renamed to avoid conflict)
 
-struct MessageComposerView: View {
+struct BuildingMessageComposer: View {
     let recipients: [String]
     let subject: String
     let prefilledBody: String
@@ -36,7 +36,7 @@ struct MessageComposerView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(recipients, id: \.self) { recipient in
-                                RecipientChip(email: recipient)
+                                BuildingRecipientChip(email: recipient)
                             }
                         }
                     }
@@ -84,7 +84,7 @@ struct MessageComposerView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(selectedPhotos.indices, id: \.self) { index in
-                                PhotoThumbnail(
+                                BuildingPhotoThumbnail(
                                     image: selectedPhotos[index],
                                     onRemove: {
                                         selectedPhotos.remove(at: index)
@@ -117,7 +117,7 @@ struct MessageComposerView: View {
             messageBody = prefilledBody
         }
         .sheet(isPresented: $showingPhotoPicker) {
-            PhotoPicker(selectedImages: $selectedPhotos)
+            BuildingPhotoPickerView(selectedImages: $selectedPhotos)
         }
     }
     
@@ -135,7 +135,7 @@ struct MessageComposerView: View {
     }
 }
 
-struct RecipientChip: View {
+struct BuildingRecipientChip: View {
     let email: String
     
     var body: some View {
@@ -162,7 +162,7 @@ struct RecipientChip: View {
     }
 }
 
-struct PhotoThumbnail: View {
+struct BuildingPhotoThumbnail: View {
     let image: UIImage
     let onRemove: () -> Void
     
@@ -187,7 +187,7 @@ struct PhotoThumbnail: View {
 // MARK: - Maintenance Components
 
 struct MaintenanceHistoryCard: View {
-    let records: [MaintenanceRecord]
+    let records: [BuildingMaintenanceRecord]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -215,7 +215,7 @@ struct MaintenanceHistoryCard: View {
 }
 
 struct MaintenanceRecordRow: View {
-    let record: MaintenanceRecord
+    let record: BuildingMaintenanceRecord
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -294,10 +294,10 @@ struct MaintenanceStatusBadge: View {
 // MARK: - Team Components
 
 struct AssignedWorkersCard: View {
-    let workers: [WorkerAssignment]
-    let onCall: (WorkerAssignment) -> Void
-    let onMessage: (WorkerAssignment) -> Void
-    let onViewTasks: (WorkerAssignment) -> Void
+    let workers: [BuildingWorkerInfo]
+    let onCall: (BuildingWorkerInfo) -> Void
+    let onMessage: (BuildingWorkerInfo) -> Void
+    let onViewTasks: (BuildingWorkerInfo) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -312,12 +312,12 @@ struct AssignedWorkersCard: View {
                     .padding(.vertical)
             } else {
                 VStack(spacing: 12) {
-                    ForEach(workers) { assignment in
-                        WorkerAssignmentRow(
-                            assignment: assignment,
-                            onCall: { onCall(assignment) },
-                            onMessage: { onMessage(assignment) },
-                            onViewTasks: { onViewTasks(assignment) }
+                    ForEach(workers) { worker in
+                        BuildingWorkerRow(
+                            worker: worker,
+                            onCall: { onCall(worker) },
+                            onMessage: { onMessage(worker) },
+                            onViewTasks: { onViewTasks(worker) }
                         )
                     }
                 }
@@ -329,8 +329,8 @@ struct AssignedWorkersCard: View {
     }
 }
 
-struct WorkerAssignmentRow: View {
-    let assignment: WorkerAssignment
+struct BuildingWorkerRow: View {
+    let worker: BuildingWorkerInfo
     let onCall: () -> Void
     let onMessage: () -> Void
     let onViewTasks: () -> Void
@@ -341,10 +341,10 @@ struct WorkerAssignmentRow: View {
                 // Worker avatar
                 ZStack {
                     Circle()
-                        .fill(assignment.isOnSite ? Color.green : Color.gray)
+                        .fill(worker.isOnSite ? Color.green : Color.gray)
                         .frame(width: 40, height: 40)
                     
-                    Text(assignment.worker.name.initials)
+                    Text(worker.workerName.initials)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
@@ -352,25 +352,25 @@ struct WorkerAssignmentRow: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
-                        Text(assignment.worker.name)
+                        Text(worker.workerName)
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
                         
-                        if !assignment.specialties.isEmpty {
-                            Text("• \(assignment.specialties.first!)")
+                        if !worker.specialties.isEmpty {
+                            Text("• \(worker.specialties.first!)")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.6))
                         }
                     }
                     
                     HStack(spacing: 8) {
-                        if assignment.isOnSite {
+                        if worker.isOnSite {
                             Label("On-site", systemImage: "location.fill")
                                 .font(.caption)
                                 .foregroundColor(.green)
                         } else {
-                            Text(assignment.schedule)
+                            Text(worker.schedule)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.6))
                         }
@@ -410,9 +410,9 @@ struct ActionButton: View {
     }
 }
 
-// MARK: - Supporting Models
+// MARK: - Supporting Models (All renamed to avoid conflicts)
 
-struct MaintenanceRecord: Identifiable {
+struct BuildingMaintenanceRecord: Identifiable {
     let id: String
     let date: Date
     let type: String
@@ -422,17 +422,20 @@ struct MaintenanceRecord: Identifiable {
     let status: String
 }
 
-struct WorkerAssignment: Identifiable {
+struct BuildingWorkerInfo: Identifiable {
     let id: String
-    let worker: WorkerProfile
+    let workerId: String
+    let workerName: String
+    let workerEmail: String?
+    let workerPhone: String?
     let schedule: String
     let specialties: [String]
     var isOnSite: Bool
 }
 
-// MARK: - Photo Picker (Simple implementation)
+// MARK: - Photo Picker (Renamed to avoid conflict)
 
-struct PhotoPicker: UIViewControllerRepresentable {
+struct BuildingPhotoPickerView: UIViewControllerRepresentable {
     @Binding var selectedImages: [UIImage]
     @Environment(\.dismiss) private var dismiss
     
@@ -451,9 +454,9 @@ struct PhotoPicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: PhotoPicker
+        let parent: BuildingPhotoPickerView
         
-        init(_ parent: PhotoPicker) {
+        init(_ parent: BuildingPhotoPickerView) {
             self.parent = parent
         }
         
@@ -485,14 +488,4 @@ extension String {
         let initials = words.compactMap { $0.first }.prefix(2)
         return String(initials).uppercased()
     }
-}
-
-// MARK: - Worker Profile (Temporary until we align with your models)
-
-struct WorkerProfile {
-    let id: String
-    let name: String
-    let email: String?
-    let phone: String?
-    let role: String
 }

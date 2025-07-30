@@ -14,23 +14,31 @@ import MessageUI
 
 struct BuildingDetailView: View {
     // MARK: - Properties
-    let building: CoreTypes.Building
-    @StateObject private var viewModel: BuildingDetailViewModel
+    let buildingId: String
+    let buildingName: String
+    let buildingAddress: String
+    @StateObject private var viewModel: BuildingDetailVM
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
     
     // MARK: - State
-    @State private var selectedTab = BuildingTab.overview
+    @State private var selectedTab = BuildingDetailTab.overview
     @State private var showingPhotoCapture = false
     @State private var showingMessageComposer = false
     @State private var showingCallMenu = false
-    @State private var selectedContact: ContactInfo?
+    @State private var selectedContact: BuildingContact?
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Initialization
-    init(building: CoreTypes.Building) {
-        self.building = building
-        self._viewModel = StateObject(wrappedValue: BuildingDetailViewModel(building: building))
+    init(buildingId: String, buildingName: String, buildingAddress: String) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.buildingAddress = buildingAddress
+        self._viewModel = StateObject(wrappedValue: BuildingDetailVM(
+            buildingId: buildingId,
+            buildingName: buildingName,
+            buildingAddress: buildingAddress
+        ))
     }
     
     // MARK: - Body
@@ -65,14 +73,15 @@ struct BuildingDetailView: View {
             await viewModel.loadBuildingData()
         }
         .sheet(isPresented: $showingPhotoCapture) {
-            PhotoCaptureView(building: building) { photo in
+            // Phase 3: Photo Evidence System
+            PhotoCaptureView(buildingId: buildingId, buildingName: buildingName) { photo in
                 await viewModel.savePhoto(photo)
             }
         }
         .sheet(isPresented: $showingMessageComposer) {
             MessageComposerView(
                 recipients: getMessageRecipients(),
-                subject: "Re: \(building.name)",
+                subject: "Re: \(buildingName)",
                 prefilledBody: getBuildingContext()
             )
         }
@@ -95,7 +104,7 @@ struct BuildingDetailView: View {
             
             Spacer()
             
-            Text(building.name)
+            Text(buildingName)
                 .font(.headline)
                 .foregroundColor(.white)
                 .lineLimit(1)
@@ -153,7 +162,7 @@ struct BuildingDetailView: View {
                 )
                 .frame(height: 200)
                 .overlay(
-                    Image(systemName: buildingIcon)
+                    Image(systemName: viewModel.buildingIcon)
                         .font(.system(size: 60))
                         .foregroundColor(.gray.opacity(0.7))
                 )
@@ -169,7 +178,7 @@ struct BuildingDetailView: View {
             // Status overlay
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(building.type.rawValue.capitalized)
+                    Text(viewModel.buildingType)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.8))
                     
@@ -188,7 +197,7 @@ struct BuildingDetailView: View {
                             )
                         }
                         
-                        if let status = building.complianceStatus {
+                        if let status = viewModel.complianceStatus {
                             statusBadge(
                                 status.rawValue.capitalized,
                                 icon: complianceIcon(status),
@@ -209,7 +218,7 @@ struct BuildingDetailView: View {
     private var tabBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
-                ForEach(BuildingTab.allCases, id: \.self) { tab in
+                ForEach(BuildingDetailTab.allCases, id: \.self) { tab in
                     if shouldShowTab(tab) {
                         tabButton(tab)
                     }
@@ -221,7 +230,7 @@ struct BuildingDetailView: View {
         .background(Color.black.opacity(0.3))
     }
     
-    private func tabButton(_ tab: BuildingTab) -> some View {
+    private func tabButton(_ tab: BuildingDetailTab) -> some View {
         Button(action: {
             withAnimation(.easeInOut(duration: 0.2)) {
                 selectedTab = tab
@@ -290,12 +299,12 @@ struct BuildingDetailView: View {
                 .foregroundColor(.white)
             
             VStack(alignment: .leading, spacing: 8) {
-                InfoRow("Address", value: building.address)
-                InfoRow("Type", value: building.type.rawValue.capitalized)
-                InfoRow("Size", value: "\(building.size.formatted()) sq ft")
-                InfoRow("Floors", value: "\(building.floors)")
-                InfoRow("Units", value: "\(building.units)")
-                InfoRow("Built", value: "\(building.yearBuilt)")
+                InfoRow("Address", value: buildingAddress)
+                InfoRow("Type", value: viewModel.buildingType)
+                InfoRow("Size", value: "\(viewModel.buildingSize.formatted()) sq ft")
+                InfoRow("Floors", value: "\(viewModel.floors)")
+                InfoRow("Units", value: "\(viewModel.units)")
+                InfoRow("Built", value: "\(viewModel.yearBuilt)")
             }
         }
         .padding()
@@ -364,8 +373,8 @@ struct BuildingDetailView: View {
             
             VStack(spacing: 12) {
                 // Building contacts
-                if let primaryContact = building.primaryContact {
-                    ContactRow(
+                if let primaryContact = viewModel.primaryContact {
+                    ContactRowView(
                         contact: primaryContact,
                         icon: "building.2",
                         onCall: { selectedContact = primaryContact; showingCallMenu = true },
@@ -374,8 +383,8 @@ struct BuildingDetailView: View {
                 }
                 
                 // Franco contacts
-                ContactRow(
-                    contact: ContactInfo(
+                ContactRowView(
+                    contact: BuildingContact(
                         name: "JM Office",
                         role: "Franco HQ",
                         email: nil,
@@ -387,8 +396,8 @@ struct BuildingDetailView: View {
                     onMessage: nil
                 )
                 
-                ContactRow(
-                    contact: ContactInfo(
+                ContactRowView(
+                    contact: BuildingContact(
                         name: "David",
                         role: "Operations",
                         email: "david@francosphere.com",
@@ -400,8 +409,8 @@ struct BuildingDetailView: View {
                     onMessage: { messageContact("david@francosphere.com") }
                 )
                 
-                ContactRow(
-                    contact: ContactInfo(
+                ContactRowView(
+                    contact: BuildingContact(
                         name: "Jerry",
                         role: "Management",
                         email: "jerry@francosphere.com",
@@ -475,24 +484,33 @@ struct BuildingDetailView: View {
             // Filter pills
             routineFilterPills
             
-            // Daily routines
-            if viewModel.routineFilter == .all || viewModel.routineFilter == .daily {
-                dailyRoutinesCard
+            // Phase 1: Core functionality
+            // TODO: Phase 4 will add worker capability adaptations
+            Group {
+                if viewModel.isLoadingRoutines {
+                    ProgressView("Loading routines...")
+                        .frame(maxWidth: .infinity, minHeight: 200)
+                } else {
+                    // Daily routines
+                    if viewModel.routineFilter == .all || viewModel.routineFilter == .daily {
+                        dailyRoutinesCard
+                    }
+                    
+                    // Weekly routines placeholder
+                    if viewModel.routineFilter == .all || viewModel.routineFilter == .weekly {
+                        placeholderCard(title: "Weekly Routines", message: "Coming in Phase 2")
+                    }
+                    
+                    // Monthly routines placeholder
+                    if viewModel.routineFilter == .all || viewModel.routineFilter == .monthly {
+                        placeholderCard(title: "Monthly Routines", message: "Coming in Phase 2")
+                    }
+                }
             }
             
-            // Weekly routines
-            if viewModel.routineFilter == .all || viewModel.routineFilter == .weekly {
-                weeklyRoutinesCard
-            }
-            
-            // Monthly routines
-            if viewModel.routineFilter == .all || viewModel.routineFilter == .monthly {
-                monthlyRoutinesCard
-            }
-            
-            // Add routine button (admin only)
+            // Add routine button (admin only) - Phase 4
             if viewModel.userRole == .admin {
-                addRoutineButton
+                addRoutineButtonPlaceholder
             }
         }
     }
@@ -500,7 +518,7 @@ struct BuildingDetailView: View {
     private var routineFilterPills: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(RoutineFilter.allCases, id: \.self) { filter in
+                ForEach(RoutineFilterType.allCases, id: \.self) { filter in
                     FilterPill(
                         title: filter.rawValue,
                         isSelected: viewModel.routineFilter == filter,
@@ -517,15 +535,35 @@ struct BuildingDetailView: View {
                 .font(.headline)
                 .foregroundColor(.white)
             
-            ForEach(TimeOfDay.allCases, id: \.self) { timeOfDay in
-                if let routines = viewModel.dailyRoutines[timeOfDay], !routines.isEmpty {
-                    TimeOfDaySection(
-                        timeOfDay: timeOfDay,
-                        routines: routines,
-                        onToggle: { routine in
-                            viewModel.toggleRoutineCompletion(routine)
+            if viewModel.dailyRoutines.isEmpty {
+                Text("No daily routines configured")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(viewModel.dailyRoutines) { routine in
+                    HStack {
+                        Button(action: { viewModel.toggleRoutineCompletion(routine) }) {
+                            Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
+                                .foregroundColor(routine.isCompleted ? .green : .white.opacity(0.5))
                         }
-                    )
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(routine.title)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.9))
+                                .strikethrough(routine.isCompleted)
+                            
+                            if let time = routine.scheduledTime {
+                                Text(time)
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.vertical, 4)
                 }
             }
         }
@@ -538,56 +576,196 @@ struct BuildingDetailView: View {
     private var historyContent: some View {
         VStack(spacing: 20) {
             if viewModel.userRole == .worker {
-                // Simplified maintenance focus
-                maintenanceHistoryCard
-                vendorVisitsCard
+                // Phase 1: Basic maintenance log
+                basicMaintenanceLog
             } else {
-                // Full history with analytics
-                historyFilterPills
-                historyAnalyticsCard
-                detailedHistoryList
+                // Phase 2: Full history with analytics
+                placeholderCard(
+                    title: "Complete History",
+                    message: "Advanced analytics coming in Phase 2"
+                )
             }
         }
+    }
+    
+    private var basicMaintenanceLog: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Recent Maintenance", systemImage: "wrench.and.screwdriver.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            if viewModel.maintenanceHistory.isEmpty {
+                Text("No recent maintenance records")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(viewModel.maintenanceHistory.prefix(5)) { record in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(record.title)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.white)
+                        
+                        Text(record.date, style: .date)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        if let description = record.description {
+                            Text(description)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                                .lineLimit(2)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    
+                    if record.id != viewModel.maintenanceHistory.prefix(5).last?.id {
+                        Divider()
+                            .background(Color.white.opacity(0.2))
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
     }
     
     // MARK: - Inventory Tab
     private var inventoryContent: some View {
         VStack(spacing: 20) {
-            // Inventory categories
-            ForEach(InventoryCategory.allCases, id: \.self) { category in
-                if let items = viewModel.inventory[category], !items.isEmpty {
-                    InventoryCategoryCard(
-                        category: category,
-                        items: items,
-                        onUpdateQuantity: { item, quantity in
-                            viewModel.updateInventoryQuantity(item, quantity: quantity)
-                        },
-                        onReorder: { item in
-                            viewModel.reorderItem(item)
-                        }
+            // Phase 3: Basic inventory view
+            if viewModel.userRole == .worker || viewModel.userRole == .admin {
+                ForEach(CoreTypes.InventoryCategory.allCases, id: \.self) { category in
+                    if let items = viewModel.inventory[category], !items.isEmpty {
+                        inventoryCategorySection(category: category, items: items)
+                    }
+                }
+                
+                if viewModel.inventory.isEmpty {
+                    placeholderCard(
+                        title: "Inventory Management",
+                        message: "Full inventory tracking coming in Phase 3"
                     )
                 }
             }
+        }
+    }
+    
+    private func inventoryCategorySection(category: CoreTypes.InventoryCategory, items: [CoreTypes.InventoryItem]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(category.rawValue, systemImage: getCategoryIcon(category))
+                .font(.headline)
+                .foregroundColor(.white)
             
-            // Add item button
-            if viewModel.userRole == .admin || viewModel.userRole == .worker {
-                addInventoryItemButton
+            ForEach(items) { item in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.name)
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                        
+                        Text("\(item.currentStock) \(item.unit)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    
+                    Spacer()
+                    
+                    // Stock level indicator
+                    stockLevelIndicator(item: item)
+                }
+                .padding(.vertical, 4)
             }
         }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
     }
     
     // MARK: - Team Tab
     private var teamContent: some View {
         VStack(spacing: 20) {
-            // Assigned workers
-            assignedWorkersCard
+            // Phase 1: Basic worker list
+            assignedWorkersSection
             
-            // Coverage calendar
-            coverageCalendarCard
+            // Phase 2: Coverage calendar placeholder
+            placeholderCard(
+                title: "Coverage Calendar",
+                message: "Schedule visualization coming in Phase 2"
+            )
             
             // Emergency contacts
-            emergencyContactsCard
+            emergencyContactsSection
         }
+    }
+    
+    private var assignedWorkersSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Assigned Workers", systemImage: "person.2.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            if viewModel.assignedWorkers.isEmpty {
+                Text("No workers assigned")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(viewModel.assignedWorkers) { worker in
+                    HStack {
+                        Circle()
+                            .fill(worker.isOnSite ? Color.green : Color.gray)
+                            .frame(width: 8, height: 8)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(worker.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                            
+                            Text(worker.schedule)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        
+                        Spacer()
+                        
+                        if worker.isOnSite {
+                            Text("On-site")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Color.green.opacity(0.2))
+                                .cornerRadius(8)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    private var emergencyContactsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Emergency Contacts", systemImage: "phone.circle.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                EmergencyContactRow(title: "Franco 24/7 Hotline", number: "(212) 555-XXXX")
+                EmergencyContactRow(title: "Building Security", number: "(212) 555-XXXX")
+                EmergencyContactRow(title: "Facilities Manager", number: "(212) 555-XXXX")
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
     }
     
     // MARK: - Quick Actions Bar
@@ -649,7 +827,7 @@ struct BuildingDetailView: View {
     
     // MARK: - Helper Methods
     
-    private func shouldShowTab(_ tab: BuildingTab) -> Bool {
+    private func shouldShowTab(_ tab: BuildingDetailTab) -> Bool {
         switch tab {
         case .inventory:
             return viewModel.userRole != .client
@@ -657,26 +835,6 @@ struct BuildingDetailView: View {
             return true
         default:
             return true
-        }
-    }
-    
-    private var buildingIcon: String {
-        switch building.type {
-        case .commercial:
-            return "building.2.fill"
-        case .residential:
-            return "house.fill"
-        case .mixed:
-            return "building.fill"
-        case .industrial:
-            return "hammer.fill"
-        case .special:
-            if building.name.lowercased().contains("museum") {
-                return "building.columns.fill"
-            } else if building.name.lowercased().contains("park") {
-                return "leaf.fill"
-            }
-            return "star.fill"
         }
     }
     
@@ -695,7 +853,7 @@ struct BuildingDetailView: View {
         case .compliant: return "checkmark.seal.fill"
         case .nonCompliant: return "exclamationmark.triangle.fill"
         case .pending: return "clock.fill"
-        case .unknown: return "questionmark.circle.fill"
+        default: return "questionmark.circle.fill"
         }
     }
     
@@ -704,7 +862,7 @@ struct BuildingDetailView: View {
         case .compliant: return .green
         case .nonCompliant: return .red
         case .pending: return .orange
-        case .unknown: return .gray
+        default: return .gray
         }
     }
     
@@ -738,8 +896,8 @@ struct BuildingDetailView: View {
     
     private func getBuildingContext() -> String {
         """
-        Building: \(building.name)
-        Address: \(building.address)
+        Building: \(buildingName)
+        Address: \(buildingAddress)
         Current Status: \(viewModel.completionPercentage)% complete
         Workers on site: \(viewModel.workersOnSite)
         
@@ -761,7 +919,7 @@ struct BuildingDetailView: View {
                 Text("Call JM Office")
             }
             
-            if let emergencyContact = building.emergencyContact,
+            if let emergencyContact = viewModel.emergencyContact,
                let phone = emergencyContact.phone {
                 Button(action: { callNumber(phone) }) {
                     Text("Call Emergency Contact")
@@ -782,7 +940,7 @@ struct BuildingDetailView: View {
     }
     
     private func messageContact(_ email: String) {
-        selectedContact = ContactInfo(
+        selectedContact = BuildingContact(
             name: email.components(separatedBy: "@").first?.capitalized ?? "Contact",
             role: nil,
             email: email,
@@ -793,15 +951,85 @@ struct BuildingDetailView: View {
     }
     
     private func openInMaps() {
-        let address = building.address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let address = buildingAddress.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         guard let url = URL(string: "maps://?address=\(address)") else { return }
         UIApplication.shared.open(url)
+    }
+    
+    private func getCategoryIcon(_ category: CoreTypes.InventoryCategory) -> String {
+        switch category {
+        case .cleaning: return "sparkles"
+        case .equipment: return "wrench.fill"
+        case .building: return "house.fill"
+        default: return "shippingbox.fill"
+        }
+    }
+    
+    private func stockLevelIndicator(item: CoreTypes.InventoryItem) -> some View {
+        HStack(spacing: 4) {
+            if item.needsRestock {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                Text("Low")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundColor(.green)
+                Text("OK")
+                    .font(.caption)
+                    .foregroundColor(.green)
+            }
+        }
+    }
+    
+    private func placeholderCard(title: String, message: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "clock.badge.checkmark")
+                .font(.largeTitle)
+                .foregroundColor(.white.opacity(0.3))
+            
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.white.opacity(0.8))
+            
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+        .padding(.horizontal)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    private var addRoutineButtonPlaceholder: some View {
+        Button(action: {
+            // Phase 4: Implement add routine functionality
+        }) {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                Text("Add Custom Routine")
+            }
+            .font(.subheadline)
+            .foregroundColor(.blue)
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.blue.opacity(0.1))
+            .cornerRadius(12)
+        }
+        .disabled(true)
+        .opacity(0.6)
     }
 }
 
 // MARK: - Supporting Types
 
-enum BuildingTab: String, CaseIterable {
+enum BuildingDetailTab: String, CaseIterable {
     case overview = "Overview"
     case routines = "Routines"
     case history = "History"
@@ -811,39 +1039,51 @@ enum BuildingTab: String, CaseIterable {
     var title: String { rawValue }
 }
 
-enum RoutineFilter: String, CaseIterable {
+enum RoutineFilterType: String, CaseIterable {
     case all = "All"
     case daily = "Daily"
     case weekly = "Weekly"
     case monthly = "Monthly"
 }
 
-enum TimeOfDay: String, CaseIterable {
-    case morning = "Morning (6 AM - 12 PM)"
-    case afternoon = "Afternoon (12 PM - 5 PM)"
-    case evening = "Evening (5 PM - 10 PM)"
-    
-    var icon: String {
-        switch self {
-        case .morning: return "sunrise.fill"
-        case .afternoon: return "sun.max.fill"
-        case .evening: return "moon.stars.fill"
-        }
-    }
+// MARK: - Data Models
+
+struct BuildingContact: Identifiable {
+    let id = UUID()
+    let name: String
+    let role: String?
+    let email: String?
+    let phone: String?
+    let isEmergencyContact: Bool
 }
 
-enum InventoryCategory: String, CaseIterable {
-    case cleaning = "Cleaning Supplies"
-    case equipment = "Equipment & Tools"
-    case building = "Building Supplies"
-    
-    var icon: String {
-        switch self {
-        case .cleaning: return "sparkles"
-        case .equipment: return "wrench.fill"
-        case .building: return "house.fill"
-        }
-    }
+struct SpacePhoto: Identifiable {
+    let id: String
+    let name: String
+    let icon: String
+    let thumbnail: UIImage?
+}
+
+struct DailyRoutine: Identifiable {
+    let id: String
+    let title: String
+    let scheduledTime: String?
+    var isCompleted: Bool = false
+}
+
+struct MaintenanceRecord: Identifiable {
+    let id: String
+    let title: String
+    let date: Date
+    let description: String?
+    let cost: Decimal?
+}
+
+struct AssignedWorker: Identifiable {
+    let id: String
+    let name: String
+    let schedule: String
+    let isOnSite: Bool
 }
 
 // MARK: - Supporting Views
@@ -870,8 +1110,8 @@ struct InfoRow: View {
     }
 }
 
-struct ContactRow: View {
-    let contact: ContactInfo
+struct ContactRowView: View {
+    let contact: BuildingContact
     let icon: String
     var onCall: (() -> Void)?
     var onMessage: (() -> Void)?
@@ -1013,11 +1253,31 @@ struct QuickActionButton: View {
     }
 }
 
+struct EmergencyContactRow: View {
+    let title: String
+    let number: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+            Spacer()
+            Text(number)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+        }
+    }
+}
+
 // MARK: - View Model
 
 @MainActor
-class BuildingDetailViewModel: ObservableObject {
-    let building: CoreTypes.Building
+class BuildingDetailVM: ObservableObject {
+    let buildingId: String
+    let buildingName: String
+    let buildingAddress: String
     
     // User context
     @Published var userRole: CoreTypes.UserRole = .worker
@@ -1032,26 +1292,46 @@ class BuildingDetailViewModel: ObservableObject {
     @Published var todaysSpecialNote: String?
     @Published var spacePhotos: [SpacePhoto] = []
     @Published var isFavorite: Bool = false
+    @Published var complianceStatus: CoreTypes.ComplianceStatus?
+    @Published var primaryContact: BuildingContact?
+    @Published var emergencyContact: BuildingContact?
+    
+    // Building details
+    @Published var buildingType: String = "Commercial"
+    @Published var buildingSize: Int = 0
+    @Published var floors: Int = 0
+    @Published var units: Int = 0
+    @Published var yearBuilt: Int = 1900
     
     // Routines data
-    @Published var routineFilter: RoutineFilter = .all
-    @Published var dailyRoutines: [TimeOfDay: [BuildingRoutine]] = [:]
-    @Published var weeklyRoutines: [BuildingRoutine] = []
-    @Published var monthlyRoutines: [BuildingRoutine] = []
+    @Published var routineFilter: RoutineFilterType = .all
+    @Published var dailyRoutines: [DailyRoutine] = []
+    @Published var isLoadingRoutines: Bool = false
     
     // History data
     @Published var maintenanceHistory: [MaintenanceRecord] = []
-    @Published var vendorVisits: [VendorVisit] = []
     
     // Inventory data
-    @Published var inventory: [InventoryCategory: [InventoryItem]] = [:]
+    @Published var inventory: [CoreTypes.InventoryCategory: [CoreTypes.InventoryItem]] = [:]
     
     // Team data
-    @Published var assignedWorkers: [WorkerAssignment] = []
-    @Published var coverageSchedule: [String: [String]] = [:] // Day: [Worker IDs]
+    @Published var assignedWorkers: [AssignedWorker] = []
     
-    init(building: CoreTypes.Building) {
-        self.building = building
+    // Computed properties
+    var buildingIcon: String {
+        if buildingName.lowercased().contains("museum") {
+            return "building.columns.fill"
+        } else if buildingName.lowercased().contains("park") {
+            return "leaf.fill"
+        } else {
+            return "building.2.fill"
+        }
+    }
+    
+    init(buildingId: String, buildingName: String, buildingAddress: String) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.buildingAddress = buildingAddress
         loadUserRole()
     }
     
@@ -1070,12 +1350,20 @@ class BuildingDetailViewModel: ObservableObject {
     }
     
     private func loadOverviewData() async {
-        // Simulate loading
+        // Phase 1: Mock data
+        // Phase 2: Load from database
         completionPercentage = Int.random(in: 70...100)
         workersOnSite = Int.random(in: 0...3)
         workersPresent = ["Kevin D.", "Maria S."]
         todaysTasks = (total: 12, completed: 8)
         nextCriticalTask = "Trash pickup @ 6 PM"
+        complianceStatus = .compliant
+        
+        // Building details
+        buildingSize = 45000
+        floors = 6
+        units = 12
+        yearBuilt = 1920
         
         // Load space photos
         spacePhotos = [
@@ -1086,74 +1374,112 @@ class BuildingDetailViewModel: ObservableObject {
     }
     
     private func loadRoutines() async {
-        // Load from database
+        isLoadingRoutines = true
+        
+        // Simulate loading
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        
+        // Phase 1: Basic daily routines
         dailyRoutines = [
-            .morning: [
-                BuildingRoutine(id: "1", title: "Lobby cleaning & mopping", timeOfDay: .morning, frequency: .daily),
-                BuildingRoutine(id: "2", title: "Elevator wipe down", timeOfDay: .morning, frequency: .daily)
-            ],
-            .afternoon: [
-                BuildingRoutine(id: "3", title: "Common area patrol", timeOfDay: .afternoon, frequency: .daily)
-            ]
+            DailyRoutine(id: "1", title: "Lobby cleaning & mopping", scheduledTime: "6:00 AM"),
+            DailyRoutine(id: "2", title: "Elevator wipe down", scheduledTime: "7:00 AM"),
+            DailyRoutine(id: "3", title: "Common area patrol", scheduledTime: "2:00 PM"),
+            DailyRoutine(id: "4", title: "Trash collection", scheduledTime: "5:00 PM")
         ]
+        
+        isLoadingRoutines = false
     }
     
     private func loadHistory() async {
-        // Load maintenance and vendor history
+        // Phase 1: Basic maintenance records
+        maintenanceHistory = [
+            MaintenanceRecord(
+                id: "1",
+                title: "Elevator B Service",
+                date: Date().addingTimeInterval(-86400),
+                description: "Annual inspection completed",
+                cost: nil
+            ),
+            MaintenanceRecord(
+                id: "2",
+                title: "HVAC Filter Replacement",
+                date: Date().addingTimeInterval(-604800),
+                description: "Replaced all filters on floors 1-3",
+                cost: 450
+            )
+        ]
     }
     
     private func loadInventory() async {
-        // Load inventory items
+        // Phase 3: Basic inventory items
         inventory = [
             .cleaning: [
-                InventoryItem(id: "1", name: "Floor Cleaner", category: .cleaning, quantity: 4, unit: "gallons", minQuantity: 2)
+                CoreTypes.InventoryItem(
+                    id: "1",
+                    name: "Floor Cleaner",
+                    category: .cleaning,
+                    currentStock: 4,
+                    minimumStock: 2,
+                    maxStock: 10,
+                    unit: "gallons",
+                    cost: 25.99
+                )
             ]
         ]
     }
     
     private func loadTeamData() async {
-        // Load assigned workers and schedule
+        // Load assigned workers
+        assignedWorkers = [
+            AssignedWorker(
+                id: "1",
+                name: "Kevin Dutan",
+                schedule: "M-F 6 AM - 2 PM",
+                isOnSite: true
+            ),
+            AssignedWorker(
+                id: "2",
+                name: "Maria Sanchez",
+                schedule: "M-F 2 PM - 10 PM",
+                isOnSite: false
+            )
+        ]
     }
     
     // Action methods
-    func toggleRoutineCompletion(_ routine: BuildingRoutine) {
+    func toggleRoutineCompletion(_ routine: DailyRoutine) {
         // Update routine completion status
-    }
-    
-    func updateInventoryQuantity(_ item: InventoryItem, quantity: Int) {
-        // Update inventory
-    }
-    
-    func reorderItem(_ item: InventoryItem) {
-        // Create reorder request
+        if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
+            dailyRoutines[index].isCompleted.toggle()
+        }
     }
     
     func reportIssue() {
-        // Open issue reporting
+        // Phase 2: Open issue reporting
     }
     
     func requestSupplies() {
-        // Open supply request
+        // Phase 3: Open supply request
     }
     
     func addNote() {
-        // Add note to building
+        // Phase 2: Add note to building
     }
     
     func logVendorVisit() {
-        // Log vendor visit
+        // Phase 2: Log vendor visit
     }
     
     func savePhoto(_ photo: UIImage) async {
-        // Save photo to building
+        // Phase 3: Save photo to building
     }
     
     func viewSpaceDetails(_ space: SpacePhoto) {
-        // View space details
+        // Phase 3: View space details
     }
     
     func exportBuildingReport() {
-        // Export building report
+        // Phase 2: Export building report
     }
     
     func toggleFavorite() {
@@ -1161,110 +1487,58 @@ class BuildingDetailViewModel: ObservableObject {
     }
     
     func editBuildingInfo() {
-        // Edit building information (admin only)
+        // Phase 4: Edit building information (admin only)
     }
 }
 
-// MARK: - Data Models
+// MARK: - Placeholder Views for Missing Components
 
-struct SpacePhoto: Identifiable {
-    let id: String
-    let name: String
-    let icon: String
-    let thumbnail: UIImage?
-}
-
-struct BuildingRoutine: Identifiable {
-    let id: String
-    let title: String
-    let timeOfDay: TimeOfDay
-    let frequency: RoutineFilter
-    var isCompleted: Bool = false
-}
-
-struct MaintenanceRecord: Identifiable {
-    let id: String
-    let date: Date
-    let type: String
-    let vendor: String?
-    let description: String
-    let cost: Decimal?
-    let status: String
-}
-
-struct VendorVisit: Identifiable {
-    let id: String
-    let date: Date
-    let vendor: String
-    let purpose: String
-    let signedBy: String
-}
-
-struct InventoryItem: Identifiable {
-    let id: String
-    let name: String
-    let category: InventoryCategory
-    var quantity: Int
-    let unit: String
-    let minQuantity: Int
-}
-
-struct WorkerAssignment: Identifiable {
-    let id: String
-    let worker: CoreTypes.WorkerProfile
-    let schedule: String
-    let specialties: [String]
-    var isOnSite: Bool
-}
-
-// MARK: - Supporting Components
-
-struct TimeOfDaySection: View {
-    let timeOfDay: TimeOfDay
-    let routines: [BuildingRoutine]
-    let onToggle: (BuildingRoutine) -> Void
+struct PhotoCaptureView: View {
+    let buildingId: String
+    let buildingName: String
+    let onCapture: (UIImage) async -> Void
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: timeOfDay.icon)
-                    .font(.subheadline)
-                Text(timeOfDay.rawValue)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+        NavigationView {
+            VStack {
+                Text("Photo Capture")
+                    .font(.largeTitle)
+                Text("Coming in Phase 3")
+                    .foregroundColor(.secondary)
             }
-            .foregroundColor(.white.opacity(0.8))
-            
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(routines) { routine in
-                    HStack {
-                        Button(action: { onToggle(routine) }) {
-                            Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
-                                .foregroundColor(routine.isCompleted ? .green : .white.opacity(0.5))
-                        }
-                        
-                        Text(routine.title)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.9))
-                            .strikethrough(routine.isCompleted)
-                        
-                        Spacer()
-                    }
+            .navigationTitle("Add Photo")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
                 }
             }
-            .padding(.leading, 8)
         }
     }
 }
 
-// MARK: - Extensions
-
-extension CoreTypes {
-    struct ContactInfo {
-        let name: String
-        let role: String?
-        let email: String?
-        let phone: String?
-        let isEmergencyContact: Bool
+struct MessageComposerView: View {
+    let recipients: [String]
+    let subject: String
+    let prefilledBody: String
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Message Composer")
+                    .font(.largeTitle)
+                Text("Email integration coming in Phase 2")
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("New Message")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
     }
 }

@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2326C1E32E3AA5E50080F005 /* BuildingDetailSupporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E22E3AA5E50080F005 /* BuildingDetailSupporting.swift */; };
 		2326C1E52E3AA63D0080F005 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E42E3AA63D0080F005 /* ImagePicker.swift */; };
+		2326C1E82E3AAB860080F005 /* BuildingDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1E62E3AAB860080F005 /* BuildingDetailComponents.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -210,8 +210,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2326C1E22E3AA5E50080F005 /* BuildingDetailSupporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailSupporting.swift; sourceTree = "<group>"; };
 		2326C1E42E3AA63D0080F005 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
+		2326C1E62E3AAB860080F005 /* BuildingDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingDetailComponents.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -421,6 +421,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2326C1E72E3AAB860080F005 /* Supporting */ = {
+			isa = PBXGroup;
+			children = (
+				2326C1E62E3AAB860080F005 /* BuildingDetailComponents.swift */,
+			);
+			path = Supporting;
+			sourceTree = "<group>";
+		};
 		232736DA2E2B8564004A52C6 = {
 			isa = PBXGroup;
 			children = (
@@ -462,7 +470,6 @@
 			isa = PBXGroup;
 			children = (
 				2326C1E42E3AA63D0080F005 /* ImagePicker.swift */,
-				2326C1E22E3AA5E50080F005 /* BuildingDetailSupporting.swift */,
 				23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */,
 				23A1B9442E3992C80011F091 /* Building.swift */,
 				23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */,
@@ -917,6 +924,7 @@
 		23779FCE2E39885600F4A10F /* Buildings */ = {
 			isa = PBXGroup;
 			children = (
+				2326C1E72E3AAB860080F005 /* Supporting */,
 				23779FC32E39885600F4A10F /* AssignedBuildingsView.swift */,
 				23779FC42E39885600F4A10F /* BuildingDetailView.swift */,
 				23779FC52E39885600F4A10F /* BuildingMapDetailView.swift */,
@@ -1224,7 +1232,6 @@
 				23A1B9642E3992C80011F091 /* MyAssignedBuildingsSection.swift in Sources */,
 				2377A00B2E39885600F4A10F /* ClockInGlassModal.swift in Sources */,
 				2377A00C2E39885600F4A10F /* GlassNavigationBar.swift in Sources */,
-				2326C1E32E3AA5E50080F005 /* BuildingDetailSupporting.swift in Sources */,
 				2377A00F2E39885600F4A10F /* NovaAPIService.swift in Sources */,
 				2377A0102E39885600F4A10F /* BuildingPreviewPopover.swift in Sources */,
 				2377A0122E39885600F4A10F /* GlassDeckContainer.swift in Sources */,
@@ -1261,6 +1268,7 @@
 				2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */,
 				2377A0312E39885600F4A10F /* GlassModal.swift in Sources */,
 				2377A0322E39885600F4A10F /* FrancoSphereImports.swift in Sources */,
+				2326C1E82E3AAB860080F005 /* BuildingDetailComponents.swift in Sources */,
 				2377A0342E39885600F4A10F /* WorkerAssignmentGlassCard.swift in Sources */,
 				2377A0362E39885600F4A10F /* ComplianceIssue.swift in Sources */,
 				2377A0372E39885600F4A10F /* BuildingMetricsService.swift in Sources */,
