@@ -7,6 +7,7 @@
 //  ✅ CORRECTED: Uses existing method names from services
 //  ✅ ALIGNED: With actual CoreTypes.BuildingMetrics constructor
 //  ✅ FUNCTIONAL: Real data integration with proper error handling
+//  ✅ FIXED: UserRole ambiguity resolved - using CoreTypes.UserRole
 //
 
 import Foundation
@@ -297,17 +298,17 @@ public class BuildingIntelligenceViewModel: ObservableObject {
         // Create basic worker profiles based on building assignments
         var fallbackWorkers: [WorkerProfile] = []
         
-        // ✅ FIXED: Changed .supervisor to .manager (which exists in UserRole enum)
+        // ✅ FIXED: Using CoreTypes.UserRole to resolve ambiguity
         if building.name.contains("Rubin") {
-            fallbackWorkers.append(createFallbackWorker(id: "4", name: "Kevin Dutan", role: .worker))
+            fallbackWorkers.append(createFallbackWorker(id: "4", name: "Kevin Dutan", role: CoreTypes.UserRole.worker))
         } else if building.name.contains("Perry") {
-            fallbackWorkers.append(createFallbackWorker(id: "5", name: "Mercedes Inamagua", role: .worker))
+            fallbackWorkers.append(createFallbackWorker(id: "5", name: "Mercedes Inamagua", role: CoreTypes.UserRole.worker))
         } else if building.name.contains("Walker") || building.name.contains("Elizabeth") {
-            fallbackWorkers.append(createFallbackWorker(id: "6", name: "Luis Lopez", role: .worker))
+            fallbackWorkers.append(createFallbackWorker(id: "6", name: "Luis Lopez", role: CoreTypes.UserRole.worker))
         } else {
             // Default workers for other buildings
-            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: .manager))  // ✅ FIXED: Changed to .manager
-            fallbackWorkers.append(createFallbackWorker(id: "2", name: "Edwin Lema", role: .worker))
+            fallbackWorkers.append(createFallbackWorker(id: "1", name: "Greg Franco", role: CoreTypes.UserRole.manager))  // ✅ FIXED: Using CoreTypes.UserRole
+            fallbackWorkers.append(createFallbackWorker(id: "2", name: "Edwin Lema", role: CoreTypes.UserRole.worker))
         }
         
         self.allAssignedWorkers = fallbackWorkers
@@ -316,7 +317,7 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     }
     
     /// Create a fallback worker with correct WorkerProfile initializer
-    private func createFallbackWorker(id: String, name: String, role: UserRole) -> WorkerProfile {
+    private func createFallbackWorker(id: String, name: String, role: CoreTypes.UserRole) -> WorkerProfile {  // ✅ FIXED: Using CoreTypes.UserRole
         return WorkerProfile(
             id: id,
             name: name,
@@ -427,6 +428,11 @@ public class BuildingIntelligenceViewModel: ObservableObject {
     - Changed from trying to access .session property to properly destructuring the tuple
     - getClockInStatus returns (isClockedIn: Bool, building: NamedCoordinate?)
     - Now correctly checks if the worker is clocked in at the specific building
+ 
+ ✅ FIXED Lines 302, 304, 306, 309, 310, 319: UserRole ambiguity
+    - Changed from bare `UserRole` to `CoreTypes.UserRole` to resolve type ambiguity
+    - Updated all references to use fully qualified enum type
+    - Fixed createFallbackWorker parameter type to use CoreTypes.UserRole
  
  ✅ All other fixes remain as documented in the original file
  */

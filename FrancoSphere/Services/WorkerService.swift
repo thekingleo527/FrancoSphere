@@ -6,6 +6,7 @@
 //  ✅ PRODUCTION READY: Real database operations only
 //  ✅ GRDB POWERED: Uses GRDBManager for all operations
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency
+//  ✅ FIXED: Compilation errors resolved
 //
 
 import Foundation
@@ -181,14 +182,16 @@ public actor WorkerService {
         """, [newWorkerId, ISO8601DateFormatter().string(from: Date()), taskId])
         
         // Broadcast update
+        // ✅ FIXED: Use existing UpdateType (taskUpdated with action context)
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.taskReassigned,
-            buildingId: nil,
+            type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,  // ✅ Valid enum case
+            buildingId: "",  // ✅ Changed from nil to empty string
             workerId: newWorkerId,
             data: [
                 "taskId": taskId,
                 "newWorkerId": newWorkerId,
+                "action": "reassigned",  // ✅ Added to indicate it's a reassignment
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -220,13 +223,16 @@ public actor WorkerService {
         ])
         
         // Broadcast update
+        // ✅ FIXED: Use existing UpdateType (buildingMetricsChanged for admin updates)
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.workerProfileUpdated,
-            buildingId: nil,
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,  // ✅ Changed to valid enum case
+            buildingId: "",  // ✅ Changed from nil to empty string
             workerId: profile.id,
             data: [
                 "workerName": profile.name,
+                "action": "profileUpdated",  // ✅ Added to indicate profile update
+                "updateType": "workerProfile",  // ✅ Additional context
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -261,13 +267,16 @@ public actor WorkerService {
         """, [workerId])
         
         // Broadcast update
+        // ✅ FIXED: Use existing UpdateType (buildingMetricsChanged for admin updates)
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.workerDeactivated,
-            buildingId: nil,
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,  // ✅ Changed to valid enum case
+            buildingId: "",  // ✅ Changed from nil to empty string
             workerId: workerId,
             data: [
                 "workerName": worker.name,
+                "action": "deactivated",  // ✅ Added to indicate deactivation
+                "updateType": "workerStatus",  // ✅ Additional context
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -390,6 +399,7 @@ public actor WorkerService {
             return nil
         }()
         
+        // ✅ FIXED: Removed extra parameters (hourlyRate, emergencyContact)
         return CoreTypes.WorkerProfile(
             id: String(id),
             name: name,
@@ -400,9 +410,7 @@ public actor WorkerService {
             certifications: certifications,
             hireDate: hireDate,
             isActive: (row["isActive"] as? Int64) == 1,
-            profileImageUrl: profileImageUrl,
-            hourlyRate: row["hourlyRate"] as? Double,
-            emergencyContact: row["emergencyContact"] as? String
+            profileImageUrl: profileImageUrl
         )
     }
 }
@@ -501,3 +509,17 @@ extension WorkerService {
         }
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES
+/*
+ ✅ FIXED Line 186, 225, 266: UpdateType enum cases
+    - Changed taskReassigned → taskUpdated (with action: "reassigned")
+    - Changed workerProfileUpdated → buildingMetricsChanged (with updateType: "workerProfile")
+    - Changed workerDeactivated → buildingMetricsChanged (with updateType: "workerStatus")
+ 
+ ✅ FIXED Lines 187, 226, 267: buildingId parameter
+    - Changed from nil to empty string "" since buildingId expects String, not String?
+ 
+ ✅ FIXED Line 393: WorkerProfile constructor
+    - Removed extra parameters (hourlyRate, emergencyContact) that don't exist in the CoreTypes.WorkerProfile constructor
+ */

@@ -26,17 +26,7 @@ import Combine
 import CryptoKit  // For checksum generation
 
 // MARK: - Canonical ID Reference
-public struct CanonicalIDs {
-    public struct Workers {
-        static let gregHutson = "1"
-        static let edwinLema = "2"
-        static let kevinDutan = "4"
-        static let mercedesInamagua = "5"
-        static let luisLopez = "6"
-        static let angelGuirachocha = "7"
-        static let shawnMagloire = "8"
-    }
-    
+
     public struct Buildings {
         static let westEighteenth12 = "1"
         static let eastTwentieth29_31 = "2"
@@ -58,7 +48,6 @@ public struct CanonicalIDs {
         static let seventhAvenue115 = "19"
         static let francoSphereHQ = "20"
     }
-}
 
 // MARK: - Date Extension
 extension Date {

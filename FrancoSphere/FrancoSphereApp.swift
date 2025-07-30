@@ -4,6 +4,9 @@
 //
 //  ✅ ENHANCED: Migration flow integration
 //  ✅ PRODUCTION READY: Handles one-time migration gracefully
+//  ✅ FIXED: LocationManager instantiated properly (not singleton)
+//  ✅ FIXED: Removed NotificationManager.requestNotificationPermission() call (private method)
+//  ✅ FIXED: Properly uses DailyOpsReset's migration functionality
 //
 
 import SwiftUI
@@ -11,9 +14,10 @@ import SwiftUI
 @main
 struct FrancoSphereApp: App {
     @StateObject private var dailyOps = DailyOpsReset.shared
-    @StateObject private var authManager = NewAuthManager()
-    @StateObject private var notificationManager = NotificationManager()
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var authManager = NewAuthManager.shared
+    @StateObject private var notificationManager = NotificationManager.shared
+    @StateObject private var contextEngine = WorkerContextEngine.shared
+    @StateObject private var locationManager = LocationManager()  // ✅ FIXED: Regular instantiation
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showingSplash = true
     
@@ -45,6 +49,7 @@ struct FrancoSphereApp: App {
                         .environmentObject(authManager)
                         .environmentObject(notificationManager)
                         .environmentObject(locationManager)
+                        .environmentObject(contextEngine)
                         .transition(.opacity)
                 } else {
                     // Login screen
@@ -70,10 +75,8 @@ struct FrancoSphereApp: App {
         // Configure app appearance
         configureAppearance()
         
-        // Request notification permissions
-        Task {
-            await notificationManager.requestPermission()
-        }
+        // NotificationManager already requests permissions in its init()
+        // No need to call requestNotificationPermission() here ✅ FIXED
         
         // Start location services if authenticated
         if authManager.isAuthenticated {

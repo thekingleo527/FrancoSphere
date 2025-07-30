@@ -2,14 +2,6 @@
 //  CanonicalIDs.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/30/25.
-//
-
-
-//
-//  CanonicalIDs.swift
-//  FrancoSphere
-//
 //  🛡️ CANONICAL ID SYSTEM - SINGLE SOURCE OF TRUTH
 //  Created: 2024-01-31
 //  Purpose: Prevent ID mismatches across the entire system

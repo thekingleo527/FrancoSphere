@@ -38,6 +38,27 @@ class DailyOpsReset: ObservableObject {
     @Published var totalSteps = 7
     @Published var migrationError: Error?
     
+    // MARK: - Custom Error Type
+    enum DailyOpsError: LocalizedError {
+        case backupFailed(String)
+        case dataIntegrityFailed(String)
+        case importFailed(String)
+        case databaseError(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .backupFailed(let reason):
+                return "Backup failed: \(reason)"
+            case .dataIntegrityFailed(let reason):
+                return "Data integrity check failed: \(reason)"
+            case .importFailed(let reason):
+                return "Import failed: \(reason)"
+            case .databaseError(let reason):
+                return "Database error: \(reason)"
+            }
+        }
+    }
+    
     private init() {}
     
     // MARK: - Public Interface
@@ -80,61 +101,11 @@ class DailyOpsReset: ObservableObject {
             
             let operationalData = OperationalDataManager.shared
             guard operationalData.verifyDataIntegrity() else {
-                throw MigrationError.dataIntegrityFailed("Operational data checksum mismatch")
+                throw DailyOpsError.dataIntegrityFailed("Operational data checksum mismatch")
             }
             
-            // Transaction-wrapped migration
-            try await GRDBManager.shared.database.write { db in
-                // Step 3: Import workers
-                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasImportedWorkers) {
-                    self.currentStep = 3
-                    self.migrationStatus = "Importing workers..."
-                    self.migrationProgress = 0.3
-                    
-                    try self.importWorkers(db: db)
-                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasImportedWorkers)
-                }
-                
-                // Step 4: Import buildings
-                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasImportedBuildings) {
-                    self.currentStep = 4
-                    self.migrationStatus = "Importing buildings..."
-                    self.migrationProgress = 0.4
-                    
-                    try self.importBuildings(db: db)
-                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasImportedBuildings)
-                }
-                
-                // Step 5: Import routine templates
-                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasImportedTemplates) {
-                    self.currentStep = 5
-                    self.migrationStatus = "Importing routine templates..."
-                    self.migrationProgress = 0.6
-                    
-                    try self.importRoutineTemplates(db: db)
-                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasImportedTemplates)
-                }
-                
-                // Step 6: Create worker assignments
-                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasCreatedAssignments) {
-                    self.currentStep = 6
-                    self.migrationStatus = "Creating worker assignments..."
-                    self.migrationProgress = 0.8
-                    
-                    try self.createWorkerAssignments(db: db)
-                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasCreatedAssignments)
-                }
-                
-                // Step 7: Setup worker capabilities
-                if !UserDefaults.standard.bool(forKey: self.migrationKeys.hasSetupCapabilities) {
-                    self.currentStep = 7
-                    self.migrationStatus = "Setting up worker capabilities..."
-                    self.migrationProgress = 0.9
-                    
-                    try self.setupWorkerCapabilities(db: db)
-                    UserDefaults.standard.set(true, forKey: self.migrationKeys.hasSetupCapabilities)
-                }
-            }
+            // Perform migration steps
+            try await performMigrationSteps()
             
             // Mark migration complete
             UserDefaults.standard.set(migrationKeys.currentVersion, forKey: migrationKeys.migrationVersion)
@@ -160,6 +131,60 @@ class DailyOpsReset: ObservableObject {
             migrationStatus = "Migration failed: \(error.localizedDescription)"
             print("❌ Migration failed: \(error)")
             throw error
+        }
+    }
+    
+    // MARK: - Migration Steps (Async)
+    
+    private func performMigrationSteps() async throws {
+        // Step 3: Import workers
+        if !UserDefaults.standard.bool(forKey: migrationKeys.hasImportedWorkers) {
+            currentStep = 3
+            migrationStatus = "Importing workers..."
+            migrationProgress = 0.3
+            
+            try await importWorkersAsync()
+            UserDefaults.standard.set(true, forKey: migrationKeys.hasImportedWorkers)
+        }
+        
+        // Step 4: Import buildings
+        if !UserDefaults.standard.bool(forKey: migrationKeys.hasImportedBuildings) {
+            currentStep = 4
+            migrationStatus = "Importing buildings..."
+            migrationProgress = 0.4
+            
+            try await importBuildingsAsync()
+            UserDefaults.standard.set(true, forKey: migrationKeys.hasImportedBuildings)
+        }
+        
+        // Step 5: Import routine templates
+        if !UserDefaults.standard.bool(forKey: migrationKeys.hasImportedTemplates) {
+            currentStep = 5
+            migrationStatus = "Importing routine templates..."
+            migrationProgress = 0.6
+            
+            try await importRoutineTemplatesAsync()
+            UserDefaults.standard.set(true, forKey: migrationKeys.hasImportedTemplates)
+        }
+        
+        // Step 6: Create worker assignments
+        if !UserDefaults.standard.bool(forKey: migrationKeys.hasCreatedAssignments) {
+            currentStep = 6
+            migrationStatus = "Creating worker assignments..."
+            migrationProgress = 0.8
+            
+            try await createWorkerAssignmentsAsync()
+            UserDefaults.standard.set(true, forKey: migrationKeys.hasCreatedAssignments)
+        }
+        
+        // Step 7: Setup worker capabilities
+        if !UserDefaults.standard.bool(forKey: migrationKeys.hasSetupCapabilities) {
+            currentStep = 7
+            migrationStatus = "Setting up worker capabilities..."
+            migrationProgress = 0.9
+            
+            try await setupWorkerCapabilitiesAsync()
+            UserDefaults.standard.set(true, forKey: migrationKeys.hasSetupCapabilities)
         }
     }
     
@@ -236,11 +261,51 @@ class DailyOpsReset: ObservableObject {
             print("✅ Backup created: \(backup.taskCount) tasks, \(backup.workerNames.count) workers, \(backup.buildingNames.count) buildings")
             
         } catch {
-            throw MigrationError.backupFailed(error.localizedDescription)
+            throw DailyOpsError.backupFailed(error.localizedDescription)
         }
     }
     
-    private func importWorkers(db: Database) throws {
+    // MARK: - Async Import Methods
+    
+    private func importWorkersAsync() async throws {
+        try await GRDBManager.shared.database.write { db in
+            try self.importWorkers(db: db)
+        }
+    }
+    
+    private func importBuildingsAsync() async throws {
+        try await GRDBManager.shared.database.write { db in
+            try self.importBuildings(db: db)
+        }
+    }
+    
+    private func importRoutineTemplatesAsync() async throws {
+        // Get tasks from OperationalDataManager on main actor
+        let tasks = OperationalDataManager.shared.getAllRealWorldTasks()
+        
+        try await GRDBManager.shared.database.write { db in
+            try self.importRoutineTemplates(db: db, tasks: tasks)
+        }
+    }
+    
+    private func createWorkerAssignmentsAsync() async throws {
+        // Get tasks from OperationalDataManager on main actor
+        let tasks = OperationalDataManager.shared.getAllRealWorldTasks()
+        
+        try await GRDBManager.shared.database.write { db in
+            try self.createWorkerAssignments(db: db, tasks: tasks)
+        }
+    }
+    
+    private func setupWorkerCapabilitiesAsync() async throws {
+        try await GRDBManager.shared.database.write { db in
+            try self.setupWorkerCapabilities(db: db)
+        }
+    }
+    
+    // MARK: - Synchronous Import Methods (called within database transaction)
+    
+    private nonisolated func importWorkers(db: Database) throws {
         print("👥 Importing workers...")
         
         var imported = 0
@@ -257,39 +322,29 @@ class DailyOpsReset: ObservableObject {
         ]
         
         for (id, name) in nameMap {
-            let userId = UUID().uuidString
+            // Check if worker already exists
+            let existingWorker = try Row.fetchOne(db, sql: """
+                SELECT id FROM workers WHERE id = ?
+            """, arguments: [id])
+            
+            if existingWorker != nil {
+                print("   Worker already exists: \(name)")
+                continue
+            }
             
             try db.execute(sql: """
-                INSERT OR IGNORE INTO users (
-                    id, email, name, phone, role, 
-                    is_active, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO workers (
+                    id, name, email, role, 
+                    isActive, shift, hireDate
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, arguments: [
-                userId,
-                "\(name.lowercased().replacingOccurrences(of: " ", with: "."))@francosphere.com",
+                id,
                 name,
-                "", // Phone number not in operational data
-                UserRole.worker.rawValue,
-                true,
-                Date().ISO8601Format(),
-                Date().ISO8601Format()
-            ])
-            
-            // Create worker profile
-            try db.execute(sql: """
-                INSERT OR IGNORE INTO worker_profiles (
-                    id, user_id, worker_id, emergency_contact,
-                    skills, certifications, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, arguments: [
-                UUID().uuidString,
-                userId,
-                id, // Using canonical ID as worker_id
-                "", // Emergency contact not in operational data
-                "general,cleaning,maintenance", // Default skills
-                "", // Certifications not in operational data
-                Date().ISO8601Format(),
-                Date().ISO8601Format()
+                "\(name.lowercased().replacingOccurrences(of: " ", with: "."))@francosphere.com",
+                getWorkerRole(id),
+                1, // isActive
+                getWorkerShift(id),
+                "2023-01-01"
             ])
             
             imported += 1
@@ -298,7 +353,7 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Imported \(imported) workers")
     }
     
-    private func importBuildings(db: Database) throws {
+    private nonisolated func importBuildings(db: Database) throws {
         print("🏢 Importing buildings...")
         
         var imported = 0
@@ -325,11 +380,21 @@ class DailyOpsReset: ObservableObject {
         ]
         
         for (id, name, address, type, floors, hasElevator, hasDoorman, latitude, longitude) in buildingDetails {
+            // Check if building already exists
+            let existingBuilding = try Row.fetchOne(db, sql: """
+                SELECT id FROM buildings WHERE id = ?
+            """, arguments: [id])
+            
+            if existingBuilding != nil {
+                print("   Building already exists: \(name)")
+                continue
+            }
+            
             try db.execute(sql: """
-                INSERT OR IGNORE INTO buildings (
+                INSERT INTO buildings (
                     id, name, address, type, floors,
                     has_elevator, has_doorman, latitude, longitude,
-                    client_id, created_at, updated_at
+                    is_active, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, arguments: [
                 id,
@@ -337,11 +402,11 @@ class DailyOpsReset: ObservableObject {
                 address,
                 type,
                 floors,
-                hasElevator,
-                hasDoorman,
+                hasElevator ? 1 : 0,
+                hasDoorman ? 1 : 0,
                 latitude,
                 longitude,
-                "default-client", // Will be updated when clients are imported
+                1, // is_active
                 Date().ISO8601Format(),
                 Date().ISO8601Format()
             ])
@@ -352,10 +417,9 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Imported \(imported) buildings")
     }
     
-    private func importRoutineTemplates(db: Database) throws {
+    private nonisolated func importRoutineTemplates(db: Database, tasks: [OperationalDataTaskAssignment]) throws {
         print("📋 Importing routine templates...")
         
-        let tasks = OperationalDataManager.shared.getAllRealWorldTasks()
         var imported = 0
         var skipped = 0
         
@@ -395,8 +459,8 @@ class DailyOpsReset: ObservableObject {
                 task.buildingId,
                 task.taskName,
                 "Routine maintenance task",
-                task.category ?? "general",
-                task.recurrence ?? "daily",
+                task.category,
+                task.recurrence,
                 task.estimatedDuration,
                 task.requiresPhoto ? 1 : 0,
                 determinePriority(task),
@@ -413,10 +477,9 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Imported \(imported) routine templates (skipped \(skipped) invalid)")
     }
     
-    private func createWorkerAssignments(db: Database) throws {
+    private nonisolated func createWorkerAssignments(db: Database, tasks: [OperationalDataTaskAssignment]) throws {
         print("🔗 Creating worker-building assignments...")
         
-        let tasks = OperationalDataManager.shared.getAllRealWorldTasks()
         var assignmentSet = Set<String>()
         var created = 0
         
@@ -451,7 +514,7 @@ class DailyOpsReset: ObservableObject {
         print("   ✓ Created \(created) worker-building assignments")
     }
     
-    private func setupWorkerCapabilities(db: Database) throws {
+    private nonisolated func setupWorkerCapabilities(db: Database) throws {
         print("⚙️ Setting up worker capabilities...")
         
         let capabilities = [
@@ -556,7 +619,7 @@ class DailyOpsReset: ObservableObject {
     private func generateTasksFromTemplates(for date: Date) async throws {
         print("📅 Generating tasks from templates for \(date.formatted(date: .abbreviated, time: .omitted))...")
         
-        try await GRDBManager.shared.database.write { db in
+        let generated = try await GRDBManager.shared.database.write { db -> Int in
             // Read all active templates
             let templates = try Row.fetchAll(db, sql: """
                 SELECT * FROM routine_templates 
@@ -564,18 +627,20 @@ class DailyOpsReset: ObservableObject {
                 ORDER BY worker_id, building_id, priority DESC
             """)
             
-            var generated = 0
+            var generatedCount = 0
             var skipped = 0
             
             for template in templates {
-                if self.shouldGenerateTask(template: template, date: date) {
+                if shouldGenerateTask(template: template, date: date) {
                     // Check if task already exists for today
+                    let templateId = template["id"] ?? ""
+                    
                     let existingCount = try Int.fetchOne(db, sql: """
                         SELECT COUNT(*) FROM routine_tasks
                         WHERE template_id = ?
                         AND DATE(scheduled_date) = DATE(?)
                     """, arguments: [
-                        template["id"],
+                        templateId,
                         date.ISO8601Format()
                     ]) ?? 0
                     
@@ -587,6 +652,17 @@ class DailyOpsReset: ObservableObject {
                     // Create task instance
                     let taskId = UUID().uuidString
                     
+                    // Extract values from template with proper types
+                    let buildingId: String = template["building_id"] ?? ""
+                    let workerId: String = template["worker_id"] ?? ""
+                    let title: String = template["title"] ?? ""
+                    let description: String = template["description"] ?? ""
+                    let category: String = template["category"] ?? ""
+                    let priority: String = template["priority"] ?? ""
+                    let frequency: String = template["frequency"] ?? ""
+                    let estimatedDuration: Int = template["estimated_duration"] ?? 30
+                    let requiresPhoto: Int = template["requires_photo"] ?? 0
+                    
                     try db.execute(sql: """
                         INSERT INTO routine_tasks (
                             id, template_id, building_id, worker_id,
@@ -596,32 +672,34 @@ class DailyOpsReset: ObservableObject {
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, arguments: [
                         taskId,
-                        template["id"],
-                        template["building_id"],
-                        template["worker_id"],
-                        template["title"],
-                        template["description"],
-                        template["category"],
-                        template["priority"],
+                        templateId,
+                        buildingId,
+                        workerId,
+                        title,
+                        description,
+                        category,
+                        priority,
                         "pending",
-                        template["frequency"],
-                        template["estimated_duration"],
-                        template["requires_photo"],
+                        frequency,
+                        estimatedDuration,
+                        requiresPhoto,
                         date.ISO8601Format(),
                         Date().ISO8601Format(),
                         Date().ISO8601Format()
                     ])
                     
-                    generated += 1
+                    generatedCount += 1
                 }
             }
             
-            print("   ✓ Generated \(generated) tasks, skipped \(skipped) existing")
+            print("   ✓ Generated \(generatedCount) tasks, skipped \(skipped) existing")
+            return generatedCount
         }
     }
     
-    private func shouldGenerateTask(template: Row, date: Date) -> Bool {
-        let frequency = (template["frequency"] as? String ?? "daily").lowercased()
+    private nonisolated func shouldGenerateTask(template: Row, date: Date) -> Bool {
+        let frequency: String = template["frequency"] ?? "daily"
+        let frequencyLower = frequency.lowercased()
         let calendar = Calendar.current
         let weekday = calendar.component(.weekday, from: date)
         let dayOfMonth = calendar.component(.day, from: date)
@@ -629,14 +707,15 @@ class DailyOpsReset: ObservableObject {
         let month = calendar.component(.month, from: date)
         
         // Check days of week if specified
-        if let daysOfWeek = template["days_of_week"] as? String, !daysOfWeek.isEmpty {
+        let daysOfWeek: String? = template["days_of_week"]
+        if let days = daysOfWeek, !days.isEmpty {
             let dayAbbrev = getDayAbbreviation(weekday).lowercased()
-            if !daysOfWeek.lowercased().contains(dayAbbrev) {
+            if !days.lowercased().contains(dayAbbrev) {
                 return false
             }
         }
         
-        switch frequency {
+        switch frequencyLower {
         case "daily":
             return true
             
@@ -663,15 +742,17 @@ class DailyOpsReset: ObservableObject {
             
         default:
             // Check for custom patterns like "mon,wed,fri"
-            if frequency.contains(",") {
+            if frequencyLower.contains(",") {
                 let dayAbbrev = getDayAbbreviation(weekday).lowercased()
-                return frequency.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }.contains(dayAbbrev)
+                return frequencyLower.split(separator: ",")
+                    .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).lowercased() }
+                    .contains(dayAbbrev)
             }
             return false
         }
     }
     
-    private func getDayAbbreviation(_ weekday: Int) -> String {
+    private nonisolated func getDayAbbreviation(_ weekday: Int) -> String {
         switch weekday {
         case 1: return "sun"
         case 2: return "mon"
@@ -692,21 +773,21 @@ class DailyOpsReset: ObservableObject {
         
         try await GRDBManager.shared.database.write { db in
             // Clean old completed tasks
-            let deletedTasks = try db.execute(sql: """
+            try db.execute(sql: """
                 DELETE FROM routine_tasks
                 WHERE status = 'completed'
                 AND updated_at < ?
             """, arguments: [cutoffDate.ISO8601Format()])
             
             // Clean old clock sessions
-            let deletedSessions = try db.execute(sql: """
+            try db.execute(sql: """
                 DELETE FROM clock_sessions
                 WHERE clock_out_time IS NOT NULL
                 AND clock_out_time < ?
             """, arguments: [cutoffDate.ISO8601Format()])
             
             // Clean orphaned photo evidence
-            let deletedPhotos = try db.execute(sql: """
+            try db.execute(sql: """
                 DELETE FROM photo_evidence
                 WHERE completion_id NOT IN (
                     SELECT id FROM task_completions
@@ -732,17 +813,43 @@ class DailyOpsReset: ObservableObject {
     
     // MARK: - Helper Methods
     
-    private func determinePriority(_ task: OperationalDataTaskAssignment) -> String {
+    private nonisolated func determinePriority(_ task: OperationalDataTaskAssignment) -> String {
         // Priority logic based on task attributes
         if task.taskName.lowercased().contains("emergency") {
             return "urgent"
         } else if task.taskName.lowercased().contains("inspection") ||
                   task.taskName.lowercased().contains("compliance") {
             return "high"
-        } else if task.category?.lowercased() == "sanitation" {
+        } else if task.category.lowercased() == "sanitation" {
             return "high"
         } else {
             return "normal"
+        }
+    }
+    
+    private nonisolated func getWorkerRole(_ workerId: String) -> String {
+        switch workerId {
+        case "1": return "Maintenance"
+        case "2": return "Cleaning"
+        case "4": return "Cleaning"
+        case "5": return "Cleaning"
+        case "6": return "Maintenance"
+        case "7": return "Sanitation"
+        case "8": return "Management"
+        default: return "General"
+        }
+    }
+    
+    private nonisolated func getWorkerShift(_ workerId: String) -> String {
+        switch workerId {
+        case "1": return "9:00 AM - 3:00 PM"
+        case "2": return "6:00 AM - 3:00 PM"
+        case "4": return "6:00 AM - 5:00 PM"
+        case "5": return "6:30 AM - 11:00 AM"
+        case "6": return "7:00 AM - 4:00 PM"
+        case "7": return "6:00 PM - 10:00 PM"
+        case "8": return "Flexible"
+        default: return "9:00 AM - 5:00 PM"
         }
     }
 }
@@ -767,24 +874,4 @@ struct WorkerCapability {
     let canAddEmergencyTasks: Bool
     let requiresPhotoForSanitation: Bool
     let simplifiedInterface: Bool
-}
-
-enum MigrationError: LocalizedError {
-    case backupFailed(String)
-    case dataIntegrityFailed(String)
-    case importFailed(String)
-    case databaseError(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .backupFailed(let reason):
-            return "Backup failed: \(reason)"
-        case .dataIntegrityFailed(let reason):
-            return "Data integrity check failed: \(reason)"
-        case .importFailed(let reason):
-            return "Import failed: \(reason)"
-        case .databaseError(let reason):
-            return "Database error: \(reason)"
-        }
-    }
 }
