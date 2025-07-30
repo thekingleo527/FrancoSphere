@@ -296,7 +296,7 @@ struct FrancoBuildingPhotoCaptureView: View {
                         Section {
                             Button("Save Photo") {
                                 Task {
-                                    await onCapture(image)
+                                    await onCapture(image, category, notes)
                                     dismiss()
                                 }
                             }
@@ -740,12 +740,12 @@ class FrancoPhotoGalleryViewModel: ObservableObject {
         isLoading = false
     }
     
-    func savePhoto(_ image: UIImage, buildingId: String) async {
+    func savePhoto(_ image: UIImage, buildingId: String, category: FrancoPhotoCategory = .all, notes: String? = nil) async {
         do {
             let metadata = FrancoBuildingPhotoMetadata(
                 buildingId: buildingId,
-                category: .all,
-                notes: nil,
+                category: category,
+                notes: notes,
                 location: locationManager.location,  // Will be nil if not available
                 taskId: nil,
                 workerId: NewAuthManager.shared.workerId,
@@ -1042,5 +1042,5 @@ struct FrancoUtilityRoomPhotoSection: View {
 }
 
 #Preview("Photo Capture") {
-    FrancoBuildingPhotoCaptureView(buildingId: "14") { _ in }
+    FrancoBuildingPhotoCaptureView(buildingId: "14") { _, _, _ in }
 }
