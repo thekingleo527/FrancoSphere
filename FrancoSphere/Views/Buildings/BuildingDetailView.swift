@@ -2,812 +2,1269 @@
 //  BuildingDetailView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ENHANCED: Preserves ALL existing functionality
-//  ✅ ADDED: Coverage detection and intelligence panel integration
-//  ✅ MAINTAINS: Real data integration, clock in/out, four-tab system
-//  ✅ ALIGNED: With actual NamedCoordinate type properties
+//  🏢 COMPREHENSIVE: Tab-based building management
+//  📱 ADAPTIVE: Role-based content visibility
+//  🔄 REAL-TIME: Live updates via DashboardSync
+//  📸 PHOTO-READY: Integrated photo management
 //
 
 import SwiftUI
 import MapKit
+import MessageUI
 
 struct BuildingDetailView: View {
-    let building: NamedCoordinate
-    @StateObject private var contextAdapter = WorkerContextEngine.shared
+    // MARK: - Properties
+    let building: CoreTypes.Building
+    @StateObject private var viewModel: BuildingDetailViewModel
+    @EnvironmentObject private var authManager: NewAuthManager
+    @EnvironmentObject private var dashboardSync: DashboardSyncService
+    
+    // MARK: - State
+    @State private var selectedTab = BuildingTab.overview
+    @State private var showingPhotoCapture = false
+    @State private var showingMessageComposer = false
+    @State private var showingCallMenu = false
+    @State private var selectedContact: ContactInfo?
     @Environment(\.dismiss) private var dismiss
     
-    // PRESERVED: All existing state variables
-    @State private var selectedTab = 0
-    @State private var isLoading = true
-    @State private var showingClockIn = false
-    @State private var clockInTime: Date?
-    
-    // PRESERVED: Real data integration with services
-    @State private var buildingTasks: [ContextualTask] = []
-    @State private var workersOnSite: [WorkerProfile] = []
-    @State private var isCurrentlyClockedIn = false
-    @State private var buildingMetrics: CoreTypes.BuildingMetrics?
-    @State private var errorMessage: String?
-    
-    // PRESERVED: Services for real data
-    private let buildingService = BuildingService.shared
-    private let taskService = TaskService.shared
-    private let workerService = WorkerService.shared
-    private let buildingMetricsService = BuildingMetricsService.shared
-    
-    // NEW: Intelligence Panel Integration
-    @State private var showIntelligencePanel = false
-    @State private var selectedIntelligenceTab = BuildingIntelligencePanel.IntelligenceTab.overview
-    
-    // NEW: Coverage Detection
-    private var isMyBuilding: Bool {
-        contextAdapter.assignedBuildings.contains { $0.id == building.id }
+    // MARK: - Initialization
+    init(building: CoreTypes.Building) {
+        self.building = building
+        self._viewModel = StateObject(wrappedValue: BuildingDetailViewModel(building: building))
     }
     
-    private var isPrimaryBuilding: Bool {
-        let primary = determinePrimaryBuilding(for: contextAdapter.currentWorker?.id ?? "")
-        return primary?.id == building.id
-    }
-    
+    // MARK: - Body
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                if isLoading {
-                    loadingView
-                } else {
-                    mainContent
-                }
-            }
-            .navigationBarHidden(true)
-            .task {
-                await loadBuildingData()
-            }
-            .sheet(isPresented: $showIntelligencePanel) {
-                // NEW: Intelligence Panel Integration
-                BuildingIntelligencePanel(
-                    building: building,
-                    selectedTab: $selectedIntelligenceTab,
-                    isMyBuilding: isMyBuilding,
-                    isPrimaryBuilding: isPrimaryBuilding
-                )
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-    
-    // PRESERVED: Existing loading view
-    private var loadingView: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.5)
-                .tint(.blue)
-            
-            Text("Loading \(building.name)...")
-                .font(.headline)
-                .foregroundColor(.white)
-        }
-    }
-    
-    // ENHANCED: Main content with coverage detection
-    private var mainContent: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // ENHANCED: Building header with coverage indicator
-                enhancedBuildingHeader
-                
-                // NEW: Coverage info card for non-assigned buildings
-                if !isMyBuilding {
-                    CoverageInfoCard(building: building) {
-                        selectedIntelligenceTab = .overview
-                        showIntelligencePanel = true
-                    }
-                }
-                
-                // PRESERVED: Existing tab section
-                tabSection
-                
-                // PRESERVED: Existing content section
-                contentSection
-                
-                // NEW: Intelligence access button
-                intelligenceAccessButton
-            }
-            .padding()
-        }
-    }
-    
-    // ENHANCED: Building header with coverage indicator
-    private var enhancedBuildingHeader: some View {
-        VStack(spacing: 16) {
-            // PRESERVED: Building image
-            buildingImageView
-            
-            // NEW: Coverage indicator for non-assigned buildings
-            if !isMyBuilding {
-                coverageIndicator
-            }
-            
-            // PRESERVED: Clock-in section (only for assigned buildings)
-            if isMyBuilding {
-                if isCurrentlyClockedIn {
-                    clockedInStatus
-                } else {
-                    clockInButton
-                }
-            }
-        }
-    }
-    
-    // NEW: Coverage indicator
-    private var coverageIndicator: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "info.circle.fill")
-                .foregroundColor(.orange)
-            
-            Text("Coverage Mode - Not Your Assigned Building")
-                .font(.subheadline)
-                .foregroundColor(.orange)
-            
-            Spacer()
-        }
-        .padding()
-        .background(.orange.opacity(0.1))
-        .cornerRadius(12)
-    }
-    
-    // FIXED: Building image view without imageAssetName
-    private var buildingImageView: some View {
         ZStack {
-            // Try to get image using standardized name based on building name
-            if let image = getBuildingImage() {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .overlay(
-                        VStack(spacing: 8) {
-                            Image(systemName: "building.2.fill")
-                                .font(.largeTitle)
-                                .foregroundColor(.white.opacity(0.5))
-                            
-                            Text(building.name)
-                                .font(.headline)
-                                .foregroundColor(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
-                        }
-                    )
-            }
-        }
-        .frame(height: 180)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            VStack {
-                HStack {
-                    Spacer()
-                    
-                    // PRESERVED: Real task count and metrics
-                    if buildingTasks.count > 0 {
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text("\(buildingTasks.count) tasks")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(.ultraThinMaterial, in: Capsule())
-                            
-                            if let metrics = buildingMetrics {
-                                Text("\(Int(metrics.completionRate * 100))% complete")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.green.opacity(0.7), in: Capsule())
-                            }
-                        }
-                    }
-                }
-                .padding(12)
-                
-                Spacer()
-            }
-        )
-    }
-    
-    // FIXED: Helper function to get building image without imageAssetName
-    private func getBuildingImage() -> UIImage? {
-        // Try standardized name based on building name
-        let standardName = building.name
-            .replacingOccurrences(of: " ", with: "_")
-            .replacingOccurrences(of: "-", with: "_")
-            .replacingOccurrences(of: "(", with: "")
-            .replacingOccurrences(of: ")", with: "")
-            .lowercased()
-        
-        // Try exact match first
-        if let image = UIImage(named: standardName) {
-            return image
-        }
-        
-        // Try with "building_" prefix
-        if let image = UIImage(named: "building_\(standardName)") {
-            return image
-        }
-        
-        // Try simplified name
-        let simplifiedName = building.name
-            .components(separatedBy: " ")
-            .first?
-            .lowercased() ?? ""
-        
-        if !simplifiedName.isEmpty,
-           let image = UIImage(named: "building_\(simplifiedName)") {
-            return image
-        }
-        
-        // No image found
-        return nil
-    }
-    
-    // PRESERVED: Clock in button with ALL existing functionality
-    private var clockInButton: some View {
-        Button {
-            handleClockIn()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "location.fill")
-                    .font(.title3)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Clock In Here")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    Text("Start your shift at \(building.name)")
-                        .font(.caption)
-                        .opacity(0.8)
-                        .multilineTextAlignment(.leading)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-            }
-            .foregroundColor(.white)
-            .padding(16)
-            .background(Color.blue.opacity(0.8))
-            .cornerRadius(12)
-        }
-    }
-    
-    // PRESERVED: Clocked in status with ALL existing functionality
-    private var clockedInStatus: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title3)
-                .foregroundColor(.green)
+            // Background
+            Color.black.ignoresSafeArea()
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Clocked In")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
+            VStack(spacing: 0) {
+                // Custom header
+                headerView
                 
-                if let clockInTime = clockInTime {
-                    Text("Since \(clockInTime, style: .time)")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-            }
-            
-            Spacer()
-            
-            Button("Clock Out") {
-                handleClockOut()
-            }
-            .font(.caption)
-            .fontWeight(.medium)
-            .foregroundColor(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.red.opacity(0.8))
-            .cornerRadius(8)
-        }
-        .foregroundColor(.white)
-        .padding(16)
-        .background(Color.green.opacity(0.2))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.green.opacity(0.5), lineWidth: 1)
-        )
-    }
-    
-    // PRESERVED: Tab section with ALL existing functionality
-    private var tabSection: some View {
-        HStack(spacing: 0) {
-            let tabs = ["Overview", "Tasks", "Workers", "Analytics"]
-            
-            ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
-                Button(action: {
-                    selectedTab = index
-                }) {
-                    Text(tab)
-                        .font(.subheadline)
-                        .fontWeight(selectedTab == index ? .semibold : .regular)
-                        .foregroundColor(selectedTab == index ? .blue : .white.opacity(0.7))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                }
+                // Hero image with status
+                heroSection
+                
+                // Tab bar
+                tabBar
+                
+                // Tab content
+                tabContent
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+                
+                // Quick actions bar
+                quickActionsBar
             }
         }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    // PRESERVED: Content section with ALL existing functionality
-    private var contentSection: some View {
-        Group {
-            switch selectedTab {
-            case 0:
-                overviewTab
-            case 1:
-                tasksTab
-            case 2:
-                workersTab
-            case 3:
-                analyticsTab
-            default:
-                overviewTab
+        .navigationBarHidden(true)
+        .task {
+            await viewModel.loadBuildingData()
+        }
+        .sheet(isPresented: $showingPhotoCapture) {
+            PhotoCaptureView(building: building) { photo in
+                await viewModel.savePhoto(photo)
             }
         }
-    }
-    
-    // FIXED: Overview tab with proper address handling
-    private var overviewTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Building Overview")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            
-            // PRESERVED: Real building statistics
-            VStack(spacing: 12) {
-                statRow("Building ID", building.id)
-                statRow("Total Tasks", "\(buildingTasks.count)")
-                statRow("Completed", "\(buildingTasks.filter { $0.isCompleted }.count)")
-                statRow("Overdue", "\(buildingTasks.filter { !$0.isCompleted && ($0.dueDate ?? Date.distantFuture) < Date() }.count)")
-                statRow("Workers Assigned", "\(workersOnSite.count)")
-                
-                if let metrics = buildingMetrics {
-                    statRow("Completion Rate", "\(Int(metrics.completionRate * 100))%")
-                    statRow("Overall Score", String(format: "%.1f", metrics.overallScore))
-                    statRow("Compliance", metrics.isCompliant ? "✅ Compliant" : "⚠️ Needs Attention")
-                }
-            }
-            .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            
-            // FIXED: Show address without conditional binding (address is non-optional)
-            if !building.address.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Address")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Text(building.address)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            }
-        }
-    }
-    
-    // PRESERVED: Tasks tab with ALL existing functionality
-    private var tasksTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Tasks")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Button("Refresh") {
-                    Task { await loadBuildingTasks() }
-                }
-                .font(.caption)
-                .foregroundColor(.blue)
-            }
-            
-            if buildingTasks.isEmpty {
-                Text("No tasks found for this building")
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 100)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            } else {
-                LazyVStack(spacing: 12) {
-                    ForEach(buildingTasks, id: \.id) { task in
-                        taskCard(task)
-                    }
-                }
-            }
-        }
-    }
-    
-    // PRESERVED: Workers tab with ALL existing functionality
-    private var workersTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Workers")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Button("Refresh") {
-                    Task { await loadBuildingWorkers() }
-                }
-                .font(.caption)
-                .foregroundColor(.blue)
-            }
-            
-            if workersOnSite.isEmpty {
-                Text("No workers currently assigned to this building")
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 100)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            } else {
-                LazyVStack(spacing: 12) {
-                    ForEach(workersOnSite, id: \.id) { worker in
-                        workerCard(worker)
-                    }
-                }
-            }
-        }
-    }
-    
-    // PRESERVED: Analytics tab with ALL existing functionality
-    private var analyticsTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Analytics")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            
-            if let metrics = buildingMetrics {
-                VStack(spacing: 12) {
-                    analyticsRow("Completion Rate", "\(Int(metrics.completionRate * 100))%", metrics.completionRate > 0.8 ? .green : .orange)
-                    analyticsRow("Pending Tasks", "\(metrics.pendingTasks)", metrics.pendingTasks == 0 ? .green : .blue)
-                    analyticsRow("Overdue Tasks", "\(metrics.overdueTasks)", metrics.overdueTasks == 0 ? .green : .red)
-                    analyticsRow("Active Workers", "\(metrics.activeWorkers)", .blue)
-                    analyticsRow("Urgent Tasks", "\(metrics.urgentTasksCount)", metrics.urgentTasksCount == 0 ? .green : .orange)
-                    analyticsRow("Overall Score", String(format: "%.1f", metrics.overallScore), scoreColor(metrics.overallScore))
-                }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            } else {
-                Text("Loading analytics...")
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 100)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            }
-        }
-    }
-    
-    // NEW: Intelligence access button
-    private var intelligenceAccessButton: some View {
-        Button(action: {
-            selectedIntelligenceTab = .overview
-            showIntelligencePanel = true
-        }) {
-            HStack(spacing: 12) {
-                Image(systemName: "brain.head.profile")
-                    .font(.title2)
-                    .foregroundColor(.purple)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Building Intelligence")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Text("Complete building information and insights")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "arrow.right")
-                    .font(.subheadline)
-                    .foregroundColor(.purple)
-            }
-            .padding()
-            .background(.purple.opacity(0.1))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(.purple.opacity(0.3), lineWidth: 1)
+        .sheet(isPresented: $showingMessageComposer) {
+            MessageComposerView(
+                recipients: getMessageRecipients(),
+                subject: "Re: \(building.name)",
+                prefilledBody: getBuildingContext()
             )
         }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    // PRESERVED: All existing card functions
-    private func taskCard(_ task: ContextualTask) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(task.isCompleted ? .green : .white.opacity(0.7))
-                
-                Text(task.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                if let urgency = task.urgency {
-                    Text(urgency.rawValue)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundColor(urgencyColor(urgency))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(urgencyColor(urgency).opacity(0.2))
-                        .cornerRadius(4)
-                }
-            }
-            
-            if let description = task.description, !description.isEmpty {
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            // PRESERVED: Task metadata
-            HStack(spacing: 12) {
-                if let dueDate = task.dueDate {
-                    Label {
-                        Text(dueDate, style: .date)
-                    } icon: {
-                        Image(systemName: "calendar")
-                    }
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                }
-                
-                if let category = task.category {
-                    Label {
-                        Text(category.rawValue)
-                    } icon: {
-                        Image(systemName: "tag")
-                    }
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
+        .confirmationDialog("Call Contact", isPresented: $showingCallMenu) {
+            callMenuOptions
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
     
-    // PRESERVED: Worker card function
-    private func workerCard(_ worker: WorkerProfile) -> some View {
-        HStack(spacing: 12) {
-            // Worker avatar
-            Circle()
-                .fill(Color.blue.opacity(0.3))
-                .frame(width: 40, height: 40)
-                .overlay(
-                    Text(worker.name.prefix(2).uppercased())
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                )
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(worker.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                Text(worker.role.rawValue.capitalized)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                if !worker.email.isEmpty {
-                    Text(worker.email)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            // Worker status indicator
-            Circle()
-                .fill(worker.isActive ? .green : .gray)
-                .frame(width: 8, height: 8)
-        }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-    
-    // PRESERVED: All existing helper functions
-    private func statRow(_ label: String, _ value: String) -> some View {
+    // MARK: - Header
+    private var headerView: some View {
         HStack {
-            Text(label)
+            Button(action: { dismiss() }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                    Text("Back")
+                }
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.7))
-            
-            Spacer()
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
                 .foregroundColor(.white)
-        }
-    }
-    
-    private func analyticsRow(_ label: String, _ value: String, _ color: Color) -> some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.7))
+            }
             
             Spacer()
             
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
+            Text(building.name)
+                .font(.headline)
+                .foregroundColor(.white)
+                .lineLimit(1)
+            
+            Spacer()
+            
+            // Settings/More button
+            Menu {
+                Button(action: { viewModel.exportBuildingReport() }) {
+                    Label("Export Report", systemImage: "square.and.arrow.up")
+                }
+                
+                Button(action: { viewModel.toggleFavorite() }) {
+                    Label(
+                        viewModel.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                        systemImage: viewModel.isFavorite ? "star.fill" : "star"
+                    )
+                }
+                
+                if viewModel.userRole == .admin {
+                    Divider()
+                    
+                    Button(action: { viewModel.editBuildingInfo() }) {
+                        Label("Edit Building Info", systemImage: "pencil")
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+    }
+    
+    // MARK: - Hero Section
+    private var heroSection: some View {
+        ZStack(alignment: .bottomLeading) {
+            // Building image
+            if let image = viewModel.buildingImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 200)
+                    .clipped()
+            } else {
+                // Placeholder
+                LinearGradient(
+                    colors: [Color.gray.opacity(0.3), Color.gray.opacity(0.5)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 200)
+                .overlay(
+                    Image(systemName: buildingIcon)
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray.opacity(0.7))
+                )
+            }
+            
+            // Gradient overlay
+            LinearGradient(
+                colors: [Color.clear, Color.black.opacity(0.7)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            
+            // Status overlay
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(building.type.rawValue.capitalized)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    HStack(spacing: 12) {
+                        statusBadge(
+                            "\(viewModel.completionPercentage)%",
+                            icon: "checkmark.circle.fill",
+                            color: completionColor
+                        )
+                        
+                        if viewModel.workersOnSite > 0 {
+                            statusBadge(
+                                "\(viewModel.workersOnSite) On-Site",
+                                icon: "person.fill",
+                                color: .blue
+                            )
+                        }
+                        
+                        if let status = building.complianceStatus {
+                            statusBadge(
+                                status.rawValue.capitalized,
+                                icon: complianceIcon(status),
+                                color: complianceColor(status)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+        }
+        .frame(height: 200)
+    }
+    
+    // MARK: - Tab Bar
+    private var tabBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                ForEach(BuildingTab.allCases, id: \.self) { tab in
+                    if shouldShowTab(tab) {
+                        tabButton(tab)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+        .frame(height: 44)
+        .background(Color.black.opacity(0.3))
+    }
+    
+    private func tabButton(_ tab: BuildingTab) -> some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = tab
+            }
+        }) {
+            VStack(spacing: 4) {
+                Text(tab.title)
+                    .font(.subheadline)
+                    .fontWeight(selectedTab == tab ? .semibold : .regular)
+                    .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
+                
+                // Selection indicator
+                Rectangle()
+                    .fill(selectedTab == tab ? Color.blue : Color.clear)
+                    .frame(height: 3)
+                    .cornerRadius(1.5)
+            }
+            .padding(.horizontal, 20)
         }
     }
     
-    private func urgencyColor(_ urgency: TaskUrgency) -> Color {
-        switch urgency {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical, .urgent, .emergency: return .red
+    // MARK: - Tab Content
+    @ViewBuilder
+    private var tabContent: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                switch selectedTab {
+                case .overview:
+                    overviewContent
+                case .routines:
+                    routinesContent
+                case .history:
+                    historyContent
+                case .inventory:
+                    inventoryContent
+                case .team:
+                    teamContent
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 20)
         }
     }
     
-    private func scoreColor(_ score: Double) -> Color {
-        switch Int(score) {
+    // MARK: - Overview Tab
+    private var overviewContent: some View {
+        VStack(spacing: 20) {
+            // Building info card
+            buildingInfoCard
+            
+            // Today's snapshot
+            todaysSnapshotCard
+            
+            // Key contacts
+            keyContactsCard
+            
+            // Spaces & access
+            spacesAccessCard
+        }
+    }
+    
+    private var buildingInfoCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Building Information", systemImage: "info.circle.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                InfoRow("Address", value: building.address)
+                InfoRow("Type", value: building.type.rawValue.capitalized)
+                InfoRow("Size", value: "\(building.size.formatted()) sq ft")
+                InfoRow("Floors", value: "\(building.floors)")
+                InfoRow("Units", value: "\(building.units)")
+                InfoRow("Built", value: "\(building.yearBuilt)")
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    private var todaysSnapshotCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Today's Snapshot", systemImage: "calendar.circle.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                if let activeTasks = viewModel.todaysTasks {
+                    HStack {
+                        Text("Active Tasks:")
+                        Spacer()
+                        Text("\(activeTasks.completed) of \(activeTasks.total)")
+                            .foregroundColor(.blue)
+                    }
+                }
+                
+                if !viewModel.workersPresent.isEmpty {
+                    HStack {
+                        Text("Workers Present:")
+                        Spacer()
+                        Text(viewModel.workersPresent.joined(separator: ", "))
+                            .foregroundColor(.green)
+                            .lineLimit(1)
+                    }
+                }
+                
+                if let nextCritical = viewModel.nextCriticalTask {
+                    HStack {
+                        Text("Next Critical:")
+                        Spacer()
+                        Text(nextCritical)
+                            .foregroundColor(.orange)
+                            .lineLimit(1)
+                    }
+                }
+                
+                if let specialNote = viewModel.todaysSpecialNote {
+                    HStack(alignment: .top) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                        Text(specialNote)
+                            .font(.caption)
+                            .foregroundColor(.yellow)
+                    }
+                }
+            }
+            .font(.subheadline)
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    private var keyContactsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Key Contacts", systemImage: "phone.circle.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            VStack(spacing: 12) {
+                // Building contacts
+                if let primaryContact = building.primaryContact {
+                    ContactRow(
+                        contact: primaryContact,
+                        icon: "building.2",
+                        onCall: { selectedContact = primaryContact; showingCallMenu = true },
+                        onMessage: { selectedContact = primaryContact; showingMessageComposer = true }
+                    )
+                }
+                
+                // Franco contacts
+                ContactRow(
+                    contact: ContactInfo(
+                        name: "JM Office",
+                        role: "Franco HQ",
+                        email: nil,
+                        phone: "(212) 555-XXXX",
+                        isEmergencyContact: true
+                    ),
+                    icon: "briefcase.fill",
+                    onCall: { callJMOffice() },
+                    onMessage: nil
+                )
+                
+                ContactRow(
+                    contact: ContactInfo(
+                        name: "David",
+                        role: "Operations",
+                        email: "david@francosphere.com",
+                        phone: nil,
+                        isEmergencyContact: false
+                    ),
+                    icon: "person.fill",
+                    onCall: nil,
+                    onMessage: { messageContact("david@francosphere.com") }
+                )
+                
+                ContactRow(
+                    contact: ContactInfo(
+                        name: "Jerry",
+                        role: "Management",
+                        email: "jerry@francosphere.com",
+                        phone: nil,
+                        isEmergencyContact: false
+                    ),
+                    icon: "person.fill",
+                    onCall: nil,
+                    onMessage: { messageContact("jerry@francosphere.com") }
+                )
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    private var spacesAccessCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Spaces & Access", systemImage: "key.fill")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Button(action: { showingPhotoCapture = true }) {
+                    Label("Add Photo", systemImage: "camera.fill")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
+            }
+            
+            // Photo grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                ForEach(viewModel.spacePhotos, id: \.id) { space in
+                    SpacePhotoThumbnail(space: space) {
+                        viewModel.viewSpaceDetails(space)
+                    }
+                }
+                
+                // Add photo button
+                Button(action: { showingPhotoCapture = true }) {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 80)
+                        .overlay(
+                            VStack(spacing: 4) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                Text("Add")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.white.opacity(0.5))
+                        )
+                }
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    // MARK: - Routines Tab
+    private var routinesContent: some View {
+        VStack(spacing: 20) {
+            // Filter pills
+            routineFilterPills
+            
+            // Daily routines
+            if viewModel.routineFilter == .all || viewModel.routineFilter == .daily {
+                dailyRoutinesCard
+            }
+            
+            // Weekly routines
+            if viewModel.routineFilter == .all || viewModel.routineFilter == .weekly {
+                weeklyRoutinesCard
+            }
+            
+            // Monthly routines
+            if viewModel.routineFilter == .all || viewModel.routineFilter == .monthly {
+                monthlyRoutinesCard
+            }
+            
+            // Add routine button (admin only)
+            if viewModel.userRole == .admin {
+                addRoutineButton
+            }
+        }
+    }
+    
+    private var routineFilterPills: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(RoutineFilter.allCases, id: \.self) { filter in
+                    FilterPill(
+                        title: filter.rawValue,
+                        isSelected: viewModel.routineFilter == filter,
+                        action: { viewModel.routineFilter = filter }
+                    )
+                }
+            }
+        }
+    }
+    
+    private var dailyRoutinesCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("Daily Routines", systemImage: "calendar.circle.fill")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            ForEach(TimeOfDay.allCases, id: \.self) { timeOfDay in
+                if let routines = viewModel.dailyRoutines[timeOfDay], !routines.isEmpty {
+                    TimeOfDaySection(
+                        timeOfDay: timeOfDay,
+                        routines: routines,
+                        onToggle: { routine in
+                            viewModel.toggleRoutineCompletion(routine)
+                        }
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(16)
+    }
+    
+    // MARK: - History Tab
+    private var historyContent: some View {
+        VStack(spacing: 20) {
+            if viewModel.userRole == .worker {
+                // Simplified maintenance focus
+                maintenanceHistoryCard
+                vendorVisitsCard
+            } else {
+                // Full history with analytics
+                historyFilterPills
+                historyAnalyticsCard
+                detailedHistoryList
+            }
+        }
+    }
+    
+    // MARK: - Inventory Tab
+    private var inventoryContent: some View {
+        VStack(spacing: 20) {
+            // Inventory categories
+            ForEach(InventoryCategory.allCases, id: \.self) { category in
+                if let items = viewModel.inventory[category], !items.isEmpty {
+                    InventoryCategoryCard(
+                        category: category,
+                        items: items,
+                        onUpdateQuantity: { item, quantity in
+                            viewModel.updateInventoryQuantity(item, quantity: quantity)
+                        },
+                        onReorder: { item in
+                            viewModel.reorderItem(item)
+                        }
+                    )
+                }
+            }
+            
+            // Add item button
+            if viewModel.userRole == .admin || viewModel.userRole == .worker {
+                addInventoryItemButton
+            }
+        }
+    }
+    
+    // MARK: - Team Tab
+    private var teamContent: some View {
+        VStack(spacing: 20) {
+            // Assigned workers
+            assignedWorkersCard
+            
+            // Coverage calendar
+            coverageCalendarCard
+            
+            // Emergency contacts
+            emergencyContactsCard
+        }
+    }
+    
+    // MARK: - Quick Actions Bar
+    private var quickActionsBar: some View {
+        HStack(spacing: 0) {
+            QuickActionButton(
+                icon: "phone.fill",
+                title: "Call",
+                action: { showingCallMenu = true }
+            )
+            
+            QuickActionButton(
+                icon: "message.fill",
+                title: "Message",
+                action: { showingMessageComposer = true }
+            )
+            
+            QuickActionButton(
+                icon: "camera.fill",
+                title: "Photo",
+                action: { showingPhotoCapture = true }
+            )
+            
+            QuickActionButton(
+                icon: "map.fill",
+                title: "Navigate",
+                action: { openInMaps() }
+            )
+            
+            Menu {
+                Button(action: { viewModel.reportIssue() }) {
+                    Label("Report Issue", systemImage: "exclamationmark.triangle")
+                }
+                
+                Button(action: { viewModel.requestSupplies() }) {
+                    Label("Request Supplies", systemImage: "shippingbox")
+                }
+                
+                Button(action: { viewModel.addNote() }) {
+                    Label("Add Note", systemImage: "note.text.badge.plus")
+                }
+                
+                if viewModel.userRole == .worker {
+                    Button(action: { viewModel.logVendorVisit() }) {
+                        Label("Log Vendor Visit", systemImage: "person.badge.plus")
+                    }
+                }
+            } label: {
+                QuickActionButton(
+                    icon: "plus.circle.fill",
+                    title: "More",
+                    action: { }
+                )
+            }
+        }
+        .frame(height: 60)
+        .background(.ultraThinMaterial)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func shouldShowTab(_ tab: BuildingTab) -> Bool {
+        switch tab {
+        case .inventory:
+            return viewModel.userRole != .client
+        case .history:
+            return true
+        default:
+            return true
+        }
+    }
+    
+    private var buildingIcon: String {
+        switch building.type {
+        case .commercial:
+            return "building.2.fill"
+        case .residential:
+            return "house.fill"
+        case .mixed:
+            return "building.fill"
+        case .industrial:
+            return "hammer.fill"
+        case .special:
+            if building.name.lowercased().contains("museum") {
+                return "building.columns.fill"
+            } else if building.name.lowercased().contains("park") {
+                return "leaf.fill"
+            }
+            return "star.fill"
+        }
+    }
+    
+    private var completionColor: Color {
+        let percentage = viewModel.completionPercentage
+        switch percentage {
         case 90...100: return .green
-        case 70...89: return .blue
-        case 50...69: return .orange
+        case 70..<90: return .yellow
+        case 50..<70: return .orange
         default: return .red
         }
     }
     
-    // PRESERVED: All existing actions
-    private func handleClockIn() {
-        isCurrentlyClockedIn = true
-        clockInTime = Date()
-        
-        // TODO: Integrate with actual clock-in system
-        print("🕐 Clocked in at \(building.name)")
+    private func complianceIcon(_ status: CoreTypes.ComplianceStatus) -> String {
+        switch status {
+        case .compliant: return "checkmark.seal.fill"
+        case .nonCompliant: return "exclamationmark.triangle.fill"
+        case .pending: return "clock.fill"
+        case .unknown: return "questionmark.circle.fill"
+        }
     }
     
-    private func handleClockOut() {
-        isCurrentlyClockedIn = false
-        clockInTime = nil
-        
-        // TODO: Integrate with actual clock-out system
-        print("🕐 Clocked out from \(building.name)")
+    private func complianceColor(_ status: CoreTypes.ComplianceStatus) -> Color {
+        switch status {
+        case .compliant: return .green
+        case .nonCompliant: return .red
+        case .pending: return .orange
+        case .unknown: return .gray
+        }
     }
     
-    // PRESERVED: All existing data loading methods
-    private func loadBuildingData() async {
-        isLoading = true
-        errorMessage = nil
+    private func statusBadge(_ text: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption)
+            Text(text)
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.2))
+        .cornerRadius(12)
+    }
+    
+    private func getMessageRecipients() -> [String] {
+        var recipients: [String] = []
         
-        // Load all data concurrently
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await self.loadBuildingTasks() }
-            group.addTask { await self.loadBuildingWorkers() }
-            group.addTask { await self.loadBuildingMetrics() }
+        if let contact = selectedContact, let email = contact.email {
+            recipients.append(email)
+        } else {
+            // Default to David and Jerry
+            recipients = ["david@francosphere.com", "jerry@francosphere.com"]
         }
         
-        print("✅ Building data loaded for \(building.name): \(buildingTasks.count) tasks, \(workersOnSite.count) workers")
-        
-        isLoading = false
+        return recipients
     }
     
-    private func loadBuildingTasks() async {
-        do {
-            // Get all tasks and filter for this building
-            let allTasks = try await taskService.getAllTasks()
-            
-            buildingTasks = allTasks.filter { task in
-                // Match by building ID or building object
-                if let taskBuildingId = task.buildingId {
-                    return taskBuildingId == building.id
-                } else if let taskBuilding = task.building {
-                    return taskBuilding.id == building.id
+    private func getBuildingContext() -> String {
+        """
+        Building: \(building.name)
+        Address: \(building.address)
+        Current Status: \(viewModel.completionPercentage)% complete
+        Workers on site: \(viewModel.workersOnSite)
+        
+        ---
+        """
+    }
+    
+    private var callMenuOptions: some View {
+        Group {
+            if let contact = selectedContact {
+                if let phone = contact.phone {
+                    Button(action: { callNumber(phone) }) {
+                        Text("Call \(contact.name)")
+                    }
                 }
-                return false
             }
             
-        } catch {
-            print("❌ Failed to load building tasks: \(error)")
-            buildingTasks = []
-        }
-    }
-    
-    private func loadBuildingWorkers() async {
-        do {
-            // Get workers assigned to this building
-            workersOnSite = try await workerService.getActiveWorkersForBuilding(building.id)
+            Button(action: { callJMOffice() }) {
+                Text("Call JM Office")
+            }
             
-        } catch {
-            print("❌ Failed to load building workers: \(error)")
-            workersOnSite = []
-        }
-    }
-    
-    private func loadBuildingMetrics() async {
-        do {
-            // Get real-time metrics for this building
-            buildingMetrics = try await buildingMetricsService.calculateMetrics(for: building.id)
+            if let emergencyContact = building.emergencyContact,
+               let phone = emergencyContact.phone {
+                Button(action: { callNumber(phone) }) {
+                    Text("Call Emergency Contact")
+                }
+            }
             
-        } catch {
-            print("❌ Failed to load building metrics: \(error)")
-            buildingMetrics = nil
+            Button("Cancel", role: .cancel) { }
         }
     }
     
-    // NEW: Primary building detection helper
-    private func determinePrimaryBuilding(for workerId: String) -> NamedCoordinate? {
-        let buildings = contextAdapter.assignedBuildings
-        
-        switch workerId {
-        case "4": // Kevin Dutan - Rubin Museum specialist
-            return buildings.first { $0.name.contains("Rubin") }
-        case "2": // Edwin Lema - Park operations
-            return buildings.first { $0.name.contains("Stuyvesant") || $0.name.contains("Park") }
-        case "5": // Mercedes Inamagua - Perry Street
-            return buildings.first { $0.name.contains("131 Perry") }
-        case "6": // Luis Lopez - Elizabeth Street
-            return buildings.first { $0.name.contains("41 Elizabeth") }
-        case "1": // Greg Salinas - 12 West 18th Street
-            return buildings.first { $0.name.contains("12 West 18th") }
-        case "7": // Angel Marin - Evening Operations
-            return buildings.first { $0.name.contains("West 17th") }
-        case "8": // Shawn Magloire - Portfolio Management
-            return buildings.first // Portfolio manager can access all
-        default:
-            return buildings.first
+    private func callNumber(_ number: String) {
+        guard let url = URL(string: "tel://\(number)") else { return }
+        UIApplication.shared.open(url)
+    }
+    
+    private func callJMOffice() {
+        callNumber("2125551234") // Replace with actual number
+    }
+    
+    private func messageContact(_ email: String) {
+        selectedContact = ContactInfo(
+            name: email.components(separatedBy: "@").first?.capitalized ?? "Contact",
+            role: nil,
+            email: email,
+            phone: nil,
+            isEmergencyContact: false
+        )
+        showingMessageComposer = true
+    }
+    
+    private func openInMaps() {
+        let address = building.address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        guard let url = URL(string: "maps://?address=\(address)") else { return }
+        UIApplication.shared.open(url)
+    }
+}
+
+// MARK: - Supporting Types
+
+enum BuildingTab: String, CaseIterable {
+    case overview = "Overview"
+    case routines = "Routines"
+    case history = "History"
+    case inventory = "Inventory"
+    case team = "Team"
+    
+    var title: String { rawValue }
+}
+
+enum RoutineFilter: String, CaseIterable {
+    case all = "All"
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+}
+
+enum TimeOfDay: String, CaseIterable {
+    case morning = "Morning (6 AM - 12 PM)"
+    case afternoon = "Afternoon (12 PM - 5 PM)"
+    case evening = "Evening (5 PM - 10 PM)"
+    
+    var icon: String {
+        switch self {
+        case .morning: return "sunrise.fill"
+        case .afternoon: return "sun.max.fill"
+        case .evening: return "moon.stars.fill"
         }
     }
 }
 
-// MARK: - Preview
-struct BuildingDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        let sampleBuilding = NamedCoordinate(
-            id: "14",
-            name: "Rubin Museum",
-            address: "150 W 17th St, New York, NY 10011",
-            latitude: 40.7402,
-            longitude: -73.9980
-        )
+enum InventoryCategory: String, CaseIterable {
+    case cleaning = "Cleaning Supplies"
+    case equipment = "Equipment & Tools"
+    case building = "Building Supplies"
+    
+    var icon: String {
+        switch self {
+        case .cleaning: return "sparkles"
+        case .equipment: return "wrench.fill"
+        case .building: return "house.fill"
+        }
+    }
+}
+
+// MARK: - Supporting Views
+
+struct InfoRow: View {
+    let label: String
+    let value: String
+    
+    init(_ label: String, value: String) {
+        self.label = label
+        self.value = value
+    }
+    
+    var body: some View {
+        HStack {
+            Text(label + ":")
+                .foregroundColor(.white.opacity(0.6))
+            Spacer()
+            Text(value)
+                .foregroundColor(.white)
+                .fontWeight(.medium)
+        }
+        .font(.subheadline)
+    }
+}
+
+struct ContactRow: View {
+    let contact: ContactInfo
+    let icon: String
+    var onCall: (() -> Void)?
+    var onMessage: (() -> Void)?
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.blue)
+                .frame(width: 40, height: 40)
+                .background(Color.blue.opacity(0.2))
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(contact.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                
+                if let role = contact.role {
+                    Text(role)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                if let phone = contact.phone {
+                    Text(phone)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                
+                if let email = contact.email {
+                    Text(email)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 12) {
+                if let onCall = onCall, contact.phone != nil {
+                    Button(action: onCall) {
+                        Image(systemName: "phone.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.green)
+                            .frame(width: 32, height: 32)
+                            .background(Color.green.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                }
+                
+                if let onMessage = onMessage, contact.email != nil {
+                    Button(action: onMessage) {
+                        Image(systemName: "message.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+                            .frame(width: 32, height: 32)
+                            .background(Color.blue.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct SpacePhotoThumbnail: View {
+    let space: SpacePhoto
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 4) {
+                if let image = space.thumbnail {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height: 80)
+                        .overlay(
+                            Image(systemName: space.icon)
+                                .font(.title2)
+                                .foregroundColor(.gray)
+                        )
+                }
+                
+                Text(space.name)
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+
+struct FilterPill: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(isSelected ? .semibold : .regular)
+                .foregroundColor(isSelected ? .white : .white.opacity(0.6))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? Color.blue : Color.white.opacity(0.1))
+                )
+        }
+    }
+}
+
+struct QuickActionButton: View {
+    let icon: String
+    let title: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.title3)
+                Text(title)
+                    .font(.caption2)
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+// MARK: - View Model
+
+@MainActor
+class BuildingDetailViewModel: ObservableObject {
+    let building: CoreTypes.Building
+    
+    // User context
+    @Published var userRole: CoreTypes.UserRole = .worker
+    
+    // Overview data
+    @Published var buildingImage: UIImage?
+    @Published var completionPercentage: Int = 0
+    @Published var workersOnSite: Int = 0
+    @Published var workersPresent: [String] = []
+    @Published var todaysTasks: (total: Int, completed: Int)?
+    @Published var nextCriticalTask: String?
+    @Published var todaysSpecialNote: String?
+    @Published var spacePhotos: [SpacePhoto] = []
+    @Published var isFavorite: Bool = false
+    
+    // Routines data
+    @Published var routineFilter: RoutineFilter = .all
+    @Published var dailyRoutines: [TimeOfDay: [BuildingRoutine]] = [:]
+    @Published var weeklyRoutines: [BuildingRoutine] = []
+    @Published var monthlyRoutines: [BuildingRoutine] = []
+    
+    // History data
+    @Published var maintenanceHistory: [MaintenanceRecord] = []
+    @Published var vendorVisits: [VendorVisit] = []
+    
+    // Inventory data
+    @Published var inventory: [InventoryCategory: [InventoryItem]] = [:]
+    
+    // Team data
+    @Published var assignedWorkers: [WorkerAssignment] = []
+    @Published var coverageSchedule: [String: [String]] = [:] // Day: [Worker IDs]
+    
+    init(building: CoreTypes.Building) {
+        self.building = building
+        loadUserRole()
+    }
+    
+    func loadBuildingData() async {
+        // Load all data for the building
+        await loadOverviewData()
+        await loadRoutines()
+        await loadHistory()
+        await loadInventory()
+        await loadTeamData()
+    }
+    
+    private func loadUserRole() {
+        // Get from auth manager
+        userRole = NewAuthManager.shared.currentUser?.role ?? .worker
+    }
+    
+    private func loadOverviewData() async {
+        // Simulate loading
+        completionPercentage = Int.random(in: 70...100)
+        workersOnSite = Int.random(in: 0...3)
+        workersPresent = ["Kevin D.", "Maria S."]
+        todaysTasks = (total: 12, completed: 8)
+        nextCriticalTask = "Trash pickup @ 6 PM"
         
-        BuildingDetailView(building: sampleBuilding)
+        // Load space photos
+        spacePhotos = [
+            SpacePhoto(id: "1", name: "Utility Room", icon: "wrench.fill", thumbnail: nil),
+            SpacePhoto(id: "2", name: "Basement", icon: "arrow.down.to.line", thumbnail: nil),
+            SpacePhoto(id: "3", name: "Roof Access", icon: "arrow.up.to.line", thumbnail: nil)
+        ]
+    }
+    
+    private func loadRoutines() async {
+        // Load from database
+        dailyRoutines = [
+            .morning: [
+                BuildingRoutine(id: "1", title: "Lobby cleaning & mopping", timeOfDay: .morning, frequency: .daily),
+                BuildingRoutine(id: "2", title: "Elevator wipe down", timeOfDay: .morning, frequency: .daily)
+            ],
+            .afternoon: [
+                BuildingRoutine(id: "3", title: "Common area patrol", timeOfDay: .afternoon, frequency: .daily)
+            ]
+        ]
+    }
+    
+    private func loadHistory() async {
+        // Load maintenance and vendor history
+    }
+    
+    private func loadInventory() async {
+        // Load inventory items
+        inventory = [
+            .cleaning: [
+                InventoryItem(id: "1", name: "Floor Cleaner", category: .cleaning, quantity: 4, unit: "gallons", minQuantity: 2)
+            ]
+        ]
+    }
+    
+    private func loadTeamData() async {
+        // Load assigned workers and schedule
+    }
+    
+    // Action methods
+    func toggleRoutineCompletion(_ routine: BuildingRoutine) {
+        // Update routine completion status
+    }
+    
+    func updateInventoryQuantity(_ item: InventoryItem, quantity: Int) {
+        // Update inventory
+    }
+    
+    func reorderItem(_ item: InventoryItem) {
+        // Create reorder request
+    }
+    
+    func reportIssue() {
+        // Open issue reporting
+    }
+    
+    func requestSupplies() {
+        // Open supply request
+    }
+    
+    func addNote() {
+        // Add note to building
+    }
+    
+    func logVendorVisit() {
+        // Log vendor visit
+    }
+    
+    func savePhoto(_ photo: UIImage) async {
+        // Save photo to building
+    }
+    
+    func viewSpaceDetails(_ space: SpacePhoto) {
+        // View space details
+    }
+    
+    func exportBuildingReport() {
+        // Export building report
+    }
+    
+    func toggleFavorite() {
+        isFavorite.toggle()
+    }
+    
+    func editBuildingInfo() {
+        // Edit building information (admin only)
+    }
+}
+
+// MARK: - Data Models
+
+struct SpacePhoto: Identifiable {
+    let id: String
+    let name: String
+    let icon: String
+    let thumbnail: UIImage?
+}
+
+struct BuildingRoutine: Identifiable {
+    let id: String
+    let title: String
+    let timeOfDay: TimeOfDay
+    let frequency: RoutineFilter
+    var isCompleted: Bool = false
+}
+
+struct MaintenanceRecord: Identifiable {
+    let id: String
+    let date: Date
+    let type: String
+    let vendor: String?
+    let description: String
+    let cost: Decimal?
+    let status: String
+}
+
+struct VendorVisit: Identifiable {
+    let id: String
+    let date: Date
+    let vendor: String
+    let purpose: String
+    let signedBy: String
+}
+
+struct InventoryItem: Identifiable {
+    let id: String
+    let name: String
+    let category: InventoryCategory
+    var quantity: Int
+    let unit: String
+    let minQuantity: Int
+}
+
+struct WorkerAssignment: Identifiable {
+    let id: String
+    let worker: CoreTypes.WorkerProfile
+    let schedule: String
+    let specialties: [String]
+    var isOnSite: Bool
+}
+
+// MARK: - Supporting Components
+
+struct TimeOfDaySection: View {
+    let timeOfDay: TimeOfDay
+    let routines: [BuildingRoutine]
+    let onToggle: (BuildingRoutine) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: timeOfDay.icon)
+                    .font(.subheadline)
+                Text(timeOfDay.rawValue)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.white.opacity(0.8))
+            
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(routines) { routine in
+                    HStack {
+                        Button(action: { onToggle(routine) }) {
+                            Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
+                                .foregroundColor(routine.isCompleted ? .green : .white.opacity(0.5))
+                        }
+                        
+                        Text(routine.title)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.9))
+                            .strikethrough(routine.isCompleted)
+                        
+                        Spacer()
+                    }
+                }
+            }
+            .padding(.leading, 8)
+        }
+    }
+}
+
+// MARK: - Extensions
+
+extension CoreTypes {
+    struct ContactInfo {
+        let name: String
+        let role: String?
+        let email: String?
+        let phone: String?
+        let isEmergencyContact: Bool
     }
 }

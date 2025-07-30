@@ -1,715 +1,784 @@
 //
-//  TaskDetailViewModel.swift
+//  TaskDetailView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ PRODUCTION READY: Complete task detail management
-//  ✅ PHOTO EVIDENCE: Integrated photo capture and storage
-//  ✅ REAL-TIME SYNC: Cross-dashboard updates via DashboardSyncService
-//  ✅ OFFLINE SUPPORT: Queue tasks for later submission
-//  ✅ FUTURE READY: Prepared for AI assistance and advanced features
-//  ✅ COMPILATION FIXED: All errors resolved for Phase 2
+//  ✅ PRODUCTION READY: Complete task detail interface
+//  ✅ PHOTO EVIDENCE: Camera integration with preview
+//  ✅ REAL-TIME UPDATES: Progress tracking and sync
+//  ✅ GLASS MORPHISM: Beautiful UI with FrancoSphere design
+//  ✅ ERROR HANDLING: Comprehensive user feedback
 //
 
-import Foundation
 import SwiftUI
-import Combine
 import PhotosUI
-import CoreLocation
+import MapKit
 
-@MainActor {
-    // MARK: - Published Properties
+struct TaskDetailView: View {
+    // MARK: - Properties
     
-    @Published var taskId: String = ""
-    @Published var taskTitle: String = ""
-    @Published var taskDescription: String?
-    @Published var taskCategory: CoreTypes.TaskCategory?
-    @Published var taskUrgency: CoreTypes.TaskUrgency?
-    @Published var taskBuildingId: String?
-    @Published var taskWorkerId: String?
-    @Published var taskDueDate: Date?
-    @Published var isCompleted: Bool = false
-    @Published var completedDate: Date?
+    @StateObject private var viewModel = TaskDetailViewModel()
+    @EnvironmentObject var authManager: NewAuthManager
+    @Environment(\.dismiss) private var dismiss
     
-    // Building & Worker Info
-    @Published var buildingName: String = "Loading..."
-    @Published var buildingAddress: String?
-    @Published var buildingCoordinate: CLLocationCoordinate2D?
-    @Published var workerName: String = "Unassigned"
-    @Published var workerProfile: CoreTypes.WorkerProfile?
-    
-    // Photo Evidence
-    @Published var capturedPhoto: UIImage?
-    @Published var photoData: Data?
-    @Published var photoLocalPath: String?
-    @Published var photoUploadProgress: Double = 0.0
-    @Published var isUploadingPhoto: Bool = false
-    
-    // Verification Status
-    @Published var verificationStatus: VerificationStatus = .notRequired
-    @Published var verificationNotes: String?
-    @Published var verifiedBy: String?
-    @Published var verifiedAt: Date?
+    let task: CoreTypes.ContextualTask
     
     // UI State
-    @Published var isLoading: Bool = false
-    @Published var isSubmitting: Bool = false
-    @Published var errorMessage: String?
-    @Published var showError: Bool = false
-    @Published var showSuccess: Bool = false
-    @Published var successMessage: String?
+    @State private var showPhotoCapture = false
+    @State private var showPhotoLibrary = false
+    @State private var showLocationMap = false
+    @State private var showResubmitSheet = false
+    @State private var resubmissionNotes = ""
+    @State private var selectedPhotoItem: PhotosPickerItem?
     
-    // Task Progress
-    @Published var taskProgress: TaskProgress = .notStarted
-    @Published var progressPercentage: Double = 0.0
-    @Published var estimatedTimeRemaining: TimeInterval?
+    // MARK: - Body
     
-    // AI Assistance (Future Phase)
-    @Published var aiSuggestions: [AISuggestion] = []
-    @Published var showAIAssistant: Bool = false
-    
-    // MARK: - Service Dependencies
-    
-    private let taskService = TaskService.shared
-    private let buildingService = BuildingService.shared
-    private let workerService = WorkerService.shared
-    private let dashboardSyncService = DashboardSyncService.shared
-    private let photoEvidenceService = PhotoEvidenceService.shared
-    private let locationManager = LocationManager()  // ✅ FIXED: Not a singleton
-    private let grdbManager = GRDBManager.shared
-    
-    // MARK: - Private Properties
-    
-    private var cancellables = Set<AnyCancellable>()
-    private var currentTask: CoreTypes.ContextualTask?
-    private var taskStartTime: Date?
-    private var photoCompressionQuality: CGFloat = 0.7
-    
-    // MARK: - Enums
-    
-    enum VerificationStatus: String, CaseIterable {
-        case notRequired = "Not Required"
-        case pending = "Pending Verification"
-        case verified = "Verified"
-        case rejected = "Verification Failed"
-        case resubmitted = "Resubmitted"
-        
-        var color: Color {
-            switch self {
-            case .notRequired: return .gray
-            case .pending, .resubmitted: return .orange
-            case .verified: return .green
-            case .rejected: return .red
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .notRequired: return "minus.circle"
-            case .pending: return "clock.fill"
-            case .verified: return "checkmark.seal.fill"
-            case .rejected: return "xmark.seal.fill"
-            case .resubmitted: return "arrow.clockwise.circle.fill"
-            }
-        }
-    }
-    
-    enum TaskProgress: String {
-        case notStarted = "Not Started"
-        case inProgress = "In Progress"
-        case awaitingPhoto = "Awaiting Photo"
-        case submitting = "Submitting"
-        case completed = "Completed"
-        
-        var progressValue: Double {
-            switch self {
-            case .notStarted: return 0.0
-            case .inProgress: return 0.3
-            case .awaitingPhoto: return 0.6
-            case .submitting: return 0.8
-            case .completed: return 1.0
-            }
-        }
-    }
-    
-    struct AISuggestion: Identifiable {
-        let id = UUID()
-        let title: String
-        let description: String
-        let type: SuggestionType
-        let confidence: Double
-        
-        enum SuggestionType {
-            case safety
-            case efficiency
-            case quality
-            case compliance
-        }
-    }
-    
-    // MARK: - Initialization
-    
-    public init() {
-        setupSubscriptions()
-        setupLocationManager()
-    }
-    
-    // MARK: - Public Methods
-    
-    /// Load task details from a generic task object
-    public func loadTask<T>(_ task: T) async where T: Any {
-        isLoading = true
-        errorMessage = nil
-        
-        // Use Mirror to extract properties
-        let mirror = Mirror(reflecting: task)
-        
-        for child in mirror.children {
-            switch child.label {
-            case "id": taskId = (child.value as? String) ?? ""
-            case "title": taskTitle = (child.value as? String) ?? "Unknown Task"
-            case "description": taskDescription = child.value as? String
-            case "isCompleted": isCompleted = (child.value as? Bool) ?? false
-            case "completedDate": completedDate = child.value as? Date
-            case "dueDate": taskDueDate = child.value as? Date
-            case "category": taskCategory = child.value as? CoreTypes.TaskCategory
-            case "urgency": taskUrgency = child.value as? CoreTypes.TaskUrgency
-            case "buildingId": taskBuildingId = child.value as? String
-            case "assignedWorkerId", "workerId": taskWorkerId = child.value as? String
-            default: break
-            }
-        }
-        
-        // Store the task if it's ContextualTask
-        if let contextualTask = task as? CoreTypes.ContextualTask {
-            currentTask = contextualTask
-        }
-        
-        // Update progress based on completion status
-        if isCompleted {
-            taskProgress = .completed
-            progressPercentage = 1.0
-        }
-        
-        // Load additional data
-        await loadBuildingInfo()
-        await loadWorkerInfo()
-        await checkVerificationRequirements()
-        
-        // Future Phase: Load AI suggestions
-        if UserDefaults.standard.bool(forKey: "enableAISuggestions") {
-            await loadAISuggestions()
-        }
-        
-        isLoading = false
-    }
-    
-    /// Start working on the task
-    public func startTask() {
-        guard taskProgress == .notStarted else { return }
-        
-        taskStartTime = Date()
-        taskProgress = .inProgress
-        progressPercentage = 0.3
-        
-        // Broadcast task started
-        broadcastTaskUpdate(type: .taskStarted)
-        
-        // Start location tracking if needed
-        if requiresLocationVerification() {
-            startLocationTracking()
-        }
-        
-        // Future Phase: Start AI monitoring
-        if UserDefaults.standard.bool(forKey: "enableAIMonitoring") {
-            startAITaskMonitoring()
-        }
-    }
-    
-    /// Capture photo evidence
-    public func capturePhoto(_ image: UIImage) async {
-        capturedPhoto = image
-        
-        // Compress image
-        if let data = image.jpegData(compressionQuality: photoCompressionQuality) {
-            photoData = data
-            
-            // Save locally first
-            await savePhotoLocally(data)
-            
-            // Update progress
-            taskProgress = .awaitingPhoto
-            progressPercentage = 0.6
-        }
-    }
-    
-    /// Complete the task with evidence
-    public func completeTask(notes: String? = nil) async {
-        guard !isSubmitting else { return }
-        
-        isSubmitting = true
-        taskProgress = .submitting
-        progressPercentage = 0.8
-        errorMessage = nil
-        
-        do {
-            // Validate photo requirement
-            if requiresPhotoEvidence() && photoData == nil {
-                throw TaskError.photoRequired
-            }
-            
-            // Get current location
-            let location = await getCurrentLocation()
-            
-            // Create evidence
-            let evidence = CoreTypes.ActionEvidence(
-                description: notes ?? "Task completed via mobile app",
-                photoURLs: [],
-                photoData: photoData != nil ? [photoData!] : nil,
-                timestamp: Date()
+    var body: some View {
+        ZStack {
+            // Background
+            LinearGradient(
+                colors: [
+                    Color.black,
+                    FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
+            .ignoresSafeArea()
             
-            // Submit to service
-            try await taskService.completeTask(taskId, evidence: evidence)
-            
-            // Save completion record locally
-            await saveCompletionRecord(notes: notes, location: location)
-            
-            // Upload photo if exists
-            if let photoPath = photoLocalPath {
-                await uploadPhotoEvidence(localPath: photoPath)
+            // Content
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header Card
+                    taskHeaderCard
+                    
+                    // Progress Indicator
+                    if viewModel.taskProgress != .notStarted {
+                        progressCard
+                    }
+                    
+                    // Photo Evidence Section
+                    if viewModel.taskProgress != .completed {
+                        photoEvidenceCard
+                    }
+                    
+                    // Verification Status
+                    if viewModel.verificationStatus != .notRequired {
+                        verificationCard
+                    }
+                    
+                    // AI Suggestions (if enabled)
+                    if !viewModel.aiSuggestions.isEmpty {
+                        aiSuggestionsCard
+                    }
+                    
+                    // Action Buttons
+                    if viewModel.taskProgress != .completed {
+                        actionButtonsCard
+                    }
+                    
+                    // Completed Info
+                    if viewModel.isCompleted {
+                        completedInfoCard
+                    }
+                }
+                .padding()
             }
             
-            // Update state
-            isCompleted = true
-            completedDate = Date()
-            taskProgress = .completed
-            progressPercentage = 1.0
-            
-            // Update verification status
-            if requiresVerification() {
-                verificationStatus = .pending
-            } else {
-                verificationStatus = .notRequired
-            }
-            
-            // Broadcast completion
-            broadcastTaskUpdate(type: .taskCompleted)
-            
-            // Show success
-            successMessage = "Task completed successfully!"
-            showSuccess = true
-            
-            // Calculate metrics
-            if let startTime = taskStartTime {
-                let duration = Date().timeIntervalSince(startTime)
-                await updateTaskMetrics(duration: duration)
-            }
-            
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-            taskProgress = .awaitingPhoto
-            progressPercentage = 0.6
-        }
-        
-        isSubmitting = false
-    }
-    
-    /// Resubmit task with additional evidence
-    public func resubmitTask(additionalNotes: String, newPhoto: UIImage?) async {
-        guard verificationStatus == .rejected else { return }
-        
-        isSubmitting = true
-        
-        // Update photo if provided
-        if let newPhoto = newPhoto {
-            await capturePhoto(newPhoto)
-        }
-        
-        // Create resubmission notes
-        let resubmissionNotes = """
-        RESUBMISSION:
-        \(additionalNotes)
-        
-        Original Notes:
-        \(verificationNotes ?? "None")
-        """
-        
-        // Complete task again with new evidence
-        await completeTask(notes: resubmissionNotes)
-        
-        if !showError {
-            verificationStatus = .resubmitted
-        }
-        
-        isSubmitting = false
-    }
-    
-    // MARK: - Private Methods
-    
-    private func setupLocationManager() {
-        // Request location permission if needed
-        locationManager.requestLocation()
-    }
-    
-    private func startLocationTracking() {
-        locationManager.startUpdatingLocation()
-    }
-    
-    private func loadBuildingInfo() async {
-        guard let buildingId = taskBuildingId else {
-            buildingName = "Unknown Building"
-            return
-        }
-        
-        do {
-            // Try to get building from service
-            let buildings = try await buildingService.getAllBuildings()
-            if let building = buildings.first(where: { $0.id == buildingId }) {
-                buildingName = building.name
-                buildingAddress = building.address
-                buildingCoordinate = CLLocationCoordinate2D(
-                    latitude: building.latitude,
-                    longitude: building.longitude
-                )
-            } else {
-                // Fallback to direct query
-                buildingName = await getBuildingNameFromDatabase(buildingId)
-            }
-        } catch {
-            print("⚠️ Failed to load building info: \(error)")
-            buildingName = "Building #\(buildingId)"
-        }
-    }
-    
-    private func getBuildingNameFromDatabase(_ buildingId: String) async -> String {
-        do {
-            let rows = try await grdbManager.query(
-                "SELECT name FROM buildings WHERE id = ?",
-                [buildingId]
-            )
-            
-            if let row = rows.first,
-               let name = row["name"] as? String {
-                return name
-            }
-        } catch {
-            print("⚠️ Database query failed: \(error)")
-        }
-        
-        return "Building #\(buildingId)"
-    }
-    
-    private func loadWorkerInfo() async {
-        guard let workerId = taskWorkerId else {
-            workerName = "Unassigned"
-            return
-        }
-        
-        do {
-            workerProfile = try await workerService.getWorkerProfile(for: workerId)
-            workerName = workerProfile?.name ?? "Worker #\(workerId)"
-        } catch {
-            print("⚠️ Failed to load worker info: \(error)")
-            workerName = "Worker #\(workerId)"
-        }
-    }
-    
-    private func checkVerificationRequirements() async {
-        // Check if task requires verification based on category
-        guard let category = taskCategory else { return }
-        
-        // ✅ FIXED: Using correct TaskCategory cases
-        switch category {
-        case .sanitation, .inspection, .security:
-            verificationStatus = isCompleted ? .pending : .notRequired
-        default:
-            verificationStatus = .notRequired
-        }
-    }
-    
-    private func savePhotoLocally(_ data: Data) async {
-        let fileName = "task_\(taskId)_\(Int(Date().timeIntervalSince1970)).jpg"
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let evidencePath = documentsPath.appendingPathComponent("Evidence")
-        
-        // Create Evidence directory if needed
-        try? FileManager.default.createDirectory(at: evidencePath, withIntermediateDirectories: true)
-        
-        let fileURL = evidencePath.appendingPathComponent(fileName)
-        
-        do {
-            try data.write(to: fileURL)
-            photoLocalPath = fileURL.path
-            print("✅ Photo saved locally: \(fileName)")
-        } catch {
-            print("❌ Failed to save photo: \(error)")
-        }
-    }
-    
-    private func uploadPhotoEvidence(localPath: String) async {
-        isUploadingPhoto = true
-        photoUploadProgress = 0.0
-        
-        // Simulate upload progress
-        for progress in stride(from: 0.0, to: 1.0, by: 0.1) {
-            photoUploadProgress = progress
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-        }
-        
-        // TODO: Implement actual photo upload to server
-        // For now, just mark as uploaded in database
-        if let completionId = await getLatestCompletionId() {
-            do {
-                let photoId = try await grdbManager.savePhotoEvidence(
-                    completionId: completionId,
-                    taskId: taskId,
-                    workerId: taskWorkerId ?? "",
-                    buildingId: taskBuildingId ?? "",
-                    localPath: localPath,
-                    fileSize: photoData?.count
-                )
-                
-                print("✅ Photo evidence recorded: \(photoId)")
-            } catch {
-                print("❌ Failed to record photo evidence: \(error)")
+            // Loading Overlay
+            if viewModel.isLoading {
+                LoadingOverlay()
             }
         }
-        
-        photoUploadProgress = 1.0
-        isUploadingPhoto = false
-    }
-    
-    private func saveCompletionRecord(notes: String?, location: CLLocationCoordinate2D?) async {
-        do {
-            let completionId = UUID().uuidString
-            
-            try await grdbManager.execute("""
-                INSERT INTO task_completions 
-                (id, task_id, worker_id, building_id, completed_at, notes, 
-                 location_lat, location_lon, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                completionId,
-                taskId,
-                taskWorkerId ?? "",
-                taskBuildingId ?? "",
-                ISO8601DateFormatter().string(from: Date()),
-                notes ?? "",
-                location?.latitude ?? 0,
-                location?.longitude ?? 0,
-                ISO8601DateFormatter().string(from: Date())
-            ])
-            
-            print("✅ Task completion recorded: \(completionId)")
-            
-        } catch {
-            print("❌ Failed to save completion record: \(error)")
+        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("Task Details")
+        .task {
+            await viewModel.loadTask(task)
         }
-    }
-    
-    private func getLatestCompletionId() async -> String? {
-        do {
-            let rows = try await grdbManager.query("""
-                SELECT id FROM task_completions 
-                WHERE task_id = ? 
-                ORDER BY created_at DESC 
-                LIMIT 1
-            """, [taskId])
-            
-            return rows.first?["id"] as? String
-        } catch {
-            print("❌ Failed to get completion ID: \(error)")
-            return nil
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK") { }
+        } message: {
+            Text(viewModel.errorMessage ?? "An error occurred")
         }
-    }
-    
-    private func getCurrentLocation() async -> CLLocationCoordinate2D? {
-        // Use LocationManager's current location
-        if let location = locationManager.location {
-            return location.coordinate
+        .alert("Success", isPresented: $viewModel.showSuccess) {
+            Button("Done") { dismiss() }
+        } message: {
+            Text(viewModel.successMessage ?? "Task completed successfully")
         }
-        return nil
-    }
-    
-    private func broadcastTaskUpdate(type: CoreTypes.DashboardUpdate.UpdateType) {
-        let update = CoreTypes.DashboardUpdate(
-            source: .worker,
-            type: type,
-            buildingId: taskBuildingId ?? "",
-            workerId: taskWorkerId ?? "",
-            data: [
-                "taskId": taskId,
-                "taskTitle": taskTitle,
-                "timestamp": ISO8601DateFormatter().string(from: Date()),
-                "progress": String(progressPercentage),
-                "hasPhoto": String(photoData != nil)
-            ]
+        .sheet(isPresented: $showPhotoCapture) {
+            PhotoCaptureView { image in
+                Task {
+                    await viewModel.capturePhoto(image)
+                }
+            }
+        }
+        .photosPicker(
+            isPresented: $showPhotoLibrary,
+            selection: $selectedPhotoItem,
+            matching: .images
         )
-        
-        dashboardSyncService.broadcastWorkerUpdate(update)
+        .onChange(of: selectedPhotoItem) { oldValue, newValue in
+            Task {
+                if let item = newValue,
+                   let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    await viewModel.capturePhoto(image)
+                }
+            }
+        }
+        .sheet(isPresented: $showResubmitSheet) {
+            resubmitView
+        }
+        .sheet(isPresented: $showLocationMap) {
+            locationMapView
+        }
     }
     
-    private func updateTaskMetrics(duration: TimeInterval) async {
-        // Future: Send metrics to analytics service
-        // ✅ FIXED: Added explicit type annotation
-        let metrics: [String: Any] = [
-            "taskId": taskId,
-            "duration": duration,
-            "hasPhoto": photoData != nil,
-            "category": taskCategory?.rawValue ?? "unknown",
-            "buildingId": taskBuildingId ?? "",
-            "workerId": taskWorkerId ?? ""
-        ]
-        
-        print("📊 Task metrics: \(metrics)")
+    // MARK: - View Components
+    
+    private var taskHeaderCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 16) {
+                // Title and Category
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(viewModel.taskTitle)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        if let category = viewModel.taskCategory {
+                            Label(category.rawValue.capitalized, systemImage: category.icon)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Urgency Badge
+                    if let urgency = viewModel.taskUrgency {
+                        Text(urgency.rawValue.uppercased())
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                FrancoSphereDesign.EnumColors.taskUrgency(urgency)
+                                    .opacity(0.2)
+                            )
+                            .foregroundColor(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                            .cornerRadius(8)
+                    }
+                }
+                
+                // Description
+                if let description = viewModel.taskDescription {
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                
+                Divider()
+                
+                // Building & Worker Info
+                HStack(spacing: 20) {
+                    // Building
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("Building", systemImage: "building.2")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(viewModel.buildingName)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        if let address = viewModel.buildingAddress {
+                            Text(address)
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Worker
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Label("Assigned To", systemImage: "person.fill")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(viewModel.workerName)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                }
+                
+                // Due Date
+                if let dueDate = viewModel.taskDueDate {
+                    HStack {
+                        Label("Due", systemImage: "calendar")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(dueDate, style: .date)
+                            .font(.subheadline)
+                        
+                        Text(dueDate, style: .time)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        if dueDate < Date() && !viewModel.isCompleted {
+                            Text("OVERDUE")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
     }
     
-    // MARK: - Helper Methods
+    private var progressCard: some View {
+        GlassCard {
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Progress")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Text(viewModel.taskProgress.rawValue)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                ProgressView(value: viewModel.progressPercentage)
+                    .progressViewStyle(.linear)
+                    .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
+                
+                if let timeRemaining = viewModel.estimatedTimeRemaining {
+                    HStack {
+                        Text("Estimated time remaining")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Text(formatDuration(timeRemaining))
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                }
+            }
+            .padding()
+        }
+    }
     
-    private func requiresPhotoEvidence() -> Bool {
-        guard let category = taskCategory else { return false }
+    private var photoEvidenceCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Label("Photo Evidence", systemImage: "camera.fill")
+                        .font(.headline)
+                    
+                    if requiresPhoto {
+                        Text("Required")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(6)
+                    }
+                    
+                    Spacer()
+                }
+                
+                if let photo = viewModel.capturedPhoto {
+                    // Photo Preview
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: photo)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(height: 200)
+                            .clipped()
+                            .cornerRadius(12)
+                        
+                        // Remove button
+                        Button {
+                            viewModel.capturedPhoto = nil
+                            viewModel.photoData = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.white, .black.opacity(0.6))
+                                .padding(8)
+                        }
+                    }
+                    
+                    // Upload Progress
+                    if viewModel.isUploadingPhoto {
+                        VStack(spacing: 8) {
+                            ProgressView(value: viewModel.photoUploadProgress)
+                                .progressViewStyle(.linear)
+                            
+                            Text("Uploading photo...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                } else {
+                    // Capture Options
+                    HStack(spacing: 16) {
+                        Button {
+                            showPhotoCapture = true
+                        } label: {
+                            VStack(spacing: 8) {
+                                Image(systemName: "camera.fill")
+                                    .font(.title2)
+                                Text("Take Photo")
+                                    .font(.caption)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.primary.opacity(0.05))
+                            .cornerRadius(12)
+                        }
+                        
+                        Button {
+                            showPhotoLibrary = true
+                        } label: {
+                            VStack(spacing: 8) {
+                                Image(systemName: "photo.on.rectangle")
+                                    .font(.title2)
+                                Text("Choose Photo")
+                                    .font(.caption)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.primary.opacity(0.05))
+                            .cornerRadius(12)
+                        }
+                    }
+                    .foregroundColor(.primary)
+                }
+            }
+            .padding()
+        }
+    }
+    
+    private var verificationCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("Verification Status", systemImage: viewModel.verificationStatus.icon)
+                        .font(.headline)
+                        .foregroundColor(viewModel.verificationStatus.color)
+                    
+                    Spacer()
+                    
+                    Text(viewModel.verificationStatus.rawValue)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(viewModel.verificationStatus.color)
+                }
+                
+                if let notes = viewModel.verificationNotes {
+                    Text(notes)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
+                }
+                
+                if viewModel.verificationStatus == .rejected {
+                    Button {
+                        showResubmitSheet = true
+                    } label: {
+                        Label("Resubmit with Evidence", systemImage: "arrow.clockwise")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
+                    .padding(.top, 8)
+                }
+                
+                if let verifiedBy = viewModel.verifiedBy,
+                   let verifiedAt = viewModel.verifiedAt {
+                    HStack {
+                        Text("Verified by \(verifiedBy)")
+                        Spacer()
+                        Text(verifiedAt, style: .relative)
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 4)
+                }
+            }
+            .padding()
+        }
+    }
+    
+    private var aiSuggestionsCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("AI Suggestions", systemImage: "sparkles")
+                        .font(.headline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerAccent)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 24))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerAccent)
+                }
+                
+                ForEach(viewModel.aiSuggestions) { suggestion in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(suggestion.title)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            Spacer()
+                            
+                            Text("\(Int(suggestion.confidence * 100))%")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Text(suggestion.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(Color.primary.opacity(0.03))
+                    .cornerRadius(8)
+                }
+            }
+            .padding()
+        }
+    }
+    
+    private var actionButtonsCard: some View {
+        GlassCard {
+            VStack(spacing: 12) {
+                if viewModel.taskProgress == .notStarted {
+                    Button {
+                        viewModel.startTask()
+                    } label: {
+                        Label("Start Task", systemImage: "play.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
+                } else if viewModel.taskProgress != .submitting {
+                    Button {
+                        Task {
+                            await viewModel.completeTask()
+                        }
+                    } label: {
+                        if viewModel.isSubmitting {
+                            HStack {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .scaleEffect(0.8)
+                                Text("Submitting...")
+                            }
+                        } else {
+                            Label("Complete Task", systemImage: "checkmark.circle.fill")
+                        }
+                        
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.green)
+                    .disabled(viewModel.isSubmitting || (requiresPhoto && viewModel.capturedPhoto == nil))
+                }
+                
+                if viewModel.buildingCoordinate != nil {
+                    Button {
+                        showLocationMap = true
+                    } label: {
+                        Label("View on Map", systemImage: "map")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
+                }
+            }
+            .padding()
+        }
+    }
+    
+    private var completedInfoCard: some View {
+        GlassCard {
+            VStack(spacing: 16) {
+                // Success Icon
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.green)
+                
+                Text("Task Completed")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                
+                if let completedDate = viewModel.completedDate {
+                    VStack(spacing: 4) {
+                        Text("Completed on")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(completedDate, style: .date)
+                            .font(.subheadline)
+                        
+                        Text(completedDate, style: .time)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                if let startTime = viewModel.taskStartTime,
+                   let completedDate = viewModel.completedDate {
+                    HStack {
+                        Text("Duration")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Text(formatDuration(completedDate.timeIntervalSince(startTime)))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            .padding()
+        }
+    }
+    
+    // MARK: - Sheet Views
+    
+    private var resubmitView: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Resubmit Task")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding(.top)
+                
+                Text("Please provide additional information and evidence for resubmission.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Additional Notes")
+                            .font(.headline)
+                        
+                        TextEditor(text: $resubmissionNotes)
+                            .frame(minHeight: 100)
+                            .padding(8)
+                            .background(Color.primary.opacity(0.05))
+                            .cornerRadius(8)
+                    }
+                    .padding()
+                }
+                
+                if viewModel.capturedPhoto == nil {
+                    Button {
+                        showPhotoCapture = true
+                        showResubmitSheet = false
+                    } label: {
+                        Label("Add New Photo", systemImage: "camera")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
+                    .padding(.horizontal)
+                }
+                
+                Spacer()
+                
+                Button {
+                    Task {
+                        await viewModel.resubmitTask(
+                            additionalNotes: resubmissionNotes,
+                            newPhoto: nil
+                        )
+                        showResubmitSheet = false
+                    }
+                } label: {
+                    Text("Submit")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
+                .disabled(resubmissionNotes.isEmpty)
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            .navigationBarItems(
+                trailing: Button("Cancel") {
+                    showResubmitSheet = false
+                }
+            )
+        }
+    }
+    
+    private var locationMapView: some View {
+        NavigationView {
+            if let coordinate = viewModel.buildingCoordinate {
+                Map(coordinateRegion: .constant(
+                    MKCoordinateRegion(
+                        center: coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    )
+                ), annotationItems: [MapPin(coordinate: coordinate)]) { pin in
+                    MapMarker(coordinate: pin.coordinate, tint: FrancoSphereDesign.DashboardColors.workerPrimary)
+                }
+                .navigationTitle(viewModel.buildingName)
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarItems(
+                    trailing: Button("Done") {
+                        showLocationMap = false
+                    }
+                )
+            }
+        }
+    }
+    
+    // MARK: - Helper Properties
+    
+    private var requiresPhoto: Bool {
+        guard let category = viewModel.taskCategory else { return false }
         
         switch category {
         case .cleaning, .sanitation, .maintenance, .repair:
             return true
         case .inspection, .security:
-            return taskUrgency == .high || taskUrgency == .critical
+            return viewModel.taskUrgency == .high || viewModel.taskUrgency == .critical
         default:
             return false
         }
     }
     
-    private func requiresVerification() -> Bool {
-        guard let category = taskCategory else { return false }
+    // MARK: - Helper Methods
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: duration) ?? "0m"
+    }
+}
+
+// MARK: - Supporting Views
+
+struct GlassCard<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        content
+            .francoGlassBackground()
+            .francoShadow()
+    }
+}
+
+struct PhotoCaptureView: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    let onCapture: (UIImage) -> Void
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: PhotoCaptureView
         
-        // ✅ FIXED: Using correct TaskCategory cases
-        switch category {
-        case .sanitation, .inspection, .security, .emergency:
-            return true
-        default:
-            return taskUrgency == .critical || taskUrgency == .emergency
+        init(_ parent: PhotoCaptureView) {
+            self.parent = parent
         }
-    }
-    
-    private func requiresLocationVerification() -> Bool {
-        return taskCategory == .security || taskCategory == .inspection
-    }
-    
-    // MARK: - AI Features (Future Phase)
-    
-    private func loadAISuggestions() async {
-        // Simulate AI suggestions based on task type
-        guard let category = taskCategory else { return }
         
-        switch category {
-        case .maintenance:
-            aiSuggestions = [
-                AISuggestion(
-                    title: "Check filter status",
-                    description: "HVAC filters should be checked monthly",
-                    type: .quality,
-                    confidence: 0.85
-                ),
-                AISuggestion(
-                    title: "Document serial numbers",
-                    description: "Include equipment serial numbers in your notes",
-                    type: .compliance,
-                    confidence: 0.92
-                )
-            ]
-        case .cleaning:
-            aiSuggestions = [
-                AISuggestion(
-                    title: "Use PPE",
-                    description: "Ensure proper protective equipment is worn",
-                    type: .safety,
-                    confidence: 0.95
-                ),
-                AISuggestion(
-                    title: "Check supply levels",
-                    description: "Verify cleaning supplies are adequately stocked",
-                    type: .efficiency,
-                    confidence: 0.78
-                )
-            ]
-        default:
-            aiSuggestions = []
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onCapture(image)
+            }
+            parent.dismiss()
         }
-    }
-    
-    private func startAITaskMonitoring() {
-        // Future: Real-time AI monitoring of task progress
-        print("🤖 AI task monitoring started for task: \(taskId)")
-    }
-    
-    // MARK: - Subscriptions
-    
-    private func setupSubscriptions() {
-        // Subscribe to photo evidence upload progress
-        photoEvidenceService.uploadProgress
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] progress in
-                self?.photoUploadProgress = progress
-            }
-            .store(in: &cancellables)
-    }
-    
-    // MARK: - Error Types
-    
-    enum TaskError: LocalizedError {
-        case photoRequired
-        case locationRequired
-        case verificationFailed
-        case networkError
         
-        var errorDescription: String? {
-            switch self {
-            case .photoRequired:
-                return "Photo evidence is required for this task"
-            case .locationRequired:
-                return "Location verification is required"
-            case .verificationFailed:
-                return "Task verification failed"
-            case .networkError:
-                return "Network connection error"
-            }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }
 
-// MARK: - Future Enhancements
+struct LoadingOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 16) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.5)
+                
+                Text("Loading...")
+                    .foregroundColor(.white)
+                    .font(.headline)
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.black.opacity(0.8))
+            )
+        }
+    }
+}
 
-/*
-🚀 FUTURE PHASES:
+// MARK: - Preview
 
-Phase 1: Enhanced Photo Evidence (Q2 2025)
-- Multiple photo support
-- Video evidence for complex tasks
-- Automatic metadata extraction
-- Cloud backup integration
-
-Phase 2: AI Task Assistant (Q3 2025)
-- Real-time guidance during task execution
-- Anomaly detection in photos
-- Quality assessment scoring
-- Predictive time estimates
-
-Phase 3: AR Integration (Q4 2025)
-- AR overlays for task locations
-- Visual task completion guides
-- Equipment identification
-- Safety hazard highlighting
-
-Phase 4: Advanced Analytics (Q1 2026)
-- Task pattern analysis
-- Worker efficiency metrics
-- Building-specific insights
-- Predictive maintenance alerts
-
-Phase 5: Integration Platform (Q2 2026)
-- Third-party tool connections
-- IoT sensor integration
-- Automated task generation
-- Smart scheduling
-*/
+struct TaskDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            TaskDetailView(
+                task: CoreTypes.ContextualTask(
+                    id: "1",
+                    title: "Clean Main Lobby",
+                    description: "Daily cleaning of the main lobby area including floors, windows, and furniture",
+                    isCompleted: false,
+                    dueDate: Date().addingTimeInterval(3600),
+                    category: .cleaning,
+                    urgency: .high,
+                    buildingId: "14",
+                    assignedWorkerId: "4"
+                )
+            )
+            .environmentObject(NewAuthManager.shared)
+        }
+    }
+}
