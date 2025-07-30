@@ -896,28 +896,41 @@ extension Date {
     }
 }
 
+// MARK: - Preview Helpers
+
+// Create mock data for previews
+struct PreviewHelpers {
+    static let kevinProfile = WorkerProfile(
+        id: "4",
+        name: "Kevin Dutan",
+        email: "kevin@francosphere.com",
+        role: .worker
+    )
+    
+    static let mercedesProfile = WorkerProfile(
+        id: "5",
+        name: "Mercedes Inamagua",
+        email: "mercedes@francosphere.com",
+        role: .worker
+    )
+    
+    static let rubinMuseum = NamedCoordinate(
+        id: "14",
+        name: "Rubin Museum",
+        address: "150 W 17th St",
+        latitude: 40.7402,
+        longitude: -73.9980
+    )
+}
+
 // MARK: - Preview
 #Preview("Standard UI - Clocked In") {
     ZStack {
         Color.black.ignoresSafeArea()
         
         HeroStatusCard(
-            worker: WorkerProfile(
-                id: "4",
-                userId: "user_4",
-                name: "Kevin Dutan",
-                email: "kevin@francosphere.com",
-                role: .worker,
-                isActive: true,
-                currentBuildingId: "14"
-            ),
-            building: NamedCoordinate(
-                id: "14",
-                name: "Rubin Museum",
-                address: "150 W 17th St",
-                latitude: 40.7402,
-                longitude: -73.9980
-            ),
+            worker: PreviewHelpers.kevinProfile,
+            building: PreviewHelpers.rubinMuseum,
             weather: CoreTypes.WeatherData(
                 id: UUID().uuidString,
                 temperature: 32,
@@ -963,15 +976,7 @@ extension Date {
         Color(.systemBackground).ignoresSafeArea()
         
         HeroStatusCard(
-            worker: WorkerProfile(
-                id: "5",
-                userId: "user_5",
-                name: "Mercedes Inamagua",
-                email: "mercedes@francosphere.com",
-                role: .worker,
-                isActive: true,
-                currentBuildingId: nil
-            ),
+            worker: PreviewHelpers.mercedesProfile,
             building: nil,
             weather: nil,
             progress: CoreTypes.TaskProgress(
@@ -1005,15 +1010,7 @@ extension Date {
         Color.black.ignoresSafeArea()
         
         HeroStatusCard(
-            worker: WorkerProfile(
-                id: "4",
-                userId: "user_4",
-                name: "Kevin Dutan",
-                email: "kevin@francosphere.com",
-                role: .worker,
-                isActive: true,
-                currentBuildingId: nil
-            ),
+            worker: PreviewHelpers.kevinProfile,
             building: nil,
             weather: nil,
             progress: CoreTypes.TaskProgress(
