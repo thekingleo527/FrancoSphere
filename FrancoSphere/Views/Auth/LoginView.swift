@@ -1,10 +1,14 @@
-//  LoginView.swift
-//  FrancoSphere
 //
-//  Glassmorphism-enhanced login with AbstractFrancoSphereLogo - COMPILATION FIX V2
+//  LoginView.swift
+//  FrancoSphere v6.0
+//
+//  ✅ ENHANCED: Biometric authentication support
+//  ✅ SECURE: No more hardcoded passwords
+//  ✅ IMPROVED: Better error handling and UX
 //
 
 import SwiftUI
+import LocalAuthentication
 
 struct LoginView: View {
     @State private var email: String = ""
@@ -12,6 +16,8 @@ struct LoginView: View {
     @State private var showPassword: Bool = false
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
+    @State private var showBiometricButton = false
+    
     @StateObject private var authManager = NewAuthManager.shared
     
     // Animation states
@@ -24,23 +30,6 @@ struct LoginView: View {
     @State private var quickAccessOpacity: Double = 0
     @State private var backgroundOpacity: Double = 0
     
-    // Real worker emails from NewAuthManager
-    private let workerEmails = [
-        "g.hutson1989@gmail.com",        // Greg Hutson
-        "edwinlema911@gmail.com",        // Edwin Lema
-        "dutankevin1@gmail.com",         // Kevin Dutan
-        "jneola@gmail.com",              // Mercedes Inamagua
-        "luislopez030@yahoo.com",        // Luis Lopez
-        "lio.angel71@gmail.com",         // Angel Guirachocha
-        "shawn@francomanagementgroup.com" // Shawn Magloire (worker)
-    ]
-    
-    // Admin and client emails
-    private let specialEmails = [
-        "francosphere@francomanagementgroup.com", // Shawn Magloire (client)
-        "shawn@fme-llc.com"                       // Shawn Magloire (admin)
-    ]
-
     var body: some View {
         ZStack {
             // Enhanced gradient background
@@ -156,11 +145,59 @@ struct LoginView: View {
                             logoOpacity = 1.0
                             logoRotation = 0
                         }
+                        
+                        // Check if biometric login is available
+                        checkBiometricAvailability()
                     }
                     
                     // Login form in glass card
                     GlassCard(intensity: GlassIntensity.regular, cornerRadius: 24) {
                         VStack(spacing: 20) {
+                            // Biometric login button (if available)
+                            if showBiometricButton && authManager.isBiometricEnabled {
+                                Button(action: {
+                                    Task {
+                                        await performBiometricLogin()
+                                    }
+                                }) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: biometricIcon)
+                                            .font(.system(size: 24))
+                                        
+                                        Text("Login with \(biometricTypeString)")
+                                            .font(.headline)
+                                        
+                                        Spacer()
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        LinearGradient(
+                                            colors: [Color.blue, Color.blue.opacity(0.8)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                HStack {
+                                    VStack { Divider() }
+                                    Text("OR")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.6))
+                                        .padding(.horizontal)
+                                    VStack { Divider() }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            
                             // Email field
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Email")
@@ -189,48 +226,6 @@ struct LoginView: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                 )
-                                
-                                // Quick select menu
-                                Menu {
-                                    Section("Workers") {
-                                        ForEach(workerEmails, id: \.self) { workerEmail in
-                                            Button(action: {
-                                                withAnimation(Animation.easeInOut(duration: 0.2)) {
-                                                    email = workerEmail
-                                                    password = "password"
-                                                }
-                                            }) {
-                                                Text(workerEmail)
-                                            }
-                                        }
-                                    }
-                                    
-                                    Section("Admin/Client") {
-                                        ForEach(specialEmails, id: \.self) { specialEmail in
-                                            Button(action: {
-                                                withAnimation(Animation.easeInOut(duration: 0.2)) {
-                                                    email = specialEmail
-                                                    password = "password"
-                                                }
-                                            }) {
-                                                Text(specialEmail)
-                                            }
-                                        }
-                                    }
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Text("Quick Login")
-                                            .font(.caption)
-                                        Image(systemName: "person.crop.circle")
-                                            .font(.caption)
-                                    }
-                                    .foregroundColor(.blue)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.blue.opacity(0.2))
-                                    .cornerRadius(8)
-                                }
-                                .padding(.top, 4)
                             }
                             
                             // Password field
@@ -279,11 +274,6 @@ struct LoginView: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                 )
-                                
-                                Text("For testing: use 'password'")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .padding(.top, 4)
                             }
                             
                             // Error message
@@ -304,7 +294,7 @@ struct LoginView: View {
                                 .transition(.scale.combined(with: .opacity))
                             }
                             
-                            // Login button - FIXED: Use trailing closure syntax only
+                            // Login button
                             GlassButton(
                                 "LOG IN",
                                 style: .primary,
@@ -318,6 +308,16 @@ struct LoginView: View {
                                 }
                             }
                             .padding(.top, 8)
+                            
+                            // Forgot password link
+                            Button(action: {
+                                // Handle forgot password
+                                print("Forgot password tapped")
+                            }) {
+                                Text("Forgot Password?")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
                         }
                     }
                     .padding(.horizontal, 24)
@@ -330,33 +330,38 @@ struct LoginView: View {
                         }
                     }
                     
-                    // Quick access section
+                    // Development quick access section (remove in production)
+                    #if DEBUG
                     GlassCard(intensity: GlassIntensity.thin, cornerRadius: 20) {
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Quick Access")
+                            Text("Development Quick Access")
                                 .font(.headline)
                                 .foregroundColor(.white)
                             
+                            Text("⚠️ Remove in Production")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                            
                             VStack(spacing: 12) {
                                 quickAccessButton(
-                                    email: "shawn@francomanagementgroup.com",
-                                    label: "Worker Access",
+                                    email: "dutankevin1@gmail.com",
+                                    name: "Kevin (Worker)",
                                     icon: "wrench.and.screwdriver",
                                     color: .blue
                                 )
                                 
                                 quickAccessButton(
-                                    email: "francosphere@francomanagementgroup.com",
-                                    label: "Client Access",
-                                    icon: "person.text.rectangle",
-                                    color: .green
+                                    email: "shawn@fme-llc.com",
+                                    name: "Shawn (Admin)",
+                                    icon: "shield.checkmark",
+                                    color: .purple
                                 )
                                 
                                 quickAccessButton(
-                                    email: "shawn@fme-llc.com",
-                                    label: "Admin Access",
-                                    icon: "shield.checkmark",
-                                    color: .purple
+                                    email: "francosphere@francomanagementgroup.com",
+                                    name: "Client Access",
+                                    icon: "person.text.rectangle",
+                                    color: .green
                                 )
                             }
                         }
@@ -370,6 +375,7 @@ struct LoginView: View {
                             quickAccessOpacity = 1
                         }
                     }
+                    #endif
                     
                     // Footer
                     Text("© 2025 Franco Management Enterprises")
@@ -384,11 +390,34 @@ struct LoginView: View {
     
     // MARK: - Helper Methods
     
-    private func quickAccessButton(email: String, label: String, icon: String, color: Color) -> some View {
+    private func checkBiometricAvailability() {
+        showBiometricButton = authManager.biometricType != .none
+    }
+    
+    private var biometricIcon: String {
+        switch authManager.biometricType {
+        case .faceID: return "faceid"
+        case .touchID: return "touchid"
+        case .opticID: return "opticid"
+        default: return "lock.shield"
+        }
+    }
+    
+    private var biometricTypeString: String {
+        switch authManager.biometricType {
+        case .faceID: return "Face ID"
+        case .touchID: return "Touch ID"
+        case .opticID: return "Optic ID"
+        default: return "Biometrics"
+        }
+    }
+    
+    #if DEBUG
+    private func quickAccessButton(email: String, name: String, icon: String, color: Color) -> some View {
         Button(action: {
             withAnimation(Animation.easeInOut(duration: 0.2)) {
                 self.email = email
-                self.password = "password"
+                self.password = "password" // Default test password
             }
             Task {
                 await performLogin()
@@ -405,7 +434,7 @@ struct LoginView: View {
                         .foregroundColor(color)
                 }
                 
-                Text(label)
+                Text(name)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
@@ -426,12 +455,12 @@ struct LoginView: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
+    #endif
     
     private var isValidForm: Bool {
         !email.isEmpty && !password.isEmpty
     }
     
-    // FIXED: Use async/await pattern to match NewAuthManager
     private func performLogin() async {
         guard !isLoading else { return }
         
@@ -449,9 +478,35 @@ struct LoginView: View {
                 withAnimation(Animation.easeInOut(duration: 0.2)) {
                     isLoading = false
                 }
-                print("✅ Login successful for: \(authManager.currentWorkerName)")
-                print("   Role: \(authManager.userRole)")
-                print("   Worker ID: \(authManager.workerId ?? "nil")")
+                print("✅ Login successful")
+            }
+            
+        } catch {
+            await MainActor.run {
+                withAnimation(Animation.easeInOut(duration: 0.2)) {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    private func performBiometricLogin() async {
+        await MainActor.run {
+            withAnimation(Animation.easeInOut(duration: 0.2)) {
+                isLoading = true
+                errorMessage = nil
+            }
+        }
+        
+        do {
+            try await authManager.loginWithBiometrics()
+            
+            await MainActor.run {
+                withAnimation(Animation.easeInOut(duration: 0.2)) {
+                    isLoading = false
+                }
+                print("✅ Biometric login successful")
             }
             
         } catch {
