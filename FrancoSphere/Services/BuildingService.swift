@@ -6,6 +6,7 @@
 //  ✅ PRODUCTION READY: Real database operations only
 //  ✅ GRDB POWERED: Uses GRDBManager for all operations
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -29,9 +30,18 @@ actor BuildingService {
             throw BuildingServiceError.noBuildingsFound
         }
         
-        let buildings = rows.compactMap { row in
-            guard let id = row["id"] as? Int64 ?? (Int64(row["id"] as? String ?? "") ?? nil),
-                  let name = row["name"] as? String,
+        let buildings = rows.compactMap { row -> NamedCoordinate? in
+            // ✅ FIXED: Handle id conversion properly
+            let idString: String
+            if let idInt = row["id"] as? Int64 {
+                idString = String(idInt)
+            } else if let idStr = row["id"] as? String {
+                idString = idStr
+            } else {
+                return nil
+            }
+            
+            guard let name = row["name"] as? String,
                   let address = row["address"] as? String,
                   let latitude = row["latitude"] as? Double,
                   let longitude = row["longitude"] as? Double else {
@@ -39,7 +49,7 @@ actor BuildingService {
             }
             
             return NamedCoordinate(
-                id: String(id),
+                id: idString,
                 name: name,
                 address: address,
                 latitude: latitude,
@@ -65,8 +75,17 @@ actor BuildingService {
             throw BuildingServiceError.buildingNotFound(buildingId)
         }
         
-        guard let id = row["id"] as? Int64 ?? (Int64(row["id"] as? String ?? "") ?? nil),
-              let name = row["name"] as? String,
+        // ✅ FIXED: Handle id conversion properly
+        let idString: String
+        if let idInt = row["id"] as? Int64 {
+            idString = String(idInt)
+        } else if let idStr = row["id"] as? String {
+            idString = idStr
+        } else {
+            throw BuildingServiceError.invalidBuildingData(buildingId)
+        }
+        
+        guard let name = row["name"] as? String,
               let address = row["address"] as? String,
               let latitude = row["latitude"] as? Double,
               let longitude = row["longitude"] as? Double else {
@@ -74,7 +93,7 @@ actor BuildingService {
         }
         
         return NamedCoordinate(
-            id: String(id),
+            id: idString,
             name: name,
             address: address,
             latitude: latitude,
@@ -107,9 +126,18 @@ actor BuildingService {
             throw BuildingServiceError.noBuildingsAssignedToWorker(workerId)
         }
         
-        let buildings = rows.compactMap { row in
-            guard let id = row["id"] as? Int64 ?? (Int64(row["id"] as? String ?? "") ?? nil),
-                  let name = row["name"] as? String,
+        let buildings = rows.compactMap { row -> NamedCoordinate? in
+            // ✅ FIXED: Handle id conversion properly
+            let idString: String
+            if let idInt = row["id"] as? Int64 {
+                idString = String(idInt)
+            } else if let idStr = row["id"] as? String {
+                idString = idStr
+            } else {
+                return nil
+            }
+            
+            guard let name = row["name"] as? String,
                   let address = row["address"] as? String,
                   let latitude = row["latitude"] as? Double,
                   let longitude = row["longitude"] as? Double else {
@@ -117,7 +145,7 @@ actor BuildingService {
             }
             
             return NamedCoordinate(
-                id: String(id),
+                id: idString,
                 name: name,
                 address: address,
                 latitude: latitude,
@@ -211,9 +239,18 @@ actor BuildingService {
         let rows = try await grdbManager.query(query, [buildingId])
         
         // OK to return empty array for inventory
-        return rows.compactMap { row in
-            guard let id = row["id"] as? Int64 ?? (Int64(row["id"] as? String ?? "") ?? nil),
-                  let name = row["name"] as? String,
+        return rows.compactMap { row -> CoreTypes.InventoryItem? in  // ✅ FIXED: Explicit return type
+            // Handle id conversion
+            let idString: String
+            if let idInt = row["id"] as? Int64 {
+                idString = String(idInt)
+            } else if let idStr = row["id"] as? String {
+                idString = idStr
+            } else {
+                return nil
+            }
+            
+            guard let name = row["name"] as? String,
                   let categoryStr = row["category"] as? String,
                   let category = CoreTypes.InventoryCategory(rawValue: categoryStr),
                   let currentStock = row["currentStock"] as? Int64,
@@ -238,7 +275,7 @@ actor BuildingService {
             }
             
             return CoreTypes.InventoryItem(
-                id: String(id),
+                id: idString,
                 name: name,
                 category: category,
                 currentStock: Int(currentStock),
@@ -249,8 +286,7 @@ actor BuildingService {
                 supplier: nil, // Supplier not in database schema
                 location: nil, // Location not in database schema
                 lastRestocked: lastRestocked,
-                status: status,
-                buildingId: buildingId
+                status: status
             )
         }
     }
@@ -376,9 +412,18 @@ actor BuildingService {
         """, ["%\(query)%", "%\(query)%"])
         
         // OK to return empty array for search results
-        return rows.compactMap { row in
-            guard let id = row["id"] as? Int64 ?? (Int64(row["id"] as? String ?? "") ?? nil),
-                  let name = row["name"] as? String,
+        return rows.compactMap { row -> NamedCoordinate? in
+            // Handle id conversion
+            let idString: String
+            if let idInt = row["id"] as? Int64 {
+                idString = String(idInt)
+            } else if let idStr = row["id"] as? String {
+                idString = idStr
+            } else {
+                return nil
+            }
+            
+            guard let name = row["name"] as? String,
                   let address = row["address"] as? String,
                   let latitude = row["latitude"] as? Double,
                   let longitude = row["longitude"] as? Double else {
@@ -386,7 +431,7 @@ actor BuildingService {
             }
             
             return NamedCoordinate(
-                id: String(id),
+                id: idString,
                 name: name,
                 address: address,
                 latitude: latitude,
@@ -432,20 +477,22 @@ actor BuildingService {
         
         try await grdbManager.execute(query, [
             building.name,
-            building.address ?? "",
+            building.address,  // ✅ FIXED: address is non-optional String
             building.latitude,
             building.longitude,
             building.id
         ])
         
         // Broadcast update
+        // ✅ FIXED: Use buildingMetricsChanged instead of non-existent buildingUpdated
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.buildingUpdated,
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,  // ✅ Changed to valid enum
             buildingId: building.id,
-            workerId: nil,
+            workerId: "",  // ✅ FIXED: Use empty string instead of nil
             data: [
                 "buildingName": building.name,
+                "action": "updated",  // ✅ Added to indicate update
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -469,19 +516,21 @@ actor BuildingService {
         try await grdbManager.execute(query, [
             building.id,
             building.name,
-            building.address ?? "",
+            building.address,  // ✅ FIXED: address is non-optional String
             building.latitude,
             building.longitude
         ])
         
         // Broadcast creation
+        // ✅ FIXED: Use buildingMetricsChanged instead of non-existent buildingCreated
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.admin,
-            type: CoreTypes.DashboardUpdate.UpdateType.buildingCreated,
+            type: CoreTypes.DashboardUpdate.UpdateType.buildingMetricsChanged,  // ✅ Changed to valid enum
             buildingId: building.id,
-            workerId: nil,
+            workerId: "",  // ✅ FIXED: Use empty string instead of nil
             data: [
                 "buildingName": building.name,
+                "action": "created",  // ✅ Added to indicate creation
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
@@ -537,7 +586,7 @@ actor BuildingService {
             source: CoreTypes.DashboardUpdate.Source.admin,
             type: CoreTypes.DashboardUpdate.UpdateType.inventoryUpdated,
             buildingId: buildingId,
-            workerId: nil,
+            workerId: "",  // ✅ FIXED: Use empty string instead of nil
             data: [
                 "action": action,
                 "itemName": itemName,
@@ -549,20 +598,23 @@ actor BuildingService {
     }
     
     private func broadcastLowStockAlert(buildingId: String, itemName: String, currentStock: Int, minimumStock: Int) async {
+        // ✅ FIXED: Use inventoryUpdated instead of non-existent lowStockAlert
         let update = CoreTypes.DashboardUpdate(
             source: CoreTypes.DashboardUpdate.Source.system,
-            type: CoreTypes.DashboardUpdate.UpdateType.lowStockAlert,
+            type: CoreTypes.DashboardUpdate.UpdateType.inventoryUpdated,  // ✅ Changed to valid enum
             buildingId: buildingId,
-            workerId: nil,
+            workerId: "",  // ✅ FIXED: Use empty string instead of nil
             data: [
                 "itemName": itemName,
                 "currentStock": String(currentStock),
                 "minimumStock": String(minimumStock),
+                "alertType": "lowStock",  // ✅ Added to indicate it's a low stock alert
                 "timestamp": ISO8601DateFormatter().string(from: Date())
             ]
         )
         
-        await DashboardSyncService.shared.broadcastSystemUpdate(update)
+        // ✅ FIXED: Use broadcastAdminUpdate instead of non-existent broadcastSystemUpdate
+        await DashboardSyncService.shared.broadcastAdminUpdate(update)
     }
 }
 
@@ -692,3 +744,27 @@ extension BuildingService {
         return criticalBuildings
     }
 }
+
+// MARK: - 📝 COMPILATION FIXES
+/*
+ ✅ FIXED Lines 32, 110: Generic parameter inference issues
+    - Cannot use nil-coalescing operator between Int64? and String?
+    - Refactored to handle Int64 and String id types separately
+ 
+ ✅ FIXED Line 221: Nil compatibility with closure result
+    - Added explicit return type to compactMap closure
+ 
+ ✅ FIXED Lines 435, 472: Non-optional String usage
+    - NamedCoordinate.address is non-optional, removed unnecessary nil-coalescing
+ 
+ ✅ FIXED Lines 444, 480, 554: Missing UpdateType enum cases
+    - Changed buildingUpdated → buildingMetricsChanged with action: "updated"
+    - Changed buildingCreated → buildingMetricsChanged with action: "created"
+    - Changed lowStockAlert → inventoryUpdated with alertType: "lowStock"
+ 
+ ✅ FIXED Lines 446, 482, 540, 556: Nil String parameters
+    - Changed nil to empty string "" for workerId parameter
+ 
+ ✅ FIXED Line 565: Missing broadcastSystemUpdate method
+    - Changed to use broadcastAdminUpdate which exists in DashboardSyncService
+ */
