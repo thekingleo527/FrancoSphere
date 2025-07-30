@@ -1,16 +1,17 @@
-
 //
-//  ImagePickerComponents.swift
+//  ImagePicker.swift
 //  FrancoSphere v6.0
 //
-//  📸 PHOTO MANAGEMENT: Unified image handling
-//  🖼️ GALLERY: Building photo organization
-//  📍 GEOTAGGING: Location-aware photos
+//  📸 PHOTO MANAGEMENT: Unified image handling for Phase 3
+//  🖼️ GALLERY: Building photo organization with evidence tracking
+//  📍 GEOTAGGING: Location-aware photos for compliance
+//  ✅ PHASE 3 READY: Integrated with PhotoEvidenceService
 //
 
 import SwiftUI
 import PhotosUI
 import CoreLocation
+import Combine
 
 // MARK: - Image Picker
 
@@ -92,10 +93,10 @@ struct PhotoPicker: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .onChange(of: selectedItems) { items in
+                .onChange(of: selectedItems) { oldValue, newValue in
                     Task {
                         selectedImages = []
-                        for item in items {
+                        for item in newValue {
                             if let data = try? await item.loadTransferable(type: Data.self),
                                let image = UIImage(data: data) {
                                 selectedImages.append(image)
@@ -124,7 +125,8 @@ struct PhotoPicker: View {
 // MARK: - Building Photo Gallery
 
 struct BuildingPhotoGallery: View {
-    let building: CoreTypes.Building
+    let buildingId: String
+    let buildingName: String
     @StateObject private var viewModel = PhotoGalleryViewModel()
     @State private var selectedCategory = PhotoCategory.all
     @State private var showingFullScreen = false
@@ -157,16 +159,37 @@ struct BuildingPhotoGallery: View {
             .background(Color(.systemBackground))
             
             // Photo grid
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 2) {
-                    ForEach(viewModel.filteredPhotos(for: selectedCategory)) { photo in
-                        PhotoGridItem(photo: photo) {
-                            selectedPhoto = photo
-                            showingFullScreen = true
+            if viewModel.isLoading {
+                Spacer()
+                ProgressView("Loading photos...")
+                    .padding()
+                Spacer()
+            } else if viewModel.photos.isEmpty {
+                Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray)
+                    Text("No photos yet")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("Add photos to document this building")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 2) {
+                        ForEach(viewModel.filteredPhotos(for: selectedCategory)) { photo in
+                            PhotoGridItem(photo: photo) {
+                                selectedPhoto = photo
+                                showingFullScreen = true
+                            }
                         }
                     }
+                    .padding(2)
                 }
-                .padding(2)
             }
             
             // Add photo button
@@ -177,7 +200,7 @@ struct BuildingPhotoGallery: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(Color.blue)
+                        .background(FrancoSphereDesign.DashboardColors.workerPrimary)
                         .cornerRadius(12)
                 }
                 .padding()
@@ -186,7 +209,7 @@ struct BuildingPhotoGallery: View {
         .navigationTitle("Photos")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.loadPhotos(for: building.id)
+            await viewModel.loadPhotos(for: buildingId)
         }
         .fullScreenCover(isPresented: $showingFullScreen) {
             if let photo = selectedPhoto {
@@ -194,8 +217,88 @@ struct BuildingPhotoGallery: View {
             }
         }
         .sheet(isPresented: $showingAddPhoto) {
-            PhotoCaptureView(building: building) { image in
-                await viewModel.savePhoto(image, for: building)
+            BuildingPhotoCaptureView(
+                buildingId: buildingId,
+                buildingName: buildingName
+            ) { image in
+                await viewModel.savePhoto(image, buildingId: buildingId)
+            }
+        }
+    }
+}
+
+// MARK: - Building Photo Capture View
+
+struct BuildingPhotoCaptureView: View {
+    let buildingId: String
+    let buildingName: String
+    let onCapture: (UIImage) async -> Void
+    
+    @State private var capturedImage: UIImage?
+    @State private var category = PhotoCategory.all
+    @State private var notes = ""
+    @State private var showingCamera = true
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            if let image = capturedImage {
+                // Review captured image
+                VStack(spacing: 0) {
+                    // Image preview
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 300)
+                        .background(Color.black)
+                    
+                    // Metadata form
+                    Form {
+                        Section("Details") {
+                            Picker("Category", selection: $category) {
+                                ForEach(PhotoCategory.allCases, id: \.self) { cat in
+                                    Label(cat.rawValue, systemImage: cat.icon)
+                                        .tag(cat)
+                                }
+                            }
+                            
+                            TextField("Notes (optional)", text: $notes, axis: .vertical)
+                                .lineLimit(3...6)
+                        }
+                        
+                        Section {
+                            Button("Save Photo") {
+                                Task {
+                                    await onCapture(image)
+                                    dismiss()
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .font(.headline)
+                            
+                            Button("Retake", role: .destructive) {
+                                capturedImage = nil
+                                showingCamera = true
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+                .navigationTitle("Add Photo")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarItems(
+                    leading: Button("Cancel") { dismiss() }
+                )
+            } else if showingCamera {
+                ImagePicker(
+                    image: $capturedImage,
+                    onImagePicked: { image in
+                        capturedImage = image
+                        showingCamera = false
+                    },
+                    sourceType: .camera
+                )
+                .ignoresSafeArea()
             }
         }
     }
@@ -212,6 +315,7 @@ enum PhotoCategory: String, CaseIterable {
     case before = "Before"
     case after = "After"
     case equipment = "Equipment"
+    case compliance = "Compliance"
     
     var icon: String {
         switch self {
@@ -223,9 +327,12 @@ enum PhotoCategory: String, CaseIterable {
         case .before: return "arrow.left.square"
         case .after: return "arrow.right.square"
         case .equipment: return "hammer"
+        case .compliance: return "checkmark.shield"
         }
     }
 }
+
+// MARK: - Category Pill
 
 struct CategoryPill: View {
     let category: PhotoCategory
@@ -259,7 +366,7 @@ struct CategoryPill: View {
             .padding(.vertical, 8)
             .background(
                 Capsule()
-                    .fill(isSelected ? Color.blue : Color(.systemGray5))
+                    .fill(isSelected ? FrancoSphereDesign.DashboardColors.workerPrimary : Color(.systemGray5))
             )
         }
     }
@@ -321,8 +428,12 @@ struct PhotoGridItem: View {
             }
         }
         .task {
-            thumbnail = await photo.loadThumbnail()
+            thumbnail = await loadThumbnail(for: photo)
         }
+    }
+    
+    private func loadThumbnail(for photo: BuildingPhoto) async -> UIImage? {
+        return await PhotoStorageService.shared.loadThumbnail(for: photo.id)
     }
 }
 
@@ -385,12 +496,14 @@ struct PhotoDetailView: View {
             .statusBar(hidden: true)
         }
         .task {
-            fullImage = await photo.loadFullImage()
+            fullImage = await PhotoStorageService.shared.loadFullImage(for: photo.id)
         }
         .confirmationDialog("Photo Actions", isPresented: $showingActions) {
             Button("Share") { sharePhoto() }
             Button("Download") { downloadPhoto() }
-            Button("Mark as Issue") { markAsIssue() }
+            if !photo.hasIssue {
+                Button("Mark as Issue") { markAsIssue() }
+            }
             Button("Delete", role: .destructive) { deletePhoto() }
             Button("Cancel", role: .cancel) { }
         }
@@ -416,13 +529,20 @@ struct PhotoDetailView: View {
     }
     
     private func markAsIssue() {
-        // Mark photo as containing an issue
+        Task {
+            await PhotoStorageService.shared.markPhotoAsIssue(photo.id)
+        }
     }
     
     private func deletePhoto() {
-        // Delete photo after confirmation
+        Task {
+            await PhotoStorageService.shared.deletePhoto(photo.id)
+            dismiss()
+        }
     }
 }
+
+// MARK: - Photo Zoom View
 
 struct PhotoZoomView: View {
     let image: UIImage
@@ -491,6 +611,8 @@ struct PhotoZoomView: View {
     }
 }
 
+// MARK: - Photo Info Overlay
+
 struct PhotoInfoOverlay: View {
     let photo: BuildingPhoto
     
@@ -499,7 +621,7 @@ struct PhotoInfoOverlay: View {
             // Metadata
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(photo.space)
+                    Text(photo.category.rawValue)
                         .font(.headline)
                         .foregroundColor(.white)
                     
@@ -536,21 +658,19 @@ struct PhotoInfoOverlay: View {
                     .cornerRadius(8)
             }
             
-            // Tags
-            if !photo.tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(photo.tags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.8))
-                                .cornerRadius(12)
-                        }
-                    }
+            // Compliance info
+            if photo.taskId != nil {
+                HStack {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.caption)
+                    Text("Task Evidence")
+                        .font(.caption)
                 }
+                .foregroundColor(.green)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(Color.green.opacity(0.2))
+                .cornerRadius(12)
             }
         }
         .padding()
@@ -576,17 +696,34 @@ class PhotoGalleryViewModel: ObservableObject {
         isLoading = true
         
         do {
-            // Load photos from database
+            // Load photos from database via service
             photos = try await PhotoStorageService.shared.loadPhotos(for: buildingId)
         } catch {
             self.error = error
+            print("❌ Failed to load photos: \(error)")
         }
         
         isLoading = false
     }
     
-    func savePhoto(_ image: UIImage, for building: CoreTypes.Building) async {
-        // Save photo logic
+    func savePhoto(_ image: UIImage, buildingId: String) async {
+        do {
+            let metadata = BuildingPhotoMetadata(
+                buildingId: buildingId,
+                category: .all,
+                notes: nil,
+                location: LocationManager().location,
+                taskId: nil,
+                workerId: NewAuthManager.shared.workerId,
+                timestamp: Date()
+            )
+            
+            let photo = try await PhotoStorageService.shared.savePhoto(image, metadata: metadata)
+            photos.append(photo)
+        } catch {
+            self.error = error
+            print("❌ Failed to save photo: \(error)")
+        }
     }
     
     func photoCount(for category: PhotoCategory) -> Int {
@@ -609,12 +746,10 @@ class PhotoGalleryViewModel: ObservableObject {
 struct BuildingPhoto: Identifiable {
     let id: String
     let buildingId: String
-    let space: String
     let category: PhotoCategory
     let timestamp: Date
     let uploadedBy: String?
     let notes: String?
-    let tags: [String]
     let localPath: String
     let remotePath: String?
     let thumbnailPath: String?
@@ -622,187 +757,266 @@ struct BuildingPhoto: Identifiable {
     let isVerified: Bool
     let hasLocation: Bool
     let location: CLLocation?
-    
-    func loadThumbnail() async -> UIImage? {
-        // Load thumbnail image
-        return nil // Placeholder
-    }
-    
-    func loadFullImage() async -> UIImage? {
-        // Load full resolution image
-        return nil // Placeholder
-    }
+    let taskId: String?
+    let fileSize: Int?
 }
 
-// MARK: - Photo Storage Service
+struct BuildingPhotoMetadata {
+    let buildingId: String
+    let category: PhotoCategory
+    let notes: String?
+    let location: CLLocation?
+    let taskId: String?
+    let workerId: String?
+    let timestamp: Date
+}
+
+// MARK: - Photo Storage Service (Phase 3 Integration)
 
 actor PhotoStorageService {
     static let shared = PhotoStorageService()
     
     private let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    private let grdbManager = GRDBManager.shared
+    private let compressionQuality: CGFloat = 0.7
+    private let thumbnailSize = CGSize(width: 200, height: 200)
     
     func loadPhotos(for buildingId: String) async throws -> [BuildingPhoto] {
-        // Load from database and file system
-        return []
+        let rows = try await grdbManager.query("""
+            SELECT * FROM photo_evidence 
+            WHERE building_id = ? 
+            ORDER BY created_at DESC
+        """, [buildingId])
+        
+        return rows.compactMap { row in
+            guard let id = row["id"] as? String,
+                  let buildingId = row["building_id"] as? String,
+                  let localPath = row["local_path"] as? String,
+                  let createdAt = row["created_at"] as? String,
+                  let date = ISO8601DateFormatter().date(from: createdAt) else {
+                return nil
+            }
+            
+            return BuildingPhoto(
+                id: id,
+                buildingId: buildingId,
+                category: PhotoCategory(rawValue: row["category"] as? String ?? "") ?? .all,
+                timestamp: date,
+                uploadedBy: row["worker_id"] as? String,
+                notes: row["notes"] as? String,
+                localPath: localPath,
+                remotePath: row["remote_url"] as? String,
+                thumbnailPath: row["thumbnail_path"] as? String,
+                hasIssue: (row["has_issue"] as? Int ?? 0) == 1,
+                isVerified: (row["is_verified"] as? Int ?? 0) == 1,
+                hasLocation: row["location_lat"] != nil,
+                location: nil,
+                taskId: row["task_id"] as? String,
+                fileSize: row["file_size"] as? Int
+            )
+        }
     }
     
-    func savePhoto(_ image: UIImage, metadata: PhotoMetadata) async throws -> BuildingPhoto {
-        // Save to file system and database
+    func savePhoto(_ image: UIImage, metadata: BuildingPhotoMetadata) async throws -> BuildingPhoto {
         let photoId = UUID().uuidString
         let fileName = "\(photoId).jpg"
         
-        // Create directory structure
-        let buildingDirectory = documentsDirectory
-            .appendingPathComponent("Buildings")
-            .appendingPathComponent(metadata.buildingId)
-            .appendingPathComponent("Photos")
-            .appendingPathComponent(metadata.spaceType)
+        // Create directory structure: /Evidence/YYYY/MM/DD/building_XX/
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy/MM/dd"
+        let datePath = dateFormatter.string(from: metadata.timestamp)
         
-        try FileManager.default.createDirectory(at: buildingDirectory, withIntermediateDirectories: true)
+        let photoDirectory = documentsDirectory
+            .appendingPathComponent("Evidence")
+            .appendingPathComponent(datePath)
+            .appendingPathComponent("building_\(metadata.buildingId)")
         
-        // Save image
-        let filePath = buildingDirectory.appendingPathComponent(fileName)
+        try FileManager.default.createDirectory(at: photoDirectory, withIntermediateDirectories: true)
         
-        if let data = image.jpegData(compressionQuality: 0.8) {
-            try data.write(to: filePath)
+        // Save full image
+        let filePath = photoDirectory.appendingPathComponent(fileName)
+        guard let imageData = image.jpegData(compressionQuality: compressionQuality) else {
+            throw PhotoError.compressionFailed
+        }
+        try imageData.write(to: filePath)
+        
+        // Create thumbnail
+        let thumbnailPath = photoDirectory.appendingPathComponent("thumb_\(fileName)")
+        if let thumbnail = image.preparingThumbnail(of: thumbnailSize),
+           let thumbData = thumbnail.jpegData(compressionQuality: 0.5) {
+            try thumbData.write(to: thumbnailPath)
         }
         
-        // Create database record
-        let photo = BuildingPhoto(
+        // Save to database
+        try await grdbManager.execute("""
+            INSERT INTO photo_evidence (
+                id, building_id, task_id, worker_id, 
+                local_path, thumbnail_path, file_size,
+                category, notes, has_issue, is_verified,
+                location_lat, location_lon, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            photoId,
+            metadata.buildingId,
+            metadata.taskId as Any,
+            metadata.workerId as Any,
+            filePath.path,
+            thumbnailPath.path,
+            imageData.count,
+            metadata.category.rawValue,
+            metadata.notes as Any,
+            0, // has_issue
+            0, // is_verified
+            metadata.location?.coordinate.latitude as Any,
+            metadata.location?.coordinate.longitude as Any,
+            ISO8601DateFormatter().string(from: metadata.timestamp)
+        ])
+        
+        return BuildingPhoto(
             id: photoId,
             buildingId: metadata.buildingId,
-            space: metadata.spaceType,
-            category: .all,
+            category: metadata.category,
             timestamp: metadata.timestamp,
-            uploadedBy: nil,
+            uploadedBy: metadata.workerId,
             notes: metadata.notes,
-            tags: [],
             localPath: filePath.path,
             remotePath: nil,
-            thumbnailPath: nil,
+            thumbnailPath: thumbnailPath.path,
             hasIssue: false,
             isVerified: false,
             hasLocation: metadata.location != nil,
-            location: metadata.location
+            location: metadata.location,
+            taskId: metadata.taskId,
+            fileSize: imageData.count
+        )
+    }
+    
+    func loadThumbnail(for photoId: String) async -> UIImage? {
+        let rows = try? await grdbManager.query(
+            "SELECT thumbnail_path FROM photo_evidence WHERE id = ?",
+            [photoId]
         )
         
-        return photo
+        guard let path = rows?.first?["thumbnail_path"] as? String else { return nil }
+        return UIImage(contentsOfFile: path)
     }
-}
-
-// MARK: - Utility Room Photo Organizer
-
-struct UtilityRoomPhotoOrganizer: View {
-    let building: CoreTypes.Building
-    @State private var utilityRooms: [UtilityRoom] = []
-    @State private var selectedRoom: UtilityRoom?
     
-    var body: some View {
-        List {
-            Section("Utility Spaces") {
-                ForEach(utilityRooms) { room in
-                    NavigationLink(destination: UtilityRoomDetail(room: room)) {
-                        HStack {
-                            Image(systemName: room.icon)
-                                .font(.title3)
-                                .foregroundColor(.blue)
-                                .frame(width: 40)
-                            
-                            VStack(alignment: .leading) {
-                                Text(room.name)
-                                    .font(.headline)
-                                
-                                Text("\(room.photoCount) photos")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            if room.hasRecentActivity {
-                                Circle()
-                                    .fill(Color.orange)
-                                    .frame(width: 8, height: 8)
-                            }
-                        }
-                    }
-                }
+    func loadFullImage(for photoId: String) async -> UIImage? {
+        let rows = try? await grdbManager.query(
+            "SELECT local_path FROM photo_evidence WHERE id = ?",
+            [photoId]
+        )
+        
+        guard let path = rows?.first?["local_path"] as? String else { return nil }
+        return UIImage(contentsOfFile: path)
+    }
+    
+    func markPhotoAsIssue(_ photoId: String) async {
+        try? await grdbManager.execute(
+            "UPDATE photo_evidence SET has_issue = 1 WHERE id = ?",
+            [photoId]
+        )
+    }
+    
+    func deletePhoto(_ photoId: String) async {
+        // Get file paths
+        let rows = try? await grdbManager.query(
+            "SELECT local_path, thumbnail_path FROM photo_evidence WHERE id = ?",
+            [photoId]
+        )
+        
+        if let row = rows?.first {
+            // Delete files
+            if let path = row["local_path"] as? String {
+                try? FileManager.default.removeItem(atPath: path)
             }
-            
-            Section {
-                Button(action: addUtilityRoom) {
-                    Label("Add Utility Room", systemImage: "plus.circle.fill")
-                        .foregroundColor(.blue)
-                }
+            if let thumbPath = row["thumbnail_path"] as? String {
+                try? FileManager.default.removeItem(atPath: thumbPath)
             }
         }
-        .navigationTitle("Utility Rooms")
-        .task {
-            loadUtilityRooms()
+        
+        // Delete database record
+        try? await grdbManager.execute(
+            "DELETE FROM photo_evidence WHERE id = ?",
+            [photoId]
+        )
+    }
+}
+
+// MARK: - Error Types
+
+enum PhotoError: LocalizedError {
+    case compressionFailed
+    case saveFailed
+    case loadFailed
+    case deleteFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .compressionFailed:
+            return "Failed to compress image"
+        case .saveFailed:
+            return "Failed to save photo"
+        case .loadFailed:
+            return "Failed to load photo"
+        case .deleteFailed:
+            return "Failed to delete photo"
         }
     }
-    
-    private func loadUtilityRooms() {
-        // Load utility rooms for building
-        utilityRooms = [
-            UtilityRoom(id: "1", name: "Boiler Room", icon: "flame.fill", photoCount: 12, hasRecentActivity: true),
-            UtilityRoom(id: "2", name: "Electrical Room", icon: "bolt.fill", photoCount: 8, hasRecentActivity: false),
-            UtilityRoom(id: "3", name: "Water Meter Room", icon: "drop.fill", photoCount: 5, hasRecentActivity: false),
-            UtilityRoom(id: "4", name: "Trash Room", icon: "trash.fill", photoCount: 23, hasRecentActivity: true),
-            UtilityRoom(id: "5", name: "Storage Room", icon: "archivebox.fill", photoCount: 15, hasRecentActivity: false)
-        ]
-    }
-    
-    private func addUtilityRoom() {
-        // Add new utility room
-    }
 }
 
-struct UtilityRoom: Identifiable {
-    let id: String
-    let name: String
-    let icon: String
-    let photoCount: Int
-    let hasRecentActivity: Bool
-}
+// MARK: - Utility Room Support
 
-struct UtilityRoomDetail: View {
-    let room: UtilityRoom
+struct UtilityRoomPhotoSection: View {
+    let buildingId: String
+    let buildingName: String
     
     var body: some View {
-        BuildingPhotoGallery(building: CoreTypes.Building(
-            id: "temp",
-            name: room.name,
-            address: "",
-            type: .commercial,
-            size: 0,
-            floors: 0,
-            units: 0,
-            yearBuilt: 0,
-            managementCompany: nil,
-            primaryContact: nil,
-            emergencyContact: nil,
-            accessInstructions: nil,
-            specialNotes: nil,
-            amenities: [],
-            complianceStatus: .unknown,
-            lastInspectionDate: nil,
-            createdAt: Date(),
-            updatedAt: Date()
-        ))
+        NavigationLink {
+            BuildingPhotoGallery(
+                buildingId: buildingId,
+                buildingName: buildingName
+            )
+        } label: {
+            HStack {
+                Image(systemName: "photo.on.rectangle")
+                    .font(.title2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                
+                VStack(alignment: .leading) {
+                    Text("Building Photos")
+                        .font(.headline)
+                    Text("Document maintenance and issues")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+        }
     }
 }
 
-// MARK: - Previews
+// MARK: - Preview Support
 
 #Preview("Photo Gallery") {
     NavigationView {
-        BuildingPhotoGallery(building: PreviewData.sampleBuilding)
+        BuildingPhotoGallery(
+            buildingId: "14",
+            buildingName: "Rubin Museum"
+        )
     }
 }
 
-#Preview("Utility Rooms") {
-    NavigationView {
-        UtilityRoomPhotoOrganizer(building: PreviewData.sampleBuilding)
-    }
+#Preview("Photo Capture") {
+    BuildingPhotoCaptureView(
+        buildingId: "14",
+        buildingName: "Rubin Museum"
+    ) { _ in }
 }
