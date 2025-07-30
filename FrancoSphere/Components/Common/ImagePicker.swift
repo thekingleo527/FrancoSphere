@@ -7,13 +7,18 @@
 //  📍 GEOTAGGING: Location-aware photos for compliance
 //  ✅ PHASE 3 READY: Integrated with PhotoEvidenceService
 //
+//  Note: Renamed components to avoid conflicts:
+//  - BuildingPhoto → FrancoBuildingPhoto
+//  - PhotoGridItem → FrancoPhotoGridItem
+//  - BuildingPhotoGallery → FrancoBuildingPhotoGallery
+//
 
 import SwiftUI
 import PhotosUI
 import CoreLocation
 import Combine
 
-// MARK: - Image Picker
+// MARK: - Basic Image Picker (Existing - Enhanced)
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
@@ -65,7 +70,7 @@ struct ImagePicker: UIViewControllerRepresentable {
 
 // MARK: - Photo Picker (Multiple Selection)
 
-struct PhotoPicker: View {
+struct FrancoPhotoPicker: View {
     @Binding var selectedImages: [UIImage]
     @State private var selectedItems: [PhotosPickerItem] = []
     @Environment(\.dismiss) private var dismiss
@@ -122,15 +127,14 @@ struct PhotoPicker: View {
     }
 }
 
-// MARK: - Building Photo Gallery
+// MARK: - Building Photo Gallery (Renamed to avoid conflict)
 
-struct BuildingPhotoGallery: View {
+struct FrancoBuildingPhotoGallery: View {
     let buildingId: String
-    let buildingName: String
-    @StateObject private var viewModel = PhotoGalleryViewModel()
-    @State private var selectedCategory = PhotoCategory.all
+    @StateObject private var viewModel = FrancoPhotoGalleryViewModel()
+    @State private var selectedCategory = FrancoPhotoCategory.all
     @State private var showingFullScreen = false
-    @State private var selectedPhoto: BuildingPhoto?
+    @State private var selectedPhoto: FrancoBuildingPhoto?
     @State private var showingAddPhoto = false
     
     let columns = [
@@ -144,8 +148,8 @@ struct BuildingPhotoGallery: View {
             // Category filter
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(PhotoCategory.allCases, id: \.self) { category in
-                        CategoryPill(
+                    ForEach(FrancoPhotoCategory.allCases, id: \.self) { category in
+                        FrancoCategoryPill(
                             category: category,
                             isSelected: selectedCategory == category,
                             count: viewModel.photoCount(for: category)
@@ -182,7 +186,7 @@ struct BuildingPhotoGallery: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 2) {
                         ForEach(viewModel.filteredPhotos(for: selectedCategory)) { photo in
-                            PhotoGridItem(photo: photo) {
+                            FrancoPhotoGridItem(photo: photo) {
                                 selectedPhoto = photo
                                 showingFullScreen = true
                             }
@@ -213,15 +217,14 @@ struct BuildingPhotoGallery: View {
         }
         .fullScreenCover(isPresented: $showingFullScreen) {
             if let photo = selectedPhoto {
-                PhotoDetailView(photo: photo)
+                FrancoPhotoDetailView(photo: photo)
             }
         }
         .sheet(isPresented: $showingAddPhoto) {
-            BuildingPhotoCaptureView(
-                buildingId: buildingId,
-                buildingName: buildingName
-            ) { image in
-                await viewModel.savePhoto(image, buildingId: buildingId)
+            FrancoBuildingPhotoCaptureView(
+                buildingId: buildingId
+            ) { image, category, notes in
+                await viewModel.savePhoto(image, buildingId: buildingId, category: category, notes: notes)
             }
         }
     }
@@ -229,16 +232,40 @@ struct BuildingPhotoGallery: View {
 
 // MARK: - Building Photo Capture View
 
-struct BuildingPhotoCaptureView: View {
+struct FrancoBuildingPhotoCaptureView: View {
     let buildingId: String
-    let buildingName: String
-    let onCapture: (UIImage) async -> Void
+    let onCapture: (UIImage, FrancoPhotoCategory, String) async -> Void
     
     @State private var capturedImage: UIImage?
-    @State private var category = PhotoCategory.all
+    @State private var category = FrancoPhotoCategory.all
     @State private var notes = ""
     @State private var showingCamera = true
+    @StateObject private var locationManager = LocationManager()
     @Environment(\.dismiss) private var dismiss
+    
+    // Get building name from CanonicalIDs
+    private var buildingName: String {
+        switch buildingId {
+        case "14": return "Rubin Museum"
+        case "1": return "12 West 18th Street"
+        case "2": return "36 Walker Street"
+        case "3": return "41 Elizabeth Street"
+        case "4": return "68 Perry Street"
+        case "5": return "104 Franklin Street"
+        case "6": return "112 West 17th Street"
+        case "7": return "117 West 17th Street"
+        case "8": return "123 1st Avenue"
+        case "9": return "131 Perry Street"
+        case "10": return "133 East 15th Street"
+        case "11": return "135 West 17th Street"
+        case "12": return "136 West 17th Street"
+        case "13": return "138 West 17th Street"
+        case "15": return "29-31 East 20th Street"
+        case "16": return "Stuyvesant Cove Park"
+        case "17": return "178 Spring Street"
+        default: return "Building #\(buildingId)"
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -256,7 +283,7 @@ struct BuildingPhotoCaptureView: View {
                     Form {
                         Section("Details") {
                             Picker("Category", selection: $category) {
-                                ForEach(PhotoCategory.allCases, id: \.self) { cat in
+                                ForEach(FrancoPhotoCategory.allCases, id: \.self) { cat in
                                     Label(cat.rawValue, systemImage: cat.icon)
                                         .tag(cat)
                                 }
@@ -304,9 +331,9 @@ struct BuildingPhotoCaptureView: View {
     }
 }
 
-// MARK: - Photo Category
+// MARK: - Photo Category (Renamed)
 
-enum PhotoCategory: String, CaseIterable {
+enum FrancoPhotoCategory: String, CaseIterable {
     case all = "All"
     case exterior = "Exterior"
     case interior = "Interior"
@@ -334,8 +361,8 @@ enum PhotoCategory: String, CaseIterable {
 
 // MARK: - Category Pill
 
-struct CategoryPill: View {
-    let category: PhotoCategory
+struct FrancoCategoryPill: View {
+    let category: FrancoPhotoCategory
     let isSelected: Bool
     let count: Int
     let action: () -> Void
@@ -372,10 +399,10 @@ struct CategoryPill: View {
     }
 }
 
-// MARK: - Photo Grid Item
+// MARK: - Photo Grid Item (Renamed)
 
-struct PhotoGridItem: View {
-    let photo: BuildingPhoto
+struct FrancoPhotoGridItem: View {
+    let photo: FrancoBuildingPhoto
     let onTap: () -> Void
     @State private var thumbnail: UIImage?
     
@@ -432,15 +459,15 @@ struct PhotoGridItem: View {
         }
     }
     
-    private func loadThumbnail(for photo: BuildingPhoto) async -> UIImage? {
-        return await PhotoStorageService.shared.loadThumbnail(for: photo.id)
+    private func loadThumbnail(for photo: FrancoBuildingPhoto) async -> UIImage? {
+        return await FrancoPhotoStorageService.shared.loadThumbnail(for: photo.id)
     }
 }
 
 // MARK: - Photo Detail View
 
-struct PhotoDetailView: View {
-    let photo: BuildingPhoto
+struct FrancoPhotoDetailView: View {
+    let photo: FrancoBuildingPhoto
     @Environment(\.dismiss) private var dismiss
     @State private var fullImage: UIImage?
     @State private var showingActions = false
@@ -452,7 +479,7 @@ struct PhotoDetailView: View {
                 Color.black.ignoresSafeArea()
                 
                 if let image = fullImage {
-                    PhotoZoomView(image: image, isZoomed: $isZoomed)
+                    FrancoPhotoZoomView(image: image, isZoomed: $isZoomed)
                 } else {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -488,7 +515,7 @@ struct PhotoDetailView: View {
                         Spacer()
                         
                         // Photo info
-                        PhotoInfoOverlay(photo: photo)
+                        FrancoPhotoInfoOverlay(photo: photo)
                     }
                 }
             }
@@ -496,7 +523,7 @@ struct PhotoDetailView: View {
             .statusBar(hidden: true)
         }
         .task {
-            fullImage = await PhotoStorageService.shared.loadFullImage(for: photo.id)
+            fullImage = await FrancoPhotoStorageService.shared.loadFullImage(for: photo.id)
         }
         .confirmationDialog("Photo Actions", isPresented: $showingActions) {
             Button("Share") { sharePhoto() }
@@ -530,13 +557,13 @@ struct PhotoDetailView: View {
     
     private func markAsIssue() {
         Task {
-            await PhotoStorageService.shared.markPhotoAsIssue(photo.id)
+            await FrancoPhotoStorageService.shared.markPhotoAsIssue(photo.id)
         }
     }
     
     private func deletePhoto() {
         Task {
-            await PhotoStorageService.shared.deletePhoto(photo.id)
+            await FrancoPhotoStorageService.shared.deletePhoto(photo.id)
             dismiss()
         }
     }
@@ -544,7 +571,7 @@ struct PhotoDetailView: View {
 
 // MARK: - Photo Zoom View
 
-struct PhotoZoomView: View {
+struct FrancoPhotoZoomView: View {
     let image: UIImage
     @Binding var isZoomed: Bool
     @State private var scale: CGFloat = 1.0
@@ -613,8 +640,8 @@ struct PhotoZoomView: View {
 
 // MARK: - Photo Info Overlay
 
-struct PhotoInfoOverlay: View {
-    let photo: BuildingPhoto
+struct FrancoPhotoInfoOverlay: View {
+    let photo: FrancoBuildingPhoto
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -684,20 +711,27 @@ struct PhotoInfoOverlay: View {
     }
 }
 
-// MARK: - View Model
+// MARK: - View Model (Renamed)
 
 @MainActor
-class PhotoGalleryViewModel: ObservableObject {
-    @Published var photos: [BuildingPhoto] = []
+class FrancoPhotoGalleryViewModel: ObservableObject {
+    @Published var photos: [FrancoBuildingPhoto] = []
     @Published var isLoading = false
     @Published var error: Error?
+    
+    private let locationManager = LocationManager()
+    
+    init() {
+        // Request location permission when view model is created
+        locationManager.requestLocation()
+    }
     
     func loadPhotos(for buildingId: String) async {
         isLoading = true
         
         do {
             // Load photos from database via service
-            photos = try await PhotoStorageService.shared.loadPhotos(for: buildingId)
+            photos = try await FrancoPhotoStorageService.shared.loadPhotos(for: buildingId)
         } catch {
             self.error = error
             print("❌ Failed to load photos: \(error)")
@@ -708,17 +742,17 @@ class PhotoGalleryViewModel: ObservableObject {
     
     func savePhoto(_ image: UIImage, buildingId: String) async {
         do {
-            let metadata = BuildingPhotoMetadata(
+            let metadata = FrancoBuildingPhotoMetadata(
                 buildingId: buildingId,
                 category: .all,
                 notes: nil,
-                location: LocationManager().location,
+                location: locationManager.location,  // Will be nil if not available
                 taskId: nil,
                 workerId: NewAuthManager.shared.workerId,
                 timestamp: Date()
             )
             
-            let photo = try await PhotoStorageService.shared.savePhoto(image, metadata: metadata)
+            let photo = try await FrancoPhotoStorageService.shared.savePhoto(image, metadata: metadata)
             photos.append(photo)
         } catch {
             self.error = error
@@ -726,14 +760,14 @@ class PhotoGalleryViewModel: ObservableObject {
         }
     }
     
-    func photoCount(for category: PhotoCategory) -> Int {
+    func photoCount(for category: FrancoPhotoCategory) -> Int {
         if category == .all {
             return photos.count
         }
         return photos.filter { $0.category == category }.count
     }
     
-    func filteredPhotos(for category: PhotoCategory) -> [BuildingPhoto] {
+    func filteredPhotos(for category: FrancoPhotoCategory) -> [FrancoBuildingPhoto] {
         if category == .all {
             return photos
         }
@@ -741,12 +775,12 @@ class PhotoGalleryViewModel: ObservableObject {
     }
 }
 
-// MARK: - Data Models
+// MARK: - Data Models (Renamed to avoid conflicts)
 
-struct BuildingPhoto: Identifiable {
+struct FrancoBuildingPhoto: Identifiable {
     let id: String
     let buildingId: String
-    let category: PhotoCategory
+    let category: FrancoPhotoCategory
     let timestamp: Date
     let uploadedBy: String?
     let notes: String?
@@ -761,9 +795,9 @@ struct BuildingPhoto: Identifiable {
     let fileSize: Int?
 }
 
-struct BuildingPhotoMetadata {
+struct FrancoBuildingPhotoMetadata {
     let buildingId: String
-    let category: PhotoCategory
+    let category: FrancoPhotoCategory
     let notes: String?
     let location: CLLocation?
     let taskId: String?
@@ -771,17 +805,17 @@ struct BuildingPhotoMetadata {
     let timestamp: Date
 }
 
-// MARK: - Photo Storage Service (Phase 3 Integration)
+// MARK: - Photo Storage Service (Phase 3 Integration - Renamed)
 
-actor PhotoStorageService {
-    static let shared = PhotoStorageService()
+actor FrancoPhotoStorageService {
+    static let shared = FrancoPhotoStorageService()
     
     private let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     private let grdbManager = GRDBManager.shared
     private let compressionQuality: CGFloat = 0.7
     private let thumbnailSize = CGSize(width: 200, height: 200)
     
-    func loadPhotos(for buildingId: String) async throws -> [BuildingPhoto] {
+    func loadPhotos(for buildingId: String) async throws -> [FrancoBuildingPhoto] {
         let rows = try await grdbManager.query("""
             SELECT * FROM photo_evidence 
             WHERE building_id = ? 
@@ -797,10 +831,10 @@ actor PhotoStorageService {
                 return nil
             }
             
-            return BuildingPhoto(
+            return FrancoBuildingPhoto(
                 id: id,
                 buildingId: buildingId,
-                category: PhotoCategory(rawValue: row["category"] as? String ?? "") ?? .all,
+                category: FrancoPhotoCategory(rawValue: row["category"] as? String ?? "") ?? .all,
                 timestamp: date,
                 uploadedBy: row["worker_id"] as? String,
                 notes: row["notes"] as? String,
@@ -817,7 +851,7 @@ actor PhotoStorageService {
         }
     }
     
-    func savePhoto(_ image: UIImage, metadata: BuildingPhotoMetadata) async throws -> BuildingPhoto {
+    func savePhoto(_ image: UIImage, metadata: FrancoBuildingPhotoMetadata) async throws -> FrancoBuildingPhoto {
         let photoId = UUID().uuidString
         let fileName = "\(photoId).jpg"
         
@@ -836,7 +870,7 @@ actor PhotoStorageService {
         // Save full image
         let filePath = photoDirectory.appendingPathComponent(fileName)
         guard let imageData = image.jpegData(compressionQuality: compressionQuality) else {
-            throw PhotoError.compressionFailed
+            throw FrancoPhotoError.compressionFailed
         }
         try imageData.write(to: filePath)
         
@@ -872,7 +906,7 @@ actor PhotoStorageService {
             ISO8601DateFormatter().string(from: metadata.timestamp)
         ])
         
-        return BuildingPhoto(
+        return FrancoBuildingPhoto(
             id: photoId,
             buildingId: metadata.buildingId,
             category: metadata.category,
@@ -945,7 +979,7 @@ actor PhotoStorageService {
 
 // MARK: - Error Types
 
-enum PhotoError: LocalizedError {
+enum FrancoPhotoError: LocalizedError {
     case compressionFailed
     case saveFailed
     case loadFailed
@@ -967,16 +1001,12 @@ enum PhotoError: LocalizedError {
 
 // MARK: - Utility Room Support
 
-struct UtilityRoomPhotoSection: View {
+struct FrancoUtilityRoomPhotoSection: View {
     let buildingId: String
-    let buildingName: String
     
     var body: some View {
         NavigationLink {
-            BuildingPhotoGallery(
-                buildingId: buildingId,
-                buildingName: buildingName
-            )
+            FrancoBuildingPhotoGallery(buildingId: buildingId)
         } label: {
             HStack {
                 Image(systemName: "photo.on.rectangle")
@@ -1007,16 +1037,10 @@ struct UtilityRoomPhotoSection: View {
 
 #Preview("Photo Gallery") {
     NavigationView {
-        BuildingPhotoGallery(
-            buildingId: "14",
-            buildingName: "Rubin Museum"
-        )
+        FrancoBuildingPhotoGallery(buildingId: "14")
     }
 }
 
 #Preview("Photo Capture") {
-    BuildingPhotoCaptureView(
-        buildingId: "14",
-        buildingName: "Rubin Museum"
-    ) { _ in }
+    FrancoBuildingPhotoCaptureView(buildingId: "14") { _ in }
 }
