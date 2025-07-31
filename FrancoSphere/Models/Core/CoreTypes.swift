@@ -11,6 +11,8 @@
 //  ✅ FIXED: Removed duplicate rawValue property from TaskUrgency
 //  ✅ FIXED: Removed all duplicate properties from InventoryItem
 //  ✅ ORGANIZED: Clean architecture with data types only
+//  ✅ STREAM A FIXED: Removed redundant rawValue from TaskFrequency
+//  ✅ STREAM A FIXED: Removed duplicate stockLevel and needsRestock from InventoryItem
 //
 //  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
 //  Usage: FrancoSphereDesign.EnumColors.taskStatus(.completed)
@@ -630,6 +632,7 @@ public struct CoreTypes {
     }
     
     // MARK: - Task Frequency
+    // ✅ STREAM A FIX: Removed redundant rawValue property and init
     public enum TaskFrequency: String, Codable, CaseIterable {
         case daily = "daily"
         case weekly = "weekly"
@@ -638,32 +641,6 @@ public struct CoreTypes {
         case quarterly = "quarterly"
         case annual = "annual"
         case onDemand = "on-demand"
-        
-        // Add public to rawValue to fix the error
-        public var rawValue: String {
-            switch self {
-            case .daily: return "daily"
-            case .weekly: return "weekly"
-            case .biweekly: return "bi-weekly"
-            case .monthly: return "monthly"
-            case .quarterly: return "quarterly"
-            case .annual: return "annual"
-            case .onDemand: return "on-demand"
-            }
-        }
-        
-        public init?(rawValue: String) {
-            switch rawValue {
-            case "daily": self = .daily
-            case "weekly": self = .weekly
-            case "bi-weekly": self = .biweekly
-            case "monthly": self = .monthly
-            case "quarterly": self = .quarterly
-            case "annual": self = .annual
-            case "on-demand": self = .onDemand
-            default: return nil
-            }
-        }
         
         public var displayName: String {
             switch self {
@@ -1232,6 +1209,7 @@ public struct CoreTypes {
         case other = "Other"
     }
     
+    // ✅ STREAM A FIX: Removed duplicate properties
     public struct InventoryItem: Codable, Identifiable {
         public let id: String
         public let name: String
@@ -1250,8 +1228,6 @@ public struct CoreTypes {
         public var quantity: Int { currentStock }
         public var minThreshold: Int { minimumStock }
         public var restockStatus: RestockStatus { status }
-        // stockLevel is a computed property alias for stockPercentage
-        public var stockLevel: Double { stockPercentage }
         
         public init(
             id: String = UUID().uuidString,
@@ -1289,6 +1265,9 @@ public struct CoreTypes {
         public var stockPercentage: Double {
             maxStock > 0 ? Double(currentStock) / Double(maxStock) : 0
         }
+        
+        // Alias for compatibility
+        public var stockLevel: Double { stockPercentage }
     }
     
     // MARK: - AI Types

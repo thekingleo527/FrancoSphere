@@ -9,6 +9,7 @@
 //  ✅ FUTURE READY: Prepared for AI assistance and advanced features
 //  ✅ COMPILATION FIXED: All errors resolved for Phase 2
 //  ✅ UPDATED: Using real PhotoEvidenceServiceV6 instead of mock
+//  ✅ STREAM A MODIFIED: Now loads worker capabilities to support UI adaptation
 //
 
 import Foundation
@@ -39,6 +40,9 @@ public class TaskDetailViewModel: ObservableObject {
     @Published var buildingCoordinate: CLLocationCoordinate2D?
     @Published var workerName: String = "Unassigned"
     @Published var workerProfile: CoreTypes.WorkerProfile?
+    
+    // ✅ STREAM A ADDITION: To inform the view which UI to render
+    @Published var workerCapabilities: WorkerDashboardViewModel.WorkerCapabilities?
     
     // Photo Evidence
     @Published var capturedPhoto: UIImage?
@@ -86,6 +90,12 @@ public class TaskDetailViewModel: ObservableObject {
     private var currentTask: CoreTypes.ContextualTask?
     private var taskStartTime: Date?
     private var photoCompressionQuality: CGFloat = 0.7
+    
+    // MARK: - Computed Properties
+    
+    public var startTime: Date? {
+        taskStartTime
+    }
     
     // MARK: - Enums
     
@@ -196,6 +206,12 @@ public class TaskDetailViewModel: ObservableObject {
         // Load additional data
         await loadBuildingInfo()
         await loadWorkerInfo()
+        
+        // ✅ STREAM A MODIFICATION: Load capabilities for the assigned worker
+        if let workerId = taskWorkerId {
+            await loadWorkerCapabilities(workerId: workerId)
+        }
+        
         await checkVerificationRequirements()
         
         // Future Phase: Load AI suggestions
@@ -270,8 +286,10 @@ public class TaskDetailViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            // Validate photo requirement
-            if requiresPhotoEvidence() && capturedPhoto == nil {
+            // Validate photo requirement based on capabilities
+            if requiresPhotoEvidence() &&
+               (workerCapabilities?.canUploadPhotos ?? true) &&
+               capturedPhoto == nil {
                 throw TaskError.photoRequired
             }
             
@@ -356,6 +374,46 @@ public class TaskDetailViewModel: ObservableObject {
         }
         
         isSubmitting = false
+    }
+    
+    // MARK: - Worker Capabilities
+    
+    private func loadWorkerCapabilities(workerId: String) async {
+        // ✅ STREAM A ADDITION: Fetches capabilities for the worker assigned to this task
+        do {
+            let rows = try await grdbManager.query("SELECT * FROM worker_capabilities WHERE worker_id = ?", [workerId])
+            if let row = rows.first {
+                self.workerCapabilities = WorkerDashboardViewModel.WorkerCapabilities(
+                    canUploadPhotos: (row["can_upload_photos"] as? Int64 ?? 1) == 1,
+                    canAddNotes: (row["can_add_notes"] as? Int64 ?? 1) == 1,
+                    canViewMap: (row["can_view_map"] as? Int64 ?? 1) == 1,
+                    canAddEmergencyTasks: (row["can_add_emergency_tasks"] as? Int64 ?? 0) == 1,
+                    requiresPhotoForSanitation: (row["requires_photo_for_sanitation"] as? Int64 ?? 1) == 1,
+                    simplifiedInterface: (row["simplified_interface"] as? Int64 ?? 0) == 1
+                )
+            } else {
+                // Fallback to default capabilities if none are found in the DB
+                self.workerCapabilities = WorkerDashboardViewModel.WorkerCapabilities(
+                    canUploadPhotos: true,
+                    canAddNotes: true,
+                    canViewMap: true,
+                    canAddEmergencyTasks: false,
+                    requiresPhotoForSanitation: true,
+                    simplifiedInterface: false
+                )
+            }
+        } catch {
+            print("❌ Failed to load worker capabilities for task detail: \(error)")
+            // Use default capabilities on error
+            self.workerCapabilities = WorkerDashboardViewModel.WorkerCapabilities(
+                canUploadPhotos: true,
+                canAddNotes: true,
+                canViewMap: true,
+                canAddEmergencyTasks: false,
+                requiresPhotoForSanitation: true,
+                simplifiedInterface: false
+            )
+        }
     }
     
     // MARK: - Private Methods
@@ -507,6 +565,12 @@ public class TaskDetailViewModel: ObservableObject {
     
     private func requiresPhotoEvidence() -> Bool {
         guard let category = taskCategory else { return false }
+        
+        // Check worker capabilities for photo requirements
+        let canUploadPhotos = workerCapabilities?.canUploadPhotos ?? true
+        if !canUploadPhotos {
+            return false
+        }
         
         switch category {
         case .cleaning, .sanitation, .maintenance, .repair:

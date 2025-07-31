@@ -7,6 +7,8 @@
 //  ✅ ENHANCED: Proper async handling
 //  ✅ FIXED: Added missing enum cases
 //  ✅ FIXED: Removed duplicate code and declarations
+//  ✅ STREAM A MODIFIED: Added real database lookup for WorkerCapabilities
+//  ✅ STREAM A MODIFIED: Added Spanish localization support
 //
 
 import Foundation
@@ -70,6 +72,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
     private let weatherService = WeatherDataAdapter.shared
+    private let grdbManager = GRDBManager.shared // ✅ STREAM A ADDITION
     
     // Create LocationManager instance instead of using .shared
     @ObservedObject private var locationManager = LocationManager()
@@ -82,6 +85,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     // MARK: - Nested Types
     
+    // This struct remains a local representation of capabilities for the view
     public struct WorkerCapabilities {
         let canUploadPhotos: Bool
         let canAddNotes: Bool
@@ -111,20 +115,18 @@ public class WorkerDashboardViewModel: ObservableObject {
     public func loadInitialData() async {
         await setLoadingState(true)
         
-        // Get current user - check if this method exists or use the correct one
         guard let user = authManager.currentUser else {
-            await setError("Authentication required")
+            // ✅ STREAM A MODIFICATION: Use Spanish-ready, user-friendly error message
+            await setError(NSLocalizedString("Authentication required", comment: "Error message when user is not logged in"))
             return
         }
         
         currentWorkerId = user.workerId
         
         do {
-            // Load worker profile first
+            // Load worker profile and capabilities first, as they drive UI decisions
             await loadWorkerProfile(workerId: user.workerId)
-            
-            // Load worker capabilities
-            await loadWorkerCapabilities(workerId: user.workerId)
+            await loadWorkerCapabilities(workerId: user.workerId) // This is now a real DB call
             
             // Load context for worker
             try await contextEngine.loadContext(for: user.workerId)
@@ -174,10 +176,12 @@ public class WorkerDashboardViewModel: ObservableObject {
             dashboardSyncService.broadcastWorkerUpdate(update)
             
             await setLoadingState(false)
-            print("✅ Worker dashboard loaded: \(assignedBuildings.count) buildings, \(todaysTasks.count) tasks")
+            print("✅ Worker dashboard loaded with capabilities.")
             
         } catch {
-            await setError("Failed to load dashboard: \(error.localizedDescription)")
+            // ✅ STREAM A MODIFICATION: More specific error handling
+            let localizedError = NSLocalizedString("Failed to load dashboard data. Please check your connection and try again.", comment: "Generic dashboard loading error")
+            await setError("\(localizedError) (\(error.localizedDescription))")
             print("❌ Worker dashboard load failed: \(error)")
         }
     }
@@ -185,18 +189,46 @@ public class WorkerDashboardViewModel: ObservableObject {
     // MARK: - Worker Capabilities
     
     private func loadWorkerCapabilities(workerId: String) async {
-        // Load from database or use defaults based on worker
-        let isSimplified = workerId == "5" // Mercedes uses simplified UI
-        let canAddEmergency = workerProfile?.role == .admin || workerProfile?.role == .manager
-        
-        workerCapabilities = WorkerCapabilities(
-            canUploadPhotos: !isSimplified,
-            canAddNotes: !isSimplified,
-            canViewMap: true,
-            canAddEmergencyTasks: canAddEmergency,
-            requiresPhotoForSanitation: true,
-            simplifiedInterface: isSimplified
-        )
+        // ✅ STREAM A MODIFICATION: This now fetches real data from the database
+        do {
+            let rows = try await grdbManager.query("SELECT * FROM worker_capabilities WHERE worker_id = ?", [workerId])
+            if let row = rows.first {
+                workerCapabilities = WorkerCapabilities(
+                    canUploadPhotos: (row["can_upload_photos"] as? Int64 ?? 1) == 1,
+                    canAddNotes: (row["can_add_notes"] as? Int64 ?? 1) == 1,
+                    canViewMap: (row["can_view_map"] as? Int64 ?? 1) == 1,
+                    canAddEmergencyTasks: (row["can_add_emergency_tasks"] as? Int64 ?? 0) == 1,
+                    requiresPhotoForSanitation: (row["requires_photo_for_sanitation"] as? Int64 ?? 1) == 1,
+                    simplifiedInterface: (row["simplified_interface"] as? Int64 ?? 0) == 1
+                )
+                print("✅ Capabilities loaded for worker \(workerId). Simplified UI: \(workerCapabilities?.simplifiedInterface ?? false)")
+            } else {
+                // Fallback to default capabilities if none are found in the DB
+                print("⚠️ No capabilities found for worker \(workerId), using default values.")
+                workerCapabilities = WorkerCapabilities(
+                    canUploadPhotos: true,
+                    canAddNotes: true,
+                    canViewMap: true,
+                    canAddEmergencyTasks: false,
+                    requiresPhotoForSanitation: true,
+                    simplifiedInterface: false
+                )
+            }
+        } catch {
+            let errorString = NSLocalizedString("Could not load worker settings.", comment: "Error for failing to load capabilities")
+            await setError("\(errorString) (\(error.localizedDescription))")
+            print("❌ Failed to load worker capabilities: \(error)")
+            
+            // Set default capabilities on error
+            workerCapabilities = WorkerCapabilities(
+                canUploadPhotos: true,
+                canAddNotes: true,
+                canViewMap: true,
+                canAddEmergencyTasks: false,
+                requiresPhotoForSanitation: true,
+                simplifiedInterface: false
+            )
+        }
     }
     
     // MARK: - Weather Management
@@ -207,7 +239,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         weatherData = CoreTypes.WeatherData(
             id: UUID().uuidString,
             temperature: 72,
-            condition: "Partly Cloudy",
+            condition: NSLocalizedString("Partly Cloudy", comment: "Weather condition"),
             humidity: 0.65,
             windSpeed: 10,
             outdoorWorkRisk: .low,
@@ -298,7 +330,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             
         } catch {
             dashboardSyncStatus = .failed
-            await setError("Failed to clock in: \(error.localizedDescription)")
+            let errorMessage = NSLocalizedString("Failed to clock in", comment: "Clock in error message")
+            await setError("\(errorMessage): \(error.localizedDescription)")
             print("❌ Clock-in failed: \(error)")
         }
     }
@@ -345,7 +378,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             
         } catch {
             dashboardSyncStatus = .failed
-            await setError("Failed to clock out: \(error.localizedDescription)")
+            let errorMessage = NSLocalizedString("Failed to clock out", comment: "Clock out error message")
+            await setError("\(errorMessage): \(error.localizedDescription)")
         }
     }
     
@@ -385,8 +419,9 @@ public class WorkerDashboardViewModel: ObservableObject {
         dashboardSyncStatus = .syncing
         
         // Create evidence if not provided
+        let taskCompletedText = NSLocalizedString("Task completed via Worker Dashboard", comment: "Task completion message")
         let taskEvidence = evidence ?? CoreTypes.ActionEvidence(
-            description: "Task completed via Worker Dashboard: \(task.title)",
+            description: "\(taskCompletedText): \(task.title)",
             photoURLs: [],
             timestamp: Date()
         )
@@ -494,7 +529,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             
         } catch {
             dashboardSyncStatus = .failed
-            await setError("Failed to refresh data: \(error.localizedDescription)")
+            let errorMessage = NSLocalizedString("Failed to refresh data", comment: "Refresh error message")
+            await setError("\(errorMessage): \(error.localizedDescription)")
         }
     }
     
@@ -621,6 +657,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     }
     
     private func setError(_ message: String) async {
+        // This is now the single point for setting errors, ensuring consistency
         errorMessage = message
         isLoading = false
         dashboardSyncStatus = .failed
@@ -791,8 +828,8 @@ extension WorkerDashboardViewModel {
         viewModel.todaysTasks = [
             CoreTypes.ContextualTask(
                 id: "task1",
-                title: "HVAC Inspection",
-                description: "Check HVAC system in main gallery",
+                title: NSLocalizedString("HVAC Inspection", comment: "Task title"),
+                description: NSLocalizedString("Check HVAC system in main gallery", comment: "Task description"),
                 isCompleted: false,
                 completedDate: nil,
                 dueDate: Date().addingTimeInterval(3600),
@@ -813,7 +850,7 @@ extension WorkerDashboardViewModel {
         viewModel.weatherData = CoreTypes.WeatherData(
             id: UUID().uuidString,
             temperature: 32,
-            condition: "Snowy",
+            condition: NSLocalizedString("Snowy", comment: "Weather condition"),
             humidity: 0.85,
             windSpeed: 15,
             outdoorWorkRisk: .high,

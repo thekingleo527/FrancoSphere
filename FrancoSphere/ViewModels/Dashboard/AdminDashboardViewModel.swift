@@ -8,6 +8,8 @@
 //  ✅ READY: Full cross-dashboard integration with photo support
 //  ✅ FIXED: Removed duplicate extension causing syntax error
 //  ✅ FIXED: Removed duplicate isOverdue property (already in CoreTypes)
+//  ✅ STREAM A MODIFIED: Added Spanish localization support
+//  ✅ STREAM A MODIFIED: Added worker capabilities checking
 //
 
 import Foundation
@@ -50,6 +52,9 @@ class AdminDashboardViewModel: ObservableObject {
     @Published var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
     @Published var crossDashboardUpdates: [CoreTypes.DashboardUpdate] = []
     
+    // MARK: - Worker Capabilities (Stream A Addition)
+    @Published var workerCapabilities: [String: WorkerCapabilities] = [:]
+    
     // MARK: - Services
     private let buildingService = BuildingService.shared
     private let taskService = TaskService.shared
@@ -63,6 +68,18 @@ class AdminDashboardViewModel: ObservableObject {
     // MARK: - Real-time Subscriptions
     private var cancellables = Set<AnyCancellable>()
     private var refreshTimer: Timer?
+    
+    // MARK: - Nested Types
+    
+    // ✅ STREAM A ADDITION: Worker capabilities structure for UI adaptation
+    struct WorkerCapabilities {
+        let canUploadPhotos: Bool
+        let canAddNotes: Bool
+        let canViewMap: Bool
+        let canAddEmergencyTasks: Bool
+        let requiresPhotoForSanitation: Bool
+        let simplifiedInterface: Bool
+    }
     
     // MARK: - Initialization
     
@@ -98,6 +115,9 @@ class AdminDashboardViewModel: ObservableObject {
             self.tasks = tasks
             self.ongoingTasks = tasks.filter { !$0.isCompleted }
             
+            // ✅ STREAM A ADDITION: Load worker capabilities
+            await loadWorkerCapabilities(for: workers)
+            
             // Load building metrics
             await loadBuildingMetrics()
             
@@ -110,11 +130,16 @@ class AdminDashboardViewModel: ObservableObject {
             await loadPhotoComplianceStats()
             
             self.lastUpdateTime = Date()
-            print("✅ Admin dashboard loaded: \(buildings.count) buildings, \(workers.count) workers, \(tasks.count) tasks")
+            
+            // ✅ STREAM A MODIFICATION: Localized success message
+            let successMessage = NSLocalizedString("Admin dashboard loaded successfully", comment: "Dashboard load success")
+            print("✅ \(successMessage): \(buildings.count) buildings, \(workers.count) workers, \(tasks.count) tasks")
             
         } catch {
             self.error = error
-            self.errorMessage = error.localizedDescription
+            // ✅ STREAM A MODIFICATION: More robust and localizable error handling
+            let baseError = NSLocalizedString("Failed to load administrator data", comment: "Admin dashboard loading error")
+            self.errorMessage = "\(baseError). \(NSLocalizedString("Please check your network connection.", comment: "Network error advice"))"
             print("❌ Failed to load admin dashboard: \(error)")
         }
         
@@ -124,6 +149,48 @@ class AdminDashboardViewModel: ObservableObject {
     /// Refresh dashboard data (for pull-to-refresh)
     func refreshDashboardData() async {
         await loadDashboardData()
+    }
+    
+    // MARK: - Worker Capabilities Methods (Stream A Addition)
+    
+    /// Load worker capabilities for all workers
+    private func loadWorkerCapabilities(for workers: [CoreTypes.WorkerProfile]) async {
+        for worker in workers {
+            do {
+                let rows = try await grdbManager.query("""
+                    SELECT * FROM worker_capabilities WHERE worker_id = ?
+                """, [worker.id])
+                
+                if let row = rows.first {
+                    workerCapabilities[worker.id] = WorkerCapabilities(
+                        canUploadPhotos: (row["can_upload_photos"] as? Int64 ?? 1) == 1,
+                        canAddNotes: (row["can_add_notes"] as? Int64 ?? 1) == 1,
+                        canViewMap: (row["can_view_map"] as? Int64 ?? 1) == 1,
+                        canAddEmergencyTasks: (row["can_add_emergency_tasks"] as? Int64 ?? 0) == 1,
+                        requiresPhotoForSanitation: (row["requires_photo_for_sanitation"] as? Int64 ?? 1) == 1,
+                        simplifiedInterface: (row["simplified_interface"] as? Int64 ?? 0) == 1
+                    )
+                }
+            } catch {
+                print("⚠️ Failed to load capabilities for worker \(worker.id): \(error)")
+            }
+        }
+    }
+    
+    /// Check if a worker can perform a specific action
+    func canWorkerPerformAction(_ workerId: String, action: WorkerAction) -> Bool {
+        guard let capabilities = workerCapabilities[workerId] else { return true }
+        
+        switch action {
+        case .uploadPhoto:
+            return capabilities.canUploadPhotos
+        case .addNotes:
+            return capabilities.canAddNotes
+        case .viewMap:
+            return capabilities.canViewMap
+        case .addEmergencyTask:
+            return capabilities.canAddEmergencyTasks
+        }
     }
     
     // MARK: - Photo Evidence Methods
@@ -163,7 +230,9 @@ class AdminDashboardViewModel: ObservableObject {
             }
             
         } catch {
-            print("❌ Failed to load completed tasks: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to load completed tasks", comment: "Completed tasks loading error")
+            print("❌ \(errorMessage): \(error)")
             completedTasks = []
             recentCompletedTasks = []
         }
@@ -189,7 +258,9 @@ class AdminDashboardViewModel: ObservableObject {
             }
             
         } catch {
-            print("❌ Failed to count today's photos: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to count today's photos", comment: "Photo count error")
+            print("❌ \(errorMessage): \(error)")
             todaysPhotoCount = 0
         }
     }
@@ -222,7 +293,9 @@ class AdminDashboardViewModel: ObservableObject {
             return verifiedTasks
             
         } catch {
-            print("❌ Failed to get tasks with photos: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to get tasks with photos", comment: "Tasks with photos error")
+            print("❌ \(errorMessage): \(error)")
             return []
         }
     }
@@ -253,7 +326,9 @@ class AdminDashboardViewModel: ObservableObject {
             }
             
         } catch {
-            print("❌ Failed to get photo count: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to get photo count", comment: "Photo count error")
+            print("❌ \(errorMessage): \(error)")
         }
         
         return 0
@@ -293,7 +368,9 @@ class AdminDashboardViewModel: ObservableObject {
             )
             
         } catch {
-            print("❌ Failed to get photo compliance stats: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to get photo compliance stats", comment: "Photo compliance error")
+            print("❌ \(errorMessage): \(error)")
             return PhotoComplianceStats(
                 tasksRequiringPhotos: 0,
                 tasksWithPhotos: 0,
@@ -312,7 +389,9 @@ class AdminDashboardViewModel: ObservableObject {
             .sink { [weak self] progress in
                 // Update UI if needed based on upload progress
                 if progress > 0 && progress < 1 {
-                    print("📸 Photo upload progress: \(Int(progress * 100))%")
+                    // ✅ STREAM A MODIFICATION: Localized progress message
+                    let progressMessage = NSLocalizedString("Photo upload progress", comment: "Photo upload progress message")
+                    print("📸 \(progressMessage): \(Int(progress * 100))%")
                 }
             }
             .store(in: &cancellables)
@@ -321,7 +400,9 @@ class AdminDashboardViewModel: ObservableObject {
         photoEvidenceService.$pendingUploads
             .receive(on: DispatchQueue.main)
             .sink { [weak self] count in
-                print("📸 Pending photo uploads: \(count)")
+                // ✅ STREAM A MODIFICATION: Localized pending message
+                let pendingMessage = NSLocalizedString("Pending photo uploads", comment: "Pending uploads message")
+                print("📸 \(pendingMessage): \(count)")
             }
             .store(in: &cancellables)
     }
@@ -337,7 +418,9 @@ class AdminDashboardViewModel: ObservableObject {
                 let buildingMetrics = try await buildingMetricsService.calculateMetrics(for: building.id)
                 metrics[building.id] = buildingMetrics
             } catch {
-                print("⚠️ Failed to load metrics for building \(building.id): \(error)")
+                // ✅ STREAM A MODIFICATION: Localized error message
+                let errorMessage = NSLocalizedString("Failed to load metrics for building", comment: "Building metrics error")
+                print("⚠️ \(errorMessage) \(building.id): \(error)")
             }
         }
         
@@ -368,7 +451,9 @@ class AdminDashboardViewModel: ObservableObject {
             self.portfolioInsights = insights
             self.isLoadingInsights = false
             
-            print("✅ Portfolio insights loaded: \(insights.count) insights")
+            // ✅ STREAM A MODIFICATION: Localized success message
+            let successMessage = NSLocalizedString("Portfolio insights loaded", comment: "Portfolio insights success")
+            print("✅ \(successMessage): \(insights.count) insights")
             
             // Create and broadcast update
             let update = CoreTypes.DashboardUpdate(
@@ -387,7 +472,9 @@ class AdminDashboardViewModel: ObservableObject {
         } catch {
             self.portfolioInsights = []
             self.isLoadingInsights = false
-            print("⚠️ Failed to load portfolio insights: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to load portfolio insights", comment: "Portfolio insights error")
+            print("⚠️ \(errorMessage): \(error)")
         }
     }
     
@@ -396,7 +483,9 @@ class AdminDashboardViewModel: ObservableObject {
     /// Fetches detailed intelligence for a specific building
     func fetchBuildingIntelligence(for buildingId: String) async {
         guard !buildingId.isEmpty else {
-            print("⚠️ Invalid building ID provided")
+            // ✅ STREAM A MODIFICATION: Localized warning message
+            let warningMessage = NSLocalizedString("Invalid building ID provided", comment: "Invalid building ID warning")
+            print("⚠️ \(warningMessage)")
             return
         }
         
@@ -410,7 +499,9 @@ class AdminDashboardViewModel: ObservableObject {
             self.selectedBuildingInsights = insights
             self.isLoadingIntelligence = false
             
-            print("✅ Intelligence loaded for building \(buildingId): \(insights.count) insights")
+            // ✅ STREAM A MODIFICATION: Localized success message
+            let successMessage = NSLocalizedString("Intelligence loaded for building", comment: "Building intelligence success")
+            print("✅ \(successMessage) \(buildingId): \(insights.count) insights")
             
             // Create and broadcast update
             let update = CoreTypes.DashboardUpdate(
@@ -429,8 +520,10 @@ class AdminDashboardViewModel: ObservableObject {
         } catch {
             self.selectedBuildingInsights = []
             self.isLoadingIntelligence = false
-            self.errorMessage = error.localizedDescription
-            print("❌ Failed to load building intelligence: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to load building intelligence", comment: "Building intelligence error")
+            self.errorMessage = "\(errorMessage): \(error.localizedDescription)"
+            print("❌ \(errorMessage): \(error)")
         }
     }
     
@@ -447,7 +540,9 @@ class AdminDashboardViewModel: ObservableObject {
             let metrics = try await buildingMetricsService.calculateMetrics(for: buildingId)
             buildingMetrics[buildingId] = metrics
             
-            print("✅ Refreshed metrics for building \(buildingId)")
+            // ✅ STREAM A MODIFICATION: Localized success message
+            let successMessage = NSLocalizedString("Refreshed metrics for building", comment: "Building metrics refresh success")
+            print("✅ \(successMessage) \(buildingId)")
             
             // Create and broadcast update
             let update = CoreTypes.DashboardUpdate(
@@ -464,7 +559,9 @@ class AdminDashboardViewModel: ObservableObject {
             broadcastAdminUpdate(update)
             
         } catch {
-            print("❌ Failed to refresh building metrics: \(error)")
+            // ✅ STREAM A MODIFICATION: Localized error message
+            let errorMessage = NSLocalizedString("Failed to refresh building metrics", comment: "Building metrics refresh error")
+            print("❌ \(errorMessage): \(error)")
         }
     }
     
@@ -589,7 +686,9 @@ class AdminDashboardViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        print("🔗 Admin dashboard cross-dashboard sync configured")
+        // ✅ STREAM A MODIFICATION: Localized setup message
+        let setupMessage = NSLocalizedString("Admin dashboard cross-dashboard sync configured", comment: "Dashboard sync setup message")
+        print("🔗 \(setupMessage)")
     }
     
     /// Broadcast admin update using DashboardUpdate directly
@@ -602,7 +701,10 @@ class AdminDashboardViewModel: ObservableObject {
         }
         
         dashboardSyncService.broadcastAdminUpdate(update)
-        print("📡 Admin update broadcast: \(update.type)")
+        
+        // ✅ STREAM A MODIFICATION: Localized broadcast message
+        let broadcastMessage = NSLocalizedString("Admin update broadcast", comment: "Update broadcast message")
+        print("📡 \(broadcastMessage): \(update.type)")
     }
     
     /// Setup auto-refresh timer
@@ -741,25 +843,34 @@ struct AdminPortfolioSummary {
         static let excellent = EfficiencyStatus(
             icon: "checkmark.circle.fill",
             color: .green,
-            description: "Excellent performance"
+            description: NSLocalizedString("Excellent performance", comment: "Excellent efficiency status")
         )
         
         static let good = EfficiencyStatus(
             icon: "hand.thumbsup.fill",
             color: .blue,
-            description: "Good performance"
+            description: NSLocalizedString("Good performance", comment: "Good efficiency status")
         )
         
         static let needsImprovement = EfficiencyStatus(
             icon: "exclamationmark.triangle.fill",
             color: .orange,
-            description: "Needs improvement"
+            description: NSLocalizedString("Needs improvement", comment: "Needs improvement efficiency status")
         )
         
         static let critical = EfficiencyStatus(
             icon: "xmark.circle.fill",
             color: .red,
-            description: "Critical attention needed"
+            description: NSLocalizedString("Critical attention needed", comment: "Critical efficiency status")
         )
     }
+}
+
+// MARK: - Worker Action Enum (Stream A Addition)
+
+enum WorkerAction {
+    case uploadPhoto
+    case addNotes
+    case viewMap
+    case addEmergencyTask
 }

@@ -8,6 +8,7 @@
 //  ✅ FIXED: Nil parameters properly typed
 //  ✅ REFACTORED: Cleaner architecture and consistent patterns
 //  ✅ ALIGNED: Works with existing service architecture
+//  ✅ STREAM A MODIFIED: Enhanced error handling for localization
 //
 
 import Foundation
@@ -132,8 +133,12 @@ public class ClientDashboardViewModel: ObservableObject {
             print("✅ Client portfolio intelligence loaded: \(totalBuildings) buildings, \(activeWorkers) workers")
             
         } catch {
+            // ✅ STREAM A MODIFICATION: More robust and localizable error handling
             isLoading = false
-            errorMessage = error.localizedDescription
+            let baseError = NSLocalizedString("could_not_load_portfolio",
+                                            value: "Could not load portfolio information",
+                                            comment: "Client dashboard loading error")
+            errorMessage = "\(baseError). \(error.localizedDescription)"
             print("❌ Failed to load portfolio intelligence: \(error)")
             await loadFallbackData()
         }

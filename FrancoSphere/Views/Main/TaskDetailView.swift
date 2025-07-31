@@ -8,6 +8,7 @@
 //  ✅ GLASS MORPHISM: Beautiful UI with FrancoSphere design
 //  ✅ ERROR HANDLING: Comprehensive user feedback
 //  ✅ FIXED: Updated deprecated Map API for iOS 17+
+//  ✅ STREAM A MODIFIED: Added conditional logic for SimplifiedTaskView
 //
 
 import SwiftUI
@@ -38,6 +39,82 @@ struct TaskDetailView: View {
     // MARK: - Body
     
     var body: some View {
+        // -----------------------------------------------------------------
+        // ✅ STREAM A MODIFICATION - START
+        // Conditionally render the entire view based on worker capabilities.
+        // The viewModel is responsible for loading the capabilities for the
+        // assigned worker when `loadTask` is called.
+        
+        Group {
+            if viewModel.workerCapabilities?.simplifiedInterface == true {
+                // If the worker has the simplified interface capability, show the simplified view.
+                SimplifiedTaskView(viewModel: viewModel, task: task)
+            } else {
+                // Otherwise, show the standard, full-featured detail view.
+                standardTaskDetailView
+            }
+        }
+        // ✅ STREAM A MODIFICATION - END
+        // -----------------------------------------------------------------
+        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("Task Details")
+        .task {
+            await viewModel.loadTask(task)
+            // Update map region if building coordinate is available
+            if let coordinate = viewModel.buildingCoordinate {
+                mapRegion = MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )
+            }
+        }
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK") { }
+        } message: {
+            Text(viewModel.errorMessage ?? "An error occurred")
+        }
+        .alert("Success", isPresented: $viewModel.showSuccess) {
+            Button("Done") { dismiss() }
+        } message: {
+            Text(viewModel.successMessage ?? "Task completed successfully")
+        }
+        .sheet(isPresented: $showPhotoCapture) {
+            ImagePicker(
+                image: .constant(nil),
+                onImagePicked: { image in
+                    Task {
+                        await viewModel.capturePhoto(image)
+                    }
+                },
+                sourceType: .camera
+            )
+        }
+        .photosPicker(
+            isPresented: $showPhotoLibrary,
+            selection: $selectedPhotoItem,
+            matching: .images
+        )
+        .onChange(of: selectedPhotoItem) { oldValue, newValue in
+            Task {
+                if let item = newValue,
+                   let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    await viewModel.capturePhoto(image)
+                }
+            }
+        }
+        .sheet(isPresented: $showResubmitSheet) {
+            resubmitView
+        }
+        .sheet(isPresented: $showLocationMap) {
+            locationMapView
+        }
+    }
+    
+    // MARK: - Standard View Components
+    // The original body has been moved into this computed property.
+    
+    private var standardTaskDetailView: some View {
         ZStack {
             // Background
             LinearGradient(
@@ -94,76 +171,21 @@ struct TaskDetailView: View {
                 LoadingOverlay()
             }
         }
-        .navigationBarTitleDisplayMode(.large)
-        .navigationTitle("Task Details")
-        .task {
-            await viewModel.loadTask(task)
-            // Update map region if building coordinate is available
-            if let coordinate = viewModel.buildingCoordinate {
-                mapRegion = MKCoordinateRegion(
-                    center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                )
-            }
-        }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK") { }
-        } message: {
-            Text(viewModel.errorMessage ?? "An error occurred")
-        }
-        .alert("Success", isPresented: $viewModel.showSuccess) {
-            Button("Done") { dismiss() }
-        } message: {
-            Text(viewModel.successMessage ?? "Task completed successfully")
-        }
-        .sheet(isPresented: $showPhotoCapture) {
-            ImagePicker(
-                image: .constant(nil),
-                onImagePicked: { image in
-                    Task {
-                        await viewModel.capturePhoto(image)
-                    }
-                },
-                sourceType: .camera
-            )
-        }
-        .photosPicker(
-            isPresented: $showPhotoLibrary,
-            selection: $selectedPhotoItem,
-            matching: .images
-        )
-        .onChange(of: selectedPhotoItem) { oldValue, newValue in
-            Task {
-                if let item = newValue,
-                   let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
-                    await viewModel.capturePhoto(image)
-                }
-            }
-        }
-        .sheet(isPresented: $showResubmitSheet) {
-            resubmitView
-        }
-        .sheet(isPresented: $showLocationMap) {
-            locationMapView
-        }
     }
-    
-    // MARK: - View Components
-    
+
     private var taskHeaderCard: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 16) {
                 // Title and Category
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(viewModel.taskTitle)
+                        Text(LocalizedStringKey(viewModel.taskTitle))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                         
                         if let category = viewModel.taskCategory {
-                            Label(category.rawValue.capitalized, systemImage: category.icon)
+                            Label(LocalizedStringKey(category.rawValue.capitalized), systemImage: category.icon)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -173,7 +195,7 @@ struct TaskDetailView: View {
                     
                     // Urgency Badge
                     if let urgency = viewModel.taskUrgency {
-                        Text(urgency.rawValue.uppercased())
+                        Text(LocalizedStringKey(urgency.rawValue.uppercased()))
                             .font(.caption2)
                             .fontWeight(.bold)
                             .padding(.horizontal, 12)
@@ -189,7 +211,7 @@ struct TaskDetailView: View {
                 
                 // Description
                 if let description = viewModel.taskDescription {
-                    Text(description)
+                    Text(LocalizedStringKey(description))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -205,7 +227,7 @@ struct TaskDetailView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Text(viewModel.buildingName)
+                        Text(LocalizedStringKey(viewModel.buildingName))
                             .font(.subheadline)
                             .fontWeight(.medium)
                         
@@ -269,7 +291,7 @@ struct TaskDetailView: View {
                     
                     Spacer()
                     
-                    Text(viewModel.taskProgress.rawValue)
+                    Text(LocalizedStringKey(viewModel.taskProgress.rawValue))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -297,95 +319,101 @@ struct TaskDetailView: View {
     }
     
     private var photoEvidenceCard: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Label("Photo Evidence", systemImage: "camera.fill")
-                        .font(.headline)
-                    
-                    if requiresPhoto {
-                        Text("Required")
-                            .font(.caption2)
-                            .foregroundColor(.red)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(6)
-                    }
-                    
-                    Spacer()
-                }
-                
-                if let photo = viewModel.capturedPhoto {
-                    // Photo Preview
-                    ZStack(alignment: .topTrailing) {
-                        Image(uiImage: photo)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(height: 200)
-                            .clipped()
-                            .cornerRadius(12)
-                        
-                        // Remove button
-                        Button {
-                            viewModel.capturedPhoto = nil
-                            viewModel.photoData = nil
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.white, .black.opacity(0.6))
-                                .padding(8)
-                        }
-                    }
-                    
-                    // Upload Progress
-                    if viewModel.isUploadingPhoto {
-                        VStack(spacing: 8) {
-                            ProgressView(value: viewModel.photoUploadProgress)
-                                .progressViewStyle(.linear)
+        // ✅ STREAM A MODIFICATION: This entire card is now conditional based on capabilities.
+        // We will add a check in the ViewModel to load the capabilities.
+        Group {
+            if viewModel.workerCapabilities?.canUploadPhotos ?? true {
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Label("Photo Evidence", systemImage: "camera.fill")
+                                .font(.headline)
                             
-                            Text("Uploading photo...")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                } else {
-                    // Capture Options
-                    HStack(spacing: 16) {
-                        Button {
-                            showPhotoCapture = true
-                        } label: {
-                            VStack(spacing: 8) {
-                                Image(systemName: "camera.fill")
-                                    .font(.title2)
-                                Text("Take Photo")
-                                    .font(.caption)
+                            if requiresPhoto {
+                                Text("Required")
+                                    .font(.caption2)
+                                    .foregroundColor(.red)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.red.opacity(0.1))
+                                    .cornerRadius(6)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.primary.opacity(0.05))
-                            .cornerRadius(12)
+                            
+                            Spacer()
                         }
                         
-                        Button {
-                            showPhotoLibrary = true
-                        } label: {
-                            VStack(spacing: 8) {
-                                Image(systemName: "photo.on.rectangle")
-                                    .font(.title2)
-                                Text("Choose Photo")
-                                    .font(.caption)
+                        if let photo = viewModel.capturedPhoto {
+                            // Photo Preview
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: photo)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(height: 200)
+                                    .clipped()
+                                    .cornerRadius(12)
+                                
+                                // Remove button
+                                Button {
+                                    viewModel.capturedPhoto = nil
+                                    viewModel.photoData = nil
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(.white, .black.opacity(0.6))
+                                        .padding(8)
+                                }
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.primary.opacity(0.05))
-                            .cornerRadius(12)
+                            
+                            // Upload Progress
+                            if viewModel.isUploadingPhoto {
+                                VStack(spacing: 8) {
+                                    ProgressView(value: viewModel.photoUploadProgress)
+                                        .progressViewStyle(.linear)
+                                    
+                                    Text("Uploading photo...")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        } else {
+                            // Capture Options
+                            HStack(spacing: 16) {
+                                Button {
+                                    showPhotoCapture = true
+                                } label: {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "camera.fill")
+                                            .font(.title2)
+                                        Text("Take Photo")
+                                            .font(.caption)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.primary.opacity(0.05))
+                                    .cornerRadius(12)
+                                }
+                                
+                                Button {
+                                    showPhotoLibrary = true
+                                } label: {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "photo.on.rectangle")
+                                            .font(.title2)
+                                        Text("Choose Photo")
+                                            .font(.caption)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.primary.opacity(0.05))
+                                    .cornerRadius(12)
+                                }
+                            }
+                            .foregroundColor(.primary)
                         }
                     }
-                    .foregroundColor(.primary)
+                    .padding()
                 }
             }
-            .padding()
         }
     }
     

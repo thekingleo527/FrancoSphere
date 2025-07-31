@@ -8,6 +8,9 @@
 //  ✅ INTEGRATED: MapRevealContainer with layered content
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ NEW: Added navigation to TodaysProgressDetailView
+//  ✅ STREAM A MODIFIED: Added conditional UI for simplified interface
+//  ✅ MODIFIED: ViewModel is now passed in from parent
+//  ✅ MODIFIED: Added departure functionality integration
 //
 
 import Foundation
@@ -17,7 +20,9 @@ import CoreLocation
 
 struct WorkerDashboardView: View {
     // MARK: - State Objects
-    @StateObject private var viewModel = WorkerDashboardViewModel()
+    // ✅ MODIFICATION: ViewModel is now passed in from the parent to ensure a single source of truth.
+    @ObservedObject var viewModel: WorkerDashboardViewModel
+    
     @ObservedObject private var contextEngine = WorkerContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
@@ -35,10 +40,14 @@ struct WorkerDashboardView: View {
     @State private var showEmergencyContacts = false
     @State private var isNovaProcessing = false
     @State private var showProgressDetail = false
+    @State private var showingDepartureChecklist = false
     
     var body: some View {
+        // The decision to show this view vs. SimplifiedDashboard is made by the parent.
+        // This view now only needs to adapt its internal components.
         MapRevealContainer(
-            buildings: contextEngine.assignedBuildings,
+            // ✅ MODIFICATION: Hide map for simplified users. The container should handle an empty array gracefully.
+            buildings: viewModel.workerCapabilities?.canViewMap ?? true ? contextEngine.assignedBuildings : [],
             currentBuildingId: contextEngine.currentBuilding?.id,
             focusBuildingId: selectedBuilding?.id,
             onBuildingTap: { building in
@@ -123,12 +132,19 @@ struct WorkerDashboardView: View {
                                 }
                             }
                             
+                            // Departure button (if clocked in)
+                            if contextEngine.clockInStatus.isClockedIn,
+                               let building = contextEngine.currentBuilding {
+                                departureButton(for: building)
+                                    .padding(.horizontal, 20)
+                            }
+                            
                             // My buildings section
                             myBuildingsSection
                                 .padding(.horizontal, 20)
                             
-                            // Smart route section (if multiple buildings)
-                            if contextEngine.assignedBuildings.count > 1 {
+                            // ✅ MODIFICATION: Conditionally show the Smart Route section
+                            if viewModel.workerCapabilities?.canViewMap == true && contextEngine.assignedBuildings.count > 1 {
                                 smartRouteSection
                                     .padding(.horizontal, 20)
                             }
@@ -148,9 +164,8 @@ struct WorkerDashboardView: View {
         }
         .navigationBarHidden(true)
         .preferredColorScheme(.dark)
-        .task {
-            await loadWorkerSpecificData()
-        }
+        // ✅ MODIFICATION: The .task modifier is moved to the parent view (e.g., WorkerMainView)
+        // This ensures data is loaded only once, regardless of which dashboard is shown.
         .sheet(isPresented: $showBuildingList) {
             BuildingSelectionView(
                 buildings: showOnlyMyBuildings ? contextEngine.assignedBuildings : contextEngine.portfolioBuildings
@@ -183,6 +198,8 @@ struct WorkerDashboardView: View {
         }
         .sheet(isPresented: $showTaskDetail) {
             if let task = selectedTask {
+                // This now correctly routes to the right detail view
+                // because TaskDetailView itself contains the switching logic.
                 TaskDetailView(task: task)
             }
         }
@@ -192,6 +209,25 @@ struct WorkerDashboardView: View {
         .sheet(isPresented: $showProgressDetail) {
             NavigationView {
                 TodaysProgressDetailView()
+            }
+        }
+        .sheet(isPresented: $showingDepartureChecklist) {
+            if let worker = contextEngine.currentWorker,
+               let building = contextEngine.currentBuilding {
+                SiteDepartureView(
+                    viewModel: SiteDepartureViewModel(
+                        workerId: worker.id,
+                        currentBuilding: building,
+                        capabilities: convertToSiteDepartureCapability(viewModel.workerCapabilities),
+                        availableBuildings: contextEngine.assignedBuildings
+                    )
+                )
+                .onDisappear {
+                    // Refresh context after departure
+                    Task {
+                        await contextEngine.refreshContext()
+                    }
+                }
             }
         }
     }
@@ -251,13 +287,15 @@ struct WorkerDashboardView: View {
                         
                         Spacer()
                         
-                        // Nova AI Button
-                        NovaAvatar(
-                            size: .medium,
-                            isProcessing: isNovaProcessing,
-                            onTap: { showNovaAssistant = true },
-                            onLongPress: { showNovaAssistant = true }
-                        )
+                        // ✅ MODIFICATION: Conditionally show the Nova AI Button
+                        if viewModel.workerCapabilities?.simplifiedInterface == false {
+                            NovaAvatar(
+                                size: .medium,
+                                isProcessing: isNovaProcessing,
+                                onTap: { showNovaAssistant = true },
+                                onLongPress: { showNovaAssistant = true }
+                            )
+                        }
                     }
                     
                     // Clock-in status pill (if clocked in)
@@ -298,6 +336,34 @@ struct WorkerDashboardView: View {
             Rectangle()
                 .fill(Color.white.opacity(0.1))
                 .frame(height: 1)
+        }
+    }
+    
+    // MARK: - Departure Button
+    
+    private func departureButton(for building: CoreTypes.NamedCoordinate) -> some View {
+        Button(action: {
+            showingDepartureChecklist = true
+        }) {
+            HStack {
+                Image(systemName: "arrow.right.square.fill")
+                Text("Leave \(building.name)")
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding()
+            .background(
+                LinearGradient(
+                    colors: [Color.red.opacity(0.8), Color.red],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(12)
         }
     }
     
@@ -632,19 +698,15 @@ struct WorkerDashboardView: View {
     }
     
     private func getWorkerCapabilities() -> HeroStatusCard.WorkerCapabilities? {
-        guard let worker = contextEngine.currentWorker else { return nil }
-        
-        // Check actual capabilities from database or use defaults based on worker
-        let isSimplified = worker.id == "5" // Mercedes uses simplified UI
-        let canAddEmergency = worker.role == .admin || worker.role == .manager
+        guard let caps = viewModel.workerCapabilities else { return nil }
         
         return HeroStatusCard.WorkerCapabilities(
-            canUploadPhotos: !isSimplified,
-            canAddNotes: !isSimplified,
-            canViewMap: true,
-            canAddEmergencyTasks: canAddEmergency,
-            requiresPhotoForSanitation: true,
-            simplifiedInterface: isSimplified
+            canUploadPhotos: caps.canUploadPhotos,
+            canAddNotes: caps.canAddNotes,
+            canViewMap: caps.canViewMap,
+            canAddEmergencyTasks: caps.canAddEmergencyTasks,
+            requiresPhotoForSanitation: caps.requiresPhotoForSanitation,
+            simplifiedInterface: caps.simplifiedInterface
         )
     }
     
@@ -733,20 +795,7 @@ struct WorkerDashboardView: View {
         return String(format: "%.1f mi", total)
     }
     
-    private func loadWorkerSpecificData() async {
-        await viewModel.loadInitialData()
-        
-        // Load context for current worker using the correct property access
-        if let workerId = authManager.workerId {
-            try? await contextEngine.loadContext(for: workerId)
-        }
-        
-        let primary = determinePrimaryBuilding(for: contextEngine.currentWorker?.id)
-        self.showOnlyMyBuildings = true
-        self.primaryBuilding = primary
-        
-        print("✅ Worker dashboard loaded: \(contextEngine.assignedBuildings.count) buildings, primary: \(primary?.name ?? "none")")
-    }
+    // ✅ MODIFICATION: Removed loadWorkerSpecificData - now handled by parent
     
     private func determinePrimaryBuilding(for workerId: String?) -> CoreTypes.NamedCoordinate? {
         let buildings = contextEngine.assignedBuildings
@@ -789,6 +838,21 @@ struct WorkerDashboardView: View {
             parentTaskId: nil
         )
     }
+    
+    // MARK: - Site Departure Capability Converter
+    
+    private func convertToSiteDepartureCapability(_ capabilities: WorkerDashboardViewModel.WorkerCapabilities?) -> SiteDepartureViewModel.WorkerCapability? {
+        guard let caps = capabilities else { return nil }
+        
+        return SiteDepartureViewModel.WorkerCapability(
+            canUploadPhotos: caps.canUploadPhotos,
+            canAddNotes: caps.canAddNotes,
+            canViewMap: caps.canViewMap,
+            canAddEmergencyTasks: caps.canAddEmergencyTasks,
+            requiresPhotoForSanitation: caps.requiresPhotoForSanitation,
+            simplifiedInterface: caps.simplifiedInterface
+        )
+    }
 }
 
 // MARK: - Notification Names Extension
@@ -801,7 +865,7 @@ extension Notification.Name {
 
 struct WorkerDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        WorkerDashboardView()
+        WorkerDashboardView(viewModel: WorkerDashboardViewModel())
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)
