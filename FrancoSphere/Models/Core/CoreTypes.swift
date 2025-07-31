@@ -1223,6 +1223,7 @@ public struct CoreTypes {
         public var quantity: Int { currentStock }
         public var minThreshold: Int { minimumStock }
         public var restockStatus: RestockStatus { status }
+        // stockLevel is a computed property alias for stockPercentage
         public var stockLevel: Double { stockPercentage }
         
         public init(
@@ -1253,7 +1254,7 @@ public struct CoreTypes {
             self.status = status
         }
         
-        // Computed property - only declared once
+        // Core computed properties
         public var needsRestock: Bool {
             currentStock <= minimumStock
         }
