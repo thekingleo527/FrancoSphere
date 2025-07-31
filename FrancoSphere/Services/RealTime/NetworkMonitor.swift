@@ -1,12 +1,3 @@
-//
-//  NetworkMonitor.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
-//
 //  NetworkMonitor.swift
 //  FrancoSphere v6.0
 //

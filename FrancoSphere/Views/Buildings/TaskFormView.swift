@@ -1,16 +1,3 @@
-import Foundation
-
-// Type aliases for CoreTypes
-
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
-import SwiftUI
-
-// Type aliases for CoreTypes
-
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 import Foundation
 

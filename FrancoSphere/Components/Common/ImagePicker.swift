@@ -97,7 +97,7 @@ struct FrancoPhotoPicker: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .onChange(of: selectedItems) {
+                .onChange(of: selectedItems) { oldValue, newValue in
                     Task {
                         var newImages: [UIImage] = []
                         for item in selectedItems {
@@ -456,7 +456,7 @@ struct FrancoPhotoDetailView: View {
     @State private var fullImage: UIImage?
     @State private var showingActions = false
     @State private var isZoomed = false
-    @Environment(\.dismiss) private var dismiss
+    @SwiftUI.Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {

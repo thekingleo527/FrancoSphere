@@ -1604,7 +1604,7 @@ struct MultipleImagePicker: UIViewControllerRepresentable {
     }
 }
 
-struct PhotoCompliancePhotoCaptureView: View {
+struct CompliancePhotoCaptureView: View {
     let requirement: RequiredPhoto
     let buildingId: String
     let onCapture: (BuildingPhoto) -> Void

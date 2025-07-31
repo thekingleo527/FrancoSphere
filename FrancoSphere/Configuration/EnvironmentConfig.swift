@@ -1,86 +1,74 @@
-
+//
 //  EnvironmentConfig.swift
 //  FrancoSphere
 //
-//  Stream D: Features & Polish
-//  Mission: Manage different build environments (Dev, Staging, Prod).
-//
-//  ✅ PRODUCTION READY: Safely provides environment-specific URLs and keys.
-//  ✅ SAFE: Uses compiler flags to prevent shipping debug configurations.
-//  ✅ CENTRALIZED: A single source of truth for all environment variables.
+//  Environment configuration for different deployment targets
 //
 
 import Foundation
 
-enum Environment: String {
+// Renamed from 'Environment' to 'AppEnvironment' to avoid SwiftUI conflicts
+enum AppEnvironment: String {
     case development
     case staging
     case production
     
-    // MARK: - Base URLs
-    
-    var baseURL: URL? {
+    var baseURL: String {
         switch self {
         case .development:
-            return URL(string: "http://localhost:8080/api/v6")
+            return "http://localhost:8080"
         case .staging:
-            return URL(string: "https://staging.api.francosphere.com/api/v6")
+            return "https://staging-api.francosphere.com"
         case .production:
-            return URL(string: "https://api.francosphere.com/api/v6")
+            return "https://api.francosphere.com"
         }
     }
     
-    var websocketURL: URL? {
+    var websocketURL: String {
         switch self {
         case .development:
-            return URL(string: "ws://localhost:8080/sync")
+            return "ws://localhost:8080/sync"
         case .staging:
-            return URL(string: "wss://staging.api.francosphere.com/sync")
+            return "wss://staging-api.francosphere.com/sync"
         case .production:
-            return URL(string: "wss://api.francosphere.com/sync")
+            return "wss://api.francosphere.com/sync"
         }
     }
     
-    // MARK: - API Keys
-    // NOTE: For better security, these keys should be stored in an `.xcconfig` file
-    // and not committed to source control. This is a simplified example.
-    
-    var sentryDSN: String {
+    var isDebugEnabled: Bool {
         switch self {
-        case .development:
-            return "YOUR_DEV_SENTRY_DSN"
-        case .staging:
-            return "YOUR_STAGING_SENTRY_DSN"
+        case .development, .staging:
+            return true
         case .production:
-            return "YOUR_PRODUCTION_SENTRY_DSN"
+            return false
         }
-    }
-    
-    var quickBooksClientID: String {
-        // Placeholder for QuickBooks integration
-        return "YOUR_QUICKBOOKS_CLIENT_ID"
     }
 }
 
-// MARK: - Environment Configuration Manager
-
 final class EnvironmentConfig {
+    static let shared = EnvironmentConfig()
     
-    /// The current build environment, determined by Swift compiler flags.
-    static let current: Environment = {
+    let current: AppEnvironment
+    
+    private init() {
         #if DEBUG
-            // In DEBUG builds, you could check for a launch argument to switch
-            // between development and staging.
-            print("✅ Running in DEVELOPMENT environment.")
-            return .development
+        self.current = .development
         #elseif STAGING
-            print("✅ Running in STAGING environment.")
-            return .staging
+        self.current = .staging
         #else
-            print("✅ Running in PRODUCTION environment.")
-            return .production
+        self.current = .production
         #endif
-    }()
+    }
     
-    private init() {}
+    var baseURL: String {
+        current.baseURL
+    }
+    
+    var websocketURL: String {
+        current.websocketURL
+    }
+    
+    var isDebugEnabled: Bool {
+        current.isDebugEnabled
+    }
 }

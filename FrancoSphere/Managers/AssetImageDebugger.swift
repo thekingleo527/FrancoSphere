@@ -1,4 +1,3 @@
-//
 //  AssetImageDebugger.swift
 //  FrancoSphere
 //

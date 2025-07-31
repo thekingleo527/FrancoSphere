@@ -1,5 +1,3 @@
-////
-//
 //  QuickActionMenu.swift
 //  FrancoSphere
 //

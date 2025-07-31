@@ -2,14 +2,6 @@
 //  NavigationCoordinator.swift
 //  FrancoSphere
 //
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
-//
-//  NavigationCoordinator.swift
-//  FrancoSphere
-//
 //  Stream D: Features & Polish
 //  Mission: Create a centralized navigation system to manage app flow.
 //

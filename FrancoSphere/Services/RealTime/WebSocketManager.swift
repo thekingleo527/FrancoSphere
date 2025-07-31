@@ -1,8 +1,3 @@
-
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
 //
 //  WebSocketManager.swift
 //  FrancoSphere
@@ -30,9 +25,32 @@ actor WebSocketManager {
     private let maxReconnectAttempts = 5
     private let reconnectDelays: [TimeInterval] = [1, 2, 5, 10, 20]
     
-    private let urlSession = URLSession(configuration: .default)
+    private let urlSession: URLSession
+    private let delegate: WebSocketDelegate
     
-    private init() {}
+    private init() {
+        self.delegate = WebSocketDelegate()
+        self.urlSession = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+        
+        // Set up delegate callbacks
+        Task {
+            await setupDelegateCallbacks()
+        }
+    }
+    
+    private func setupDelegateCallbacks() {
+        delegate.onOpen = { [weak self] in
+            Task {
+                await self?.handleConnectionOpened()
+            }
+        }
+        
+        delegate.onClose = { [weak self] closeCode, reason in
+            Task {
+                await self?.handleConnectionClosed(closeCode: closeCode, reason: reason)
+            }
+        }
+    }
     
     // MARK: - Connection Management
     
@@ -40,7 +58,19 @@ actor WebSocketManager {
     ///
     /// - Parameter token: The authentication token from `NewAuthManager`.
     func connect(token: String) {
-        guard !isConnected, let url = EnvironmentConfig.current.websocketURL else {
+        guard !isConnected else {
+            print("🔌 WebSocket already connected")
+            return
+        }
+        
+        #if DEBUG
+        let urlString = "ws://localhost:8080/sync"
+        #else
+        let urlString = "wss://api.francosphere.com/sync"
+        #endif
+        
+        guard let url = URL(string: urlString) else {
+            print("❌ Invalid WebSocket URL")
             return
         }
         
@@ -48,9 +78,8 @@ actor WebSocketManager {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         webSocketTask = urlSession.webSocketTask(with: request)
-        webSocketTask?.delegate = self
         
-        print("🔌 WebSocket connecting...")
+        print("🔌 WebSocket connecting to \(urlString)...")
         webSocketTask?.resume()
     }
     
@@ -67,22 +96,20 @@ actor WebSocketManager {
     /// Encodes and sends a `DashboardUpdate` to the server.
     ///
     /// - Parameter update: The `DashboardUpdate` object from `CoreTypes`.
-    func send(_ update: CoreTypes.DashboardUpdate) throws {
+    func send(_ update: CoreTypes.DashboardUpdate) async throws {
         guard isConnected, let task = webSocketTask else {
             throw WebSocketError.notConnected
         }
         
         do {
-            let data = try JSONEncoder().encode(update)
-            task.send(.data(data)) { error in
-                if let error = error {
-                    print("❌ WebSocket send error: \(error.localizedDescription)")
-                } else {
-                    print("⬆️ WebSocket update sent: \(update.type.rawValue)")
-                }
-            }
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(update)
+            
+            try await task.send(.data(data))
+            print("⬆️ WebSocket update sent: \(update.type.rawValue)")
         } catch {
-            print("❌ WebSocket encoding error: \(error.localizedDescription)")
+            print("❌ WebSocket send error: \(error.localizedDescription)")
             throw WebSocketError.encodingFailed(error)
         }
     }
@@ -91,18 +118,15 @@ actor WebSocketManager {
     private func startReceiving() {
         guard let task = webSocketTask else { return }
         
-        task.receive { [weak self] result in
-            guard let self = self else { return }
-            
-            Task {
-                switch result {
-                case .success(let message):
-                    await self.handleMessage(message)
-                    self.startReceiving() // Continue listening for the next message
-                case .failure(let error):
-                    print("❌ WebSocket receive error: \(error.localizedDescription)")
-                    await self.handleDisconnection()
+        Task {
+            do {
+                while isConnected {
+                    let message = try await task.receive()
+                    await handleMessage(message)
                 }
+            } catch {
+                print("❌ WebSocket receive error: \(error.localizedDescription)")
+                await handleDisconnection()
             }
         }
     }
@@ -122,7 +146,9 @@ actor WebSocketManager {
         }
         
         do {
-            let update = try JSONDecoder().decode(CoreTypes.DashboardUpdate.self, from: updateData)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let update = try decoder.decode(CoreTypes.DashboardUpdate.self, from: updateData)
             print("⬇️ WebSocket update received: \(update.type.rawValue)")
             await notifyDashboardSync(update)
         } catch {
@@ -139,16 +165,18 @@ actor WebSocketManager {
             return
         }
         
-        let delay = reconnectDelays[reconnectAttempts]
+        let delay = reconnectDelays[min(reconnectAttempts, reconnectDelays.count - 1)]
         print("🔌 WebSocket will attempt to reconnect in \(delay) seconds...")
         
         Task {
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-            // This would typically re-trigger the connection flow from a higher-level manager
-            // that has access to the authentication token.
-            print("🔌 Attempting to reconnect now (attempt \(reconnectAttempts + 1))...")
-            reconnectAttempts += 1
-            // Example: await someAppCoordinator.reconnectWebSocket()
+            
+            // Fetch current auth token and reconnect
+            if let token = await getAuthToken() {
+                print("🔌 Attempting to reconnect now (attempt \(reconnectAttempts + 1))...")
+                reconnectAttempts += 1
+                connect(token: token)
+            }
         }
     }
     
@@ -157,6 +185,18 @@ actor WebSocketManager {
     }
     
     // MARK: - State Management & Integration
+    
+    private func handleConnectionOpened() {
+        print("✅ WebSocket connected successfully.")
+        self.isConnected = true
+        resetReconnection()
+        startReceiving()
+    }
+    
+    private func handleConnectionClosed(closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        print("🔌 WebSocket disconnected. Code: \(closeCode.rawValue)")
+        handleDisconnection()
+    }
     
     private func handleDisconnection() {
         resetConnectionState()
@@ -168,29 +208,54 @@ actor WebSocketManager {
         self.isConnected = false
     }
     
+    /// Gets the current authentication token
+    private func getAuthToken() async -> String? {
+        await MainActor.run {
+            NewAuthManager.shared.currentUser?.id
+        }
+    }
+    
     /// Notifies the main-thread `DashboardSyncService` of a new remote update.
     private func notifyDashboardSync(_ update: CoreTypes.DashboardUpdate) async {
         await MainActor.run {
             DashboardSyncService.shared.handleRemoteUpdate(update)
         }
     }
+    
+    // MARK: - Public Status
+    
+    nonisolated var connectionStatus: ConnectionStatus {
+        get async {
+            if await isConnected {
+                return .connected
+            } else if await reconnectAttempts > 0 {
+                return .reconnecting
+            } else {
+                return .disconnected
+            }
+        }
+    }
+    
+    enum ConnectionStatus {
+        case connected
+        case disconnected
+        case reconnecting
+    }
 }
 
-// MARK: - URLSessionWebSocketDelegate
+// MARK: - WebSocket Delegate
 
-extension WebSocketManager: URLSessionWebSocketDelegate {
+/// A separate class to handle URLSession delegate callbacks
+private class WebSocketDelegate: NSObject, URLSessionWebSocketDelegate {
+    var onOpen: (() -> Void)?
+    var onClose: ((URLSessionWebSocketTask.CloseCode, Data?) -> Void)?
+    
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
-        print("✅ WebSocket connected successfully.")
-        self.isConnected = true
-        resetReconnection()
-        startReceiving()
+        onOpen?()
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
-        print("🔌 WebSocket disconnected. Code: \(closeCode.rawValue)")
-        Task {
-            await handleDisconnection()
-        }
+        onClose?(closeCode, reason)
     }
 }
 
@@ -210,10 +275,28 @@ enum WebSocketError: LocalizedError {
     }
 }
 
-// MARK: - Environment Configuration Point
+// MARK: - DashboardSyncService Extension
 
-extension EnvironmentConfig {
-    // This assumes EnvironmentConfig.swift exists as planned
-    // static var current: Environment = .production
-    // var websocketURL: URL? { ... }
+extension DashboardSyncService {
+    /// Handles updates received from the WebSocket
+    func handleRemoteUpdate(_ update: CoreTypes.DashboardUpdate) {
+        // Check if this update originated from this device
+        if update.deviceId == UIDevice.current.identifierForVendor?.uuidString {
+            return // Ignore our own updates
+        }
+        
+        // Process the update based on source and type
+        switch update.source {
+        case .worker:
+            workerDashboardSubject.send(update)
+        case .admin:
+            adminDashboardSubject.send(update)
+        case .client:
+            clientDashboardSubject.send(update)
+        case .system:
+            crossDashboardSubject.send(update)
+        }
+        
+        print("📨 Processed remote update: \(update.type.rawValue) from \(update.source.rawValue)")
+    }
 }

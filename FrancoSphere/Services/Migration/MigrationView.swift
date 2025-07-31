@@ -1,12 +1,3 @@
-//
-//  MigrationView.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/30/25.
-//
-
-
-//
 //  MigrationView.swift
 //  FrancoSphere v6.0
 //

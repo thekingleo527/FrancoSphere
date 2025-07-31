@@ -26,7 +26,7 @@
 		2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */; };
 		2326C20E2E3B27400080F005 /* VectorClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C20D2E3B27400080F005 /* VectorClock.swift */; };
 		2326C2102E3B27740080F005 /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C20F2E3B27740080F005 /* WebSocketManager.swift */; };
-		2326C2122E3B27BB0080F005 /* ConflictResolutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2112E3B27BB0080F005 /* ConflictResolutionView.swift */; };
+		2326C2122E3B27BB0080F005 /* ConflictResolutionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2112E3B27BB0080F005 /* ConflictResolutionService.swift */; };
 		2326C21B2E3B2A9E0080F005 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C21A2E3B2A9E0080F005 /* OnboardingView.swift */; };
 		2326C21D2E3B2AD70080F005 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */; };
 		2326C2202E3B2B840080F005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2326C21E2E3B2B840080F005 /* Localizable.strings */; };
@@ -42,6 +42,8 @@
 		2326C23F2E3B3DB30080F005 /* IntegrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C23E2E3B3DB30080F005 /* IntegrationManager.swift */; };
 		2326C2412E3B3E0A0080F005 /* MigrationV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2402E3B3E0A0080F005 /* MigrationV2.swift */; };
 		2326C2432E3B3E2B0080F005 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2422E3B3E2B0080F005 /* BackupManager.swift */; };
+		2326C2472E3B468E0080F005 /* WorkerPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2462E3B468E0080F005 /* WorkerPreferencesView.swift */; };
+		2326C24B2E3B65590080F005 /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C24A2E3B65590080F005 /* LanguageManager.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -259,7 +261,7 @@
 		2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskService+DepartureChecklist.swift"; sourceTree = "<group>"; };
 		2326C20D2E3B27400080F005 /* VectorClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorClock.swift; sourceTree = "<group>"; };
 		2326C20F2E3B27740080F005 /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
-		2326C2112E3B27BB0080F005 /* ConflictResolutionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConflictResolutionView.swift; sourceTree = "<group>"; };
+		2326C2112E3B27BB0080F005 /* ConflictResolutionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConflictResolutionService.swift; sourceTree = "<group>"; };
 		2326C21A2E3B2A9E0080F005 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
 		2326C21F2E3B2B840080F005 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -276,6 +278,8 @@
 		2326C23E2E3B3DB30080F005 /* IntegrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationManager.swift; sourceTree = "<group>"; };
 		2326C2402E3B3E0A0080F005 /* MigrationV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationV2.swift; sourceTree = "<group>"; };
 		2326C2422E3B3E2B0080F005 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		2326C2462E3B468E0080F005 /* WorkerPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerPreferencesView.swift; sourceTree = "<group>"; };
+		2326C24A2E3B65590080F005 /* LanguageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageManager.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -700,6 +704,7 @@
 		23779F552E39885600F4A10F /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				2326C24A2E3B65590080F005 /* LanguageManager.swift */,
 				2326C2422E3B3E2B0080F005 /* BackupManager.swift */,
 				2326C22F2E3B3C0B0080F005 /* AccessibilityManager.swift */,
 				2326C22D2E3B3BFB0080F005 /* ThemeManager.swift */,
@@ -977,7 +982,7 @@
 		23779FB62E39885600F4A10F /* Sync */ = {
 			isa = PBXGroup;
 			children = (
-				2326C2112E3B27BB0080F005 /* ConflictResolutionView.swift */,
+				2326C2112E3B27BB0080F005 /* ConflictResolutionService.swift */,
 				23779FB32E39885600F4A10F /* DataSynchronizationService.swift */,
 				23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */,
 			);
@@ -1052,6 +1057,7 @@
 		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2462E3B468E0080F005 /* WorkerPreferencesView.swift */,
 				2326C2132E3B29B10080F005 /* Simplified */,
 				2326C2032E3B14920080F005 /* SiteDepartureView.swift */,
 				23779FCF2E39885600F4A10F /* AdminDashboardView.swift */,
@@ -1296,7 +1302,7 @@
 				23779FDF2E39885600F4A10F /* LoginView.swift in Sources */,
 				2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */,
 				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
-				2326C2122E3B27BB0080F005 /* ConflictResolutionView.swift in Sources */,
+				2326C2122E3B27BB0080F005 /* ConflictResolutionService.swift in Sources */,
 				2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */,
 				23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
@@ -1410,12 +1416,14 @@
 				2326C2262E3B36C30080F005 /* BatchedRequestManager.swift in Sources */,
 				2377A0372E39885600F4A10F /* BuildingMetricsService.swift in Sources */,
 				2377A0392E39885600F4A10F /* TimeStatus.swift in Sources */,
+				2326C24B2E3B65590080F005 /* LanguageManager.swift in Sources */,
 				23A1B97C2E3994260011F091 /* BuildingService.swift in Sources */,
 				2326C23D2E3B3D930080F005 /* PredictiveAnalytics.swift in Sources */,
 				23A1B97D2E3994260011F091 /* DashboardSyncService.swift in Sources */,
 				23A1B97E2E3994260011F091 /* WorkerService.swift in Sources */,
 				23A1B97F2E3994260011F091 /* TaskService.swift in Sources */,
 				2377A03A2E39885600F4A10F /* ImportHelper.swift in Sources */,
+				2326C2472E3B468E0080F005 /* WorkerPreferencesView.swift in Sources */,
 				2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */,
 				2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */,
 				2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */,
