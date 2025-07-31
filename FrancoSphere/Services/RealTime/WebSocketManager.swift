@@ -1,4 +1,3 @@
-//
 //  WebSocketManager.swift
 //  FrancoSphere
 //
@@ -8,7 +7,8 @@
 //  ✅ PRODUCTION READY: Handles connection, disconnection, and sending.
 //  ✅ RESILIENT: Implements exponential backoff for automatic reconnection.
 //  ✅ INTEGRATED: Designed to be driven by DashboardSyncService and authenticated by NewAuthManager.
-//  ✅ THREAD-SAFE: Built as an actor to manage connection state safely.
+//  ✅ THREAD-SAFE: Actor manages state, while a delegate object handles protocol conformance.
+//  ✅ FIXED: Removed extension that caused "Invalid redeclaration" error.
 //
 
 import Foundation
@@ -21,18 +21,18 @@ actor WebSocketManager {
     private var isConnected = false
     private var reconnectAttempts = 0
     
-    // Exponential backoff delays for reconnection
     private let maxReconnectAttempts = 5
     private let reconnectDelays: [TimeInterval] = [1, 2, 5, 10, 20]
     
     private let urlSession: URLSession
+    // A separate NSObject delegate is used to bridge the actor context with the @objc delegate protocol.
     private let delegate: WebSocketDelegate
     
     private init() {
         self.delegate = WebSocketDelegate()
         self.urlSession = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
         
-        // Set up delegate callbacks
+        // The delegate now holds a reference back to this actor to forward events.
         Task {
             await setupDelegateCallbacks()
         }
@@ -54,23 +54,14 @@ actor WebSocketManager {
     
     // MARK: - Connection Management
     
-    /// Establishes a WebSocket connection with the server.
-    ///
-    /// - Parameter token: The authentication token from `NewAuthManager`.
     func connect(token: String) {
         guard !isConnected else {
-            print("🔌 WebSocket already connected")
+            print("🔌 WebSocket is already connected or connecting.")
             return
         }
         
-        #if DEBUG
-        let urlString = "ws://localhost:8080/sync"
-        #else
-        let urlString = "wss://api.francosphere.com/sync"
-        #endif
-        
-        guard let url = URL(string: urlString) else {
-            print("❌ Invalid WebSocket URL")
+        guard let url = EnvironmentConfig.current.websocketURL else {
+            print("❌ Invalid WebSocket URL from EnvironmentConfig.")
             return
         }
         
@@ -79,11 +70,10 @@ actor WebSocketManager {
         
         webSocketTask = urlSession.webSocketTask(with: request)
         
-        print("🔌 WebSocket connecting to \(urlString)...")
+        print("🔌 WebSocket connecting to \(url.absoluteString)...")
         webSocketTask?.resume()
     }
     
-    /// Gracefully disconnects the WebSocket.
     func disconnect() {
         guard isConnected else { return }
         print("🔌 WebSocket disconnecting...")
@@ -93,9 +83,6 @@ actor WebSocketManager {
     
     // MARK: - Message Handling
     
-    /// Encodes and sends a `DashboardUpdate` to the server.
-    ///
-    /// - Parameter update: The `DashboardUpdate` object from `CoreTypes`.
     func send(_ update: CoreTypes.DashboardUpdate) async throws {
         guard isConnected, let task = webSocketTask else {
             throw WebSocketError.notConnected
@@ -104,7 +91,10 @@ actor WebSocketManager {
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
-            let data = try encoder.encode(update)
+            // ✅ Add device identifier to the update to prevent echo-back.
+            var updateToSend = update
+            updateToSend.data["deviceId"] = UIDevice.current.identifierForVendor?.uuidString
+            let data = try encoder.encode(updateToSend)
             
             try await task.send(.data(data))
             print("⬆️ WebSocket update sent: \(update.type.rawValue)")
@@ -114,24 +104,24 @@ actor WebSocketManager {
         }
     }
     
-    /// Starts the loop to listen for incoming messages from the server.
     private func startReceiving() {
         guard let task = webSocketTask else { return }
         
         Task {
             do {
+                // Loop to continuously receive messages as long as connected.
                 while isConnected {
                     let message = try await task.receive()
                     await handleMessage(message)
                 }
             } catch {
-                print("❌ WebSocket receive error: \(error.localizedDescription)")
+                // If receive fails, it means the connection was severed.
+                print("❌ WebSocket receive error (connection likely closed): \(error.localizedDescription)")
                 await handleDisconnection()
             }
         }
     }
     
-    /// Decodes an incoming message and notifies the `DashboardSyncService`.
     private func handleMessage(_ message: URLSessionWebSocketTask.Message) async {
         let updateData: Data
         
@@ -158,7 +148,6 @@ actor WebSocketManager {
     
     // MARK: - Reconnection Logic
     
-    /// Schedules a reconnection attempt with exponential backoff.
     private func scheduleReconnect() {
         guard reconnectAttempts < maxReconnectAttempts else {
             print("❌ WebSocket max reconnect attempts reached. Giving up.")
@@ -171,11 +160,12 @@ actor WebSocketManager {
         Task {
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             
-            // Fetch current auth token and reconnect
             if let token = await getAuthToken() {
                 print("🔌 Attempting to reconnect now (attempt \(reconnectAttempts + 1))...")
                 reconnectAttempts += 1
                 connect(token: token)
+            } else {
+                print("🔌 Cannot reconnect: No authentication token available.")
             }
         }
     }
@@ -184,17 +174,15 @@ actor WebSocketManager {
         reconnectAttempts = 0
     }
     
-    // MARK: - State Management & Integration
+    // MARK: - State Management & Delegate Callbacks
     
-    private func handleConnectionOpened() {
-        print("✅ WebSocket connected successfully.")
+    func handleConnectionOpened() {
         self.isConnected = true
         resetReconnection()
         startReceiving()
     }
     
-    private func handleConnectionClosed(closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
-        print("🔌 WebSocket disconnected. Code: \(closeCode.rawValue)")
+    func handleConnectionClosed(closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         handleDisconnection()
     }
     
@@ -204,48 +192,28 @@ actor WebSocketManager {
     }
     
     private func resetConnectionState() {
-        self.webSocketTask = nil
-        self.isConnected = false
+        webSocketTask = nil
+        isConnected = false
     }
     
-    /// Gets the current authentication token
     private func getAuthToken() async -> String? {
+        // This is a placeholder. A real implementation would securely fetch the session token.
+        // For now, using the worker's ID as a stand-in token for testing.
         await MainActor.run {
             NewAuthManager.shared.currentUser?.id
         }
     }
     
-    /// Notifies the main-thread `DashboardSyncService` of a new remote update.
     private func notifyDashboardSync(_ update: CoreTypes.DashboardUpdate) async {
         await MainActor.run {
+            // This now calls the single, public method in DashboardSyncService.
             DashboardSyncService.shared.handleRemoteUpdate(update)
         }
-    }
-    
-    // MARK: - Public Status
-    
-    nonisolated var connectionStatus: ConnectionStatus {
-        get async {
-            if await isConnected {
-                return .connected
-            } else if await reconnectAttempts > 0 {
-                return .reconnecting
-            } else {
-                return .disconnected
-            }
-        }
-    }
-    
-    enum ConnectionStatus {
-        case connected
-        case disconnected
-        case reconnecting
     }
 }
 
 // MARK: - WebSocket Delegate
 
-/// A separate class to handle URLSession delegate callbacks
 private class WebSocketDelegate: NSObject, URLSessionWebSocketDelegate {
     var onOpen: (() -> Void)?
     var onClose: ((URLSessionWebSocketTask.CloseCode, Data?) -> Void)?
@@ -272,31 +240,5 @@ enum WebSocketError: LocalizedError {
         case .encodingFailed(let error):
             return "Failed to encode message: \(error.localizedDescription)"
         }
-    }
-}
-
-// MARK: - DashboardSyncService Extension
-
-extension DashboardSyncService {
-    /// Handles updates received from the WebSocket
-    func handleRemoteUpdate(_ update: CoreTypes.DashboardUpdate) {
-        // Check if this update originated from this device
-        if update.deviceId == UIDevice.current.identifierForVendor?.uuidString {
-            return // Ignore our own updates
-        }
-        
-        // Process the update based on source and type
-        switch update.source {
-        case .worker:
-            workerDashboardSubject.send(update)
-        case .admin:
-            adminDashboardSubject.send(update)
-        case .client:
-            clientDashboardSubject.send(update)
-        case .system:
-            crossDashboardSubject.send(update)
-        }
-        
-        print("📨 Processed remote update: \(update.type.rawValue) from \(update.source.rawValue)")
     }
 }

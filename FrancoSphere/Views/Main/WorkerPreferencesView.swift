@@ -1,4 +1,5 @@
 
+//
 //  WorkerPreferencesView.swift
 //  FrancoSphere
 //
@@ -12,33 +13,30 @@
 //
 
 import SwiftUI
+import Combine
 
 struct WorkerPreferencesView: View {
     
     @StateObject private var viewModel: WorkerPreferencesViewModel
-    @EnvironmentObject private var themeManager: ThemeManager
+    
+    // ThemeManager can be injected as an EnvironmentObject if it's provided by a parent view.
+    // For standalone use, it can also be instantiated directly.
+    @StateObject private var themeManager = ThemeManager.shared
+    
     @Environment(\.dismiss) private var dismiss
     
     init(workerId: String) {
+        // Initialize the StateObject with the workerId, which is then passed to the ViewModel.
         self._viewModel = StateObject(wrappedValue: WorkerPreferencesViewModel(workerId: workerId))
     }
     
     var body: some View {
         NavigationView {
             Form {
-                // Language Section
                 languageSection
-                
-                // Display Section
                 displaySection
-                
-                // Accessibility Section
                 accessibilitySection
-                
-                // Notifications Section
                 notificationsSection
-                
-                // About Section
                 aboutSection
             }
             .navigationTitle(LocalizedStringKey("Preferences"))
@@ -52,10 +50,12 @@ struct WorkerPreferencesView: View {
                         }
                     }
                     .fontWeight(.semibold)
+                    .disabled(!viewModel.hasChanges)
                 }
             }
         }
         .task {
+            // Asynchronously load the worker's current preferences when the view appears.
             await viewModel.loadPreferences()
         }
         .alert("Error", isPresented: $viewModel.showError) {
@@ -77,22 +77,20 @@ struct WorkerPreferencesView: View {
                     Text("Español").tag("es")
                 }
                 .pickerStyle(.menu)
-                .onChange(of: viewModel.selectedLanguage) { newValue in
-                    // Update app language immediately
-                    updateAppLanguage(to: newValue)
+                .onChange(of: viewModel.selectedLanguage) {
+                    updateAppLanguage(to: viewModel.selectedLanguage)
                 }
             }
         } header: {
-            Text("Preferred Language", bundle: .main)
+            Text("Preferred Language")
         } footer: {
-            Text("Choose your preferred language for the app interface.", bundle: .main)
+            Text("Choose your preferred language for the app interface.")
                 .font(.caption)
         }
     }
     
     private var displaySection: some View {
         Section {
-            // Text Size
             VStack(alignment: .leading, spacing: 12) {
                 Label("Text Size", systemImage: "textformat.size")
                 
@@ -106,8 +104,7 @@ struct WorkerPreferencesView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                // Preview text
-                Text("Sample Text", bundle: .main)
+                Text("Sample Text")
                     .font(.body)
                     .scaleEffect(viewModel.textSizeMultiplier)
                     .frame(maxWidth: .infinity)
@@ -117,15 +114,13 @@ struct WorkerPreferencesView: View {
             }
             .padding(.vertical, 4)
             
-            // High Contrast
             Toggle(isOn: $viewModel.useHighContrast) {
                 Label("High Contrast Mode", systemImage: "circle.lefthalf.filled")
             }
-            .onChange(of: viewModel.useHighContrast) { newValue in
-                themeManager.toggleHighContrast(isOn: newValue)
+            .onChange(of: viewModel.useHighContrast) {
+                themeManager.toggleHighContrast(isOn: viewModel.useHighContrast)
             }
             
-            // Theme Selection
             HStack {
                 Label("Theme", systemImage: "moon.circle")
                 Spacer()
@@ -135,38 +130,35 @@ struct WorkerPreferencesView: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .onChange(of: viewModel.selectedTheme) { newValue in
-                    themeManager.applyTheme(newValue)
+                .onChange(of: viewModel.selectedTheme) {
+                    themeManager.applyTheme(viewModel.selectedTheme)
                 }
             }
         } header: {
-            Text("Display", bundle: .main)
+            Text("Display")
         }
     }
     
     private var accessibilitySection: some View {
         Section {
-            // Simplified Interface
             Toggle(isOn: $viewModel.useSimplifiedInterface) {
                 Label("Simplified Interface", systemImage: "square.grid.2x2")
             }
             
-            // Photo Requirements
             if viewModel.canTogglePhotoRequirement {
                 Toggle(isOn: $viewModel.requiresPhoto) {
                     Label("Require Photos for Tasks", systemImage: "camera")
                 }
             }
             
-            // Reduce Motion
             Toggle(isOn: $viewModel.reduceMotion) {
                 Label("Reduce Motion", systemImage: "figure.walk.motion")
             }
         } header: {
-            Text("Accessibility", bundle: .main)
+            Text("Accessibility")
         } footer: {
             if viewModel.useSimplifiedInterface {
-                Text("Simplified interface shows only essential features with larger buttons.", bundle: .main)
+                Text("Simplified interface shows only essential features with larger buttons.")
                     .font(.caption)
             }
         }
@@ -192,7 +184,7 @@ struct WorkerPreferencesView: View {
                 }
             }
         } header: {
-            Text("Notifications", bundle: .main)
+            Text("Notifications")
         }
     }
     
@@ -213,59 +205,53 @@ struct WorkerPreferencesView: View {
                     .font(.system(.caption, design: .monospaced))
             }
         } header: {
-            Text("About", bundle: .main)
+            Text("About")
         }
     }
     
     // MARK: - Helper Methods
     
     private func updateAppLanguage(to languageCode: String) {
-        // Update UserDefaults for language preference
         UserDefaults.standard.set([languageCode], forKey: "AppleLanguages")
-        
-        // Note: In a production app, you might want to show an alert
-        // suggesting the user restart the app for full language change
+        // NOTE: For the change to take full effect, the user may need to restart the app.
+        // A production app might show an alert suggesting this.
     }
 }
 
-// MARK: - View Model
+// MARK: - Worker Preferences ViewModel
 
 @MainActor
 class WorkerPreferencesViewModel: ObservableObject {
+    
     // MARK: - Published Properties
     
-    // Language & Display
     @Published var selectedLanguage = "en"
     @Published var textSizeMultiplier: Double = 1.0
     @Published var useHighContrast = false
     @Published var selectedTheme: ThemeManager.Theme = .system
-    
-    // Accessibility
     @Published var useSimplifiedInterface = false
     @Published var requiresPhoto = true
     @Published var reduceMotion = false
-    
-    // Notifications
     @Published var enableNotifications = true
     @Published var urgentTaskAlerts = true
     @Published var clockInReminders = true
     @Published var endOfDayReports = false
     
-    // UI State
     @Published var showError = false
     @Published var errorMessage: String?
     @Published var isLoading = false
+    @Published var hasChanges = false
     
-    // Configuration
     let workerId: String
     var canTogglePhotoRequirement = true
     
-    // Services
     private let grdbManager = GRDBManager.shared
-    private let themeManager = ThemeManager.shared
+    private var initialPreferencesState: Data?
+    private var cancellables = Set<AnyCancellable>()
     
     init(workerId: String) {
         self.workerId = workerId
+        setupChangeMonitor()
     }
     
     // MARK: - Data Operations
@@ -274,7 +260,6 @@ class WorkerPreferencesViewModel: ObservableObject {
         isLoading = true
         
         do {
-            // Load from worker_capabilities table
             let rows = try await grdbManager.query("""
                 SELECT * FROM worker_capabilities
                 WHERE worker_id = ?
@@ -282,27 +267,16 @@ class WorkerPreferencesViewModel: ObservableObject {
             """, [workerId])
             
             if let row = rows.first {
-                // Map database values to view model properties
-                await MainActor.run {
-                    self.useSimplifiedInterface = (row["simplified_interface"] as? Int64 ?? 0) == 1
-                    self.requiresPhoto = (row["requires_photo_for_sanitation"] as? Int64 ?? 1) == 1
-                    
-                    // Check if worker can toggle photo requirement
-                    self.canTogglePhotoRequirement = (row["can_add_emergency_tasks"] as? Int64 ?? 0) == 1
-                }
+                useSimplifiedInterface = (row["simplified_interface"] as? Int64 ?? 0) == 1
+                requiresPhoto = (row["requires_photo_for_sanitation"] as? Int64 ?? 1) == 1
+                canTogglePhotoRequirement = (row["can_add_emergency_tasks"] as? Int64 ?? 0) == 1
+                selectedLanguage = row["preferred_language"] as? String ?? "en"
             }
             
-            // Load language preference from UserDefaults
-            if let languages = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
-               let firstLang = languages.first {
-                selectedLanguage = firstLang.hasPrefix("es") ? "es" : "en"
-            }
+            loadLocalPreferences()
             
-            // Load display preferences from UserDefaults (or worker-specific storage)
-            loadDisplayPreferences()
-            
-            // Load notification preferences
-            loadNotificationPreferences()
+            // Capture the initial state after loading to check for changes later.
+            captureInitialState()
             
         } catch {
             errorMessage = "Failed to load preferences: \(error.localizedDescription)"
@@ -314,57 +288,28 @@ class WorkerPreferencesViewModel: ObservableObject {
     
     func savePreferences() async {
         do {
-            // First, ensure worker_capabilities record exists
-            let existingRows = try await grdbManager.query("""
-                SELECT COUNT(*) as count FROM worker_capabilities
-                WHERE worker_id = ?
-            """, [workerId])
+            try await grdbManager.execute("""
+                INSERT INTO worker_capabilities (worker_id, simplified_interface, requires_photo_for_sanitation, preferred_language, updated_at)
+                VALUES (?, ?, ?, ?, datetime('now'))
+                ON CONFLICT(worker_id) DO UPDATE SET
+                simplified_interface = excluded.simplified_interface,
+                requires_photo_for_sanitation = excluded.requires_photo_for_sanitation,
+                preferred_language = excluded.preferred_language,
+                updated_at = datetime('now')
+            """, [
+                workerId,
+                useSimplifiedInterface ? 1 : 0,
+                requiresPhoto ? 1 : 0,
+                selectedLanguage
+            ])
             
-            let exists = (existingRows.first?["count"] as? Int64 ?? 0) > 0
-            
-            if exists {
-                // Update existing record
-                try await grdbManager.execute("""
-                    UPDATE worker_capabilities
-                    SET simplified_interface = ?,
-                        requires_photo_for_sanitation = ?,
-                        updated_at = ?
-                    WHERE worker_id = ?
-                """, [
-                    useSimplifiedInterface ? 1 : 0,
-                    requiresPhoto ? 1 : 0,
-                    Date().ISO8601Format(),
-                    workerId
-                ])
-            } else {
-                // Insert new record with defaults
-                try await grdbManager.execute("""
-                    INSERT INTO worker_capabilities (
-                        worker_id, can_upload_photos, can_add_notes,
-                        can_view_map, can_add_emergency_tasks,
-                        requires_photo_for_sanitation, simplified_interface,
-                        created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, [
-                    workerId,
-                    1, // can_upload_photos default
-                    1, // can_add_notes default
-                    1, // can_view_map default
-                    0, // can_add_emergency_tasks default
-                    requiresPhoto ? 1 : 0,
-                    useSimplifiedInterface ? 1 : 0,
-                    Date().ISO8601Format(),
-                    Date().ISO8601Format()
-                ])
-            }
-            
-            // Save display preferences
-            saveDisplayPreferences()
-            
-            // Save notification preferences
-            saveNotificationPreferences()
+            saveLocalPreferences()
+            captureInitialState() // Reset the "changes" tracker
             
             print("✅ Preferences saved successfully for worker \(workerId)")
+            
+            // Notify the rest of the app that preferences have changed.
+            NotificationCenter.default.post(name: .workerPreferencesChanged, object: nil)
             
         } catch {
             errorMessage = "Failed to save preferences: \(error.localizedDescription)"
@@ -372,10 +317,61 @@ class WorkerPreferencesViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Helper Methods
+    // MARK: - Change Monitoring
     
-    private func loadDisplayPreferences() {
-        // Load from UserDefaults with worker-specific keys
+    private func setupChangeMonitor() {
+        // This publisher fires whenever any of the preference properties change.
+        let publisher = Publishers.CombineLatest8(
+            $selectedLanguage, $textSizeMultiplier, $useHighContrast, $selectedTheme,
+            $useSimplifiedInterface, $requiresPhoto, $reduceMotion, $enableNotifications
+        )
+        
+        publisher
+            .debounce(for: .milliseconds(100), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.checkForChanges()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func captureInitialState() {
+        let currentState = [
+            selectedLanguage,
+            String(textSizeMultiplier),
+            String(useHighContrast),
+            selectedTheme.rawValue,
+            String(useSimplifiedInterface),
+            String(requiresPhoto),
+            String(reduceMotion),
+            String(enableNotifications)
+        ].joined(separator: "|")
+        
+        initialPreferencesState = currentState.data(using: .utf8)
+        hasChanges = false
+    }
+    
+    private func checkForChanges() {
+        let currentState = [
+            selectedLanguage,
+            String(textSizeMultiplier),
+            String(useHighContrast),
+            selectedTheme.rawValue,
+            String(useSimplifiedInterface),
+            String(requiresPhoto),
+            String(reduceMotion),
+            String(enableNotifications)
+        ].joined(separator: "|")
+        
+        let currentStateData = currentState.data(using: .utf8)
+        
+        if let initialState = initialPreferencesState {
+            hasChanges = initialState != currentStateData
+        }
+    }
+    
+    // MARK: - Helper Methods for Local Preferences
+    
+    private func loadLocalPreferences() {
         let defaults = UserDefaults.standard
         let prefix = "worker_\(workerId)_"
         
@@ -385,41 +381,25 @@ class WorkerPreferencesViewModel: ObservableObject {
         useHighContrast = defaults.bool(forKey: "\(prefix)highContrast")
         reduceMotion = defaults.bool(forKey: "\(prefix)reduceMotion")
         
-        // Load theme from ThemeManager
-        selectedTheme = themeManager.currentTheme
-        useHighContrast = themeManager.useHighContrast
+        if let themeRawValue = defaults.string(forKey: "\(prefix)theme"),
+           let theme = ThemeManager.Theme(rawValue: themeRawValue) {
+            selectedTheme = theme
+        }
+        
+        enableNotifications = defaults.object(forKey: "\(prefix)enableNotifications") as? Bool ?? true
+        urgentTaskAlerts = defaults.object(forKey: "\(prefix)urgentTaskAlerts") as? Bool ?? true
+        clockInReminders = defaults.object(forKey: "\(prefix)clockInReminders") as? Bool ?? true
+        endOfDayReports = defaults.object(forKey: "\(prefix)endOfDayReports") as? Bool ?? false
     }
     
-    private func saveDisplayPreferences() {
+    private func saveLocalPreferences() {
         let defaults = UserDefaults.standard
         let prefix = "worker_\(workerId)_"
         
         defaults.set(textSizeMultiplier, forKey: "\(prefix)textSize")
         defaults.set(useHighContrast, forKey: "\(prefix)highContrast")
         defaults.set(reduceMotion, forKey: "\(prefix)reduceMotion")
-    }
-    
-    private func loadNotificationPreferences() {
-        let defaults = UserDefaults.standard
-        let prefix = "worker_\(workerId)_"
-        
-        enableNotifications = defaults.bool(forKey: "\(prefix)enableNotifications")
-        urgentTaskAlerts = defaults.bool(forKey: "\(prefix)urgentTaskAlerts")
-        clockInReminders = defaults.bool(forKey: "\(prefix)clockInReminders")
-        endOfDayReports = defaults.bool(forKey: "\(prefix)endOfDayReports")
-        
-        // Default to true for important notifications
-        if !defaults.bool(forKey: "\(prefix)hasSetNotificationPrefs") {
-            enableNotifications = true
-            urgentTaskAlerts = true
-            clockInReminders = true
-            defaults.set(true, forKey: "\(prefix)hasSetNotificationPrefs")
-        }
-    }
-    
-    private func saveNotificationPreferences() {
-        let defaults = UserDefaults.standard
-        let prefix = "worker_\(workerId)_"
+        defaults.set(selectedTheme.rawValue, forKey: "\(prefix)theme")
         
         defaults.set(enableNotifications, forKey: "\(prefix)enableNotifications")
         defaults.set(urgentTaskAlerts, forKey: "\(prefix)urgentTaskAlerts")
@@ -428,17 +408,19 @@ class WorkerPreferencesViewModel: ObservableObject {
     }
 }
 
-// MARK: - Preview
+// MARK: - Notification Name Extension
+extension Notification.Name {
+    static let workerPreferencesChanged = Notification.Name("workerPreferencesChanged")
+}
 
+// MARK: - Preview
 struct WorkerPreferencesView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            // English version
             WorkerPreferencesView(workerId: "4") // Kevin
                 .environmentObject(ThemeManager.shared)
                 .environment(\.locale, .init(identifier: "en"))
             
-            // Spanish version
             WorkerPreferencesView(workerId: "5") // Mercedes
                 .environmentObject(ThemeManager.shared)
                 .environment(\.locale, .init(identifier: "es"))
