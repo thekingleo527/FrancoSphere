@@ -32,7 +32,7 @@ struct BuildingDetailView: View {
     @State private var selectedRoutine: DailyRoutine?
     @State private var showWorkerAssignment = false
     @State private var capturedImage: UIImage?
-    @State private var photoCategory: FrancoBuildingPhotoCategory = .general
+    @State private var photoCategory: FrancoPhotoCategory = .all
     @State private var photoNotes: String = ""
     @Environment(\.dismiss) private var dismiss
     
@@ -1111,12 +1111,12 @@ struct BuildingDetailView: View {
 struct PhotoCaptureSheet: View {
     let buildingId: String
     let buildingName: String
-    let onCapture: (UIImage, FrancoBuildingPhotoCategory, String) -> Void
-    
+    let onCapture: (UIImage, FrancoPhotoCategory, String) -> Void
+
     @State private var selectedImage: UIImage?
     @State private var showingImagePicker = false
     @State private var showingCamera = false
-    @State private var selectedCategory: FrancoBuildingPhotoCategory = .general
+    @State private var selectedCategory: FrancoPhotoCategory = .all
     @State private var notes: String = ""
     @State private var isProcessing = false
     @Environment(\.dismiss) private var dismiss
@@ -1808,7 +1808,7 @@ class BuildingDetailVM: ObservableObject {
         }
     }
     
-    private func iconForCategory(_ category: FrancoBuildingPhotoCategory) -> String {
+    func savePhoto(_ photo: UIImage, category: FrancoPhotoCategory, notes: String) async {
         switch category {
         case .entrance: return "door.left.hand.open"
         case .lobby: return "building"
@@ -2035,7 +2035,7 @@ class BuildingDetailVM: ObservableObject {
         // Phase 2: Log vendor visit
     }
     
-    func savePhoto(_ photo: UIImage, category: FrancoBuildingPhotoCategory, notes: String) async {
+    private func iconForCategory(_ category: FrancoPhotoCategory) -> String {
         // Get current location if available
         let location = await locationManager.getCurrentLocation()
         
