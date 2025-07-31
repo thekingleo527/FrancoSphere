@@ -5,6 +5,7 @@
 //  🏆 PRODUCTION-READY: Enhanced with Timeline Integration
 //  ✅ CLEAN: Modular components and better organization
 //  ✅ INTEGRATED: TimelineProgressBar for visual time tracking
+//  ✅ FIXED: Renamed components to avoid duplicate declarations
 //
 
 import SwiftUI
@@ -91,7 +92,7 @@ private struct StandardHeroView: View {
         VStack(spacing: 0) {
             // Sync status bar
             if syncStatus != .synced {
-                SyncStatusBar(
+                HeroSyncStatusBar(
                     status: syncStatus,
                     onAction: onSync
                 )
@@ -100,7 +101,7 @@ private struct StandardHeroView: View {
             // Main content
             VStack(spacing: 20) {
                 // Header with greeting and status
-                HeaderSection(
+                HeroHeaderSection(
                     worker: worker,
                     clockInStatus: clockInStatus,
                     language: language,
@@ -109,7 +110,7 @@ private struct StandardHeroView: View {
                 
                 // Weather card
                 if let weather = weather {
-                    WeatherCard(
+                    HeroWeatherCard(
                         weather: weather,
                         isExpanded: $showWeatherDetail
                     )
@@ -122,7 +123,7 @@ private struct StandardHeroView: View {
                 )
                 
                 // Status grid
-                StatusGrid(
+                HeroStatusGrid(
                     building: building,
                     progress: progress,
                     capabilities: capabilities,
@@ -133,11 +134,11 @@ private struct StandardHeroView: View {
                 
                 // Emergency section
                 if capabilities?.canAddEmergencyTasks ?? false {
-                    EmergencyButton(onTap: onEmergency)
+                    HeroEmergencyButton(onTap: onEmergency)
                 }
                 
                 // Action section
-                ActionSection(
+                HeroActionSection(
                     clockInStatus: clockInStatus,
                     capabilities: capabilities,
                     isOffline: syncStatus == .offline,
@@ -150,13 +151,13 @@ private struct StandardHeroView: View {
             .padding(24)
         }
         .background(
-            CardBackground(
+            HeroCardBackground(
                 clockInStatus: clockInStatus,
                 syncStatus: syncStatus
             )
         )
         .overlay(
-            OfflineOverlay(isOffline: syncStatus == .offline)
+            HeroOfflineOverlay(isOffline: syncStatus == .offline)
         )
     }
 }
@@ -198,10 +199,10 @@ private struct SimplifiedHeroView: View {
             .padding(.top)
             
             // Big status indicator
-            StatusIndicator(clockInStatus: clockInStatus)
+            HeroStatusIndicator(clockInStatus: clockInStatus)
             
             // Simple task count
-            TaskCountDisplay(
+            HeroTaskCountDisplay(
                 completed: progress.completedTasks,
                 total: progress.totalTasks,
                 language: language
@@ -210,7 +211,7 @@ private struct SimplifiedHeroView: View {
             Spacer()
             
             // Large clock in button
-            ClockInButton(
+            HeroClockInButton(
                 status: clockInStatus,
                 language: language,
                 isLarge: true,
@@ -219,7 +220,7 @@ private struct SimplifiedHeroView: View {
             
             // Emergency button
             if capabilities?.canAddEmergencyTasks ?? false {
-                EmergencyButton(onTap: onEmergency, isLarge: true)
+                HeroEmergencyButton(onTap: onEmergency, isLarge: true)
             }
         }
         .padding(24)
@@ -284,13 +285,13 @@ private struct EnhancedProgressSection: View {
             .foregroundColor(.white.opacity(0.8))
             
             // Visual progress bar
-            ProgressBar(percentage: progressPercentage)
+            HeroProgressBar(percentage: progressPercentage)
             
             // Timeline with task markers
             TimelineProgressBar()
                 .frame(height: 20)
                 .overlay(
-                    TaskTimelineMarkers(
+                    HeroTaskTimelineMarkers(
                         completedTasks: progress.completedTasks,
                         totalTasks: progress.totalTasks,
                         nextTaskTime: getNextTaskTime()
@@ -320,7 +321,7 @@ private struct EnhancedProgressSection: View {
     }
 }
 
-private struct TaskTimelineMarkers: View {
+private struct HeroTaskTimelineMarkers: View {
     let completedTasks: Int
     let totalTasks: Int
     let nextTaskTime: Date?
@@ -371,7 +372,7 @@ private struct TaskTimelineMarkers: View {
     }
 }
 
-private struct HeaderSection: View {
+private struct HeroHeaderSection: View {
     let worker: WorkerProfile?
     let clockInStatus: HeroStatusCard.ClockInStatus
     let language: String
@@ -401,7 +402,7 @@ private struct HeaderSection: View {
                 
                 // Clock in details
                 if case let .clockedIn(buildingName, _, time, location) = clockInStatus {
-                    ClockInDetails(
+                    HeroClockInDetails(
                         buildingName: buildingName,
                         time: time,
                         hasLocation: location != nil
@@ -412,7 +413,7 @@ private struct HeaderSection: View {
             Spacer()
             
             // Status indicator
-            StatusBadge(
+            HeroWorkerStatusBadge(
                 clockInStatus: clockInStatus,
                 hasPhotoRequirement: hasPhotoRequirement
             )
@@ -420,7 +421,7 @@ private struct HeaderSection: View {
     }
 }
 
-private struct ClockInDetails: View {
+private struct HeroClockInDetails: View {
     let buildingName: String
     let time: Date
     let hasLocation: Bool
@@ -451,7 +452,7 @@ private struct ClockInDetails: View {
     }
 }
 
-private struct StatusBadge: View {
+private struct HeroWorkerStatusBadge: View {
     let clockInStatus: HeroStatusCard.ClockInStatus
     let hasPhotoRequirement: Bool
     
@@ -508,7 +509,7 @@ private struct StatusBadge: View {
     }
 }
 
-private struct WeatherCard: View {
+private struct HeroWeatherCard: View {
     let weather: CoreTypes.WeatherData
     @Binding var isExpanded: Bool
     
@@ -534,7 +535,7 @@ private struct WeatherCard: View {
                             .fontWeight(.semibold)
                         
                         if weather.outdoorWorkRisk != .low {
-                            RiskBadge(risk: weather.outdoorWorkRisk)
+                            HeroRiskBadge(risk: weather.outdoorWorkRisk)
                         }
                     }
                     
@@ -544,7 +545,7 @@ private struct WeatherCard: View {
                     
                     // DSNY Alert if relevant
                     if weather.condition.lowercased().contains("snow") {
-                        DSNYAlert()
+                        HeroDSNYAlert()
                     }
                 }
                 
@@ -598,7 +599,7 @@ private struct WeatherCard: View {
     }
 }
 
-private struct RiskBadge: View {
+private struct HeroRiskBadge: View {
     let risk: CoreTypes.OutdoorWorkRisk
     
     var body: some View {
@@ -617,7 +618,7 @@ private struct RiskBadge: View {
     }
 }
 
-private struct DSNYAlert: View {
+private struct HeroDSNYAlert: View {
     var body: some View {
         Label("DSNY snow removal required", systemImage: "snowflake")
             .font(.caption2)
@@ -625,7 +626,7 @@ private struct DSNYAlert: View {
     }
 }
 
-private struct StatusGrid: View {
+private struct HeroStatusGrid: View {
     let building: NamedCoordinate?
     let progress: CoreTypes.TaskProgress
     let capabilities: HeroStatusCard.WorkerCapabilities?
@@ -668,7 +669,7 @@ private struct StatusGrid: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 // Building status
-                StatusCard(
+                HeroStatusCard(
                     icon: "building.2.fill",
                     title: language == "es" ? "Edificio Actual" : "Current Building",
                     value: building?.name ?? (language == "es" ? "No asignado" : "Not assigned"),
@@ -679,7 +680,7 @@ private struct StatusGrid: View {
                 )
                 
                 // Task status
-                StatusCard(
+                HeroStatusCard(
                     icon: "checkmark.circle.fill",
                     title: language == "es" ? "Tareas Hoy" : "Tasks Today",
                     value: "\(progress.completedTasks) / \(progress.totalTasks)",
@@ -692,13 +693,13 @@ private struct StatusGrid: View {
             
             // Compliance status if worker has sanitation tasks
             if capabilities?.requiresPhotoForSanitation ?? true {
-                ComplianceStatusCard()
+                HeroComplianceCard()
             }
         }
     }
 }
 
-private struct StatusCard: View {
+private struct HeroStatusCard: View {
     let icon: String
     let title: String
     let value: String
@@ -756,7 +757,7 @@ private struct StatusCard: View {
     }
 }
 
-private struct ComplianceStatusCard: View {
+private struct HeroComplianceCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "camera.fill.badge.ellipsis")
@@ -791,7 +792,7 @@ private struct ComplianceStatusCard: View {
     }
 }
 
-private struct EmergencyButton: View {
+private struct HeroEmergencyButton: View {
     let onTap: () -> Void
     var isLarge: Bool = false
     
@@ -838,7 +839,7 @@ private struct EmergencyButton: View {
     }
 }
 
-private struct ActionSection: View {
+private struct HeroActionSection: View {
     let clockInStatus: HeroStatusCard.ClockInStatus
     let capabilities: HeroStatusCard.WorkerCapabilities?
     let isOffline: Bool
@@ -851,7 +852,7 @@ private struct ActionSection: View {
     var body: some View {
         HStack(spacing: 12) {
             // Clock in/out button
-            ClockInButton(
+            HeroClockInButton(
                 status: clockInStatus,
                 language: language,
                 isOffline: isOffline,
@@ -860,7 +861,7 @@ private struct ActionSection: View {
             )
             
             // Quick actions
-            QuickActionsMenu(
+            HeroQuickActionsMenu(
                 capabilities: capabilities,
                 onEmergency: onEmergency
             )
@@ -868,7 +869,7 @@ private struct ActionSection: View {
     }
 }
 
-private struct ClockInButton: View {
+private struct HeroClockInButton: View {
     let status: HeroStatusCard.ClockInStatus
     let language: String
     var isOffline: Bool = false
@@ -950,7 +951,7 @@ private struct ClockInButton: View {
     }
 }
 
-private struct QuickActionsMenu: View {
+private struct HeroQuickActionsMenu: View {
     let capabilities: HeroStatusCard.WorkerCapabilities?
     let onEmergency: () -> Void
     
@@ -994,7 +995,7 @@ private struct QuickActionsMenu: View {
     }
 }
 
-private struct StatusIndicator: View {
+private struct HeroStatusIndicator: View {
     let clockInStatus: HeroStatusCard.ClockInStatus
     
     var body: some View {
@@ -1016,7 +1017,7 @@ private struct StatusIndicator: View {
     }
 }
 
-private struct TaskCountDisplay: View {
+private struct HeroTaskCountDisplay: View {
     let completed: Int
     let total: Int
     let language: String
@@ -1038,7 +1039,7 @@ private struct TaskCountDisplay: View {
     }
 }
 
-private struct ProgressBar: View {
+private struct HeroProgressBar: View {
     let percentage: Double
     
     private var progressColor: Color {
@@ -1081,7 +1082,7 @@ private struct ProgressBar: View {
     }
 }
 
-private struct SyncStatusBar: View {
+private struct HeroSyncStatusBar: View {
     let status: HeroStatusCard.SyncStatus
     let onAction: () -> Void
     
@@ -1173,7 +1174,7 @@ private struct SyncStatusBar: View {
     }
 }
 
-private struct CardBackground: View {
+private struct HeroCardBackground: View {
     let clockInStatus: HeroStatusCard.ClockInStatus
     let syncStatus: HeroStatusCard.SyncStatus
     
@@ -1215,7 +1216,7 @@ private struct CardBackground: View {
     }
 }
 
-private struct OfflineOverlay: View {
+private struct HeroOfflineOverlay: View {
     let isOffline: Bool
     
     var body: some View {

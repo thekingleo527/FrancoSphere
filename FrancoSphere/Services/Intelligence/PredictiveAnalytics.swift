@@ -1,10 +1,3 @@
-//
-//  PredictiveAnalytics.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/31/25.
-//
-
 
 //  PredictiveAnalytics.swift
 //  FrancoSphere

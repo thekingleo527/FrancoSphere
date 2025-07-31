@@ -1,15 +1,8 @@
 //
-//  NextStepsSection.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
-//
-//  NextStepsSection.swift
+//  NextStepsView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ RENAMED: Changed from NextStepsSection to NextStepsView to avoid conflicts
 //  ✅ NEW: Smart task progression component
 //  ✅ INTEGRATES: RoutineRepository for routine-based tasks
 //  ✅ CONTEXT-AWARE: Shows tasks based on current location
@@ -19,7 +12,7 @@
 import SwiftUI
 import CoreLocation
 
-struct NextStepsSection: View {
+struct NextStepsView: View {
     // MARK: - Properties
     let currentTask: CoreTypes.ContextualTask?
     let upcomingTasks: [CoreTypes.ContextualTask]
@@ -52,7 +45,7 @@ struct NextStepsSection: View {
     
     private var hasTimeSensitiveTasks: Bool {
         upcomingTasks.contains { task in
-            task.urgency == .urgent || 
+            task.urgency == .urgent ||
             task.urgency == .critical ||
             task.title.lowercased().contains("dsny") ||
             task.title.lowercased().contains("pickup")
@@ -75,7 +68,7 @@ struct NextStepsSection: View {
                 
                 // Current task (most prominent)
                 if let task = currentTask {
-                    CurrentTaskCard(
+                    NextStepsTaskCard(
                         task: task,
                         onStart: { onStartTask(task) }
                     )
@@ -185,7 +178,7 @@ struct NextStepsSection: View {
                 .foregroundColor(.white.opacity(0.6))
             
             ForEach(tasksAtCurrentLocation.prefix(2)) { task in
-                CompactTaskRow(task: task)
+                NextStepsCompactTaskRow(task: task)
             }
             
             if tasksAtCurrentLocation.count > 2 {
@@ -364,9 +357,9 @@ struct NextLocationInfo {
     let estimatedTime: String
 }
 
-// MARK: - Current Task Card
+// MARK: - Task Card Component (Renamed to avoid conflict)
 
-struct CurrentTaskCard: View {
+private struct NextStepsTaskCard: View {
     let task: CoreTypes.ContextualTask
     let onStart: () -> Void
     
@@ -387,7 +380,7 @@ struct CurrentTaskCard: View {
                 
                 // Urgency indicator
                 if let urgency = task.urgency, urgency.priorityValue > 50 {
-                    UrgencyBadge(urgency: urgency)
+                    NextStepsUrgencyBadge(urgency: urgency)
                 }
             }
             
@@ -436,9 +429,9 @@ struct CurrentTaskCard: View {
     }
 }
 
-// MARK: - Compact Task Row
+// MARK: - Compact Task Row (Renamed to avoid conflict)
 
-struct CompactTaskRow: View {
+private struct NextStepsCompactTaskRow: View {
     let task: CoreTypes.ContextualTask
     
     var body: some View {
@@ -473,9 +466,9 @@ struct CompactTaskRow: View {
     }
 }
 
-// MARK: - Urgency Badge
+// MARK: - Urgency Badge (Renamed to avoid conflict)
 
-struct UrgencyBadge: View {
+private struct NextStepsUrgencyBadge: View {
     let urgency: CoreTypes.TaskUrgency
     
     var body: some View {
@@ -498,15 +491,46 @@ struct UrgencyBadge: View {
     }
 }
 
+// MARK: - TaskUrgency Extension for Priority Value
+
+extension CoreTypes.TaskUrgency {
+    var priorityValue: Int {
+        switch self {
+        case .emergency: return 100
+        case .critical: return 90
+        case .urgent: return 80
+        case .high: return 70
+        case .medium: return 50
+        case .low: return 30
+        }
+    }
+}
+
+// MARK: - BuildingRoutine Extension (placeholder properties)
+
+extension BuildingRoutine {
+    var displaySchedule: String {
+        "Daily at \(estimatedDuration) min"
+    }
+    
+    var isOverdue: Bool {
+        false // Placeholder
+    }
+    
+    var isDueToday: Bool {
+        true // Placeholder
+    }
+}
+
 // MARK: - Preview
 
-struct NextStepsSection_Previews: PreviewProvider {
+struct NextStepsView_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             
             ScrollView {
-                NextStepsSection(
+                NextStepsView(
                     currentTask: CoreTypes.ContextualTask(
                         id: "1",
                         title: "Clean Main Lobby",
@@ -523,7 +547,23 @@ struct NextStepsSection_Previews: PreviewProvider {
                         estimatedDuration: 1200,
                         urgency: .high
                     ),
-                    upcomingTasks: [],
+                    upcomingTasks: [
+                        CoreTypes.ContextualTask(
+                            id: "2",
+                            title: "Empty Trash Bins",
+                            buildingId: "14",
+                            building: CoreTypes.NamedCoordinate(
+                                id: "14",
+                                name: "Rubin Museum",
+                                address: "150 W 17th St",
+                                latitude: 40.7402,
+                                longitude: -73.9980
+                            ),
+                            requiresPhoto: false,
+                            estimatedDuration: 900,
+                            urgency: .medium
+                        )
+                    ],
                     currentBuilding: CoreTypes.NamedCoordinate(
                         id: "14",
                         name: "Rubin Museum",

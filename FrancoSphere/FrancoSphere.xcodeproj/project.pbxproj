@@ -50,6 +50,8 @@
 		2326C2622E3C070B0080F005 /* AdminDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */; };
 		2326C2642E3C07170080F005 /* ClientDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */; };
 		2326C2662E3C1C210080F005 /* NextStepsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2652E3C1C210080F005 /* NextStepsSection.swift */; };
+		2326C2692E3C23A20080F005 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */; };
+		2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -104,7 +106,6 @@
 		2377A0232E39885600F4A10F /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F572E39885600F4A10F /* MapRevealContainer.swift */; };
 		2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCD2E39885600F4A10F /* TaskScheduleView.swift */; };
 		2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */; };
-		2377A0272E39885600F4A10F /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F8F2E39885600F4A10F /* TestRealDataIntegration.swift */; };
 		2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F352E39885600F4A10F /* GlassTransitions.swift */; };
 		2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCF2E39885600F4A10F /* AdminDashboardView.swift */; };
 		2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDC2E39885600F4A10F /* WorkerProfileView.swift */; };
@@ -223,7 +224,6 @@
 		23A1B99C2E39A0EF0011F091 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */; };
 		23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */; };
 		23C839A22E39E6C000C6866E /* MigrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C839A12E39E6C000C6866E /* MigrationView.swift */; };
-		23C839A42E39E74300C6866E /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C839A32E39E74300C6866E /* TestMigrationFlow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -286,6 +286,9 @@
 		2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardContainerView.swift; sourceTree = "<group>"; };
 		2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardContainerView.swift; sourceTree = "<group>"; };
 		2326C2652E3C1C210080F005 /* NextStepsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextStepsSection.swift; sourceTree = "<group>"; };
+		2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
+		2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FrancoSphereTests-Bridging-Header.h"; sourceTree = "<group>"; };
+		2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -373,7 +376,6 @@
 		23779F892E39885600F4A10F /* Rubin_Museum_142_148_West_17th_Street.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Rubin_Museum_142_148_West_17th_Street.jpg; sourceTree = "<group>"; };
 		23779F8A2E39885600F4A10F /* Stuyvesant_Cove_Park.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Stuyvesant_Cove_Park.jpg; sourceTree = "<group>"; };
 		23779F8C2E39885600F4A10F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		23779F8F2E39885600F4A10F /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
 		23779F902E39885600F4A10F /* update_rubin_museum_id.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = update_rubin_museum_id.sql; sourceTree = "<group>"; };
 		23779F932E39885600F4A10F /* BuildingFeatureConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingFeatureConfiguration.swift; sourceTree = "<group>"; };
 		23779F972E39885600F4A10F /* WorkerContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerContextEngine.swift; sourceTree = "<group>"; };
@@ -459,7 +461,6 @@
 		23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
 		23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalIDs.swift; sourceTree = "<group>"; };
 		23C839A12E39E6C000C6866E /* MigrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationView.swift; sourceTree = "<group>"; };
-		23C839A32E39E74300C6866E /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -548,8 +549,11 @@
 				23779FDE2E39885600F4A10F /* Views */,
 				23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */,
 				23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */,
+				2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */,
+				2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */,
 				2326C2232E3B32B60080F005 /* TestHelpers.swift */,
 				23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */,
+				2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -863,7 +867,6 @@
 		23779F912E39885600F4A10F /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
-				23779F8F2E39885600F4A10F /* TestRealDataIntegration.swift */,
 				23779F902E39885600F4A10F /* update_rubin_museum_id.sql */,
 			);
 			path = Scripts;
@@ -913,7 +916,6 @@
 			isa = PBXGroup;
 			children = (
 				2326C2402E3B3E0A0080F005 /* MigrationV2.swift */,
-				23C839A32E39E74300C6866E /* TestMigrationFlow.swift */,
 				23C839A12E39E6C000C6866E /* MigrationView.swift */,
 				23779F992E39885600F4A10F /* WorkerAssignmentEngine.swift */,
 			);
@@ -1404,12 +1406,10 @@
 				2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */,
 				2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */,
 				23A1B98C2E3994760011F091 /* IntelligenceService.swift in Sources */,
-				23C839A42E39E74300C6866E /* TestMigrationFlow.swift in Sources */,
 				2326C2432E3B3E2B0080F005 /* BackupManager.swift in Sources */,
 				2326C2042E3B14920080F005 /* SiteDepartureView.swift in Sources */,
 				23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */,
 				23A1B98D2E3994760011F091 /* WorkerMetricsService.swift in Sources */,
-				2377A0272E39885600F4A10F /* TestRealDataIntegration.swift in Sources */,
 				2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */,
 				2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */,
 				2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */,
@@ -1502,6 +1502,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */,
+				2326C2692E3C23A20080F005 /* TestRealDataIntegration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1739,6 +1741,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.fmg.FrancoSphereTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "FrancoSphereTests-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1760,6 +1763,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.fmg.FrancoSphereTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "FrancoSphereTests-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FrancoSphere.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FrancoSphere";

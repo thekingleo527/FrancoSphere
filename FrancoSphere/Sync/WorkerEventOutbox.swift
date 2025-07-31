@@ -2,7 +2,8 @@
 //  WorkerEventOutbox.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Simplified to match existing patterns
+//  ✅ CLEAN: No dependency on DataSynchronizationService or WorkerEvent
+//  ✅ SELF-CONTAINED: Works independently
 //  ✅ V6.0: Phase 2.2 - Enhanced Offline Queue
 //
 
@@ -12,7 +13,7 @@ import Foundation
 actor WorkerEventOutbox {
     static let shared = WorkerEventOutbox()
 
-    /// Represents a single worker action that needs to be synced (Local version)
+    /// Represents a single worker action that needs to be synced
     struct OutboxEvent: Codable, Identifiable {
         let id: String
         let type: WorkerActionType
@@ -43,41 +44,20 @@ actor WorkerEventOutbox {
             self.payload = Data()
             self.retryCount = 0
         }
-        
-        // Convert to WorkerEvent that DataSynchronizationService expects
-        func toSyncEvent() -> WorkerEvent {
-            let eventType: WorkerEvent.EventType
-            switch self.type {
-            case .taskCompletion, .taskComplete:
-                eventType = .taskCompletion
-            case .clockIn:
-                eventType = .clockIn
-            case .clockOut:
-                eventType = .clockOut
-            case .photoUpload, .commentUpdate:
-                eventType = .taskCompletion
-            case .routineInspection:
-                eventType = .taskStart
-            case .buildingStatusUpdate:
-                eventType = .buildingArrival
-            case .emergencyReport:
-                eventType = .taskCompletion
-            }
-            
-            return WorkerEvent(
-                buildingId: self.buildingId,
-                workerId: self.workerId,
-                type: eventType,
-                timestamp: self.timestamp
-            )
-        }
     }
     
     // In-memory queue for pending events
     private var pendingEvents: [OutboxEvent] = []
     
+    // Track last sync time
+    private var lastSyncTime: Date?
+    
+    // Track sync state
+    private var isSyncing = false
+    
     private init() {
-        // Simple synchronous init
+        // Load any persisted events on init
+        loadPendingEvents()
     }
 
     /// Adds a new event to the outbox to be synced
@@ -86,16 +66,16 @@ actor WorkerEventOutbox {
         pendingEvents.append(event)
         savePendingEvents()
         
-        // Now we can directly call attemptFlush since we're already async
+        // Attempt to flush immediately
         await attemptFlush()
     }
     
-    /// Create and queue an event from a ContextualTask completion
-    func recordTaskCompletion(task: ContextualTask, workerId: String) async {
+    /// Create and queue an event from a task completion
+    func recordTaskCompletion(taskId: String, taskTitle: String, workerId: String, buildingId: String) async {
         let event = OutboxEvent(
             type: .taskCompletion,
             workerId: workerId,
-            buildingId: task.buildingId ?? "unknown"
+            buildingId: buildingId
         )
         await addEvent(event)
     }
@@ -107,7 +87,6 @@ actor WorkerEventOutbox {
         await addEvent(event)
     }
 
-    
     /// Create and queue an event for building status updates
     func recordBuildingStatusEvent(workerId: String, buildingId: String) async {
         let event = OutboxEvent(type: .buildingStatusUpdate, workerId: workerId, buildingId: buildingId)
@@ -121,20 +100,34 @@ actor WorkerEventOutbox {
     }
     
     /// Create and queue an event for photo uploads
-    func recordPhotoUploadEvent(workerId: String, buildingId: String) async {
-        let event = OutboxEvent(type: .photoUpload, workerId: workerId, buildingId: buildingId)
-        await addEvent(event)
+    func recordPhotoUploadEvent(workerId: String, buildingId: String, photoData: Data? = nil) async {
+        if let photoData = photoData,
+           let event = try? OutboxEvent(type: .photoUpload, workerId: workerId, buildingId: buildingId, payload: photoData) {
+            await addEvent(event)
+        } else {
+            let event = OutboxEvent(type: .photoUpload, workerId: workerId, buildingId: buildingId)
+            await addEvent(event)
+        }
     }
     
     /// Create and queue an event for emergency reports
-    func recordEmergencyReportEvent(workerId: String, buildingId: String) async {
-        let event = OutboxEvent(type: .emergencyReport, workerId: workerId, buildingId: buildingId)
-        await addEvent(event)
+    func recordEmergencyReportEvent(workerId: String, buildingId: String, description: String? = nil) async {
+        let payload = ["description": description ?? "Emergency reported"]
+        if let event = try? OutboxEvent(type: .emergencyReport, workerId: workerId, buildingId: buildingId, payload: payload) {
+            await addEvent(event)
+        } else {
+            let event = OutboxEvent(type: .emergencyReport, workerId: workerId, buildingId: buildingId)
+            await addEvent(event)
+        }
     }
 
     /// Attempts to send all pending events to the server
     func attemptFlush() async {
         guard !pendingEvents.isEmpty else { return }
+        guard !isSyncing else { return } // Prevent concurrent flushes
+        
+        isSyncing = true
+        defer { isSyncing = false }
         
         print("📤 Attempting to flush \(pendingEvents.count) events...")
         
@@ -145,14 +138,10 @@ actor WorkerEventOutbox {
                 // Simulate a network request
                 try await submitEventToServer(event)
                 
-                // If successful, mark for removal and broadcast completion
+                // If successful, mark for removal
                 successfullySyncedEvents.append(event.id)
                 
-                // Convert to sync event
-                let syncEvent = event.toSyncEvent()
-                
-                // Broadcast to DataSynchronizationService on MainActor
-                await DataSynchronizationService.shared.broadcastSyncCompletion(for: syncEvent)
+                print("   ✅ Successfully synced event \(event.id)")
                 
             } catch {
                 // Handle retry logic
@@ -176,26 +165,24 @@ actor WorkerEventOutbox {
         if !successfullySyncedEvents.isEmpty {
             pendingEvents.removeAll { successfullySyncedEvents.contains($0.id) }
             savePendingEvents()
+            lastSyncTime = Date()
             print("✅ Flushed \(successfullySyncedEvents.count) events successfully.")
         }
     }
     
     /// Simulates submitting a single event to a remote server
     private func submitEventToServer(_ event: OutboxEvent) async throws {
-        // Simple delay without Task.sleep
+        // Simple delay to simulate network request
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             DispatchQueue.global().asyncAfter(deadline: .now() + Double.random(in: 0.1...0.5)) {
-                // Simulate a potential network failure
-                if Double.random(in: 0...1) < 0.1 { // 10% chance of failure
+                // Simulate a potential network failure (10% chance)
+                if Double.random(in: 0...1) < 0.1 {
                     continuation.resume(throwing: URLError(.notConnectedToInternet))
                 } else {
                     continuation.resume()
                 }
             }
         }
-        
-        // If we reach here, the sync is considered successful
-        print("   -> Successfully synced event \(event.id) to server.")
     }
     
     // MARK: - Queue Management
@@ -210,6 +197,16 @@ actor WorkerEventOutbox {
         return pendingEvents
     }
     
+    /// Get last sync time
+    func getLastSyncTime() -> Date? {
+        return lastSyncTime
+    }
+    
+    /// Check if currently syncing
+    func isSyncing() -> Bool {
+        return isSyncing
+    }
+    
     /// Clear all pending events (use with caution)
     func clearAllEvents() {
         pendingEvents.removeAll()
@@ -220,7 +217,22 @@ actor WorkerEventOutbox {
     /// Force retry all failed events
     func retryAllEvents() async {
         print("🔄 Forcing retry of all pending events...")
+        
+        // Reset retry counts for high-retry events
+        for index in pendingEvents.indices {
+            if pendingEvents[index].retryCount >= 5 {
+                pendingEvents[index].retryCount = 0
+            }
+        }
+        
         await attemptFlush()
+    }
+    
+    /// Get a summary of queue status
+    func getQueueStatus() -> (pending: Int, highRetry: Int, lastSync: Date?) {
+        let pending = pendingEvents.count
+        let highRetry = pendingEvents.filter { $0.retryCount >= 3 }.count
+        return (pending, highRetry, lastSyncTime)
     }
     
     // MARK: - Persistence (Simplified using UserDefaults)
@@ -250,20 +262,41 @@ actor WorkerEventOutbox {
 // MARK: - WorkerActionType Extension
 
 extension WorkerActionType {
-    var syncEventType: WorkerEvent.EventType {
+    /// Display name for UI
+    var displayName: String {
         switch self {
-        case .taskCompletion, .taskComplete:
-            return .taskCompletion
+        case .taskComplete, .taskCompletion:
+            return "Task Completed"
         case .clockIn:
-            return .clockIn
+            return "Clocked In"
         case .clockOut:
-            return .clockOut
+            return "Clocked Out"
+        case .photoUpload:
+            return "Photo Uploaded"
+        case .commentUpdate:
+            return "Comment Added"
         case .routineInspection:
-            return .taskStart
+            return "Routine Inspection"
         case .buildingStatusUpdate:
-            return .buildingArrival
-        case .photoUpload, .commentUpdate, .emergencyReport:
-            return .taskCompletion
+            return "Building Status Updated"
+        case .emergencyReport:
+            return "Emergency Reported"
+        }
+    }
+    
+    /// Category for grouping similar actions
+    var category: String {
+        switch self {
+        case .taskComplete, .taskCompletion, .routineInspection:
+            return "Tasks"
+        case .clockIn, .clockOut:
+            return "Time Tracking"
+        case .photoUpload, .commentUpdate:
+            return "Evidence"
+        case .buildingStatusUpdate:
+            return "Building"
+        case .emergencyReport:
+            return "Emergency"
         }
     }
 }
