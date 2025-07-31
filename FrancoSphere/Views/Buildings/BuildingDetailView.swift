@@ -1,17 +1,18 @@
-////
+//
 //  BuildingDetailView.swift
 //  FrancoSphere v6.0
 //
 //  🏢 COMPREHENSIVE: Tab-based building management
 //  📱 ADAPTIVE: Role-based content visibility
 //  🔄 REAL-TIME: Live updates via DashboardSync
-//  📸 PHOTO-READY: Integrated photo management
+//  📸 PHOTO-READY: Integrated photo management with evidence system
 //  ✅ ENHANCED: Worker assignment for routines
 //
 
 import SwiftUI
 import MapKit
 import MessageUI
+import CoreLocation
 
 struct BuildingDetailView: View {
     // MARK: - Properties
@@ -30,6 +31,9 @@ struct BuildingDetailView: View {
     @State private var selectedContact: BuildingContact?
     @State private var selectedRoutine: DailyRoutine?
     @State private var showWorkerAssignment = false
+    @State private var capturedImage: UIImage?
+    @State private var photoCategory: FrancoBuildingPhotoCategory = .general
+    @State private var photoNotes: String = ""
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Initialization
@@ -76,12 +80,20 @@ struct BuildingDetailView: View {
             await viewModel.loadBuildingData()
         }
         .sheet(isPresented: $showingPhotoCapture) {
-            // Use the Franco photo capture system
-            FrancoBuildingPhotoCaptureView(
-                buildingId: buildingId
-            ) { image, category, notes in
-                await viewModel.savePhoto(image)
-            }
+            // Integrated photo capture system
+            PhotoCaptureSheet(
+                buildingId: buildingId,
+                buildingName: buildingName,
+                onCapture: { image, category, notes in
+                    Task {
+                        await viewModel.savePhoto(
+                            image,
+                            category: category,
+                            notes: notes
+                        )
+                    }
+                }
+            )
         }
         .sheet(isPresented: $showingMessageComposer) {
             MessageComposerView(
@@ -303,7 +315,7 @@ struct BuildingDetailView: View {
             // Key contacts
             keyContactsCard
             
-            // Spaces & access
+            // Spaces & access with integrated photo gallery
             spacesAccessCard
         }
     }
@@ -453,8 +465,11 @@ struct BuildingDetailView: View {
                 
                 Spacer()
                 
-                Button(action: { showingPhotoCapture = true }) {
-                    Label("Add Photo", systemImage: "camera.fill")
+                // Navigate to full photo gallery
+                NavigationLink {
+                    FrancoBuildingPhotoGallery(buildingId: buildingId)
+                } label: {
+                    Label("View All", systemImage: "photo.on.rectangle")
                         .font(.caption)
                         .foregroundColor(.blue)
                 }
@@ -466,7 +481,7 @@ struct BuildingDetailView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                ForEach(viewModel.spacePhotos, id: \.id) { space in
+                ForEach(viewModel.spacePhotos.prefix(5), id: \.id) { space in
                     SpacePhotoThumbnail(space: space) {
                         viewModel.viewSpaceDetails(space)
                     }
@@ -1092,6 +1107,174 @@ struct BuildingDetailView: View {
     }
 }
 
+// MARK: - Photo Capture Sheet (Integrated with Evidence System)
+struct PhotoCaptureSheet: View {
+    let buildingId: String
+    let buildingName: String
+    let onCapture: (UIImage, FrancoBuildingPhotoCategory, String) -> Void
+    
+    @State private var selectedImage: UIImage?
+    @State private var showingImagePicker = false
+    @State private var showingCamera = false
+    @State private var selectedCategory: FrancoBuildingPhotoCategory = .general
+    @State private var notes: String = ""
+    @State private var isProcessing = false
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                // Photo preview or placeholder
+                if let image = selectedImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 300)
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
+                } else {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 300)
+                        .overlay(
+                            VStack(spacing: 12) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.gray)
+                                Text("Tap to add photo")
+                                    .foregroundColor(.gray)
+                            }
+                        )
+                        .onTapGesture {
+                            showPhotoOptions()
+                        }
+                }
+                
+                // Category picker
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Category")
+                        .font(.headline)
+                    
+                    Picker("Category", selection: $selectedCategory) {
+                        ForEach(FrancoBuildingPhotoCategory.allCases, id: \.self) { category in
+                            Text(category.displayName).tag(category)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                
+                // Notes field
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Notes (Optional)")
+                        .font(.headline)
+                    
+                    TextField("Add notes about this photo...", text: $notes, axis: .vertical)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .lineLimit(3...6)
+                }
+                
+                Spacer()
+                
+                // Action buttons
+                HStack(spacing: 16) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.red)
+                    
+                    Spacer()
+                    
+                    if selectedImage == nil {
+                        Button(action: showPhotoOptions) {
+                            Label("Add Photo", systemImage: "camera.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else {
+                        Button(action: savePhoto) {
+                            if isProcessing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Label("Save Photo", systemImage: "checkmark.circle.fill")
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(isProcessing)
+                    }
+                }
+            }
+            .padding()
+            .navigationTitle("Add Building Photo")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker(image: $selectedImage)
+        }
+        .fullScreenCover(isPresented: $showingCamera) {
+            CameraView(image: $selectedImage)
+        }
+    }
+    
+    private func showPhotoOptions() {
+        // Check camera availability
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            showingCamera = true
+        } else {
+            showingImagePicker = true
+        }
+    }
+    
+    private func savePhoto() {
+        guard let image = selectedImage else { return }
+        
+        isProcessing = true
+        onCapture(image, selectedCategory, notes)
+        
+        // Dismiss after short delay to show processing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            dismiss()
+        }
+    }
+}
+
+// MARK: - Camera View
+struct CameraView: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraView
+        
+        init(_ parent: CameraView) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.image = image
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
 // MARK: - Supporting Types
 
 enum BuildingDetailTab: String, CaseIterable {
@@ -1492,6 +1675,10 @@ class BuildingDetailVM: ObservableObject {
     let buildingName: String
     let buildingAddress: String
     
+    // Services
+    private let photoStorageService = FrancoPhotoStorageService.shared
+    private let locationManager = LocationManager()
+    
     // User context
     @Published var userRole: CoreTypes.UserRole = CoreTypes.UserRole.worker
     
@@ -1555,6 +1742,7 @@ class BuildingDetailVM: ObservableObject {
         await loadHistory()
         await loadInventory()
         await loadTeamData()
+        await loadBuildingPhotos()
     }
     
     private func loadUserRole() {
@@ -1597,13 +1785,40 @@ class BuildingDetailVM: ObservableObject {
             units = 12
             yearBuilt = 1920
         }
-        
-        // Load space photos
-        spacePhotos = [
-            SpacePhoto(id: "1", name: "Utility Room", icon: "wrench.fill", thumbnail: nil),
-            SpacePhoto(id: "2", name: "Basement", icon: "arrow.down.to.line", thumbnail: nil),
-            SpacePhoto(id: "3", name: "Roof Access", icon: "arrow.up.to.line", thumbnail: nil)
-        ]
+    }
+    
+    private func loadBuildingPhotos() async {
+        // Load photos from storage service
+        do {
+            let photos = try await photoStorageService.loadPhotos(for: buildingId)
+            
+            // Convert to SpacePhoto format for display
+            spacePhotos = photos.prefix(6).compactMap { photo in
+                guard let thumbnail = photo.thumbnail else { return nil }
+                
+                return SpacePhoto(
+                    id: photo.id,
+                    name: photo.category.displayName,
+                    icon: iconForCategory(photo.category),
+                    thumbnail: thumbnail
+                )
+            }
+        } catch {
+            print("❌ Error loading building photos: \(error)")
+        }
+    }
+    
+    private func iconForCategory(_ category: FrancoBuildingPhotoCategory) -> String {
+        switch category {
+        case .entrance: return "door.left.hand.open"
+        case .lobby: return "building"
+        case .utilities: return "wrench.fill"
+        case .basement: return "arrow.down.to.line"
+        case .roof: return "arrow.up.to.line"
+        case .mechanical: return "gear"
+        case .storage: return "shippingbox.fill"
+        case .general: return "photo"
+        }
     }
     
     private func loadRoutines() async {
@@ -1820,22 +2035,42 @@ class BuildingDetailVM: ObservableObject {
         // Phase 2: Log vendor visit
     }
     
-    func savePhoto(_ photo: UIImage) async {
-        // Phase 3: Save photo to building
-        // Use FrancoPhotoStorageService to save
+    func savePhoto(_ photo: UIImage, category: FrancoBuildingPhotoCategory, notes: String) async {
+        // Get current location if available
+        let location = await locationManager.getCurrentLocation()
+        
+        // Create metadata
         let metadata = FrancoBuildingPhotoMetadata(
             buildingId: buildingId,
-            category: .utilities,
-            notes: nil,
-            location: nil,
+            category: category,
+            notes: notes.isEmpty ? nil : notes,
+            location: location,
             taskId: nil,
             workerId: NewAuthManager.shared.workerId,
             timestamp: Date()
         )
         
         do {
-            _ = try await FrancoPhotoStorageService.shared.savePhoto(photo, metadata: metadata)
-            print("✅ Photo saved to building gallery")
+            let savedPhoto = try await photoStorageService.savePhoto(photo, metadata: metadata)
+            print("✅ Photo saved to building gallery: \(savedPhoto.id)")
+            
+            // Reload photos to update UI
+            await loadBuildingPhotos()
+            
+            // Broadcast update
+            let update = CoreTypes.DashboardUpdate(
+                source: .worker,
+                type: .buildingMetricsChanged,
+                buildingId: buildingId,
+                workerId: NewAuthManager.shared.workerId ?? "",
+                data: [
+                    "action": "photoAdded",
+                    "photoId": savedPhoto.id,
+                    "category": category.rawValue
+                ]
+            )
+            DashboardSyncService.shared.broadcastWorkerUpdate(update)
+            
         } catch {
             print("❌ Failed to save photo: \(error)")
         }
