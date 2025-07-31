@@ -9,6 +9,8 @@
 //  ✅ FIXED: Uses real data from cache and database
 //  ✅ FIXED: Respects system configuration thresholds
 //  ✅ ADDED: Offline queue support for reliable sync
+//  ✅ STREAM B INTEGRATED: WebSocket support for real-time server sync
+//  ✅ ADDED: Conflict detection and resolution support
 //
 
 import Foundation
@@ -69,6 +71,7 @@ public class DashboardSyncService: ObservableObject {
     private let workerService = WorkerService.shared
     private let operationalDataManager = OperationalDataManager.shared  // ✅ INTEGRATED
     private let grdbManager = GRDBManager.shared // ✅ ADDED for offline queue
+    private let webSocketManager = WebSocketManager.shared // ✅ STREAM B: WebSocket integration
     
     private var cancellables = Set<AnyCancellable>()
     private var syncTimer: Timer?
@@ -108,6 +111,24 @@ public class DashboardSyncService: ObservableObject {
         setupAutoSync()
         setupOfflineQueueProcessing()
         setupNetworkMonitoring()
+        setupWebSocketConnection() // ✅ STREAM B: Initialize WebSocket
+    }
+    
+    // MARK: - WebSocket Setup (STREAM B)
+    
+    private func setupWebSocketConnection() {
+        // Get auth token and connect
+        Task {
+            if let token = await getAuthToken() {
+                await webSocketManager.connect(token: token)
+            }
+        }
+    }
+    
+    private func getAuthToken() async -> String? {
+        // Get token from NewAuthManager or similar auth service
+        // This is a placeholder - actual implementation would get from auth service
+        return UserDefaults.standard.string(forKey: "authToken")
     }
     
     // MARK: - Data Validation
@@ -150,6 +171,10 @@ public class DashboardSyncService: ObservableObject {
                     if isOnline {
                         Task {
                             await self.processPendingUpdates()
+                            // Reconnect WebSocket if needed
+                            if let token = await self.getAuthToken() {
+                                await self.webSocketManager.connect(token: token)
+                            }
                         }
                     }
                 }
@@ -167,7 +192,7 @@ public class DashboardSyncService: ObservableObject {
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
         if isOnline {
-            // Broadcast to all dashboards
+            // 1. Send locally (existing)
             crossDashboardSubject.send(enrichedUpdate)
             
             // Send to specific dashboard streams
@@ -182,6 +207,13 @@ public class DashboardSyncService: ObservableObject {
             
             // Update unified state
             updateUnifiedState(from: enrichedUpdate)
+            
+            // 2. Queue for server (existing - handled by sendToServer)
+            // 3. Send via WebSocket (new)
+            Task {
+                await sendToServer(enrichedUpdate)
+            }
+            
         } else {
             // Queue for later if offline
             Task {
@@ -197,7 +229,7 @@ public class DashboardSyncService: ObservableObject {
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
         if isOnline {
-            // Broadcast to all dashboards
+            // 1. Send locally
             crossDashboardSubject.send(enrichedUpdate)
             
             // Send to specific dashboard streams
@@ -211,6 +243,12 @@ public class DashboardSyncService: ObservableObject {
             
             // Update unified state
             updateUnifiedState(from: enrichedUpdate)
+            
+            // 2. Send via WebSocket
+            Task {
+                await sendToServer(enrichedUpdate)
+            }
+            
         } else {
             // Queue for later if offline
             Task {
@@ -226,7 +264,7 @@ public class DashboardSyncService: ObservableObject {
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
         if isOnline {
-            // Broadcast to all dashboards
+            // 1. Send locally
             crossDashboardSubject.send(enrichedUpdate)
             
             // Send to specific dashboard streams
@@ -240,11 +278,206 @@ public class DashboardSyncService: ObservableObject {
             
             // Update unified state
             updateUnifiedState(from: enrichedUpdate)
+            
+            // 2. Send via WebSocket
+            Task {
+                await sendToServer(enrichedUpdate)
+            }
+            
         } else {
             // Queue for later if offline
             Task {
                 await enqueueUpdate(enrichedUpdate)
             }
+        }
+    }
+    
+    // MARK: - WebSocket Integration (STREAM B)
+    
+    /// Send update to server via WebSocket
+    private func sendToServer(_ update: CoreTypes.DashboardUpdate) async {
+        do {
+            try await webSocketManager.send(update)
+            print("🌐 Sent update to server: \(update.type.rawValue)")
+        } catch {
+            print("❌ Failed to send update to server: \(error)")
+            // Queue for retry
+            await enqueueUpdate(update)
+        }
+    }
+    
+    /// Handle update received from server via WebSocket
+    public func handleRemoteUpdate(_ update: CoreTypes.DashboardUpdate) {
+        Task {
+            // 4. Handle conflicts (new)
+            await detectAndResolveConflicts(update)
+            
+            // Broadcast the remote update locally
+            switch update.source {
+            case .worker:
+                workerUpdatesSubject.send(update)
+            case .admin:
+                adminUpdatesSubject.send(update)
+            case .client:
+                clientUpdatesSubject.send(update)
+            case .system:
+                crossDashboardSubject.send(update)
+            }
+            
+            // Update local state
+            createLiveUpdateFromRemote(update)
+            updateUnifiedState(from: update)
+        }
+    }
+    
+    /// Detect and resolve conflicts between local and remote updates
+    private func detectAndResolveConflicts(_ update: CoreTypes.DashboardUpdate) async {
+        // Check if we have a conflicting local update
+        let hasConflict = await checkForConflict(update)
+        
+        if hasConflict {
+            print("⚠️ Conflict detected for update: \(update.id)")
+            
+            // Resolve based on conflict resolution strategy
+            let resolution = await resolveConflict(update)
+            
+            switch resolution {
+            case .acceptRemote:
+                // Accept the remote update as-is
+                print("✅ Resolved conflict: Accepting remote update")
+                
+            case .acceptLocal:
+                // Keep local version, ignore remote
+                print("✅ Resolved conflict: Keeping local version")
+                return // Don't process the remote update
+                
+            case .merge(let mergedUpdate):
+                // Use merged version
+                print("✅ Resolved conflict: Using merged version")
+                handleResolvedUpdate(mergedUpdate)
+                return
+                
+            case .manual:
+                // Queue for manual resolution
+                print("⚠️ Conflict requires manual resolution")
+                await queueForManualResolution(update)
+                return
+            }
+        }
+    }
+    
+    private func checkForConflict(_ update: CoreTypes.DashboardUpdate) async -> Bool {
+        // Check if we have a recent local update for the same entity
+        do {
+            let recentUpdates = try await grdbManager.query("""
+                SELECT * FROM sync_queue
+                WHERE entity_id = ? AND entity_type = ?
+                AND created_at > ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            """, [
+                update.buildingId.isEmpty ? update.workerId : update.buildingId,
+                "dashboard_update",
+                Date().addingTimeInterval(-30).ISO8601Format() // Within last 30 seconds
+            ])
+            
+            return !recentUpdates.isEmpty
+        } catch {
+            return false
+        }
+    }
+    
+    private enum ConflictResolution {
+        case acceptRemote
+        case acceptLocal
+        case merge(CoreTypes.DashboardUpdate)
+        case manual
+    }
+    
+    private func resolveConflict(_ update: CoreTypes.DashboardUpdate) async -> ConflictResolution {
+        // Simple last-write-wins strategy for now
+        // In a real implementation, this would use vector clocks or similar
+        
+        switch update.type {
+        case .taskCompleted:
+            // Task completions should never conflict - accept all
+            return .acceptRemote
+            
+        case .buildingMetricsChanged:
+            // Metrics can be merged
+            if let localMetrics = unifiedBuildingMetrics[update.buildingId],
+               let remoteCompletion = Double(update.data["completionRate"] ?? "0") {
+                
+                // Take the average for now (simple merge strategy)
+                let mergedCompletion = (localMetrics.completionRate + remoteCompletion) / 2
+                
+                var mergedData = update.data
+                mergedData["completionRate"] = String(mergedCompletion)
+                
+                let mergedUpdate = CoreTypes.DashboardUpdate(
+                    source: update.source,
+                    type: update.type,
+                    buildingId: update.buildingId,
+                    workerId: update.workerId,
+                    data: mergedData
+                )
+                
+                return .merge(mergedUpdate)
+            }
+            return .acceptRemote
+            
+        case .workerClockedIn, .workerClockedOut:
+            // Clock events should be ordered - last one wins
+            return .acceptRemote
+            
+        default:
+            // Default to accepting remote
+            return .acceptRemote
+        }
+    }
+    
+    private func handleResolvedUpdate(_ update: CoreTypes.DashboardUpdate) {
+        // Process the resolved update
+        crossDashboardSubject.send(update)
+        updateUnifiedState(from: update)
+    }
+    
+    private func queueForManualResolution(_ update: CoreTypes.DashboardUpdate) async {
+        // Store in a special conflict queue for admin review
+        do {
+            let updateData = try JSONEncoder().encode(update)
+            
+            try await grdbManager.execute("""
+                INSERT INTO conflict_queue (
+                    id, update_data, conflict_type, created_at
+                ) VALUES (?, ?, ?, ?)
+            """, [
+                UUID().uuidString,
+                String(data: updateData, encoding: .utf8) ?? "{}",
+                "dashboard_update",
+                Date().ISO8601Format()
+            ])
+            
+            print("📋 Queued update for manual conflict resolution")
+        } catch {
+            print("❌ Failed to queue conflict: \(error)")
+        }
+    }
+    
+    private func createLiveUpdateFromRemote(_ update: CoreTypes.DashboardUpdate) {
+        // Create appropriate live update based on source
+        switch update.source {
+        case .worker:
+            createLiveWorkerUpdate(from: update)
+        case .admin:
+            createLiveAdminAlert(from: update)
+        case .client:
+            createLiveClientMetric(from: update)
+        case .system:
+            // System updates might create all types
+            createLiveWorkerUpdate(from: update)
+            createLiveAdminAlert(from: update)
+            createLiveClientMetric(from: update)
         }
     }
     
@@ -263,7 +496,7 @@ public class DashboardSyncService: ObservableObject {
             """, [
                 update.id,
                 "dashboard_update",
-                update.buildingId.isEmpty ? nil : update.buildingId,
+                update.buildingId.isEmpty ? update.workerId : update.buildingId,
                 update.type.rawValue,
                 String(data: updateData, encoding: .utf8) ?? "{}",
                 0,
@@ -309,17 +542,8 @@ public class DashboardSyncService: ObservableObject {
                 do {
                     let update = try JSONDecoder().decode(CoreTypes.DashboardUpdate.self, from: data)
                     
-                    // Re-broadcast the update
-                    switch update.source {
-                    case .worker:
-                        broadcastWorkerUpdate(update)
-                    case .admin:
-                        broadcastAdminUpdate(update)
-                    case .client:
-                        broadcastClientUpdate(update)
-                    case .system:
-                        crossDashboardSubject.send(update)
-                    }
+                    // Send via WebSocket
+                    try await webSocketManager.send(update)
                     
                     // Remove from queue on success
                     try await grdbManager.execute(
@@ -399,6 +623,11 @@ public class DashboardSyncService: ObservableObject {
             if let building = operationalDataManager.getBuilding(byId: update.buildingId) {
                 enrichedData["buildingName"] = building.name
             }
+        }
+        
+        // Add timestamp if not present
+        if enrichedData["timestamp"] == nil {
+            enrichedData["timestamp"] = ISO8601DateFormatter().string(from: Date())
         }
         
         // Create new update with enriched data
