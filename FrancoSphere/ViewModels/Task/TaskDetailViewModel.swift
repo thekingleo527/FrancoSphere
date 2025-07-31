@@ -8,6 +8,7 @@
 //  ✅ OFFLINE SUPPORT: Queue tasks for later submission
 //  ✅ FUTURE READY: Prepared for AI assistance and advanced features
 //  ✅ COMPILATION FIXED: All errors resolved for Phase 2
+//  ✅ UPDATED: Using real PhotoEvidenceServiceV6 instead of mock
 //
 
 import Foundation
@@ -75,8 +76,8 @@ public class TaskDetailViewModel: ObservableObject {
     private let buildingService = BuildingService.shared
     private let workerService = WorkerService.shared
     private let dashboardSyncService = DashboardSyncService.shared
-    private let photoEvidenceService = PhotoEvidenceService.shared
-    private let locationManager = LocationManager()  // ✅ FIXED: LocationManager is not a singleton
+    private let photoEvidenceService = PhotoEvidenceServiceV6.shared  // ✅ UPDATED: Using real service
+    private let locationManager = LocationManager()
     private let grdbManager = GRDBManager.shared
     
     // MARK: - Private Properties
@@ -218,7 +219,7 @@ public class TaskDetailViewModel: ObservableObject {
         
         // Start location tracking if needed
         if requiresLocationVerification() {
-            locationManager.startUpdatingLocation()  // ✅ FIXED: Using correct method name
+            locationManager.startUpdatingLocation()
         }
         
         // Future Phase: Start AI monitoring
@@ -227,20 +228,35 @@ public class TaskDetailViewModel: ObservableObject {
         }
     }
     
-    /// Capture photo evidence
+    /// Capture photo evidence using the real PhotoEvidenceService
     public func capturePhoto(_ image: UIImage) async {
         capturedPhoto = image
         
-        // Compress image
-        if let data = image.jpegData(compressionQuality: photoCompressionQuality) {
-            photoData = data
-            
-            // Save locally first
-            await savePhotoLocally(data)
-            
-            // Update progress
-            taskProgress = .awaitingPhoto
-            progressPercentage = 0.6
+        // Update progress
+        taskProgress = .awaitingPhoto
+        progressPercentage = 0.6
+        
+        // Use the real PhotoEvidenceService to handle photo evidence
+        if let task = currentTask,
+           let worker = workerProfile {
+            do {
+                let evidence = try await photoEvidenceService.captureEvidence(
+                    image: image,
+                    for: task,
+                    worker: worker,
+                    location: locationManager.location,
+                    notes: nil
+                )
+                
+                photoLocalPath = evidence.localPath
+                photoData = image.jpegData(compressionQuality: photoCompressionQuality)
+                
+                print("✅ Photo evidence captured: \(evidence.id)")
+            } catch {
+                print("❌ Failed to capture photo evidence: \(error)")
+                errorMessage = error.localizedDescription
+                showError = true
+            }
         }
     }
     
@@ -255,7 +271,7 @@ public class TaskDetailViewModel: ObservableObject {
         
         do {
             // Validate photo requirement
-            if requiresPhotoEvidence() && photoData == nil {
+            if requiresPhotoEvidence() && capturedPhoto == nil {
                 throw TaskError.photoRequired
             }
             
@@ -265,8 +281,8 @@ public class TaskDetailViewModel: ObservableObject {
             // Create evidence
             let evidence = CoreTypes.ActionEvidence(
                 description: notes ?? "Task completed via mobile app",
-                photoURLs: [],
-                photoData: photoData != nil ? [photoData!] : nil,
+                photoURLs: photoLocalPath != nil ? [URL(fileURLWithPath: photoLocalPath!)] : [],
+                photoData: nil,  // Already handled by PhotoEvidenceService
                 timestamp: Date()
             )
             
@@ -275,11 +291,6 @@ public class TaskDetailViewModel: ObservableObject {
             
             // Save completion record locally
             await saveCompletionRecord(notes: notes, location: location)
-            
-            // Upload photo if exists
-            if let photoPath = photoLocalPath {
-                await uploadPhotoEvidence(localPath: photoPath)
-            }
             
             // Update state
             isCompleted = true
@@ -417,65 +428,12 @@ public class TaskDetailViewModel: ObservableObject {
         // Check if task requires verification based on category
         guard let category = taskCategory else { return }
         
-        // ✅ FIXED: Using correct TaskCategory cases from CoreTypes
         switch category {
         case .sanitation, .inspection, .security:
             verificationStatus = isCompleted ? .pending : .notRequired
         default:
             verificationStatus = .notRequired
         }
-    }
-    
-    private func savePhotoLocally(_ data: Data) async {
-        let fileName = "task_\(taskId)_\(Int(Date().timeIntervalSince1970)).jpg"
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let evidencePath = documentsPath.appendingPathComponent("Evidence")
-        
-        // Create Evidence directory if needed
-        try? FileManager.default.createDirectory(at: evidencePath, withIntermediateDirectories: true)
-        
-        let fileURL = evidencePath.appendingPathComponent(fileName)
-        
-        do {
-            try data.write(to: fileURL)
-            photoLocalPath = fileURL.path
-            print("✅ Photo saved locally: \(fileName)")
-        } catch {
-            print("❌ Failed to save photo: \(error)")
-        }
-    }
-    
-    private func uploadPhotoEvidence(localPath: String) async {
-        isUploadingPhoto = true
-        photoUploadProgress = 0.0
-        
-        // Simulate upload progress
-        for progress in stride(from: 0.0, to: 1.0, by: 0.1) {
-            photoUploadProgress = progress
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-        }
-        
-        // TODO: Implement actual photo upload to server
-        // For now, just mark as uploaded in database
-        if let completionId = await getLatestCompletionId() {
-            do {
-                let photoId = try await grdbManager.savePhotoEvidence(
-                    completionId: completionId,
-                    taskId: taskId,
-                    workerId: taskWorkerId ?? "",
-                    buildingId: taskBuildingId ?? "",
-                    localPath: localPath,
-                    fileSize: photoData?.count
-                )
-                
-                print("✅ Photo evidence recorded: \(photoId)")
-            } catch {
-                print("❌ Failed to record photo evidence: \(error)")
-            }
-        }
-        
-        photoUploadProgress = 1.0
-        isUploadingPhoto = false
     }
     
     private func saveCompletionRecord(notes: String?, location: CLLocationCoordinate2D?) async {
@@ -506,24 +464,7 @@ public class TaskDetailViewModel: ObservableObject {
         }
     }
     
-    private func getLatestCompletionId() async -> String? {
-        do {
-            let rows = try await grdbManager.query("""
-                SELECT id FROM task_completions 
-                WHERE task_id = ? 
-                ORDER BY created_at DESC 
-                LIMIT 1
-            """, [taskId])
-            
-            return rows.first?["id"] as? String
-        } catch {
-            print("❌ Failed to get completion ID: \(error)")
-            return nil
-        }
-    }
-    
     private func getCurrentLocation() async -> CLLocationCoordinate2D? {
-        // ✅ FIXED: Access location property directly from LocationManager
         if let currentLocation = locationManager.location {
             return currentLocation.coordinate
         }
@@ -550,7 +491,6 @@ public class TaskDetailViewModel: ObservableObject {
     
     private func updateTaskMetrics(duration: TimeInterval) async {
         // Future: Send metrics to analytics service
-        // ✅ FIXED: Added explicit type annotation for heterogeneous collection
         let metrics: [String: Any] = [
             "taskId": taskId,
             "duration": duration,
@@ -581,7 +521,6 @@ public class TaskDetailViewModel: ObservableObject {
     private func requiresVerification() -> Bool {
         guard let category = taskCategory else { return false }
         
-        // ✅ FIXED: Using correct TaskCategory cases from CoreTypes
         switch category {
         case .sanitation, .inspection, .security, .emergency:
             return true
@@ -644,8 +583,8 @@ public class TaskDetailViewModel: ObservableObject {
     // MARK: - Subscriptions
     
     private func setupSubscriptions() {
-        // Subscribe to photo evidence upload progress
-        photoEvidenceService.uploadProgress
+        // Subscribe to photo evidence upload progress from the real service
+        photoEvidenceService.$uploadProgress
             .receive(on: DispatchQueue.main)
             .sink { [weak self] progress in
                 self?.photoUploadProgress = progress
@@ -674,17 +613,6 @@ public class TaskDetailViewModel: ObservableObject {
             }
         }
     }
-}
-
-// MARK: - PhotoEvidenceService Mock
-
-// Temporary mock until PhotoEvidenceService is implemented in Phase 3
-class PhotoEvidenceService {
-    static let shared = PhotoEvidenceService()
-    
-    let uploadProgress = PassthroughSubject<Double, Never>()
-    
-    private init() {}
 }
 
 // MARK: - Future Enhancements

@@ -1,18 +1,11 @@
 //
 //  PhotoEvidenceService.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/30/25.
-//
-
-
-//
-//  PhotoEvidenceService.swift
 //  FrancoSphere v6.0
 //
 //  ✅ PRODUCTION READY: Complete photo evidence system
 //  ✅ INTEGRATED: Uses SecurityManager for encryption
 //  ✅ GRDB: Full database integration
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import Foundation
@@ -67,143 +60,140 @@ public class PhotoEvidenceService: ObservableObject {
         currentUploadTask = task.title
         uploadProgress = 0.1
         
-        do {
-            // Step 1: Create directory structure
-            let photoId = UUID().uuidString
-            let photoDirectory = try createPhotoDirectory(
-                for: task,
-                buildingId: task.buildingId ?? "unknown",
-                photoId: photoId
-            )
-            
-            uploadProgress = 0.2
-            
-            // Step 2: Compress and save original
-            guard let imageData = image.jpegData(compressionQuality: compressionQuality),
-                  imageData.count <= maxPhotoSize else {
-                throw PhotoError.compressionFailed
-            }
-            
-            let fileName = "\(photoId).jpg"
-            let localPath = photoDirectory.appendingPathComponent(fileName)
-            try imageData.write(to: localPath)
-            
-            uploadProgress = 0.4
-            
-            // Step 3: Create thumbnail
-            let thumbnailPath = try createThumbnail(
-                from: image,
-                at: photoDirectory,
-                photoId: photoId
-            )
-            
-            uploadProgress = 0.5
-            
-            // Step 4: Encrypt photo using SecurityManager
-            let encryptedPhoto = try await securityManager.encryptPhoto(
-                imageData,
-                taskId: task.id
-            )
-            
-            uploadProgress = 0.6
-            
-            // Step 5: Create database record
-            let completionId = UUID().uuidString
-            
-            try await grdbManager.execute("""
-                INSERT INTO task_completions (
-                    id, task_id, worker_id, building_id,
-                    completion_time, notes, location_lat, location_lon,
-                    quality_score, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                completionId,
-                task.id,
-                worker.id,
-                task.buildingId ?? "",
-                Date().ISO8601Format(),
-                notes ?? "",
-                location?.coordinate.latitude ?? 0,
-                location?.coordinate.longitude ?? 0,
-                100, // Default quality score
-                Date().ISO8601Format()
-            ])
-            
-            uploadProgress = 0.7
-            
-            // Step 6: Create photo evidence record
-            try await grdbManager.execute("""
-                INSERT INTO photo_evidence (
-                    id, completion_id, local_path, remote_url,
-                    file_size, mime_type, metadata, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                photoId,
-                completionId,
-                localPath.path,
-                nil, // Remote URL will be set after upload
-                imageData.count,
-                "image/jpeg",
-                createPhotoMetadata(task: task, worker: worker, location: location),
-                Date().ISO8601Format()
-            ])
-            
-            uploadProgress = 0.8
-            
-            // Step 7: Queue for background upload
-            try await queueForUpload(photoId: photoId, localPath: localPath.path)
-            
-            uploadProgress = 0.9
-            
-            // Step 8: Broadcast completion
-            let update = CoreTypes.DashboardUpdate(
-                source: .worker,
-                type: .taskCompleted,
-                buildingId: task.buildingId ?? "",
-                workerId: worker.id,
-                data: [
-                    "taskId": task.id,
-                    "photoId": photoId,
-                    "hasLocation": String(location != nil),
-                    "timestamp": ISO8601DateFormatter().string(from: Date())
-                ]
-            )
-            dashboardSyncService.broadcastWorkerUpdate(update)
-            
-            uploadProgress = 1.0
-            
-            // Create return object
-            let evidence = PhotoEvidence(
-                id: photoId,
-                taskId: task.id,
-                workerId: worker.id,
-                buildingId: task.buildingId ?? "",
-                localPath: localPath.path,
-                thumbnailPath: thumbnailPath,
-                capturedAt: Date(),
-                uploadStatus: .pending,
-                encryptedPhoto: encryptedPhoto,
-                location: location,
-                notes: notes
-            )
-            
-            print("✅ Photo evidence captured: \(photoId) for task \(task.title)")
-            
-            // Start background upload
-            Task {
-                await processUploadQueue()
-            }
-            
-            return evidence
-            
-        } catch {
-            print("❌ Failed to capture photo evidence: \(error)")
-            throw error
-        } finally {
+        defer {
             isUploading = false
             currentUploadTask = nil
             uploadProgress = 0
         }
+        
+        // Step 1: Create directory structure
+        let photoId = UUID().uuidString
+        let photoDirectory = try createPhotoDirectory(
+            for: task,
+            buildingId: task.buildingId ?? "unknown",
+            photoId: photoId
+        )
+        
+        uploadProgress = 0.2
+        
+        // Step 2: Compress and save original
+        guard let imageData = image.jpegData(compressionQuality: compressionQuality),
+              imageData.count <= maxPhotoSize else {
+            throw PhotoError.compressionFailed
+        }
+        
+        let fileName = "\(photoId).jpg"
+        let localPath = photoDirectory.appendingPathComponent(fileName)
+        try imageData.write(to: localPath)
+        
+        uploadProgress = 0.4
+        
+        // Step 3: Create thumbnail
+        let thumbnailPath = try createThumbnail(
+            from: image,
+            at: photoDirectory,
+            photoId: photoId
+        )
+        
+        uploadProgress = 0.5
+        
+        // Step 4: Encrypt photo using SecurityManager
+        let encryptedPhoto = try await securityManager.encryptPhoto(
+            imageData,
+            taskId: task.id
+        )
+        
+        uploadProgress = 0.6
+        
+        // Step 5: Create database record
+        let completionId = UUID().uuidString
+        
+        // ✅ FIXED: Properly handle optional values
+        try await grdbManager.execute("""
+            INSERT INTO task_completions (
+                id, task_id, worker_id, building_id,
+                completion_time, notes, location_lat, location_lon,
+                quality_score, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            completionId,
+            task.id,
+            worker.id,
+            task.buildingId ?? "",
+            Date().ISO8601Format(),
+            notes as Any,
+            location?.coordinate.latitude as Any,
+            location?.coordinate.longitude as Any,
+            100,
+            Date().ISO8601Format()
+        ])
+        
+        uploadProgress = 0.7
+        
+        // Step 6: Create photo evidence record
+        try await grdbManager.execute("""
+            INSERT INTO photo_evidence (
+                id, completion_id, local_path, remote_url,
+                file_size, mime_type, metadata, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            photoId,
+            completionId,
+            localPath.path,
+            NSNull(), // Remote URL will be set after upload
+            imageData.count,
+            "image/jpeg",
+            createPhotoMetadata(task: task, worker: worker, location: location),
+            Date().ISO8601Format()
+        ])
+        
+        uploadProgress = 0.8
+        
+        // Step 7: Queue for background upload
+        try await queueForUpload(photoId: photoId, localPath: localPath.path)
+        
+        uploadProgress = 0.9
+        
+        // Step 8: Broadcast completion
+        let update = CoreTypes.DashboardUpdate(
+            source: .worker,
+            type: .taskCompleted,
+            buildingId: task.buildingId ?? "",
+            workerId: worker.id,
+            data: [
+                "taskId": task.id,
+                "photoId": photoId,
+                "hasLocation": String(location != nil),
+                "timestamp": ISO8601DateFormatter().string(from: Date())
+            ]
+        )
+        dashboardSyncService.broadcastWorkerUpdate(update)
+        
+        uploadProgress = 1.0
+        
+        // Create return object
+        let evidence = PhotoEvidence(
+            id: photoId,
+            taskId: task.id,
+            workerId: worker.id,
+            buildingId: task.buildingId ?? "",
+            localPath: localPath.path,
+            thumbnailPath: thumbnailPath,
+            capturedAt: Date(),
+            uploadStatus: .pending,
+            encryptedPhotoData: encryptedPhoto.encryptedData,
+            location: location,
+            notes: notes
+        )
+        
+        print("✅ Photo evidence captured: \(photoId) for task \(task.title)")
+        
+        // Start background upload
+        Task {
+            await processUploadQueue()
+        }
+        
+        return evidence
     }
     
     /// Load photo evidence for a task
@@ -246,7 +236,7 @@ public class PhotoEvidenceService: ObservableObject {
                 thumbnailPath: nil,
                 capturedAt: Date(), // Parse from created_at if needed
                 uploadStatus: row["remote_url"] != nil ? .uploaded : .pending,
-                encryptedPhoto: nil,
+                encryptedPhotoData: nil,
                 location: location,
                 notes: row["notes"] as? String
             )
@@ -455,7 +445,7 @@ public struct PhotoEvidence: Identifiable {
     public let thumbnailPath: String?
     public let capturedAt: Date
     public let uploadStatus: UploadStatus
-    public let encryptedPhoto: EncryptedPhoto?
+    public let encryptedPhotoData: Data? // ✅ FIXED: Changed from EncryptedPhoto to Data
     public let location: CLLocation?
     public let notes: String?
     
