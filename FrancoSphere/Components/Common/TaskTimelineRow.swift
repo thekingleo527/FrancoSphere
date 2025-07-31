@@ -1,17 +1,13 @@
-//
 //  TaskTimelineRow.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: All compilation errors resolved for ACTUAL ContextualTask structure
+//  ✅ FIXED: Compilation error resolved - removed isCompleted from initializer
 //  ✅ Uses task.title property (from FrancoSphereModels.swift)
 //  ✅ Fixed constructor to match actual ContextualTask init
 //  ✅ Handles optional urgency properly
-//  ✅ Uses isCompleted boolean instead of status string
 //
 
 import SwiftUI
-
-// Type aliases for CoreTypes
 
 struct TaskTimelineRow: View {
     let task: ContextualTask
@@ -24,12 +20,12 @@ struct TaskTimelineRow: View {
                 .frame(width: 12, height: 12)
             
             VStack(alignment: .leading, spacing: 4) {
-                // ✅ FIXED: Using task.title (actual property from FrancoSphereModels)
+                // Using task.title (actual property from FrancoSphereModels)
                 Text(task.title)
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                // ✅ FIXED: Safe unwrapping of optional description
+                // Safe unwrapping of optional description
                 Text(task.description ?? "No description")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -66,7 +62,6 @@ struct TaskTimelineRow: View {
         .padding(.vertical, 8)
     }
     
-    // ✅ FIXED: Added missing .emergency case for exhaustive switch
     private func urgencyColor(for urgency: TaskUrgency) -> Color {
         switch urgency {
         case .emergency:
@@ -86,36 +81,95 @@ struct TaskTimelineRow: View {
 // MARK: - Preview Provider
 struct TaskTimelineRow_Previews: PreviewProvider {
     static var previews: some View {
-        TaskTimelineRow(
-            task: ContextualTask(
-                // ✅ FIXED: Using actual ContextualTask constructor from FrancoSphereModels.swift
-                id: "preview-1",
-                title: "Sample Task",                    // ✅ Correct parameter name
-                description: "A sample task for preview",
-                isCompleted: false,
-                completedDate: nil,
-                // ✅ REMOVED: scheduledDate parameter doesn't exist in ContextualTask
-                dueDate: Date(),
-                category: .maintenance,
-                urgency: .medium,
-                building: NamedCoordinate(              // ✅ Use NamedCoordinate object
-                    id: "1",
-                    name: "Sample Building",
-                    latitude: 40.7128,
-                    longitude: -74.0060
-                ),
-                worker: WorkerProfile(                  // ✅ Use WorkerProfile object
-                    id: "1",
-                    name: "Sample Worker",
-                    email: "worker@test.com",
-                    phoneNumber: "555-0123",
-                    role: .worker,
-                    skills: [],
-                    certifications: [],
-                    hireDate: Date()
+        VStack(spacing: 20) {
+            // Preview 1: Incomplete task
+            TaskTimelineRow(
+                task: ContextualTask(
+                    id: "preview-1",
+                    title: "Clean Main Lobby",
+                    description: "Daily cleaning of building entrance and lobby area",
+                    // ✅ FIXED: Removed isCompleted from initializer
+                    completedDate: nil,  // This makes isCompleted false
+                    dueDate: Date().addingTimeInterval(3600),
+                    category: .maintenance,
+                    urgency: .high,
+                    building: NamedCoordinate(
+                        id: "1",
+                        name: "123 Main Street",
+                        latitude: 40.7128,
+                        longitude: -74.0060
+                    ),
+                    worker: WorkerProfile(
+                        id: "1",
+                        name: "Kevin Dutan",
+                        email: "kevin@francosphere.com",
+                        phoneNumber: "555-0123",
+                        role: .worker,
+                        skills: [],
+                        certifications: [],
+                        hireDate: Date()
+                    )
                 )
             )
-        )
+            
+            // Preview 2: Completed task
+            TaskTimelineRow(
+                task: ContextualTask(
+                    id: "preview-2",
+                    title: "Empty Trash Bins",
+                    description: "Remove trash from all floors",
+                    completedDate: Date(), // This makes isCompleted true
+                    dueDate: Date().addingTimeInterval(-3600),
+                    category: .cleaning,
+                    urgency: .medium,
+                    building: NamedCoordinate(
+                        id: "2",
+                        name: "456 Park Ave",
+                        latitude: 40.7580,
+                        longitude: -73.9855
+                    ),
+                    worker: WorkerProfile(
+                        id: "2",
+                        name: "Maria Garcia",
+                        email: "maria@francosphere.com",
+                        phoneNumber: "555-0124",
+                        role: .worker,
+                        skills: [],
+                        certifications: [],
+                        hireDate: Date()
+                    )
+                )
+            )
+            
+            // Preview 3: Emergency task
+            TaskTimelineRow(
+                task: ContextualTask(
+                    id: "preview-3",
+                    title: "Water Leak - 3rd Floor",
+                    description: nil, // Testing nil description
+                    completedDate: nil,
+                    dueDate: Date(),
+                    category: .emergency,
+                    urgency: .emergency,
+                    building: NamedCoordinate(
+                        id: "3",
+                        name: "789 Broadway",
+                        latitude: 40.7489,
+                        longitude: -73.9680
+                    ),
+                    worker: WorkerProfile(
+                        id: "1",
+                        name: "Kevin Dutan",
+                        email: "kevin@francosphere.com",
+                        phoneNumber: "555-0123",
+                        role: .worker,
+                        skills: [],
+                        certifications: [],
+                        hireDate: Date()
+                    )
+                )
+            )
+        }
         .padding()
         .previewLayout(.sizeThatFits)
     }

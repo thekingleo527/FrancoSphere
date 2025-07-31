@@ -8,12 +8,13 @@
 //  ✅ FIXED: Removed non-existent estimatedDuration property
 //  ✅ FIXED: Removed dependency on deleted ContextualTaskIntelligence extension
 //  ✅ FIXED: Building name now uses actual ContextualTask properties
+//  ✅ FIXED: Preview section - removed isCompleted from initializer
 //
 //  Note: ContextualTask actual properties:
 //  - id: String
 //  - title: String (not 'name')
 //  - description: String?
-//  - isCompleted: Bool
+//  - isCompleted: Bool (computed property, not a parameter)
 //  - completedDate: Date?
 //  - dueDate: Date? (not 'scheduledDate')
 //  - category: TaskCategory?
@@ -22,12 +23,6 @@
 //  - worker: WorkerProfile?
 //  - buildingId: String?
 //  - priority: TaskUrgency?
-//
-//  Properties that DON'T exist:
-//  - buildingName (was in deleted extension)
-//  - assignedWorkerId (was in deleted extension)
-//  - estimatedDuration
-//  - scheduledDate
 //
 
 import SwiftUI
@@ -111,7 +106,7 @@ public struct TaskDisplayHelpers {
     
     /// Get assigned worker ID for display
     public static func assignedWorkerIdText(for task: ContextualTask) -> String {
-        // ✅ Note: ContextualTask doesn't have assignedWorkerId property
+        // Note: ContextualTask doesn't have assignedWorkerId property
         // Using worker.id if available
         return task.worker?.id ?? "Unassigned"
     }
@@ -160,7 +155,6 @@ public struct TaskDisplayHelpers {
     
     /// Calculate estimated duration for task
     public static func estimatedDurationText(for task: ContextualTask) -> String {
-        // ✅ FIXED: Removed reference to non-existent estimatedDuration property
         // Estimate duration based on urgency and category
         let baseDuration: TimeInterval
         
@@ -272,7 +266,6 @@ public struct TaskDisplayHelpers {
     
     /// Get building name for task
     public static func buildingName(for task: ContextualTask) -> String {
-        // ✅ FIXED: Removed MainActor-isolated property access
         if let building = task.building {
             return building.name
         } else if let buildingId = task.buildingId, !buildingId.isEmpty {
@@ -362,13 +355,12 @@ extension View {
 struct TaskDisplayHelpers_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 16) {
-            // ✅ FIXED: Use correct ContextualTask initializer with only needed parameters
+            // ✅ FIXED: Removed isCompleted parameter - it's computed from completedDate
             let sampleTask = ContextualTask(
                 id: "preview-task",
                 title: "Clean Lobby",
                 description: "Daily lobby cleaning",
-                isCompleted: false,
-                completedDate: nil,
+                completedDate: nil,  // This makes isCompleted false
                 dueDate: Date().addingTimeInterval(3600),
                 category: .cleaning,
                 urgency: .high,
@@ -378,14 +370,47 @@ struct TaskDisplayHelpers_Previews: PreviewProvider {
                 priority: .high
             )
             
-            VStack(alignment: .leading, spacing: 8) {
-                TaskDisplayHelpers.priorityBadge(for: sampleTask)
-                TaskDisplayHelpers.categoryBadge(for: sampleTask)
-                TaskDisplayHelpers.completionStatusView(for: sampleTask)
+            let completedTask = ContextualTask(
+                id: "preview-task-2",
+                title: "Replace Light Bulbs",
+                description: "Replace bulbs in hallway",
+                completedDate: Date(),  // This makes isCompleted true
+                dueDate: Date().addingTimeInterval(-3600),
+                category: .maintenance,
+                urgency: .medium,
+                building: nil,
+                worker: nil,
+                buildingId: "456 Park Ave",
+                priority: .medium
+            )
+            
+            VStack(alignment: .leading, spacing: 16) {
+                // Pending task
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Pending Task").font(.caption).foregroundColor(.secondary)
+                    HStack(spacing: 12) {
+                        TaskDisplayHelpers.priorityBadge(for: sampleTask)
+                        TaskDisplayHelpers.categoryBadge(for: sampleTask)
+                    }
+                    TaskDisplayHelpers.completionStatusView(for: sampleTask)
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                
+                // Completed task
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Completed Task").font(.caption).foregroundColor(.secondary)
+                    HStack(spacing: 12) {
+                        TaskDisplayHelpers.priorityBadge(for: completedTask)
+                        TaskDisplayHelpers.categoryBadge(for: completedTask)
+                    }
+                    TaskDisplayHelpers.completionStatusView(for: completedTask)
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
             }
-            .padding()
-            .background(.ultraThinMaterial)
-            .cornerRadius(12)
         }
         .padding()
         .background(Color(.systemGroupedBackground))

@@ -177,12 +177,19 @@ struct SimplifiedDashboard: View {
 
 struct SimplifiedDashboard_Previews: PreviewProvider {
     static var previews: some View {
-        // Create a mock ViewModel for the preview
-        let mockViewModel = WorkerDashboardViewModel.preview()
-        mockViewModel.isClockedIn = true
-        mockViewModel.currentBuilding = .init(id: "14", name: "Rubin Museum", address: "", latitude: 0, longitude: 0)
-        
-        SimplifiedDashboard(viewModel: mockViewModel)
-            .preferredColorScheme(.dark)
+        SimplifiedDashboard(viewModel: {
+            // Create and configure the mock ViewModel
+            let mockViewModel = WorkerDashboardViewModel.preview()
+            mockViewModel.isClockedIn = true
+            mockViewModel.currentBuilding = .init(
+                id: "14",
+                name: "Rubin Museum",
+                address: "",
+                latitude: 0,
+                longitude: 0
+            )
+            return mockViewModel
+        }())
+        .preferredColorScheme(.dark)
     }
 }

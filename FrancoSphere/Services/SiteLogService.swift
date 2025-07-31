@@ -1,12 +1,4 @@
-//
-//  SiteLogService.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/30/25.
-//
 
-
-//
 //  SiteLogService.swift
 //  FrancoSphere
 //

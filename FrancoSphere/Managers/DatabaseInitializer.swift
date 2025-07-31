@@ -2,10 +2,11 @@
 //  DatabaseInitializer.swift
 //  FrancoSphere v6.0
 //
-//  ✅ CONSOLIDATED: Merged DatabaseStartupCoordinator + UnifiedDataInitializer + UnifiedDataService
-//  ✅ SINGLE SOURCE: All database initialization in one place
+//  ✅ CONSOLIDATED: Merged DatabaseStartupCoordinator + UnifiedDataInitializer + UnifiedDataService + SchemaMigrationPatch
+//  ✅ SINGLE SOURCE: All database initialization and migration in one place
 //  ✅ UI-READY: Progress tracking for SwiftUI
 //  ✅ PRODUCTION-READY: Comprehensive initialization with fallbacks
+//  ✅ KEVIN'S DATA: Rubin Museum (ID 14) assignment preserved
 //
 
 import Foundation
@@ -117,17 +118,102 @@ public class DatabaseInitializer: ObservableObject {
         
         initializationProgress = 0.1
         
+        // Fix missing columns (from SchemaMigrationPatch)
+        try await fixMissingWorkerColumns()
+        initializationProgress = 0.15
+        
+        // Create migration tracking table
+        try await createMigrationTrackingTable()
+        initializationProgress = 0.2
+        
         // Create additional tables
         try await createAdditionalTables()
-        initializationProgress = 0.2
+        initializationProgress = 0.25
+        
+        // Fix worker_building_assignments structure
+        try await fixWorkerBuildingAssignments()
+        initializationProgress = 0.3
         
         // Run migrations
         try await runMigrationsIfNeeded()
-        initializationProgress = 0.3
+        initializationProgress = 0.35
         
         // Seed authentication data
         try await seedAuthenticationData()
         initializationProgress = 0.4
+    }
+    
+    // MARK: - Emergency Column Fixes (from SchemaMigrationPatch)
+    
+    private func fixMissingWorkerColumns() async throws {
+        print("🚨 EMERGENCY FIX: Adding missing columns to workers table...")
+        
+        let tableInfo = try await grdbManager.query("PRAGMA table_info(workers)")
+        let columnNames = Set(tableInfo.compactMap { $0["name"] as? String })
+        
+        print("📋 Current workers table columns: \(columnNames.sorted())")
+        
+        // Add missing required columns
+        if !columnNames.contains("isActive") {
+            try await grdbManager.execute("ALTER TABLE workers ADD COLUMN isActive INTEGER DEFAULT 1")
+            print("✅ Added isActive column")
+        }
+        
+        if !columnNames.contains("shift") {
+            try await grdbManager.execute("ALTER TABLE workers ADD COLUMN shift TEXT DEFAULT 'day'")
+            print("✅ Added shift column")
+        }
+        
+        if !columnNames.contains("hireDate") {
+            try await grdbManager.execute("ALTER TABLE workers ADD COLUMN hireDate TEXT DEFAULT (date('now'))")
+            print("✅ Added hireDate column")
+        }
+        
+        if !columnNames.contains("email") {
+            try await grdbManager.execute("ALTER TABLE workers ADD COLUMN email TEXT")
+            print("✅ Added email column")
+        }
+        
+        print("✅ Essential worker columns verified")
+    }
+    
+    private func fixWorkerBuildingAssignments() async throws {
+        print("🔧 Ensuring worker_building_assignments table structure...")
+        
+        // Create table if it doesn't exist
+        try await grdbManager.execute("""
+            CREATE TABLE IF NOT EXISTS worker_building_assignments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                worker_id TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                role TEXT DEFAULT 'maintenance',
+                assigned_date TEXT DEFAULT CURRENT_TIMESTAMP,
+                is_active INTEGER DEFAULT 1,
+                notes TEXT,
+                assignment_type TEXT DEFAULT 'regular',
+                UNIQUE(worker_id, building_id)
+            )
+        """)
+        
+        // Check and add missing columns
+        let tableInfo = try await grdbManager.query("PRAGMA table_info(worker_building_assignments)")
+        let columns = tableInfo.compactMap { $0["name"] as? String }
+        
+        if !columns.contains("notes") {
+            try await grdbManager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN notes TEXT
+            """)
+        }
+        
+        if !columns.contains("assignment_type") {
+            try await grdbManager.execute("""
+                ALTER TABLE worker_building_assignments 
+                ADD COLUMN assignment_type TEXT DEFAULT 'regular'
+            """)
+        }
+        
+        print("✅ worker_building_assignments table structure verified")
     }
     
     // MARK: - Phase 2: Data Import
@@ -142,7 +228,15 @@ public class DatabaseInitializer: ObservableObject {
         if needsOperationalData {
             // Seed operational data from database
             try await seedOperationalDataIfNeeded()
+            initializationProgress = 0.5
+            
+            // Seed Kevin's corrected building assignments
+            try await createKevinCorrectedAssignments()
             initializationProgress = 0.55
+            
+            // Import operational schedules from SchemaMigrationPatch
+            try await importOperationalSchedules()
+            initializationProgress = 0.6
             
             // Import from OperationalDataManager
             if !operationalData.isInitialized {
@@ -160,6 +254,140 @@ public class DatabaseInitializer: ObservableObject {
             print("✅ Operational data already exists")
             initializationProgress = 0.7
         }
+    }
+    
+    // MARK: - Kevin's Corrected Building Assignments (from SchemaMigrationPatch)
+    
+    private func createKevinCorrectedAssignments() async throws {
+        print("🏢 Creating Kevin's CORRECTED building assignments - PRESERVING RUBIN MUSEUM...")
+        
+        // Check if already applied
+        if try await hasMigrationBeenApplied(1001, description: "Kevin Rubin Museum Correction") {
+            print("✅ Kevin's corrected assignments already applied")
+            return
+        }
+        
+        // Clear any existing Kevin assignments to avoid conflicts
+        try await grdbManager.execute("""
+            DELETE FROM worker_building_assignments 
+            WHERE worker_id = '4'
+        """)
+        
+        // Kevin's CORRECTED building assignments - ALL PRESERVED from SchemaMigrationPatch
+        // ✅ CRITICAL: Rubin Museum ID "14", NOT Franklin ID "13"
+        let kevinBuildings: [(String, String)] = [
+            ("3", "131 Perry Street - Primary assignment"),
+            ("6", "68 Perry Street - Perry Street corridor"),
+            ("7", "135-139 West 17th Street - Main maintenance building"),
+            ("9", "117 West 17th Street - West 17th corridor"),
+            ("11", "136 West 17th Street - Extended coverage"),
+            ("16", "Stuyvesant Cove Park - Special outdoor assignment"),
+            ("17", "178 Spring Street - Downtown coverage"), // ✅ Correct ID 17
+            ("14", "Rubin Museum (142–148 W 17th) - CORRECTED ASSIGNMENT") // ✅ Rubin Museum, NOT Franklin
+        ]
+        
+        for (buildingId, notes) in kevinBuildings {
+            try await grdbManager.execute("""
+                INSERT OR REPLACE INTO worker_building_assignments 
+                (worker_id, building_id, role, assignment_type, assigned_date, is_active, notes) 
+                VALUES ('4', ?, 'maintenance', 'corrected_duties', datetime('now'), 1, ?)
+            """, [buildingId, notes])
+        }
+        
+        print("✅ Created \(kevinBuildings.count) CORRECTED building assignments for Kevin")
+        print("   🎯 Kevin now has Rubin Museum (ID 14), NOT Franklin Street")
+        print("   🎯 Kevin now has 178 Spring Street (ID 17) - building ID conflict resolved")
+        
+        // Verify Kevin's corrected assignments
+        let kevinAssignments = try await grdbManager.query("""
+            SELECT building_id, notes FROM worker_building_assignments 
+            WHERE worker_id = '4' AND is_active = 1
+        """, [])
+        
+        print("📊 Kevin's verified assignments: \(kevinAssignments.count) buildings")
+        for assignment in kevinAssignments {
+            let buildingId = assignment["building_id"] as? String ?? "nil"
+            let notes = assignment["notes"] as? String ?? ""
+            print("   🏢 Building ID: \(buildingId) - \(notes)")
+        }
+        
+        // Record this migration
+        try await recordMigrationVersion(1001, description: "Kevin Rubin Museum Correction")
+    }
+    
+    // MARK: - Operational Schedules Import (from SchemaMigrationPatch)
+    
+    private func importOperationalSchedules() async throws {
+        print("🔧 Importing operational schedules - ALL ORIGINAL DATA PRESERVED...")
+        
+        // Check if already applied
+        if try await hasMigrationBeenApplied(1002, description: "Operational Schedules Import") {
+            print("✅ Operational schedules already imported")
+            return
+        }
+        
+        // Kevin's corrected routine schedules - ALL PRESERVED from SchemaMigrationPatch
+        // ✅ CRITICAL: Rubin Museum (ID 14), NOT Franklin (ID 13)
+        let routineSchedules: [(String, String, String, String, String, String)] = [
+            // Kevin's corrected Perry Street circuit - PRESERVED
+            ("routine_3_4_perry_main", "Perry Street Main Circuit", "3", "FREQ=DAILY;BYHOUR=6", "4", "Cleaning"),
+            ("routine_6_4_perry_full", "Perry 68 Full Building Clean", "6", "FREQ=WEEKLY;BYDAY=TU,TH;BYHOUR=8", "4", "Cleaning"),
+            ("routine_7_4_17th_corridor", "17th Street Corridor Maintenance", "7", "FREQ=DAILY;BYHOUR=11", "4", "Cleaning"),
+            ("routine_9_4_17th_west", "117 West 17th Operations", "9", "FREQ=DAILY;BYHOUR=12", "4", "Cleaning"),
+            ("routine_11_4_extended", "Extended Coverage Area", "11", "FREQ=WEEKLY;BYDAY=FR;BYHOUR=10", "4", "Maintenance"),
+            ("routine_16_4_park", "Stuyvesant Park Maintenance", "16", "FREQ=WEEKLY;BYDAY=SA;BYHOUR=8", "4", "Outdoor"),
+            ("routine_17_4_spring", "Spring Street Downtown", "17", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=14", "4", "Cleaning"),
+            // ✅ CORRECTED: Kevin's Rubin Museum assignment (ID 14, NOT Franklin ID 13) - PRESERVED
+            ("routine_14_4_rubin", "Rubin Museum Operations", "14", "FREQ=DAILY;BYHOUR=10", "4", "Sanitation"),
+            
+            // Other workers' schedules - ALL PRESERVED
+            ("routine_1_1_main", "12 West 18th Complete Service", "1", "FREQ=DAILY;BYHOUR=9", "1", "Cleaning"),
+            ("routine_16_2_park_morn", "Park Morning Inspection", "16", "FREQ=DAILY;BYHOUR=6", "2", "Maintenance"),
+            ("routine_7_5_glass", "Glass & Lobby Circuit", "7", "FREQ=DAILY;BYHOUR=6", "5", "Cleaning"),
+            ("routine_4_6_franklin", "Franklin Sidewalk Operations", "4", "FREQ=WEEKLY;BYDAY=MO,WE,FR;BYHOUR=7", "6", "Cleaning"),
+            ("routine_1_7_evening", "Evening Security Check", "1", "FREQ=DAILY;BYHOUR=21", "7", "Operations"),
+            ("routine_14_8_hvac", "Rubin Museum HVAC Systems", "14", "FREQ=MONTHLY;BYHOUR=9", "8", "Maintenance")
+        ]
+        
+        var routineCount = 0
+        for routine in routineSchedules {
+            let weatherDependent = routine.5 == "Cleaning" ? 1 : 0
+            
+            try await grdbManager.execute("""
+                INSERT OR REPLACE INTO routine_schedules 
+                (id, name, building_id, rrule, worker_id, category, weather_dependent)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, [routine.0, routine.1, routine.2, routine.3, routine.4, routine.5, weatherDependent])
+            routineCount += 1
+        }
+        
+        print("✅ Imported \(routineCount) routine schedules (Kevin's Rubin Museum corrected)")
+        
+        // Import DSNY schedules with Kevin's corrected routes - ALL PRESERVED
+        let dsnySchedules: [(String, String, String, String)] = [
+            ("dsny_kevin_perry", "Kevin Perry Street Route", "3,6", "MON,WED,FRI"),
+            ("dsny_kevin_17th", "Kevin 17th Street Route", "7,9,11", "MON,WED,FRI"),
+            ("dsny_kevin_downtown", "Kevin Downtown Route", "17", "TUE,THU"),
+            ("dsny_kevin_rubin", "Kevin Rubin Museum Route", "14", "TUE,FRI"), // ✅ CORRECTED & PRESERVED
+            ("dsny_kevin_park", "Kevin Park Route", "16", "SAT"),
+            ("dsny_general_east", "General East Route", "1", "MON,WED,FRI"),
+            ("dsny_general_downtown", "General Downtown Route", "4,8", "TUE,THU,SAT")
+        ]
+        
+        var dsnyCount = 0
+        for dsny in dsnySchedules {
+            try await grdbManager.execute("""
+                INSERT OR REPLACE INTO dsny_schedules 
+                (id, route_id, building_ids, collection_days)
+                VALUES (?, ?, ?, ?)
+            """, [dsny.0, dsny.1, dsny.2, dsny.3])
+            dsnyCount += 1
+        }
+        
+        print("✅ Imported \(dsnyCount) DSNY schedules (Kevin's routes corrected & preserved)")
+        
+        // Record this migration
+        try await recordMigrationVersion(1002, description: "Operational Schedules Import")
     }
     
     // MARK: - Phase 3: Verification
@@ -203,6 +431,16 @@ public class DatabaseInitializer: ObservableObject {
     }
     
     // MARK: - Database Table Creation
+    
+    private func createMigrationTrackingTable() async throws {
+        try await grdbManager.execute("""
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                version INTEGER PRIMARY KEY,
+                description TEXT,
+                applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+    }
     
     private func createAdditionalTables() async throws {
         print("🔧 Creating additional operational tables...")
@@ -254,6 +492,61 @@ public class DatabaseInitializer: ObservableObject {
             )
         """)
         
+        // Routine schedules table (from SchemaMigrationPatch)
+        try await grdbManager.execute("""
+            CREATE TABLE IF NOT EXISTS routine_schedules (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                rrule TEXT NOT NULL,
+                worker_id TEXT NOT NULL,
+                category TEXT NOT NULL,
+                estimated_duration INTEGER DEFAULT 3600,
+                weather_dependent INTEGER DEFAULT 0,
+                priority_level TEXT DEFAULT 'medium',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
+                FOREIGN KEY (worker_id) REFERENCES workers(id)
+            )
+        """)
+
+        // DSNY schedules table (from SchemaMigrationPatch)
+        try await grdbManager.execute("""
+            CREATE TABLE IF NOT EXISTS dsny_schedules (
+                id TEXT PRIMARY KEY,
+                route_id TEXT NOT NULL,
+                building_ids TEXT NOT NULL,
+                collection_days TEXT NOT NULL,
+                pickup_window_start INTEGER DEFAULT 21600,
+                pickup_window_end INTEGER DEFAULT 43200,
+                route_status TEXT DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        // Site departure logs table (for SiteLogService)
+        try await grdbManager.execute("""
+            CREATE TABLE IF NOT EXISTS site_departure_logs (
+                id TEXT PRIMARY KEY,
+                worker_id TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                departed_at TEXT NOT NULL,
+                tasks_completed_count INTEGER DEFAULT 0,
+                tasks_remaining_count INTEGER DEFAULT 0,
+                photos_provided_count INTEGER DEFAULT 0,
+                is_fully_compliant INTEGER DEFAULT 0,
+                notes TEXT,
+                next_destination_building_id TEXT,
+                departure_method TEXT DEFAULT 'normal',
+                location_lat REAL,
+                location_lon REAL,
+                time_spent_minutes INTEGER,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (worker_id) REFERENCES workers(id),
+                FOREIGN KEY (building_id) REFERENCES buildings(id)
+            )
+        """)
+        
         print("✅ Additional operational tables created")
     }
     
@@ -271,33 +564,45 @@ public class DatabaseInitializer: ObservableObject {
         if workerCount == 0 {
             print("📝 Seeding authentication data...")
             
-            // Real worker authentication data
-            let realWorkers: [(String, String, String, String, String, String?, Double)] = [
-                // (id, name, email, password, role, phone, hourlyRate)
-                ("1", "Greg Hutson", "g.hutson1989@gmail.com", "password", "worker", "917-555-0001", 28.0),
-                ("2", "Edwin Lema", "edwinlema911@gmail.com", "password", "worker", "917-555-0002", 26.0),
-                ("4", "Kevin Dutan", "dutankevin1@gmail.com", "password", "worker", "917-555-0004", 25.0),
-                ("5", "Mercedes Inamagua", "jneola@gmail.com", "password", "worker", "917-555-0005", 27.0),
-                ("6", "Luis Lopez", "luislopez030@yahoo.com", "password", "worker", "917-555-0006", 25.0),
-                ("7", "Angel Guirachocha", "lio.angel71@gmail.com", "password", "worker", "917-555-0007", 26.0),
-                ("8", "Shawn Magloire", "shawn@francomanagementgroup.com", "password", "admin", "917-555-0008", 45.0),
-                ("9", "Shawn Magloire", "francosphere@francomanagementgroup.com", "password", "client", "917-555-0008", 45.0),
-                ("10", "Shawn Magloire", "shawn@fme-llc.com", "password", "admin", "917-555-0008", 45.0),
-                ("100", "Test Worker", "test@franco.com", "password", "worker", "917-555-0100", 25.0),
-                ("101", "Test Admin", "admin@franco.com", "password", "admin", "917-555-0101", 35.0),
-                ("102", "Test Client", "client@franco.com", "password", "client", "917-555-0102", 30.0)
+            // Real worker authentication data with shifts and hire dates (from SchemaMigrationPatch)
+            let realWorkers: [(String, String, String, String, String, String?, Double, String, String)] = [
+                // (id, name, email, password, role, phone, hourlyRate, shift, hireDate)
+                ("1", "Greg Hutson", "g.hutson1989@gmail.com", "password", "worker", "917-555-0001", 28.0, "day", "2022-03-15"),
+                ("2", "Edwin Lema", "edwinlema911@gmail.com", "password", "worker", "917-555-0002", 26.0, "morning", "2023-01-10"),
+                ("4", "Kevin Dutan", "dutankevin1@gmail.com", "password", "worker", "917-555-0004", 25.0, "expanded", "2021-08-20"), // ✅ Expanded duties PRESERVED
+                ("5", "Mercedes Inamagua", "jneola@gmail.com", "password", "worker", "917-555-0005", 27.0, "split", "2022-11-05"),
+                ("6", "Luis Lopez", "luislopez030@yahoo.com", "password", "worker", "917-555-0006", 25.0, "day", "2023-02-18"),
+                ("7", "Angel Guirachocha", "lio.angel71@gmail.com", "password", "worker", "917-555-0007", 26.0, "evening", "2022-07-12"),
+                ("8", "Shawn Magloire", "shawn@francomanagementgroup.com", "password", "admin", "917-555-0008", 45.0, "day", "2020-01-15"),
+                ("9", "Shawn Magloire", "francosphere@francomanagementgroup.com", "password", "client", "917-555-0008", 45.0, "day", "2020-01-15"),
+                ("10", "Shawn Magloire", "shawn@fme-llc.com", "password", "admin", "917-555-0008", 45.0, "day", "2020-01-15"),
+                ("100", "Test Worker", "test@franco.com", "password", "worker", "917-555-0100", 25.0, "day", "2024-01-01"),
+                ("101", "Test Admin", "admin@franco.com", "password", "admin", "917-555-0101", 35.0, "day", "2024-01-01"),
+                ("102", "Test Client", "client@franco.com", "password", "client", "917-555-0102", 30.0, "day", "2024-01-01")
             ]
             
-            for (id, name, email, password, role, phone, rate) in realWorkers {
+            for (id, name, email, password, role, phone, rate, shift, hireDate) in realWorkers {
                 try await grdbManager.execute("""
                     INSERT OR REPLACE INTO workers 
-                    (id, name, email, password, role, phone, hourlyRate, isActive, 
+                    (id, name, email, password, role, phone, hourlyRate, isActive, shift, hireDate,
                      skills, timezone, notification_preferences, created_at, updated_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
-                """, [id, name, email, password, role, phone ?? "", rate, getDefaultSkills(for: role)])
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 'America/New_York', '{}', datetime('now'), datetime('now'))
+                """, [id, name, email, password, role, phone ?? "", rate, shift, hireDate, getDefaultSkills(for: role)])
             }
             
             print("✅ Seeded \(realWorkers.count) workers with authentication")
+            
+            // Verify Kevin was created correctly
+            let kevinCheck = try await grdbManager.query(
+                "SELECT id, name, isActive, shift FROM workers WHERE id = '4' LIMIT 1",
+                []
+            )
+            
+            if let kevin = kevinCheck.first {
+                print("✅ Kevin verification: ID=\(kevin["id"] ?? "nil"), Name=\(kevin["name"] ?? "nil"), Active=\(kevin["isActive"] ?? "nil"), Shift=\(kevin["shift"] ?? "nil")")
+            } else {
+                print("🚨 WARNING: Kevin not found after seeding!")
+            }
         } else {
             print("✅ Workers already exist (\(workerCount) workers)")
         }
@@ -343,7 +648,8 @@ public class DatabaseInitializer: ObservableObject {
             ("12", "135 West 17th Street", "135 W 17th St, New York, NY 10011", 40.7402, -73.9975, "building_135w17"),
             ("13", "138 West 17th Street", "138 W 17th St, New York, NY 10011", 40.7403, -73.9978, "building_138w17"),
             ("15", "112 West 18th Street", "112 W 18th St, New York, NY 10011", 40.7395, -73.9950, "building_112w18"),
-            ("16", "Stuyvesant Cove Park", "E 20th St & FDR Dr, New York, NY 10009", 40.7325, -73.9732, "stuyvesant_park")
+            ("16", "Stuyvesant Cove Park", "E 20th St & FDR Dr, New York, NY 10009", 40.7325, -73.9732, "stuyvesant_park"),
+            ("17", "178 Spring Street", "178 Spring St, New York, NY 10012", 40.7240, -73.9998, "building_178spring") // Added from SchemaMigrationPatch
         ]
         
         for (id, name, address, lat, lng, imageAsset) in buildings {
@@ -358,10 +664,8 @@ public class DatabaseInitializer: ObservableObject {
     }
     
     private func seedWorkerAssignments() async throws {
-        let assignments = [
-            ("4", "14", "maintenance"),    // Kevin at Rubin Museum
-            ("4", "11", "maintenance"),
-            ("4", "6", "maintenance"),
+        // Other workers' basic assignments
+        let basicAssignments = [
             ("1", "1", "cleaning"),
             ("2", "2", "maintenance"),
             ("2", "5", "maintenance"),
@@ -370,7 +674,7 @@ public class DatabaseInitializer: ObservableObject {
             ("7", "1", "sanitation"),
         ]
         
-        for (workerId, buildingId, role) in assignments {
+        for (workerId, buildingId, role) in basicAssignments {
             try await grdbManager.execute("""
                 INSERT OR IGNORE INTO worker_building_assignments 
                 (worker_id, building_id, role, assigned_date, is_active)
@@ -378,7 +682,9 @@ public class DatabaseInitializer: ObservableObject {
             """, [workerId, buildingId, role])
         }
         
-        print("✅ Worker assignments seeded")
+        print("✅ Basic worker assignments seeded")
+        
+        // Kevin's corrected assignments will be handled separately in createKevinCorrectedAssignments()
     }
     
     private func seedSampleTasks() async throws {
@@ -491,16 +797,53 @@ public class DatabaseInitializer: ObservableObject {
     private func runMigrationsIfNeeded() async throws {
         print("🔄 Checking for pending migrations...")
         
-        try await grdbManager.execute("""
-            CREATE TABLE IF NOT EXISTS schema_migrations (
-                version INTEGER PRIMARY KEY,
-                applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        // Future migrations would go here
+        // Add essential constraints (from SchemaMigrationPatch)
+        if !(try await hasMigrationBeenApplied(1003, description: "Essential Constraints")) {
+            try await addEssentialConstraints()
+            try await recordMigrationVersion(1003, description: "Essential Constraints")
+        }
         
         print("✅ Migrations complete")
+    }
+    
+    private func addEssentialConstraints() async throws {
+        print("🔧 Adding essential constraints...")
+        
+        let indexes: [(String, String, String)] = [
+            ("idx_worker_building_unique", "worker_building_assignments", "worker_id, building_id"),
+            ("idx_worker_email", "workers", "email"),
+            ("idx_worker_active", "workers", "isActive")
+        ]
+        
+        for (indexName, tableName, columns) in indexes {
+            do {
+                try await grdbManager.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS \(indexName) 
+                    ON \(tableName)(\(columns))
+                """)
+            } catch {
+                print("⚠️ Could not create index \(indexName): \(error)")
+            }
+        }
+        
+        print("✅ Essential constraints added")
+    }
+    
+    // MARK: - Migration Version Tracking
+    
+    private func recordMigrationVersion(_ version: Int, description: String) async throws {
+        try await grdbManager.execute("""
+            INSERT OR IGNORE INTO schema_migrations (version, description, applied_at)
+            VALUES (?, ?, datetime('now'))
+        """, [version, description])
+    }
+    
+    private func hasMigrationBeenApplied(_ version: Int, description: String) async throws -> Bool {
+        let result = try await grdbManager.query(
+            "SELECT COUNT(*) as count FROM schema_migrations WHERE version = ?",
+            [version]
+        )
+        return (result.first?["count"] as? Int64 ?? 0) > 0
     }
     
     // MARK: - Verification Methods
@@ -508,7 +851,7 @@ public class DatabaseInitializer: ObservableObject {
     private func verifyCriticalRelationships() async throws {
         print("🔍 Verifying critical relationships...")
         
-        // Verify Kevin Dutan's Rubin Museum assignment
+        // Verify Kevin Dutan's Rubin Museum assignment (most critical check)
         let kevinRubinCheck = try await grdbManager.query("""
             SELECT COUNT(*) as count 
             FROM worker_building_assignments 
@@ -517,16 +860,37 @@ public class DatabaseInitializer: ObservableObject {
         
         let hasKevinRubin = (kevinRubinCheck.first?["count"] as? Int64 ?? 0) > 0
         
-        if !hasKevinRubin {
-            print("⚠️ Creating Kevin Dutan's Rubin Museum assignment...")
+        if hasKevinRubin {
+            print("✅ KEVIN CORRECTION VERIFIED: Has Rubin Museum (14), NOT Franklin Street (13)")
+        } else {
+            print("🚨 KEVIN ASSIGNMENT ERROR: Missing Rubin Museum assignment")
             
+            // Create the assignment if missing
             try await grdbManager.execute("""
                 INSERT OR REPLACE INTO worker_building_assignments 
-                (worker_id, building_id, role, assigned_date, is_active)
-                VALUES ('4', '14', 'maintenance', datetime('now'), 1)
+                (worker_id, building_id, role, assigned_date, is_active, notes)
+                VALUES ('4', '14', 'maintenance', datetime('now'), 1, 'CRITICAL: Rubin Museum Assignment')
             """)
             
             print("✅ Kevin Dutan's Rubin Museum assignment created")
+        }
+        
+        // Verify Kevin doesn't have Franklin Street (ID 13)
+        let kevinFranklinCheck = try await grdbManager.query("""
+            SELECT COUNT(*) as count 
+            FROM worker_building_assignments 
+            WHERE worker_id = '4' AND building_id = '13' AND is_active = 1
+        """)
+        
+        let hasKevinFranklin = (kevinFranklinCheck.first?["count"] as? Int64 ?? 0) > 0
+        
+        if hasKevinFranklin {
+            print("🚨 REMOVING INCORRECT: Kevin has Franklin Street (13) - removing...")
+            try await grdbManager.execute("""
+                DELETE FROM worker_building_assignments 
+                WHERE worker_id = '4' AND building_id = '13'
+            """)
+            print("✅ Removed incorrect Franklin Street assignment from Kevin")
         }
         
         print("✅ Critical relationships verified")
@@ -555,6 +919,20 @@ public class DatabaseInitializer: ObservableObject {
             } else {
                 result.passedChecks.append("\(table): \(count) records ✓")
             }
+        }
+        
+        // Special check for Kevin's 8 buildings
+        let kevinBuildingCount = try await grdbManager.query("""
+            SELECT COUNT(*) as count 
+            FROM worker_building_assignments 
+            WHERE worker_id = '4' AND is_active = 1
+        """)
+        
+        let kevinCount = kevinBuildingCount.first?["count"] as? Int64 ?? 0
+        if kevinCount == 8 {
+            result.passedChecks.append("Kevin Dutan: \(kevinCount) buildings ✓")
+        } else {
+            result.issues.append("Kevin Dutan: only \(kevinCount) buildings (expected 8)")
         }
         
         print("📊 Integrity check: \(result.passedChecks.count) passed, \(result.issues.count) issues")
@@ -699,6 +1077,36 @@ public class DatabaseInitializer: ObservableObject {
             ]
         }
         
+        // Kevin's specific stats
+        let kevinStats = try await grdbManager.query("""
+            SELECT COUNT(*) as building_count
+            FROM worker_building_assignments
+            WHERE worker_id = '4' AND is_active = 1
+        """)
+        
+        if let row = kevinStats.first {
+            stats["kevin"] = [
+                "building_count": row["building_count"] as? Int64 ?? 0,
+                "has_rubin": 0  // Will be updated below
+            ]
+        }
+        
+        // Check if Kevin has Rubin Museum
+        let kevinRubinCheck = try await grdbManager.query("""
+            SELECT COUNT(*) as count
+            FROM worker_building_assignments
+            WHERE worker_id = '4' AND building_id = '14' AND is_active = 1
+        """)
+        
+        if let row = kevinRubinCheck.first,
+           let count = row["count"] as? Int64,
+           count > 0 {
+            if var kevinData = stats["kevin"] as? [String: Any] {
+                kevinData["has_rubin"] = 1
+                stats["kevin"] = kevinData
+            }
+        }
+        
         stats["database"] = [
             "initialized": isInitialized,
             "ready": await grdbManager.isDatabaseReady(),
@@ -706,6 +1114,90 @@ public class DatabaseInitializer: ObservableObject {
         ]
         
         return stats
+    }
+    
+    // MARK: - Validation Report
+    
+    /// Generate a comprehensive validation report
+    public func generateValidationReport() async throws -> String {
+        var report = "🔍 FRANCOSPHERE DATABASE VALIDATION REPORT\n"
+        report += "=" * 50 + "\n\n"
+        
+        // Check Kevin specifically
+        report += "👷 KEVIN DUTAN VALIDATION:\n"
+        
+        let kevinCheck = try await grdbManager.query("""
+            SELECT w.id, w.name, w.isActive, w.shift, COUNT(wba.building_id) as building_count
+            FROM workers w 
+            LEFT JOIN worker_building_assignments wba ON w.id = wba.worker_id AND wba.is_active = 1
+            WHERE w.id = '4'
+            GROUP BY w.id, w.name, w.isActive, w.shift
+        """, [])
+        
+        if let kevin = kevinCheck.first {
+            let buildingCount = kevin["building_count"] as? Int64 ?? 0
+            report += "✅ Kevin found with \(buildingCount) building assignments\n"
+            report += "   Shift: \(kevin["shift"] as? String ?? "unknown")\n"
+        } else {
+            report += "❌ Kevin Dutan not found!\n"
+        }
+        
+        // Verify Kevin has Rubin Museum and NOT Franklin
+        let kevinBuildings = try await grdbManager.query("""
+            SELECT building_id, notes FROM worker_building_assignments 
+            WHERE worker_id = '4' AND is_active = 1
+            ORDER BY building_id
+        """, [])
+        
+        let kevinBuildingIds = kevinBuildings.compactMap { $0["building_id"] as? String }
+        let hasRubin = kevinBuildingIds.contains("14")
+        let hasFranklin = kevinBuildingIds.contains("13")
+        
+        report += "\n📍 KEVIN'S BUILDING ASSIGNMENTS:\n"
+        for building in kevinBuildings {
+            let buildingId = building["building_id"] as? String ?? "?"
+            let notes = building["notes"] as? String ?? ""
+            report += "   Building \(buildingId): \(notes)\n"
+        }
+        
+        report += "\n🎯 CRITICAL CHECKS:\n"
+        report += "   Has Rubin Museum (14): \(hasRubin ? "✅ YES" : "❌ NO")\n"
+        report += "   Has Franklin Street (13): \(hasFranklin ? "❌ YES (WRONG!)" : "✅ NO (CORRECT)")\n"
+        
+        // Check routine schedules
+        report += "\n📅 ROUTINE SCHEDULES:\n"
+        let routineCount = try await grdbManager.query("""
+            SELECT COUNT(*) as count FROM routine_schedules
+        """, [])
+        
+        let routines = routineCount.first?["count"] as? Int64 ?? 0
+        report += "   Total routine schedules: \(routines)\n"
+        
+        // Check DSNY schedules
+        let dsnyCount = try await grdbManager.query("""
+            SELECT COUNT(*) as count FROM dsny_schedules
+        """, [])
+        
+        let dsnyRoutes = dsnyCount.first?["count"] as? Int64 ?? 0
+        report += "   Total DSNY routes: \(dsnyRoutes)\n"
+        
+        // Check all workers
+        report += "\n👥 ALL WORKERS:\n"
+        let allWorkers = try await grdbManager.query("""
+            SELECT id, name, email, shift, isActive FROM workers 
+            WHERE isActive = 1
+            ORDER BY id
+        """, [])
+        
+        for worker in allWorkers {
+            let id = worker["id"] as? String ?? "?"
+            let name = worker["name"] as? String ?? "?"
+            let shift = worker["shift"] as? String ?? "?"
+            report += "   \(id): \(name) (\(shift) shift)\n"
+        }
+        
+        report += "\n✅ VALIDATION COMPLETE\n"
+        return report
     }
     
     #if DEBUG
@@ -933,3 +1425,35 @@ public enum InitializationError: LocalizedError {
         }
     }
 }
+
+// MARK: - 📝 CONSOLIDATED MIGRATION NOTES
+/*
+ ✅ COMPLETE CONSOLIDATION WITH 100% DATA PRESERVATION:
+ 
+ 🔧 ALL SCHEMAMIGRATIONPATCH FUNCTIONALITY INTEGRATED:
+ - ✅ Emergency column fixes (isActive, shift, hireDate, email)
+ - ✅ Kevin's corrected building assignments (8 buildings)
+ - ✅ Kevin's Rubin Museum: Building ID 14 preserved (NOT Franklin 13)
+ - ✅ All worker data: 7 active workers with complete profiles
+ - ✅ All routine schedules: Complete operational matrix preserved
+ - ✅ All DSNY routes: Waste collection schedules preserved
+ - ✅ Building assignments: All worker-building relationships preserved
+ - ✅ Migration tracking with version control
+ 
+ 🔧 ENHANCED FEATURES:
+ - ✅ UI progress tracking for all operations
+ - ✅ Comprehensive error handling
+ - ✅ Health check and validation reporting
+ - ✅ Service integration verification
+ - ✅ Fallback data access patterns
+ - ✅ Debug utilities for development
+ 
+ 🔧 CRITICAL DATA PRESERVED:
+ - ✅ Kevin's Rubin Museum assignment (ID 14) maintained
+ - ✅ Kevin's 178 Spring Street assignment (ID 17) maintained
+ - ✅ All operational schedules with correct building mappings
+ - ✅ Complete worker-building assignment matrix
+ - ✅ Site departure logs table for compliance tracking
+ 
+ 🎯 STATUS: Complete consolidation - ready to delete SchemaMigrationPatch.swift
+ */
