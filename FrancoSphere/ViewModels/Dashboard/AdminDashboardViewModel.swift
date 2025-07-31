@@ -771,8 +771,3 @@ extension CoreTypes.ContextualTask {
         }
         return scheduled < Date()
     }
-    
-    var isCompleted: Bool {
-        status == .completed
-    }
-}
