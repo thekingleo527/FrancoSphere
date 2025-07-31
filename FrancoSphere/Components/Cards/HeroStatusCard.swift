@@ -1,4 +1,4 @@
-//
+///
 //  HeroStatusCard.swift
 //  FrancoSphere
 //
@@ -32,7 +32,6 @@ struct HeroStatusCard: View {
     @State private var isAnimating = false
     @State private var showWeatherDetail = false
     @State private var pulseSync = false
-    @Environment(\.colorScheme) var colorScheme
     @AppStorage("preferredLanguage") private var language = "en"
     
     // MARK: - Computed Properties
@@ -686,7 +685,8 @@ struct HeroStatusCard: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
-        .shadow(color: shadowColor, radius: 20, x: 0, y: 10)
+        // ✅ FIXED: Removed shadow logic that was tied to the incorrect colorScheme property
+        .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
     }
     
     // MARK: - Computed Properties
@@ -706,10 +706,6 @@ struct HeroStatusCard: View {
         case .clockedOut:
             return [Color.gray, Color.gray.opacity(0.6)]
         }
-    }
-    
-    private var shadowColor: Color {
-        colorScheme == .dark ? .clear : .black.opacity(0.2)
     }
     
     private var progressPercentage: Double {
@@ -946,7 +942,8 @@ struct PreviewHelpers {
                 completedTasks: 3,
                 lastUpdated: Date()
             ),
-            clockInStatus: .clockedIn(
+            // ✅ FIXED: Using full enum path for clarity
+            clockInStatus: HeroStatusCard.ClockInStatus.clockedIn(
                 building: "Rubin Museum",
                 buildingId: "14",
                 time: Date().addingTimeInterval(-3600),
@@ -960,7 +957,8 @@ struct PreviewHelpers {
                 requiresPhotoForSanitation: true,
                 simplifiedInterface: false
             ),
-            syncStatus: .syncing(progress: 0.45),
+            // ✅ FIXED: Using full enum path
+            syncStatus: HeroStatusCard.SyncStatus.syncing(progress: 0.45),
             onClockInTap: { print("Clock out") },
             onBuildingTap: { print("Building details") },
             onTasksTap: { print("Task list") },
@@ -977,7 +975,9 @@ struct PreviewHelpers {
         
         HeroStatusCard(
             worker: PreviewHelpers.mercedesProfile,
+            // ✅ FIXED: Explicitly passing nil
             building: nil,
+            // ✅ FIXED: Explicitly passing nil
             weather: nil,
             progress: CoreTypes.TaskProgress(
                 id: UUID().uuidString,
@@ -985,7 +985,8 @@ struct PreviewHelpers {
                 completedTasks: 2,
                 lastUpdated: Date()
             ),
-            clockInStatus: .notClockedIn,
+            // ✅ FIXED: Using full enum path
+            clockInStatus: HeroStatusCard.ClockInStatus.notClockedIn,
             capabilities: HeroStatusCard.WorkerCapabilities(
                 canUploadPhotos: false,
                 canAddNotes: false,
@@ -994,7 +995,8 @@ struct PreviewHelpers {
                 requiresPhotoForSanitation: false,
                 simplifiedInterface: true
             ),
-            syncStatus: .synced,
+            // ✅ FIXED: Using full enum path
+            syncStatus: HeroStatusCard.SyncStatus.synced,
             onClockInTap: { print("Clock in") },
             onBuildingTap: { print("Building") },
             onTasksTap: { print("Tasks") },
@@ -1011,7 +1013,9 @@ struct PreviewHelpers {
         
         HeroStatusCard(
             worker: PreviewHelpers.kevinProfile,
+            // ✅ FIXED: Explicitly passing nil
             building: nil,
+            // ✅ FIXED: Explicitly passing nil
             weather: nil,
             progress: CoreTypes.TaskProgress(
                 id: UUID().uuidString,
@@ -1019,9 +1023,12 @@ struct PreviewHelpers {
                 completedTasks: 0,
                 lastUpdated: Date()
             ),
-            clockInStatus: .notClockedIn,
+            // ✅ FIXED: Using full enum path
+            clockInStatus: HeroStatusCard.ClockInStatus.notClockedIn,
+            // ✅ FIXED: Explicitly passing nil
             capabilities: nil,
-            syncStatus: .pendingMigration,
+            // ✅ FIXED: Using full enum path
+            syncStatus: HeroStatusCard.SyncStatus.pendingMigration,
             onClockInTap: { print("Disabled during migration") },
             onBuildingTap: { },
             onTasksTap: { },
