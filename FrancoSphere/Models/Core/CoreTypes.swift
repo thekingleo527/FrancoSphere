@@ -632,42 +632,39 @@ public struct CoreTypes {
     }
     
     // MARK: - Task Frequency
-        public enum TaskFrequency: String, Codable, CaseIterable {
-            case daily
-            case weekly
-            case biweekly = "bi-weekly" // Use this format for multi-word cases
-            case monthly
-            case quarterly
-            case annual
-            case onDemand = "on-demand"
-            
-            // This is the only computed property you need to add.
-            // Swift handles rawValue and the initializer for you automatically.
-            public var displayName: String {
-                switch self {
-                case .daily: return NSLocalizedString("Daily", comment: "Task frequency")
-                case .weekly: return NSLocalizedString("Weekly", comment: "Task frequency")
-                case .biweekly: return NSLocalizedString("Bi-Weekly", comment: "Task frequency")
-                case .monthly: return NSLocalizedString("Monthly", comment: "Task frequency")
-                case .quarterly: return NSLocalizedString("Quarterly", comment: "Task frequency")
-                case .annual: return NSLocalizedString("Annual", comment: "Task frequency")
-                case .onDemand: return NSLocalizedString("On-Demand", comment: "Task frequency")
-                }
-            }
-            
-            public var sortOrder: Int {
-                switch self {
-                case .daily: return 1
-                case .weekly: return 2
-                case .biweekly: return 3
-                case .monthly: return 4
-                case .quarterly: return 5
-                case .annual: return 6
-                case .onDemand: return 7
-                }
+    public enum TaskFrequency: String, Codable, CaseIterable {
+        case daily
+        case weekly
+        case biweekly = "bi-weekly"
+        case monthly
+        case quarterly
+        case annual
+        case onDemand = "on-demand"
+        
+        public var displayName: String {
+            switch self {
+            case .daily: return NSLocalizedString("Daily", comment: "Task frequency")
+            case .weekly: return NSLocalizedString("Weekly", comment: "Task frequency")
+            case .biweekly: return NSLocalizedString("Bi-Weekly", comment: "Task frequency")
+            case .monthly: return NSLocalizedString("Monthly", comment: "Task frequency")
+            case .quarterly: return NSLocalizedString("Quarterly", comment: "Task frequency")
+            case .annual: return NSLocalizedString("Annual", comment: "Task frequency")
+            case .onDemand: return NSLocalizedString("On-Demand", comment: "Task frequency")
             }
         }
-
+        
+        public var sortOrder: Int {
+            switch self {
+            case .daily: return 1
+            case .weekly: return 2
+            case .biweekly: return 3
+            case .monthly: return 4
+            case .quarterly: return 5
+            case .annual: return 6
+            case .onDemand: return 7
+            }
+        }
+    }
     
     // MARK: - Contextual Task
     public struct ContextualTask: Identifiable, Codable, Hashable {

@@ -1,4 +1,3 @@
-
 //
 //  WorkerPreferencesView.swift
 //  FrancoSphere
@@ -77,7 +76,7 @@ struct WorkerPreferencesView: View {
                     Text("Español").tag("es")
                 }
                 .pickerStyle(.menu)
-                .onChange(of: viewModel.selectedLanguage) {
+                .onChange(of: viewModel.selectedLanguage) { _ in
                     updateAppLanguage(to: viewModel.selectedLanguage)
                 }
             }
@@ -117,7 +116,7 @@ struct WorkerPreferencesView: View {
             Toggle(isOn: $viewModel.useHighContrast) {
                 Label("High Contrast Mode", systemImage: "circle.lefthalf.filled")
             }
-            .onChange(of: viewModel.useHighContrast) {
+            .onChange(of: viewModel.useHighContrast) { _ in
                 themeManager.toggleHighContrast(isOn: viewModel.useHighContrast)
             }
             
@@ -130,7 +129,7 @@ struct WorkerPreferencesView: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .onChange(of: viewModel.selectedTheme) {
+                .onChange(of: viewModel.selectedTheme) { _ in
                     themeManager.applyTheme(viewModel.selectedTheme)
                 }
             }
@@ -320,14 +319,23 @@ class WorkerPreferencesViewModel: ObservableObject {
     // MARK: - Change Monitoring
     
     private func setupChangeMonitor() {
-        // This publisher fires whenever any of the preference properties change.
-        let publisher = Publishers.CombineLatest8(
-            $selectedLanguage, $textSizeMultiplier, $useHighContrast, $selectedTheme,
-            $useSimplifiedInterface, $requiresPhoto, $reduceMotion, $enableNotifications
+        // Chain multiple CombineLatest publishers to handle more than 4 values
+        let group1 = Publishers.CombineLatest4(
+            $selectedLanguage,
+            $textSizeMultiplier,
+            $useHighContrast,
+            $selectedTheme
         )
         
-        publisher
-            .debounce(for: .milliseconds(100), scheduler: RunLoop.main)
+        let group2 = Publishers.CombineLatest4(
+            $useSimplifiedInterface,
+            $requiresPhoto,
+            $reduceMotion,
+            $enableNotifications
+        )
+        
+        Publishers.CombineLatest(group1, group2)
+            .debounce(for: .seconds(0.1), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.checkForChanges()
             }
@@ -405,6 +413,19 @@ class WorkerPreferencesViewModel: ObservableObject {
         defaults.set(urgentTaskAlerts, forKey: "\(prefix)urgentTaskAlerts")
         defaults.set(clockInReminders, forKey: "\(prefix)clockInReminders")
         defaults.set(endOfDayReports, forKey: "\(prefix)endOfDayReports")
+    }
+}
+
+// MARK: - ThemeManager.Theme Extension
+extension ThemeManager.Theme: Identifiable {
+    public var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .light: return "Light"
+        case .dark: return "Dark"
+        case .system: return "System"
+        }
     }
 }
 

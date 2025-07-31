@@ -1,4 +1,4 @@
-
+//
 //  BuildingRoutineComponents.swift
 //  FrancoSphere v6.0
 //
@@ -109,7 +109,7 @@ struct DailyRoutinesCard: View {
             await loadDailyRoutines()
         }
         .onReceive(dashboardSync.crossDashboardUpdates) { update in
-            if update.buildingId == buildingId && 
+            if update.buildingId == buildingId &&
                (update.type == .taskCompleted || update.type == .taskUpdated) {
                 Task { await loadDailyRoutines() }
             }
@@ -118,7 +118,7 @@ struct DailyRoutinesCard: View {
     
     private var filteredRoutines: [DailyRoutineTask] {
         routines.filter { routine in
-            selectedTimeFilter == .all || 
+            selectedTimeFilter == .all ||
             selectedTimeFilter.matches(hour: routine.scheduledHour ?? 12)
         }
     }
@@ -144,7 +144,7 @@ struct DailyRoutinesCard: View {
                 LEFT JOIN buildings b ON rt.building_id = b.id
                 WHERE rt.building_id = ?
                 AND rt.scheduled_date = ?
-                AND rt.frequency = 'Daily'
+                AND rt.frequency = 'daily'
                 \(workerId != nil ? "AND rt.worker_id = ?" : "")
                 ORDER BY rt.scheduled_hour, rt.priority DESC
             """, workerId != nil ? [buildingId, dateString, workerId!] : [buildingId, dateString])
@@ -686,15 +686,15 @@ struct RecurringTaskEditor: View {
         VStack(alignment: .leading, spacing: 16) {
             // Frequency picker
             Picker("Frequency", selection: $frequency) {
-                Text("Daily").tag("Daily")
-                Text("Weekly").tag("Weekly")
-                Text("Bi-Weekly").tag("Bi-Weekly")
-                Text("Monthly").tag("Monthly")
+                Text("Daily").tag("daily")
+                Text("Weekly").tag("weekly")
+                Text("Bi-Weekly").tag("bi-weekly")
+                Text("Monthly").tag("monthly")
             }
             .pickerStyle(SegmentedPickerStyle())
             
             // Days of week (for weekly/bi-weekly)
-            if frequency == "Weekly" || frequency == "Bi-Weekly" {
+            if frequency == "weekly" || frequency == "bi-weekly" {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Days of Week")
                         .font(.caption)
@@ -719,7 +719,7 @@ struct RecurringTaskEditor: View {
             }
             
             // Day of month (for monthly)
-            if frequency == "Monthly" {
+            if frequency == "monthly" {
                 Stepper("Day of month: \(dayOfMonth ?? 1)", value: Binding(
                     get: { dayOfMonth ?? 1 },
                     set: { dayOfMonth = $0 }
@@ -868,7 +868,7 @@ struct AddRoutineSheet: View {
                         .lineLimit(3...6)
                     
                     Picker("Category", selection: $category) {
-                        ForEach(CanonicalIDs.TaskCategories.all, id: \.self) { category in
+                        ForEach(["Cleaning", "Maintenance", "Sanitation", "Inspection"], id: \.self) { category in
                             Text(category).tag(category)
                         }
                     }
@@ -893,9 +893,9 @@ struct AddRoutineSheet: View {
                 }
                 
                 Section(header: Text("Requirements")) {
-                    Stepper("Duration: \(estimatedDuration) min", 
-                           value: $estimatedDuration, 
-                           in: 5...480, 
+                    Stepper("Duration: \(estimatedDuration) min",
+                           value: $estimatedDuration,
+                           in: 5...480,
                            step: 5)
                     
                     Toggle("Requires Photo Evidence", isOn: $requiresPhoto)
@@ -905,12 +905,12 @@ struct AddRoutineSheet: View {
                 }
                 
                 Section {
-                    Text("This routine will be created for \(frequency.rawValue.lowercased()) execution")
+                    Text("This routine will be created for \(frequency.displayName.lowercased()) execution")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            .navigationTitle("Add \(frequency.rawValue) Routine")
+            .navigationTitle("Add \(frequency.displayName) Routine")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -1156,20 +1156,4 @@ struct RecurringSettings {
     var dayOfMonth: Int?
     var startTime = Date()
     var endTime = Date().addingTimeInterval(3600)
-}
-
-// MARK: - Extensions
-
-extension CoreTypes.TaskFrequency {
-    var rawValue: String {
-        switch self {
-        case .daily: return "Daily"
-        case .weekly: return "Weekly"
-        case .biweekly: return "Bi-Weekly"
-        case .monthly: return "Monthly"
-        case .quarterly: return "Quarterly"
-        case .annual: return "Annual"
-        case .onDemand: return "On-Demand"
-        }
-    }
 }

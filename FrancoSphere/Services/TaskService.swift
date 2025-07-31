@@ -1,3 +1,4 @@
+//
 //  TaskService.swift
 //  FrancoSphere v6.0
 //
@@ -6,6 +7,7 @@
 //  ✅ GRDB POWERED: Uses GRDBManager for all operations
 //  ✅ ASYNC/AWAIT: Modern Swift concurrency
 //  ✅ FIXED: All compilation errors and logical flaws resolved
+//  ✅ FIXED: ContextualTask initializer uses correct parameters
 //
 
 import Foundation
@@ -168,11 +170,11 @@ actor TaskService {
             task.description ?? NSNull(),
             task.buildingId ?? NSNull(),
             task.assignedWorkerId ?? NSNull(),
-            grdbManager.dateFormatter.string(from: task.dueDate ?? Date()),
+            grdbManager.dateFormatter.string(from: task.scheduledDate ?? Date()),
             grdbManager.dateFormatter.string(from: task.dueDate ?? Date()),
             task.category?.rawValue ?? "maintenance",
             task.urgency?.rawValue ?? "medium",
-            task.isCompleted ? 1 : 0
+            task.status == .completed ? 1 : 0
         ])
     }
     
@@ -190,7 +192,7 @@ actor TaskService {
             task.description ?? NSNull(),
             task.buildingId ?? NSNull(),
             task.assignedWorkerId ?? NSNull(),
-            grdbManager.dateFormatter.string(from: task.dueDate ?? Date()),
+            grdbManager.dateFormatter.string(from: task.scheduledDate ?? Date()),
             grdbManager.dateFormatter.string(from: task.dueDate ?? Date()),
             task.category?.rawValue ?? "maintenance",
             task.urgency?.rawValue ?? "medium",
@@ -251,20 +253,32 @@ actor TaskService {
             CoreTypes.WorkerProfile(id: (row["workerId"] as? String) ?? "", name: $0, email: "", role: .worker)
         }
         
+        // Determine status based on isCompleted field
+        let isCompleted = (row["isCompleted"] as? Int64 ?? 0) == 1
+        let status: CoreTypes.TaskStatus = isCompleted ? .completed : .pending
+        
         return ContextualTask(
             id: id,
             title: title,
             description: row["description"] as? String,
-            isCompleted: (row["isCompleted"] as? Int64 ?? 0) == 1,
-            completedDate: parseDate(row["completedDate"] as? String),
+            status: status,
+            completedAt: parseDate(row["completedDate"] as? String),
+            scheduledDate: parseDate(row["scheduledDate"] as? String) ?? Date(),
             dueDate: parseDate(row["dueDate"] as? String) ?? parseDate(row["scheduledDate"] as? String),
             category: (row["category"] as? String).flatMap(CoreTypes.TaskCategory.init(rawValue:)),
             urgency: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)),
             building: building,
             worker: worker,
             buildingId: row["buildingId"] as? String,
+            buildingName: building?.name,
             assignedWorkerId: row["workerId"] as? String,
-            priority: (row["priority"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:))
+            priority: (row["priority"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)) ??
+                     (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)),
+            frequency: nil,
+            requiresPhoto: false,
+            estimatedDuration: nil,
+            createdAt: Date(),
+            updatedAt: Date()
         )
     }
     

@@ -162,19 +162,27 @@ public final class WorkerContextEngine: ObservableObject {
             let building = findBuildingForTask(operational.building, in: assignedBuildings)
             
             let task = CoreTypes.ContextualTask(
-                id: "op_task_\(workerId)_\(index)",
-                title: operational.taskName,
-                description: "Operational: \(operational.taskName) at \(operational.building)",
-                isCompleted: false,
-                completedDate: nil,
-                dueDate: Date().addingTimeInterval(3600),
-                category: mapOperationalCategory(operational.category),
-                urgency: mapOperationalUrgency(operational.skillLevel),
-                building: building,
-                worker: currentWorker,
-                buildingId: building?.id,
-                priority: mapOperationalUrgency(operational.skillLevel)
-            )
+                            id: "op_task_\(workerId)_\(index)",
+                            title: operational.taskName,
+                            description: "Operational: \(operational.taskName) at \(operational.building)",
+                            status: .pending,
+                            completedAt: nil,
+                            scheduledDate: Date(),
+                            dueDate: Date().addingTimeInterval(3600),
+                            category: mapOperationalCategory(operational.category),
+                            urgency: mapOperationalUrgency(operational.skillLevel),
+                            building: building,
+                            worker: currentWorker,
+                            buildingId: building?.id,
+                            buildingName: building?.name,
+                            assignedWorkerId: workerId,
+                            priority: mapOperationalUrgency(operational.skillLevel),
+                            frequency: nil,
+                            requiresPhoto: false,
+                            estimatedDuration: 3600,
+                            createdAt: Date(),
+                            updatedAt: Date()
+                        )
             
             tasks.append(task)
         }
