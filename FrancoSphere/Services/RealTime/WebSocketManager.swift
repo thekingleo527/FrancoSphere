@@ -1,3 +1,4 @@
+//
 //  WebSocketManager.swift
 //  FrancoSphere
 //
@@ -8,11 +9,14 @@
 //  ✅ RESILIENT: Implements exponential backoff for automatic reconnection.
 //  ✅ INTEGRATED: Designed to be driven by DashboardSyncService and authenticated by NewAuthManager.
 //  ✅ THREAD-SAFE: Actor manages state, while a delegate object handles protocol conformance.
-//  ✅ FIXED: Removed extension that caused "Invalid redeclaration" error.
+//  ✅ FIXED: Removed duplicate definition from DashboardSyncService.
 //
 
 import Foundation
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 actor WebSocketManager {
     static let shared = WebSocketManager()
@@ -60,8 +64,8 @@ actor WebSocketManager {
             return
         }
         
-        guard let url = EnvironmentConfig.current.websocketURL else {
-            print("❌ Invalid WebSocket URL from EnvironmentConfig.")
+        guard let url = getWebSocketURL() else {
+            print("❌ Invalid WebSocket URL.")
             return
         }
         
@@ -93,7 +97,11 @@ actor WebSocketManager {
             encoder.dateEncodingStrategy = .iso8601
             // ✅ Add device identifier to the update to prevent echo-back.
             var updateToSend = update
+            #if canImport(UIKit)
             updateToSend.data["deviceId"] = UIDevice.current.identifierForVendor?.uuidString
+            #else
+            updateToSend.data["deviceId"] = ProcessInfo.processInfo.globallyUniqueString
+            #endif
             let data = try encoder.encode(updateToSend)
             
             try await task.send(.data(data))
@@ -180,9 +188,12 @@ actor WebSocketManager {
         self.isConnected = true
         resetReconnection()
         startReceiving()
+        print("✅ WebSocket connection opened")
     }
     
     func handleConnectionClosed(closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        let reasonString = reason.flatMap { String(data: $0, encoding: .utf8) } ?? "Unknown"
+        print("🔌 WebSocket connection closed. Code: \(closeCode.rawValue), Reason: \(reasonString)")
         handleDisconnection()
     }
     
@@ -197,11 +208,31 @@ actor WebSocketManager {
     }
     
     private func getAuthToken() async -> String? {
-        // This is a placeholder. A real implementation would securely fetch the session token.
-        // For now, using the worker's ID as a stand-in token for testing.
-        await MainActor.run {
-            NewAuthManager.shared.currentUser?.id
+        // Try to get from NewAuthManager first
+        let token = await MainActor.run {
+            // Check if we have a session token
+            if let sessionToken = UserDefaults.standard.string(forKey: "sessionToken") {
+                return sessionToken
+            }
+            // Fallback to using user ID as token for testing
+            return NewAuthManager.shared.currentUser?.id
         }
+        return token
+    }
+    
+    private func getWebSocketURL() -> URL? {
+        // Check environment variable first
+        if let envURL = ProcessInfo.processInfo.environment["WEBSOCKET_URL"],
+           let url = URL(string: envURL) {
+            return url
+        }
+        
+        // Default URLs based on build configuration
+        #if DEBUG
+        return URL(string: "ws://localhost:8080/sync")
+        #else
+        return URL(string: "wss://api.francosphere.com/sync")
+        #endif
     }
     
     private func notifyDashboardSync(_ update: CoreTypes.DashboardUpdate) async {
@@ -219,10 +250,12 @@ private class WebSocketDelegate: NSObject, URLSessionWebSocketDelegate {
     var onClose: ((URLSessionWebSocketTask.CloseCode, Data?) -> Void)?
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+        print("🔌 URLSession WebSocket delegate: connection opened")
         onOpen?()
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        print("🔌 URLSession WebSocket delegate: connection closed")
         onClose?(closeCode, reason)
     }
 }

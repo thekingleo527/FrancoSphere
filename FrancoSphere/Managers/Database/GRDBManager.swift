@@ -8,6 +8,7 @@
 //  ✅ SINGLE SOURCE: One manager for everything
 //  ✅ ENHANCED: Full inventory management, worker tracking, and real-time sync
 //  ✅ STREAM B UPDATE: Enhanced sync_queue with priority, compression, and retry management
+//  ✅ FOREIGN KEYS ENABLED: Data integrity enforced at database level
 //
 
 import Foundation
@@ -53,9 +54,9 @@ public final class GRDBManager {
             
             var config = Configuration()
             config.prepareDatabase { db in
-                // Enable foreign keys for data integrity
+                // ✅ FOREIGN KEYS ENABLED HERE!
                 try db.execute(sql: "PRAGMA foreign_keys = ON")
-                // Enable WAL mode for better concurrency
+                // ✅ Enable WAL mode for better concurrency
                 try db.execute(sql: "PRAGMA journal_mode = WAL")
             }
             
@@ -67,6 +68,7 @@ public final class GRDBManager {
             }
             
             print("✅ GRDB Database initialized successfully at: \(databasePath)")
+            print("✅ Foreign keys are ENABLED for data integrity")
         } catch {
             print("❌ GRDB Database initialization failed: \(error)")
             fatalError("Cannot initialize database: \(error)")
@@ -561,7 +563,7 @@ public final class GRDBManager {
         // Create indexes
         try createIndexes(db)
         
-        print("✅ GRDB Tables created successfully")
+        print("✅ GRDB Tables created successfully with foreign key constraints")
     }
     
     private func createIndexes(_ db: Database) throws {
