@@ -20,6 +20,10 @@
 		2326C1FA2E3AEB8D0080F005 /* PhotoEvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */; };
 		2326C1FC2E3AEBDD0080F005 /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = 2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */; };
 		2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1FF2E3B11680080F005 /* StringExtensions.swift */; };
+		2326C2022E3B14390080F005 /* SiteDepartureViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2012E3B14390080F005 /* SiteDepartureViewModel.swift */; };
+		2326C2042E3B14920080F005 /* SiteDepartureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2032E3B14920080F005 /* SiteDepartureView.swift */; };
+		2326C2062E3B15BF0080F005 /* SiteLogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2052E3B15BF0080F005 /* SiteLogService.swift */; };
+		2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -231,6 +235,10 @@
 		2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEvidenceService.swift; sourceTree = "<group>"; };
 		2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
 		2326C1FF2E3B11680080F005 /* StringExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtensions.swift; sourceTree = "<group>"; };
+		2326C2012E3B14390080F005 /* SiteDepartureViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteDepartureViewModel.swift; sourceTree = "<group>"; };
+		2326C2032E3B14920080F005 /* SiteDepartureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteDepartureView.swift; sourceTree = "<group>"; };
+		2326C2052E3B15BF0080F005 /* SiteLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteLogService.swift; sourceTree = "<group>"; };
+		2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskService+DepartureChecklist.swift"; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -855,6 +863,8 @@
 		23779FAE2E39885600F4A10F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */,
+				2326C2052E3B15BF0080F005 /* SiteLogService.swift */,
 				2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */,
 				2326C1F72E3AC14F0080F005 /* InventoryService.swift */,
 				23779F942E39885600F4A10F /* Configuration */,
@@ -967,6 +977,7 @@
 		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2032E3B14920080F005 /* SiteDepartureView.swift */,
 				23779FCF2E39885600F4A10F /* AdminDashboardView.swift */,
 				23779FD02E39885600F4A10F /* BuildingPreviewPopover.swift */,
 				23779FD12E39885600F4A10F /* ClientDashboardView.swift */,
@@ -1026,6 +1037,7 @@
 		2377A09A2E398AA800F4A10F /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2012E3B14390080F005 /* SiteDepartureViewModel.swift */,
 				2377A0922E398AA800F4A10F /* Building */,
 				2377A0962E398AA800F4A10F /* Dashboard */,
 				2377A0982E398AA800F4A10F /* Task */,
@@ -1201,6 +1213,7 @@
 				23779FDF2E39885600F4A10F /* LoginView.swift in Sources */,
 				2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */,
 				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
+				2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */,
 				23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
 				23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */,
@@ -1214,6 +1227,7 @@
 				2377A09E2E398AA800F4A10F /* AdminDashboardViewModel.swift in Sources */,
 				2377A09F2E398AA800F4A10F /* InitializationViewModel.swift in Sources */,
 				2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */,
+				2326C2062E3B15BF0080F005 /* SiteLogService.swift in Sources */,
 				2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */,
 				23779FED2E39885600F4A10F /* EnhancedClockInGlassCard.swift in Sources */,
 				23779FF02E39885600F4A10F /* WorkerAssignmentEngine.swift in Sources */,
@@ -1285,6 +1299,7 @@
 				2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */,
 				23A1B98C2E3994760011F091 /* IntelligenceService.swift in Sources */,
 				23C839A42E39E74300C6866E /* TestMigrationFlow.swift in Sources */,
+				2326C2042E3B14920080F005 /* SiteDepartureView.swift in Sources */,
 				23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */,
 				23A1B98D2E3994760011F091 /* WorkerMetricsService.swift in Sources */,
 				2377A0272E39885600F4A10F /* TestRealDataIntegration.swift in Sources */,
@@ -1321,6 +1336,7 @@
 				2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */,
 				2326C1FA2E3AEB8D0080F005 /* PhotoEvidenceService.swift in Sources */,
 				2326C1EE2E3AB0D10080F005 /* BuildingTeamComponents.swift in Sources */,
+				2326C2022E3B14390080F005 /* SiteDepartureViewModel.swift in Sources */,
 				2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */,
 				2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */,
 				2377A04F2E39885600F4A10F /* TimelineProgressBar.swift in Sources */,
