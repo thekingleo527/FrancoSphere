@@ -17,6 +17,8 @@
 		2326C1F42E3AB63A0080F005 /* BuildingMetricsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F32E3AB63A0080F005 /* BuildingMetricsComponents.swift */; };
 		2326C1F62E3AB7B00080F005 /* BuildingComplianceComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F52E3AB7B00080F005 /* BuildingComplianceComponents.swift */; };
 		2326C1F82E3AC14F0080F005 /* InventoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F72E3AC14F0080F005 /* InventoryService.swift */; };
+		2326C1FA2E3AEB8D0080F005 /* PhotoEvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */; };
+		2326C1FC2E3AEBDD0080F005 /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = 2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -227,6 +229,8 @@
 		2326C1F32E3AB63A0080F005 /* BuildingMetricsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMetricsComponents.swift; sourceTree = "<group>"; };
 		2326C1F52E3AB7B00080F005 /* BuildingComplianceComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingComplianceComponents.swift; sourceTree = "<group>"; };
 		2326C1F72E3AC14F0080F005 /* InventoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryService.swift; sourceTree = "<group>"; };
+		2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEvidenceService.swift; sourceTree = "<group>"; };
+		2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -453,6 +457,7 @@
 		232736DA2E2B8564004A52C6 = {
 			isa = PBXGroup;
 			children = (
+				2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */,
 				23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */,
 				2377A09A2E398AA800F4A10F /* ViewModels */,
 				23779F402E39885600F4A10F /* Components */,
@@ -854,6 +859,7 @@
 		23779FAE2E39885600F4A10F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */,
 				2326C1F72E3AC14F0080F005 /* InventoryService.swift */,
 				23779F942E39885600F4A10F /* Configuration */,
 				23779F952E39885600F4A10F /* Core */,
@@ -1150,6 +1156,7 @@
 				2377A0772E39885600F4A10F /* Preview Assets.xcassets in Resources */,
 				2377A0782E39885600F4A10F /* 131_Perry_Street.jpg in Resources */,
 				2377A0792E39885600F4A10F /* Stuyvesant_Cove_Park.jpg in Resources */,
+				2326C1FC2E3AEBDD0080F005 /* .swiftlint.yml in Resources */,
 				2377A07A2E39885600F4A10F /* 112_West_18th_Street.jpg in Resources */,
 				2377A07B2E39885600F4A10F /* update_rubin_museum_id.sql in Resources */,
 				2377A07C2E39885600F4A10F /* 104_Franklin_Street.jpg in Resources */,
@@ -1316,6 +1323,7 @@
 				2377A04A2E39885600F4A10F /* AssignedBuildingsView.swift in Sources */,
 				2326C1EA2E3AAF330080F005 /* BuildingInventoryComponents.swift in Sources */,
 				2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */,
+				2326C1FA2E3AEB8D0080F005 /* PhotoEvidenceService.swift in Sources */,
 				2326C1EE2E3AB0D10080F005 /* BuildingTeamComponents.swift in Sources */,
 				2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */,
 				2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */,

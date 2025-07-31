@@ -5,6 +5,7 @@
 //  ✅ ENHANCED: Complete initialization flow with DatabaseInitializer
 //  ✅ PRODUCTION READY: Handles database init, migration, and daily ops
 //  ✅ WIRED: All initialization components properly connected
+//  ✅ FIXED: iOS 17+ onChange syntax and getCurrentUser issue
 //
 
 import SwiftUI
@@ -83,8 +84,8 @@ struct FrancoSphereApp: App {
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 checkDailyOperations()
             }
-            .onChange(of: initViewModel.isComplete) { isComplete in
-                if isComplete {
+            .onChange(of: initViewModel.isComplete) { oldValue, newValue in
+                if newValue {
                     // After initialization completes, check daily operations
                     checkDailyOperations()
                 }
@@ -140,7 +141,7 @@ struct FrancoSphereApp: App {
             await BuildingMetricsService.shared.invalidateAllCaches()
             
             // Refresh worker context if authenticated
-            if let currentUser = await authManager.getCurrentUser() {
+            if let currentUser = authManager.currentUser {
                 try await contextEngine.loadContext(for: currentUser.workerId)
             }
             

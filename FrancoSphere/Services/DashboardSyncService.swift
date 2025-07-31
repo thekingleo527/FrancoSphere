@@ -8,6 +8,7 @@
 //  ✅ FIXED: Properly integrated with OperationalDataManager
 //  ✅ FIXED: Uses real data from cache and database
 //  ✅ FIXED: Respects system configuration thresholds
+//  ✅ ADDED: Offline queue support for reliable sync
 //
 
 import Foundation
@@ -56,6 +57,8 @@ public class DashboardSyncService: ObservableObject {
     @Published public var unifiedPortfolioIntelligence: CoreTypes.PortfolioIntelligence?
     @Published public var isLive = true
     @Published public var lastSyncTime: Date?
+    @Published public var isOnline = true
+    @Published public var pendingUpdatesCount = 0
     
     // MARK: - Service Dependencies
     
@@ -65,9 +68,11 @@ public class DashboardSyncService: ObservableObject {
     private let taskService = TaskService.shared
     private let workerService = WorkerService.shared
     private let operationalDataManager = OperationalDataManager.shared  // ✅ INTEGRATED
+    private let grdbManager = GRDBManager.shared // ✅ ADDED for offline queue
     
     private var cancellables = Set<AnyCancellable>()
     private var syncTimer: Timer?
+    private var offlineQueueTimer: Timer?
     private var isInitialized = false
     
     // Debug mode for logging
@@ -83,6 +88,7 @@ public class DashboardSyncService: ObservableObject {
     
     deinit {
         syncTimer?.invalidate()
+        offlineQueueTimer?.invalidate()
     }
     
     // MARK: - Initialization
@@ -100,6 +106,8 @@ public class DashboardSyncService: ObservableObject {
         
         setupRealTimeSynchronization()
         setupAutoSync()
+        setupOfflineQueueProcessing()
+        setupNetworkMonitoring()
     }
     
     // MARK: - Data Validation
@@ -130,6 +138,25 @@ public class DashboardSyncService: ObservableObject {
         return true
     }
     
+    // MARK: - Network Monitoring
+    
+    private func setupNetworkMonitoring() {
+        // Monitor network status changes
+        NotificationCenter.default.publisher(for: .networkStatusChanged)
+            .sink { [weak self] notification in
+                guard let self = self else { return }
+                if let isOnline = notification.userInfo?["isOnline"] as? Bool {
+                    self.isOnline = isOnline
+                    if isOnline {
+                        Task {
+                            await self.processPendingUpdates()
+                        }
+                    }
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
     // MARK: - Public Broadcasting Methods
 
     /// Broadcast update from Worker Dashboard (task completion, clock-in, etc.)
@@ -139,23 +166,28 @@ public class DashboardSyncService: ObservableObject {
         // Enrich update with real data if needed
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
-        // Broadcast to all dashboards
-        crossDashboardSubject.send(enrichedUpdate)
-        
-        // Send to specific dashboard streams
-        workerUpdatesSubject.send(enrichedUpdate)
-        adminUpdatesSubject.send(enrichedUpdate)
-        clientUpdatesSubject.send(enrichedUpdate)
-        
-        // Create live updates for real-time feeds
-        createLiveWorkerUpdate(from: enrichedUpdate)
-        createLiveAdminAlert(from: enrichedUpdate)
-        createLiveClientMetric(from: enrichedUpdate)
-        
-        // Update unified state
-        updateUnifiedState(from: enrichedUpdate)
-        
-        // Event tracking is handled internally by OperationalDataManager
+        if isOnline {
+            // Broadcast to all dashboards
+            crossDashboardSubject.send(enrichedUpdate)
+            
+            // Send to specific dashboard streams
+            workerUpdatesSubject.send(enrichedUpdate)
+            adminUpdatesSubject.send(enrichedUpdate)
+            clientUpdatesSubject.send(enrichedUpdate)
+            
+            // Create live updates for real-time feeds
+            createLiveWorkerUpdate(from: enrichedUpdate)
+            createLiveAdminAlert(from: enrichedUpdate)
+            createLiveClientMetric(from: enrichedUpdate)
+            
+            // Update unified state
+            updateUnifiedState(from: enrichedUpdate)
+        } else {
+            // Queue for later if offline
+            Task {
+                await enqueueUpdate(enrichedUpdate)
+            }
+        }
     }
 
     /// Broadcast update from Admin Dashboard (building metrics, intelligence, etc.)
@@ -164,22 +196,27 @@ public class DashboardSyncService: ObservableObject {
         
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
-        // Broadcast to all dashboards
-        crossDashboardSubject.send(enrichedUpdate)
-        
-        // Send to specific dashboard streams
-        adminUpdatesSubject.send(enrichedUpdate)
-        workerUpdatesSubject.send(enrichedUpdate)
-        clientUpdatesSubject.send(enrichedUpdate)
-        
-        // Create live updates
-        createLiveAdminAlert(from: enrichedUpdate)
-        createLiveClientMetric(from: enrichedUpdate)
-        
-        // Update unified state
-        updateUnifiedState(from: enrichedUpdate)
-        
-        // Event tracking is handled internally by OperationalDataManager
+        if isOnline {
+            // Broadcast to all dashboards
+            crossDashboardSubject.send(enrichedUpdate)
+            
+            // Send to specific dashboard streams
+            adminUpdatesSubject.send(enrichedUpdate)
+            workerUpdatesSubject.send(enrichedUpdate)
+            clientUpdatesSubject.send(enrichedUpdate)
+            
+            // Create live updates
+            createLiveAdminAlert(from: enrichedUpdate)
+            createLiveClientMetric(from: enrichedUpdate)
+            
+            // Update unified state
+            updateUnifiedState(from: enrichedUpdate)
+        } else {
+            // Queue for later if offline
+            Task {
+                await enqueueUpdate(enrichedUpdate)
+            }
+        }
     }
 
     /// Broadcast update from Client Dashboard (portfolio changes, etc.)
@@ -188,22 +225,161 @@ public class DashboardSyncService: ObservableObject {
         
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
-        // Broadcast to all dashboards
-        crossDashboardSubject.send(enrichedUpdate)
+        if isOnline {
+            // Broadcast to all dashboards
+            crossDashboardSubject.send(enrichedUpdate)
+            
+            // Send to specific dashboard streams
+            clientUpdatesSubject.send(enrichedUpdate)
+            adminUpdatesSubject.send(enrichedUpdate)
+            workerUpdatesSubject.send(enrichedUpdate)
+            
+            // Create live updates
+            createLiveClientMetric(from: enrichedUpdate)
+            createLiveAdminAlert(from: enrichedUpdate)
+            
+            // Update unified state
+            updateUnifiedState(from: enrichedUpdate)
+        } else {
+            // Queue for later if offline
+            Task {
+                await enqueueUpdate(enrichedUpdate)
+            }
+        }
+    }
+    
+    // MARK: - Offline Queue Implementation
+    
+    private func enqueueUpdate(_ update: CoreTypes.DashboardUpdate) async {
+        // Save to database for persistence
+        do {
+            let updateData = try JSONEncoder().encode(update)
+            
+            try await grdbManager.execute("""
+                INSERT INTO sync_queue (
+                    id, entity_type, entity_id, action,
+                    data, retry_count, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, [
+                update.id,
+                "dashboard_update",
+                update.buildingId.isEmpty ? nil : update.buildingId,
+                update.type.rawValue,
+                String(data: updateData, encoding: .utf8) ?? "{}",
+                0,
+                Date().ISO8601Format()
+            ])
+            
+            // Update pending count
+            await updatePendingCount()
+            
+            print("📥 Queued update for offline sync: \(update.type)")
+        } catch {
+            print("❌ Failed to queue update: \(error)")
+            operationalDataManager.logError("Failed to enqueue dashboard update", error: error)
+        }
+    }
+    
+    public func processPendingUpdates() async {
+        guard isOnline else { return }
         
-        // Send to specific dashboard streams
-        clientUpdatesSubject.send(enrichedUpdate)
-        adminUpdatesSubject.send(enrichedUpdate)
-        workerUpdatesSubject.send(enrichedUpdate)
+        do {
+            let rows = try await grdbManager.query("""
+                SELECT * FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND retry_count < 3
+                ORDER BY created_at ASC
+                LIMIT 50
+            """, [])
+            
+            guard !rows.isEmpty else {
+                await updatePendingCount()
+                return
+            }
+            
+            print("📤 Processing \(rows.count) pending updates")
+            
+            for item in rows {
+                guard let queueId = item["id"] as? String,
+                      let dataString = item["data"] as? String,
+                      let data = dataString.data(using: .utf8) else {
+                    continue
+                }
+                
+                do {
+                    let update = try JSONDecoder().decode(CoreTypes.DashboardUpdate.self, from: data)
+                    
+                    // Re-broadcast the update
+                    switch update.source {
+                    case .worker:
+                        broadcastWorkerUpdate(update)
+                    case .admin:
+                        broadcastAdminUpdate(update)
+                    case .client:
+                        broadcastClientUpdate(update)
+                    case .system:
+                        crossDashboardSubject.send(update)
+                    }
+                    
+                    // Remove from queue on success
+                    try await grdbManager.execute(
+                        "DELETE FROM sync_queue WHERE id = ?",
+                        [queueId]
+                    )
+                    
+                } catch {
+                    // Increment retry count on failure
+                    let retryCount = item["retry_count"] as? Int ?? 0
+                    try await grdbManager.execute("""
+                        UPDATE sync_queue
+                        SET retry_count = ?, last_retry_at = ?
+                        WHERE id = ?
+                    """, [retryCount + 1, Date().ISO8601Format(), queueId])
+                    
+                    print("⚠️ Failed to process queued update: \(error)")
+                }
+            }
+            
+            // Update pending count
+            await updatePendingCount()
+            
+        } catch {
+            operationalDataManager.logError("Failed to process pending updates", error: error)
+        }
+    }
+    
+    private func updatePendingCount() async {
+        do {
+            let count = try await grdbManager.query("""
+                SELECT COUNT(*) as count FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND retry_count < 3
+            """, [])
+            
+            if let total = count.first?["count"] as? Int64 {
+                await MainActor.run {
+                    self.pendingUpdatesCount = Int(total)
+                }
+            }
+        } catch {
+            print("❌ Failed to update pending count: \(error)")
+        }
+    }
+    
+    private func setupOfflineQueueProcessing() {
+        // Process queue every 30 seconds when online
+        offlineQueueTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            guard let self = self, self.isOnline else { return }
+            
+            Task {
+                await self.processPendingUpdates()
+            }
+        }
         
-        // Create live updates
-        createLiveClientMetric(from: enrichedUpdate)
-        createLiveAdminAlert(from: enrichedUpdate)
-        
-        // Update unified state
-        updateUnifiedState(from: enrichedUpdate)
-        
-        // Event tracking is handled internally by OperationalDataManager
+        // Process immediately on startup
+        Task {
+            await processPendingUpdates()
+        }
     }
     
     // MARK: - Data Enrichment
@@ -725,4 +901,10 @@ extension DashboardSyncService {
             ]
         )
     }
+}
+
+// MARK: - Network Status Extension
+
+extension Notification.Name {
+    static let networkStatusChanged = Notification.Name("networkStatusChanged")
 }
