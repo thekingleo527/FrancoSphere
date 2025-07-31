@@ -7,6 +7,7 @@
 //  ✅ ENHANCED: Proper architecture with persistent header
 //  ✅ INTEGRATED: MapRevealContainer with layered content
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ NEW: Added navigation to TodaysProgressDetailView
 //
 
 import Foundation
@@ -32,6 +33,7 @@ struct WorkerDashboardView: View {
     @State private var showTaskDetail = false
     @State private var showEmergencyContacts = false
     @State private var isNovaProcessing = false
+    @State private var showProgressDetail = false  // NEW: For analytics navigation
     
     var body: some View {
         MapRevealContainer(
@@ -90,19 +92,42 @@ struct WorkerDashboardView: View {
                             )
                             .padding(.horizontal, 20)
                             
-                            // Today's tasks card
+                            // Today's tasks section with analytics button
                             if !contextEngine.todaysTasks.isEmpty {
-                                TodaysTasksGlassCard(
-                                    tasks: contextEngine.todaysTasks.map { convertToMaintenanceTask($0) },
-                                    onTaskTap: { task in
-                                        // Convert back to ContextualTask for selectedTask
-                                        if let contextualTask = contextEngine.todaysTasks.first(where: { $0.id == task.id }) {
-                                            selectedTask = contextualTask
-                                            showTaskDetail = true
+                                VStack(spacing: 16) {
+                                    // Tasks header with analytics button
+                                    HStack {
+                                        Text("Today's Tasks")
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+                                        
+                                        Spacer()
+                                        
+                                        // Analytics button
+                                        Button(action: { showProgressDetail = true }) {
+                                            HStack(spacing: 4) {
+                                                Text("View Analytics")
+                                                Image(systemName: "chart.bar.fill")
+                                            }
+                                            .font(.caption)
+                                            .foregroundColor(.blue)
                                         }
                                     }
-                                )
-                                .padding(.horizontal, 20)
+                                    .padding(.horizontal, 20)
+                                    
+                                    // Tasks card
+                                    TodaysTasksGlassCard(
+                                        tasks: contextEngine.todaysTasks.map { convertToMaintenanceTask($0) },
+                                        onTaskTap: { task in
+                                            // Convert back to ContextualTask for selectedTask
+                                            if let contextualTask = contextEngine.todaysTasks.first(where: { $0.id == task.id }) {
+                                                selectedTask = contextualTask
+                                                showTaskDetail = true
+                                            }
+                                        }
+                                    )
+                                    .padding(.horizontal, 20)
+                                }
                             }
                             
                             // My buildings section
@@ -170,6 +195,11 @@ struct WorkerDashboardView: View {
         }
         .sheet(isPresented: $showEmergencyContacts) {
             EmergencyContactsSheet()
+        }
+        .sheet(isPresented: $showProgressDetail) {
+            NavigationView {
+                TodaysProgressDetailView()
+            }
         }
     }
     
@@ -322,6 +352,15 @@ struct WorkerDashboardView: View {
     
     private var floatingInsightsSection: some View {
         VStack(spacing: 12) {
+            // Progress insight card
+            insightCard(
+                title: "Daily Progress",
+                message: "\(contextEngine.todaysTasks.filter { $0.isCompleted }.count) of \(contextEngine.todaysTasks.count) tasks completed",
+                icon: "chart.line.uptrend.xyaxis",
+                color: .green,
+                action: { showProgressDetail = true }
+            )
+            
             if getUrgentTaskCount() > 0 {
                 insightCard(
                     title: "Urgent Tasks",
@@ -372,32 +411,42 @@ struct WorkerDashboardView: View {
         }
     }
     
-    private func insightCard(title: String, message: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(color)
-                .frame(width: 40, height: 40)
-                .background(color.opacity(0.2))
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
+    private func insightCard(title: String, message: String, icon: String, color: Color, action: (() -> Void)? = nil) -> some View {
+        Button(action: { action?() }) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(color)
+                    .frame(width: 40, height: 40)
+                    .background(color.opacity(0.2))
+                    .clipShape(Circle())
                 
-                Text(message)
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    
+                    Text(message)
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                if action != nil {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.4))
+                }
             }
-            
-            Spacer()
+            .padding(12)
+            .francoPropertyCardBackground()
+            .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
         }
-        .padding(12)
-        .francoPropertyCardBackground()
-        .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
+        .buttonStyle(PlainButtonStyle())
+        .disabled(action == nil)
     }
     
     // MARK: - Building Image Helper
@@ -531,8 +580,8 @@ struct WorkerDashboardView: View {
     }
     
     private func handleTasksTap() {
-        // Could navigate to a full task list view
-        // For now, scroll to tasks section
+        // Navigate to the progress detail view
+        showProgressDetail = true
     }
     
     private func handleEmergencyTap() {

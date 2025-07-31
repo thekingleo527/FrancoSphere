@@ -315,8 +315,8 @@ extension CoreTypes {
         CoreTypes.WorkerProfile(
             id: "4", // Kevin's actual ID in the system
             name: "Kevin Dutan",
-            email: "kevin.dutan@francosphere.com",
-            phoneNumber: "+1 (212) 555-0123",
+            email: "dutankevin1@gmail.com",
+            phoneNumber: "917-555-0004",
             role: .worker,
             skills: ["Cleaning", "Maintenance", "Sanitation", "Operations", "HVAC", "Electrical"],
             certifications: ["OSHA 30", "EPA Universal", "NYC Fire Safety"],
@@ -326,8 +326,8 @@ extension CoreTypes {
         WorkerProfile(
             id: "2",
             name: "Edwin Lema",
-            email: "edwin.lema@francosphere.com",
-            phoneNumber: "+1 (212) 555-0122",
+            email: "edwinlema911@gmail.com",
+            phoneNumber: "917-555-0002",
             role: .worker,
             skills: ["Maintenance", "Park Operations", "Equipment Repair", "Boiler Operations"],
             certifications: ["NYC Parks Certified", "Boiler Operator License"],
@@ -337,8 +337,8 @@ extension CoreTypes {
         WorkerProfile(
             id: "5",
             name: "Mercedes Inamagua",
-            email: "mercedes.inamagua@francosphere.com",
-            phoneNumber: "+1 (212) 555-0125",
+            email: "jneola@gmail.com",
+            phoneNumber: "917-555-0005",
             role: .worker,
             skills: ["Cleaning", "Glass Cleaning", "Lobby Maintenance", "Deep Cleaning"],
             certifications: ["OSHA 10", "Green Cleaning Certified"],
@@ -348,8 +348,8 @@ extension CoreTypes {
         WorkerProfile(
             id: "6",
             name: "Luis Lopez",
-            email: "luis.lopez@francosphere.com",
-            phoneNumber: "+1 (212) 555-0126",
+            email: "luislopez030@yahoo.com",
+            phoneNumber: "917-555-0006",
             role: .worker,
             skills: ["Cleaning", "Maintenance", "Floor Care", "Trash Management"],
             certifications: ["OSHA 10"],
@@ -359,8 +359,8 @@ extension CoreTypes {
         WorkerProfile(
             id: "7",
             name: "Angel Guiracocha",
-            email: "angel.guiracocha@francosphere.com",
-            phoneNumber: "+1 (212) 555-0127",
+            email: "lio.angel71@gmail.com",
+            phoneNumber: "917-555-0007",
             role: .worker,
             skills: ["Evening Operations", "Building Security", "Trash Management", "DSNY Compliance"],
             certifications: ["NYC Security License", "OSHA 10"],
@@ -370,8 +370,8 @@ extension CoreTypes {
         WorkerProfile(
             id: "1",
             name: "Greg Hutson",
-            email: "greg.hutson@francosphere.com",
-            phoneNumber: "+1 (212) 555-0121",
+            email: "g.hutson1989@gmail.com",
+            phoneNumber: "917-555-0001",
             role: .worker,
             skills: ["Building Maintenance", "HVAC", "Electrical", "Plumbing"],
             certifications: ["HVAC Certified", "Master Plumber License"],
@@ -381,8 +381,8 @@ extension CoreTypes {
         WorkerProfile(
             id: "8",
             name: "Shawn Magloire",
-            email: "shawn.magloire@francosphere.com",
-            phoneNumber: "+1 (212) 555-0128",
+            email: "shawn@francomanagementgroup.com",
+            phoneNumber: "917-555-0008",
             role: .admin,
             skills: ["Portfolio Management", "Operations Management", "Staff Supervision"],
             certifications: ["Property Management License", "MBA"],
@@ -398,7 +398,6 @@ extension CoreTypes {
             id: "task_rubin_001",
             title: "Rubin Museum Morning Trash Circuit",
             description: "Complete trash removal and sanitation check for all floors",
-            isCompleted: false,
             dueDate: Date(timeIntervalSinceNow: 7200), // 2 hours from now
             category: .sanitation,
             urgency: .medium,
@@ -410,7 +409,6 @@ extension CoreTypes {
             id: "task_rubin_002",
             title: "Rubin Museum Deep Clean",
             description: "Deep clean galleries and public areas",
-            isCompleted: false,
             dueDate: Date(timeIntervalSinceNow: 10800), // 3 hours from now
             category: .cleaning,
             urgency: .medium,
@@ -424,7 +422,6 @@ extension CoreTypes {
             id: "task_perry_001",
             title: "131 Perry Sidewalk Sweep",
             description: "Sidewalk + Curb Sweep / Trash Return",
-            isCompleted: false,
             dueDate: Date(timeIntervalSinceNow: 3600), // 1 hour from now
             category: .cleaning,
             urgency: .high,
@@ -438,7 +435,6 @@ extension CoreTypes {
             id: "task_park_001",
             title: "Morning Park Check",
             description: "Stuyvesant Cove Park morning inspection and equipment check",
-            isCompleted: false,
             dueDate: Date(timeIntervalSinceNow: 1800), // 30 minutes from now
             category: .maintenance,
             urgency: .high,
@@ -452,7 +448,6 @@ extension CoreTypes {
             id: "task_glass_001",
             title: "112 West 18th Glass & Lobby Clean",
             description: "Complete glass cleaning and lobby maintenance",
-            isCompleted: false,
             dueDate: Date(timeIntervalSinceNow: 5400), // 1.5 hours from now
             category: .cleaning,
             urgency: .medium,
@@ -466,7 +461,6 @@ extension CoreTypes {
             id: "task_dsny_001",
             title: "DSNY Trash Compliance",
             description: "Evening DSNY trash setup for collection",
-            isCompleted: false,
             dueDate: Date(timeIntervalSinceNow: 43200), // 12 hours from now (evening)
             category: .sanitation,
             urgency: .critical,

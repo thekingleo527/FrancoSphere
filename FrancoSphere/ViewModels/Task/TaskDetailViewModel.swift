@@ -76,7 +76,7 @@ public class TaskDetailViewModel: ObservableObject {
     private let buildingService = BuildingService.shared
     private let workerService = WorkerService.shared
     private let dashboardSyncService = DashboardSyncService.shared
-    private let photoEvidenceService = PhotoEvidenceServiceV6.shared  // ✅ UPDATED: Using real service
+    private let photoEvidenceService = PhotoEvidenceService.shared  // ✅ UPDATED: Using real service
     private let locationManager = LocationManager()
     private let grdbManager = GRDBManager.shared
     

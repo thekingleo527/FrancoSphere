@@ -166,7 +166,6 @@
 		23A1B9582E3992C80011F091 /* TaskTimelineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94D2E3992C80011F091 /* TaskTimelineRow.swift */; };
 		23A1B9592E3992C80011F091 /* BuildingIntelligencePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */; };
 		23A1B95A2E3992C80011F091 /* WeatherTasksSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9512E3992C80011F091 /* WeatherTasksSection.swift */; };
-		23A1B95C2E3992C80011F091 /* TodaysRoutineSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94F2E3992C80011F091 /* TodaysRoutineSummaryView.swift */; };
 		23A1B95D2E3992C80011F091 /* WeatherDashboardComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9502E3992C80011F091 /* WeatherDashboardComponent.swift */; };
 		23A1B95E2E3992C80011F091 /* Building.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9442E3992C80011F091 /* Building.swift */; };
 		23A1B95F2E3992C80011F091 /* AdaptiveGlassModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */; };
@@ -382,7 +381,6 @@
 		23A1B94C2E3992C80011F091 /* TaskDisplayHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDisplayHelpers.swift; sourceTree = "<group>"; };
 		23A1B94D2E3992C80011F091 /* TaskTimelineRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineRow.swift; sourceTree = "<group>"; };
 		23A1B94E2E3992C80011F091 /* TodaysProgressDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysProgressDetailView.swift; sourceTree = "<group>"; };
-		23A1B94F2E3992C80011F091 /* TodaysRoutineSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysRoutineSummaryView.swift; sourceTree = "<group>"; };
 		23A1B9502E3992C80011F091 /* WeatherDashboardComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDashboardComponent.swift; sourceTree = "<group>"; };
 		23A1B9512E3992C80011F091 /* WeatherTasksSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTasksSection.swift; sourceTree = "<group>"; };
 		23A1B9522E3992C80011F091 /* WeatherViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewModifier.swift; sourceTree = "<group>"; };
@@ -507,7 +505,6 @@
 				23A1B94C2E3992C80011F091 /* TaskDisplayHelpers.swift */,
 				23A1B94D2E3992C80011F091 /* TaskTimelineRow.swift */,
 				23A1B94E2E3992C80011F091 /* TodaysProgressDetailView.swift */,
-				23A1B94F2E3992C80011F091 /* TodaysRoutineSummaryView.swift */,
 				23A1B9502E3992C80011F091 /* WeatherDashboardComponent.swift */,
 				23A1B9512E3992C80011F091 /* WeatherTasksSection.swift */,
 				23A1B9522E3992C80011F091 /* WeatherViewModifier.swift */,
@@ -1252,7 +1249,6 @@
 				23A1B9582E3992C80011F091 /* TaskTimelineRow.swift in Sources */,
 				23A1B9592E3992C80011F091 /* BuildingIntelligencePanel.swift in Sources */,
 				23A1B95A2E3992C80011F091 /* WeatherTasksSection.swift in Sources */,
-				23A1B95C2E3992C80011F091 /* TodaysRoutineSummaryView.swift in Sources */,
 				23A1B95D2E3992C80011F091 /* WeatherDashboardComponent.swift in Sources */,
 				23A1B95E2E3992C80011F091 /* Building.swift in Sources */,
 				23A1B95F2E3992C80011F091 /* AdaptiveGlassModifier.swift in Sources */,
