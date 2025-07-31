@@ -2,12 +2,9 @@
 //  ContentView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed duplicate initialization
-//  ✅ CLEAN: Only handles dashboard routing
-//  ✅ SIMPLE: No initialization logic here
-//  ✅ FIXED: Switch now uses UserRole enum cases instead of strings
-//  ✅ FIXED: Uses @ViewBuilder for proper view composition
-//  ✅ FIXED: Dashboard views create their own ViewModels internally
+//  ✅ FIXED: Now delegates ViewModel creation to role-specific container views.
+//  ✅ CLEAN: Only handles top-level routing based on user role.
+//  ✅ ROBUST: Aligned with a consistent ViewModel injection pattern.
 //
 
 import SwiftUI
@@ -17,50 +14,22 @@ struct ContentView: View {
     
     @ViewBuilder
     var body: some View {
-        // Route to appropriate dashboard based on role
+        // Route to the appropriate role-specific container view.
+        // Each container is responsible for creating its own ViewModel.
         switch authManager.userRole {
-        case .admin:
-            AdminDashboardView()
-                .environmentObject(authManager)
+        case .admin, .manager:
+            // Admin and Manager share the same dashboard experience.
+            AdminDashboardContainerView()
         case .client:
-            ClientDashboardView()
-                .environmentObject(authManager)
+            ClientDashboardContainerView()
         case .worker:
-            WorkerDashboardView()
-                .environmentObject(authManager)
-        case .manager:
-            // Managers get admin dashboard with focused features
-            AdminDashboardView()
-                .environmentObject(authManager)
+            WorkerDashboardContainerView()
         case nil:
-            // Fallback to worker dashboard when no role is set
-            WorkerDashboardView()
-                .environmentObject(authManager)
+            // Fallback for an undefined role, defaults to the worker experience.
+            // This is a safe default for a partially configured user.
+            WorkerDashboardContainerView()
         }
+        // Pass the authManager down so the container views can use it.
+        .environmentObject(authManager)
     }
 }
-
-// MARK: - Preview
-
-#Preview {
-    ContentView()
-        .environmentObject(NewAuthManager.shared)
-}
-
-// MARK: - Preview Note
-// To test different dashboard views, you have several options:
-//
-// 1. Preview each dashboard directly in its own file:
-//    - Open AdminDashboardView.swift and use its preview
-//    - Open WorkerDashboardView.swift and use its preview
-//    - Open ClientDashboardView.swift and use its preview
-//
-// 2. Log in with different test accounts in the preview:
-//    - Use the actual login flow with test credentials
-//    - Each test account should have a different role
-//
-// 3. Temporarily modify NewAuthManager for testing:
-//    - Add a debug-only method to set test users
-//    - Remember to remove before production
-//
-// Note: userRole is computed from currentUser and cannot be set directly

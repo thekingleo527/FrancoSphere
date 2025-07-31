@@ -19,10 +19,7 @@ import MapKit
 import CoreLocation
 
 struct WorkerDashboardView: View {
-    // MARK: - State Objects
-    // ✅ MODIFICATION: ViewModel is now passed in from the parent to ensure a single source of truth.
-    @ObservedObject var viewModel: WorkerDashboardViewModel
-    
+    @StateObject var viewModel: WorkerDashboardViewModel
     @ObservedObject private var contextEngine = WorkerContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
