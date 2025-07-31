@@ -11,6 +11,7 @@
 //  ✅ ADDED: Offline queue support for reliable sync
 //  ✅ STREAM B INTEGRATED: WebSocket support for real-time server sync
 //  ✅ ADDED: Conflict detection and resolution support
+//  ✅ ENHANCED: Priority queue, batch processing, compression, and cleanup
 //
 
 import Foundation
@@ -61,6 +62,7 @@ public class DashboardSyncService: ObservableObject {
     @Published public var lastSyncTime: Date?
     @Published public var isOnline = true
     @Published public var pendingUpdatesCount = 0
+    @Published public var urgentPendingCount = 0
     
     // MARK: - Service Dependencies
     
@@ -76,6 +78,8 @@ public class DashboardSyncService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var syncTimer: Timer?
     private var offlineQueueTimer: Timer?
+    private var urgentQueueTimer: Timer?
+    private var cleanupTimer: Timer?
     private var isInitialized = false
     
     // Debug mode for logging
@@ -92,6 +96,8 @@ public class DashboardSyncService: ObservableObject {
     deinit {
         syncTimer?.invalidate()
         offlineQueueTimer?.invalidate()
+        urgentQueueTimer?.invalidate()
+        cleanupTimer?.invalidate()
     }
     
     // MARK: - Initialization
@@ -109,7 +115,7 @@ public class DashboardSyncService: ObservableObject {
         
         setupRealTimeSynchronization()
         setupAutoSync()
-        setupOfflineQueueProcessing()
+        setupEnhancedOfflineQueueProcessing()
         setupNetworkMonitoring()
         setupWebSocketConnection() // ✅ STREAM B: Initialize WebSocket
     }
@@ -170,7 +176,7 @@ public class DashboardSyncService: ObservableObject {
                     self.isOnline = isOnline
                     if isOnline {
                         Task {
-                            await self.processPendingUpdates()
+                            await self.processPendingUpdatesBatch()
                             // Reconnect WebSocket if needed
                             if let token = await self.getAuthToken() {
                                 await self.webSocketManager.connect(token: token)
@@ -481,56 +487,333 @@ public class DashboardSyncService: ObservableObject {
         }
     }
     
-    // MARK: - Offline Queue Implementation
+    // MARK: - Live Update Types
+
+    public struct LiveWorkerUpdate {
+        public let id = UUID()
+        public let workerId: String
+        public let workerName: String?
+        public let action: String
+        public let buildingId: String?
+        public let buildingName: String?
+        public let timestamp = Date()
+        
+        public init(workerId: String, workerName: String? = nil, action: String, buildingId: String? = nil, buildingName: String? = nil) {
+            self.workerId = workerId
+            self.workerName = workerName
+            self.action = action
+            self.buildingId = buildingId
+            self.buildingName = buildingName
+        }
+    }
+
+    public struct LiveAdminAlert {
+        public let id = UUID()
+        public let title: String
+        public let severity: Severity
+        public let buildingId: String
+        public let timestamp = Date()
+        
+        public enum Severity: String, CaseIterable {
+            case low = "Low"
+            case medium = "Medium"
+            case high = "High"
+            case critical = "Critical"
+            
+            var color: Color {
+                switch self {
+                case .low: return .green
+                case .medium: return .yellow
+                case .high: return .orange
+                case .critical: return .red
+                }
+            }
+        }
+        
+        public init(title: String, severity: Severity, buildingId: String) {
+            self.title = title
+            self.severity = severity
+            self.buildingId = buildingId
+        }
+    }
+
+    public struct LiveClientMetric {
+        public let id = UUID()
+        public let name: String
+        public let value: String
+        public let trend: CoreTypes.TrendDirection
+        public let timestamp = Date()
+        
+        public init(name: String, value: String, trend: CoreTypes.TrendDirection) {
+            self.name = name
+            self.value = value
+            self.trend = trend
+        }
+    }
+    
+    // MARK: - Priority Levels
+    
+    public enum UpdatePriority: Int {
+        case low = 0
+        case normal = 1
+        case high = 2
+        case urgent = 3
+        
+        static func fromUpdateType(_ type: CoreTypes.DashboardUpdate.UpdateType) -> UpdatePriority {
+            switch type {
+            case .workerClockedIn, .workerClockedOut:
+                return .urgent // Clock events need immediate sync
+            case .taskCompleted:
+                return .high // Task completions are important
+            case .buildingMetricsChanged:
+                return .normal // Metrics can wait a bit
+            case .complianceStatusChanged:
+                return .urgent // Compliance is critical
+            default:
+                return .normal
+            }
+        }
+    }
+    
+    // MARK: - Enhanced Offline Queue Implementation
     
     private func enqueueUpdate(_ update: CoreTypes.DashboardUpdate) async {
-        // Save to database for persistence
+        await enqueueUpdateWithPriority(update)
+    }
+    
+    private func enqueueUpdateWithPriority(_ update: CoreTypes.DashboardUpdate) async {
         do {
+            // Determine priority
+            let priority = UpdatePriority.fromUpdateType(update.type)
+            
+            // Compress update data if large
             let updateData = try JSONEncoder().encode(update)
+            let compressedData = await compressDataIfNeeded(updateData)
+            let isCompressed = compressedData.count < updateData.count
+            
+            // Calculate exponential backoff delay for retries
+            let baseRetryDelay = 2.0 // 2 seconds base
             
             try await grdbManager.execute("""
                 INSERT INTO sync_queue (
                     id, entity_type, entity_id, action,
-                    data, retry_count, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    data, retry_count, priority, is_compressed,
+                    retry_delay, created_at, expires_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, [
                 update.id,
                 "dashboard_update",
                 update.buildingId.isEmpty ? update.workerId : update.buildingId,
                 update.type.rawValue,
-                String(data: updateData, encoding: .utf8) ?? "{}",
+                String(data: compressedData, encoding: .utf8) ?? "{}",
                 0,
-                Date().ISO8601Format()
+                priority.rawValue,
+                isCompressed ? 1 : 0,
+                baseRetryDelay,
+                Date().ISO8601Format(),
+                Date().addingTimeInterval(86400).ISO8601Format() // 24 hour expiry
             ])
             
             // Update pending count
-            await updatePendingCount()
+            await updatePendingCountWithPriority()
             
-            print("📥 Queued update for offline sync: \(update.type)")
+            print("📥 Queued update with priority \(priority): \(update.type)")
+            
+            // Trigger immediate processing for urgent updates
+            if priority == .urgent && isOnline {
+                Task {
+                    await processUrgentUpdates()
+                }
+            }
+            
         } catch {
             print("❌ Failed to queue update: \(error)")
             operationalDataManager.logError("Failed to enqueue dashboard update", error: error)
         }
     }
     
-    public func processPendingUpdates() async {
+    // MARK: - Batch Processing
+    
+    public func processPendingUpdatesBatch() async {
         guard isOnline else { return }
         
         do {
+            // Get updates in priority order, with retry limit
             let rows = try await grdbManager.query("""
                 SELECT * FROM sync_queue
                 WHERE entity_type = 'dashboard_update'
-                AND retry_count < 3
-                ORDER BY created_at ASC
-                LIMIT 50
-            """, [])
+                AND retry_count < ?
+                AND (expires_at IS NULL OR expires_at > ?)
+                ORDER BY priority DESC, created_at ASC
+                LIMIT ?
+            """, [
+                getMaxRetries(),
+                Date().ISO8601Format(),
+                getBatchSize()
+            ])
             
             guard !rows.isEmpty else {
-                await updatePendingCount()
+                await updatePendingCountWithPriority()
+                await cleanupExpiredItems()
                 return
             }
             
-            print("📤 Processing \(rows.count) pending updates")
+            print("📤 Batch processing \(rows.count) pending updates")
+            
+            // Group updates by type for efficient batch sending
+            let updateBatches = await groupUpdatesForBatching(rows)
+            
+            // Process each batch
+            for (batchType, batchItems) in updateBatches {
+                await processBatch(batchType: batchType, items: batchItems)
+            }
+            
+            // Update pending count
+            await updatePendingCountWithPriority()
+            
+        } catch {
+            operationalDataManager.logError("Failed to process pending updates batch", error: error)
+        }
+    }
+    
+    private func groupUpdatesForBatching(_ rows: [[String: Any]]) async -> [String: [[String: Any]]] {
+        var batches: [String: [[String: Any]]] = [:]
+        
+        for row in rows {
+            guard let action = row["action"] as? String else { continue }
+            
+            if batches[action] == nil {
+                batches[action] = []
+            }
+            batches[action]?.append(row)
+        }
+        
+        return batches
+    }
+    
+    private func processBatch(batchType: String, items: [[String: Any]]) async {
+        var updates: [CoreTypes.DashboardUpdate] = []
+        var queueIds: [String] = []
+        
+        // Decode all updates in the batch
+        for item in items {
+            guard let queueId = item["id"] as? String,
+                  let dataString = item["data"] as? String,
+                  let isCompressed = item["is_compressed"] as? Int64,
+                  let data = dataString.data(using: .utf8) else {
+                continue
+            }
+            
+            do {
+                // Decompress if needed
+                let decompressedData = isCompressed == 1 ? await decompressData(data) : data
+                let update = try JSONDecoder().decode(CoreTypes.DashboardUpdate.self, from: decompressedData)
+                
+                updates.append(update)
+                queueIds.append(queueId)
+            } catch {
+                print("⚠️ Failed to decode queued update: \(error)")
+                await handleFailedUpdate(item)
+            }
+        }
+        
+        // Send batch via WebSocket
+        if !updates.isEmpty {
+            await sendBatchToServer(updates: updates, queueIds: queueIds)
+        }
+    }
+    
+    private func sendBatchToServer(updates: [CoreTypes.DashboardUpdate], queueIds: [String]) async {
+        do {
+            // Send all updates in a batch
+            for (index, update) in updates.enumerated() {
+                try await webSocketManager.send(update)
+                
+                // Remove from queue on success
+                try await grdbManager.execute(
+                    "DELETE FROM sync_queue WHERE id = ?",
+                    [queueIds[index]]
+                )
+            }
+            
+            print("✅ Batch sent successfully: \(updates.count) updates")
+            
+        } catch {
+            print("❌ Batch send failed: \(error)")
+            
+            // Handle batch failure with exponential backoff
+            for queueId in queueIds {
+                await incrementRetryWithBackoff(queueId: queueId)
+            }
+        }
+    }
+    
+    // MARK: - Exponential Backoff
+    
+    private func incrementRetryWithBackoff(queueId: String) async {
+        do {
+            // Get current retry info
+            let rows = try await grdbManager.query(
+                "SELECT retry_count, retry_delay FROM sync_queue WHERE id = ?",
+                [queueId]
+            )
+            
+            guard let row = rows.first,
+                  let retryCount = row["retry_count"] as? Int,
+                  let currentDelay = row["retry_delay"] as? Double else {
+                return
+            }
+            
+            // Calculate next delay with exponential backoff
+            let newRetryCount = retryCount + 1
+            let newDelay = min(currentDelay * 2.0, 300.0) // Max 5 minutes
+            let nextRetryTime = Date().addingTimeInterval(newDelay)
+            
+            try await grdbManager.execute("""
+                UPDATE sync_queue
+                SET retry_count = ?,
+                    retry_delay = ?,
+                    last_retry_at = ?,
+                    next_retry_at = ?
+                WHERE id = ?
+            """, [
+                newRetryCount,
+                newDelay,
+                Date().ISO8601Format(),
+                nextRetryTime.ISO8601Format(),
+                queueId
+            ])
+            
+            print("⏱️ Update \(queueId) will retry in \(newDelay) seconds (attempt \(newRetryCount))")
+            
+        } catch {
+            print("❌ Failed to update retry info: \(error)")
+        }
+    }
+    
+    private func handleFailedUpdate(_ item: [String: Any]) async {
+        guard let queueId = item["id"] as? String else { return }
+        await incrementRetryWithBackoff(queueId: queueId)
+    }
+    
+    // MARK: - Urgent Updates Processing
+    
+    private func processUrgentUpdates() async {
+        guard isOnline else { return }
+        
+        do {
+            // Get only urgent updates
+            let rows = try await grdbManager.query("""
+                SELECT * FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND priority = ?
+                AND retry_count < ?
+                ORDER BY created_at ASC
+                LIMIT 10
+            """, [
+                UpdatePriority.urgent.rawValue,
+                3 // Fewer retries for urgent items
+            ])
             
             for item in rows {
                 guard let queueId = item["id"] as? String,
@@ -542,7 +825,7 @@ public class DashboardSyncService: ObservableObject {
                 do {
                     let update = try JSONDecoder().decode(CoreTypes.DashboardUpdate.self, from: data)
                     
-                    // Send via WebSocket
+                    // Send immediately
                     try await webSocketManager.send(update)
                     
                     // Remove from queue on success
@@ -551,58 +834,198 @@ public class DashboardSyncService: ObservableObject {
                         [queueId]
                     )
                     
-                } catch {
-                    // Increment retry count on failure
-                    let retryCount = item["retry_count"] as? Int ?? 0
-                    try await grdbManager.execute("""
-                        UPDATE sync_queue
-                        SET retry_count = ?, last_retry_at = ?
-                        WHERE id = ?
-                    """, [retryCount + 1, Date().ISO8601Format(), queueId])
+                    print("🚨 Urgent update processed: \(update.type)")
                     
-                    print("⚠️ Failed to process queued update: \(error)")
+                } catch {
+                    await handleFailedUpdate(item)
                 }
             }
             
-            // Update pending count
-            await updatePendingCount()
-            
         } catch {
-            operationalDataManager.logError("Failed to process pending updates", error: error)
+            print("❌ Failed to process urgent updates: \(error)")
         }
     }
     
-    private func updatePendingCount() async {
+    // MARK: - Compression
+    
+    private func compressDataIfNeeded(_ data: Data) async -> Data {
+        // Only compress if data is larger than 1KB
+        guard data.count > 1024 else { return data }
+        
         do {
-            let count = try await grdbManager.query("""
-                SELECT COUNT(*) as count FROM sync_queue
-                WHERE entity_type = 'dashboard_update'
-                AND retry_count < 3
-            """, [])
-            
-            if let total = count.first?["count"] as? Int64 {
-                await MainActor.run {
-                    self.pendingUpdatesCount = Int(total)
-                }
+            // Use compression algorithm
+            if let compressed = data.compressed(using: .zlib) {
+                let ratio = Double(compressed.count) / Double(data.count)
+                print("🗜️ Compressed update: \(data.count) → \(compressed.count) bytes (ratio: \(String(format: "%.2f", ratio)))")
+                return compressed
             }
         } catch {
-            print("❌ Failed to update pending count: \(error)")
+            print("⚠️ Compression failed, using original data")
+        }
+        
+        return data
+    }
+    
+    private func decompressData(_ data: Data) async -> Data {
+        do {
+            if let decompressed = data.decompressed(using: .zlib) {
+                return decompressed
+            }
+        } catch {
+            print("⚠️ Decompression failed, assuming uncompressed data")
+        }
+        
+        return data
+    }
+    
+    // MARK: - Automatic Cleanup
+    
+    private func cleanupExpiredItems() async {
+        do {
+            // Remove expired items
+            let expiredCount = try await grdbManager.execute("""
+                DELETE FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND expires_at IS NOT NULL
+                AND expires_at < ?
+            """, [Date().ISO8601Format()])
+            
+            if expiredCount > 0 {
+                print("🧹 Cleaned up \(expiredCount) expired queue items")
+            }
+            
+            // Remove items that have exceeded max retry count
+            let maxRetries = getMaxRetries()
+            let failedCount = try await grdbManager.execute("""
+                DELETE FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND retry_count >= ?
+            """, [maxRetries])
+            
+            if failedCount > 0 {
+                print("🧹 Removed \(failedCount) failed queue items")
+            }
+            
+            // Archive old successful items (optional)
+            await archiveOldItems()
+            
+        } catch {
+            print("❌ Cleanup failed: \(error)")
         }
     }
     
-    private func setupOfflineQueueProcessing() {
-        // Process queue every 30 seconds when online
+    private func archiveOldItems() async {
+        // Move successfully processed items older than 7 days to archive table
+        do {
+            let archiveDate = Date().addingTimeInterval(-604800) // 7 days ago
+            
+            try await grdbManager.execute("""
+                INSERT INTO sync_queue_archive
+                SELECT * FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND created_at < ?
+                AND retry_count = 0
+            """, [archiveDate.ISO8601Format()])
+            
+            let archivedCount = try await grdbManager.execute("""
+                DELETE FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND created_at < ?
+                AND retry_count = 0
+            """, [archiveDate.ISO8601Format()])
+            
+            if archivedCount > 0 {
+                print("📦 Archived \(archivedCount) old queue items")
+            }
+            
+        } catch {
+            // Archive table might not exist, that's ok
+        }
+    }
+    
+    // MARK: - Configuration
+    
+    private func getBatchSize() -> Int {
+        // Get from config or use default
+        return operationalDataManager.getSystemConfiguration().syncBatchSize ?? 50
+    }
+    
+    private func getMaxRetries() -> Int {
+        // Get from config or use default
+        return operationalDataManager.getSystemConfiguration().maxSyncRetries ?? 5
+    }
+    
+    // MARK: - Enhanced Timer Setup
+    
+    private func setupEnhancedOfflineQueueProcessing() {
+        // Urgent items - every 10 seconds
+        urgentQueueTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            guard let self = self, self.isOnline else { return }
+            Task {
+                await self.processUrgentUpdates()
+            }
+        }
+        
+        // Regular batch processing - every 30 seconds
         offlineQueueTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             guard let self = self, self.isOnline else { return }
-            
             Task {
-                await self.processPendingUpdates()
+                await self.processPendingUpdatesBatch()
+            }
+        }
+        
+        // Cleanup - every 5 minutes
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 300.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            Task {
+                await self.cleanupExpiredItems()
             }
         }
         
         // Process immediately on startup
         Task {
-            await processPendingUpdates()
+            await processPendingUpdatesBatch()
+            await cleanupExpiredItems()
+        }
+    }
+    
+    // MARK: - Updated Pending Count
+    
+    private func updatePendingCountWithPriority() async {
+        do {
+            // Get counts by priority
+            let counts = try await grdbManager.query("""
+                SELECT priority, COUNT(*) as count
+                FROM sync_queue
+                WHERE entity_type = 'dashboard_update'
+                AND retry_count < ?
+                GROUP BY priority
+            """, [getMaxRetries()])
+            
+            var totalCount = 0
+            var urgentCount = 0
+            
+            for row in counts {
+                if let priority = row["priority"] as? Int,
+                   let count = row["count"] as? Int64 {
+                    totalCount += Int(count)
+                    if priority == UpdatePriority.urgent.rawValue {
+                        urgentCount = Int(count)
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                self.pendingUpdatesCount = totalCount
+                self.urgentPendingCount = urgentCount
+            }
+            
+            if urgentCount > 0 {
+                print("⚠️ \(urgentCount) urgent updates pending")
+            }
+            
+        } catch {
+            print("❌ Failed to update pending count: \(error)")
         }
     }
     
@@ -735,70 +1158,6 @@ public class DashboardSyncService: ObservableObject {
             ]
         )
         broadcastAdminUpdate(update)
-    }
-    
-    // MARK: - Live Update Types (moved inside class)
-
-    public struct LiveWorkerUpdate {
-        public let id = UUID()
-        public let workerId: String
-        public let workerName: String?
-        public let action: String
-        public let buildingId: String?
-        public let buildingName: String?
-        public let timestamp = Date()
-        
-        public init(workerId: String, workerName: String? = nil, action: String, buildingId: String? = nil, buildingName: String? = nil) {
-            self.workerId = workerId
-            self.workerName = workerName
-            self.action = action
-            self.buildingId = buildingId
-            self.buildingName = buildingName
-        }
-    }
-
-    public struct LiveAdminAlert {
-        public let id = UUID()
-        public let title: String
-        public let severity: Severity
-        public let buildingId: String
-        public let timestamp = Date()
-        
-        public enum Severity: String, CaseIterable {
-            case low = "Low"
-            case medium = "Medium"
-            case high = "High"
-            case critical = "Critical"
-            
-            var color: Color {
-                switch self {
-                case .low: return .green
-                case .medium: return .yellow
-                case .high: return .orange
-                case .critical: return .red
-                }
-            }
-        }
-        
-        public init(title: String, severity: Severity, buildingId: String) {
-            self.title = title
-            self.severity = severity
-            self.buildingId = buildingId
-        }
-    }
-
-    public struct LiveClientMetric {
-        public let id = UUID()
-        public let name: String
-        public let value: String
-        public let trend: CoreTypes.TrendDirection
-        public let timestamp = Date()
-        
-        public init(name: String, value: String, trend: CoreTypes.TrendDirection) {
-            self.name = name
-            self.value = value
-            self.trend = trend
-        }
     }
     
     // MARK: - Live Update Creation
@@ -1136,4 +1495,16 @@ extension DashboardSyncService {
 
 extension Notification.Name {
     static let networkStatusChanged = Notification.Name("networkStatusChanged")
+}
+
+// MARK: - Data Compression Extension
+
+extension Data {
+    func compressed(using algorithm: NSData.CompressionAlgorithm) -> Data? {
+        return (self as NSData).compressed(using: algorithm) as Data?
+    }
+    
+    func decompressed(using algorithm: NSData.CompressionAlgorithm) -> Data? {
+        return (self as NSData).decompressed(using: algorithm) as Data?
+    }
 }

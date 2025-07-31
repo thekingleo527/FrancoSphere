@@ -7,6 +7,7 @@
 //  ✅ COMPLETE: Full authentication + operational database manager
 //  ✅ SINGLE SOURCE: One manager for everything
 //  ✅ ENHANCED: Full inventory management, worker tracking, and real-time sync
+//  ✅ STREAM B UPDATE: Enhanced sync_queue with priority, compression, and retry management
 //
 
 import Foundation
@@ -283,18 +284,43 @@ public final class GRDBManager {
             )
         """)
         
-        // Sync queue (for offline support and photo uploads)
+        // ✅ STREAM B UPDATE: Enhanced sync queue with priority and compression
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS sync_queue (
                 id TEXT PRIMARY KEY,
                 entity_type TEXT NOT NULL,
                 entity_id TEXT NOT NULL,
                 action TEXT NOT NULL,
-                data TEXT,
-                retry_count INTEGER DEFAULT 0,
-                last_retry_at TEXT,
+                data TEXT NOT NULL,
+                retry_count INTEGER NOT NULL DEFAULT 0,
+                priority INTEGER NOT NULL DEFAULT 1,
+                is_compressed INTEGER NOT NULL DEFAULT 0,
+                retry_delay REAL NOT NULL DEFAULT 2.0,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_retry_at TEXT,
+                next_retry_at TEXT,
+                expires_at TEXT,
                 UNIQUE(entity_type, entity_id, action)
+            )
+        """)
+        
+        // ✅ STREAM B UPDATE: Sync queue archive for completed/expired items
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS sync_queue_archive (
+                id TEXT PRIMARY KEY,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                data TEXT NOT NULL,
+                retry_count INTEGER NOT NULL DEFAULT 0,
+                priority INTEGER NOT NULL DEFAULT 1,
+                is_compressed INTEGER NOT NULL DEFAULT 0,
+                retry_delay REAL NOT NULL DEFAULT 2.0,
+                created_at TEXT NOT NULL,
+                last_retry_at TEXT,
+                archived_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                archive_reason TEXT,
+                success INTEGER DEFAULT 0
             )
         """)
         
@@ -573,9 +599,12 @@ public final class GRDBManager {
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_departure_logs_worker_building ON site_departure_logs(worker_id, building_id, departed_at)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_departure_logs_date ON site_departure_logs(departed_at)")
         
-        // Sync queue indexes
+        // ✅ STREAM B UPDATE: Enhanced sync queue indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_entity ON sync_queue(entity_type, entity_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_retry ON sync_queue(retry_count)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_priority ON sync_queue(priority DESC, created_at ASC)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_next_retry ON sync_queue(next_retry_at)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_expires ON sync_queue(expires_at)")
         
         // Worker assignment indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_worker_assignments_worker ON worker_building_assignments(worker_id)")
@@ -999,6 +1028,82 @@ public final class GRDBManager {
                 ])
             }
         }
+    }
+    
+    // MARK: - Stream B Sync Queue Management
+    
+    public func addToSyncQueue(
+        entityType: String,
+        entityId: String,
+        action: String,
+        data: Data,
+        priority: Int = 1,
+        compress: Bool = false,
+        expiresInHours: Int? = nil
+    ) async throws {
+        let compressedData = compress ? try data.compressed(using: .zlib) : data
+        let dataString = compressedData.base64EncodedString()
+        let expiresAt = expiresInHours.map { Date().addingTimeInterval(TimeInterval($0 * 3600)) }
+        
+        try await execute("""
+            INSERT OR REPLACE INTO sync_queue (
+                id, entity_type, entity_id, action, data, 
+                priority, is_compressed, created_at, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+        """, [
+            UUID().uuidString,
+            entityType,
+            entityId,
+            action,
+            dataString,
+            priority,
+            compress ? 1 : 0,
+            expiresAt?.ISO8601Format() as Any
+        ])
+    }
+    
+    public func getNextSyncBatch(limit: Int = 50) async throws -> [[String: Any]] {
+        return try await query("""
+            SELECT * FROM sync_queue 
+            WHERE (next_retry_at IS NULL OR next_retry_at <= datetime('now'))
+                AND (expires_at IS NULL OR expires_at > datetime('now'))
+            ORDER BY priority DESC, created_at ASC 
+            LIMIT ?
+        """, [limit])
+    }
+    
+    public func updateSyncRetry(id: String, success: Bool) async throws {
+        if success {
+            // Move to archive
+            try await execute("""
+                INSERT INTO sync_queue_archive 
+                SELECT *, datetime('now') as archived_at, 'success' as archive_reason, 1 as success 
+                FROM sync_queue WHERE id = ?
+            """, [id])
+            try await execute("DELETE FROM sync_queue WHERE id = ?", [id])
+        } else {
+            // Update retry info
+            try await execute("""
+                UPDATE sync_queue 
+                SET retry_count = retry_count + 1,
+                    last_retry_at = datetime('now'),
+                    retry_delay = MIN(retry_delay * 2, 3600),
+                    next_retry_at = datetime('now', '+' || CAST(MIN(retry_delay * 2, 3600) AS TEXT) || ' seconds')
+                WHERE id = ?
+            """, [id])
+        }
+    }
+    
+    public func cleanupExpiredSyncItems() async throws {
+        // Archive expired items
+        try await execute("""
+            INSERT INTO sync_queue_archive 
+            SELECT *, datetime('now') as archived_at, 'expired' as archive_reason, 0 as success 
+            FROM sync_queue WHERE expires_at <= datetime('now')
+        """)
+        
+        // Delete from main queue
+        try await execute("DELETE FROM sync_queue WHERE expires_at <= datetime('now')")
     }
 }
 
