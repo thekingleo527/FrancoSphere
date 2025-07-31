@@ -1751,13 +1751,3 @@ struct StatItem: View {
         }
     }
 }
-
-// MARK: - String Extensions
-
-extension String {
-    var initials: String {
-        let words = self.components(separatedBy: " ")
-        let initials = words.compactMap { $0.first }.map { String($0) }
-        return initials.joined().uppercased()
-    }
-}

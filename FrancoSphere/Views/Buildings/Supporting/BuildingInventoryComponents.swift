@@ -852,20 +852,6 @@ struct InventoryHistoryPoint: Identifiable {
     let itemsUsed: Int
     let usagePercentage: Double
 }
-
-// MARK: - Extensions
-
-extension CoreTypes.InventoryCategory {
-    var icon: String {
-        switch self {
-        case .cleaning: return "sparkles"
-        case .equipment: return "wrench.fill"
-        case .building: return "house.fill"
-        case .sanitation: return "trash.fill"
-        case .office: return "briefcase.fill"
-        case .seasonal: return "snowflake"
-        }
-    }
     
     var displayName: String {
         switch self {
@@ -877,7 +863,6 @@ extension CoreTypes.InventoryCategory {
         case .seasonal: return "Seasonal Items"
         }
     }
-}
 
 extension CoreTypes.InventoryItem {
     var stockLevel: Double {

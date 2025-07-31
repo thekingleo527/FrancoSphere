@@ -7,6 +7,7 @@
 //  ✅ ENHANCED: Aligned with v6.0 three-dashboard system
 //  ✅ INTEGRATED: Actor-compatible design patterns
 //  ✅ ADDED: Centralized color system for all CoreTypes enums
+//  ✅ MERGED: Incorporated utilities from ModelColorsExtensions
 //
 
 import SwiftUI
@@ -360,6 +361,89 @@ enum FrancoSphereDesign {
             case .unknown: return .gray
             }
         }
+        
+        // MARK: - Generic Helpers (Merged from ModelColorsExtensions)
+        
+        /// Generic status color helper for string-based statuses
+        static func genericStatusColor(for status: String) -> Color {
+            switch status.lowercased() {
+            case "verified", "completed", "success", "compliant": return .green
+            case "pending", "in progress", "processing": return .orange
+            case "failed", "error", "rejected": return .red
+            case "warning", "caution": return .yellow
+            default: return .gray
+            }
+        }
+        
+        /// Generic category color helper for string-based categories
+        static func genericCategoryColor(for category: String) -> Color {
+            switch category.lowercased() {
+            case "maintenance": return .orange
+            case "cleaning": return .blue
+            case "repair": return .red
+            case "inspection": return .purple
+            case "emergency": return .red
+            case "safety": return .yellow
+            case "equipment": return .indigo
+            case "supplies": return .green
+            case "sanitation": return .cyan
+            default: return .gray
+            }
+        }
+    }
+    
+    // MARK: - Icon Helpers (Merged from ModelColorsExtensions)
+    enum Icons {
+        
+        /// Returns SF Symbol icon for status strings
+        static func statusIcon(for status: String) -> String {
+            switch status.lowercased() {
+            case "verified", "completed", "success": return "checkmark.circle.fill"
+            case "pending", "processing": return "clock.fill"
+            case "failed", "error": return "xmark.circle.fill"
+            case "in progress": return "gear"
+            case "warning": return "exclamationmark.triangle.fill"
+            case "rejected": return "xmark.octagon.fill"
+            default: return "questionmark.circle"
+            }
+        }
+        
+        /// Returns SF Symbol icon for category strings
+        static func categoryIcon(for category: String) -> String {
+            switch category.lowercased() {
+            case "maintenance": return "wrench.and.screwdriver"
+            case "cleaning": return "sparkles"
+            case "repair": return "hammer"
+            case "inspection": return "magnifyingglass"
+            case "emergency": return "exclamationmark.triangle.fill"
+            case "safety": return "shield.fill"
+            case "equipment": return "gear"
+            case "supplies": return "shippingbox"
+            case "sanitation": return "trash.fill"
+            default: return "square.grid.3x3"
+            }
+        }
+        
+        /// Returns SF Symbol icon for inventory categories
+        static func inventoryIcon(for category: CoreTypes.InventoryCategory) -> String {
+            switch category {
+            case .cleaning: return "sparkles"
+            case .equipment: return "wrench.fill"
+            case .building: return "house.fill"
+            case .sanitation: return "trash.fill"
+            case .office: return "briefcase.fill"
+            case .seasonal: return "snowflake"
+            case .supplies: return "shippingbox"
+            case .maintenance: return "hammer"
+            case .electrical: return "bolt.circle"
+            case .safety: return "shield.fill"
+            case .tools: return "wrench.and.screwdriver"
+            case .materials: return "cube.box"
+            case .plumbing: return "drop.circle"
+            case .general: return "square.grid.2x2"
+            case .other: return "folder"
+            }
+        }
     }
     
     // MARK: - Metrics Display (NEW for v6.0)
@@ -368,6 +452,29 @@ enum FrancoSphereDesign {
         static let progressBarCornerRadius: CGFloat = 3
         static let statusIndicatorSize: CGFloat = 8
         static let trendArrowSize: CGFloat = 12
+    }
+}
+
+// MARK: - String Extensions (Merged from ModelColorsExtensions)
+extension String {
+    /// Returns color for string-based status
+    var statusColor: Color {
+        FrancoSphereDesign.EnumColors.genericStatusColor(for: self)
+    }
+    
+    /// Returns SF Symbol icon for status strings
+    var statusIcon: String {
+        FrancoSphereDesign.Icons.statusIcon(for: self)
+    }
+    
+    /// Returns SF Symbol icon for category strings
+    var categoryIcon: String {
+        FrancoSphereDesign.Icons.categoryIcon(for: self)
+    }
+    
+    /// Returns color for string-based category
+    var categoryColor: Color {
+        FrancoSphereDesign.EnumColors.genericCategoryColor(for: self)
     }
 }
 

@@ -2,9 +2,9 @@
 //  WorkerDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ UPDATED: Integrated HeaderV3B and HeroStatusCard
+//  ✅ UPDATED: Integrated ProfileBadge component
 //  ✅ FIXED: Removed redundant custom components
-//  ✅ ENHANCED: Proper architecture with persistent header
+//  ✅ ENHANCED: Real-time status updates via ProfileBadge
 //  ✅ INTEGRATED: MapRevealContainer with layered content
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ NEW: Added navigation to TodaysProgressDetailView
@@ -20,6 +20,7 @@ struct WorkerDashboardView: View {
     @StateObject private var viewModel = WorkerDashboardViewModel()
     @ObservedObject private var contextEngine = WorkerContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
+    @EnvironmentObject private var dashboardSync: DashboardSyncService
     
     // MARK: - State Variables
     @State private var showBuildingList = false
@@ -33,7 +34,7 @@ struct WorkerDashboardView: View {
     @State private var showTaskDetail = false
     @State private var showEmergencyContacts = false
     @State private var isNovaProcessing = false
-    @State private var showProgressDetail = false  // NEW: For analytics navigation
+    @State private var showProgressDetail = false
     
     var body: some View {
         MapRevealContainer(
@@ -60,22 +61,14 @@ struct WorkerDashboardView: View {
                 
                 // Main content with fixed header
                 VStack(spacing: 0) {
-                    // Persistent header using HeaderV3B
-                    HeaderV3B(
-                        workerName: contextEngine.currentWorker?.name ?? "",
-                        nextTaskName: getNextTaskName(),
-                        showClockPill: contextEngine.clockInStatus.isClockedIn,
-                        isNovaProcessing: isNovaProcessing,
-                        onProfileTap: { showProfileView = true },
-                        onNovaPress: { showNovaAssistant = true },
-                        onNovaLongPress: { showNovaAssistant = true }
-                    )
-                    .zIndex(100) // Keep header on top
+                    // Enhanced header with ProfileBadge
+                    workerDashboardHeader
+                        .zIndex(100) // Keep header on top
                     
                     // Scrollable content
                     ScrollView {
                         VStack(spacing: 24) {
-                            // Hero Status Card - replaces multiple custom sections
+                            // Hero Status Card
                             HeroStatusCard(
                                 worker: contextEngine.currentWorker,
                                 building: contextEngine.currentBuilding,
@@ -203,7 +196,112 @@ struct WorkerDashboardView: View {
         }
     }
     
-    // MARK: - My Buildings Section (kept from original)
+    // MARK: - Enhanced Header with ProfileBadge
+    
+    private var workerDashboardHeader: some View {
+        VStack(spacing: 0) {
+            // Glass background
+            ZStack {
+                // Background blur
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.05),
+                                Color.clear
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                
+                // Main header content
+                VStack(spacing: 16) {
+                    // Top row with profile and Nova
+                    HStack(alignment: .center, spacing: 16) {
+                        // Profile badge with real-time status
+                        if let worker = contextEngine.currentWorker {
+                            ProfileBadge(
+                                worker: worker,
+                                size: .standard,
+                                context: .worker,
+                                onTap: { showProfileView = true }
+                            )
+                        }
+                        
+                        // Worker info
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(getGreeting())
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                            
+                            Text(contextEngine.currentWorker?.name ?? "Worker")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            
+                            // Next task preview
+                            if let nextTask = getNextTaskName() {
+                                Text(nextTask)
+                                    .font(.caption2)
+                                    .foregroundColor(.blue)
+                                    .lineLimit(1)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        // Nova AI Button
+                        NovaAvatar(
+                            size: .medium,
+                            isProcessing: isNovaProcessing,
+                            onTap: { showNovaAssistant = true },
+                            onLongPress: { showNovaAssistant = true }
+                        )
+                    }
+                    
+                    // Clock-in status pill (if clocked in)
+                    if contextEngine.clockInStatus.isClockedIn,
+                       let building = contextEngine.currentBuilding {
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock.fill")
+                                .font(.caption)
+                            
+                            Text("Clocked in at \(building.name)")
+                                .font(.caption)
+                            
+                            Spacer()
+                            
+                            if let clockInTime = viewModel.clockInTime {
+                                Text(clockInTime, style: .time)
+                                    .font(.caption)
+                            }
+                        }
+                        .foregroundColor(.green)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.green.opacity(0.2))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+            }
+            
+            // Divider
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 1)
+        }
+    }
+    
+    // MARK: - My Buildings Section
     
     private var myBuildingsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -295,7 +393,7 @@ struct WorkerDashboardView: View {
         .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
     }
     
-    // MARK: - Smart Route Section (new)
+    // MARK: - Smart Route Section
     
     private var smartRouteSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -348,7 +446,7 @@ struct WorkerDashboardView: View {
         .frame(maxWidth: .infinity)
     }
     
-    // MARK: - Floating Insights Section (kept and enhanced)
+    // MARK: - Floating Insights Section
     
     private var floatingInsightsSection: some View {
         VStack(spacing: 12) {
@@ -493,6 +591,18 @@ struct WorkerDashboardView: View {
     }
     
     // MARK: - Adapter Methods for HeroStatusCard
+    
+    private func getGreeting() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 0..<12:
+            return "Good morning"
+        case 12..<17:
+            return "Good afternoon"
+        default:
+            return "Good evening"
+        }
+    }
     
     private func getNextTaskName() -> String? {
         contextEngine.todaysTasks.first(where: { !$0.isCompleted })?.title
@@ -693,6 +803,7 @@ struct WorkerDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         WorkerDashboardView()
             .environmentObject(NewAuthManager.shared)
+            .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)
     }
 }

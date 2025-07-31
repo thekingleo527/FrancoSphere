@@ -473,19 +473,3 @@ struct BuildingPhotoPickerView: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - Extensions
-
-extension String {
-    var initials: String {
-        let formatter = PersonNameComponentsFormatter()
-        if let components = formatter.personNameComponents(from: self) {
-            formatter.style = .abbreviated
-            return formatter.string(from: components)
-        }
-        
-        // Fallback
-        let words = self.split(separator: " ")
-        let initials = words.compactMap { $0.first }.prefix(2)
-        return String(initials).uppercased()
-    }
-}

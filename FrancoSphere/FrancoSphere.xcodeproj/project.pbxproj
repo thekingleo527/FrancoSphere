@@ -19,6 +19,7 @@
 		2326C1F82E3AC14F0080F005 /* InventoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F72E3AC14F0080F005 /* InventoryService.swift */; };
 		2326C1FA2E3AEB8D0080F005 /* PhotoEvidenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */; };
 		2326C1FC2E3AEBDD0080F005 /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = 2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */; };
+		2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C1FF2E3B11680080F005 /* StringExtensions.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -26,7 +27,6 @@
 		23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F312E39885600F4A10F /* GlassMorphismStyles.swift */; };
 		23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB02E39885600F4A10F /* RouteStatItem.swift */; };
 		23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F062E39885600F4A10F /* MySitesCard.swift */; };
-		23779FE52E39885600F4A10F /* ModelColorsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F232E39885600F4A10F /* ModelColorsExtensions.swift */; };
 		23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F362E39885600F4A10F /* GlassTypes.swift */; };
 		23779FE72E39885600F4A10F /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */; };
 		23779FE82E39885600F4A10F /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC42E39885600F4A10F /* BuildingDetailView.swift */; };
@@ -230,6 +230,7 @@
 		2326C1F72E3AC14F0080F005 /* InventoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryService.swift; sourceTree = "<group>"; };
 		2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEvidenceService.swift; sourceTree = "<group>"; };
 		2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
+		2326C1FF2E3B11680080F005 /* StringExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtensions.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -243,7 +244,6 @@
 		23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
 		23779F212E39885600F4A10F /* FrancoSphereDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereDesign.swift; sourceTree = "<group>"; };
 		23779F222E39885600F4A10F /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
-		23779F232E39885600F4A10F /* ModelColorsExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelColorsExtensions.swift; sourceTree = "<group>"; };
 		23779F242E39885600F4A10F /* TimelineProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineProgressBar.swift; sourceTree = "<group>"; };
 		23779F252E39885600F4A10F /* TodaysTasksGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaysTasksGlassCard.swift; sourceTree = "<group>"; };
 		23779F262E39885600F4A10F /* WeatherTaskTimelineCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherTaskTimelineCard.swift; sourceTree = "<group>"; };
@@ -521,7 +521,6 @@
 				23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */,
 				23779F212E39885600F4A10F /* FrancoSphereDesign.swift */,
 				23779F222E39885600F4A10F /* HeaderV3B.swift */,
-				23779F232E39885600F4A10F /* ModelColorsExtensions.swift */,
 				23779F242E39885600F4A10F /* TimelineProgressBar.swift */,
 				23779F252E39885600F4A10F /* TodaysTasksGlassCard.swift */,
 				23779F262E39885600F4A10F /* WeatherTaskTimelineCard.swift */,
@@ -928,6 +927,7 @@
 		23779FBE2E39885600F4A10F /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				2326C1FF2E3B11680080F005 /* StringExtensions.swift */,
 				23779FB92E39885600F4A10F /* Database */,
 				23779FBC2E39885600F4A10F /* Extensions */,
 				23779FBD2E39885600F4A10F /* Helpers */,
@@ -1199,11 +1199,11 @@
 			files = (
 				2326C1F82E3AC14F0080F005 /* InventoryService.swift in Sources */,
 				23779FDF2E39885600F4A10F /* LoginView.swift in Sources */,
+				2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */,
 				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
 				23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
 				23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */,
-				23779FE52E39885600F4A10F /* ModelColorsExtensions.swift in Sources */,
 				23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */,
 				23779FE72E39885600F4A10F /* ComplianceOverviewView.swift in Sources */,
 				23779FE82E39885600F4A10F /* BuildingDetailView.swift in Sources */,
