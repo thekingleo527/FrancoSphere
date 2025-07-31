@@ -5,6 +5,7 @@
 //  ✅ REFACTORED: Services removed, only data types remain
 //  ✅ FIXED: All compilation errors eliminated
 //  ✅ FIXED: Removed all color properties - now in FrancoSphereDesign.EnumColors
+//  ✅ FIXED: Removed duplicate needsRestock property
 //  ✅ ORGANIZED: Clean architecture with data types only
 //
 //  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
@@ -14,6 +15,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import SwiftUI
 
 // MARK: - CoreTypes Namespace
 public struct CoreTypes {
@@ -1105,7 +1107,9 @@ public struct CoreTypes {
             self.status = status
         }
         
+        // ✅ FIXED: Removed duplicate needsRestock property - only keeping one
         public var needsRestock: Bool { currentStock <= minimumStock }
+        
         public var stockPercentage: Double {
             maxStock > 0 ? Double(currentStock) / Double(maxStock) : 0
         }

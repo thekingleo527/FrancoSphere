@@ -5,6 +5,7 @@
 //  ✅ FIXED: Removed duplicate initialization
 //  ✅ CLEAN: Only handles dashboard routing
 //  ✅ SIMPLE: No initialization logic here
+//  ✅ FIXED: Switch now uses UserRole enum cases instead of strings
 //
 
 import SwiftUI
@@ -16,17 +17,17 @@ struct ContentView: View {
         Group {
             // Route to appropriate dashboard based on role
             switch authManager.userRole {
-            case "admin":
+            case .admin:
                 AdminDashboardView()
-            case "client":
+            case .client:
                 ClientDashboardView()
-            case "worker":
+            case .worker:
                 WorkerDashboardView()
-            case "manager":
+            case .manager:
                 // Managers get admin dashboard with focused features
                 AdminDashboardView()
-            default:
-                // Fallback to worker dashboard
+            case nil:
+                // Fallback to worker dashboard when no role is set
                 WorkerDashboardView()
             }
         }

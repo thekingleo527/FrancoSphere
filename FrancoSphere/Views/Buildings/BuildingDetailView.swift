@@ -1559,7 +1559,12 @@ class BuildingDetailVM: ObservableObject {
     
     private func loadUserRole() {
         // Get from auth manager
-        userRole = NewAuthManager.shared.currentUser?.role ?? CoreTypes.UserRole.worker
+        if let roleString = NewAuthManager.shared.currentUser?.role,
+           let role = CoreTypes.UserRole(rawValue: roleString) {
+            userRole = role
+        } else {
+            userRole = .worker // Default to worker role
+        }
     }
     
     private func loadOverviewData() async {

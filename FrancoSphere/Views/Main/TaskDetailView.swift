@@ -7,7 +7,7 @@
 //  ✅ REAL-TIME UPDATES: Progress tracking and sync
 //  ✅ GLASS MORPHISM: Beautiful UI with FrancoSphere design
 //  ✅ ERROR HANDLING: Comprehensive user feedback
-//  ✅ FIXED: Removed duplicate GlassCard and PhotoCaptureView
+//  ✅ FIXED: Updated deprecated Map API for iOS 17+
 //
 
 import SwiftUI
@@ -30,6 +30,10 @@ struct TaskDetailView: View {
     @State private var showResubmitSheet = false
     @State private var resubmissionNotes = ""
     @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var mapRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060),
+        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+    )
     
     // MARK: - Body
     
@@ -94,6 +98,13 @@ struct TaskDetailView: View {
         .navigationTitle("Task Details")
         .task {
             await viewModel.loadTask(task)
+            // Update map region if building coordinate is available
+            if let coordinate = viewModel.buildingCoordinate {
+                mapRegion = MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )
+            }
         }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") { }
@@ -106,7 +117,6 @@ struct TaskDetailView: View {
             Text(viewModel.successMessage ?? "Task completed successfully")
         }
         .sheet(isPresented: $showPhotoCapture) {
-            // ✅ FIXED: Using ImagePicker from ImagePicker.swift
             ImagePicker(
                 image: .constant(nil),
                 onImagePicked: { image in
@@ -142,7 +152,6 @@ struct TaskDetailView: View {
     // MARK: - View Components
     
     private var taskHeaderCard: some View {
-        // ✅ FIXED: Using GlassCard from Components/Glass/GlassCard.swift
         GlassCard {
             VStack(alignment: .leading, spacing: 16) {
                 // Title and Category
@@ -552,7 +561,7 @@ struct TaskDetailView: View {
                     }
                 }
                 
-                if let startTime = viewModel.taskStartTime,
+                if let startTime = viewModel.startTime,
                    let completedDate = viewModel.completedDate {
                     HStack {
                         Text("Duration")
@@ -646,14 +655,11 @@ struct TaskDetailView: View {
     private var locationMapView: some View {
         NavigationView {
             if let coordinate = viewModel.buildingCoordinate {
-                Map(coordinateRegion: .constant(
-                    MKCoordinateRegion(
-                        center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                    )
-                ), annotationItems: [MapPin(coordinate: coordinate)]) { pin in
-                    MapMarker(coordinate: pin.coordinate, tint: FrancoSphereDesign.DashboardColors.workerPrimary)
+                Map {
+                    Marker(viewModel.buildingName, coordinate: coordinate)
+                        .tint(FrancoSphereDesign.DashboardColors.workerPrimary)
                 }
+                .mapStyle(.standard(elevation: .realistic))
                 .navigationTitle(viewModel.buildingName)
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationBarItems(
@@ -714,11 +720,6 @@ struct LoadingOverlay: View {
             )
         }
     }
-}
-
-struct MapPin: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
 }
 
 // MARK: - Preview

@@ -7,6 +7,7 @@
 //  ✅ SESSION MANAGEMENT: Token expiration and refresh
 //  ✅ ROLE-BASED ACCESS: Proper permission handling
 //  ✅ NO HARDCODED CREDENTIALS: All passwords hashed and stored securely
+//  ✅ ENHANCED SECURITY: SHA256 hashing with salt, password requirements
 //
 
 import Foundation
@@ -14,6 +15,7 @@ import Combine
 import SwiftUI
 import LocalAuthentication
 import Security
+import CryptoKit
 
 // MARK: - Notifications
 extension Notification.Name {
@@ -21,6 +23,7 @@ extension Notification.Name {
     static let userDidLogout = Notification.Name("userDidLogout")
     static let sessionExpired = Notification.Name("sessionExpired")
     static let sessionRefreshed = Notification.Name("sessionRefreshed")
+    static let passwordChanged = Notification.Name("passwordChanged")
 }
 
 // MARK: - NewAuthManager
@@ -36,6 +39,7 @@ public class NewAuthManager: ObservableObject {
     @Published public private(set) var biometricType: LABiometryType = .none
     @Published public private(set) var isBiometricEnabled = false
     @Published public private(set) var sessionStatus: SessionStatus = .none
+    @Published public private(set) var passwordStrength: PasswordStrength = .weak
     
     // MARK: - Public Properties
     public var userRole: CoreTypes.UserRole? {
@@ -61,6 +65,7 @@ public class NewAuthManager: ObservableObject {
     
     // MARK: - Private Properties
     private let grdbManager = GRDBManager.shared
+    private let securityManager = SecurityManager.shared
     private let laContext = LAContext()
     private var cancellables = Set<AnyCancellable>()
     
@@ -76,12 +81,20 @@ public class NewAuthManager: ObservableObject {
     private let refreshTokenKey = "refreshToken"
     private let biometricEnabledKey = "biometricEnabled"
     private let lastAuthenticatedUserKey = "lastAuthenticatedUser"
+    private let saltKey = "passwordSalt"
     
     // Security settings
     private let sessionDuration: TimeInterval = 8 * 60 * 60 // 8 hours
     private let sessionRefreshThreshold: TimeInterval = 30 * 60 // 30 minutes before expiry
     private let maxLoginAttempts = 5
     private var loginAttempts = 0
+    
+    // Password requirements
+    private let minPasswordLength = 8
+    private let requireUppercase = true
+    private let requireLowercase = true
+    private let requireNumbers = true
+    private let requireSpecialChars = true
     
     private init() {
         setupBiometrics()
@@ -103,61 +116,167 @@ public class NewAuthManager: ObservableObject {
         defer { isLoading = false }
         
         do {
-            // Authenticate with database
-            let result = await grdbManager.authenticateWorker(email: email, password: password)
+            // Get user from database
+            let userRows = try await grdbManager.query(
+                "SELECT * FROM workers WHERE email = ? AND isActive = 1",
+                [email]
+            )
             
-            switch result {
-            case .success(let authenticatedUser):
-                // Create session
-                let session = try await createSession(for: (
-                    workerId: authenticatedUser.workerId,
-                    name: authenticatedUser.name,
-                    email: authenticatedUser.email,
-                    role: authenticatedUser.role
-                ))
-                
-                // Create CoreTypes.User
-                let user = CoreTypes.User(
-                    id: authenticatedUser.workerId,
-                    workerId: authenticatedUser.workerId,
-                    name: authenticatedUser.name,
-                    email: authenticatedUser.email,
-                    role: authenticatedUser.role
-                )
-                
-                // Store session in keychain
-                try await storeSession(session: session, user: user)
-                
-                // Update state
-                self.currentUser = user
-                self.isAuthenticated = true
-                self.sessionStatus = .active
-                self.loginAttempts = 0
-                
-                // Store last authenticated user for biometric login
-                UserDefaults.standard.set(email, forKey: lastAuthenticatedUserKey)
-                
-                // Start session monitoring
-                startSessionTimer()
-                
-                print("✅ Authentication successful for \(user.name)")
-                NotificationCenter.default.post(name: .userDidLogin, object: nil, userInfo: ["user": user])
-                
-                // Prompt for biometric enrollment if available
-                if biometricType != .none && !isBiometricEnabled {
-                    Task {
-                        try? await promptBiometricEnrollment()
-                    }
-                }
-                
-            case .failure(let message):
+            guard let userRow = userRows.first else {
                 loginAttempts += 1
-                throw AuthError.authenticationFailed(message)
+                throw AuthError.authenticationFailed("Invalid credentials")
             }
+            
+            // Get stored password hash
+            guard let storedPasswordHash = userRow["password"] as? String,
+                  let workerId = userRow["id"] as? String else {
+                throw AuthError.authenticationFailed("Invalid user data")
+            }
+            
+            // For migration: Check if password is still plain text
+            if storedPasswordHash == password {
+                // Migrate to hashed password
+                print("⚠️ Migrating plain text password for user: \(email)")
+                let hashedPassword = try await hashPassword(password, for: email)
+                try await grdbManager.execute(
+                    "UPDATE workers SET password = ? WHERE id = ?",
+                    [hashedPassword, workerId]
+                )
+            } else {
+                // Verify hashed password
+                let isValid = try await verifyPassword(password, hash: storedPasswordHash, for: email)
+                guard isValid else {
+                    loginAttempts += 1
+                    throw AuthError.authenticationFailed("Invalid credentials")
+                }
+            }
+            
+            // Create session
+            let session = try await createSession(for: (
+                workerId: workerId,
+                name: userRow["name"] as? String ?? "",
+                email: email,
+                role: userRow["role"] as? String ?? "worker"
+            ))
+            
+            // Create CoreTypes.User
+            let user = CoreTypes.User(
+                id: workerId,
+                workerId: workerId,
+                name: userRow["name"] as? String ?? "",
+                email: email,
+                role: userRow["role"] as? String ?? "worker"
+            )
+            
+            // Store session in keychain
+            try await storeSession(session: session, user: user)
+            
+            // Update state
+            self.currentUser = user
+            self.isAuthenticated = true
+            self.sessionStatus = .active
+            self.loginAttempts = 0
+            
+            // Update last login time
+            try await grdbManager.execute(
+                "UPDATE workers SET lastLogin = ?, loginAttempts = 0 WHERE id = ?",
+                [Date().ISO8601Format(), workerId]
+            )
+            
+            // Store last authenticated user for biometric login
+            UserDefaults.standard.set(email, forKey: lastAuthenticatedUserKey)
+            
+            // Start session monitoring
+            startSessionTimer()
+            
+            print("✅ Authentication successful for \(user.name)")
+            NotificationCenter.default.post(name: .userDidLogin, object: nil, userInfo: ["user": user])
+            
+            // Prompt for biometric enrollment if available
+            if biometricType != .none && !isBiometricEnabled {
+                Task {
+                    try? await promptBiometricEnrollment()
+                }
+            }
+            
         } catch {
             authError = error as? AuthError ?? .unknown(error.localizedDescription)
             throw error
         }
+    }
+    
+    /// Change password for current user
+    public func changePassword(currentPassword: String, newPassword: String) async throws {
+        guard let user = currentUser else {
+            throw AuthError.notAuthenticated
+        }
+        
+        // Validate new password
+        guard isPasswordValid(newPassword) else {
+            throw AuthError.weakPassword
+        }
+        
+        // Verify current password
+        let userRows = try await grdbManager.query(
+            "SELECT password FROM workers WHERE id = ?",
+            [user.workerId]
+        )
+        
+        guard let userRow = userRows.first,
+              let storedHash = userRow["password"] as? String else {
+            throw AuthError.userNotFound
+        }
+        
+        let isValid = try await verifyPassword(currentPassword, hash: storedHash, for: user.email)
+        guard isValid else {
+            throw AuthError.authenticationFailed("Current password is incorrect")
+        }
+        
+        // Hash new password
+        let newHash = try await hashPassword(newPassword, for: user.email)
+        
+        // Update in database
+        try await grdbManager.execute(
+            "UPDATE workers SET password = ?, updated_at = ? WHERE id = ?",
+            [newHash, Date().ISO8601Format(), user.workerId]
+        )
+        
+        print("✅ Password changed successfully for \(user.name)")
+        NotificationCenter.default.post(name: .passwordChanged, object: nil)
+    }
+    
+    /// Reset password (admin function)
+    public func resetPassword(for email: String, newPassword: String) async throws {
+        guard hasAdminAccess else {
+            throw AuthError.insufficientPermissions
+        }
+        
+        // Validate new password
+        guard isPasswordValid(newPassword) else {
+            throw AuthError.weakPassword
+        }
+        
+        // Get user
+        let userRows = try await grdbManager.query(
+            "SELECT id FROM workers WHERE email = ?",
+            [email]
+        )
+        
+        guard let userRow = userRows.first,
+              let workerId = userRow["id"] as? String else {
+            throw AuthError.userNotFound
+        }
+        
+        // Hash new password
+        let newHash = try await hashPassword(newPassword, for: email)
+        
+        // Update in database
+        try await grdbManager.execute(
+            "UPDATE workers SET password = ?, loginAttempts = 0, lockedUntil = NULL, updated_at = ? WHERE id = ?",
+            [newHash, Date().ISO8601Format(), workerId]
+        )
+        
+        print("✅ Password reset for user: \(email)")
     }
     
     /// Authenticate with biometrics
@@ -347,6 +466,40 @@ public class NewAuthManager: ObservableObject {
         return true
     }
     
+    /// Get current user information
+    public func getCurrentUser() async -> AuthenticatedUser? {
+        guard let user = currentUser else { return nil }
+        
+        return AuthenticatedUser(
+            id: Int(user.id) ?? 0,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            workerId: user.workerId,
+            displayName: nil,
+            timezone: "America/New_York"
+        )
+    }
+    
+    /// Check password strength
+    public func checkPasswordStrength(_ password: String) -> PasswordStrength {
+        var strength = 0
+        
+        if password.count >= minPasswordLength { strength += 1 }
+        if password.count >= 12 { strength += 1 }
+        if password.rangeOfCharacter(from: .uppercaseLetters) != nil { strength += 1 }
+        if password.rangeOfCharacter(from: .lowercaseLetters) != nil { strength += 1 }
+        if password.rangeOfCharacter(from: .decimalDigits) != nil { strength += 1 }
+        if password.rangeOfCharacter(from: CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")) != nil { strength += 1 }
+        
+        switch strength {
+        case 0...2: return .weak
+        case 3...4: return .medium
+        case 5...6: return .strong
+        default: return .strong
+        }
+    }
+    
     // MARK: - Private Methods
     
     private func setupBiometrics() {
@@ -365,6 +518,57 @@ public class NewAuthManager: ObservableObject {
         }
         
         print("🔐 Biometric setup - Type: \(biometricTypeString), Enabled: \(isBiometricEnabled)")
+    }
+    
+    private func hashPassword(_ password: String, for email: String) async throws -> String {
+        // Get or create salt for user
+        let saltKey = "\(keychainService).salt.\(email)"
+        let salt: Data
+        
+        if let existingSalt = try? getFromKeychain(key: saltKey) as? Data {
+            salt = existingSalt
+        } else {
+            // Generate new salt
+            salt = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+            try storeInKeychain(salt, for: saltKey)
+        }
+        
+        // Create hash using SHA256
+        let passwordData = Data(password.utf8)
+        let saltedPassword = salt + passwordData
+        let hash = SHA256.hash(data: saltedPassword)
+        
+        // Convert to base64 for storage
+        let hashString = Data(hash).base64EncodedString()
+        return hashString
+    }
+    
+    private func verifyPassword(_ password: String, hash: String, for email: String) async throws -> Bool {
+        // Get salt for user
+        let saltKey = "\(keychainService).salt.\(email)"
+        guard let salt = try? getFromKeychain(key: saltKey) as? Data else {
+            // No salt found, this might be a plain text password
+            return false
+        }
+        
+        // Hash the provided password
+        let passwordData = Data(password.utf8)
+        let saltedPassword = salt + passwordData
+        let computedHash = SHA256.hash(data: saltedPassword)
+        let computedHashString = Data(computedHash).base64EncodedString()
+        
+        return computedHashString == hash
+    }
+    
+    private func isPasswordValid(_ password: String) -> Bool {
+        guard password.count >= minPasswordLength else { return false }
+        
+        if requireUppercase && password.rangeOfCharacter(from: .uppercaseLetters) == nil { return false }
+        if requireLowercase && password.rangeOfCharacter(from: .lowercaseLetters) == nil { return false }
+        if requireNumbers && password.rangeOfCharacter(from: .decimalDigits) == nil { return false }
+        if requireSpecialChars && password.rangeOfCharacter(from: CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")) == nil { return false }
+        
+        return true
     }
     
     private func createSession(for authenticatedWorker: (workerId: String, name: String, email: String, role: String)) async throws -> Session {
@@ -566,6 +770,28 @@ public enum SessionStatus {
     case expired
 }
 
+public enum PasswordStrength {
+    case weak
+    case medium
+    case strong
+    
+    var color: Color {
+        switch self {
+        case .weak: return .red
+        case .medium: return .orange
+        case .strong: return .green
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .weak: return "Weak"
+        case .medium: return "Medium"
+        case .strong: return "Strong"
+        }
+    }
+}
+
 public struct Permission {
     let name: String
     let allowedRoles: Set<CoreTypes.UserRole>
@@ -595,6 +821,16 @@ public struct Permission {
         name: "complete_tasks",
         allowedRoles: [.admin, .manager, .worker]
     )
+    
+    static let manageInventory = Permission(
+        name: "manage_inventory",
+        allowedRoles: [.admin, .manager]
+    )
+    
+    static let viewReports = Permission(
+        name: "view_reports",
+        allowedRoles: [.admin, .manager, .client]
+    )
 }
 
 private struct Session: Codable {
@@ -603,9 +839,6 @@ private struct Session: Codable {
     let expirationDate: Date
     let user: CoreTypes.User
 }
-
-// Note: AuthenticatedUser type is defined elsewhere in the project (likely in GRDBManager)
-// We use a tuple in createSession to avoid naming conflicts
 
 // MARK: - Auth Errors
 
@@ -624,6 +857,9 @@ public enum AuthError: LocalizedError {
     case biometricEnrollmentFailed(String)
     case keychainError(String)
     case tooManyAttempts
+    case weakPassword
+    case userNotFound
+    case insufficientPermissions
     case unknown(String)
     
     public var errorDescription: String? {
@@ -656,6 +892,12 @@ public enum AuthError: LocalizedError {
             return "Secure storage error: \(message)"
         case .tooManyAttempts:
             return "Too many failed login attempts. Please try again later."
+        case .weakPassword:
+            return "Password does not meet security requirements. Must be at least 8 characters with uppercase, lowercase, numbers, and special characters."
+        case .userNotFound:
+            return "User not found"
+        case .insufficientPermissions:
+            return "You do not have permission to perform this action"
         case .unknown(let message):
             return "An unknown error occurred: \(message)"
         }
