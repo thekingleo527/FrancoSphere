@@ -57,7 +57,7 @@ struct InventoryCategoryCard: View {
                     
                     // Item list
                     ForEach(items) { item in
-                        InventoryItemRow(
+                        BuildingInventoryItemRow(
                             item: item,
                             buildingId: buildingId,
                             onQuantityChanged: { newQuantity in
@@ -169,7 +169,7 @@ struct InventoryCategoryCard: View {
 
 // MARK: - Individual Inventory Item Row
 
-struct InventoryItemRow: View {
+struct BuildingInventoryItemRow: View {
     let item: CoreTypes.InventoryItem
     let buildingId: String
     let onQuantityChanged: (Int) -> Void

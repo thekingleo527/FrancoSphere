@@ -1010,7 +1010,7 @@ struct CategoryCard: View {
     }
 }
 
-struct FilterChip: View {
+struct CLientFilterChip: View {
     let title: String
     let isSelected: Bool
     var color: Color = .blue

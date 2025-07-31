@@ -1045,7 +1045,7 @@ struct ActivityFeedItem: View {
     }
 }
 
-struct FilterChip: View {
+struct BuildingFilterChip: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void

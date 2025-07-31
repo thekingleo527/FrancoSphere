@@ -1,12 +1,12 @@
-
+//
 //  GRDBManager.swift
 //  FrancoSphere v6.0
 //
-//  ✅ PRODUCTION READY: Complete database manager with migration support
+//  ✅ PRODUCTION READY: Complete database manager with all features
+//  ✅ INTEGRATED: Includes site departure logs, photo evidence, sync queue, and metrics
 //  ✅ COMPLETE: Full authentication + operational database manager
 //  ✅ SINGLE SOURCE: One manager for everything
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ENHANCED: Full inventory management system with transactions, requests, and alerts
+//  ✅ ENHANCED: Full inventory management, worker tracking, and real-time sync
 //
 
 import Foundation
@@ -121,7 +121,7 @@ public final class GRDBManager {
             )
         """)
         
-        // Tasks table
+        // Routine tasks table (main tasks table)
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS routine_tasks (
                 id TEXT PRIMARY KEY,
@@ -139,12 +139,19 @@ public final class GRDBManager {
                 estimatedDuration INTEGER DEFAULT 30,
                 notes TEXT,
                 photoPaths TEXT,
+                requires_photo INTEGER DEFAULT 0,
+                priority TEXT DEFAULT 'medium',
+                status TEXT DEFAULT 'pending',
+                assigned_worker_id TEXT,
+                building_id TEXT,
                 FOREIGN KEY (buildingId) REFERENCES buildings(id),
-                FOREIGN KEY (workerId) REFERENCES workers(id)
+                FOREIGN KEY (workerId) REFERENCES workers(id),
+                FOREIGN KEY (assigned_worker_id) REFERENCES workers(id),
+                FOREIGN KEY (building_id) REFERENCES buildings(id)
             )
         """)
         
-        // Worker assignments
+        // Worker building assignments
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS worker_building_assignments (
                 id TEXT PRIMARY KEY,
@@ -214,15 +221,137 @@ public final class GRDBManager {
                 id TEXT PRIMARY KEY,
                 task_id TEXT NOT NULL,
                 worker_id TEXT NOT NULL,
+                building_id TEXT NOT NULL,
                 completion_time TEXT NOT NULL,
                 photo_paths TEXT,
                 notes TEXT,
                 quality_score INTEGER,
                 verified_by TEXT,
+                location_lat REAL,
+                location_lon REAL,
+                sync_status TEXT DEFAULT 'pending',
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (task_id) REFERENCES routine_tasks(id),
                 FOREIGN KEY (worker_id) REFERENCES workers(id),
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
                 FOREIGN KEY (verified_by) REFERENCES workers(id)
+            )
+        """)
+        
+        // Photo evidence (enhanced from PhotoEvidenceService)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS photo_evidence (
+                id TEXT PRIMARY KEY,
+                completion_id TEXT NOT NULL,
+                task_id TEXT,
+                worker_id TEXT,
+                local_path TEXT NOT NULL,
+                thumbnail_path TEXT,
+                remote_url TEXT,
+                file_size INTEGER,
+                mime_type TEXT DEFAULT 'image/jpeg',
+                metadata TEXT,
+                uploaded_at TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (completion_id) REFERENCES task_completions(id) ON DELETE CASCADE,
+                FOREIGN KEY (task_id) REFERENCES routine_tasks(id),
+                FOREIGN KEY (worker_id) REFERENCES workers(id)
+            )
+        """)
+        
+        // Site departure logs (from paste.txt)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS site_departure_logs (
+                id TEXT PRIMARY KEY,
+                worker_id TEXT NOT NULL,
+                building_id TEXT NOT NULL,
+                departed_at TEXT NOT NULL,
+                tasks_completed_count INTEGER NOT NULL,
+                tasks_remaining_count INTEGER NOT NULL,
+                photos_provided_count INTEGER NOT NULL,
+                is_fully_compliant INTEGER NOT NULL,
+                notes TEXT,
+                next_destination_building_id TEXT,
+                departure_method TEXT,
+                location_lat REAL,
+                location_lon REAL,
+                time_spent_minutes INTEGER,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (worker_id) REFERENCES workers(id),
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
+                FOREIGN KEY (next_destination_building_id) REFERENCES buildings(id)
+            )
+        """)
+        
+        // Sync queue (for offline support and photo uploads)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS sync_queue (
+                id TEXT PRIMARY KEY,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                data TEXT,
+                retry_count INTEGER DEFAULT 0,
+                last_retry_at TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(entity_type, entity_id, action)
+            )
+        """)
+        
+        // Worker capabilities
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS worker_capabilities (
+                worker_id TEXT PRIMARY KEY,
+                can_upload_photos INTEGER DEFAULT 1,
+                can_add_notes INTEGER DEFAULT 1,
+                can_view_map INTEGER DEFAULT 1,
+                can_add_emergency_tasks INTEGER DEFAULT 0,
+                requires_photo_for_sanitation INTEGER DEFAULT 1,
+                simplified_interface INTEGER DEFAULT 0,
+                max_daily_tasks INTEGER DEFAULT 50,
+                preferred_language TEXT DEFAULT 'en',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (worker_id) REFERENCES workers(id)
+            )
+        """)
+        
+        // Worker time logs (for metrics calculation)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS worker_time_logs (
+                id TEXT PRIMARY KEY,
+                workerId TEXT NOT NULL,
+                clockInTime TEXT NOT NULL,
+                clockOutTime TEXT,
+                breakMinutes INTEGER DEFAULT 0,
+                totalMinutes INTEGER,
+                buildingId TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (workerId) REFERENCES workers(id),
+                FOREIGN KEY (buildingId) REFERENCES buildings(id)
+            )
+        """)
+        
+        // Building metrics cache
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS building_metrics_cache (
+                building_id TEXT PRIMARY KEY,
+                completion_rate REAL,
+                average_task_time INTEGER,
+                overdue_tasks INTEGER,
+                total_tasks INTEGER,
+                active_workers INTEGER,
+                is_compliant INTEGER,
+                overall_score REAL,
+                last_updated TEXT,
+                pending_tasks INTEGER,
+                urgent_tasks_count INTEGER,
+                has_worker_on_site INTEGER,
+                maintenance_efficiency REAL,
+                weekly_completion_trend REAL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id)
             )
         """)
         
@@ -244,8 +373,8 @@ public final class GRDBManager {
                 FOREIGN KEY (assignedTo) REFERENCES workers(id)
             )
         """)
-
-        // Legacy compatibility tables needed by other services
+        
+        // Legacy compatibility tables
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS worker_assignments (
                 worker_id TEXT NOT NULL,
@@ -273,10 +402,10 @@ public final class GRDBManager {
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
-
-        // --- INVENTORY SYSTEM TABLES (NEW & ENHANCED) ---
-
-        // Inventory items (ENHANCED)
+        
+        // --- INVENTORY SYSTEM TABLES ---
+        
+        // Inventory items
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS inventory_items (
                 id TEXT PRIMARY KEY,
@@ -303,15 +432,15 @@ public final class GRDBManager {
                 FOREIGN KEY (building_id) REFERENCES buildings(id)
             )
         """)
-
-        // Inventory transactions for tracking usage/restocking
+        
+        // Inventory transactions
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS inventory_transactions (
                 id TEXT PRIMARY KEY,
                 item_id TEXT NOT NULL,
                 worker_id TEXT,
                 task_id TEXT,
-                transaction_type TEXT NOT NULL, -- 'use', 'restock', 'adjust', 'waste', 'return'
+                transaction_type TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
                 quantity_before INTEGER NOT NULL,
                 quantity_after INTEGER NOT NULL,
@@ -330,7 +459,7 @@ public final class GRDBManager {
                 FOREIGN KEY (verified_by) REFERENCES workers(id)
             )
         """)
-
+        
         // Supply requests
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS supply_requests (
@@ -363,7 +492,7 @@ public final class GRDBManager {
                 FOREIGN KEY (received_by) REFERENCES workers(id)
             )
         """)
-
+        
         // Supply request items
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS supply_request_items (
@@ -382,14 +511,14 @@ public final class GRDBManager {
                 FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
             )
         """)
-
-        // Inventory alerts/notifications
+        
+        // Inventory alerts
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS inventory_alerts (
                 id TEXT PRIMARY KEY,
                 item_id TEXT NOT NULL,
                 building_id TEXT NOT NULL,
-                alert_type TEXT NOT NULL, -- 'low_stock', 'out_of_stock', 'expiring', 'overstock'
+                alert_type TEXT NOT NULL,
                 threshold_value INTEGER,
                 current_value INTEGER,
                 message TEXT NOT NULL,
@@ -410,35 +539,75 @@ public final class GRDBManager {
     }
     
     private func createIndexes(_ db: Database) throws {
+        // Worker indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_workers_email ON workers(email)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_workers_active ON workers(isActive)")
+        
+        // Task indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_building ON routine_tasks(buildingId)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_worker ON routine_tasks(workerId)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_status ON routine_tasks(status)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_scheduled_date ON routine_tasks(scheduledDate)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_tasks_completed ON routine_tasks(isCompleted)")
+        
+        // Session indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sessions_worker_active ON user_sessions(worker_id, is_active)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_login_history_worker ON login_history(worker_id, login_time)")
-
+        
+        // Clock session indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_clock_sessions_worker ON clock_sessions(worker_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_clock_sessions_building ON clock_sessions(building_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_clock_sessions_date ON clock_sessions(clock_in_time)")
+        
+        // Task completion indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_task_completions_task ON task_completions(task_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_task_completions_worker ON task_completions(worker_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_task_completions_date ON task_completions(completion_time)")
+        
+        // Photo evidence indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_photo_evidence_completion ON photo_evidence(completion_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_photo_evidence_task ON photo_evidence(task_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_photo_evidence_upload ON photo_evidence(uploaded_at)")
+        
+        // Site departure log indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_departure_logs_worker_building ON site_departure_logs(worker_id, building_id, departed_at)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_departure_logs_date ON site_departure_logs(departed_at)")
+        
+        // Sync queue indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_entity ON sync_queue(entity_type, entity_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_sync_queue_retry ON sync_queue(retry_count)")
+        
+        // Worker assignment indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_worker_assignments_worker ON worker_building_assignments(worker_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_worker_assignments_building ON worker_building_assignments(building_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_worker_assignments_active ON worker_building_assignments(is_active)")
+        
+        // Building metrics cache indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_metrics_cache_updated ON building_metrics_cache(last_updated)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_metrics_cache_score ON building_metrics_cache(overall_score)")
+        
         // Inventory indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inventory_building ON inventory_items(building_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inventory_category ON inventory_items(category)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory_items(status)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inventory_active ON inventory_items(is_active)")
-
+        
         // Inventory transaction indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_trans_item ON inventory_transactions(item_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_trans_type ON inventory_transactions(transaction_type)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_trans_date ON inventory_transactions(created_at)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_trans_worker ON inventory_transactions(worker_id)")
-
+        
         // Supply request indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_supply_req_building ON supply_requests(building_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_supply_req_status ON supply_requests(status)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_supply_req_requested_by ON supply_requests(requested_by)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_supply_req_number ON supply_requests(request_number)")
-
+        
         // Supply request items indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_supply_item_request ON supply_request_items(request_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_supply_item_item ON supply_request_items(item_id)")
-
+        
         // Inventory alerts indexes
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_alert_item ON inventory_alerts(item_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_alert_building ON inventory_alerts(building_id)")
@@ -508,7 +677,7 @@ public final class GRDBManager {
             return db.lastInsertedRowID
         }
     }
-
+    
     public func inTransaction<T>(_ block: @escaping (Database) throws -> T) async throws -> T {
         return try await dbPool.write { db in
             var result: T?
@@ -589,15 +758,26 @@ public final class GRDBManager {
     public func createSession(for workerId: String, deviceInfo: String = "iOS App") async throws -> String {
         let sessionId = UUID().uuidString
         let expiresAt = Date().addingTimeInterval(24 * 60 * 60)
-        try await execute("INSERT INTO user_sessions (session_id, worker_id, device_info, ip_address, login_time, last_activity, expires_at, is_active) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?, 1)", [sessionId, workerId, deviceInfo, "127.0.0.1", ISO8601DateFormatter().string(from: expiresAt)])
+        try await execute("""
+            INSERT INTO user_sessions (
+                session_id, worker_id, device_info, ip_address, 
+                login_time, last_activity, expires_at, is_active
+            ) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?, 1)
+        """, [sessionId, workerId, deviceInfo, "127.0.0.1", ISO8601DateFormatter().string(from: expiresAt)])
         return sessionId
     }
     
     public func validateSession(_ sessionId: String) async throws -> AuthenticatedUser? {
-        let rows = try await query("SELECT w.*, s.expires_at FROM user_sessions s JOIN workers w ON s.worker_id = w.id WHERE s.session_id = ? AND s.is_active = 1 AND w.isActive = 1", [sessionId])
+        let rows = try await query("""
+            SELECT w.*, s.expires_at FROM user_sessions s 
+            JOIN workers w ON s.worker_id = w.id 
+            WHERE s.session_id = ? AND s.is_active = 1 AND w.isActive = 1
+        """, [sessionId])
         guard let row = rows.first else { return nil }
         
-        if let expiresAtString = row["expires_at"] as? String, let expiresAt = ISO8601DateFormatter().date(from: expiresAtString), Date() > expiresAt {
+        if let expiresAtString = row["expires_at"] as? String,
+           let expiresAt = ISO8601DateFormatter().date(from: expiresAtString),
+           Date() > expiresAt {
             try await execute("UPDATE user_sessions SET is_active = 0 WHERE session_id = ?", [sessionId])
             return nil
         }
@@ -606,21 +786,31 @@ public final class GRDBManager {
         
         let idString = row["id"] as? String ?? "0"
         return AuthenticatedUser(
-            id: Int(idString) ?? 0, name: row["name"] as? String ?? "", email: row["email"] as? String ?? "",
-            role: row["role"] as? String ?? "worker", workerId: idString, displayName: row["display_name"] as? String,
+            id: Int(idString) ?? 0,
+            name: row["name"] as? String ?? "",
+            email: row["email"] as? String ?? "",
+            role: row["role"] as? String ?? "worker",
+            workerId: idString,
+            displayName: row["display_name"] as? String,
             timezone: row["timezone"] as? String ?? "America/New_York"
         )
     }
     
     public func logout(workerId: String) async throws {
-        try await execute("UPDATE user_sessions SET is_active = 0, last_activity = datetime('now') WHERE worker_id = ? AND is_active = 1", [workerId])
+        try await execute("""
+            UPDATE user_sessions SET is_active = 0, last_activity = datetime('now') 
+            WHERE worker_id = ? AND is_active = 1
+        """, [workerId])
     }
     
     private func isAccountLocked(email: String) async throws -> Bool {
         let rows = try await query("SELECT loginAttempts, lockedUntil FROM workers WHERE email = ?", [email])
         guard let row = rows.first else { return false }
         let attempts = row["loginAttempts"] as? Int64 ?? 0
-        if attempts >= 5, let lockedUntilString = row["lockedUntil"] as? String, let lockedUntil = ISO8601DateFormatter().date(from: lockedUntilString), Date() < lockedUntil {
+        if attempts >= 5,
+           let lockedUntilString = row["lockedUntil"] as? String,
+           let lockedUntil = ISO8601DateFormatter().date(from: lockedUntilString),
+           Date() < lockedUntil {
             return true
         }
         return false
@@ -638,96 +828,189 @@ public final class GRDBManager {
     private func recordLoginAttempt(email: String, success: Bool, reason: String?) async {
         let workerRows = try? await query("SELECT id FROM workers WHERE email = ?", [email])
         let workerId = workerRows?.first?["id"] as? String
-        try? await execute("INSERT INTO login_history (worker_id, email, login_time, success, failure_reason, ip_address, device_info) VALUES (?, ?, datetime('now'), ?, ?, ?, ?)", [workerId as Any, email, success ? 1 : 0, reason as Any, "127.0.0.1", "iOS App"])
+        try? await execute("""
+            INSERT INTO login_history (
+                worker_id, email, login_time, success, 
+                failure_reason, ip_address, device_info
+            ) VALUES (?, ?, datetime('now'), ?, ?, ?, ?)
+        """, [workerId as Any, email, success ? 1 : 0, reason as Any, "127.0.0.1", "iOS App"])
     }
     
     // MARK: - Real-time Observation
     
     public func observeBuildings() -> AnyPublisher<[CoreTypes.NamedCoordinate], Error> {
         ValueObservation.tracking { db in
-            try Row.fetchAll(db, sql: "SELECT id, name, address, latitude, longitude FROM buildings ORDER BY name").map { row in
+            try Row.fetchAll(db, sql: """
+                SELECT id, name, address, latitude, longitude 
+                FROM buildings ORDER BY name
+            """).map { row in
                 CoreTypes.NamedCoordinate(
-                    id: row["id"], name: row["name"], address: row["address"],
-                    latitude: row["latitude"] ?? 0.0, longitude: row["longitude"] ?? 0.0
+                    id: row["id"],
+                    name: row["name"],
+                    address: row["address"],
+                    latitude: row["latitude"] ?? 0.0,
+                    longitude: row["longitude"] ?? 0.0
                 )
             }
         }.publisher(in: dbPool).eraseToAnyPublisher()
     }
-
+    
     public func observeTasks(for buildingId: String) -> AnyPublisher<[CoreTypes.ContextualTask], Error> {
         ValueObservation.tracking { db in
-            try Row.fetchAll(db, sql: "SELECT t.*, b.name as buildingName, w.name as workerName FROM routine_tasks t LEFT JOIN buildings b ON t.buildingId = b.id LEFT JOIN workers w ON t.workerId = w.id WHERE t.buildingId = ? ORDER BY t.scheduledDate", arguments: [buildingId])
+            try Row.fetchAll(db, sql: """
+                SELECT t.*, b.name as buildingName, w.name as workerName 
+                FROM routine_tasks t 
+                LEFT JOIN buildings b ON t.buildingId = b.id 
+                LEFT JOIN workers w ON t.workerId = w.id 
+                WHERE t.buildingId = ? 
+                ORDER BY t.scheduledDate
+            """, arguments: [buildingId])
                 .compactMap { self.contextualTaskFromRow($0) }
         }.publisher(in: dbPool).eraseToAnyPublisher()
     }
-
+    
     public func contextualTaskFromRow(_ row: Row) -> CoreTypes.ContextualTask? {
         guard let id = row["id"] as? String, let title = row["title"] as? String else { return nil }
         return CoreTypes.ContextualTask(
-            id: id, title: title, description: row["description"],
+            id: id,
+            title: title,
+            description: row["description"],
             isCompleted: (row["isCompleted"] as? Int64 ?? 0) > 0,
             completedDate: (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             dueDate: (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             category: (row["category"] as? String).flatMap(CoreTypes.TaskCategory.init(rawValue:)),
             urgency: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)),
-            building: (row["buildingName"] as? String).map { CoreTypes.NamedCoordinate(id: row["buildingId"], name: $0, address: "", latitude: 0, longitude: 0) },
-            worker: (row["workerName"] as? String).map { CoreTypes.WorkerProfile(id: row["workerId"], name: $0, email: "", role: .worker) },
-            buildingId: row["buildingId"], assignedWorkerId: row["workerId"],
+            building: (row["buildingName"] as? String).map {
+                CoreTypes.NamedCoordinate(
+                    id: row["buildingId"],
+                    name: $0,
+                    address: "",
+                    latitude: 0,
+                    longitude: 0
+                )
+            },
+            worker: (row["workerName"] as? String).map {
+                CoreTypes.WorkerProfile(
+                    id: row["workerId"],
+                    name: $0,
+                    email: "",
+                    role: .worker
+                )
+            },
+            buildingId: row["buildingId"],
+            assignedWorkerId: row["workerId"],
             priority: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:))
         )
     }
-
+    
     // MARK: - Inventory Management Helpers
-
+    
     public func generateSupplyRequestNumber() async throws -> String {
         let year = Calendar.current.component(.year, from: Date())
         let month = String(format: "%02d", Calendar.current.component(.month, from: Date()))
-        let rows = try await query("SELECT COUNT(*) as count FROM supply_requests WHERE strftime('%Y-%m', created_at) = ?", ["\(year)-\(month)"])
+        let rows = try await query("""
+            SELECT COUNT(*) as count FROM supply_requests 
+            WHERE strftime('%Y-%m', created_at) = ?
+        """, ["\(year)-\(month)"])
         let count = (rows.first?["count"] as? Int64 ?? 0) + 1
         return "SR-\(year)\(month)-\(String(format: "%04d", count))"
     }
-
+    
     public func checkLowStockItems(for buildingId: String) async throws -> [[String: Any]] {
-        return try await query("SELECT * FROM inventory_items WHERE building_id = ? AND is_active = 1 AND current_stock <= minimum_stock ORDER BY (CAST(current_stock AS REAL) / CAST(minimum_stock AS REAL)) ASC", [buildingId])
+        return try await query("""
+            SELECT * FROM inventory_items 
+            WHERE building_id = ? AND is_active = 1 AND current_stock <= minimum_stock 
+            ORDER BY (CAST(current_stock AS REAL) / CAST(minimum_stock AS REAL)) ASC
+        """, [buildingId])
     }
-
+    
     public func getInventoryValue(for buildingId: String) async throws -> Double {
-        let rows = try await query("SELECT SUM(current_stock * cost) as total_value FROM inventory_items WHERE building_id = ? AND is_active = 1", [buildingId])
+        let rows = try await query("""
+            SELECT SUM(current_stock * cost) as total_value 
+            FROM inventory_items 
+            WHERE building_id = ? AND is_active = 1
+        """, [buildingId])
         return rows.first?["total_value"] as? Double ?? 0.0
     }
-
-    public func recordInventoryTransaction(itemId: String, type: String, quantity: Int, workerId: String, taskId: String? = nil, reason: String? = nil, notes: String? = nil) async throws {
+    
+    public func recordInventoryTransaction(
+        itemId: String,
+        type: String,
+        quantity: Int,
+        workerId: String,
+        taskId: String? = nil,
+        reason: String? = nil,
+        notes: String? = nil
+    ) async throws {
         try await inTransaction { db in
-            let itemRow = try Row.fetchOne(db, sql: "SELECT current_stock, minimum_stock, name, building_id FROM inventory_items WHERE id = ?", arguments: [itemId])
-            guard let currentStock = itemRow?["current_stock"] as? Int else { throw DatabaseError.itemNotFound(itemId) }
+            let itemRow = try Row.fetchOne(db, sql: """
+                SELECT current_stock, minimum_stock, name, building_id 
+                FROM inventory_items WHERE id = ?
+            """, arguments: [itemId])
+            guard let currentStock = itemRow?["current_stock"] as? Int else {
+                throw DatabaseError.itemNotFound(itemId)
+            }
             
             let quantityBefore = currentStock
             let quantityChange = (type == "use" || type == "waste") ? -quantity : quantity
             let quantityAfter = quantityBefore + quantityChange
             
-            try db.execute(sql: "INSERT INTO inventory_transactions (id, item_id, worker_id, task_id, transaction_type, quantity, quantity_before, quantity_after, reason, notes, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))", arguments: [UUID().uuidString, itemId, workerId, taskId, type, quantity, quantityBefore, quantityAfter, reason, notes, workerId])
+            try db.execute(sql: """
+                INSERT INTO inventory_transactions (
+                    id, item_id, worker_id, task_id, transaction_type, 
+                    quantity, quantity_before, quantity_after, reason, 
+                    notes, performed_by, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            """, arguments: [
+                UUID().uuidString, itemId, workerId, taskId, type,
+                quantity, quantityBefore, quantityAfter, reason,
+                notes, workerId
+            ])
             
-            try db.execute(sql: "UPDATE inventory_items SET current_stock = ?, updated_at = datetime('now'), status = CASE WHEN ? <= 0 THEN 'out_of_stock' WHEN ? <= minimum_stock THEN 'low_stock' ELSE 'in_stock' END, last_restocked = CASE WHEN ? = 'restock' THEN datetime('now') ELSE last_restocked END WHERE id = ?", arguments: [quantityAfter, quantityAfter, quantityAfter, type, itemId])
+            try db.execute(sql: """
+                UPDATE inventory_items 
+                SET current_stock = ?, 
+                    updated_at = datetime('now'), 
+                    status = CASE 
+                        WHEN ? <= 0 THEN 'out_of_stock' 
+                        WHEN ? <= minimum_stock THEN 'low_stock' 
+                        ELSE 'in_stock' 
+                    END, 
+                    last_restocked = CASE 
+                        WHEN ? = 'restock' THEN datetime('now') 
+                        ELSE last_restocked 
+                    END 
+                WHERE id = ?
+            """, arguments: [quantityAfter, quantityAfter, quantityAfter, type, itemId])
             
             let minimumStock = itemRow?["minimum_stock"] as? Int ?? 0
             if quantityAfter <= minimumStock && quantityBefore > minimumStock {
                 let itemName = itemRow?["name"] as? String ?? "Item"
                 let buildingId = itemRow?["building_id"] as? String ?? "Unknown"
-                try db.execute(sql: "INSERT INTO inventory_alerts (id, item_id, building_id, alert_type, threshold_value, current_value, message, created_at) VALUES (?, ?, ?, 'low_stock', ?, ?, ?, datetime('now'))", arguments: [UUID().uuidString, itemId, buildingId, minimumStock, quantityAfter, "Low stock alert for \(itemName)"])
+                try db.execute(sql: """
+                    INSERT INTO inventory_alerts (
+                        id, item_id, building_id, alert_type, 
+                        threshold_value, current_value, message, created_at
+                    ) VALUES (?, ?, ?, 'low_stock', ?, ?, ?, datetime('now'))
+                """, arguments: [
+                    UUID().uuidString, itemId, buildingId,
+                    minimumStock, quantityAfter,
+                    "Low stock alert for \(itemName)"
+                ])
             }
         }
     }
 }
 
-
 // MARK: - Custom Errors
+
 enum DatabaseError: LocalizedError {
     case duplicateUser(String)
     case invalidSession(String)
     case authenticationFailed(String)
     case unknownError
     case itemNotFound(String)
-
+    
     var errorDescription: String? {
         switch self {
         case .duplicateUser(let msg): return msg
@@ -755,7 +1038,15 @@ public struct AuthenticatedUser: Codable, Equatable {
     public let displayName: String?
     public let timezone: String
     
-    public init(id: Int, name: String, email: String, role: String, workerId: String, displayName: String? = nil, timezone: String = "America/New_York") {
+    public init(
+        id: Int,
+        name: String,
+        email: String,
+        role: String,
+        workerId: String,
+        displayName: String? = nil,
+        timezone: String = "America/New_York"
+    ) {
         self.id = id
         self.name = name
         self.email = email

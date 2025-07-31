@@ -6,6 +6,8 @@
 //  ✅ ALIGNED: With DashboardSyncService using CoreTypes.DashboardUpdate
 //  ✅ PHOTO EVIDENCE: Full integration with PhotoEvidenceService
 //  ✅ READY: Full cross-dashboard integration with photo support
+//  ✅ FIXED: Removed duplicate extension causing syntax error
+//  ✅ FIXED: Removed duplicate isOverdue property (already in CoreTypes)
 //
 
 import Foundation
@@ -761,13 +763,3 @@ struct AdminPortfolioSummary {
         )
     }
 }
-
-// Extension to check if task is overdue
-extension CoreTypes.ContextualTask {
-    var isOverdue: Bool {
-        guard status != .completed,
-              let scheduled = scheduledDate else {
-            return false
-        }
-        return scheduled < Date()
-    }

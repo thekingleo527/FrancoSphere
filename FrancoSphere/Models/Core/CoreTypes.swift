@@ -8,8 +8,8 @@
 //  ✅ FIXED: Removed duplicate needsRestock property
 //  ✅ FIXED: Added missing BuildingIntelligence type
 //  ✅ FIXED: Made TaskFrequency accessible
-//  ✅ FIXED: Made rawValue public for RawRepresentable conformance
-//  ✅ FIXED: Removed duplicate stockLevel property
+//  ✅ FIXED: Removed duplicate rawValue property from TaskUrgency
+//  ✅ FIXED: Removed all duplicate properties from InventoryItem
 //  ✅ ORGANIZED: Clean architecture with data types only
 //
 //  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
@@ -1223,6 +1223,7 @@ public struct CoreTypes {
         public var quantity: Int { currentStock }
         public var minThreshold: Int { minimumStock }
         public var restockStatus: RestockStatus { status }
+        public var stockLevel: Double { stockPercentage }
         
         public init(
             id: String = UUID().uuidString,
@@ -1252,7 +1253,7 @@ public struct CoreTypes {
             self.status = status
         }
         
-        // Computed properties
+        // Computed property - only declared once
         public var needsRestock: Bool {
             currentStock <= minimumStock
         }
@@ -1260,8 +1261,6 @@ public struct CoreTypes {
         public var stockPercentage: Double {
             maxStock > 0 ? Double(currentStock) / Double(maxStock) : 0
         }
-        
-        public var stockLevel: Double { stockPercentage }
     }
     
     // MARK: - AI Types
