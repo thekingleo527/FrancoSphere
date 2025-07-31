@@ -13,6 +13,7 @@ import SwiftUI
 import Foundation
 
 struct BuildingIntelligencePanel: View {
+    // MARK: - Properties
     let building: NamedCoordinate
     @Binding var selectedTab: IntelligenceTab
     let isMyBuilding: Bool
@@ -20,6 +21,8 @@ struct BuildingIntelligencePanel: View {
     
     @StateObject private var viewModel = BuildingIntelligenceViewModel()
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
+    
+    // ✅ FIXED: Correct usage of @Environment property wrapper for dismiss action
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Initialization
@@ -30,6 +33,7 @@ struct BuildingIntelligencePanel: View {
         self.isPrimaryBuilding = isPrimaryBuilding
     }
     
+    // MARK: - IntelligenceTab Enum
     enum IntelligenceTab: String, CaseIterable {
         case overview = "Overview"
         case allWorkers = "All Workers"
@@ -58,6 +62,7 @@ struct BuildingIntelligencePanel: View {
         }
     }
     
+    // MARK: - Body
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -109,7 +114,7 @@ struct BuildingIntelligencePanel: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(.orange.opacity(0.1))
+        .background(Color.orange.opacity(0.1))
     }
     
     // MARK: - Intelligence Tab Bar
@@ -127,7 +132,11 @@ struct BuildingIntelligencePanel: View {
     }
     
     private func tabButton(for tab: IntelligenceTab) -> some View {
-        Button(action: { selectedTab = tab }) {
+        Button(action: {
+            withAnimation(.easeInOut) {
+                selectedTab = tab
+            }
+        }) {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
                     .font(.caption)
@@ -234,15 +243,12 @@ struct BuildingOverviewTab: View {
             if isLoading {
                 IntelligenceLoadingView(message: "Loading building overview...")
             } else {
-                // Building status card
                 buildingStatusCard
                 
-                // Metrics grid
                 if let metrics = metrics {
                     metricsGrid(metrics)
                 }
                 
-                // Current activity
                 currentActivitySection
             }
         }
@@ -348,13 +354,8 @@ struct AllWorkersTab: View {
             if isLoading {
                 IntelligenceLoadingView(message: "Loading worker information...")
             } else {
-                // Workers on site now
                 currentWorkersSection
-                
-                // Primary workers
                 primaryWorkersSection
-                
-                // All assigned workers
                 allWorkersSection
             }
         }
@@ -452,10 +453,7 @@ struct FullScheduleTab: View {
             if isLoading {
                 IntelligenceLoadingView(message: "Loading schedule information...")
             } else {
-                // Today's schedule
                 todaysScheduleSection
-                
-                // Weekly routines
                 weeklyRoutinesSection
             }
         }
@@ -527,10 +525,7 @@ struct BuildingHistoryTab: View {
             if isLoading {
                 IntelligenceLoadingView(message: "Loading building history...")
             } else {
-                // Recent history
                 recentHistorySection
-                
-                // Patterns
                 patternsSection
             }
         }
@@ -606,13 +601,9 @@ struct EmergencyInfoTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             if isLoading {
-                // ✅ FIXED: Changed LoadingView to IntelligenceLoadingView
                 IntelligenceLoadingView(message: "Loading emergency information...")
             } else {
-                // Emergency contacts
                 emergencyContactsSection
-                
-                // Emergency procedures
                 emergencyProceduresSection
             }
         }
@@ -686,9 +677,8 @@ struct WorkerRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Worker avatar
             Circle()
-                .fill(.blue.opacity(0.3))
+                .fill(Color.blue.opacity(0.3))
                 .frame(width: 40, height: 40)
                 .overlay(
                     Text(String(worker.name.prefix(1)))
@@ -697,7 +687,6 @@ struct WorkerRow: View {
                         .foregroundColor(.blue)
                 )
             
-            // Worker info
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text(worker.name)
@@ -712,7 +701,7 @@ struct WorkerRow: View {
                             .foregroundColor(.blue)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(.blue.opacity(0.2))
+                            .background(Color.blue.opacity(0.2))
                             .clipShape(Capsule())
                     }
                 }
@@ -724,7 +713,6 @@ struct WorkerRow: View {
             
             Spacer()
             
-            // Status indicators
             VStack(alignment: .trailing, spacing: 2) {
                 if showOnSiteStatus {
                     HStack(spacing: 4) {
@@ -792,9 +780,7 @@ struct TaskScheduleRow: View {
         case .low: return .green
         case .medium: return .yellow
         case .high: return .orange
-        case .critical: return .red
-        case .urgent: return .red
-        case .emergency: return .red
+        case .critical, .urgent, .emergency: return .red
         }
     }
 }
@@ -898,10 +884,6 @@ struct IntelligenceLoadingView: View {
         .cornerRadius(12)
     }
 }
-
-// MARK: - Fixed BuildingIntelligenceViewModel Integration
-// Note: This assumes the BuildingIntelligenceViewModel from earlier artifact exists
-// If not, create it in ViewModels/BuildingIntelligenceViewModel.swift
 
 // MARK: - Preview
 

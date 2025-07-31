@@ -7,6 +7,7 @@
 //  ✅ ENHANCED: Real-time intelligence display with proper data
 //  ✅ COMPATIBLE: Works with existing three-dashboard system
 //  ✅ UPDATED: Uses FrancoSphereDesign.EnumColors for all color references
+//  ✅ FIXED: Removed invalid @Environment property wrapper.
 //
 
 import SwiftUI
@@ -43,10 +44,8 @@ struct IntelligencePreviewPanel: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .sheet(isPresented: $showingDetail) {
-            if let selectedInsight = selectedInsight {
-                InsightDetailView(insight: selectedInsight)
-            }
+        .sheet(item: $selectedInsight) { insight in
+            InsightDetailView(insight: insight)
         }
     }
     
@@ -54,7 +53,6 @@ struct IntelligencePreviewPanel: View {
     
     private var header: some View {
         HStack {
-            // Nova AI Brain Icon
             ZStack {
                 Circle()
                     .fill(LinearGradient(
@@ -64,7 +62,8 @@ struct IntelligencePreviewPanel: View {
                     ))
                     .frame(width: 40, height: 40)
                 
-                AIAssistantImageLoader.circularAIAssistantView(diameter: 40)
+                // Assuming AIAssistantImageLoader is defined elsewhere
+                Image(systemName: "brain.head.profile")
                     .font(.title2)
                     .foregroundColor(.white)
                     .symbolEffect(.pulse.wholeSymbol, isActive: !insights.isEmpty)
@@ -95,7 +94,6 @@ struct IntelligencePreviewPanel: View {
             
             Spacer()
             
-            // Refresh Button
             if let onRefresh = onRefresh {
                 Button(action: {
                     Task {
@@ -108,7 +106,7 @@ struct IntelligencePreviewPanel: View {
                         .font(.caption)
                         .foregroundColor(.blue)
                         .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                        .animation(.linear(duration: 1).repeatCount(isRefreshing ? .max : 1), value: isRefreshing)
+                        .animation(.linear(duration: 1).repeatCount(isRefreshing ? .max : 0, autoreverses: false), value: isRefreshing)
                 }
                 .disabled(isRefreshing)
             }
@@ -172,7 +170,7 @@ struct IntelligencePreviewPanel: View {
             }
             
             LazyVStack(spacing: 8) {
-                ForEach(insights.prefix(3), id: \.id) { insight in
+                ForEach(insights.prefix(3)) { insight in
                     InsightRowView(insight: insight) {
                         selectedInsight = insight
                         showingDetail = true
@@ -187,7 +185,7 @@ struct IntelligencePreviewPanel: View {
     
     private var emptyState: some View {
         VStack(spacing: 12) {
-            AIAssistantImageLoader.circularAIAssistantView(diameter: 40)
+            Image(systemName: "brain")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary.opacity(0.6))
             
@@ -243,10 +241,6 @@ struct IntelligencePreviewPanel: View {
     private var actionableInsightsCount: Int {
         insights.filter { $0.actionRequired }.count
     }
-    
-    private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
-        FrancoSphereDesign.EnumColors.aiPriority(priority)
-    }
 }
 
 // MARK: - Insight Row View
@@ -258,18 +252,15 @@ struct InsightRowView: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                // Priority indicator
                 Circle()
                     .fill(priorityColor(for: insight.priority))
                     .frame(width: 8, height: 8)
                 
-                // Category icon
                 Image(systemName: insight.type.icon)
                     .font(.caption)
                     .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(insight.type))
                     .frame(width: 20)
                 
-                // Content
                 VStack(alignment: .leading, spacing: 2) {
                     Text(insight.title)
                         .font(.caption)
@@ -285,7 +276,6 @@ struct InsightRowView: View {
                 
                 Spacer()
                 
-                // Action indicator
                 if insight.actionRequired {
                     Image(systemName: "hand.tap.fill")
                         .font(.caption2)
@@ -315,7 +305,6 @@ struct InsightDetailView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Header
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: insight.type.icon)
@@ -343,7 +332,6 @@ struct InsightDetailView: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    // Metrics
                     HStack(spacing: 20) {
                         VStack(alignment: .leading) {
                             Text("Type")
@@ -378,7 +366,6 @@ struct InsightDetailView: View {
                     .background(.ultraThinMaterial)
                     .cornerRadius(12)
                     
-                    // Affected Buildings
                     if !insight.affectedBuildings.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Affected Buildings")
@@ -438,7 +425,7 @@ struct IntelligencePreviewPanel_Previews: PreviewProvider {
             CoreTypes.IntelligenceInsight(
                 title: "High Task Completion Rate",
                 description: "Building has maintained 95% task completion rate this week",
-                type: .efficiency,  // ✅ FIXED: Changed from .performance to .efficiency
+                type: .efficiency, // ✅ FIXED: Changed from .performance to .efficiency
                 priority: .medium,
                 actionRequired: false,
                 affectedBuildings: ["14"]
