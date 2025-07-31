@@ -5,6 +5,7 @@
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ ALIGNED: Matches actual service method signatures
 //  ✅ FUNCTIONAL: Works with existing CoreTypes and services
+//  ✅ RENAMED: MetricCard to WorkerMetricCard to avoid conflicts
 //
 
 import SwiftUI
@@ -148,25 +149,25 @@ struct PerformanceMetricsView: View {
             }
             
             HStack(spacing: 8) {
-                MetricCard(
+                WorkerMetricCard(
                     title: "Efficiency",
                     value: "\(Int(metrics.efficiency * 100))%",
                     color: metrics.efficiency > 0.8 ? .green : .orange
                 )
                 
-                MetricCard(
+                WorkerMetricCard(
                     title: "Tasks",
                     value: "\(metrics.tasksCompleted)",
                     color: .blue
                 )
                 
-                MetricCard(
+                WorkerMetricCard(
                     title: "Avg Time",
                     value: formatTime(metrics.averageTime),
                     color: .orange
                 )
                 
-                MetricCard(
+                WorkerMetricCard(
                     title: "Quality",
                     value: "\(Int(metrics.qualityScore * 100))%",
                     color: metrics.qualityScore > 0.8 ? .purple : .orange
@@ -206,7 +207,7 @@ struct PerformanceMetricsView: View {
     }
 }
 
-struct MetricCard: View {
+struct WorkerMetricCard: View {
     let title: String
     let value: String
     let color: Color

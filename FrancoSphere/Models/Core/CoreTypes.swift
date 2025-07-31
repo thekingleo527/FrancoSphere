@@ -6,6 +6,8 @@
 //  ✅ FIXED: All compilation errors eliminated
 //  ✅ FIXED: Removed all color properties - now in FrancoSphereDesign.EnumColors
 //  ✅ FIXED: Removed duplicate needsRestock property
+//  ✅ FIXED: Added missing BuildingIntelligence type
+//  ✅ FIXED: Made TaskFrequency accessible
 //  ✅ ORGANIZED: Clean architecture with data types only
 //
 //  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
@@ -145,6 +147,7 @@ public struct CoreTypes {
         public let id: String
         public let name: String
         public let email: String
+        public let phone: String?
         public let phoneNumber: String?
         public let role: UserRole
         public let skills: [String]?
@@ -152,29 +155,43 @@ public struct CoreTypes {
         public let hireDate: Date?
         public let isActive: Bool
         public let profileImageUrl: URL?
+        public let assignedBuildingIds: [String]
+        public let capabilities: WorkerCapabilities?
+        public let createdAt: Date
+        public let updatedAt: Date
         
         public init(
             id: String,
             name: String,
             email: String,
+            phone: String? = nil,
             phoneNumber: String? = nil,
             role: UserRole,
             skills: [String]? = nil,
             certifications: [String]? = nil,
             hireDate: Date? = nil,
             isActive: Bool = true,
-            profileImageUrl: URL? = nil
+            profileImageUrl: URL? = nil,
+            assignedBuildingIds: [String] = [],
+            capabilities: WorkerCapabilities? = nil,
+            createdAt: Date = Date(),
+            updatedAt: Date = Date()
         ) {
             self.id = id
             self.name = name
             self.email = email
-            self.phoneNumber = phoneNumber
+            self.phone = phone
+            self.phoneNumber = phoneNumber ?? phone
             self.role = role
             self.skills = skills
             self.certifications = certifications
             self.hireDate = hireDate
             self.isActive = isActive
             self.profileImageUrl = profileImageUrl
+            self.assignedBuildingIds = assignedBuildingIds
+            self.capabilities = capabilities
+            self.createdAt = createdAt
+            self.updatedAt = updatedAt
         }
         
         public var displayName: String { name }
@@ -182,6 +199,32 @@ public struct CoreTypes {
         public var isWorker: Bool { role == .worker }
         public var isManager: Bool { role == .manager }
         public var isClient: Bool { role == .client }
+    }
+    
+    // MARK: - Worker Capabilities
+    public struct WorkerCapabilities: Codable, Hashable {
+        public let canUploadPhotos: Bool
+        public let canAddNotes: Bool
+        public let canViewMap: Bool
+        public let canAddEmergencyTasks: Bool
+        public let requiresPhotoForSanitation: Bool
+        public let simplifiedInterface: Bool
+        
+        public init(
+            canUploadPhotos: Bool = true,
+            canAddNotes: Bool = true,
+            canViewMap: Bool = true,
+            canAddEmergencyTasks: Bool = false,
+            requiresPhotoForSanitation: Bool = true,
+            simplifiedInterface: Bool = false
+        ) {
+            self.canUploadPhotos = canUploadPhotos
+            self.canAddNotes = canAddNotes
+            self.canViewMap = canViewMap
+            self.canAddEmergencyTasks = canAddEmergencyTasks
+            self.requiresPhotoForSanitation = requiresPhotoForSanitation
+            self.simplifiedInterface = simplifiedInterface
+        }
     }
     
     public struct WorkerSkill: Codable, Hashable, Identifiable {
@@ -399,6 +442,38 @@ public struct CoreTypes {
         }
     }
     
+    // MARK: - Building Intelligence (Added for compatibility)
+    public struct BuildingIntelligence: Codable, Identifiable {
+        public let id: String
+        public let buildingId: String
+        public let metrics: BuildingMetrics
+        public let insights: [IntelligenceInsight]
+        public let recommendations: [String]
+        public let predictedIssues: [String]
+        public let optimizationOpportunities: [String]
+        public let generatedAt: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            buildingId: String,
+            metrics: BuildingMetrics,
+            insights: [IntelligenceInsight] = [],
+            recommendations: [String] = [],
+            predictedIssues: [String] = [],
+            optimizationOpportunities: [String] = [],
+            generatedAt: Date = Date()
+        ) {
+            self.id = id
+            self.buildingId = buildingId
+            self.metrics = metrics
+            self.insights = insights
+            self.recommendations = recommendations
+            self.predictedIssues = predictedIssues
+            self.optimizationOpportunities = optimizationOpportunities
+            self.generatedAt = generatedAt
+        }
+    }
+    
     // MARK: - PortfolioState
     public struct PortfolioState: Codable {
         public let totalBuildings: Int
@@ -551,6 +626,7 @@ public struct CoreTypes {
         case paused = "Paused"
         case waiting = "Waiting"
     }
+    
     // MARK: - Task Frequency
     public enum TaskFrequency: String, Codable, CaseIterable {
         case daily = "daily"
@@ -572,51 +648,96 @@ public struct CoreTypes {
             case .onDemand: return "On-Demand"
             }
         }
+        
+        public var sortOrder: Int {
+            switch self {
+            case .daily: return 1
+            case .weekly: return 2
+            case .biweekly: return 3
+            case .monthly: return 4
+            case .quarterly: return 5
+            case .annual: return 6
+            case .onDemand: return 7
+            }
+        }
     }
+    
     // MARK: - Contextual Task
     public struct ContextualTask: Identifiable, Codable, Hashable {
         public let id: String
         public let title: String
         public let description: String?
-        public var isCompleted: Bool
-        public var completedDate: Date?
+        public var status: TaskStatus
+        public var completedAt: Date?
+        public var scheduledDate: Date?
         public var dueDate: Date?
         public var category: TaskCategory?
         public var urgency: TaskUrgency?
         public var building: NamedCoordinate?
         public var worker: WorkerProfile?
         public var buildingId: String?
+        public var buildingName: String?
         public var assignedWorkerId: String?
         public var priority: TaskUrgency?
+        public var frequency: TaskFrequency?
+        public var requiresPhoto: Bool?
+        public var estimatedDuration: TimeInterval?
+        public var createdAt: Date
+        public var updatedAt: Date
+        
+        // Computed properties for compatibility
+        public var isCompleted: Bool {
+            get { status == .completed }
+            set { status = newValue ? .completed : .pending }
+        }
+        
+        public var completedDate: Date? {
+            get { completedAt }
+            set { completedAt = newValue }
+        }
         
         public init(
             id: String = UUID().uuidString,
             title: String,
             description: String? = nil,
-            isCompleted: Bool = false,
-            completedDate: Date? = nil,
+            status: TaskStatus = .pending,
+            completedAt: Date? = nil,
+            scheduledDate: Date? = nil,
             dueDate: Date? = nil,
             category: TaskCategory? = nil,
             urgency: TaskUrgency? = nil,
             building: NamedCoordinate? = nil,
             worker: WorkerProfile? = nil,
             buildingId: String? = nil,
+            buildingName: String? = nil,
             assignedWorkerId: String? = nil,
-            priority: TaskUrgency? = nil
+            priority: TaskUrgency? = nil,
+            frequency: TaskFrequency? = nil,
+            requiresPhoto: Bool? = false,
+            estimatedDuration: TimeInterval? = nil,
+            createdAt: Date = Date(),
+            updatedAt: Date = Date()
         ) {
             self.id = id
             self.title = title
             self.description = description
-            self.isCompleted = isCompleted
-            self.completedDate = completedDate
+            self.status = status
+            self.completedAt = completedAt
+            self.scheduledDate = scheduledDate
             self.dueDate = dueDate
             self.category = category
             self.urgency = urgency
             self.building = building
             self.worker = worker
             self.buildingId = buildingId ?? building?.id
+            self.buildingName = buildingName ?? building?.name
             self.assignedWorkerId = assignedWorkerId ?? worker?.id
             self.priority = priority ?? urgency
+            self.frequency = frequency
+            self.requiresPhoto = requiresPhoto
+            self.estimatedDuration = estimatedDuration
+            self.createdAt = createdAt
+            self.updatedAt = updatedAt
         }
         
         // Convenience initializer for compatibility
@@ -634,27 +755,28 @@ public struct CoreTypes {
             self.id = UUID().uuidString
             self.title = title
             self.description = description
-            self.isCompleted = isCompleted
-            self.completedDate = nil
+            self.status = isCompleted ? .completed : .pending
+            self.completedAt = isCompleted ? Date() : nil
+            self.scheduledDate = scheduledDate
             self.dueDate = dueDate ?? scheduledDate
             self.category = category
             self.urgency = urgency
             self.building = building
             self.worker = worker
             self.buildingId = building?.id
+            self.buildingName = building?.name
             self.assignedWorkerId = worker?.id
             self.priority = urgency
+            self.frequency = nil
+            self.requiresPhoto = false
+            self.estimatedDuration = nil
+            self.createdAt = Date()
+            self.updatedAt = Date()
         }
         
         public var isOverdue: Bool {
             guard let dueDate = dueDate else { return false }
-            return Date() > dueDate && !isCompleted
-        }
-        
-        public var status: TaskStatus {
-            if isCompleted { return .completed }
-            if isOverdue { return .overdue }
-            return .pending
+            return Date() > dueDate && status != .completed
         }
     }
     
@@ -1099,6 +1221,7 @@ public struct CoreTypes {
         public var quantity: Int { currentStock }
         public var minThreshold: Int { minimumStock }
         public var restockStatus: RestockStatus { status }
+        public var stockLevel: Double { stockPercentage }
         
         public init(
             id: String = UUID().uuidString,
@@ -1128,8 +1251,10 @@ public struct CoreTypes {
             self.status = status
         }
         
-        // ✅ FIXED: Removed duplicate needsRestock property - only keeping one
-        public var needsRestock: Bool { currentStock <= minimumStock }
+        // Computed property for stock needs
+        public var needsRestock: Bool {
+            currentStock <= minimumStock
+        }
         
         public var stockPercentage: Double {
             maxStock > 0 ? Double(currentStock) / Double(maxStock) : 0
@@ -1642,24 +1767,12 @@ public typealias RoleID = CoreTypes.RoleID
 public typealias NamedCoordinate = CoreTypes.NamedCoordinate
 public typealias WorkerProfile = CoreTypes.WorkerProfile
 public typealias ContextualTask = CoreTypes.ContextualTask
-// ✅ FIXED: Removed conflicting DashboardUpdate alias - use CoreTypes.DashboardUpdate directly
 public typealias ActionEvidence = CoreTypes.ActionEvidence
-// ❌ REMOVED: BuildingMetrics - conflicts with existing type
-// ❌ REMOVED: MaintenanceTask - conflicts with existing type
 public typealias BuildingType = CoreTypes.BuildingType
 public typealias AIScenarioType = CoreTypes.AIScenarioType
 public typealias AIScenario = CoreTypes.AIScenario
-// ❌ REMOVED: FrancoWorkerAssignment - conflicts with existing type
-// ❌ REMOVED: TaskProgress - conflicts with existing type
-public typealias TrendDirection = CoreTypes.TrendDirection
-// ❌ REMOVED: TaskCategory - conflicts with existing type
-// ❌ REMOVED: TaskUrgency - conflicts with existing type
 public typealias TaskStatus = CoreTypes.TaskStatus
-// ❌ REMOVED: WeatherCondition - conflicts with existing type
-// ❌ REMOVED: InventoryItem - conflicts with existing type
-// ❌ REMOVED: InventoryCategory - conflicts with existing type
 public typealias RestockStatus = CoreTypes.RestockStatus
-// ❌ REMOVED: ComplianceStatus - conflicts with existing type
 public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
 public typealias DashboardSyncStatus = CoreTypes.DashboardSyncStatus
 public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
@@ -1672,6 +1785,9 @@ public typealias WorkerRoutineSummary = CoreTypes.WorkerRoutineSummary
 public typealias BuildingStatistics = CoreTypes.BuildingStatistics
 public typealias BuildingTab = CoreTypes.BuildingTab
 public typealias PortfolioState = CoreTypes.PortfolioState
+
+// Add TaskFrequency alias for global access
+public typealias TaskFrequency = CoreTypes.TaskFrequency
 
 // MARK: - Models Namespace Alias
 public typealias Models = CoreTypes
