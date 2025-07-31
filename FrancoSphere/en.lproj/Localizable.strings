@@ -1,0 +1,91 @@
+/* 
+  Localizable.strings
+  FrancoSphere
+
+  Created by Shawn Magloire on 7/31/25.
+  
+*/
+/*
+  Localizable.strings (Spanish)
+  FrancoSphere
+
+  Stream A: UI/UX & Spanish
+  Mission: Provide complete Spanish localization for the application.
+*/
+
+// MARK: - General UI
+"OK" = "Aceptar";
+"Cancel" = "Cancelar";
+"Save" = "Guardar";
+"Submit" = "Enviar";
+"Error" = "Error";
+"Success" = "Éxito";
+"Loading..." = "Cargando...";
+"Retry" = "Reintentar";
+"Back" = "Atrás";
+"Done" = "Hecho";
+
+// MARK: - Login & Auth
+"Login" = "Iniciar Sesión";
+"Email" = "Correo Electrónico";
+"Password" = "Contraseña";
+"Authentication required" = "Autenticación requerida";
+"Invalid credentials" = "Credenciales no válidas";
+
+// MARK: - Dashboard
+"Dashboard" = "Panel";
+"Good Morning" = "Buenos Días";
+"Good Afternoon" = "Buenas Tardes";
+"Good Evening" = "Buenas Noches";
+"Today's Tasks" = "Tareas de Hoy";
+"All tasks complete!" = "¡Todas las tareas completas!";
+"Great job. You are all caught up for today." = "Buen trabajo. Estás al día por hoy.";
+"Current Building" = "Edificio Actual";
+"Not currently clocked in at a building." = "No ha registrado entrada en un edificio.";
+"Clock In" = "Registrar Entrada";
+"Clock Out" = "Registrar Salida";
+
+// MARK: - Tasks
+"Task" = "Tarea";
+"Tasks" = "Tareas";
+"Complete" = "Completar";
+"Completed" = "Completado";
+"Pending" = "Pendiente";
+"Overdue" = "Atrasado";
+"Due Time" = "Hora de Entrega";
+"Building" = "Edificio";
+"Photo Required" = "Se Requiere Foto";
+"Take Photo" = "Tomar Foto";
+"Task marked as complete." = "Tarea marcada como completada.";
+"Complete Task" = "Completar Tarea";
+
+// MARK: - Urgency
+"Urgent" = "Urgente";
+"Normal" = "Normal";
+"Low" = "Baja";
+"High" = "Alta";
+"Critical" = "Crítica";
+
+// MARK: - Admin & Client Dashboards
+"Admin Dashboard" = "Panel de Administrador";
+"Client Dashboard" = "Panel de Cliente";
+"Portfolio Overview" = "Resumen del Portafolio";
+"Buildings" = "Edificios";
+"Workers" = "Trabajadores";
+"Compliance" = "Cumplimiento";
+"Insights" = "Perspectivas";
+
+// MARK: - Preferences
+"Preferences" = "Preferencias";
+"Language" = "Idioma";
+"Preferred Language" = "Idioma Preferido";
+"English" = "English";
+"Español" = "Español";
+"Accessibility" = "Accesibilidad";
+"Simplified Interface" = "Interfaz Simplificada";
+"High Contrast Mode" = "Modo de Alto Contraste";
+"Text Size" = "Tamaño del Texto";
+"Sample Text" = "Texto de Ejemplo";
+"Notifications" = "Notificaciones";
+"Enable Push Notifications" = "Activar Notificaciones Push";
+"Urgent Task Alerts" = "Alertas de Tareas Urgentes";

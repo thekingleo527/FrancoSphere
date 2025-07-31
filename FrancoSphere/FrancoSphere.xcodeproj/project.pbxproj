@@ -24,6 +24,12 @@
 		2326C2042E3B14920080F005 /* SiteDepartureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2032E3B14920080F005 /* SiteDepartureView.swift */; };
 		2326C2062E3B15BF0080F005 /* SiteLogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2052E3B15BF0080F005 /* SiteLogService.swift */; };
 		2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */; };
+		2326C20E2E3B27400080F005 /* VectorClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C20D2E3B27400080F005 /* VectorClock.swift */; };
+		2326C2102E3B27740080F005 /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C20F2E3B27740080F005 /* WebSocketManager.swift */; };
+		2326C2122E3B27BB0080F005 /* ConflictResolutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2112E3B27BB0080F005 /* ConflictResolutionView.swift */; };
+		2326C21B2E3B2A9E0080F005 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C21A2E3B2A9E0080F005 /* OnboardingView.swift */; };
+		2326C21D2E3B2AD70080F005 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */; };
+		2326C2202E3B2B840080F005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2326C21E2E3B2B840080F005 /* Localizable.strings */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -239,6 +245,13 @@
 		2326C2032E3B14920080F005 /* SiteDepartureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteDepartureView.swift; sourceTree = "<group>"; };
 		2326C2052E3B15BF0080F005 /* SiteLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteLogService.swift; sourceTree = "<group>"; };
 		2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskService+DepartureChecklist.swift"; sourceTree = "<group>"; };
+		2326C20D2E3B27400080F005 /* VectorClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorClock.swift; sourceTree = "<group>"; };
+		2326C20F2E3B27740080F005 /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
+		2326C2112E3B27BB0080F005 /* ConflictResolutionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConflictResolutionView.swift; sourceTree = "<group>"; };
+		2326C21A2E3B2A9E0080F005 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
+		2326C21F2E3B2B840080F005 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		2326C2222E3B2DBF0080F005 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -419,6 +432,14 @@
 		23C839A32E39E74300C6866E /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		2326C2132E3B29B10080F005 /* Simplified */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Simplified;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		232736E02E2B8564004A52C6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -463,6 +484,7 @@
 		232736DA2E2B8564004A52C6 = {
 			isa = PBXGroup;
 			children = (
+				2326C21E2E3B2B840080F005 /* Localizable.strings */,
 				2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */,
 				23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */,
 				2377A09A2E398AA800F4A10F /* ViewModels */,
@@ -564,6 +586,7 @@
 		23779F3D2E39885600F4A10F /* Intelligence */ = {
 			isa = PBXGroup;
 			children = (
+				2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */,
 				23779F3B2E39885600F4A10F /* IntelligencePreviewPanel.swift */,
 				23779F3C2E39885600F4A10F /* SyncStatusComponents.swift */,
 			);
@@ -670,6 +693,7 @@
 		23779F5A2E39885600F4A10F /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				2326C20D2E3B27400080F005 /* VectorClock.swift */,
 				23779F592E39885600F4A10F /* CoreTypes.swift */,
 			);
 			path = Core;
@@ -855,6 +879,7 @@
 		23779F9D2E39885600F4A10F /* RealTime */ = {
 			isa = PBXGroup;
 			children = (
+				2326C20F2E3B27740080F005 /* WebSocketManager.swift */,
 				23779F9C2E39885600F4A10F /* WorkerFeedbackManager.swift */,
 			);
 			path = RealTime;
@@ -904,6 +929,7 @@
 		23779FB62E39885600F4A10F /* Sync */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2112E3B27BB0080F005 /* ConflictResolutionView.swift */,
 				23779FB32E39885600F4A10F /* DataSynchronizationService.swift */,
 				23779FB52E39885600F4A10F /* WorkerEventOutbox.swift */,
 			);
@@ -948,6 +974,7 @@
 		23779FC22E39885600F4A10F /* Auth */ = {
 			isa = PBXGroup;
 			children = (
+				2326C21A2E3B2A9E0080F005 /* OnboardingView.swift */,
 				23779FBF2E39885600F4A10F /* ForgotPasswordView.swift */,
 				23779FC02E39885600F4A10F /* LoginView.swift */,
 				23779FC12E39885600F4A10F /* SignUpView.swift */,
@@ -977,6 +1004,7 @@
 		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2132E3B29B10080F005 /* Simplified */,
 				2326C2032E3B14920080F005 /* SiteDepartureView.swift */,
 				23779FCF2E39885600F4A10F /* AdminDashboardView.swift */,
 				23779FD02E39885600F4A10F /* BuildingPreviewPopover.swift */,
@@ -1061,6 +1089,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				2326C2132E3B29B10080F005 /* Simplified */,
+			);
 			name = FrancoSphere;
 			packageProductDependencies = (
 				239AD0972E2B955A0055CDF8 /* GRDB */,
@@ -1139,6 +1170,7 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
 			);
 			mainGroup = 232736DA2E2B8564004A52C6;
 			minimizedProjectReferenceProxies = 1;
@@ -1175,6 +1207,7 @@
 				2377A0812E39885600F4A10F /* 136_West_17th_Street.jpg in Resources */,
 				2377A0822E39885600F4A10F /* 135West17thStreet.jpg in Resources */,
 				2377A0832E39885600F4A10F /* 41_Elizabeth_Street.jpeg in Resources */,
+				2326C2202E3B2B840080F005 /* Localizable.strings in Resources */,
 				2377A0842E39885600F4A10F /* 117_West_17th_Street.jpg in Resources */,
 				2377A0852E39885600F4A10F /* 29_31_East_20th_Street.jpg in Resources */,
 				2377A0862E39885600F4A10F /* AIAssistant.png in Resources */,
@@ -1213,6 +1246,7 @@
 				23779FDF2E39885600F4A10F /* LoginView.swift in Sources */,
 				2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */,
 				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
+				2326C2122E3B27BB0080F005 /* ConflictResolutionView.swift in Sources */,
 				2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */,
 				23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
@@ -1234,6 +1268,7 @@
 				23779FF22E39885600F4A10F /* SecurityManager.swift in Sources */,
 				23779FF32E39885600F4A10F /* CoreTypes.swift in Sources */,
 				23779FF52E39885600F4A10F /* NovaInteractionView.swift in Sources */,
+				2326C20E2E3B27400080F005 /* VectorClock.swift in Sources */,
 				23779FF62E39885600F4A10F /* GRDBManager.swift in Sources */,
 				2326C1F02E3AB3D40080F005 /* BuildingHistoryComponents.swift in Sources */,
 				23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */,
@@ -1281,8 +1316,10 @@
 				23A1B9902E39949C0011F091 /* WeatherDataAdapter.swift in Sources */,
 				2377A0132E39885600F4A10F /* TaskTimelineView.swift in Sources */,
 				2377A0142E39885600F4A10F /* BuildingStatsGlassCard.swift in Sources */,
+				2326C21D2E3B2AD70080F005 /* SyncStatusView.swift in Sources */,
 				2377A0152E39885600F4A10F /* NovaTypes.swift in Sources */,
 				2377A0172E39885600F4A10F /* CLLocationCoordinate2DExtension.swift in Sources */,
+				2326C2102E3B27740080F005 /* WebSocketManager.swift in Sources */,
 				2377A0182E39885600F4A10F /* WorkerFeedbackManager.swift in Sources */,
 				2377A0192E39885600F4A10F /* FrancoSphereModels.swift in Sources */,
 				2377A01A2E39885600F4A10F /* InitializationView.swift in Sources */,
@@ -1357,6 +1394,7 @@
 				2377A05B2E39885600F4A10F /* WorkerMetricsDTO.swift in Sources */,
 				2377A05C2E39885600F4A10F /* QuickActionMenu.swift in Sources */,
 				2377A05F2E39885600F4A10F /* DatabaseSchemaVerifier.swift in Sources */,
+				2326C21B2E3B2A9E0080F005 /* OnboardingView.swift in Sources */,
 				23A1B9742E3993E00011F091 /* ClockInManager.swift in Sources */,
 				2377A0602E39885600F4A10F /* TodaysTasksGlassCard.swift in Sources */,
 				2377A0612E39885600F4A10F /* VerificationRecord.swift in Sources */,
@@ -1412,12 +1450,25 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		2326C21E2E3B2B840080F005 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2326C21F2E3B2B840080F005 /* en */,
+				2326C2222E3B2DBF0080F005 /* es */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		232737022E2B8565004A52C6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1482,6 +1533,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1544,6 +1596,9 @@
 				DEVELOPMENT_TEAM = X82DB5QT3S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FrancoSphere-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1572,6 +1627,9 @@
 				DEVELOPMENT_TEAM = X82DB5QT3S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FrancoSphere-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
