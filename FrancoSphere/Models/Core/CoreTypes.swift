@@ -551,7 +551,28 @@ public struct CoreTypes {
         case paused = "Paused"
         case waiting = "Waiting"
     }
-    
+    // MARK: - Task Frequency
+    public enum TaskFrequency: String, Codable, CaseIterable {
+        case daily = "daily"
+        case weekly = "weekly"
+        case biweekly = "bi-weekly"
+        case monthly = "monthly"
+        case quarterly = "quarterly"
+        case annual = "annual"
+        case onDemand = "on-demand"
+        
+        public var displayName: String {
+            switch self {
+            case .daily: return "Daily"
+            case .weekly: return "Weekly"
+            case .biweekly: return "Bi-Weekly"
+            case .monthly: return "Monthly"
+            case .quarterly: return "Quarterly"
+            case .annual: return "Annual"
+            case .onDemand: return "On-Demand"
+            }
+        }
+    }
     // MARK: - Contextual Task
     public struct ContextualTask: Identifiable, Codable, Hashable {
         public let id: String
