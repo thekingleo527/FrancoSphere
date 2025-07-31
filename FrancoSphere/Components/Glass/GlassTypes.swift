@@ -5,6 +5,7 @@
 //  ✅ SINGLE SOURCE OF TRUTH: Only GlassIntensity definition in entire codebase
 //  ✅ FIXED: All Animation syntax errors corrected
 //  ✅ UNIFIED: Central location for all Glass component types
+//  ✅ ENHANCED: Added missing properties for GlassButton compatibility
 //
 
 import SwiftUI
@@ -235,6 +236,99 @@ public struct GlassTabItem {
     }
 }
 
+// MARK: - Glass Style Configuration (Added for better customization)
+public struct GlassStyleConfiguration {
+    public let baseColor: Color
+    public let intensity: GlassIntensity
+    public let cornerRadius: CGFloat
+    public let borderWidth: CGFloat
+    public let shadowRadius: CGFloat
+    
+    public init(
+        baseColor: Color = .white,
+        intensity: GlassIntensity = .regular,
+        cornerRadius: CGFloat = 16,
+        borderWidth: CGFloat = 1,
+        shadowRadius: CGFloat = 10
+    ) {
+        self.baseColor = baseColor
+        self.intensity = intensity
+        self.cornerRadius = cornerRadius
+        self.borderWidth = borderWidth
+        self.shadowRadius = shadowRadius
+    }
+    
+    // Preset configurations
+    public static let card = GlassStyleConfiguration(
+        intensity: .regular,
+        cornerRadius: 16,
+        shadowRadius: 10
+    )
+    
+    public static let modal = GlassStyleConfiguration(
+        intensity: .thick,
+        cornerRadius: 24,
+        shadowRadius: 20
+    )
+    
+    public static let navigationBar = GlassStyleConfiguration(
+        intensity: .thick,
+        cornerRadius: 0,
+        borderWidth: 0,
+        shadowRadius: 5
+    )
+    
+    public static let statusBadge = GlassStyleConfiguration(
+        intensity: .thin,
+        cornerRadius: 8,
+        shadowRadius: 4
+    )
+}
+
+// MARK: - Glass Theme (Added for theming support)
+public struct GlassTheme {
+    public let primary: Color
+    public let secondary: Color
+    public let background: LinearGradient
+    public let cardIntensity: GlassIntensity
+    public let modalIntensity: GlassIntensity
+    
+    public static let dark = GlassTheme(
+        primary: .blue,
+        secondary: .purple,
+        background: LinearGradient(
+            colors: [
+                Color(red: 0.05, green: 0.05, blue: 0.15),
+                Color(red: 0.1, green: 0.1, blue: 0.25)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ),
+        cardIntensity: .regular,
+        modalIntensity: .thick
+    )
+    
+    public static let light = GlassTheme(
+        primary: .blue,
+        secondary: .indigo,
+        background: LinearGradient(
+            colors: [
+                Color(red: 0.95, green: 0.95, blue: 0.97),
+                Color(red: 0.9, green: 0.9, blue: 0.95)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ),
+        cardIntensity: .thin,
+        modalIntensity: .regular
+    )
+}
+
 // MARK: - Type Aliases for compatibility
 public typealias GlassCardStyle = GlassIntensity
 public typealias GlassEffectStyle = GlassIntensity
+
+// MARK: - ButtonStyle Disambiguation
+// To avoid conflicts with SwiftUI's ButtonStyle protocol,
+// we namespace our button style differently
+public typealias GlassButtonVariant = GlassButtonStyle

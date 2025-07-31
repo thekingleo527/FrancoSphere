@@ -1,4 +1,4 @@
-
+//
 //  SiteDepartureView.swift
 //  FrancoSphere
 //
@@ -98,7 +98,7 @@ public struct SiteDepartureView: View {
                     await viewModel.loadChecklist()
                 }
             }
-            .buttonStyle(GlassButtonStyle())
+            .buttonStyle(DepartureGlassButtonStyle())
         }
         .padding()
     }
@@ -466,7 +466,7 @@ struct EndOfDayCard: View {
 }
 
 // Glass button style for consistency
-struct GlassButtonStyle: ButtonStyle {
+struct DepartureGlassButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding()
