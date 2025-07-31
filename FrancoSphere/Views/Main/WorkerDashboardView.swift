@@ -180,7 +180,7 @@ struct WorkerDashboardView: View {
                 BuildingDetailView(
                     buildingId: building.id,
                     buildingName: building.name,
-                    buildingAddress: building.address ?? ""
+                    buildingAddress: building.address
                 )
                 .onDisappear {
                     selectedBuilding = nil
@@ -291,7 +291,6 @@ struct WorkerDashboardView: View {
                         if viewModel.workerCapabilities?.simplifiedInterface == false {
                             NovaAvatar(
                                 size: .medium,
-                                isProcessing: isNovaProcessing,
                                 onTap: { showNovaAssistant = true },
                                 onLongPress: { showNovaAssistant = true }
                             )
