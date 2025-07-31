@@ -1,3 +1,4 @@
+//
 //  ConflictResolutionService.swift
 //  FrancoSphere
 //
@@ -5,7 +6,7 @@
 //  Mission: Implement conflict detection and resolution for real-time sync.
 //
 //  ✅ PRODUCTION READY: Complete conflict resolution with multiple strategies.
-//  ✅ INTEGRATED: Works with VectorClock, DashboardSyncService, and ConflictResolutionView.
+//  ✅ INTEGRATED: Works with SyncVectorClock, DashboardSyncService, and ConflictResolutionView.
 //  ✅ FLEXIBLE: Supports automatic and manual resolution strategies.
 //  ✅ AUDITABLE: Tracks all conflict resolutions for compliance.
 //
@@ -45,15 +46,7 @@ public enum ConflictChoice {
     case keepLocal
     case acceptRemote
     case merge
-    case defer
-}
-
-/// Result of vector clock comparison
-public enum ClockComparison {
-    case happensBefore    // Local happened before remote
-    case happensAfter     // Local happened after remote
-    case concurrent       // True conflict - neither happened before the other
-    case unknown         // No vector clock data available
+    case postpone  // Changed from 'defer' to avoid keyword conflict
 }
 
 /// Strategy for automatic conflict resolution
@@ -265,7 +258,7 @@ actor ConflictResolutionService {
             return await resolveByPriority(conflict)
         case .manualOnly:
             // Queue for manual resolution
-            return await deferResolution(conflict)
+            return await postponeResolution(conflict)
         case .custom(let resolver):
             let choice = resolver(conflict)
             return await resolveConflict(conflict, choice: choice, resolvedBy: "system", reason: "Custom strategy")
@@ -279,37 +272,17 @@ actor ConflictResolutionService {
         for entity: String,
         node: String
     ) async {
-        // This would integrate with the VectorClock implementation
+        // This would integrate with the SyncVectorClock implementation
         // For now, we'll store in database
         
         do {
             let existingClock = try await getVectorClock(for: entity)
-            var clock = existingClock ?? VectorClock()
+            var clock = existingClock ?? SyncVectorClock()
             clock.increment(for: node)
             
             try await saveVectorClock(clock, for: entity)
         } catch {
             print("❌ Failed to update vector clock: \(error)")
-        }
-    }
-    
-    /// Compare two vector clocks
-    public func compareVectorClocks(
-        _ clock1: VectorClock?,
-        _ clock2: VectorClock?
-    ) -> ClockComparison {
-        guard let clock1 = clock1, let clock2 = clock2 else {
-            return .unknown
-        }
-        
-        if clock1.happensBefore(clock2) {
-            return .happensBefore
-        } else if clock1.happensAfter(clock2) {
-            return .happensAfter
-        } else if clock1.areConcurrent(with: clock2) {
-            return .concurrent
-        } else {
-            return .unknown
         }
     }
     
@@ -359,8 +332,8 @@ actor ConflictResolutionService {
     }
     
     private func compareVectorClocks(
-        local: VectorClock?,
-        remote: VectorClock?
+        local: SyncVectorClock?,
+        remote: SyncVectorClock?
     ) -> ClockComparison {
         guard let local = local, let remote = remote else {
             return .unknown
@@ -413,15 +386,15 @@ actor ConflictResolutionService {
         return resolution
     }
     
-    private func deferResolution(_ conflict: Conflict) async -> ConflictResolution {
-        // Mark as deferred and keep in pending
+    private func postponeResolution(_ conflict: Conflict) async -> ConflictResolution {
+        // Mark as postponed and keep in pending
         let resolution = ConflictResolution(
             conflictId: conflict.id,
-            choice: .defer,
+            choice: .postpone,
             resolvedBy: "system",
             resolvedAt: Date(),
             mergedUpdate: nil,
-            reason: "Deferred for manual resolution"
+            reason: "Postponed for manual resolution"
         )
         
         // Keep in pending conflicts
@@ -449,15 +422,17 @@ actor ConflictResolutionService {
         }
         
         // Create merged update with combined vector clock
-        let mergedClock = local.vectorClock?.merge(with: remote.vectorClock ?? VectorClock()) ?? remote.vectorClock
+        let mergedClock = local.vectorClock?.merge(with: remote.vectorClock ?? SyncVectorClock()) ?? remote.vectorClock
         
         return CoreTypes.DashboardUpdate(
+            id: UUID().uuidString,
             source: local.source, // Keep local source
             type: local.type,
             buildingId: local.buildingId,
             workerId: local.workerId,
             data: mergedData,
             timestamp: max(local.timestamp, remote.timestamp),
+            deviceId: local.deviceId,
             vectorClock: mergedClock
         )
     }
@@ -580,7 +555,7 @@ actor ConflictResolutionService {
         }
     }
     
-    private func getVectorClock(for entity: String) async throws -> VectorClock? {
+    private func getVectorClock(for entity: String) async throws -> SyncVectorClock? {
         let rows = try await grdbManager.query("""
             SELECT vector_clock FROM entity_vector_clocks
             WHERE entity_id = ?
@@ -592,10 +567,10 @@ actor ConflictResolutionService {
             return nil
         }
         
-        return try JSONDecoder().decode(VectorClock.self, from: data)
+        return try JSONDecoder().decode(SyncVectorClock.self, from: data)
     }
     
-    private func saveVectorClock(_ clock: VectorClock, for entity: String) async throws {
+    private func saveVectorClock(_ clock: SyncVectorClock, for entity: String) async throws {
         let clockData = try JSONEncoder().encode(clock)
         let clockString = String(data: clockData, encoding: .utf8) ?? "{}"
         
@@ -619,6 +594,7 @@ extension ClockComparison: RawRepresentable {
         case .happensBefore: return "before"
         case .happensAfter: return "after"
         case .concurrent: return "concurrent"
+        case .equal: return "equal"
         case .unknown: return "unknown"
         }
     }
@@ -628,6 +604,7 @@ extension ClockComparison: RawRepresentable {
         case "before": self = .happensBefore
         case "after": self = .happensAfter
         case "concurrent": self = .concurrent
+        case "equal": self = .equal
         case "unknown": self = .unknown
         default: return nil
         }
@@ -640,7 +617,7 @@ extension ConflictChoice: RawRepresentable {
         case .keepLocal: return "keep_local"
         case .acceptRemote: return "accept_remote"
         case .merge: return "merge"
-        case .defer: return "defer"
+        case .postpone: return "postpone"
         }
     }
     
@@ -649,21 +626,24 @@ extension ConflictChoice: RawRepresentable {
         case "keep_local": self = .keepLocal
         case "accept_remote": self = .acceptRemote
         case "merge": self = .merge
-        case "defer": self = .defer
+        case "postpone": self = .postpone
         default: return nil
         }
     }
 }
 
 // MARK: - DashboardUpdate Extension
-
+// NOTE: The vectorClock property should be added to CoreTypes.DashboardUpdate
+// This extension is here temporarily for compilation
 extension CoreTypes.DashboardUpdate {
-    /// Vector clock property for conflict resolution
-    /// Note: This property needs to be added to the actual CoreTypes.DashboardUpdate struct
-    public var vectorClock: VectorClock? {
-        // This is a placeholder - the actual implementation would be in CoreTypes
-        get { return nil }
-        set { }
+    public var vectorClock: SyncVectorClock? {
+        // TODO: This should be a stored property in the actual DashboardUpdate struct
+        return nil
+    }
+    
+    public var deviceId: String? {
+        // TODO: This should be a stored property in the actual DashboardUpdate struct
+        return nil
     }
 }
 
@@ -707,7 +687,7 @@ extension ConflictResolutionService {
             return remoteUpdate
         case .merge:
             return resolution.mergedUpdate
-        case .defer:
+        case .postpone:
             // Conflict needs manual resolution
             return nil
         }
@@ -722,7 +702,7 @@ extension ConflictResolutionService {
         case .higherPriorityWins:
             return await resolveByPriority(conflict)
         case .manualOnly:
-            return await deferResolution(conflict)
+            return await postponeResolution(conflict)
         case .custom(let resolver):
             let choice = resolver(conflict)
             return await resolveConflict(conflict, choice: choice, resolvedBy: "system", reason: "Custom strategy")

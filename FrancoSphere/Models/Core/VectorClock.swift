@@ -1,43 +1,34 @@
-
+//
 //  VectorClock.swift
 //  FrancoSphere
 //
 //  Stream B: Gemini - Backend Services
 //  Mission: Implement conflict resolution for real-time sync.
 //
-//  ✅ PRODUCTION READY: Core data structure for CRDTs.
-//  ✅ SAFE: Codable and Equatable for reliable serialization and comparison.
-//  ✅ COMPLETE: Implements all required comparison and merging logic.
-//
 
 import Foundation
 
 /// A data structure to determine the causal ordering of events in a distributed system.
-/// This is essential for detecting and resolving conflicts in multi-device sync.
-public struct VectorClock: Codable, Equatable {
+/// Renamed to SyncVectorClock to avoid naming conflicts.
+public struct SyncVectorClock: Codable, Equatable {
     
-    // The dictionary holds the logical clock for each node (device/user) in the system.
-    // [NodeID: LogicalTime]
     private var clocks: [String: Int] = [:]
     
-    /// Increments the clock for a specific node ID. This should be called
-    /// whenever an entity is modified on a given device.
-    ///
-    /// - Parameter nodeId: The unique identifier for the device or user making the change.
+    /// Initializer
+    public init() {}
+    
+    /// Increment the clock for a specific node
     public mutating func increment(for nodeId: String) {
         clocks[nodeId, default: 0] += 1
     }
     
-    /// Determines if this vector clock causally precedes another.
-    /// Returns `true` if this clock is an ancestor of the other clock.
-    ///
-    /// - Parameter other: The vector clock to compare against.
-    public func happensBefore(_ other: VectorClock) -> Bool {
+    /// Check if this clock happens before another clock
+    public func happensBefore(_ other: SyncVectorClock) -> Bool {
         var selfIsStrictlySmaller = false
         for (nodeId, selfTime) in clocks {
             let otherTime = other.clocks[nodeId] ?? 0
             if selfTime > otherTime {
-                return false // An element in self is greater, so it cannot happen before.
+                return false
             }
             if selfTime < otherTime {
                 selfIsStrictlySmaller = true
@@ -46,28 +37,18 @@ public struct VectorClock: Codable, Equatable {
         return selfIsStrictlySmaller
     }
     
-    /// Determines if this vector clock causally succeeds another.
-    /// Returns `true` if this clock is a descendant of the other clock.
-    ///
-    /// - Parameter other: The vector clock to compare against.
-    public func happensAfter(_ other: VectorClock) -> Bool {
+    /// Check if this clock happens after another clock
+    public func happensAfter(_ other: SyncVectorClock) -> Bool {
         return other.happensBefore(self)
     }
     
-    /// Determines if two vector clocks are concurrent (i.e., in conflict).
-    /// This occurs when neither clock happens before the other.
-    ///
-    /// - Parameter other: The vector clock to compare against.
-    public func areConcurrent(with other: VectorClock) -> Bool {
+    /// Check if two clocks are concurrent (neither happens before the other)
+    public func areConcurrent(with other: SyncVectorClock) -> Bool {
         return !self.happensBefore(other) && !other.happensBefore(self)
     }
     
-    /// Merges another vector clock into this one, resolving causality by taking the maximum
-    /// value for each node's clock. This is the fundamental operation for resolving state.
-    ///
-    /// - Parameter other: The vector clock to merge with.
-    /// - Returns: A new `VectorClock` instance representing the merged state.
-    public func merge(with other: VectorClock) -> VectorClock {
+    /// Merge two vector clocks, taking the maximum value for each node
+    public func merge(with other: SyncVectorClock) -> SyncVectorClock {
         var mergedClock = self
         for (nodeId, otherTime) in other.clocks {
             let selfTime = mergedClock.clocks[nodeId] ?? 0
@@ -76,15 +57,53 @@ public struct VectorClock: Codable, Equatable {
         return mergedClock
     }
     
-    /// Provides direct, read-only access to the internal clock values.
+    /// Get a copy of the internal clocks dictionary
     public func getClocks() -> [String: Int] {
         return clocks
     }
+    
+    /// Get the clock value for a specific node
+    public func getClock(for nodeId: String) -> Int {
+        return clocks[nodeId] ?? 0
+    }
 }
 
-// MARK: - Integration Point in CoreTypes
+// MARK: - Clock Comparison Result
+public enum ClockComparison {
+    case happensBefore
+    case happensAfter
+    case concurrent
+    case equal
+    case unknown  // Added for compatibility with ConflictResolutionService
+}
 
-extension CoreTypes.DashboardUpdate {
-    // This would be added to the DashboardUpdate struct in CoreTypes.swift
-    // public var vectorClock: VectorClock
+// MARK: - Extensions
+extension SyncVectorClock {
+    /// Compare this clock with another and return the relationship
+    public func compare(with other: SyncVectorClock) -> ClockComparison {
+        if self == other {
+            return .equal
+        } else if self.happensBefore(other) {
+            return .happensBefore
+        } else if self.happensAfter(other) {
+            return .happensAfter
+        } else {
+            return .concurrent
+        }
+    }
+    
+    /// Create a new vector clock with an incremented value for the given node
+    public func incremented(for nodeId: String) -> SyncVectorClock {
+        var newClock = self
+        newClock.increment(for: nodeId)
+        return newClock
+    }
+}
+
+// MARK: - Debugging
+extension SyncVectorClock: CustomStringConvertible {
+    public var description: String {
+        let clockStrings = clocks.map { "\($0.key):\($0.value)" }.sorted()
+        return "SyncVectorClock{\(clockStrings.joined(separator: ", "))}"
+    }
 }

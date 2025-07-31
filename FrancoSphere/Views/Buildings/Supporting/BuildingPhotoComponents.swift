@@ -962,7 +962,7 @@ struct PhotoComplianceVerifier: View {
         }
         .sheet(isPresented: $showingPhotoCapture) {
             if let requirement = selectedRequirement {
-                PhotoCompliancePhotoCaptureView(
+                BuildingPhotoCaptureView(
                     requirement: requirement,
                     buildingId: buildingId,
                     onCapture: { photo in
@@ -1604,7 +1604,7 @@ struct MultipleImagePicker: UIViewControllerRepresentable {
     }
 }
 
-struct CompliancePhotoCaptureView: View {
+struct BuildingPhotoCaptureView: View {
     let requirement: RequiredPhoto
     let buildingId: String
     let onCapture: (BuildingPhoto) -> Void

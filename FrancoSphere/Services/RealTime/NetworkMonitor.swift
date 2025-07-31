@@ -29,7 +29,7 @@ public class NetworkMonitor: ObservableObject {
     
     // MARK: - Connection Types
     
-    public enum ConnectionType: String, CaseIterable {
+    public enum ConnectionType: String, CaseIterable, Codable {
         case wifi = "Wi-Fi"
         case cellular = "Cellular"
         case wiredEthernet = "Ethernet"
@@ -49,7 +49,7 @@ public class NetworkMonitor: ObservableObject {
         }
     }
     
-    public enum ConnectionQuality: String, CaseIterable {
+    public enum ConnectionQuality: String, CaseIterable, Codable {
         case excellent = "Excellent"
         case good = "Good"
         case fair = "Fair"
@@ -336,7 +336,7 @@ public class NetworkMonitor: ObservableObject {
         // Analyze patterns in connection history
         let prediction = offlinePredictionModel.predictNextOffline(
             history: connectionHistory,
-            currentLocation: LocationManager().location
+            currentLocation: nil // Would need proper LocationManager integration
         )
         
         predictedOfflineTime = prediction.predictedTime

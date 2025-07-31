@@ -632,7 +632,6 @@ public struct CoreTypes {
     }
     
     // MARK: - Task Frequency
-    // ✅ STREAM A FIX: Removed redundant rawValue property and init
     public enum TaskFrequency: String, Codable, CaseIterable {
         case daily = "daily"
         case weekly = "weekly"
@@ -1257,17 +1256,12 @@ public struct CoreTypes {
             self.status = status
         }
         
-        // Core computed properties
-        public var needsRestock: Bool {
-            currentStock <= minimumStock
-        }
-        
         public var stockPercentage: Double {
             maxStock > 0 ? Double(currentStock) / Double(maxStock) : 0
         }
         
-        // Alias for compatibility
-        public var stockLevel: Double { stockPercentage }
+        // Use stockPercentage as the single source of truth
+        // Remove: public var stockLevel: Double { stockPercentage }
     }
     
     // MARK: - AI Types
