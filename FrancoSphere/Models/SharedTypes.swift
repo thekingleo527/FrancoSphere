@@ -1,4 +1,3 @@
-// Import added for type access
 //
 //  SharedTypes.swift
 //  FrancoSphere
@@ -7,16 +6,31 @@
 //
 
 import Foundation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import CoreLocation
-// FrancoSphere Types Import
-// (This comment helps identify our import)
-
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
+
+// MARK: - TrendDirection
+enum TrendDirection: String, Codable {
+    case up = "up"
+    case down = "down"
+    case stable = "stable"
+    
+    var icon: String {
+        switch self {
+        case .up: return "arrow.up.circle.fill"
+        case .down: return "arrow.down.circle.fill"
+        case .stable: return "minus.circle.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .up: return .green
+        case .down: return .red
+        case .stable: return .gray
+        }
+    }
+}
 
 // MARK: - WeatherImpact
 
