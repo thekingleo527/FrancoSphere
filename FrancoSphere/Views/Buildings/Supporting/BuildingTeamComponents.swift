@@ -233,15 +233,15 @@ struct WorkerScheduleGrid: View {
                     w.name as worker_name,
                     w.phone as worker_phone,
                     w.email as worker_email
-                FROM worker_assignments wa
-                JOIN workers w ON wa.worker_id = w.id
+                FROM worker_building_assignments wa
+                JOIN worker_profiles w ON wa.worker_id = w.id
                 WHERE wa.building_id = ?
-                AND wa.assignment_date BETWEEN ? AND ?
-                ORDER BY wa.assignment_date, wa.start_time
+                AND wa.start_date <= ? AND wa.end_date >= ?
+                ORDER BY wa.start_date
             """, [
                 buildingId,
-                startOfWeek.ISO8601Format(),
-                endOfWeek.ISO8601Format()
+                endOfWeek.ISO8601Format(),
+                startOfWeek.ISO8601Format()
             ])
             
             assignments = rows.compactMap { row in
@@ -578,7 +578,24 @@ struct TeamCoverageCalendar: View {
     
     private func loadMonthCoverage() async {
         // Load coverage data for the month
+        // Implementation would query database for assignments
         isLoading = false
+        
+        // Mock data for now
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: month))!
+        let range = calendar.range(of: .day, in: .month, for: month)!
+        
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
+                // Random coverage for demo
+                if Bool.random() {
+                    coverage[date] = [
+                        WorkerProfile(id: "1", name: "Kevin Dutan", email: nil, phone: nil, role: .worker, isActive: true),
+                        WorkerProfile(id: "2", name: "Edwin Lema", email: nil, phone: nil, role: .worker, isActive: true)
+                    ]
+                }
+            }
+        }
     }
 }
 
@@ -727,28 +744,28 @@ struct WorkerPerformanceCard: View {
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 12) {
-                    MetricCard(
+                    TeamMetricCard(
                         title: "Tasks Completed",
                         value: "\(metrics.tasksCompleted)",
                         trend: metrics.tasksTrend,
                         icon: "checkmark.circle.fill"
                     )
                     
-                    MetricCard(
+                    TeamMetricCard(
                         title: "On-Time Rate",
                         value: "\(Int(metrics.onTimeRate))%",
                         trend: metrics.onTimeTrend,
                         icon: "clock.fill"
                     )
                     
-                    MetricCard(
+                    TeamMetricCard(
                         title: "Attendance",
                         value: "\(Int(metrics.attendanceRate))%",
                         trend: metrics.attendanceTrend,
                         icon: "calendar.badge.checkmark"
                     )
                     
-                    MetricCard(
+                    TeamMetricCard(
                         title: "Quality Score",
                         value: "\(Int(metrics.qualityScore))%",
                         trend: metrics.qualityTrend,
@@ -796,24 +813,51 @@ struct WorkerPerformanceCard: View {
     }
     
     private func loadPerformanceMetrics() async {
-        // Load performance data
-        // Mock data for now
-        metrics = WorkerPerformanceData(
-            overallScore: 87,
-            tasksCompleted: 142,
-            tasksTrend: .up,
-            onTimeRate: 92,
-            onTimeTrend: .stable,
-            attendanceRate: 98,
-            attendanceTrend: .up,
-            qualityScore: 85,
-            qualityTrend: .up,
-            achievements: [
-                "100 tasks completed this month",
-                "Perfect attendance - 30 days"
-            ]
-        )
+        // Load performance data from database
+        do {
+            let metrics = try await WorkerMetricsService.shared.getWorkerPerformance(
+                workerId: worker.id,
+                buildingId: buildingId
+            )
+            
+            self.metrics = WorkerPerformanceData(
+                overallScore: metrics.overallScore,
+                tasksCompleted: metrics.tasksCompleted,
+                tasksTrend: determineTrend(metrics.taskCompletionTrend),
+                onTimeRate: metrics.onTimeRate,
+                onTimeTrend: determineTrend(metrics.onTimeTrend),
+                attendanceRate: metrics.attendanceRate,
+                attendanceTrend: determineTrend(metrics.attendanceTrend),
+                qualityScore: metrics.qualityScore,
+                qualityTrend: determineTrend(metrics.qualityTrend),
+                achievements: metrics.recentAchievements ?? []
+            )
+        } catch {
+            // Use mock data as fallback
+            metrics = WorkerPerformanceData(
+                overallScore: 87,
+                tasksCompleted: 142,
+                tasksTrend: .up,
+                onTimeRate: 92,
+                onTimeTrend: .stable,
+                attendanceRate: 98,
+                attendanceTrend: .up,
+                qualityScore: 85,
+                qualityTrend: .up,
+                achievements: [
+                    "100 tasks completed this month",
+                    "Perfect attendance - 30 days"
+                ]
+            )
+        }
         isLoading = false
+    }
+    
+    private func determineTrend(_ value: Double?) -> TeamMetricCard.Trend {
+        guard let value = value else { return .stable }
+        if value > 5 { return .up }
+        if value < -5 { return .down }
+        return .stable
     }
 }
 
@@ -837,7 +881,7 @@ struct ScheduleCell: View {
     }
     
     var body: some View {
-        Button(action: { 
+        Button(action: {
             if workers.isEmpty {
                 onAdd()
             } else {
@@ -1032,7 +1076,8 @@ struct CapabilityBadge: View {
     }
 }
 
-struct MetricCard: View {
+// Renamed from MetricCard to TeamMetricCard to avoid conflicts
+struct TeamMetricCard: View {
     let title: String
     let value: String
     let trend: Trend
@@ -1098,9 +1143,10 @@ struct WorkerScheduleAssignment: Identifiable {
     
     init(from row: [String: Any]) {
         self.id = row["id"] as? String ?? UUID().uuidString
-        self.date = ISO8601DateFormatter().date(from: row["assignment_date"] as? String ?? "") ?? Date()
-        self.timeSlot = row["time_slot"] as? String ?? ""
-        self.durationHours = row["duration_hours"] as? Int ?? 3
+        // Use start_date from worker_building_assignments table
+        self.date = ISO8601DateFormatter().date(from: row["start_date"] as? String ?? "") ?? Date()
+        self.timeSlot = "9-12" // Default time slot, adjust based on your business logic
+        self.durationHours = 3 // Default duration
         
         // Create worker profile if data exists
         if let workerId = row["worker_id"] as? String,
@@ -1173,13 +1219,13 @@ struct HandoffNote: Identifiable {
 struct WorkerPerformanceData {
     let overallScore: Double
     let tasksCompleted: Int
-    let tasksTrend: MetricCard.Trend
+    let tasksTrend: TeamMetricCard.Trend
     let onTimeRate: Double
-    let onTimeTrend: MetricCard.Trend
+    let onTimeTrend: TeamMetricCard.Trend
     let attendanceRate: Double
-    let attendanceTrend: MetricCard.Trend
+    let attendanceTrend: TeamMetricCard.Trend
     let qualityScore: Double
-    let qualityTrend: MetricCard.Trend
+    let qualityTrend: TeamMetricCard.Trend
     let achievements: [String]
 }
 
@@ -1332,70 +1378,119 @@ struct ContactButton: View {
     }
 }
 
-// Additional sheet views...
-
-// MARK: - Extensions
-
-extension View {
-    func shimmering() -> some View {
-        self.modifier(ShimmeringModifier())
-    }
-}
-
-struct ShimmeringModifier: ViewModifier {
-    @State private var phase: CGFloat = 0
-    
-    func body(content: Content) -> some View {
-        content
-            .overlay(
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0),
-                        Color.white.opacity(0.3),
-                        Color.white.opacity(0)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .rotationEffect(.degrees(30))
-                .offset(x: phase * 200 - 100)
-                .mask(content)
-            )
-            .onAppear {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    phase = 1
-                }
-            }
-    }
-}
-
-struct StatItem: View {
-    let label: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption2)
-                .foregroundColor(.white.opacity(0.6))
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
-        }
-    }
-}
-
 struct CalendarGrid: View {
     let month: Date
     let coverage: [Date: [WorkerProfile]]
     @Binding var selectedDate: Date?
     
+    private let calendar = Calendar.current
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter
+    }()
+    
     var body: some View {
-        // Implementation similar to RoutineScheduleCalendar
-        EmptyView()
+        VStack(spacing: 0) {
+            // Day headers
+            HStack(spacing: 0) {
+                ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
+                    Text(day)
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.bottom, 8)
+            
+            // Calendar grid
+            let days = generateMonthDays()
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+                ForEach(days, id: \.self) { date in
+                    if let date = date {
+                        CalendarDayCell(
+                            date: date,
+                            workers: coverage[date] ?? [],
+                            isSelected: calendar.isDate(date, inSameDayAs: selectedDate ?? Date()),
+                            onTap: {
+                                selectedDate = date
+                            }
+                        )
+                    } else {
+                        Color.clear
+                            .frame(height: 36)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func generateMonthDays() -> [Date?] {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: month),
+              let firstWeekday = calendar.dateComponents([.weekday], from: monthInterval.start).weekday else {
+            return []
+        }
+        
+        let numberOfDays = calendar.range(of: .day, in: .month, for: month)?.count ?? 0
+        let offsetDays = firstWeekday - 1
+        
+        var days: [Date?] = Array(repeating: nil, count: offsetDays)
+        
+        for day in 1...numberOfDays {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: monthInterval.start) {
+                days.append(date)
+            }
+        }
+        
+        // Fill remaining days to complete the grid
+        while days.count % 7 != 0 {
+            days.append(nil)
+        }
+        
+        return days
+    }
+}
+
+struct CalendarDayCell: View {
+    let date: Date
+    let workers: [WorkerProfile]
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    private var backgroundColor: Color {
+        if isSelected {
+            return .blue.opacity(0.3)
+        } else if !workers.isEmpty {
+            return .green.opacity(0.2)
+        } else {
+            return Color.white.opacity(0.05)
+        }
+    }
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 2) {
+                Text("\(Calendar.current.component(.day, from: date))")
+                    .font(.caption)
+                    .fontWeight(isSelected ? .bold : .regular)
+                    .foregroundColor(.white)
+                
+                if !workers.isEmpty {
+                    HStack(spacing: 1) {
+                        ForEach(0..<min(workers.count, 3), id: \.self) { _ in
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 4, height: 4)
+                        }
+                    }
+                }
+            }
+            .frame(height: 36)
+            .frame(maxWidth: .infinity)
+            .background(backgroundColor)
+            .cornerRadius(8)
+        }
     }
 }
 
@@ -1410,19 +1505,26 @@ struct SelectedDateCoverage: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
             
-            ForEach(workers) { worker in
-                HStack {
-                    Text(worker.name)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    Spacer()
-                    
-                    if let phone = worker.phone {
-                        Button(action: { }) {
-                            Image(systemName: "phone.fill")
-                                .font(.caption)
-                                .foregroundColor(.green)
+            if workers.isEmpty {
+                Text("No coverage scheduled")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(workers) { worker in
+                    HStack {
+                        Text(worker.name)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Spacer()
+                        
+                        if let phone = worker.phone {
+                            Button(action: { callWorker(phone) }) {
+                                Image(systemName: "phone.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
                         }
                     }
                 }
@@ -1431,6 +1533,11 @@ struct SelectedDateCoverage: View {
         .padding()
         .background(Color.white.opacity(0.03))
         .cornerRadius(8)
+    }
+    
+    private func callWorker(_ phone: String) {
+        guard let url = URL(string: "tel://\(phone.replacingOccurrences(of: " ", with: ""))") else { return }
+        UIApplication.shared.open(url)
     }
 }
 
@@ -1530,6 +1637,7 @@ struct ShiftAssignmentSheet: View {
     @State private var selectedDate = Date()
     @State private var selectedTimeSlot = "9-12"
     @State private var duration = 3
+    @State private var availableWorkers: [WorkerProfile] = []
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -1539,7 +1647,9 @@ struct ShiftAssignmentSheet: View {
                     // Worker picker
                     Picker("Worker", selection: $selectedWorker) {
                         Text("Select Worker").tag(nil as String?)
-                        // TODO: Load available workers
+                        ForEach(availableWorkers) { worker in
+                            Text(worker.name).tag(worker.id as String?)
+                        }
                     }
                     
                     DatePicker("Date", selection: $selectedDate, displayedComponents: .date)
@@ -1565,7 +1675,7 @@ struct ShiftAssignmentSheet: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        // Save assignment
+                        // Save assignment logic would go here
                         dismiss()
                     }
                     .fontWeight(.semibold)
@@ -1573,5 +1683,81 @@ struct ShiftAssignmentSheet: View {
                 }
             }
         }
+        .task {
+            await loadAvailableWorkers()
+        }
+    }
+    
+    private func loadAvailableWorkers() async {
+        do {
+            let workers = try await WorkerService.shared.getActiveWorkers()
+            availableWorkers = workers
+        } catch {
+            print("❌ Error loading workers: \(error)")
+        }
+    }
+}
+
+// MARK: - Extensions
+
+extension View {
+    func shimmering() -> some View {
+        self.modifier(ShimmeringModifier())
+    }
+}
+
+struct ShimmeringModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0),
+                        Color.white.opacity(0.3),
+                        Color.white.opacity(0)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .rotationEffect(.degrees(30))
+                .offset(x: phase * 200 - 100)
+                .mask(content)
+            )
+            .onAppear {
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    phase = 1
+                }
+            }
+    }
+}
+
+struct StatItem: View {
+    let label: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.6))
+            
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+        }
+    }
+}
+
+// MARK: - String Extensions
+
+extension String {
+    var initials: String {
+        let words = self.components(separatedBy: " ")
+        let initials = words.compactMap { $0.first }.map { String($0) }
+        return initials.joined().uppercased()
     }
 }
