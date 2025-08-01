@@ -7,6 +7,7 @@
 //  Includes building-wise breakdown and time-based analysis
 //  ✅ FIXED: Updated to use correct ContextualTask properties
 //  ✅ FIXED: Removed invalid @Environment property wrapper
+//  ✅ FIXED: Task urgency comparison using urgencyLevel
 //
 
 import SwiftUI
@@ -365,7 +366,8 @@ struct ProgressTaskRow: View {
             
             Spacer()
             
-            if let urgency = task.urgency, urgency > .medium {
+            // ✅ FIXED: Using urgencyLevel for comparison and checking for high priority tasks
+            if let urgency = task.urgency, urgency.urgencyLevel > CoreTypes.TaskUrgency.medium.urgencyLevel {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundColor(priorityColor(for: urgency))
@@ -376,7 +378,7 @@ struct ProgressTaskRow: View {
         .background(Color.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 8))
     }
     
-    private func priorityColor(for urgency: TaskUrgency) -> Color {
+    private func priorityColor(for urgency: CoreTypes.TaskUrgency) -> Color {
         switch urgency {
         case .emergency, .critical: return .red
         case .urgent, .high: return .orange

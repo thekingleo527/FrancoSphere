@@ -6,6 +6,7 @@
 //  ✅ ALIGNED: With current CoreTypes and Phase 2.1 implementation
 //  ✅ ENHANCED: Compatible with three-dashboard system
 //  ✅ GRDB: Real-time data integration ready
+//  ✅ FIXED: Removed isCompleted from ContextualTask initializers
 //
 
 import SwiftUI
@@ -295,13 +296,13 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
     
     static var sampleTasks: [ContextualTask] {
         [
-            // ✅ FIXED: Removed estimatedDuration from all tasks
+            // ✅ FIXED: Removed isCompleted parameter and using completedAt
             ContextualTask(
                 id: "1",
                 title: "Window Cleaning",
                 description: "Clean exterior windows",
-                isCompleted: false,
-                completedDate: nil,
+                status: .pending,  // Makes isCompleted false
+                completedAt: nil,
                 dueDate: Date(),
                 category: .cleaning,
                 urgency: .medium,
@@ -314,8 +315,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 id: "2",
                 title: "HVAC Inspection",
                 description: "Check HVAC system",
-                isCompleted: true,
-                completedDate: Date(),
+                status: .completed,  // Makes isCompleted true
+                completedAt: Date(),
                 dueDate: Date(),
                 category: .maintenance,
                 urgency: .high,
@@ -328,8 +329,8 @@ struct WeatherDashboardComponent_Previews: PreviewProvider {
                 id: "3",
                 title: "Emergency Exit Check",
                 description: "Verify emergency exit accessibility",
-                isCompleted: false,
-                completedDate: nil,
+                status: .pending,  // Makes isCompleted false
+                completedAt: nil,
                 dueDate: Date(),
                 category: .inspection,
                 urgency: .critical,

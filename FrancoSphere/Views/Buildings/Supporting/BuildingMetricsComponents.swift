@@ -1,5 +1,4 @@
 //
-
 //  BuildingMetricsComponents.swift
 //  FrancoSphere v6.0
 //
@@ -317,7 +316,7 @@ struct TaskCompletionChart: View {
                         y: .value("Completion", data.completionRate)
                     )
                     .foregroundStyle(
-                        data.completionRate >= 0.8 ? Color.green : 
+                        data.completionRate >= 0.8 ? Color.green :
                         data.completionRate >= 0.6 ? Color.yellow : Color.red
                     )
                 }
@@ -742,7 +741,7 @@ class BuildingMetricsViewModel: ObservableObject {
     
     func refreshMetrics(for buildingId: String) async {
         // Invalidate cache and reload
-        await BuildingMetricsService.shared.invalidateCache(for: buildingId)
+        BuildingMetricsService.shared.invalidateCache(for: buildingId)
         await loadMetrics(for: buildingId)
     }
 }

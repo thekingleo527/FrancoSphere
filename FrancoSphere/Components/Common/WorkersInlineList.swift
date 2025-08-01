@@ -6,6 +6,7 @@
 //  ✅ Changed to use WorkerService.getAllActiveWorkers() for multiple workers
 //  ✅ Fixed Animation typo → .easeInOut animation
 //  ✅ Compatible with WorkerContextEngine actor architecture
+//  ✅ FIXED: ProfileBadge parameters and removed unnecessary catch block
 //
 
 import SwiftUI
@@ -168,15 +169,16 @@ struct WorkersInlineList: View {
             onWorkerTap?(worker.id)
         }) {
             VStack(spacing: 8) {
-                // Worker avatar
-                ProfileBadge(
-                    workerName: worker.name,
-                    imageUrl: nil, // Could be enhanced to support profile images
-                    isCompact: true,
-                    onTap: {
-                        onWorkerTap?(worker.id)
-                    }, accentColor: getWorkerAccentColor(worker)
-                )
+                // Worker avatar - Using a simple circle with initials instead of ProfileBadge
+                ZStack {
+                    Circle()
+                        .fill(getWorkerAccentColor(worker))
+                        .frame(width: 40, height: 40)
+                    
+                    Text(getInitials(from: worker.name))
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                }
                 
                 // Worker info
                 VStack(spacing: 2) {
@@ -293,6 +295,13 @@ struct WorkersInlineList: View {
     
     // MARK: - Helper Methods
     
+    private func getInitials(from name: String) -> String {
+        let components = name.components(separatedBy: " ")
+        let first = components.first?.first ?? Character("?")
+        let last: Character = components.count > 1 ? (components.last?.first ?? Character(" ")) : Character(" ")
+        return "\(first)\(last)".uppercased().trimmingCharacters(in: .whitespaces)
+    }
+    
     private func formatWorkerDisplayName(_ name: String) -> String {
         let components = name.components(separatedBy: " ")
         if components.count >= 2 {
@@ -316,12 +325,9 @@ struct WorkersInlineList: View {
     
     private func isWorkerClockedIn(_ workerId: String) async -> Bool {
         // Check if worker is currently clocked in through ClockInManager
-        do {
-            let status = await ClockInManager.shared.getClockInStatus(for: workerId)
-            return status.isClockedIn
-        } catch {
-            return false
-        }
+        // ✅ FIXED: Removed unnecessary do-catch as this doesn't throw
+        let status = await ClockInManager.shared.getClockInStatus(for: workerId)
+        return status.isClockedIn
     }
     
     private func getWorkerTaskCount(_ workerId: String) async -> Int {
