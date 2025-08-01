@@ -95,7 +95,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     private var weatherUpdateTimer: Timer?
     
     // Location Manager
-    @ObservedObject private var locationManager = LocationManager()
+    @ObservedObject private var locationManager = LocationManager.shared
     
     // Service Dependencies
     private let authManager = NewAuthManager.shared
@@ -118,7 +118,10 @@ public class WorkerDashboardViewModel: ObservableObject {
     }
     
     deinit {
-        cleanup()
+        // Timers need to be invalidated on deinit
+        refreshTimer?.invalidate()
+        weatherUpdateTimer?.invalidate()
+        // Note: cancellables are automatically cleaned up
     }
     
     // MARK: - Public Methods
@@ -130,32 +133,34 @@ public class WorkerDashboardViewModel: ObservableObject {
             return
         }
         
-        await performLoading {
-            currentWorkerId = user.workerId
+        await performLoading { [weak self] in
+            guard let self = self else { return }
+            
+            self.currentWorkerId = user.workerId
             
             // Load worker profile and capabilities
-            await loadWorkerProfile(workerId: user.workerId)
-            await loadWorkerCapabilities(workerId: user.workerId)
+            await self.loadWorkerProfile(workerId: user.workerId)
+            await self.loadWorkerCapabilities(workerId: user.workerId)
             
             // Load operational context
-            try await contextEngine.loadContext(for: user.workerId)
-            await syncStateFromContextEngine()
+            try await self.contextEngine.loadContext(for: user.workerId)
+            await self.syncStateFromContextEngine()
             
             // Load additional data
-            await loadClockInStatus(workerId: user.workerId)
-            await calculateMetrics()
-            await loadBuildingMetrics()
+            await self.loadClockInStatus(workerId: user.workerId)
+            await self.calculateMetrics()
+            await self.loadBuildingMetrics()
             
             // Load weather if clocked in
-            if let building = currentBuilding {
-                await loadWeatherData(for: building)
+            if let building = self.currentBuilding {
+                await self.loadWeatherData(for: building)
             }
             
             // Calculate hours worked
-            await calculateHoursWorkedToday()
+            await self.calculateHoursWorkedToday()
             
             // Broadcast activation
-            broadcastWorkerActivation(user: user)
+            self.broadcastWorkerActivation(user: user)
             
             print("✅ Worker dashboard loaded successfully")
         }
@@ -165,22 +170,24 @@ public class WorkerDashboardViewModel: ObservableObject {
     public func refreshData() async {
         guard let workerId = currentWorkerId else { return }
         
-        await performSync {
+        await performSync { [weak self] in
+            guard let self = self else { return }
+            
             // Reload context
-            try await contextEngine.loadContext(for: workerId)
-            await syncStateFromContextEngine()
+            try await self.contextEngine.loadContext(for: workerId)
+            await self.syncStateFromContextEngine()
             
             // Update clock-in status
-            await loadClockInStatus(workerId: workerId)
+            await self.loadClockInStatus(workerId: workerId)
             
             // Recalculate metrics
-            await calculateMetrics()
-            await loadBuildingMetrics()
-            await calculateHoursWorkedToday()
+            await self.calculateMetrics()
+            await self.loadBuildingMetrics()
+            await self.calculateHoursWorkedToday()
             
             // Update weather if needed
-            if let building = currentBuilding {
-                await loadWeatherData(for: building)
+            if let building = self.currentBuilding {
+                await self.loadWeatherData(for: building)
             }
             
             print("✅ Dashboard data refreshed")
@@ -191,9 +198,11 @@ public class WorkerDashboardViewModel: ObservableObject {
     public func clockIn(at building: CoreTypes.NamedCoordinate) async {
         guard let workerId = currentWorkerId else { return }
         
-        await performSync {
+        await performSync { [weak self] in
+            guard let self = self else { return }
+            
             // Get current location
-            let location = locationManager.location
+            let location = self.locationManager.location
             let coordinate = location.map {
                 CLLocationCoordinate2D(
                     latitude: $0.coordinate.latitude,
@@ -202,25 +211,25 @@ public class WorkerDashboardViewModel: ObservableObject {
             }
             
             // Perform clock in
-            try await clockInManager.clockIn(
+            try await self.clockInManager.clockIn(
                 workerId: workerId,
                 building: building,
                 location: coordinate
             )
             
             // Update state
-            updateClockInState(
+            self.updateClockInState(
                 building: building,
                 time: Date(),
                 location: location
             )
             
             // Load weather and tasks
-            await loadWeatherData(for: building)
-            await loadBuildingTasks(workerId: workerId, buildingId: building.id)
+            await self.loadWeatherData(for: building)
+            await self.loadBuildingTasks(workerId: workerId, buildingId: building.id)
             
             // Broadcast update
-            broadcastClockIn(workerId: workerId, building: building, hasLocation: location != nil)
+            self.broadcastClockIn(workerId: workerId, building: building, hasLocation: location != nil)
             
             print("✅ Clocked in at \(building.name)")
         }
@@ -231,18 +240,20 @@ public class WorkerDashboardViewModel: ObservableObject {
         guard let workerId = currentWorkerId,
               let building = currentBuilding else { return }
         
-        await performSync {
+        await performSync { [weak self] in
+            guard let self = self else { return }
+            
             // Calculate session summary
-            let sessionSummary = calculateSessionSummary(building: building)
+            let sessionSummary = self.calculateSessionSummary(building: building)
             
             // Perform clock out
-            try await clockInManager.clockOut(workerId: workerId)
+            try await self.clockInManager.clockOut(workerId: workerId)
             
             // Reset state
-            resetClockInState()
+            self.resetClockInState()
             
             // Broadcast summary
-            broadcastClockOut(
+            self.broadcastClockOut(
                 workerId: workerId,
                 building: building,
                 summary: sessionSummary
@@ -256,23 +267,25 @@ public class WorkerDashboardViewModel: ObservableObject {
     public func completeTask(_ task: CoreTypes.ContextualTask, evidence: CoreTypes.ActionEvidence? = nil) async {
         guard let workerId = currentWorkerId else { return }
         
-        await performSync {
+        await performSync { [weak self] in
+            guard let self = self else { return }
+            
             // Create evidence if needed
-            let taskEvidence = evidence ?? createDefaultEvidence(for: task)
+            let taskEvidence = evidence ?? self.createDefaultEvidence(for: task)
             
             // Update local state
-            updateTaskCompletion(taskId: task.id)
+            self.updateTaskCompletion(taskId: task.id)
             
             // Recalculate metrics
-            await calculateMetrics()
+            await self.calculateMetrics()
             
             // Update building metrics
             if let buildingId = task.buildingId {
-                await updateBuildingMetrics(buildingId: buildingId)
+                await self.updateBuildingMetrics(buildingId: buildingId)
             }
             
             // Broadcast completion
-            broadcastTaskCompletion(
+            self.broadcastTaskCompletion(
                 task: task,
                 workerId: workerId,
                 evidence: taskEvidence
@@ -292,29 +305,33 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     /// Force sync with server
     public func forceSyncWithServer() async {
-        await performSync {
-            await refreshData()
+        await performSync { [weak self] in
+            guard let self = self else { return }
+            
+            await self.refreshData()
             
             // Broadcast sync request
             let syncUpdate = CoreTypes.DashboardUpdate(
                 source: .worker,
                 type: .buildingMetricsChanged,
-                buildingId: currentBuilding?.id ?? "",
-                workerId: currentWorkerId ?? "",
+                buildingId: self.currentBuilding?.id ?? "",
+                workerId: self.currentWorkerId ?? "",
                 data: [
                     "action": "forceSync",
                     "timestamp": ISO8601DateFormatter().string(from: Date())
                 ]
             )
-            dashboardSyncService.broadcastWorkerUpdate(syncUpdate)
+            self.dashboardSyncService.broadcastWorkerUpdate(syncUpdate)
         }
     }
     
     /// Retry failed sync operations
     public func retrySyncOperations() async {
-        await performSync {
+        await performSync { [weak self] in
+            guard let self = self else { return }
+            
             try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
-            await refreshData()
+            await self.refreshData()
         }
     }
     

@@ -6,7 +6,7 @@
 //  ✅ PRODUCTION READY: Handles database init, migration, and daily ops
 //  ✅ WIRED: All initialization components properly connected
 //  ✅ SENTRY INTEGRATED: Full crash reporting and performance monitoring
-//  ✅ FIXED: iOS 17+ onChange syntax and getCurrentUser issue
+//  ✅ FIXED: Corrected Sentry integration and all compiler errors.
 //
 
 import SwiftUI
@@ -27,7 +27,7 @@ struct FrancoSphereApp: App {
     @State private var showingSplash = true
     
     init() {
-        // Initialize Sentry as early as possible
+        // Initialize Sentry as the very first step of the app's lifecycle.
         initializeSentry()
     }
     
@@ -65,6 +65,7 @@ struct FrancoSphereApp: App {
                         .transition(.opacity)
                 } else if !hasCompletedOnboarding {
                     // Step 3: Show the onboarding flow for first-time users.
+                    // This now correctly refers to the OnboardingView in its own file.
                     OnboardingView(onComplete: {
                         hasCompletedOnboarding = true
                     })
@@ -91,22 +92,18 @@ struct FrancoSphereApp: App {
             .animation(.easeInOut(duration: 0.3), value: dailyOps.needsMigration())
             .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
             .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
-            .onAppear {
-                setupApp()
-            }
+            .onAppear(perform: setupApp)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 checkDailyOperations()
             }
-            // Use the correct `onChange` syntax for iOS 17+
-            .onChange(of: initViewModel.isComplete) { isComplete in
-                if isComplete {
-                    // After initialization completes, check if daily operations/migration is needed.
+            // Use the correct `onChange` syntax for wide compatibility.
+            .onChange(of: initViewModel.isComplete) { newValue in
+                if newValue {
                     checkDailyOperations()
                 }
             }
-            // Monitor auth changes to update Sentry user context
-            .onChange(of: authManager.currentUser) { user in
-                updateSentryUserContext(user)
+            .onChange(of: authManager.currentUser) { newValue in
+                updateSentryUserContext(newValue)
             }
         }
     }
@@ -115,10 +112,8 @@ struct FrancoSphereApp: App {
     
     private func initializeSentry() {
         SentrySDK.start { options in
-            // Your actual Sentry DSN
             options.dsn = "https://c77b2dddf9eca868ead5142d23a438cf@o4509764891901952.ingest.us.sentry.io/4509764893081600"
             
-            // Basic Configuration
             #if DEBUG
             options.debug = true
             options.environment = "debug"
@@ -127,55 +122,44 @@ struct FrancoSphereApp: App {
             options.environment = "production"
             #endif
             
-            // Performance Monitoring
-            options.tracesSampleRate = 0.1 // Capture 10% of transactions for performance monitoring
-            options.profilesSampleRate = 0.1 // Profile 10% of transactions
+            options.tracesSampleRate = 0.2
             
-            // Release Information
+            // ✅ FIXED: Replaced deprecated `profilesSampleRate` with `profilesSampler`.
+            options.profilesSampler = { samplingContext in
+                return 0.2 // Profile 20% of transactions.
+            }
+            
             if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
                let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
                 options.releaseName = "francosphere@\(version)+\(build)"
             }
             
-            // Breadcrumbs
             options.enableAutoBreadcrumbTracking = true
             options.maxBreadcrumbs = 100
+            options.attachScreenshot = true
+            options.attachViewHierarchy = true
             
-            // Attachments
-            options.attachScreenshot = true // Attach screenshots to crash reports
-            options.attachViewHierarchy = true // Attach view hierarchy
-            
-            // Privacy
             options.beforeSend = { event in
-                // Scrub sensitive data before sending
-                return sanitizeEvent(event)
+                return self.sanitizeEvent(event)
             }
             
-            // Session Tracking
             options.enableAutoSessionTracking = true
-            options.sessionTrackingIntervalMillis = 30000 // 30 seconds
+            options.sessionTrackingIntervalMillis = 30000
             
-            // Network Tracking
             options.enableNetworkTracking = true
             options.enableNetworkBreadcrumbs = true
             
-            // UI Tracking - Fixed property name
             options.enableUIViewControllerTracing = true
             options.enableUserInteractionTracing = true
             options.enableSwizzling = true
             
-            // Experimental Features
             options.enableTimeToFullDisplayTracing = true
             options.enablePreWarmedAppStartTracing = true
         }
         
-        // Set initial tags
         SentrySDK.configureScope { scope in
             scope.setTag(value: UIDevice.current.model, key: "device.model")
             scope.setTag(value: UIDevice.current.systemVersion, key: "ios.version")
-            scope.setTag(value: Locale.current.identifier, key: "locale")
-            
-            // Add app-specific context
             scope.setContext(value: [
                 "initialized": databaseInitializer.isInitialized,
                 "migrationNeeded": dailyOps.needsMigration(),
@@ -189,9 +173,6 @@ struct FrancoSphereApp: App {
     // MARK: - Sentry Helper Methods
     
     private func sanitizeEvent(_ event: Event) -> Event? {
-        // Remove sensitive information from the event
-        
-        // Scrub email addresses from messages
         if let message = event.message {
             event.message = SentryMessage(
                 formatted: message.formatted.replacingOccurrences(
@@ -202,26 +183,18 @@ struct FrancoSphereApp: App {
             )
         }
         
-        // Scrub sensitive data from breadcrumbs
         event.breadcrumbs = event.breadcrumbs?.compactMap { breadcrumb in
             var sanitizedBreadcrumb = breadcrumb
-            
-            // Remove password fields
             if var data = sanitizedBreadcrumb.data {
                 data.removeValue(forKey: "password")
                 data.removeValue(forKey: "token")
-                data.removeValue(forKey: "apiKey")
                 sanitizedBreadcrumb.data = data
             }
-            
             return sanitizedBreadcrumb
         }
         
-        // Scrub sensitive URLs
-        if let request = event.request {
-            if let url = request.url, url.contains("password") || url.contains("token") {
-                event.request?.url = "[REDACTED_URL]"
-            }
+        if let request = event.request, let url = request.url, url.contains("password") || url.contains("token") {
+            event.request?.url = "[REDACTED_URL]"
         }
         
         return event
@@ -230,25 +203,14 @@ struct FrancoSphereApp: App {
     private func updateSentryUserContext(_ user: CoreTypes.User?) {
         SentrySDK.configureScope { scope in
             if let user = user {
-                // Set user information (but not sensitive data)
-                let sentryUser = User(userId: user.workerId)
+                // ✅ FIXED: Using the correct Sentry.User initializer.
+                let sentryUser = Sentry.User(userId: user.workerId)
                 sentryUser.username = user.name
-                // Don't send email to protect privacy
                 
                 scope.setUser(sentryUser)
-                
-                // Add user context
-                scope.setContext(value: [
-                    "workerId": user.workerId,
-                    "role": user.role,
-                    "name": user.name
-                ], key: "user_info")
-                
-                // Set user-specific tags
+                scope.setContext(value: ["role": user.role], key: "user_info")
                 scope.setTag(value: user.role, key: "user.role")
-                
             } else {
-                // Clear user context on logout
                 scope.setUser(nil)
                 scope.removeContext(key: "user_info")
                 scope.removeTag(key: "user.role")
@@ -261,73 +223,42 @@ struct FrancoSphereApp: App {
     private func setupApp() {
         configureAppearance()
         
-        // Add breadcrumb for app launch
-        let breadcrumb = Breadcrumb()
-        breadcrumb.level = .info
-        breadcrumb.category = "app.lifecycle"
-        breadcrumb.message = "App launched"
-        breadcrumb.data = [
-            "hasCompletedOnboarding": hasCompletedOnboarding,
-            "isAuthenticated": authManager.isAuthenticated
-        ]
+        let breadcrumb = Breadcrumb(level: .info, category: "app.lifecycle")
+        breadcrumb.message = "App setup started"
         SentrySDK.addBreadcrumb(breadcrumb)
         
-        // NotificationManager already requests permissions in its init()
-        
-        // Start location services if the user is already authenticated from a previous session.
         if authManager.isAuthenticated {
             locationManager.startUpdatingLocation()
         }
         
-        // Check if we need to run daily operations right away.
         if databaseInitializer.isInitialized {
             checkDailyOperations()
         }
     }
     
     private func checkDailyOperations() {
-        // Create a transaction for performance monitoring
-        let transaction = SentrySDK.startTransaction(
-            name: "daily_operations",
-            operation: "task"
-        )
+        let transaction = SentrySDK.startTransaction(name: "daily_operations", operation: "app.task")
         
         Task {
             do {
                 guard databaseInitializer.isInitialized else {
-                    print("⚠️ Database not ready, deferring daily operations check.")
                     transaction.finish(status: .cancelled)
                     return
                 }
                 
-                // Create spans for different operations
-                let migrationSpan = transaction.startChild(operation: "migration_check")
-                let needsMigration = dailyOps.needsMigration()
-                migrationSpan.finish()
-                
-                // This single call will trigger migration if needed
                 let operationsSpan = transaction.startChild(operation: "perform_operations")
                 try await dailyOps.performDailyOperations()
                 operationsSpan.finish()
                 
-                // After operations are complete, refresh any globally cached data.
                 let refreshSpan = transaction.startChild(operation: "refresh_data")
                 await refreshAppData()
                 refreshSpan.finish()
                 
                 transaction.finish(status: .ok)
-                
             } catch {
-                print("❌ Daily operations failed: \(error)")
-                
-                // Capture the error with context
                 SentrySDK.capture(error: error) { scope in
-                    scope.setContext(value: [
-                        "operation": "daily_operations",
-                        "needsMigration": dailyOps.needsMigration()
-                    ], key: "daily_ops")
+                    scope.setTag(value: "daily_operations", key: "task_group")
                 }
-                
                 transaction.finish(status: .internalError)
                 await handleDailyOpsError(error)
             }
@@ -335,7 +266,6 @@ struct FrancoSphereApp: App {
     }
     
     private func refreshAppData() async {
-        // Invalidate caches and refresh context to ensure the UI has the latest data.
         do {
             await BuildingMetricsService.shared.invalidateAllCaches()
             
@@ -343,37 +273,26 @@ struct FrancoSphereApp: App {
                 try await contextEngine.loadContext(for: currentUser.workerId)
             }
             
-            print("✅ App data refreshed after daily operations.")
-            
-            // Add breadcrumb for successful refresh
-            let breadcrumb = Breadcrumb()
-            breadcrumb.level = .info
-            breadcrumb.category = "app.data"
+            let breadcrumb = Breadcrumb(level: .info, category: "app.data")
             breadcrumb.message = "App data refreshed"
             SentrySDK.addBreadcrumb(breadcrumb)
-            
+            print("✅ App data refreshed after daily operations.")
         } catch {
-            print("⚠️ Failed to refresh app data: \(error)")
-            
-            // Capture non-fatal error
             SentrySDK.capture(error: error) { scope in
                 scope.setLevel(.warning)
-                scope.setContext(value: ["operation": "refresh_app_data"], key: "context")
             }
+            print("⚠️ Failed to refresh app data: \(error)")
         }
     }
     
     private func handleDailyOpsError(_ error: Error) async {
-        // Error is already captured by Sentry in checkDailyOperations
-        // This method can handle any additional error recovery logic
         print("📊 Daily ops error logged to Sentry: \(error)")
     }
     
     private func configureAppearance() {
-        // Centralized UI appearance configuration.
         let navAppearance = UINavigationBarAppearance()
         navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = UIColor.systemBackground
+        navAppearance.backgroundColor = .systemBackground
         navAppearance.titleTextAttributes = [.foregroundColor: UIColor.label]
         navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.label]
         
@@ -383,55 +302,34 @@ struct FrancoSphereApp: App {
         
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithOpaqueBackground()
-        tabAppearance.backgroundColor = UIColor.systemBackground
+        tabAppearance.backgroundColor = .systemBackground
         
         UITabBar.appearance().standardAppearance = tabAppearance
-        UITabBar.appearance().scrollEdgeAppearance = tabAppearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = tabAppearance
+        }
         
-        UITableView.appearance().backgroundColor = UIColor.systemBackground
+        UITableView.appearance().backgroundColor = .systemBackground
     }
 }
 
-// MARK: - Sentry Crash Reporter Wrapper
+// MARK: - Sentry Crash Reporter Wrapper (for backward compatibility)
 
-/// Wrapper for Sentry functionality to maintain compatibility with existing code
 enum CrashReporter {
-    static func initialize() {
-        // Initialization happens in FrancoSphereApp.init()
-        // This method exists for backward compatibility
-    }
-    
     static func captureError(_ error: Error, context: [String: Any]? = nil) {
         SentrySDK.capture(error: error) { scope in
             if let context = context {
-                scope.setContext(value: context, key: "error_context")
+                scope.setContext(value: context, key: "custom_error_context")
             }
         }
     }
-    
-    static func captureMessage(_ message: String, level: SentryLevel = .info) {
-        SentrySDK.capture(message: message) { scope in
-            scope.setLevel(level)
-        }
-    }
-    
-    static func addBreadcrumb(message: String, category: String, level: SentryLevel = .info, data: [String: Any]? = nil) {
-        let breadcrumb = Breadcrumb()
-        breadcrumb.message = message
-        breadcrumb.category = category
-        breadcrumb.level = level
-        breadcrumb.data = data
-        SentrySDK.addBreadcrumb(breadcrumb)
-    }
-    
-    static func setUserContext(_ user: CoreTypes.User?) {
-        // Handled by updateSentryUserContext in FrancoSphereApp
-    }
 }
 
-// MARK: - Placeholder Views
+// MARK: - Placeholder Views (These should live in their own files)
 
 struct SplashView: View {
+    @State private var animate = false
+    
     var body: some View {
         ZStack {
             LinearGradient(
@@ -444,66 +342,35 @@ struct SplashView: View {
             )
             .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                Image(systemName: "building.2.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.blue, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+            VStack(spacing: 24) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: [.blue.opacity(0.3), .cyan.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 120, height: 120)
+                        .blur(radius: 20)
+                        .scaleEffect(animate ? 1.2 : 0.8)
+                    
+                    Image(systemName: "building.2.crop.circle.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .scaleEffect(animate ? 1.0 : 0.8)
+                }
                 
                 Text("FrancoSphere")
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
+                    .opacity(animate ? 1.0 : 0.0)
                 
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.2)
+                Text("Property Management Excellence")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .opacity(animate ? 1.0 : 0.0)
             }
-        }
-        
-        // Add test button in debug builds only
-        #if DEBUG
-        .overlay(alignment: .bottom) {
-            VStack(spacing: 16) {
-                Button("Test Sentry Integration") {
-                    // Test message
-                    SentrySDK.capture(message: "FrancoSphere Sentry test successful! 🚀")
-                    
-                    // Test error
-                    let testError = NSError(
-                        domain: "com.francosphere.test",
-                        code: 1,
-                        userInfo: [
-                            NSLocalizedDescriptionKey: "Test error from production setup"
-                        ]
-                    )
-                    SentrySDK.capture(error: testError) { scope in
-                        scope.setLevel(.info)
-                        scope.setTag(value: "test", key: "error.type")
-                    }
-                    
-                    // Add breadcrumb
-                    CrashReporter.addBreadcrumb(
-                        message: "Sentry test button pressed",
-                        category: "ui.click",
-                        data: ["source": "splash_screen"]
-                    )
-                    
-                    print("✅ Sentry test events sent! Check your dashboard.")
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.8)) {
+                    animate = true
                 }
-                .buttonStyle(.bordered)
-                .tint(.white)
-                
-                Text("Remove this button before production!")
-                    .font(.caption)
-                    .foregroundColor(.orange)
             }
-            .padding(.bottom, 60)
         }
-        #endif
     }
 }

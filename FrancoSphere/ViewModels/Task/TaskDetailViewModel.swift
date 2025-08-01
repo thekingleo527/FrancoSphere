@@ -7,9 +7,8 @@
 //  ✅ REAL-TIME SYNC: Cross-dashboard updates via DashboardSyncService
 //  ✅ OFFLINE SUPPORT: Queue tasks for later submission
 //  ✅ FUTURE READY: Prepared for AI assistance and advanced features
-//  ✅ COMPILATION FIXED: All errors resolved for Phase 2
-//  ✅ UPDATED: Using real PhotoEvidenceServiceV6 instead of mock
-//  ✅ STREAM A MODIFIED: Now loads worker capabilities to support UI adaptation
+//  ✅ COMPILATION FIXED: All syntax and singleton access errors resolved.
+//  ✅ STREAM A MODIFIED: Now loads worker capabilities to support UI adaptation.
 //
 
 import Foundation
@@ -41,7 +40,6 @@ public class TaskDetailViewModel: ObservableObject {
     @Published var workerName: String = "Unassigned"
     @Published var workerProfile: CoreTypes.WorkerProfile?
     
-    // ✅ STREAM A ADDITION: To inform the view which UI to render
     @Published var workerCapabilities: WorkerDashboardViewModel.WorkerCapabilities?
     
     // Photo Evidence
@@ -80,7 +78,7 @@ public class TaskDetailViewModel: ObservableObject {
     private let buildingService = BuildingService.shared
     private let workerService = WorkerService.shared
     private let dashboardSyncService = DashboardSyncService.shared
-    private let photoEvidenceService = PhotoEvidenceService.shared  // ✅ UPDATED: Using real service
+    private let photoEvidenceService = PhotoEvidenceService.shared
     private let locationManager = LocationManager.shared
     private let grdbManager = GRDBManager.shared
     
@@ -163,17 +161,15 @@ public class TaskDetailViewModel: ObservableObject {
     
     public init() {
         setupSubscriptions()
-        setupLocationManager.shared
+        setupLocationManager()
     }
     
     // MARK: - Public Methods
     
-    /// Load task details from a generic task object
     public func loadTask<T>(_ task: T) async where T: Any {
         isLoading = true
         errorMessage = nil
         
-        // Use Mirror to extract properties
         let mirror = Mirror(reflecting: task)
         
         for child in mirror.children {
@@ -192,29 +188,24 @@ public class TaskDetailViewModel: ObservableObject {
             }
         }
         
-        // Store the task if it's ContextualTask
         if let contextualTask = task as? CoreTypes.ContextualTask {
             currentTask = contextualTask
         }
         
-        // Update progress based on completion status
         if isCompleted {
             taskProgress = .completed
             progressPercentage = 1.0
         }
         
-        // Load additional data
         await loadBuildingInfo()
         await loadWorkerInfo()
         
-        // ✅ STREAM A MODIFICATION: Load capabilities for the assigned worker
         if let workerId = taskWorkerId {
             await loadWorkerCapabilities(workerId: workerId)
         }
         
         await checkVerificationRequirements()
         
-        // Future Phase: Load AI suggestions
         if UserDefaults.standard.bool(forKey: "enableAISuggestions") {
             await loadAISuggestions()
         }
@@ -222,7 +213,6 @@ public class TaskDetailViewModel: ObservableObject {
         isLoading = false
     }
     
-    /// Start working on the task
     public func startTask() {
         guard taskProgress == .notStarted else { return }
         
@@ -230,31 +220,23 @@ public class TaskDetailViewModel: ObservableObject {
         taskProgress = .inProgress
         progressPercentage = 0.3
         
-        // Broadcast task started
         broadcastTaskUpdate(type: .taskStarted)
         
-        // Start location tracking if needed
         if requiresLocationVerification() {
             locationManager.startUpdatingLocation()
         }
         
-        // Future Phase: Start AI monitoring
         if UserDefaults.standard.bool(forKey: "enableAIMonitoring") {
             startAITaskMonitoring()
         }
     }
     
-    /// Capture photo evidence using the real PhotoEvidenceService
     public func capturePhoto(_ image: UIImage) async {
         capturedPhoto = image
-        
-        // Update progress
         taskProgress = .awaitingPhoto
         progressPercentage = 0.6
         
-        // Use the real PhotoEvidenceService to handle photo evidence
-        if let task = currentTask,
-           let worker = workerProfile {
+        if let task = currentTask, let worker = workerProfile {
             do {
                 let evidence = try await photoEvidenceService.captureEvidence(
                     image: image,
@@ -276,7 +258,6 @@ public class TaskDetailViewModel: ObservableObject {
         }
     }
     
-    /// Complete the task with evidence
     public func completeTask(notes: String? = nil) async {
         guard !isSubmitting else { return }
         
@@ -286,51 +267,39 @@ public class TaskDetailViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            // Validate photo requirement based on capabilities
-            if requiresPhotoEvidence() &&
-               (workerCapabilities?.canUploadPhotos ?? true) &&
-               capturedPhoto == nil {
+            if requiresPhotoEvidence() && (workerCapabilities?.canUploadPhotos ?? true) && capturedPhoto == nil {
                 throw TaskError.photoRequired
             }
             
-            // Get current location
             let location = await getCurrentLocation()
             
-            // Create evidence
             let evidence = CoreTypes.ActionEvidence(
                 description: notes ?? "Task completed via mobile app",
                 photoURLs: photoLocalPath != nil ? [URL(fileURLWithPath: photoLocalPath!)] : [],
-                photoData: nil,  // Already handled by PhotoEvidenceService
+                photoData: nil,
                 timestamp: Date()
             )
             
-            // Submit to service
             try await taskService.completeTask(taskId, evidence: evidence)
             
-            // Save completion record locally
             await saveCompletionRecord(notes: notes, location: location)
             
-            // Update state
             isCompleted = true
             completedDate = Date()
             taskProgress = .completed
             progressPercentage = 1.0
             
-            // Update verification status
             if requiresVerification() {
                 verificationStatus = .pending
             } else {
                 verificationStatus = .notRequired
             }
             
-            // Broadcast completion
             broadcastTaskUpdate(type: .taskCompleted)
             
-            // Show success
             successMessage = "Task completed successfully!"
             showSuccess = true
             
-            // Calculate metrics
             if let startTime = taskStartTime {
                 let duration = Date().timeIntervalSince(startTime)
                 await updateTaskMetrics(duration: duration)
@@ -346,18 +315,15 @@ public class TaskDetailViewModel: ObservableObject {
         isSubmitting = false
     }
     
-    /// Resubmit task with additional evidence
     public func resubmitTask(additionalNotes: String, newPhoto: UIImage?) async {
         guard verificationStatus == .rejected else { return }
         
         isSubmitting = true
         
-        // Update photo if provided
         if let newPhoto = newPhoto {
             await capturePhoto(newPhoto)
         }
         
-        // Create resubmission notes
         let resubmissionNotes = """
         RESUBMISSION:
         \(additionalNotes)
@@ -366,7 +332,6 @@ public class TaskDetailViewModel: ObservableObject {
         \(verificationNotes ?? "None")
         """
         
-        // Complete task again with new evidence
         await completeTask(notes: resubmissionNotes)
         
         if !showError {
@@ -379,11 +344,10 @@ public class TaskDetailViewModel: ObservableObject {
     // MARK: - Worker Capabilities
     
     private func loadWorkerCapabilities(workerId: String) async {
-        // ✅ STREAM A ADDITION: Fetches capabilities for the worker assigned to this task
         do {
             let rows = try await grdbManager.query("SELECT * FROM worker_capabilities WHERE worker_id = ?", [workerId])
             if let row = rows.first {
-                self.workerCapabilities = WorkerDashboardViewModel.WorkerCapabilities(
+                self.workerCapabilities = .init(
                     canUploadPhotos: (row["can_upload_photos"] as? Int64 ?? 1) == 1,
                     canAddNotes: (row["can_add_notes"] as? Int64 ?? 1) == 1,
                     canViewMap: (row["can_view_map"] as? Int64 ?? 1) == 1,
@@ -392,34 +356,17 @@ public class TaskDetailViewModel: ObservableObject {
                     simplifiedInterface: (row["simplified_interface"] as? Int64 ?? 0) == 1
                 )
             } else {
-                // Fallback to default capabilities if none are found in the DB
-                self.workerCapabilities = WorkerDashboardViewModel.WorkerCapabilities(
-                    canUploadPhotos: true,
-                    canAddNotes: true,
-                    canViewMap: true,
-                    canAddEmergencyTasks: false,
-                    requiresPhotoForSanitation: true,
-                    simplifiedInterface: false
-                )
+                self.workerCapabilities = .init(canUploadPhotos: true, canAddNotes: true, canViewMap: true, canAddEmergencyTasks: false, requiresPhotoForSanitation: true, simplifiedInterface: false)
             }
         } catch {
             print("❌ Failed to load worker capabilities for task detail: \(error)")
-            // Use default capabilities on error
-            self.workerCapabilities = WorkerDashboardViewModel.WorkerCapabilities(
-                canUploadPhotos: true,
-                canAddNotes: true,
-                canViewMap: true,
-                canAddEmergencyTasks: false,
-                requiresPhotoForSanitation: true,
-                simplifiedInterface: false
-            )
+            self.workerCapabilities = .init(canUploadPhotos: true, canAddNotes: true, canViewMap: true, canAddEmergencyTasks: false, requiresPhotoForSanitation: true, simplifiedInterface: false)
         }
     }
     
     // MARK: - Private Methods
     
-    private func setupLocationManager.shared {
-        // Request location permission if needed
+    private func setupLocationManager() {
         locationManager.requestLocation()
     }
     
@@ -430,19 +377,10 @@ public class TaskDetailViewModel: ObservableObject {
         }
         
         do {
-            // Try to get building from service
-            let buildings = try await buildingService.getAllBuildings()
-            if let building = buildings.first(where: { $0.id == buildingId }) {
-                buildingName = building.name
-                buildingAddress = building.address
-                buildingCoordinate = CLLocationCoordinate2D(
-                    latitude: building.latitude,
-                    longitude: building.longitude
-                )
-            } else {
-                // Fallback to direct query
-                buildingName = await getBuildingNameFromDatabase(buildingId)
-            }
+            let building = try await buildingService.getBuilding(buildingId: buildingId)
+            buildingName = building.name
+            buildingAddress = building.address
+            buildingCoordinate = CLLocationCoordinate2D(latitude: building.latitude, longitude: building.longitude)
         } catch {
             print("⚠️ Failed to load building info: \(error)")
             buildingName = "Building #\(buildingId)"
@@ -451,19 +389,13 @@ public class TaskDetailViewModel: ObservableObject {
     
     private func getBuildingNameFromDatabase(_ buildingId: String) async -> String {
         do {
-            let rows = try await grdbManager.query(
-                "SELECT name FROM buildings WHERE id = ?",
-                [buildingId]
-            )
-            
-            if let row = rows.first,
-               let name = row["name"] as? String {
+            let rows = try await grdbManager.query("SELECT name FROM buildings WHERE id = ?", [buildingId])
+            if let name = rows.first?["name"] as? String {
                 return name
             }
         } catch {
             print("⚠️ Database query failed: \(error)")
         }
-        
         return "Building #\(buildingId)"
     }
     
@@ -483,7 +415,6 @@ public class TaskDetailViewModel: ObservableObject {
     }
     
     private func checkVerificationRequirements() async {
-        // Check if task requires verification based on category
         guard let category = taskCategory else { return }
         
         switch category {
@@ -499,9 +430,7 @@ public class TaskDetailViewModel: ObservableObject {
             let completionId = UUID().uuidString
             
             try await grdbManager.execute("""
-                INSERT INTO task_completions 
-                (id, task_id, worker_id, building_id, completed_at, notes, 
-                 location_lat, location_lon, created_at)
+                INSERT INTO task_completions (id, task_id, worker_id, building_id, completion_time, notes, location_lat, location_lon, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, [
                 completionId,
@@ -509,9 +438,9 @@ public class TaskDetailViewModel: ObservableObject {
                 taskWorkerId ?? "",
                 taskBuildingId ?? "",
                 ISO8601DateFormatter().string(from: Date()),
-                notes ?? "",
-                location?.latitude ?? 0,
-                location?.longitude ?? 0,
+                notes as Any,
+                location?.latitude as Any,
+                location?.longitude as Any,
                 ISO8601DateFormatter().string(from: Date())
             ])
             
@@ -523,10 +452,7 @@ public class TaskDetailViewModel: ObservableObject {
     }
     
     private func getCurrentLocation() async -> CLLocationCoordinate2D? {
-        if let currentLocation = locationManager.location {
-            return currentLocation.coordinate
-        }
-        return nil
+        return locationManager.location?.coordinate
     }
     
     private func broadcastTaskUpdate(type: CoreTypes.DashboardUpdate.UpdateType) {
@@ -548,7 +474,6 @@ public class TaskDetailViewModel: ObservableObject {
     }
     
     private func updateTaskMetrics(duration: TimeInterval) async {
-        // Future: Send metrics to analytics service
         let metrics: [String: Any] = [
             "taskId": taskId,
             "duration": duration,
@@ -561,14 +486,10 @@ public class TaskDetailViewModel: ObservableObject {
         print("📊 Task metrics: \(metrics)")
     }
     
-    // MARK: - Helper Methods
-    
     private func requiresPhotoEvidence() -> Bool {
-        guard let category = taskCategory else { return false }
+        guard let category = taskCategory, let workerCapabilities = workerCapabilities else { return false }
         
-        // Check worker capabilities for photo requirements
-        let canUploadPhotos = workerCapabilities?.canUploadPhotos ?? true
-        if !canUploadPhotos {
+        if !workerCapabilities.canUploadPhotos {
             return false
         }
         
@@ -597,42 +518,19 @@ public class TaskDetailViewModel: ObservableObject {
         return taskCategory == .security || taskCategory == .inspection
     }
     
-    // MARK: - AI Features (Future Phase)
-    
     private func loadAISuggestions() async {
-        // Simulate AI suggestions based on task type
         guard let category = taskCategory else { return }
         
         switch category {
         case .maintenance:
             aiSuggestions = [
-                AISuggestion(
-                    title: "Check filter status",
-                    description: "HVAC filters should be checked monthly",
-                    type: .quality,
-                    confidence: 0.85
-                ),
-                AISuggestion(
-                    title: "Document serial numbers",
-                    description: "Include equipment serial numbers in your notes",
-                    type: .compliance,
-                    confidence: 0.92
-                )
+                .init(title: "Check filter status", description: "HVAC filters should be checked monthly", type: .quality, confidence: 0.85),
+                .init(title: "Document serial numbers", description: "Include equipment serial numbers in your notes", type: .compliance, confidence: 0.92)
             ]
         case .cleaning:
             aiSuggestions = [
-                AISuggestion(
-                    title: "Use PPE",
-                    description: "Ensure proper protective equipment is worn",
-                    type: .safety,
-                    confidence: 0.95
-                ),
-                AISuggestion(
-                    title: "Check supply levels",
-                    description: "Verify cleaning supplies are adequately stocked",
-                    type: .efficiency,
-                    confidence: 0.78
-                )
+                .init(title: "Use PPE", description: "Ensure proper protective equipment is worn", type: .safety, confidence: 0.95),
+                .init(title: "Check supply levels", description: "Verify cleaning supplies are adequately stocked", type: .efficiency, confidence: 0.78)
             ]
         default:
             aiSuggestions = []
@@ -640,14 +538,10 @@ public class TaskDetailViewModel: ObservableObject {
     }
     
     private func startAITaskMonitoring() {
-        // Future: Real-time AI monitoring of task progress
         print("🤖 AI task monitoring started for task: \(taskId)")
     }
     
-    // MARK: - Subscriptions
-    
     private func setupSubscriptions() {
-        // Subscribe to photo evidence upload progress from the real service
         photoEvidenceService.$uploadProgress
             .receive(on: DispatchQueue.main)
             .sink { [weak self] progress in
@@ -678,39 +572,3 @@ public class TaskDetailViewModel: ObservableObject {
         }
     }
 }
-
-// MARK: - Future Enhancements
-
-/*
-🚀 FUTURE PHASES:
-
-Phase 1: Enhanced Photo Evidence (Q2 2025)
-- Multiple photo support
-- Video evidence for complex tasks
-- Automatic metadata extraction
-- Cloud backup integration
-
-Phase 2: AI Task Assistant (Q3 2025)
-- Real-time guidance during task execution
-- Anomaly detection in photos
-- Quality assessment scoring
-- Predictive time estimates
-
-Phase 3: AR Integration (Q4 2025)
-- AR overlays for task locations
-- Visual task completion guides
-- Equipment identification
-- Safety hazard highlighting
-
-Phase 4: Advanced Analytics (Q1 2026)
-- Task pattern analysis
-- Worker efficiency metrics
-- Building-specific insights
-- Predictive maintenance alerts
-
-Phase 5: Integration Platform (Q2 2026)
-- Third-party tool connections
-- IoT sensor integration
-- Automated task generation
-- Smart scheduling
-*/
