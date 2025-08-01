@@ -21,7 +21,7 @@ public struct ProfileBadge: View {
     let size: BadgeSize
     let context: DashboardContext
     let onTap: () -> Void
-    
+
     // MARK: - State
     @State private var isPressed = false
     @State private var pulseAnimation = false
@@ -105,20 +105,21 @@ public struct ProfileBadge: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
-        .onLongPressGesture(minimumDuration: .infinity,
-                            onPressing: { pressing in
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    isPressed = pressing
-                                }
-                            },
-                            perform: {})
-        .onChange(of: statusMonitor.currentStatus) {
-            let newStatus = statusMonitor.currentStatus
-            if newStatus == .clockedIn && !pulseAnimation {
+        .onLongPressGesture(
+            minimumDuration: 0.5,
+            pressing: { pressing in
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isPressed = pressing
+                }
+            },
+            perform: {}
+        )
+        .onChange(of: statusMonitor.currentStatus) { oldValue, newValue in
+            if newValue == .clockedIn && !pulseAnimation {
                 withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                     pulseAnimation = true
                 }
-            } else if newStatus != .clockedIn {
+            } else if newValue != .clockedIn {
                 pulseAnimation = false
             }
         }
