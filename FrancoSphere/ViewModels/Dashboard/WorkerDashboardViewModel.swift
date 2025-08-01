@@ -648,8 +648,33 @@ public class WorkerDashboardViewModel: ObservableObject {
             print("⚠️ Failed to update building metrics: \(error)")
         }
     }
-    
-    private func setLoadingState(_ loading: Bool) async {
+    private func loadDSNYTasks() async {
+        guard let workerId = currentWorkerId else { return }
+        
+        do {
+            // Generate DSNY tasks for all assigned buildings
+            for building in assignedBuildings {
+                let dsnyTasks = try await DSNYAPIService.shared.generateDSNYTasks(
+                    for: building,
+                    workerId: workerId
+                )
+                
+                // Add to today's tasks if not already present
+                for task in dsnyTasks {
+                    if !todaysTasks.contains(where: { $0.id == task.id }) {
+                        todaysTasks.append(task)
+                    }
+                }
+            }
+            
+            // Sort tasks by scheduled time
+            todaysTasks.sort {
+                ($0.scheduledDate ?? Date()) < ($1.scheduledDate ?? Date())
+            }
+        } catch {
+            print("Failed to load DSNY tasks: \(error)")
+        }
+    };    private func setLoadingState(_ loading: Bool) async {
         isLoading = loading
         if !loading {
             errorMessage = nil

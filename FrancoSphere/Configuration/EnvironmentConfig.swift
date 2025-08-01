@@ -72,3 +72,15 @@ final class EnvironmentConfig {
         current.isDebugEnabled
     }
 }
+// DSNY API configuration
+extension EnvironmentConfig {
+    var dsnyAPIToken: String? {
+        // In production, use secure storage
+        // For development, can use environment variable
+        ProcessInfo.processInfo.environment["DSNY_API_TOKEN"]
+    }
+    
+    var dsnyAPIBaseURL: String {
+        "https://data.cityofnewyork.us/resource"
+    }
+}

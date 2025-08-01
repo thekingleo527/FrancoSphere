@@ -9,6 +9,7 @@
 //  ✅ ENHANCED: Full inventory management, worker tracking, and real-time sync
 //  ✅ STREAM B UPDATE: Enhanced sync_queue with priority, compression, and retry management
 //  ✅ FOREIGN KEYS ENABLED: Data integrity enforced at database level
+//  ✅ DSNY INTEGRATION: Complete DSNY schedule, violations, and compliance tracking
 //
 
 import Foundation
@@ -560,6 +561,57 @@ public final class GRDBManager {
             )
         """)
         
+        // --- DSNY INTEGRATION TABLES ---
+        
+        // DSNY schedule cache table
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS dsny_schedule_cache (
+                building_id TEXT PRIMARY KEY,
+                district_section TEXT NOT NULL,
+                refuse_days TEXT,
+                recycling_days TEXT,
+                organics_days TEXT,
+                bulk_days TEXT,
+                last_updated TEXT NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id)
+            )
+        """)
+        
+        // DSNY violations table
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS dsny_violations (
+                id TEXT PRIMARY KEY,
+                building_id TEXT NOT NULL,
+                violation_type TEXT NOT NULL,
+                issue_date TEXT NOT NULL,
+                fine_amount REAL NOT NULL,
+                status TEXT NOT NULL,
+                description TEXT,
+                photo_evidence TEXT,
+                reported_by TEXT,
+                resolved_at TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
+                FOREIGN KEY (reported_by) REFERENCES workers(id)
+            )
+        """)
+        
+        // DSNY compliance logs
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS dsny_compliance_logs (
+                id TEXT PRIMARY KEY,
+                building_id TEXT NOT NULL,
+                check_date TEXT NOT NULL,
+                is_compliant INTEGER NOT NULL,
+                issues TEXT,
+                worker_id TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (building_id) REFERENCES buildings(id),
+                FOREIGN KEY (worker_id) REFERENCES workers(id)
+            )
+        """)
+        
         // Create indexes
         try createIndexes(db)
         
@@ -644,6 +696,14 @@ public final class GRDBManager {
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_alert_building ON inventory_alerts(building_id)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_alert_type ON inventory_alerts(alert_type)")
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_inv_alert_resolved ON inventory_alerts(is_resolved)")
+        
+        // DSNY indexes
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_dsny_schedule_updated ON dsny_schedule_cache(last_updated)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_dsny_violations_building ON dsny_violations(building_id)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_dsny_violations_date ON dsny_violations(issue_date)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_dsny_violations_status ON dsny_violations(status)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_dsny_compliance_building_date ON dsny_compliance_logs(building_id, check_date)")
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_dsny_compliance_compliant ON dsny_compliance_logs(is_compliant)")
     }
     
     // MARK: - Public API (Compatible with existing GRDBManager calls)
@@ -1106,6 +1166,76 @@ public final class GRDBManager {
         
         // Delete from main queue
         try await execute("DELETE FROM sync_queue WHERE expires_at <= datetime('now')")
+    }
+    
+    // MARK: - DSNY Helper Methods
+    
+    public func getDSNYSchedule(for buildingId: String) async throws -> [String: Any]? {
+        let rows = try await query("""
+            SELECT * FROM dsny_schedule_cache 
+            WHERE building_id = ? 
+            ORDER BY last_updated DESC 
+            LIMIT 1
+        """, [buildingId])
+        return rows.first
+    }
+    
+    public func updateDSNYSchedule(
+        buildingId: String,
+        districtSection: String,
+        refuseDays: String? = nil,
+        recyclingDays: String? = nil,
+        organicsDays: String? = nil,
+        bulkDays: String? = nil
+    ) async throws {
+        try await execute("""
+            INSERT OR REPLACE INTO dsny_schedule_cache (
+                building_id, district_section, refuse_days, 
+                recycling_days, organics_days, bulk_days, 
+                last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+        """, [
+            buildingId, districtSection,
+            refuseDays as Any, recyclingDays as Any,
+            organicsDays as Any, bulkDays as Any
+        ])
+    }
+    
+    public func recordDSNYViolation(
+        buildingId: String,
+        violationType: String,
+        fineAmount: Double,
+        description: String? = nil,
+        reportedBy: String? = nil
+    ) async throws -> String {
+        let violationId = UUID().uuidString
+        try await execute("""
+            INSERT INTO dsny_violations (
+                id, building_id, violation_type, issue_date, 
+                fine_amount, status, description, reported_by
+            ) VALUES (?, ?, ?, datetime('now'), ?, 'open', ?, ?)
+        """, [
+            violationId, buildingId, violationType,
+            fineAmount, description as Any, reportedBy as Any
+        ])
+        return violationId
+    }
+    
+    public func checkDSNYCompliance(
+        buildingId: String,
+        workerId: String,
+        isCompliant: Bool,
+        issues: String? = nil
+    ) async throws {
+        try await execute("""
+            INSERT INTO dsny_compliance_logs (
+                id, building_id, check_date, is_compliant, 
+                issues, worker_id
+            ) VALUES (?, ?, datetime('now'), ?, ?, ?)
+        """, [
+            UUID().uuidString, buildingId,
+            isCompliant ? 1 : 0, issues as Any, workerId
+        ])
     }
 }
 

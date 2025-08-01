@@ -541,7 +541,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "Rubin Museum (142–148 W 17th)",
-            taskName: "DSNY: Set Out Trash",
+            taskName: "DSNY Put-Out (after 20:00)",
             assignedWorker: "Kevin Dutan",
             category: "Operations",
             skillLevel: "Basic",
@@ -605,7 +605,7 @@ public class OperationalDataManager: ObservableObject {
         // DSNY put-out
         OperationalDataTaskAssignment(
             building: "135-139 West 17th Street",
-            taskName: "DSNY: Set Out Trash",
+            taskName: "DSNY Put-Out (after 20:00)",
             assignedWorker: "Kevin Dutan",
             category: "Operations",
             skillLevel: "Basic",
@@ -620,7 +620,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "136 West 17th Street",
-            taskName: "DSNY: Set Out Trash",
+            taskName: "DSNY Put-Out (after 20:00)",
             assignedWorker: "Kevin Dutan",
             category: "Operations",
             skillLevel: "Basic",
@@ -635,7 +635,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "138 West 17th Street",
-            taskName: "DSNY: Set Out Trash",
+            taskName: "DSNY Put-Out (after 20:00)",
             assignedWorker: "Kevin Dutan",
             category: "Operations",
             skillLevel: "Basic",
@@ -650,7 +650,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "178 Spring Street",
-            taskName: "DSNY: Set Out Trash",
+            taskName: "DSNY Put-Out (after 20:00)",
             assignedWorker: "Kevin Dutan",
             category: "Operations",
             skillLevel: "Basic",
@@ -1086,7 +1086,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "68 Perry Street",
-            taskName: "DSNY: Bring In Trash Bins",
+            taskName: "DSNY Prep / Move Bins",
             assignedWorker: "Angel Guirachocha",
             category: "Operations",
             skillLevel: "Basic",
@@ -1101,7 +1101,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "123 1st Avenue",
-            taskName: "DSNY: Bring In Trash Bins",
+            taskName: "DSNY Prep / Move Bins",
             assignedWorker: "Angel Guirachocha",
             category: "Operations",
             skillLevel: "Basic",
@@ -1116,7 +1116,7 @@ public class OperationalDataManager: ObservableObject {
         ),
         OperationalDataTaskAssignment(
             building: "104 Franklin Street",
-            taskName: "DSNY: Bring In Trash Bins",
+            taskName: "DSNY Prep / Move Bins",
             assignedWorker: "Angel Guirachocha",
             category: "Operations",
             skillLevel: "Basic",

@@ -5,6 +5,7 @@
 //  ✅ CLEAN: No dependency on DataSynchronizationService or WorkerEvent
 //  ✅ SELF-CONTAINED: Works independently
 //  ✅ V6.0: Phase 2.2 - Enhanced Offline Queue
+//  ✅ FIXED: Swift 6 actor isolation compliance
 //
 
 import Foundation
@@ -53,11 +54,13 @@ actor WorkerEventOutbox {
     private var lastSyncTime: Date?
     
     // Track sync state
-    private var isSyncing = false
+    private var _isSyncing = false
     
     private init() {
-        // Load any persisted events on init
-        loadPendingEvents()
+        // Load any persisted events on init using Task for async context
+        Task {
+            await loadPendingEvents()
+        }
     }
 
     /// Adds a new event to the outbox to be synced
@@ -124,10 +127,10 @@ actor WorkerEventOutbox {
     /// Attempts to send all pending events to the server
     func attemptFlush() async {
         guard !pendingEvents.isEmpty else { return }
-        guard !isSyncing else { return } // Prevent concurrent flushes
+        guard !_isSyncing else { return } // Prevent concurrent flushes
         
-        isSyncing = true
-        defer { isSyncing = false }
+        _isSyncing = true
+        defer { _isSyncing = false }
         
         print("📤 Attempting to flush \(pendingEvents.count) events...")
         
@@ -204,7 +207,7 @@ actor WorkerEventOutbox {
     
     /// Check if currently syncing
     func isSyncing() -> Bool {
-        return isSyncing
+        return _isSyncing
     }
     
     /// Clear all pending events (use with caution)

@@ -6,6 +6,7 @@
 //  ✅ STREAMLINED: Header | Hero | Next Steps | Intelligence
 //  ✅ INTEGRATED: End-of-day reporting via Intelligence Panel
 //  ✅ ENHANCED: Worker notes and photos throughout the day
+//  ✅ FIXED: Resolved HeroStatusCard type references
 //
 
 import Foundation
@@ -347,6 +348,7 @@ struct WorkerDashboardView: View {
         )
     }
     
+    // Fixed: Using the proper enum case structure
     private func getClockInStatus() -> HeroStatusCard.ClockInStatus {
         if contextEngine.clockInStatus.isClockedIn,
            let building = contextEngine.currentBuilding {
@@ -363,6 +365,7 @@ struct WorkerDashboardView: View {
         return .notClockedIn
     }
     
+    // Fixed: Creating the struct properly
     private func getWorkerCapabilities() -> HeroStatusCard.WorkerCapabilities? {
         guard let caps = viewModel.workerCapabilities else { return nil }
         
@@ -376,6 +379,7 @@ struct WorkerDashboardView: View {
         )
     }
     
+    // Fixed: Using the proper enum cases
     private func getSyncStatus() -> HeroStatusCard.SyncStatus {
         switch viewModel.dashboardSyncStatus {
         case .synced: return .synced
@@ -629,13 +633,13 @@ struct CurrentTaskCard: View {
                 .foregroundColor(.white)
             
             HStack(spacing: 16) {
-                if let location = task.location {
-                    Label(location, systemImage: "location")
+                if let building = task.building {
+                    Label(building.name, systemImage: "location")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.8))
                 }
                 
-                if task.requiresPhoto {
+                if task.requiresPhoto == true {
                     Label("Photo required", systemImage: "camera.fill")
                         .font(.caption)
                         .foregroundColor(.orange)
@@ -687,6 +691,12 @@ struct UpcomingTaskRow: View {
             }
         }
     }
+}
+
+// MARK: - Notification Extension
+
+extension Notification.Name {
+    static let showRouteOnMap = Notification.Name("showRouteOnMap")
 }
 
 // MARK: - Preview Provider

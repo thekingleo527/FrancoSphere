@@ -6,6 +6,7 @@
 //  ✅ PRESERVED: All real-world building routine data
 //  ✅ ASYNC/AWAIT: Modern concurrency patterns
 //  ✅ KEVIN'S DATA: All sample routines for 6+ buildings preserved
+//  ✅ FIXED: Renamed computed properties to avoid conflicts
 //
 
 import Foundation
@@ -51,8 +52,8 @@ struct BuildingRoutine: Identifiable, Hashable {
     let isActive: Bool
     let createdDate: Date
     
-    // Computed properties
-    var displaySchedule: String {
+    // Computed properties - renamed to avoid conflicts
+    var routineDisplaySchedule: String {
         switch scheduleType.lowercased() {
         case "daily":
             return "Daily at \(startTime)"
@@ -67,7 +68,7 @@ struct BuildingRoutine: Identifiable, Hashable {
         }
     }
     
-    var isDueToday: Bool {
+    var isRoutineDueToday: Bool {
         let today = Calendar.current.component(.weekday, from: Date())
         let todayName = Calendar.current.weekdaySymbols[today - 1]
         
@@ -81,9 +82,9 @@ struct BuildingRoutine: Identifiable, Hashable {
         }
     }
     
-    var isOverdue: Bool {
+    var isRoutineOverdue: Bool {
         // Simple logic - if it's due today and past the start time
-        guard isDueToday else { return false }
+        guard isRoutineDueToday else { return false }
         
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
@@ -98,7 +99,7 @@ struct BuildingRoutine: Identifiable, Hashable {
         return now > todayStartTime
     }
     
-    var nextDue: Date? {
+    var nextRoutineDue: Date? {
         let calendar = Calendar.current
         let now = Date()
         
@@ -155,7 +156,7 @@ final class RoutineRepository: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
     
-    // FIXED: Changed from GRDBManager to GRDBManager
+    // Using GRDBManager
     private let grdbManager = GRDBManager.shared
     private var lastRefresh: Date = Date.distantPast
     private let refreshInterval: TimeInterval = 300 // 5 minutes
@@ -178,11 +179,11 @@ final class RoutineRepository: ObservableObject {
     }
     
     func getOverdueRoutines() -> [BuildingRoutine] {
-        return routines.filter { $0.isActive && $0.isOverdue }
+        return routines.filter { $0.isActive && $0.isRoutineOverdue }
     }
     
     func getDueTodayRoutines() -> [BuildingRoutine] {
-        return routines.filter { $0.isActive && $0.isDueToday }
+        return routines.filter { $0.isActive && $0.isRoutineDueToday }
     }
     
     func refreshRoutines() async {
@@ -202,7 +203,7 @@ final class RoutineRepository: ObservableObject {
         isLoading = false
     }
     
-    // MARK: - Database Operations (GRDB MIGRATED)
+    // MARK: - Database Operations
     
     private func initializeDatabase() async {
         await createRoutinesTableIfNeeded()
@@ -210,7 +211,6 @@ final class RoutineRepository: ObservableObject {
     
     private func createRoutinesTableIfNeeded() async {
         do {
-            // FIXED: Use GRDBManager execute method (no Async suffix)
             try await grdbManager.execute("""
                 CREATE TABLE IF NOT EXISTS building_routines (
                     id TEXT PRIMARY KEY,
@@ -240,7 +240,6 @@ final class RoutineRepository: ObservableObject {
     
     private func loadRoutinesFromDatabase() async {
         do {
-            // FIXED: Use GRDBManager query method (no Async suffix)
             let results = try await grdbManager.query("""
                 SELECT * FROM building_routines 
                 WHERE is_active = 1 
@@ -289,10 +288,10 @@ final class RoutineRepository: ObservableObject {
         }
     }
     
-    // MARK: - Sample Data for Development (ALL KEVIN'S DATA PRESERVED)
+    // MARK: - Sample Data for Development
     
     private func loadSampleRoutines() async {
-        // Check if we already have routines - FIXED: Use GRDBManager query
+        // Check if we already have routines
         do {
             let count = try await grdbManager.query("SELECT COUNT(*) as count FROM building_routines")
             if let first = count.first, let countValue = first["count"] as? Int64, countValue > 0 {
@@ -303,7 +302,7 @@ final class RoutineRepository: ObservableObject {
             print("⚠️ Could not check routine count, proceeding with sample data")
         }
         
-        // PRESERVED: All original sample routines for Kevin's buildings
+        // Sample routines for Kevin's buildings
         let sampleRoutines = [
             // Building 3 (Kevin's building)
             ("routine_3_daily_sweep", "3", "Daily Lobby Sweep", "Sweep and mop lobby area", "daily", "", "08:00", 30, "medium"),
@@ -333,7 +332,6 @@ final class RoutineRepository: ObservableObject {
         
         do {
             for (id, buildingId, name, desc, scheduleType, days, startTime, duration, priority) in sampleRoutines {
-                // FIXED: Use GRDBManager execute method
                 try await grdbManager.execute("""
                     INSERT OR IGNORE INTO building_routines 
                     (id, building_id, routine_name, description, schedule_type, schedule_days, start_time, estimated_duration, priority, is_active) 
@@ -347,7 +345,7 @@ final class RoutineRepository: ObservableObject {
         }
     }
     
-    // MARK: - CRUD Operations (GRDBManager)
+    // MARK: - CRUD Operations
     
     func addRoutine(_ routine: BuildingRoutine) async throws {
         try await grdbManager.execute("""
@@ -431,10 +429,15 @@ final class RoutineRepository: ObservableObject {
  ✅ COMPLETE GRDB MIGRATION:
  
  🔧 FIXED DATABASE MANAGER:
- - ✅ Changed GRDBManager.shared → GRDBManager.shared
- - ✅ Changed executeAsync() → execute()
- - ✅ Changed queryAsync() → query()
- - ✅ Removed parameters: labels (GRDBManager handles this automatically)
+ - ✅ Changed to GRDBManager.shared
+ - ✅ Using execute() and query() methods
+ - ✅ Removed async suffixes
+ 
+ 🔧 FIXED NAMING CONFLICTS:
+ - ✅ Renamed displaySchedule → routineDisplaySchedule
+ - ✅ Renamed isDueToday → isRoutineDueToday
+ - ✅ Renamed isOverdue → isRoutineOverdue
+ - ✅ Added nextRoutineDue for consistency
  
  🔧 PRESERVED ALL DATA:
  - ✅ All Kevin's building routines (Buildings 3, 6, 7, 9, 11, 16)
@@ -449,5 +452,5 @@ final class RoutineRepository: ObservableObject {
  - ✅ Schedule type handling (daily/weekly/monthly)
  - ✅ Database persistence with sample data
  
- 🎯 STATUS: GRDB migration complete, all real-world data preserved
+ 🎯 STATUS: GRDB migration complete, naming conflicts resolved
  */

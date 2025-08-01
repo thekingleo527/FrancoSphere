@@ -52,6 +52,8 @@
 		2326C2662E3C1C210080F005 /* NextStepsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2652E3C1C210080F005 /* NextStepsSection.swift */; };
 		2326C2692E3C23A20080F005 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */; };
 		2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */; };
+		2326C2702E3C36250080F005 /* DSNYModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26F2E3C36250080F005 /* DSNYModels.swift */; };
+		2326C2722E3C36620080F005 /* DSNYAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2712E3C36620080F005 /* DSNYAPIService.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -289,6 +291,8 @@
 		2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
 		2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FrancoSphereTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
+		2326C26F2E3C36250080F005 /* DSNYModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYModels.swift; sourceTree = "<group>"; };
+		2326C2712E3C36620080F005 /* DSNYAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYAPIService.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -763,6 +767,7 @@
 		23779F602E39885600F4A10F /* Enums */ = {
 			isa = PBXGroup;
 			children = (
+				2326C26F2E3C36250080F005 /* DSNYModels.swift */,
 				23779F5F2E39885600F4A10F /* QBConnectionStatus.swift */,
 			);
 			path = Enums;
@@ -932,6 +937,7 @@
 		23779F9D2E39885600F4A10F /* RealTime */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2712E3C36620080F005 /* DSNYAPIService.swift */,
 				2326C2272E3B36E60080F005 /* NetworkMonitor.swift */,
 				2326C2252E3B36C30080F005 /* BatchedRequestManager.swift */,
 				2326C20F2E3B27740080F005 /* WebSocketManager.swift */,
@@ -1399,6 +1405,7 @@
 				2377A01D2E39885600F4A10F /* TrackableScrollView.swift in Sources */,
 				2377A01E2E39885600F4A10F /* ClientDashboardView.swift in Sources */,
 				2377A01F2E39885600F4A10F /* QBConnectionStatus.swift in Sources */,
+				2326C2702E3C36250080F005 /* DSNYModels.swift in Sources */,
 				23A1B9932E3994B80011F091 /* QuickBooksOAuthManager.swift in Sources */,
 				23A1B9942E3994B80011F091 /* QuickBooksPayrollExporter.swift in Sources */,
 				2377A0222E39885600F4A10F /* BuildingSelectionView.swift in Sources */,
@@ -1413,6 +1420,7 @@
 				2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */,
 				2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */,
 				2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */,
+				2326C2722E3C36620080F005 /* DSNYAPIService.swift in Sources */,
 				2377A02B2E39885600F4A10F /* GlassCard.swift in Sources */,
 				2377A02E2E39885600F4A10F /* GlassLoadingView.swift in Sources */,
 				2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */,

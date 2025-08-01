@@ -13,6 +13,7 @@
 //  ✅ ORGANIZED: Clean architecture with data types only
 //  ✅ STREAM A FIXED: Removed redundant rawValue from TaskFrequency
 //  ✅ STREAM A FIXED: Removed duplicate stockLevel and needsRestock from InventoryItem
+//  ✅ FIXED: Resolved priorityValue naming conflict
 //
 //  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
 //  Usage: FrancoSphereDesign.EnumColors.taskStatus(.completed)
@@ -607,7 +608,8 @@ public struct CoreTypes {
         case urgent = "urgent"
         case emergency = "emergency"
         
-        public var priorityValue: Int {
+        // Renamed to avoid conflict with AIPriority.priorityValue
+        public var urgencyLevel: Int {
             switch self {
             case .low: return 1
             case .medium: return 2
@@ -618,7 +620,7 @@ public struct CoreTypes {
             }
         }
         
-        public var sortOrder: Int { priorityValue }
+        public var sortOrder: Int { urgencyLevel }
     }
     
     public enum TaskStatus: String, Codable, CaseIterable {
@@ -1288,6 +1290,7 @@ public struct CoreTypes {
         case quality = "Quality"
         case operations = "Operations"
         case maintenance = "Maintenance"
+        case routing = "Routing"
         
         public var icon: String {
             switch self {
@@ -1298,6 +1301,7 @@ public struct CoreTypes {
             case .quality: return "star"
             case .operations: return "gear"
             case .maintenance: return "wrench"
+            case .routing: return "map"
             }
         }
     }

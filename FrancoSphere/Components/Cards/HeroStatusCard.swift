@@ -1,11 +1,11 @@
-///
+//
 //  HeroStatusCard.swift
 //  FrancoSphere
 //
 //  🏆 PRODUCTION-READY: Enhanced with Timeline Integration
 //  ✅ CLEAN: Modular components and better organization
 //  ✅ INTEGRATED: TimelineProgressBar for visual time tracking
-//  ✅ FIXED: Renamed components to avoid duplicate declarations
+//  ✅ FIXED: All compilation errors resolved
 //
 
 import SwiftUI
@@ -14,6 +14,37 @@ import CoreLocation
 // MARK: - Main Component
 
 struct HeroStatusCard: View {
+    // MARK: - Supporting Types (Moved to top to fix scope issues)
+    
+    enum ClockInStatus: Equatable {
+        case notClockedIn
+        case clockedIn(building: String, buildingId: String, time: Date, location: CLLocation?)
+        case onBreak(since: Date)
+        case clockedOut(at: Date)
+        
+        var isClockedIn: Bool {
+            if case .clockedIn = self { return true }
+            return false
+        }
+    }
+    
+    enum SyncStatus: Equatable {
+        case synced
+        case syncing(progress: Double)
+        case offline
+        case error(String)
+        case pendingMigration
+    }
+    
+    struct WorkerCapabilities {
+        let canUploadPhotos: Bool
+        let canAddNotes: Bool
+        let canViewMap: Bool
+        let canAddEmergencyTasks: Bool
+        let requiresPhotoForSanitation: Bool
+        let simplifiedInterface: Bool
+    }
+    
     // MARK: - Properties
     let worker: WorkerProfile?
     let building: NamedCoordinate?
@@ -669,7 +700,7 @@ private struct HeroStatusGrid: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 // Building status
-                HeroStatusCard(
+                HeroStatusCardItem(
                     icon: "building.2.fill",
                     title: language == "es" ? "Edificio Actual" : "Current Building",
                     value: building?.name ?? (language == "es" ? "No asignado" : "Not assigned"),
@@ -680,7 +711,7 @@ private struct HeroStatusGrid: View {
                 )
                 
                 // Task status
-                HeroStatusCard(
+                HeroStatusCardItem(
                     icon: "checkmark.circle.fill",
                     title: language == "es" ? "Tareas Hoy" : "Tasks Today",
                     value: "\(progress.completedTasks) / \(progress.totalTasks)",
@@ -699,7 +730,7 @@ private struct HeroStatusGrid: View {
     }
 }
 
-private struct HeroStatusCard: View {
+private struct HeroStatusCardItem: View {
     let icon: String
     let title: String
     let value: String
@@ -1241,39 +1272,6 @@ private struct HeroOfflineOverlay: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Supporting Types
-
-extension HeroStatusCard {
-    enum ClockInStatus: Equatable {
-        case notClockedIn
-        case clockedIn(building: String, buildingId: String, time: Date, location: CLLocation?)
-        case onBreak(since: Date)
-        case clockedOut(at: Date)
-        
-        var isClockedIn: Bool {
-            if case .clockedIn = self { return true }
-            return false
-        }
-    }
-    
-    enum SyncStatus: Equatable {
-        case synced
-        case syncing(progress: Double)
-        case offline
-        case error(String)
-        case pendingMigration
-    }
-    
-    struct WorkerCapabilities {
-        let canUploadPhotos: Bool
-        let canAddNotes: Bool
-        let canViewMap: Bool
-        let canAddEmergencyTasks: Bool
-        let requiresPhotoForSanitation: Bool
-        let simplifiedInterface: Bool
     }
 }
 

@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Renamed ComplianceIssue to ComplianceIssueData to avoid conflicts
 //  ✅ FIXED: Proper ComplianceIssueType cases
 //  ✅ FIXED: Added icon computation for issue types
 //  ✅ FIXED: Correct PortfolioIntelligence initializer
@@ -16,17 +17,17 @@ import SwiftUI
 
 struct ComplianceOverviewView: View {
     let intelligence: CoreTypes.PortfolioIntelligence?
-    let onIssuesTap: ((ComplianceIssue) -> Void)?
+    let onIssuesTap: ((ComplianceIssueData) -> Void)?
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
     
     @State private var selectedTab: CoreTypes.ComplianceTab = .overview
-    @State private var showingIssueDetail: ComplianceIssue?
+    @State private var showingIssueDetail: ComplianceIssueData?
     @State private var showingAuditScheduler = false
     @State private var showingExportOptions = false
     
     init(intelligence: CoreTypes.PortfolioIntelligence?,
-         onIssuesTap: ((ComplianceIssue) -> Void)? = nil,
+         onIssuesTap: ((ComplianceIssueData) -> Void)? = nil,
          onScheduleAudit: (() -> Void)? = nil,
          onExportReport: (() -> Void)? = nil) {
         self.intelligence = intelligence
@@ -622,7 +623,7 @@ struct ComplianceOverviewView: View {
     }
     
     // Fixed: Using proper ComplianceIssueType cases
-    private func createMockIssues(count: Int) -> [ComplianceIssue] {
+    private func createMockIssues(count: Int) -> [ComplianceIssueData] {
         guard count > 0 else { return [] }
         
         // Fixed: Removed imageAssetName parameter
@@ -633,11 +634,11 @@ struct ComplianceOverviewView: View {
             longitude: -73.9980
         )
         
-        var issues: [ComplianceIssue] = []
+        var issues: [ComplianceIssueData] = []
         let issueTypes: [CoreTypes.ComplianceIssueType] = [.safety, .environmental, .regulatory]
         
         for i in 0..<count {
-            let issue = ComplianceIssue(
+            let issue = ComplianceIssueData(
                 type: issueTypes[i % issueTypes.count],
                 severity: .high,
                 description: "Critical compliance issue \(i + 1) requiring immediate attention",
@@ -703,7 +704,7 @@ struct QuickStatCard: View {
 }
 
 struct CriticalIssueRow: View {
-    let issue: ComplianceIssue
+    let issue: ComplianceIssueData
     let onTap: () -> Void
     
     var body: some View {
@@ -766,7 +767,7 @@ struct CriticalIssueRow: View {
 }
 
 struct ComplianceIssueCard: View {
-    let issue: ComplianceIssue
+    let issue: ComplianceIssueData
     let onTap: () -> Void
     
     var body: some View {
@@ -1063,7 +1064,7 @@ struct ReportCard: View {
 // MARK: - Sheet Views
 
 struct ComplianceIssueDetailSheet: View {
-    let issue: ComplianceIssue
+    let issue: ComplianceIssueData
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -1268,9 +1269,9 @@ enum ReportType: String, CaseIterable {
     }
 }
 
-// MARK: - ComplianceIssue Type Definition
+// MARK: - ComplianceIssueData Type Definition (Renamed to avoid conflicts)
 
-struct ComplianceIssue: Identifiable {
+struct ComplianceIssueData: Identifiable {
     let id = UUID()
     let type: CoreTypes.ComplianceIssueType
     let severity: CoreTypes.ComplianceSeverity

@@ -21,9 +21,4 @@ public enum WorkerActionType: String, Codable, CaseIterable {
     case routineInspection = "routine_inspection"
     case buildingStatusUpdate = "building_status_update"
     case emergencyReport = "emergency_report"
-    
-    /// A user-friendly name for displaying the action in the UI.
-    public var displayName: String {
-        return self.rawValue.replacingOccurrences(of: "_", with: " ").capitalized
-    }
 }
