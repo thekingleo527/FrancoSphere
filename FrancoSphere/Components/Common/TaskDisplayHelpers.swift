@@ -8,14 +8,15 @@
 //  ✅ FIXED: Removed non-existent estimatedDuration property
 //  ✅ FIXED: Removed dependency on deleted ContextualTaskIntelligence extension
 //  ✅ FIXED: Building name now uses actual ContextualTask properties
-//  ✅ FIXED: Preview section - removed isCompleted from initializer
+//  ✅ FIXED: Preview section - using completedAt instead of completedDate
 //
 //  Note: ContextualTask actual properties:
 //  - id: String
 //  - title: String (not 'name')
 //  - description: String?
 //  - isCompleted: Bool (computed property, not a parameter)
-//  - completedDate: Date?
+//  - completedAt: Date? (stored property)
+//  - completedDate: Date? (computed property that returns completedAt)
 //  - dueDate: Date? (not 'scheduledDate')
 //  - category: TaskCategory?
 //  - urgency: TaskUrgency?
@@ -355,12 +356,12 @@ extension View {
 struct TaskDisplayHelpers_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 16) {
-            // ✅ FIXED: Removed isCompleted parameter - it's computed from completedDate
+            // ✅ FIXED: Using completedAt instead of completedDate
             let sampleTask = ContextualTask(
                 id: "preview-task",
                 title: "Clean Lobby",
                 description: "Daily lobby cleaning",
-                completedDate: nil,  // This makes isCompleted false
+                completedAt: nil,  // This makes isCompleted false
                 dueDate: Date().addingTimeInterval(3600),
                 category: .cleaning,
                 urgency: .high,
@@ -374,7 +375,7 @@ struct TaskDisplayHelpers_Previews: PreviewProvider {
                 id: "preview-task-2",
                 title: "Replace Light Bulbs",
                 description: "Replace bulbs in hallway",
-                completedDate: Date(),  // This makes isCompleted true
+                completedAt: Date(),  // This makes isCompleted true
                 dueDate: Date().addingTimeInterval(-3600),
                 category: .maintenance,
                 urgency: .medium,

@@ -1,7 +1,7 @@
 //  TaskTimelineRow.swift
 //  FrancoSphere
 //
-//  ✅ FIXED: Compilation error resolved - removed isCompleted from initializer
+//  ✅ FIXED: Compilation error resolved - using completedAt instead of completedDate
 //  ✅ Uses task.title property (from FrancoSphereModels.swift)
 //  ✅ Fixed constructor to match actual ContextualTask init
 //  ✅ Handles optional urgency properly
@@ -88,8 +88,8 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                     id: "preview-1",
                     title: "Clean Main Lobby",
                     description: "Daily cleaning of building entrance and lobby area",
-                    // ✅ FIXED: Removed isCompleted from initializer
-                    completedDate: nil,  // This makes isCompleted false
+                    // ✅ FIXED: Using completedAt instead of completedDate
+                    completedAt: nil,  // This makes isCompleted false
                     dueDate: Date().addingTimeInterval(3600),
                     category: .maintenance,
                     urgency: .high,
@@ -118,7 +118,7 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                     id: "preview-2",
                     title: "Empty Trash Bins",
                     description: "Remove trash from all floors",
-                    completedDate: Date(), // This makes isCompleted true
+                    completedAt: Date(), // This makes isCompleted true
                     dueDate: Date().addingTimeInterval(-3600),
                     category: .cleaning,
                     urgency: .medium,
@@ -147,7 +147,7 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                     id: "preview-3",
                     title: "Water Leak - 3rd Floor",
                     description: nil, // Testing nil description
-                    completedDate: nil,
+                    completedAt: nil,
                     dueDate: Date(),
                     category: .emergency,
                     urgency: .emergency,

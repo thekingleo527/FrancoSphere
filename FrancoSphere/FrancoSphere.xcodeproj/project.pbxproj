@@ -54,6 +54,7 @@
 		2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */; };
 		2326C2702E3C36250080F005 /* DSNYModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26F2E3C36250080F005 /* DSNYModels.swift */; };
 		2326C2722E3C36620080F005 /* DSNYAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2712E3C36620080F005 /* DSNYAPIService.swift */; };
+		2326C2742E3C43E50080F005 /* DSNYMigrationOneShot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2732E3C43E50080F005 /* DSNYMigrationOneShot.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
@@ -293,6 +294,7 @@
 		2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
 		2326C26F2E3C36250080F005 /* DSNYModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYModels.swift; sourceTree = "<group>"; };
 		2326C2712E3C36620080F005 /* DSNYAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYAPIService.swift; sourceTree = "<group>"; };
+		2326C2732E3C43E50080F005 /* DSNYMigrationOneShot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSNYMigrationOneShot.swift; sourceTree = "<group>"; };
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -920,6 +922,7 @@
 		23779F9A2E39885600F4A10F /* Migration */ = {
 			isa = PBXGroup;
 			children = (
+				2326C2732E3C43E50080F005 /* DSNYMigrationOneShot.swift */,
 				2326C2402E3B3E0A0080F005 /* MigrationV2.swift */,
 				23C839A12E39E6C000C6866E /* MigrationView.swift */,
 				23779F992E39885600F4A10F /* WorkerAssignmentEngine.swift */,
@@ -1461,6 +1464,7 @@
 				2326C2022E3B14390080F005 /* SiteDepartureViewModel.swift in Sources */,
 				2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */,
 				2326C22A2E3B396C0080F005 /* ReportGenerator.swift in Sources */,
+				2326C2742E3C43E50080F005 /* DSNYMigrationOneShot.swift in Sources */,
 				2326C22C2E3B3BEB0080F005 /* NavigationCoordinator.swift in Sources */,
 				2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */,
 				2377A04F2E39885600F4A10F /* TimelineProgressBar.swift in Sources */,
