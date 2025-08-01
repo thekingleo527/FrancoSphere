@@ -25,7 +25,7 @@ public class SiteDepartureViewModel: ObservableObject {
     let workerCapabilities: WorkerCapability?
     let availableBuildings: [CoreTypes.NamedCoordinate]
     
-    private let locationManager = LocationManager()
+    private let locationManager = LocationManager.shared
     
     // MARK: - Worker Capability Structure
     public struct WorkerCapability {

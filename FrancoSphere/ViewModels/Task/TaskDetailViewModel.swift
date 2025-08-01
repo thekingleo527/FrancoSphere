@@ -81,7 +81,7 @@ public class TaskDetailViewModel: ObservableObject {
     private let workerService = WorkerService.shared
     private let dashboardSyncService = DashboardSyncService.shared
     private let photoEvidenceService = PhotoEvidenceService.shared  // ✅ UPDATED: Using real service
-    private let locationManager = LocationManager()
+    private let locationManager = LocationManager.shared
     private let grdbManager = GRDBManager.shared
     
     // MARK: - Private Properties
@@ -163,7 +163,7 @@ public class TaskDetailViewModel: ObservableObject {
     
     public init() {
         setupSubscriptions()
-        setupLocationManager()
+        setupLocationManager.shared
     }
     
     // MARK: - Public Methods
@@ -418,7 +418,7 @@ public class TaskDetailViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func setupLocationManager() {
+    private func setupLocationManager.shared {
         // Request location permission if needed
         locationManager.requestLocation()
     }

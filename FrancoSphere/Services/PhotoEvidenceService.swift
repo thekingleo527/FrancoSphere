@@ -27,7 +27,7 @@ public class PhotoEvidenceService: ObservableObject {
     // MARK: - Dependencies
     private let grdbManager = GRDBManager.shared
     private let dashboardSyncService = DashboardSyncService.shared
-    private let locationManager = LocationManager()
+    private let locationManager = LocationManager.shared
     
     // MARK: - Configuration
     private let compressionQuality: CGFloat = 0.7

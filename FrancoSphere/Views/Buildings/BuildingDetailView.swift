@@ -1677,7 +1677,7 @@ class BuildingDetailVM: ObservableObject {
     
     // Services
     private let photoStorageService = FrancoPhotoStorageService.shared
-    private let locationManager = LocationManager()
+    private let locationManager = LocationManager.shared
     
     // User context
     @Published var userRole: CoreTypes.UserRole = CoreTypes.UserRole.worker

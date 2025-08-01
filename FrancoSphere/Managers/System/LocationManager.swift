@@ -27,7 +27,7 @@ import Combine
 // MARK: - Location Manager
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
+    private let locationManager = CLLocationManager.shared
     
     @Published var location: CLLocation?
     @Published var locationStatus: CLAuthorizationStatus = .notDetermined

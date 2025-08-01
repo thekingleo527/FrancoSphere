@@ -1,13 +1,12 @@
 //
 //  HeaderV3B.swift
-//  FrancoSphere v6.0 - Production Ready
+//  FrancoSphere v6.0 - Future-Ready Header
 //
-//  ✅ PRODUCTION READY: Aligned with CoreTypes.UserRole
-//  ✅ AI FOR EVERYONE: All roles get Nova AI access
-//  ✅ ROLE-AWARE: AI adapts features based on user role and current task
-//  ✅ CONTEXT-INTELLIGENT: AI understands worker location, task, and building
-//  ✅ VISUAL DIFFERENTIATION: AI button appearance reflects role context
-//  ✅ FUTURE READY: Prepared for voice, AR, and advanced AI features
+//  ✅ BRAND-FIRST: Logo on left establishes identity
+//  ✅ AI-CENTRIC: Nova takes center stage
+//  ✅ USER-FOCUSED: Profile and clock actions grouped right
+//  ✅ FUTURE-READY: Supports voice, AR, wearables roadmap
+//  ✅ PROGRESSIVE: Features appear conditionally
 //
 
 import SwiftUI
@@ -25,297 +24,241 @@ struct HeaderV3B: View {
     let onNovaPress: () -> Void
     let onNovaLongPress: () -> Void
     
-    // Future Phase: Voice command callback
-    var onVoiceCommand: (() -> Void)?
+    // Optional callbacks
+    var onLogoTap: (() -> Void)?
+    var onClockAction: (() -> Void)?
     
-    // Future Phase: AR mode toggle
+    // Future Phase callbacks
+    var onVoiceCommand: (() -> Void)?
     var onARModeToggle: (() -> Void)?
+    var onWearableSync: (() -> Void)?
     
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
-    @State private var showAITooltip = false
-    @State private var aiButtonScale: CGFloat = 1.0
+    @State private var showNovaTooltip = false
+    @State private var novaScale: CGFloat = 1.0
+    @State private var clockedDuration = ""
+    
+    private let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     // MARK: - Body
     
     var body: some View {
-        headerContent
-            .frame(height: 80)
-            .background(backgroundView)
-            .overlay(alignment: .bottom) {
-                Divider()
-                    .opacity(0.3)
+        ZStack {
+            // Background
+            headerBackground
+            
+            // Main content with proper layout
+            HStack(spacing: 0) {
+                // LEFT: Brand Logo (20%)
+                brandSection
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(width: UIScreen.main.bounds.width * 0.2)
+                
+                // CENTER: Nova AI (40%)
+                novaSection
+                    .frame(maxWidth: .infinity)
+                    .frame(width: UIScreen.main.bounds.width * 0.4)
+                
+                // RIGHT: User Profile & Clock (40%)
+                userSection
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .frame(width: UIScreen.main.bounds.width * 0.4)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .frame(height: 80)
+        .onReceive(timer) { _ in
+            updateClockDuration()
+        }
     }
     
-    private var backgroundView: some View {
+    // MARK: - Background
+    
+    private var headerBackground: some View {
         ZStack {
-            // Base material
+            // Base glass effect
             Rectangle()
                 .fill(.ultraThinMaterial)
             
-            // Role-based accent gradient (subtle)
+            // Subtle gradient based on state
             LinearGradient(
                 colors: [
-                    profileButtonColor.opacity(0.05),
+                    backgroundAccentColor.opacity(0.05),
                     Color.clear
                 ],
-                startPoint: .leading,
-                endPoint: .trailing
+                startPoint: .top,
+                endPoint: .bottom
             )
+            
+            // Bottom separator
+            VStack {
+                Spacer()
+                Divider()
+                    .opacity(0.3)
+            }
         }
         .ignoresSafeArea()
     }
     
-    private var headerContent: some View {
-        HStack(spacing: 16) {
-            // Left: Profile section
-            profileSection
-            
-            Spacer()
-            
-            // Center: Status indicators
-            statusSection
-            
-            Spacer()
-            
-            // Right: Action buttons (Nova AI + future buttons)
-            actionButtonsSection
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
+    // MARK: - Brand Section (Left)
     
-    // MARK: - Profile Section
-    
-    private var profileSection: some View {
-        HStack(spacing: 12) {
-            profileButton
-                .overlay(alignment: .bottomTrailing) {
-                    // Online/Active indicator
-                    if contextAdapter.currentBuilding != nil {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 12, height: 12)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.black, lineWidth: 2)
-                            )
-                            .offset(x: 2, y: 2)
-                    }
-                }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(displayWorkerName)
-                    .font(.headline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                
-                HStack(spacing: 4) {
-                    Image(systemName: roleIcon)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    
-                    Text(roleDisplayText)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-            }
-        }
-    }
-    
-    private var profileButton: some View {
-        Button(action: onProfileTap) {
-            ZStack {
-                Circle()
-                    .fill(profileButtonGradient)
-                    .frame(width: 44, height: 44)
-                
-                Text(profileInitials)
-                    .font(.system(size: 16, weight: .semibold))
+    private var brandSection: some View {
+        Button(action: { onLogoTap?() ?? {} }) {
+            HStack(spacing: 8) {
+                // Logo
+                Image("FrancoSphereLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
                     .foregroundColor(.white)
-            }
-            .overlay(
-                Circle()
-                    .stroke(profileButtonColor.opacity(0.3), lineWidth: 1)
-            )
-            .shadow(color: profileButtonColor.opacity(0.2), radius: 4, y: 2)
-        }
-        .buttonStyle(ScaleButtonStyle())
-    }
-    
-    // MARK: - Status Section
-    
-    private var statusSection: some View {
-        VStack(spacing: 4) {
-            if showClockPill {
-                clockPill
-            }
-            
-            if let nextTask = nextTaskName {
-                nextTaskPill(nextTask)
-            }
-        }
-    }
-    
-    private var clockPill: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(clockStatusColor)
-                .frame(width: 8, height: 8)
-                .overlay(
-                    Circle()
-                        .fill(clockStatusColor)
-                        .frame(width: 8, height: 8)
-                        .opacity(0.5)
-                        .scaleEffect(1.5)
-                        .animation(
-                            .easeInOut(duration: 2).repeatForever(autoreverses: true),
-                            value: showClockPill
-                        )
-            )
-            
-            Text(clockStatusText)
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(clockStatusColor.opacity(0.15))
-                .overlay(
-                    Capsule()
-                        .stroke(clockStatusColor.opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-    
-    private func nextTaskPill(_ taskName: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "arrow.right.circle.fill")
-                .font(.caption2)
-                .foregroundColor(.orange)
-            
-            Text(taskName)
-                .font(.caption2)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .background(
-            Capsule()
-                .fill(Color.orange.opacity(0.1))
-                .overlay(
-                    Capsule()
-                        .stroke(Color.orange.opacity(0.2), lineWidth: 1)
-                )
-        )
-    }
-    
-    // MARK: - Action Buttons Section
-    
-    private var actionButtonsSection: some View {
-        HStack(spacing: 12) {
-            // Future Phase: Voice Command Button
-            if onVoiceCommand != nil {
-                voiceCommandButton
-            }
-            
-            // Future Phase: AR Mode Button
-            if onARModeToggle != nil {
-                arModeButton
-            }
-            
-            // Nova AI Button - Always visible
-            novaAiButton
-        }
-    }
-    
-    // MARK: - Nova AI Button
-    
-    private var novaAiButton: some View {
-        Button(action: handleNovaAction) {
-            ZStack {
-                // Background with role color
-                Circle()
-                    .fill(aiButtonGradient)
-                    .frame(width: 44, height: 44)
                 
-                // Icon
-                Group {
-                    if let aiImage = UIImage(named: "AIAssistant") {
-                        Image(uiImage: aiImage)
-                            .resizable()
-                            .renderingMode(.template)
-                            .frame(width: 24, height: 24)
+                // Or text logo if image not found
+                if UIImage(named: "FrancoSphereLogo") == nil {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("FRANCO")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
-                    } else {
-                        Image(systemName: "brain.head.profile")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.white)
+                        Text("SPHERE")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
                     }
                 }
-                .scaleEffect(aiButtonScale)
-                
-                // Processing indicator
-                if isNovaProcessing {
-                    processingIndicator
+            }
+            .opacity(0.9)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(onLogoTap == nil)
+    }
+    
+    // MARK: - Nova Section (Center)
+    
+    private var novaSection: some View {
+        VStack(spacing: 4) {
+            // Future phase buttons arranged around Nova
+            HStack(spacing: 16) {
+                // Voice Command (Phase 1)
+                if onVoiceCommand != nil {
+                    futurePhaseButton(
+                        icon: "mic.fill",
+                        color: .purple,
+                        action: { onVoiceCommand?() },
+                        label: "Voice"
+                    )
+                    .transition(.scale.combined(with: .opacity))
                 }
                 
-                // Context indicator
-                if hasActiveContext && !isNovaProcessing {
-                    contextIndicator
+                // Nova button (center)
+                Button(action: handleNovaAction) {
+                    ZStack {
+                        // Background circle
+                        Circle()
+                            .fill(novaBackgroundGradient)
+                            .frame(width: 48, height: 48)
+                            .shadow(color: novaGlowColor.opacity(0.3), radius: 8)
+                        
+                        // Nova icon
+                        novaIcon
+                            .scaleEffect(novaScale)
+                        
+                        // State indicators
+                        if isNovaProcessing {
+                            novaProcessingRing
+                        }
+                        
+                        // Alert badge
+                        if hasUrgentContext {
+                            alertBadge
+                        }
+                    }
+                }
+                .buttonStyle(ScaleButtonStyle())
+                .onLongPressGesture {
+                    onNovaLongPress()
+                }
+                
+                // AR Mode (Phase 2)
+                if onARModeToggle != nil {
+                    futurePhaseButton(
+                        icon: "arkit",
+                        color: .cyan,
+                        action: { onARModeToggle?() },
+                        label: "AR"
+                    )
+                    .transition(.scale.combined(with: .opacity))
                 }
             }
-        }
-        .buttonStyle(ScaleButtonStyle())
-        .onLongPressGesture {
-            onNovaLongPress()
+            
+            // Context message
+            novaContextMessage
+                .animation(.easeInOut, value: novaMessage)
         }
         .overlay(
-            // Tooltip for first-time users
-            aiTooltip
-                .opacity(showAITooltip ? 1 : 0)
-                .animation(.easeInOut, value: showAITooltip)
+            novaTooltip
+                .opacity(showNovaTooltip ? 1 : 0)
+                .offset(y: -60)
         )
     }
     
-    private var processingIndicator: some View {
+    private var novaIcon: some View {
+        Group {
+            if let novaImage = UIImage(named: "NovaAI") {
+                Image(uiImage: novaImage)
+                    .resizable()
+                    .renderingMode(.template)
+                    .frame(width: 28, height: 28)
+                    .foregroundColor(.white)
+            } else {
+                // Fallback icon
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(.white)
+                    .symbolEffect(.pulse.wholeSymbol, options: .repeating, isActive: isNovaProcessing)
+            }
+        }
+    }
+    
+    private var novaProcessingRing: some View {
         Circle()
+            .trim(from: 0, to: 0.8)
             .stroke(
                 AngularGradient(
-                    colors: aiProcessingColors,
+                    colors: [.white, .white.opacity(0.2)],
                     center: .center
                 ),
-                lineWidth: 2
+                style: StrokeStyle(lineWidth: 2, lineCap: .round)
             )
-            .frame(width: 48, height: 48)
+            .frame(width: 54, height: 54)
             .rotationEffect(.degrees(isNovaProcessing ? 360 : 0))
             .animation(
-                .linear(duration: 2).repeatForever(autoreverses: false),
+                .linear(duration: 1.5).repeatForever(autoreverses: false),
                 value: isNovaProcessing
             )
     }
     
-    private var contextIndicator: some View {
+    private var alertBadge: some View {
         Circle()
-            .fill(aiContextColor)
-            .frame(width: 10, height: 10)
+            .fill(Color.red)
+            .frame(width: 12, height: 12)
             .overlay(
-                Circle()
-                    .stroke(Color.black.opacity(0.2), lineWidth: 1)
+                Text("!")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white)
             )
-            .offset(x: 14, y: -14)
-            .transition(.scale.combined(with: .opacity))
+            .offset(x: 18, y: -18)
     }
     
-    private var aiTooltip: some View {
-        Text(aiContextDescription)
+    private var novaContextMessage: some View {
+        Text(novaMessage)
+            .font(.caption2)
+            .fontWeight(.medium)
+            .foregroundColor(novaMessageColor)
+            .lineLimit(1)
+            .frame(height: 14)
+    }
+    
+    private var novaTooltip: some View {
+        Text("Tap for AI assistance")
             .font(.caption2)
             .foregroundColor(.white)
             .padding(.horizontal, 12)
@@ -324,78 +267,199 @@ struct HeaderV3B: View {
                 Capsule()
                     .fill(Color.black.opacity(0.8))
             )
-            .offset(y: -50)
     }
     
-    // MARK: - Future Phase Buttons
+    // MARK: - User Section (Right)
     
-    private var voiceCommandButton: some View {
-        Button(action: { onVoiceCommand?() }) {
-            Circle()
-                .fill(Color.purple.opacity(0.15))
-                .frame(width: 36, height: 36)
-                .overlay(
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.purple)
+    private var userSection: some View {
+        HStack(spacing: 12) {
+            // Future Phase: Wearable sync indicator
+            if onWearableSync != nil {
+                wearableIndicator
+            }
+            
+            // Clock status
+            if showClockPill {
+                clockStatusView
+            }
+            
+            // Profile button
+            profileButton
+        }
+    }
+    
+    private var wearableIndicator: some View {
+        Button(action: { onWearableSync?() }) {
+            Image(systemName: "applewatch")
+                .font(.system(size: 16))
+                .foregroundColor(.green)
+                .padding(8)
+                .background(
+                    Circle()
+                        .fill(Color.green.opacity(0.1))
                 )
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .transition(.scale.combined(with: .opacity))
+    }
+    
+    private var clockStatusView: some View {
+        Button(action: { onClockAction?() ?? {} }) {
+            VStack(alignment: .trailing, spacing: 2) {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(clockStatusColor)
+                        .frame(width: 8, height: 8)
+                        .overlay(
+                            Circle()
+                                .fill(clockStatusColor.opacity(0.5))
+                                .frame(width: 12, height: 12)
+                                .opacity(isClocked ? 1 : 0)
+                                .animation(
+                                    .easeInOut(duration: 2).repeatForever(autoreverses: true),
+                                    value: isClocked
+                                )
+                        )
+                    
+                    Text(isClocked ? "Clocked In" : "Clock In")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+                
+                if let building = contextAdapter.currentBuilding {
+                    Text("\(building.name) • \(clockedDuration)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(clockBackgroundColor)
+                    .overlay(
+                        Capsule()
+                            .stroke(clockStatusColor.opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var profileButton: some View {
+        Button(action: onProfileTap) {
+            HStack(spacing: 8) {
+                // Name (optional, for larger screens)
+                if UIScreen.main.bounds.width > 390 {
+                    Text(displayName)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                }
+                
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(profileGradient)
+                        .frame(width: 40, height: 40)
+                    
+                    Text(initials)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+            }
         }
         .buttonStyle(ScaleButtonStyle())
     }
     
-    private var arModeButton: some View {
-        Button(action: { onARModeToggle?() }) {
-            Circle()
-                .fill(Color.blue.opacity(0.15))
-                .frame(width: 36, height: 36)
-                .overlay(
-                    Image(systemName: "arkit")
-                        .font(.system(size: 16))
-                        .foregroundColor(.blue)
-                )
+    // MARK: - Helper Views
+    
+    private func futurePhaseButton(icon: String, color: Color, action: @escaping () -> Void, label: String) -> some View {
+        VStack(spacing: 2) {
+            Button(action: action) {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                    .overlay(
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(color)
+                    )
+            }
+            .buttonStyle(ScaleButtonStyle())
+            
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundColor(color.opacity(0.8))
         }
-        .buttonStyle(ScaleButtonStyle())
     }
     
     // MARK: - Computed Properties
     
-    private var displayWorkerName: String {
-        if !workerName.isEmpty && workerName != "Worker" {
-            return workerName
-        }
-        return contextAdapter.currentWorker?.name ?? "Worker"
+    private var displayName: String {
+        let name = !workerName.isEmpty && workerName != "Worker"
+            ? workerName
+            : contextAdapter.currentWorker?.name ?? "Worker"
+        
+        // Show first name only for space
+        return name.components(separatedBy: " ").first ?? name
     }
     
-    private var profileInitials: String {
-        let name = displayWorkerName
+    private var initials: String {
+        let name = displayName
         let components = name.components(separatedBy: " ")
-        let first = components.first?.first ?? Character("F")
-        let last = components.count > 1 ? components.last?.first ?? Character("S") : nil
+        let first = components.first?.first ?? "F"
+        let last = components.count > 1 ? components.last?.first : nil
         
         if let last = last {
             return "\(first)\(last)".uppercased()
         } else {
-            return "\(first)\(first)".uppercased()
+            return String(first).uppercased()
         }
     }
     
-    private var profileButtonColor: Color {
-        guard let worker = contextAdapter.currentWorker else { return .blue }
-        return getWorkerRoleColor(worker.role)
+    private var isClocked: Bool {
+        contextAdapter.currentBuilding != nil
     }
     
-    private var profileButtonGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                profileButtonColor,
-                profileButtonColor.opacity(0.8)
-            ],
+    private var clockStatusColor: Color {
+        isClocked ? .green : .orange
+    }
+    
+    private var clockBackgroundColor: Color {
+        isClocked ? Color.green.opacity(0.15) : Color.orange.opacity(0.15)
+    }
+    
+    private var backgroundAccentColor: Color {
+        if hasUrgentContext {
+            return .red
+        } else if isNovaProcessing {
+            return .purple
+        } else if isClocked {
+            return .green
+        } else {
+            return .blue
+        }
+    }
+    
+    private var profileGradient: LinearGradient {
+        let baseColor = getRoleColor()
+        return LinearGradient(
+            colors: [baseColor, baseColor.opacity(0.8)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
     
-    private func getWorkerRoleColor(_ role: CoreTypes.UserRole) -> Color {
+    private func getRoleColor() -> Color {
+        guard let role = contextAdapter.currentWorker?.role else { return .blue }
         switch role {
         case .worker: return .blue
         case .admin: return .green
@@ -404,168 +468,105 @@ struct HeaderV3B: View {
         }
     }
     
-    private var roleIcon: String {
-        guard let worker = contextAdapter.currentWorker else { return "person.fill" }
+    private var novaBackgroundGradient: LinearGradient {
+        let colors: [Color] = hasUrgentContext
+            ? [.red.opacity(0.8), .orange.opacity(0.8)]
+            : isNovaProcessing
+                ? [.purple, .blue]
+                : [.blue.opacity(0.8), .purple.opacity(0.8)]
         
-        switch worker.role {
-        case .worker: return "hammer.fill"
-        case .admin: return "crown.fill"
-        case .manager: return "person.3.fill"
-        case .client: return "building.2.fill"
-        }
-    }
-    
-    private var roleDisplayText: String {
-        guard let worker = contextAdapter.currentWorker else { return "Team Member" }
-        
-        // Special role descriptions for known workers
-        switch worker.id {
-        case "4": return "Museum Specialist"      // Kevin
-        case "2": return "Park Operations"         // Edwin
-        case "5": return "West Village"            // Mercedes
-        case "6": return "Downtown"                // Luis
-        case "1": return "Systems Expert"          // Greg
-        case "7": return "Evening Ops"             // Angel
-        case "8": return "Portfolio Lead"          // Shawn
-        case "3": return "Executive"               // Francisco
-        default:
-            // Generic role descriptions
-            switch worker.role {
-            case .worker: return "Field Operations"
-            case .admin: return "Management"
-            case .manager: return "Team Lead"
-            case .client: return "Client Services"
-            }
-        }
-    }
-    
-    private var clockStatusColor: Color {
-        contextAdapter.currentBuilding != nil ? .green : .orange
-    }
-    
-    private var clockStatusText: String {
-        if let building = contextAdapter.currentBuilding {
-            return building.name
-        } else if showClockPill {
-            return "On Site"
-        } else {
-            return "Available"
-        }
-    }
-    
-    // MARK: - AI Properties
-    
-    private var aiButtonGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                aiButtonBackgroundColor,
-                aiButtonBackgroundColor.opacity(0.7)
-            ],
+        return LinearGradient(
+            colors: colors,
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
     
-    private var aiButtonBackgroundColor: Color {
-        guard let worker = contextAdapter.currentWorker else { return .purple }
-        
-        switch worker.role {
-        case .worker: return .blue
-        case .admin: return .green
-        case .manager: return .orange
-        case .client: return .purple
+    private var novaGlowColor: Color {
+        hasUrgentContext ? .red : .blue
+    }
+    
+    private var hasUrgentContext: Bool {
+        // Check for urgent conditions
+        let hasUrgentTask = contextAdapter.todaysTasks.contains { task in
+            task.urgency == .urgent || task.urgency == .critical
         }
-    }
-    
-    private var aiProcessingColors: [Color] {
-        guard let worker = contextAdapter.currentWorker else { return [.purple, .blue, .purple] }
         
-        switch worker.role {
-        case .worker: return [.blue, .cyan, .blue]
-        case .admin: return [.green, .mint, .green]
-        case .manager: return [.orange, .yellow, .orange]
-        case .client: return [.purple, .pink, .purple]
-        }
-    }
-    
-    private var hasActiveContext: Bool {
-        let hasCurrentTask = nextTaskName != nil
-        let hasBuildings = !contextAdapter.assignedBuildings.isEmpty
-        let hasClockIn = contextAdapter.currentBuilding != nil
+        let hasDSNY = nextTaskName?.lowercased().contains("dsny") ?? false
         
-        return hasCurrentTask || hasBuildings || hasClockIn
+        return hasUrgentTask || hasDSNY
     }
     
-    private var aiContextColor: Color {
-        if nextTaskName != nil {
-            return .orange  // Active task
-        } else if contextAdapter.currentBuilding != nil {
-            return .green   // On site
+    private var novaMessage: String {
+        if isNovaProcessing {
+            return "Analyzing..."
+        } else if hasUrgentContext {
+            return "Urgent task requires attention"
+        } else if let task = nextTaskName {
+            return "Ready to help with \(task)"
+        } else if isClocked {
+            return "Monitoring your progress"
         } else {
-            return .blue    // Available
+            return "Tap for AI assistance"
         }
     }
     
-    private var aiContextDescription: String {
-        guard let worker = contextAdapter.currentWorker else { return "Nova AI Assistant" }
-        
-        var context = "Nova AI - "
-        
-        switch worker.role {
-        case .worker:
-            if let task = nextTaskName {
-                context += "Help with \(task)"
-            } else if let building = contextAdapter.currentBuilding {
-                context += "At \(building.name)"
-            } else {
-                context += "Field assistance ready"
-            }
-            
-        case .admin:
-            context += "Portfolio insights"
-            
-        case .manager:
-            context += "Team coordination"
-            
-        case .client:
-            context += "Building status"
+    private var novaMessageColor: Color {
+        if hasUrgentContext {
+            return .red
+        } else if isNovaProcessing {
+            return .purple
+        } else {
+            return .secondary
         }
-        
-        return context
     }
     
-    // MARK: - Actions
+    // MARK: - Methods
     
     private func handleNovaAction() {
-        if isNovaProcessing {
-            onNovaLongPress()
-        } else {
-            // Animate button press
+        // Animate press
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            novaScale = 0.9
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                aiButtonScale = 0.9
+                novaScale = 1.0
+            }
+        }
+        
+        onNovaPress()
+        
+        // Show tooltip for first-time users
+        if !UserDefaults.standard.bool(forKey: "hasSeenNovaTooltip") {
+            withAnimation {
+                showNovaTooltip = true
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                    aiButtonScale = 1.0
-                }
-            }
-            
-            onNovaPress()
-            
-            // Show tooltip for first-time users
-            if !UserDefaults.standard.bool(forKey: "hasSeenAITooltip") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 withAnimation {
-                    showAITooltip = true
+                    showNovaTooltip = false
                 }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    withAnimation {
-                        showAITooltip = false
-                    }
-                    UserDefaults.standard.set(true, forKey: "hasSeenAITooltip")
-                }
+                UserDefaults.standard.set(true, forKey: "hasSeenNovaTooltip")
             }
+        }
+    }
+    
+    private func updateClockDuration() {
+        guard let building = contextAdapter.currentBuilding,
+              let clockIn = contextAdapter.lastClockIn else {
+            clockedDuration = ""
+            return
+        }
+        
+        let duration = Date().timeIntervalSince(clockIn)
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        
+        if hours > 0 {
+            clockedDuration = "\(hours)h \(minutes)m"
+        } else {
+            clockedDuration = "\(minutes)m"
         }
     }
 }
@@ -584,51 +585,35 @@ struct ScaleButtonStyle: ButtonStyle {
 
 struct HeaderV3B_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: 0) {
-            // Worker with active task
+        VStack(spacing: 20) {
+            // Current state - Worker clocked in
             HeaderV3B(
                 workerName: "Kevin Dutan",
                 nextTaskName: "Museum Security Check",
                 showClockPill: true,
                 isNovaProcessing: false,
-                onProfileTap: { print("Profile tapped") },
-                onNovaPress: { print("Nova pressed") },
-                onNovaLongPress: { print("Nova long pressed") },
-                onVoiceCommand: { print("Voice command") },
-                onARModeToggle: { print("AR mode") }
+                onProfileTap: { print("Profile") },
+                onNovaPress: { print("Nova") },
+                onNovaLongPress: { print("Nova long press") }
             )
             
-            Divider()
-            
-            // Admin with processing
+            // With future features enabled
             HeaderV3B(
-                workerName: "Shawn Magloire",
+                workerName: "Edwin Rodriguez",
                 nextTaskName: nil,
-                showClockPill: false,
+                showClockPill: true,
                 isNovaProcessing: true,
                 onProfileTap: { },
                 onNovaPress: { },
-                onNovaLongPress: { }
+                onNovaLongPress: { },
+                onVoiceCommand: { print("Voice command") },
+                onARModeToggle: { print("AR mode") },
+                onWearableSync: { print("Wearable sync") }
             )
             
-            Divider()
-            
-            // Manager available
+            // Not clocked in
             HeaderV3B(
-                workerName: "Francisco",
-                nextTaskName: nil,
-                showClockPill: false,
-                isNovaProcessing: false,
-                onProfileTap: { },
-                onNovaPress: { },
-                onNovaLongPress: { }
-            )
-            
-            Divider()
-            
-            // Client viewing
-            HeaderV3B(
-                workerName: "John Smith",
+                workerName: "Mercedes Gonzalez",
                 nextTaskName: nil,
                 showClockPill: false,
                 isNovaProcessing: false,
@@ -639,43 +624,57 @@ struct HeaderV3B_Previews: PreviewProvider {
             
             Spacer()
         }
-        .background(Color(.systemBackground))
+        .padding()
+        .background(Color.black)
         .preferredColorScheme(.dark)
     }
 }
 
-// MARK: - Future Phase Features
+// MARK: - Future Phases Roadmap
 
 /*
-🚀 FUTURE PHASES ROADMAP:
+🚀 FUTURE PHASES INTEGRATION PLAN:
 
 Phase 1: Voice Integration (Q2 2025)
-- Voice command button activation
+- Voice command button flanks Nova AI
 - Hands-free task completion
-- Voice notes and reports
 - Multi-language support (English/Spanish)
+- Voice-to-text notes
+- "Hey Nova" wake word
 
 Phase 2: AR Features (Q3 2025)
-- AR mode for building navigation
+- AR mode button opposite voice
+- Building navigation overlay
 - Equipment identification
 - Visual task guides
 - Safety hazard detection
 
 Phase 3: Advanced AI (Q4 2025)
+- Nova learns worker patterns
 - Predictive task suggestions
 - Anomaly detection alerts
 - Performance optimization
-- Learning from user patterns
+- Contextual recommendations
 
 Phase 4: Wearable Support (Q1 2026)
-- Apple Watch companion
+- Apple Watch sync indicator
 - Smart glasses integration
 - Haptic feedback
 - Emergency alerts
+- Hands-free operations
 
 Phase 5: Integration Ecosystem (Q2 2026)
-- Third-party tool integration
-- API marketplace
-- Custom workflows
-- Enterprise features
+- Third-party tool badges
+- API marketplace access
+- Custom workflow buttons
+- Enterprise integrations
+- Plugin architecture
+
+LAYOUT EVOLUTION:
+Current: [Logo] ← [Nova AI] → [User/Clock]
+Phase 1: [Logo] ← [Voice][Nova AI] → [User/Clock]
+Phase 2: [Logo] ← [Voice][Nova AI][AR] → [User/Clock]
+Phase 4: [Logo] ← [Voice][Nova AI][AR] → [Watch][User/Clock]
+
+The header is designed to gracefully accommodate new features without disrupting the core layout. Future buttons appear conditionally based on available callbacks.
 */

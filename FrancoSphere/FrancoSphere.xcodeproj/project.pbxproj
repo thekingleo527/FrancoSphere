@@ -30,7 +30,6 @@
 		2326C21B2E3B2A9E0080F005 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C21A2E3B2A9E0080F005 /* OnboardingView.swift */; };
 		2326C21D2E3B2AD70080F005 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */; };
 		2326C2202E3B2B840080F005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2326C21E2E3B2B840080F005 /* Localizable.strings */; };
-		2326C2242E3B32B60080F005 /* TestHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2232E3B32B60080F005 /* TestHelpers.swift */; };
 		2326C2262E3B36C30080F005 /* BatchedRequestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2252E3B36C30080F005 /* BatchedRequestManager.swift */; };
 		2326C2282E3B36E60080F005 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2272E3B36E60080F005 /* NetworkMonitor.swift */; };
 		2326C22A2E3B396C0080F005 /* ReportGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2292E3B396C0080F005 /* ReportGenerator.swift */; };
@@ -271,7 +270,6 @@
 		2326C21C2E3B2AD70080F005 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
 		2326C21F2E3B2B840080F005 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2326C2222E3B2DBF0080F005 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-		2326C2232E3B32B60080F005 /* TestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHelpers.swift; sourceTree = "<group>"; };
 		2326C2252E3B36C30080F005 /* BatchedRequestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchedRequestManager.swift; sourceTree = "<group>"; };
 		2326C2272E3B36E60080F005 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		2326C2292E3B396C0080F005 /* ReportGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportGenerator.swift; sourceTree = "<group>"; };
@@ -557,7 +555,6 @@
 				23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */,
 				2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */,
 				2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */,
-				2326C2232E3B32B60080F005 /* TestHelpers.swift */,
 				23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */,
 				2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */,
 			);
@@ -1391,7 +1388,6 @@
 				2377A0122E39885600F4A10F /* GlassDeckContainer.swift in Sources */,
 				2326C2622E3C070B0080F005 /* AdminDashboardContainerView.swift in Sources */,
 				23A1B99C2E39A0EF0011F091 /* FrancoSphereApp.swift in Sources */,
-				2326C2242E3B32B60080F005 /* TestHelpers.swift in Sources */,
 				23A1B9902E39949C0011F091 /* WeatherDataAdapter.swift in Sources */,
 				2377A0132E39885600F4A10F /* TaskTimelineView.swift in Sources */,
 				2377A0142E39885600F4A10F /* BuildingStatsGlassCard.swift in Sources */,

@@ -19,7 +19,7 @@ struct FrancoSphereApp: App {
     @StateObject private var authManager = NewAuthManager.shared
     @StateObject private var notificationManager = NotificationManager.shared
     @StateObject private var contextEngine = WorkerContextEngine.shared
-    @StateObject private var locationManager = LocationManager()
+    private let locationManager = LocationManager.shared
     @StateObject private var databaseInitializer = DatabaseInitializer.shared
     @StateObject private var initViewModel = InitializationViewModel()
     
@@ -65,8 +65,10 @@ struct FrancoSphereApp: App {
                         .transition(.opacity)
                 } else if !hasCompletedOnboarding {
                     // Step 3: Show the onboarding flow for first-time users.
-                    OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
-                        .transition(.opacity)
+                    OnboardingView(onComplete: {
+                        hasCompletedOnboarding = true
+                    })
+                    .transition(.opacity)
                 } else if authManager.isAuthenticated {
                     // Step 4: If the user is authenticated, show the main app content.
                     ContentView()
@@ -157,8 +159,8 @@ struct FrancoSphereApp: App {
             options.enableNetworkTracking = true
             options.enableNetworkBreadcrumbs = true
             
-            // UI Tracking
-            options.enableUIViewControllerTracking = true
+            // UI Tracking - Fixed property name
+            options.enableUIViewControllerTracing = true
             options.enableUserInteractionTracing = true
             options.enableSwizzling = true
             
@@ -229,8 +231,7 @@ struct FrancoSphereApp: App {
         SentrySDK.configureScope { scope in
             if let user = user {
                 // Set user information (but not sensitive data)
-                let sentryUser = User()
-                sentryUser.userId = user.workerId
+                let sentryUser = User(userId: user.workerId)
                 sentryUser.username = user.name
                 // Don't send email to protect privacy
                 

@@ -241,7 +241,7 @@ struct FrancoBuildingPhotoCaptureView: View {
     @State private var category = FrancoPhotoCategory.general
     @State private var notes = ""
     @State private var showingCamera = true
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var locationManager = LocationManager.shared
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -700,7 +700,7 @@ class FrancoPhotoGalleryViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: Error?
     
-    private let locationManager = LocationManager()
+    private let locationManager = LocationManager.shared
     
     init() {
         locationManager.requestLocation()

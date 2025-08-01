@@ -2,6 +2,7 @@
 //  NextStepsView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Removed non-existent properties and corrected syntax
 //  ✅ RENAMED: Changed from NextStepsSection to NextStepsView to avoid conflicts
 //  ✅ NEW: Smart task progression component
 //  ✅ INTEGRATES: RoutineRepository for routine-based tasks
@@ -392,13 +393,14 @@ private struct NextStepsTaskCard: View {
                     .lineLimit(2)
                 
                 HStack(spacing: 16) {
-                    if let location = task.location {
-                        Label(location, systemImage: "location")
+                    // Show building name instead of location
+                    if let building = task.building {
+                        Label(building.name, systemImage: "building.2")
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
-                    if task.requiresPhoto {
+                    if task.requiresPhoto == true {  // Fixed: Unwrap optional Bool
                         Label("Photo required", systemImage: "camera.fill")
                             .font(.caption)
                             .foregroundColor(.orange)
@@ -453,7 +455,7 @@ private struct NextStepsCompactTaskRow: View {
                     .foregroundColor(.white.opacity(0.5))
             }
             
-            if task.requiresPhoto {
+            if task.requiresPhoto == true {  // Fixed: Unwrap optional Bool
                 Image(systemName: "camera.fill")
                     .font(.caption2)
                     .foregroundColor(.orange.opacity(0.6))
@@ -534,7 +536,7 @@ struct NextStepsView_Previews: PreviewProvider {
                     currentTask: CoreTypes.ContextualTask(
                         id: "1",
                         title: "Clean Main Lobby",
-                        buildingId: "14",
+                        urgency: .high,
                         building: CoreTypes.NamedCoordinate(
                             id: "14",
                             name: "Rubin Museum",
@@ -542,16 +544,15 @@ struct NextStepsView_Previews: PreviewProvider {
                             latitude: 40.7402,
                             longitude: -73.9980
                         ),
-                        location: "Main Entrance",
+                        buildingId: "14",  // Fixed: building comes before buildingId
                         requiresPhoto: true,
-                        estimatedDuration: 1200,
-                        urgency: .high
+                        estimatedDuration: 1200
                     ),
                     upcomingTasks: [
                         CoreTypes.ContextualTask(
                             id: "2",
                             title: "Empty Trash Bins",
-                            buildingId: "14",
+                            urgency: .medium,
                             building: CoreTypes.NamedCoordinate(
                                 id: "14",
                                 name: "Rubin Museum",
@@ -559,9 +560,9 @@ struct NextStepsView_Previews: PreviewProvider {
                                 latitude: 40.7402,
                                 longitude: -73.9980
                             ),
+                            buildingId: "14",  // Fixed: building comes before buildingId
                             requiresPhoto: false,
-                            estimatedDuration: 900,
-                            urgency: .medium
+                            estimatedDuration: 900
                         )
                     ],
                     currentBuilding: CoreTypes.NamedCoordinate(
