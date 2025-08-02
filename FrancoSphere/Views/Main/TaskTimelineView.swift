@@ -892,6 +892,7 @@ struct NovaInsightRow: View {
         case .quality: return "star"
         case .operations: return "gearshape.2"
         case .maintenance: return "wrench.and.screwdriver"
+        @unknown default: return "lightbulb" // Handle any future cases
         }
     }
     

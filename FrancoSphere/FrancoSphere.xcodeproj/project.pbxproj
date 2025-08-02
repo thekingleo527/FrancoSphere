@@ -201,7 +201,6 @@
 		23A1B9602E3992C80011F091 /* TodaysProgressDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94E2E3992C80011F091 /* TodaysProgressDetailView.swift */; };
 		23A1B9612E3992C80011F091 /* WorkersInlineList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9532E3992C80011F091 /* WorkersInlineList.swift */; };
 		23A1B9622E3992C80011F091 /* WeatherViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9522E3992C80011F091 /* WeatherViewModifier.swift */; };
-		23A1B9632E3992C80011F091 /* FrancoSphereColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9462E3992C80011F091 /* FrancoSphereColors.swift */; };
 		23A1B9642E3992C80011F091 /* MyAssignedBuildingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9492E3992C80011F091 /* MyAssignedBuildingsSection.swift */; };
 		23A1B9662E3992F90011F091 /* DatabaseInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9652E3992F90011F091 /* DatabaseInitializer.swift */; };
 		23A1B9682E39931D0011F091 /* WorkerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9672E39931D0011F091 /* WorkerManager.swift */; };
@@ -429,7 +428,6 @@
 		23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
 		23A1B9442E3992C80011F091 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
-		23A1B9462E3992C80011F091 /* FrancoSphereColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereColors.swift; sourceTree = "<group>"; };
 		23A1B9482E3992C80011F091 /* InitializationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationStatus.swift; sourceTree = "<group>"; };
 		23A1B9492E3992C80011F091 /* MyAssignedBuildingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAssignedBuildingsSection.swift; sourceTree = "<group>"; };
 		23A1B94A2E3992C80011F091 /* ProfileBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileBadge.swift; sourceTree = "<group>"; };
@@ -577,7 +575,6 @@
 				23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */,
 				23A1B9442E3992C80011F091 /* Building.swift */,
 				23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */,
-				23A1B9462E3992C80011F091 /* FrancoSphereColors.swift */,
 				23A1B9482E3992C80011F091 /* InitializationStatus.swift */,
 				23A1B9492E3992C80011F091 /* MyAssignedBuildingsSection.swift */,
 				23A1B94A2E3992C80011F091 /* ProfileBadge.swift */,
@@ -1375,7 +1372,6 @@
 				2326C2602E3C06FD0080F005 /* WorkerDashboardContainerView.swift in Sources */,
 				23A1B9612E3992C80011F091 /* WorkersInlineList.swift in Sources */,
 				23A1B9622E3992C80011F091 /* WeatherViewModifier.swift in Sources */,
-				23A1B9632E3992C80011F091 /* FrancoSphereColors.swift in Sources */,
 				23A1B9642E3992C80011F091 /* MyAssignedBuildingsSection.swift in Sources */,
 				2377A00B2E39885600F4A10F /* ClockInGlassModal.swift in Sources */,
 				2326C1F42E3AB63A0080F005 /* BuildingMetricsComponents.swift in Sources */,
