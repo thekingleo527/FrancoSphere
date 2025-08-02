@@ -6,6 +6,7 @@
 //  ✅ CLEAN: Modular components and better organization
 //  ✅ INTEGRATED: TimelineProgressBar for visual time tracking
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ DARK ELEGANCE: Updated with new theme colors
 //
 
 import SwiftUI
@@ -150,7 +151,8 @@ private struct StandardHeroView: View {
                 // Enhanced progress section with timeline
                 EnhancedProgressSection(
                     progress: progress,
-                    language: language
+                    language: language,
+                    onStartTask: onClockIn
                 )
                 
                 // Status grid
@@ -221,11 +223,12 @@ private struct SimplifiedHeroView: View {
             VStack(spacing: 8) {
                 Text(greeting)
                     .font(.title)
-                    .foregroundColor(.primary)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Text(worker?.name ?? "Worker")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             .padding(.top)
             
@@ -255,9 +258,8 @@ private struct SimplifiedHeroView: View {
             }
         }
         .padding(24)
-        .background(Color(.systemBackground))
-        .cornerRadius(24)
-        .shadow(radius: 10)
+        .francoDarkCardBackground(cornerRadius: 24)
+        .francoShadow()
     }
 }
 
@@ -266,6 +268,9 @@ private struct SimplifiedHeroView: View {
 private struct EnhancedProgressSection: View {
     let progress: CoreTypes.TaskProgress
     let language: String
+    let onStartTask: () -> Void
+    
+    @StateObject private var contextEngine = WorkerContextEngine.shared
     
     private var progressPercentage: Double {
         guard progress.totalTasks > 0 else { return 0 }
@@ -304,6 +309,10 @@ private struct EnhancedProgressSection: View {
         return Date().addingTimeInterval(3600) // Placeholder: 1 hour from now
     }
     
+    private var currentTask: CoreTypes.ContextualTask? {
+        contextEngine.todaysTasks.first { !$0.isCompleted }
+    }
+    
     var body: some View {
         VStack(spacing: 12) {
             // Current progress text
@@ -313,7 +322,7 @@ private struct EnhancedProgressSection: View {
                 Text("\(Int(progressPercentage * 100))%")
             }
             .font(.caption)
-            .foregroundColor(.white.opacity(0.8))
+            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             // Visual progress bar
             HeroProgressBar(percentage: progressPercentage)
@@ -333,22 +342,61 @@ private struct EnhancedProgressSection: View {
             HStack {
                 Text(getTimeBasedStatus())
                     .font(.caption2)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 Spacer()
                 Text(getRemainingWorkTime())
                     .font(.caption2)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+            }
+            
+            // Current task action (NEW)
+            if let task = currentTask {
+                VStack(spacing: 12) {
+                    Divider()
+                        .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                    
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("NEXT TASK")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                            
+                            Text(task.title)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .lineLimit(1)
+                            
+                            if let building = task.building {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "building.2")
+                                        .font(.caption2)
+                                    Text(building.name)
+                                        .font(.caption)
+                                }
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: onStartTask) {
+                            Text("START")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(FrancoSphereDesign.DashboardColors.primaryAction)
+                                .cornerRadius(8)
+                        }
+                    }
+                }
             }
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .francoGlassBackground(cornerRadius: 16)
     }
 }
 
@@ -362,7 +410,7 @@ private struct HeroTaskTimelineMarkers: View {
             // Completed task markers
             ForEach(0..<completedTasks, id: \.self) { index in
                 Circle()
-                    .fill(Color.green)
+                    .fill(FrancoSphereDesign.DashboardColors.success)
                     .frame(width: 6, height: 6)
                     .position(
                         x: taskPosition(index: index, in: geometry.size.width),
@@ -375,14 +423,14 @@ private struct HeroTaskTimelineMarkers: View {
                 let position = timePosition(for: nextTime, in: geometry.size.width)
                 
                 Circle()
-                    .fill(Color.orange)
+                    .fill(FrancoSphereDesign.DashboardColors.warning)
                     .frame(width: 8, height: 8)
                     .overlay(
                         Circle()
-                            .stroke(Color.white, lineWidth: 1)
+                            .stroke(FrancoSphereDesign.DashboardColors.primaryText, lineWidth: 1)
                     )
                     .position(x: position, y: geometry.size.height / 2)
-                    .shadow(color: .orange.opacity(0.5), radius: 4)
+                    .shadow(color: FrancoSphereDesign.DashboardColors.warning.opacity(0.5), radius: 4)
             }
         }
     }
@@ -424,12 +472,12 @@ private struct HeroHeaderSection: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(greeting)
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Text(worker?.name ?? "Worker")
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 // Clock in details
                 if case let .clockedIn(buildingName, _, time, location) = clockInStatus {
@@ -461,16 +509,16 @@ private struct HeroClockInDetails: View {
         VStack(alignment: .leading, spacing: 2) {
             Label(buildingName, systemImage: "building.2")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             Label(timeString(from: time), systemImage: "clock")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             if hasLocation {
                 Label("Location verified", systemImage: "location.fill")
                     .font(.caption)
-                    .foregroundColor(.green.opacity(0.8))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.success.opacity(0.8))
             }
         }
         .padding(.top, 4)
@@ -501,7 +549,7 @@ private struct HeroWorkerStatusBadge: View {
             // Photo requirement indicator
             if hasPhotoRequirement && clockInStatus.isClockedIn {
                 Circle()
-                    .fill(Color.orange)
+                    .fill(FrancoSphereDesign.DashboardColors.warning)
                     .frame(width: 20, height: 20)
                     .overlay(
                         Image(systemName: "camera.fill")
@@ -527,13 +575,13 @@ private struct HeroWorkerStatusBadge: View {
         
         switch clockInStatus {
         case .notClockedIn:
-            colors = [.gray, .gray.opacity(0.6)]
+            colors = [FrancoSphereDesign.DashboardColors.inactive, FrancoSphereDesign.DashboardColors.inactive.opacity(0.6)]
         case .clockedIn:
-            colors = [.green, .green.opacity(0.6)]
+            colors = [FrancoSphereDesign.DashboardColors.success, FrancoSphereDesign.DashboardColors.success.opacity(0.6)]
         case .onBreak:
-            colors = [.orange, .yellow]
+            colors = [FrancoSphereDesign.DashboardColors.warning, Color(hex: "fbbf24")]
         case .clockedOut:
-            colors = [.blue, .blue.opacity(0.6)]
+            colors = [FrancoSphereDesign.DashboardColors.info, FrancoSphereDesign.DashboardColors.info.opacity(0.6)]
         }
         
         return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -564,6 +612,7 @@ private struct HeroWeatherCard: View {
                         Text("\(Int(weather.temperature))°F")
                             .font(.title3)
                             .fontWeight(.semibold)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
                         if weather.outdoorWorkRisk != .low {
                             HeroRiskBadge(risk: weather.outdoorWorkRisk)
@@ -572,7 +621,7 @@ private struct HeroWeatherCard: View {
                     
                     Text(weather.condition)
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     // DSNY Alert if relevant
                     if weather.condition.lowercased().contains("snow") {
@@ -583,15 +632,8 @@ private struct HeroWeatherCard: View {
                 Spacer()
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-            )
-            .foregroundColor(.white)
+            .francoGlassBackground(cornerRadius: 16)
+            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isExpanded ? 0.95 : 1)
@@ -615,15 +657,15 @@ private struct HeroWeatherCard: View {
         
         switch weather.condition.lowercased() {
         case "sunny", "clear":
-            colors = [.yellow, .orange]
+            colors = [Color(hex: "fbbf24"), FrancoSphereDesign.DashboardColors.warning]
         case "cloudy", "partly cloudy":
-            colors = [.gray, .gray.opacity(0.6)]
+            colors = [FrancoSphereDesign.DashboardColors.inactive, FrancoSphereDesign.DashboardColors.inactive.opacity(0.6)]
         case "rainy", "stormy":
-            colors = [.blue, .blue.opacity(0.6)]
+            colors = [FrancoSphereDesign.DashboardColors.info, FrancoSphereDesign.DashboardColors.info.opacity(0.6)]
         case "snowy":
-            colors = [.white, .blue.opacity(0.3)]
+            colors = [FrancoSphereDesign.DashboardColors.primaryText, FrancoSphereDesign.DashboardColors.info.opacity(0.3)]
         default:
-            colors = [.blue, .cyan]
+            colors = [FrancoSphereDesign.DashboardColors.info, FrancoSphereDesign.DashboardColors.workerAccent]
         }
         
         return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -636,16 +678,7 @@ private struct HeroRiskBadge: View {
     var body: some View {
         Label(risk.rawValue.capitalized, systemImage: "exclamationmark.triangle.fill")
             .font(.caption)
-            .foregroundColor(riskColor)
-    }
-    
-    private var riskColor: Color {
-        switch risk {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .extreme: return .red
-        }
+            .foregroundColor(FrancoSphereDesign.EnumColors.outdoorWorkRisk(risk))
     }
 }
 
@@ -653,7 +686,7 @@ private struct HeroDSNYAlert: View {
     var body: some View {
         Label("DSNY snow removal required", systemImage: "snowflake")
             .font(.caption2)
-            .foregroundColor(.yellow)
+            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
     }
 }
 
@@ -678,10 +711,10 @@ private struct HeroStatusGrid: View {
     
     private var progressColor: Color {
         switch progressPercentage {
-        case 0..<0.3: return .red
-        case 0.3..<0.6: return .orange
-        case 0.6..<0.9: return .yellow
-        default: return .green
+        case 0..<0.3: return FrancoSphereDesign.DashboardColors.critical
+        case 0.3..<0.6: return FrancoSphereDesign.DashboardColors.warning
+        case 0.6..<0.9: return Color(hex: "fbbf24")
+        default: return FrancoSphereDesign.DashboardColors.success
         }
     }
     
@@ -705,7 +738,7 @@ private struct HeroStatusGrid: View {
                     title: language == "es" ? "Edificio Actual" : "Current Building",
                     value: building?.name ?? (language == "es" ? "No asignado" : "Not assigned"),
                     subtitle: building != nil ? "Tap for details" : nil,
-                    color: .blue,
+                    color: FrancoSphereDesign.DashboardColors.info,
                     badge: nil,
                     action: onBuilding
                 )
@@ -753,36 +786,29 @@ private struct HeroStatusCardItem: View {
                         Text(badge)
                             .font(.caption2)
                             .padding(4)
-                            .background(Circle().fill(Color.red))
+                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.critical))
                     }
                 }
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     .lineLimit(1)
                 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(.caption2)
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-            )
+            .francoGlassBackground(cornerRadius: 16)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -793,31 +819,31 @@ private struct HeroComplianceCard: View {
         HStack(spacing: 12) {
             Image(systemName: "camera.fill.badge.ellipsis")
                 .font(.title3)
-                .foregroundColor(.orange)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Photo Evidence Required")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Text("For all sanitation tasks")
                     .font(.caption2)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             }
             
             Spacer()
             
             Image(systemName: "info.circle")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.orange.opacity(0.2))
+                .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                        .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.2), lineWidth: 1)
                 )
         )
     }
@@ -836,32 +862,32 @@ private struct HeroEmergencyButton: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
-                    .background(Color.orange)
+                    .background(FrancoSphereDesign.DashboardColors.warning)
                     .cornerRadius(15)
             } else {
                 HStack(spacing: 12) {
                     Image(systemName: "phone.badge.plus")
                         .font(.headline)
-                        .foregroundColor(.orange)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                     
                     Text("Emergency Contact")
                         .font(.subheadline)
                         .fontWeight(.medium)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
-                .foregroundColor(.white)
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.orange.opacity(0.2))
+                        .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                                .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.2), lineWidth: 1)
                         )
                 )
             }
@@ -921,16 +947,16 @@ private struct HeroClockInButton: View {
         }
     }
     
-    private var colors: [Color] {
+    private var buttonColor: Color {
         switch status {
         case .notClockedIn:
-            return [.blue, .blue.opacity(0.8)]
+            return FrancoSphereDesign.DashboardColors.primaryAction
         case .clockedIn:
-            return [.orange, .red]
+            return FrancoSphereDesign.DashboardColors.critical
         case .onBreak:
-            return [.yellow, .orange]
+            return FrancoSphereDesign.DashboardColors.warning
         case .clockedOut:
-            return [.gray, .gray.opacity(0.8)]
+            return FrancoSphereDesign.DashboardColors.inactive
         }
     }
     
@@ -945,7 +971,7 @@ private struct HeroClockInButton: View {
                     .frame(height: 80)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(status.isClockedIn ? Color.red : Color.green)
+                            .fill(status.isClockedIn ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.primaryAction)
                     )
             } else {
                 HStack(spacing: 8) {
@@ -967,13 +993,7 @@ private struct HeroClockInButton: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
-                        .fill(
-                            LinearGradient(
-                                colors: colors,
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(buttonColor)
                 )
             }
         }
@@ -1016,11 +1036,11 @@ private struct HeroQuickActionsMenu: View {
         } label: {
             Image(systemName: "ellipsis.circle.fill")
                 .font(.title2)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 .frame(width: 52, height: 52)
                 .background(
                     Circle()
-                        .fill(.ultraThinMaterial)
+                        .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                 )
         }
     }
@@ -1032,7 +1052,7 @@ private struct HeroStatusIndicator: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(clockInStatus.isClockedIn ? Color.green : Color.gray)
+                .fill(clockInStatus.isClockedIn ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
                 .frame(width: 120, height: 120)
             
             VStack(spacing: 4) {
@@ -1057,15 +1077,16 @@ private struct HeroTaskCountDisplay: View {
         VStack(spacing: 8) {
             Text(language == "es" ? "Tareas Hoy" : "Tasks Today")
                 .font(.title2)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text("\(completed) " + (language == "es" ? "hechas" : "done"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(.green)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
             
             Text((language == "es" ? "de " : "of ") + "\(total) total")
                 .font(.title3)
-                .foregroundColor(.secondary)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
     }
 }
@@ -1075,10 +1096,10 @@ private struct HeroProgressBar: View {
     
     private var progressColor: Color {
         switch percentage {
-        case 0..<0.3: return .red
-        case 0.3..<0.6: return .orange
-        case 0.6..<0.9: return .yellow
-        default: return .green
+        case 0..<0.3: return FrancoSphereDesign.DashboardColors.critical
+        case 0.3..<0.6: return FrancoSphereDesign.DashboardColors.warning
+        case 0.6..<0.9: return Color(hex: "fbbf24")
+        default: return FrancoSphereDesign.DashboardColors.success
         }
     }
     
@@ -1086,7 +1107,7 @@ private struct HeroProgressBar: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 Rectangle()
-                    .fill(Color.white.opacity(0.1))
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                 
                 Rectangle()
                     .fill(
@@ -1102,7 +1123,7 @@ private struct HeroProgressBar: View {
                 // Milestone markers
                 ForEach([0.25, 0.5, 0.75], id: \.self) { milestone in
                     Rectangle()
-                        .fill(Color.white.opacity(0.3))
+                        .fill(FrancoSphereDesign.DashboardColors.borderSubtle)
                         .frame(width: 1)
                         .offset(x: geometry.size.width * milestone)
                 }
@@ -1145,11 +1166,11 @@ private struct HeroSyncStatusBar: View {
     
     private var statusColor: Color {
         switch status {
-        case .synced: return .green
-        case .syncing: return .blue
-        case .offline: return .orange
-        case .error: return .red
-        case .pendingMigration: return .purple
+        case .synced: return FrancoSphereDesign.DashboardColors.success
+        case .syncing: return FrancoSphereDesign.DashboardColors.info
+        case .offline: return FrancoSphereDesign.DashboardColors.warning
+        case .error: return FrancoSphereDesign.DashboardColors.critical
+        case .pendingMigration: return FrancoSphereDesign.DashboardColors.tertiaryAction
         }
     }
     
@@ -1160,19 +1181,19 @@ private struct HeroSyncStatusBar: View {
                 switch status {
                 case .synced:
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 case .syncing:
                     ProgressView()
                         .scaleEffect(0.8)
                 case .offline:
                     Image(systemName: "wifi.slash")
-                        .foregroundColor(.orange)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                 case .error:
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                 case .pendingMigration:
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(.blue)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                 }
             }
             .font(.caption)
@@ -1180,7 +1201,7 @@ private struct HeroSyncStatusBar: View {
             // Status text
             Text(statusText)
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             Spacer()
             
@@ -1192,15 +1213,15 @@ private struct HeroSyncStatusBar: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.2))
+                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
                         .cornerRadius(12)
                 }
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(statusColor.opacity(0.9))
+        .background(statusColor.opacity(0.15))
         .animation(.easeInOut(duration: 0.3), value: status)
     }
 }
@@ -1211,19 +1232,11 @@ private struct HeroCardBackground: View {
     
     private var backgroundColors: [Color] {
         if case .pendingMigration = syncStatus {
-            return [Color.purple, Color.indigo].map { $0.opacity(0.8) }
+            return FrancoSphereDesign.DashboardColors.adminHeroGradient
         }
         
-        switch clockInStatus {
-        case .notClockedIn:
-            return [Color.blue, Color.purple].map { $0.opacity(0.8) }
-        case .clockedIn:
-            return [Color.green, Color.blue].map { $0.opacity(0.8) }
-        case .onBreak:
-            return [Color.orange, Color.yellow].map { $0.opacity(0.8) }
-        case .clockedOut:
-            return [Color.gray, Color.gray.opacity(0.6)]
-        }
+        // Always use the dark elegant worker gradient
+        return FrancoSphereDesign.DashboardColors.workerHeroGradient
     }
     
     var body: some View {
@@ -1234,16 +1247,16 @@ private struct HeroCardBackground: View {
                 endPoint: .bottomTrailing
             )
             
+            // Subtle overlay for depth
             RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial)
-                .opacity(0.8)
+                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .overlay(
             RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+        .francoShadow()
     }
 }
 
@@ -1266,7 +1279,7 @@ private struct HeroOfflineOverlay: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.orange.opacity(0.9))
+                    .background(FrancoSphereDesign.DashboardColors.warning.opacity(0.9))
                     .cornerRadius(20)
                     .padding(.bottom, 8)
                 }
@@ -1310,7 +1323,7 @@ struct PreviewHelpers {
 // MARK: - Previews
 #Preview("Standard UI - Clocked In") {
     ZStack {
-        Color.black.ignoresSafeArea()
+        FrancoSphereDesign.DashboardColors.baseBackground.ignoresSafeArea()
         
         HeroStatusCard(
             worker: PreviewHelpers.kevinProfile,
@@ -1357,7 +1370,7 @@ struct PreviewHelpers {
 
 #Preview("Simplified UI") {
     ZStack {
-        Color(.systemBackground).ignoresSafeArea()
+        FrancoSphereDesign.DashboardColors.baseBackground.ignoresSafeArea()
         
         HeroStatusCard(
             worker: PreviewHelpers.mercedesProfile,
@@ -1391,7 +1404,7 @@ struct PreviewHelpers {
 
 #Preview("Pending Migration") {
     ZStack {
-        Color.black.ignoresSafeArea()
+        FrancoSphereDesign.DashboardColors.baseBackground.ignoresSafeArea()
         
         HeroStatusCard(
             worker: PreviewHelpers.kevinProfile,

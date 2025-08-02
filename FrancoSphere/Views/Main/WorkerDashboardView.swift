@@ -8,6 +8,8 @@
 //  ✅ FUTURE-READY: Prepared for voice, AR, wearables
 //  ✅ UPDATED: Now uses IntelligencePreviewPanel for AI insights
 //  ✅ FIXED: Switch statements are now exhaustive
+//  ✅ DARK ELEGANCE: Updated with new theme colors
+//  ✅ OPTIMIZED: Removed NextStepsView for cleaner layout
 //
 
 import Foundation
@@ -34,9 +36,53 @@ struct WorkerDashboardView: View {
     @State private var refreshID = UUID()
     @State private var selectedInsight: CoreTypes.IntelligenceInsight?
     
+    // Intelligence panel state
+    @State private var currentContext: ViewContext = .dashboard
+    @AppStorage("preferredPanelState") private var userPanelPreference: IntelPanelState = .collapsed
+    
     // Future phase states
     @State private var voiceCommandEnabled = false
     @State private var arModeEnabled = false
+    
+    // MARK: - Enums
+    enum ViewContext {
+        case dashboard
+        case buildingDetail
+        case taskFlow
+        case siteDeparture
+        case novaChat
+        case emergency
+    }
+    
+    enum IntelPanelState {
+        case hidden
+        case minimal
+        case collapsed
+        case expanded
+        case fullscreen
+    }
+    
+    // MARK: - Computed Properties
+    private var intelligencePanelState: IntelPanelState {
+        switch currentContext {
+        case .dashboard:
+            return hasUrgentAlerts() ? .expanded : userPanelPreference
+        case .buildingDetail:
+            return .minimal
+        case .taskFlow:
+            return .hidden
+        case .siteDeparture:
+            return .hidden
+        case .novaChat:
+            return .fullscreen
+        case .emergency:
+            return .expanded
+        }
+    }
+    
+    private func hasUrgentAlerts() -> Bool {
+        novaEngine.insights.contains { $0.priority == .critical } || hasUrgentTasks()
+    }
     
     var body: some View {
         MapRevealContainer(
@@ -48,16 +94,9 @@ struct WorkerDashboardView: View {
             }
         ) {
             ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.95),
-                        Color.black.opacity(0.85)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Dark Elegance Background
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
                 
                 // Main content
                 VStack(spacing: 0) {
@@ -91,7 +130,7 @@ struct WorkerDashboardView: View {
                     // Main content area
                     ScrollView {
                         VStack(spacing: 16) {
-                            // 1. Collapsible Hero Status Card (5% collapsed, 25-30% expanded)
+                            // Collapsible Hero Status Card
                             CollapsibleHeroWrapper(
                                 isCollapsed: $isHeroCollapsed,
                                 worker: contextEngine.currentWorker,
@@ -101,7 +140,7 @@ struct WorkerDashboardView: View {
                                 clockInStatus: getClockInStatus(),
                                 capabilities: getWorkerCapabilities(),
                                 syncStatus: getSyncStatus(),
-                                onClockInTap: handleClockAction, // Use same handler
+                                onClockInTap: handleClockAction,
                                 onBuildingTap: { /* Handled by map */ },
                                 onTasksTap: { showAllTasks = true },
                                 onEmergencyTap: handleEmergencyAction,
@@ -109,22 +148,8 @@ struct WorkerDashboardView: View {
                             )
                             .zIndex(50)
                             
-                            // 2. Next Steps View - ALWAYS VISIBLE (15-18%)
-                            if !contextEngine.todaysTasks.isEmpty {
-                                NextStepsView(
-                                    currentTask: getCurrentTask(),
-                                    upcomingTasks: getUpcomingTasks(),
-                                    currentBuilding: contextEngine.currentBuilding,
-                                    onStartTask: { task in
-                                        selectedTask = task
-                                        showTaskDetail = true
-                                    },
-                                    onSeeAll: { showAllTasks = true }
-                                )
-                            }
-                            
                             // Spacer for bottom intelligence bar
-                            Spacer(minLength: 80)
+                            Spacer(minLength: intelligencePanelState == .hidden ? 20 : 80)
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
@@ -134,16 +159,18 @@ struct WorkerDashboardView: View {
                         refreshID = UUID()
                     }
                     
-                    // 3. Intelligence Preview Panel in Compact Mode (10%)
-                    if !novaEngine.insights.isEmpty || hasIntelligenceToShow() {
+                    // Intelligence Preview Panel
+                    if intelligencePanelState != .hidden && (!novaEngine.insights.isEmpty || hasIntelligenceToShow()) {
                         IntelligencePreviewPanel(
                             insights: getCurrentInsights(),
-                            displayMode: .compact,
+                            displayMode: intelligencePanelState == .minimal ? .compact : .compact,
                             onNavigate: { target in
                                 handleIntelligenceNavigation(target)
-                            }
+                            },
+                            contextEngine: contextEngine
                         )
                         .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
                     }
                 }
             }
@@ -158,6 +185,8 @@ struct WorkerDashboardView: View {
         .sheet(isPresented: $showNovaAssistant) {
             NovaInteractionView()
                 .presentationDetents([.large])
+                .onAppear { currentContext = .novaChat }
+                .onDisappear { currentContext = .dashboard }
         }
         .sheet(item: $selectedInsight) { insight in
             InsightDetailView(insight: insight)
@@ -165,7 +194,9 @@ struct WorkerDashboardView: View {
         .sheet(isPresented: $showTaskDetail) {
             if let task = selectedTask {
                 TaskDetailView(task: task)
+                    .onAppear { currentContext = .taskFlow }
                     .onDisappear {
+                        currentContext = .dashboard
                         Task {
                             await contextEngine.refreshContext()
                         }
@@ -174,7 +205,7 @@ struct WorkerDashboardView: View {
         }
         .sheet(isPresented: $showAllTasks) {
             NavigationView {
-                VStack {
+                VStack(spacing: 0) {
                     List(contextEngine.todaysTasks) { task in
                         WorkerTaskRowView(task: task) {
                             selectedTask = task
@@ -183,6 +214,7 @@ struct WorkerDashboardView: View {
                         }
                     }
                     .listStyle(PlainListStyle())
+                    .background(FrancoSphereDesign.DashboardColors.baseBackground)
                 }
                 .navigationTitle("Today's Tasks")
                 .navigationBarTitleDisplayMode(.large)
@@ -191,9 +223,12 @@ struct WorkerDashboardView: View {
                         Button("Done") {
                             showAllTasks = false
                         }
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     }
                 }
+                .background(FrancoSphereDesign.DashboardColors.baseBackground)
             }
+            .preferredColorScheme(.dark)
         }
         .sheet(isPresented: $showDepartureChecklist) {
             if let worker = contextEngine.currentWorker,
@@ -206,6 +241,8 @@ struct WorkerDashboardView: View {
                         availableBuildings: contextEngine.assignedBuildings
                     )
                 )
+                .onAppear { currentContext = .siteDeparture }
+                .onDisappear { currentContext = .dashboard }
             }
         }
         .sheet(isPresented: $showMainMenu) {
@@ -262,23 +299,60 @@ struct WorkerDashboardView: View {
     private func handleIntelligenceNavigation(_ target: IntelligencePreviewPanel.NavigationTarget) {
         switch target {
         case .tasks(let urgentCount):
-            // Filter to urgent tasks
             showAllTasks = true
             
         case .buildings(let affected):
-            // Could implement building filter view
             print("Navigate to buildings: \(affected)")
             
         case .compliance(let deadline):
-            // Show compliance-specific view
             showAllTasks = true
             
         case .maintenance(let overdue):
-            // Show maintenance tasks
             showAllTasks = true
             
         case .fullInsights:
             showNovaAssistant = true
+            
+        case .allTasks:
+            showAllTasks = true
+            
+        case .taskDetail(let id):
+            if let task = contextEngine.todaysTasks.first(where: { $0.id == id }) {
+                selectedTask = task
+                showTaskDetail = true
+            }
+            
+        case .allBuildings:
+            // Navigate to buildings list
+            print("Navigate to all buildings")
+            
+        case .buildingDetail(let id):
+            // Navigate to specific building
+            print("Navigate to building: \(id)")
+            
+        case .clockOut:
+            handleClockAction()
+            
+        case .profile:
+            showProfileView = true
+            
+        case .settings:
+            showMainMenu = true
+            
+        case .dsnyTasks:
+            // Filter to DSNY tasks
+            showAllTasks = true
+            
+        case .routeOptimization:
+            // Show route optimization
+            print("Show route optimization")
+            
+        case .photoEvidence:
+            // Show photo evidence
+            print("Show photo evidence")
+            
+        case .emergencyContacts:
+            handleEmergencyAction()
         }
     }
     
@@ -311,6 +385,7 @@ struct WorkerDashboardView: View {
         if viewModel.workerCapabilities?.canAddEmergencyTasks == true {
             // Show emergency task creation
             print("Emergency task creation")
+            currentContext = .emergency
         } else {
             // Show emergency contacts
             print("Show emergency contacts")
@@ -459,20 +534,20 @@ struct WorkerTaskRowView: View {
                     Text(task.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                     
                     HStack(spacing: 8) {
                         if let building = task.building {
                             Label(building.name, systemImage: "building.2")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         }
                         
                         if let dueDate = task.dueDate {
                             Label(dueDate.formatted(date: .omitted, time: .shortened), systemImage: "clock")
                                 .font(.caption)
-                                .foregroundColor(task.isOverdue ? .red : .secondary)
+                                .foregroundColor(task.isOverdue ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
                         }
                     }
                 }
@@ -482,10 +557,10 @@ struct WorkerTaskRowView: View {
                 // Status indicator
                 if task.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 } else if task.urgency == .critical || task.urgency == .urgent {
                     Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                 }
             }
             .padding(.vertical, 8)
@@ -495,21 +570,21 @@ struct WorkerTaskRowView: View {
     }
     
     private var urgencyColor: Color {
-        // Handle optional urgency with nil-coalescing
+        // Use Dark Elegance theme colors
         switch task.urgency ?? .low {
         case .critical, .emergency:
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         case .urgent, .high:
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         case .medium:
-            return .yellow
+            return Color(hex: "fbbf24") // Amber
         case .low:
-            return .blue
+            return FrancoSphereDesign.DashboardColors.info
         }
     }
 }
 
-// MARK: - Main Menu View (Placeholder)
+// MARK: - Main Menu View
 
 struct MainMenuView: View {
     @Environment(\.dismiss) var dismiss
@@ -523,18 +598,23 @@ struct MainMenuView: View {
                     Label("Buildings", systemImage: "building.2")
                     Label("Schedule", systemImage: "calendar")
                 }
+                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
                 
                 Section("Tools") {
                     Label("Reports", systemImage: "doc.text")
                     Label("Inventory", systemImage: "shippingbox")
                     Label("Messages", systemImage: "message")
                 }
+                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
                 
                 Section("Support") {
                     Label("Help", systemImage: "questionmark.circle")
                     Label("Settings", systemImage: "gear")
                 }
+                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
             }
+            .scrollContentBackground(.hidden)
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
             .navigationTitle("FrancoSphere")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -542,9 +622,11 @@ struct MainMenuView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -578,7 +660,7 @@ struct CollapsibleHeroWrapper: View {
                     progress: progress,
                     clockInStatus: clockInStatus,
                     onExpand: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        withAnimation(FrancoSphereDesign.Animations.spring) {
                             isCollapsed = false
                         }
                     }
@@ -604,15 +686,15 @@ struct CollapsibleHeroWrapper: View {
                     
                     // Collapse button overlay
                     Button(action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        withAnimation(FrancoSphereDesign.Animations.spring) {
                             isCollapsed = true
                         }
                     }) {
                         Image(systemName: "chevron.up")
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                             .padding(8)
-                            .background(Circle().fill(.ultraThinMaterial))
+                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.glassOverlay))
                     }
                     .padding(8)
                 }
@@ -650,37 +732,37 @@ struct MinimalHeroCard: View {
                     Text(worker.name)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                 }
                 
                 Text("•")
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 
                 // Progress
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.circle")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Text("\(progress.completedTasks)/\(progress.totalTasks)")
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
                 
                 // Building if clocked in
                 if let building = building {
                     Text("•")
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                     
                     HStack(spacing: 4) {
                         Image(systemName: "location")
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         
                         Text(building.name)
                             .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                             .lineLimit(1)
                     }
                 }
@@ -690,31 +772,20 @@ struct MinimalHeroCard: View {
                 // Expand indicator
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.2), Color.purple.opacity(0.2)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .francoDarkCardBackground(cornerRadius: 12)
         }
         .buttonStyle(PlainButtonStyle())
     }
     
     private var statusColor: Color {
         if case .clockedIn = clockInStatus {
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         } else {
-            return .gray
+            return FrancoSphereDesign.DashboardColors.inactive
         }
     }
     

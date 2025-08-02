@@ -7,6 +7,8 @@
 //  ✅ NAVIGATION: Compact mode acts as intelligent navigation
 //  ✅ MAINTAINS: All existing functionality
 //  ✅ PRODUCTION DATA: Uses real OperationalDataManager insights
+//  ✅ ENHANCED: Swipe gestures, quick actions, expandable navigation
+//  ✅ NOVA INTEGRATION: Uses actual Nova AI avatar instead of generic icons
 //
 //  Real-world operational context:
 //  - 20 active buildings, 7 workers
@@ -43,6 +45,7 @@ struct IntelligencePreviewPanel: View {
     let onRefresh: (() async -> Void)?
     var displayMode: DisplayMode = .panel
     var onNavigate: ((NavigationTarget) -> Void)?
+    var contextEngine: WorkerContextEngine?
     
     @State private var isRefreshing = false
     @State private var selectedInsight: CoreTypes.IntelligenceInsight?
@@ -50,19 +53,39 @@ struct IntelligencePreviewPanel: View {
     @State private var currentInsightIndex = 0
     @State private var rotationTimer: Timer?
     
+    // Enhanced states for gestures and expansion
+    @State private var isExpanded = false
+    @State private var dragOffset: CGFloat = 0
+    @State private var showSwipeHint = false
+    @State private var isNovaThinking = false
+    
     // Display modes
     enum DisplayMode {
         case panel      // Full panel (existing)
         case compact    // Bottom bar navigation
     }
     
-    // Navigation targets from insights
+    // Enhanced Navigation targets
     enum NavigationTarget {
+        // Existing targets
         case tasks(urgent: Int)
         case buildings(affected: [String])
         case compliance(deadline: Date?)
         case maintenance(overdue: Int)
         case fullInsights
+        
+        // NEW navigation targets
+        case allTasks
+        case taskDetail(id: String)
+        case allBuildings
+        case buildingDetail(id: String)
+        case clockOut
+        case profile
+        case settings
+        case dsnyTasks
+        case routeOptimization
+        case photoEvidence
+        case emergencyContacts
     }
     
     init(
@@ -70,13 +93,15 @@ struct IntelligencePreviewPanel: View {
         onInsightTap: ((CoreTypes.IntelligenceInsight) -> Void)? = nil,
         onRefresh: (() async -> Void)? = nil,
         displayMode: DisplayMode = .panel,
-        onNavigate: ((NavigationTarget) -> Void)? = nil
+        onNavigate: ((NavigationTarget) -> Void)? = nil,
+        contextEngine: WorkerContextEngine? = nil
     ) {
         self.insights = insights
         self.onInsightTap = onInsightTap
         self.onRefresh = onRefresh
         self.displayMode = displayMode
         self.onNavigate = onNavigate
+        self.contextEngine = contextEngine
     }
     
     var body: some View {
@@ -84,15 +109,15 @@ struct IntelligencePreviewPanel: View {
         case .panel:
             panelView
         case .compact:
-            compactView
+            enhancedCompactView
         }
     }
     
-    // MARK: - Panel View (Original)
+    // MARK: - Panel View (Original with Nova)
     
     private var panelView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            header
+            headerWithNova
             
             if insights.isEmpty {
                 emptyState
@@ -108,114 +133,123 @@ struct IntelligencePreviewPanel: View {
         }
     }
     
-    // MARK: - Compact Navigation Bar View
+    // MARK: - Enhanced Compact Navigation Bar View
     
-    private var compactView: some View {
-        Button(action: handleCompactTap) {
-            HStack(spacing: 0) {
-                // Nova indicator with state
-                compactNovaIndicator
-                    .padding(.trailing, 12)
-                
-                // Dynamic content area
-                Spacer(minLength: 0)
-                
-                compactContent
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Spacer(minLength: 0)
-                
-                // Quick actions
-                compactActions
-                    .padding(.leading, 12)
+    private var enhancedCompactView: some View {
+        VStack(spacing: 0) {
+            // Swipe indicator
+            if !isExpanded {
+                swipeIndicator
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(compactBackground)
+            
+            // Main compact panel content
+            Button(action: handleCompactTap) {
+                HStack(spacing: 0) {
+                    // Nova AI avatar instead of generic indicator
+                    compactNovaAvatar
+                        .padding(.trailing, 12)
+                    
+                    // Dynamic content area
+                    Spacer(minLength: 0)
+                    
+                    compactContent
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Spacer(minLength: 0)
+                    
+                    // Enhanced quick actions
+                    enhancedCompactActions
+                        .padding(.leading, 12)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(height: 60)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Expandable navigation pills
+            if isExpanded {
+                quickNavigationPills
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .move(edge: .bottom).combined(with: .opacity)
+                    ))
+            }
         }
-        .buttonStyle(PlainButtonStyle())
-        .onAppear { startInsightRotation() }
+        .background(compactBackground)
+        .frame(height: isExpanded ? 120 : 60)
+        .offset(y: dragOffset)
+        .gesture(swipeGesture)
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isExpanded)
+        .onAppear {
+            startInsightRotation()
+            // Show swipe hint briefly on first appearance
+            if !UserDefaults.standard.bool(forKey: "hasSeenSwipeHint") {
+                showSwipeHintBriefly()
+            }
+        }
         .onDisappear { stopInsightRotation() }
         .sheet(item: $selectedInsight) { insight in
             InsightDetailView(insight: insight)
         }
-    }
-    
-    // MARK: - Compact View Components
-    
-    private var compactNovaIndicator: some View {
-        ZStack {
-            Circle()
-                .fill(novaGradient)
-                .frame(width: 36, height: 36)
-            
-            Image(systemName: "brain.head.profile")
-                .font(.body)
-                .foregroundColor(.white)
-                .symbolEffect(.pulse.wholeSymbol, isActive: hasCritical)
-            
-            // Critical alert ring
-            if hasCritical {
-                Circle()
-                    .stroke(Color.red, lineWidth: 2)
-                    .frame(width: 40, height: 40)
-                    .scaleEffect(hasCritical ? 1.2 : 1.0)
-                    .opacity(hasCritical ? 0.6 : 0)
-                    .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: hasCritical)
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if hasActionRequired {
-                Circle()
-                    .fill(Color.orange)
-                    .frame(width: 10, height: 10)
-                    .offset(x: 2, y: -2)
+        .overlay(alignment: .bottom) {
+            if showSwipeHint {
+                swipeHintOverlay
             }
         }
     }
     
-    private var compactContent: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 6) {
-                Text("Nova Intelligence")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                if !insights.isEmpty {
-                    StatusPill(
-                        text: hasCritical ? "CRITICAL" : "ACTIVE",
-                        color: hasCritical ? .red : .green
-                    )
+    // MARK: - Swipe Components
+    
+    private var swipeIndicator: some View {
+        HStack {
+            Spacer()
+            Capsule()
+                .fill(Color.white.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
+            Spacer()
+        }
+    }
+    
+    private var swipeGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                withAnimation(.interactiveSpring()) {
+                    dragOffset = value.translation.height
                 }
             }
-            
-            if !insights.isEmpty {
-                Text(currentInsightText)
-                    .font(.caption2)
-                    .foregroundColor(currentInsightColor)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .animation(.easeInOut(duration: 0.3), value: currentInsightIndex)
-            } else {
-                Text("Analyzing operations...")
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.6))
+            .onEnded { value in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    if value.translation.height < -30 {
+                        isExpanded = true
+                    } else if value.translation.height > 30 && isExpanded {
+                        isExpanded = false
+                    }
+                    dragOffset = 0
+                }
             }
-        }
     }
     
-    private var compactActions: some View {
+    // MARK: - Quick Action Buttons
+    
+    private var enhancedCompactActions: some View {
         HStack(spacing: 8) {
-            // Navigation hints based on insights
-            if let navHint = primaryNavigationHint {
-                NavigationHintButton(hint: navHint) {
-                    handleNavigationHint(navHint)
+            // Context-aware quick action buttons
+            ForEach(getQuickActions(), id: \.id) { action in
+                QuickActionButton(
+                    icon: action.icon,
+                    text: action.text,
+                    color: action.color,
+                    isCritical: action.isCritical
+                ) {
+                    onNavigate?(action.target)
                 }
             }
             
-            // Insight count
-            if insights.count > 0 {
+            // Insight count badge (if no quick actions)
+            if getQuickActions().isEmpty && insights.count > 0 {
                 InsightCountBadge(
                     count: insights.count,
                     hasCritical: hasCritical
@@ -223,47 +257,239 @@ struct IntelligencePreviewPanel: View {
             }
             
             // Chevron
-            Image(systemName: "chevron.right")
+            Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.6))
+                .animation(.spring(response: 0.3), value: isExpanded)
         }
     }
     
-    private var compactBackground: some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
+    // MARK: - Quick Navigation Pills
+    
+    private var quickNavigationPills: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(getNavigationPills(), id: \.id) { pill in
+                    NavigationPill(
+                        icon: pill.icon,
+                        label: pill.label,
+                        badge: pill.badge
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            isExpanded = false
+                        }
+                        onNavigate?(pill.target)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+        }
+    }
+    
+    // MARK: - Context-Aware Quick Actions
+    
+    private func getQuickActions() -> [QuickAction] {
+        var actions: [QuickAction] = []
+        
+        // Critical tasks action
+        if let urgentCount = getUrgentTaskCount(), urgentCount > 0 {
+            actions.append(QuickAction(
+                id: "urgent_tasks",
+                icon: "exclamationmark.triangle.fill",
+                text: "\(urgentCount) Tasks",
+                color: .orange,
+                isCritical: urgentCount >= 3,
+                target: .tasks(urgent: urgentCount)
+            ))
+        }
+        
+        // DSNY deadline action
+        if hasComplianceDeadline {
+            let dsnyCount = insights.filter {
+                $0.type == .compliance &&
+                $0.description.contains("DSNY")
+            }.flatMap { $0.affectedBuildings }.count
             
-            // Top edge indicator
-            if hasCritical {
-                VStack {
-                    LinearGradient(
-                        colors: [.red, .orange],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 2)
-                    
-                    Spacer()
+            // Check if it's close to 8 PM
+            let calendar = Calendar.current
+            let now = Date()
+            let hour = calendar.component(.hour, from: now)
+            let isUrgent = hour >= 18 && hour < 20 // 6 PM to 8 PM
+            
+            actions.append(QuickAction(
+                id: "dsny_deadline",
+                icon: isUrgent ? "clock.fill" : "trash.fill",
+                text: isUrgent ? "8:00 PM" : "\(dsnyCount) DSNY",
+                color: isUrgent ? .red : .orange,
+                isCritical: isUrgent,
+                target: .dsnyTasks
+            ))
+        }
+        
+        // Current building action
+        if let buildingId = contextEngine?.currentBuilding?.id,
+           let buildingName = contextEngine?.currentBuilding?.name {
+            let shortName = String(buildingName.prefix(8))
+            actions.append(QuickAction(
+                id: "current_building",
+                icon: "building.2",
+                text: shortName,
+                color: .blue,
+                isCritical: false,
+                target: .buildingDetail(id: buildingId)
+            ))
+        }
+        
+        // Route optimization action
+        if insights.contains(where: { $0.description.contains("optimization") }) {
+            actions.append(QuickAction(
+                id: "optimize_route",
+                icon: "map",
+                text: "Optimize",
+                color: .green,
+                isCritical: false,
+                target: .routeOptimization
+            ))
+        }
+        
+        return Array(actions.prefix(3)) // Maximum 3 quick actions
+    }
+    
+    // MARK: - Navigation Pills
+    
+    private func getNavigationPills() -> [NavigationPillData] {
+        var pills: [NavigationPillData] = []
+        
+        // Always show these core navigation options
+        pills.append(NavigationPillData(
+            id: "all_tasks",
+            icon: "checkmark.circle",
+            label: "All Tasks",
+            badge: contextEngine?.todaysTasks.filter { !$0.isCompleted }.count,
+            target: .allTasks
+        ))
+        
+        pills.append(NavigationPillData(
+            id: "buildings",
+            icon: "building.2",
+            label: "Buildings",
+            badge: contextEngine?.assignedBuildings.count,
+            target: .allBuildings
+        ))
+        
+        // Context-specific pills
+        if contextEngine?.clockInStatus.isClockedIn ?? false {
+            pills.append(NavigationPillData(
+                id: "clock_out",
+                icon: "clock.badge.checkmark",
+                label: "Clock Out",
+                badge: nil,
+                target: .clockOut
+            ))
+        }
+        
+        if insights.contains(where: { $0.type == .compliance }) {
+            pills.append(NavigationPillData(
+                id: "photo_evidence",
+                icon: "camera.fill",
+                label: "Evidence",
+                badge: nil,
+                target: .photoEvidence
+            ))
+        }
+        
+        pills.append(NavigationPillData(
+            id: "nova_chat",
+            icon: "message.fill",
+            label: "Nova Chat",
+            badge: nil,
+            target: .fullInsights
+        ))
+        
+        pills.append(NavigationPillData(
+            id: "more",
+            icon: "ellipsis.circle",
+            label: "More",
+            badge: nil,
+            target: .settings
+        ))
+        
+        return pills
+    }
+    
+    // MARK: - Swipe Hint
+    
+    private var swipeHintOverlay: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.up")
+                    .font(.caption)
+                Text("Swipe up for quick navigation")
+                    .font(.caption)
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(Color.black.opacity(0.8)))
+            .padding(.bottom, 70)
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+    
+    private func showSwipeHintBriefly() {
+        withAnimation(.easeIn(duration: 0.3)) {
+            showSwipeHint = true
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                showSwipeHint = false
+                UserDefaults.standard.set(true, forKey: "hasSeenSwipeHint")
+            }
+        }
+    }
+    
+    // MARK: - Nova Avatar Components
+    
+    private var compactNovaAvatar: some View {
+        NovaAvatar(
+            size: .small,
+            isActive: !insights.isEmpty,
+            hasUrgentInsights: hasCritical || hasComplianceDeadline,
+            isBusy: isNovaThinking,
+            onTap: handleCompactTap,
+            onLongPress: {
+                // Long press for voice activation in future
+                print("Nova long press - future voice activation")
+            }
+        )
+        .onChange(of: currentInsightIndex) { _, _ in
+            // Brief thinking animation when insights rotate
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isNovaThinking = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isNovaThinking = false
                 }
             }
         }
     }
     
-    // MARK: - Header (Panel Mode)
-    
-    private var header: some View {
+    private var headerWithNova: some View {
         HStack {
-            ZStack {
-                Circle()
-                    .fill(novaGradient)
-                    .frame(width: 40, height: 40)
-                
-                Image(systemName: "brain.head.profile")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .symbolEffect(.pulse.wholeSymbol, isActive: !insights.isEmpty)
-            }
+            // Nova Avatar for panel mode
+            NovaAvatar(
+                size: .medium,
+                isActive: !insights.isEmpty,
+                hasUrgentInsights: hasCritical,
+                isBusy: isRefreshing,
+                onTap: {
+                    onNavigate?(.fullInsights)
+                }
+            )
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
@@ -298,6 +524,80 @@ struct IntelligencePreviewPanel: View {
                         .animation(.linear(duration: 1).repeatCount(isRefreshing ? .max : 0, autoreverses: false), value: isRefreshing)
                 }
                 .disabled(isRefreshing)
+            }
+        }
+    }
+    
+    // MARK: - Compact View Components (Enhanced)
+    
+    private var compactContent: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text("Nova Intelligence")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                
+                if !insights.isEmpty {
+                    StatusPill(
+                        text: getStatusText(),
+                        color: getStatusColor()
+                    )
+                }
+            }
+            
+            if !insights.isEmpty {
+                Text(currentInsightText)
+                    .font(.caption2)
+                    .foregroundColor(currentInsightColor)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .animation(.easeInOut(duration: 0.3), value: currentInsightIndex)
+            } else {
+                Text("Analyzing operations...")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+        }
+    }
+    
+    private func getStatusText() -> String {
+        if hasCritical {
+            return "CRITICAL"
+        } else if hasComplianceDeadline {
+            return "TIME SENSITIVE"
+        } else {
+            return "ACTIVE"
+        }
+    }
+    
+    private func getStatusColor() -> Color {
+        if hasCritical {
+            return .red
+        } else if hasComplianceDeadline {
+            return .orange
+        } else {
+            return .green
+        }
+    }
+    
+    private var compactBackground: some View {
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+            
+            // Top edge indicator
+            if hasCritical {
+                VStack {
+                    LinearGradient(
+                        colors: [.red, .orange],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 2)
+                    
+                    Spacer()
+                }
             }
         }
     }
@@ -380,9 +680,13 @@ struct IntelligencePreviewPanel: View {
     
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "brain")
-                .font(.system(size: 40))
-                .foregroundColor(.secondary.opacity(0.6))
+            // Nova Avatar in inactive state
+            NovaAvatar(
+                size: .large,
+                isActive: false,
+                hasUrgentInsights: false,
+                isBusy: false
+            )
             
             Text("No Intelligence Available")
                 .font(.headline)
@@ -397,53 +701,6 @@ struct IntelligencePreviewPanel: View {
     }
     
     // MARK: - Navigation Logic
-    
-    private var primaryNavigationHint: NavigationHint? {
-        // Analyze insights to suggest navigation
-        if let urgentCount = getUrgentTaskCount(), urgentCount > 0 {
-            return NavigationHint(
-                icon: "exclamationmark.triangle.fill",
-                text: "\(urgentCount)",
-                color: .orange,
-                target: .tasks(urgent: urgentCount)
-            )
-        }
-        
-        if let maintenanceCount = getOverdueMaintenanceCount(), maintenanceCount > 0 {
-            return NavigationHint(
-                icon: "wrench.fill",
-                text: "\(maintenanceCount)",
-                color: .red,
-                target: .maintenance(overdue: maintenanceCount)
-            )
-        }
-        
-        if hasComplianceDeadline {
-            // DSNY compliance is time-critical (8 PM deadline)
-            let dsnySummary = insights.filter { $0.type == .compliance && $0.description.contains("DSNY") }
-                .compactMap { insight -> String? in
-                    let buildingCount = insight.affectedBuildings.count
-                    if buildingCount > 0 {
-                        return "\(buildingCount)"
-                    }
-                    return nil
-                }
-                .first
-            
-            return NavigationHint(
-                icon: "clock.fill",
-                text: dsnySummary ?? "DSNY",
-                color: .orange,
-                target: .compliance(deadline: Calendar.current.date(bySettingHour: 20, minute: 0, second: 0, of: Date()))
-            )
-        }
-        
-        return nil
-    }
-    
-    private func handleNavigationHint(_ hint: NavigationHint) {
-        onNavigate?(hint.target)
-    }
     
     private func handleCompactTap() {
         if let critical = insights.first(where: { $0.priority == .critical }) {
@@ -524,11 +781,8 @@ struct IntelligencePreviewPanel: View {
     
     private func getUrgentTaskCount() -> Int? {
         // Extract from insights mentioning urgent tasks
-        // Common patterns: "X urgent tasks", "X overdue", "X critical"
         for insight in insights {
-            // Operations and maintenance types often contain task-related insights
             if insight.type == .operations || insight.type == .maintenance {
-                // Match patterns like "3 urgent museum tasks" or "5 overdue Rubin tasks"
                 if let match = insight.description.firstMatch(of: /(\d+)\s+(urgent|overdue|critical)/) {
                     return Int(match.1)
                 }
@@ -539,7 +793,6 @@ struct IntelligencePreviewPanel: View {
     
     private func getOverdueMaintenanceCount() -> Int? {
         // Extract from maintenance insights
-        // Matches real patterns like "power wash scheduled", "HVAC checks overdue"
         for insight in insights where insight.type == .maintenance {
             if let match = insight.description.firstMatch(of: /(\d+)\s+.*\s*(overdue|scheduled|pending)/) {
                 return Int(match.1)
@@ -571,22 +824,11 @@ struct IntelligencePreviewPanel: View {
     }
     
     private var hasComplianceDeadline: Bool {
-        // Check for DSNY or other compliance deadlines
         insights.contains { insight in
             insight.type == .compliance &&
             (insight.priority == .critical || insight.priority == .high) &&
             (insight.description.contains("DSNY") || insight.description.contains("8:00 PM") || insight.description.contains("set-out"))
         }
-    }
-    
-    private var novaGradient: LinearGradient {
-        LinearGradient(
-            colors: hasCritical ?
-                [.red.opacity(0.8), .orange.opacity(0.8)] :
-                [.blue.opacity(0.3), .purple.opacity(0.3)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
     }
 }
 
@@ -654,26 +896,78 @@ struct IntelligenceMetricCard: View {
     }
 }
 
-struct NavigationHintButton: View {
-    let hint: NavigationHint
-    let onTap: () -> Void
+// MARK: - Quick Action Button
+
+struct QuickActionButton: View {
+    let icon: String
+    let text: String
+    let color: Color
+    let isCritical: Bool
+    let action: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: action) {
             HStack(spacing: 4) {
-                Image(systemName: hint.icon)
+                Image(systemName: icon)
                     .font(.caption2)
-                    .foregroundColor(hint.color)
                 
-                Text(hint.text)
+                Text(text)
                     .font(.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(hint.color)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(hint.color.opacity(0.2))
-            .cornerRadius(12)
+            .foregroundColor(isCritical ? .white : color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isCritical ? color : color.opacity(0.2))
+            )
+        }
+    }
+}
+
+// MARK: - Navigation Pill
+
+struct NavigationPill: View {
+    let icon: String
+    let label: String
+    let badge: Int?
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: icon)
+                        .font(.system(size: 20))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    if let badge = badge, badge > 0 {
+                        Text("\(badge)")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(2)
+                            .frame(minWidth: 14, minHeight: 14)
+                            .background(Circle().fill(Color.red))
+                            .offset(x: 8, y: -8)
+                    }
+                }
+                
+                Text(label)
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .frame(minWidth: 60)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            )
         }
     }
 }
@@ -695,14 +989,26 @@ struct InsightCountBadge: View {
     }
 }
 
-struct NavigationHint {
+// MARK: - Data Models
+
+struct QuickAction: Identifiable {
+    let id: String
     let icon: String
     let text: String
     let color: Color
+    let isCritical: Bool
     let target: IntelligencePreviewPanel.NavigationTarget
 }
 
-// MARK: - Insight Row View (unchanged)
+struct NavigationPillData: Identifiable {
+    let id: String
+    let icon: String
+    let label: String
+    let badge: Int?
+    let target: IntelligencePreviewPanel.NavigationTarget
+}
+
+// MARK: - Insight Row View
 
 struct InsightRowView: View {
     let insight: CoreTypes.IntelligenceInsight
@@ -754,7 +1060,7 @@ struct InsightRowView: View {
     }
 }
 
-// MARK: - Insight Detail View (unchanged)
+// MARK: - Insight Detail View
 
 struct InsightDetailView: View {
     let insight: CoreTypes.IntelligenceInsight
@@ -882,74 +1188,31 @@ struct IntelligencePreviewPanel_Previews: PreviewProvider {
     static var previews: some View {
         // Real-world insights based on OperationalDataManager data
         let productionInsights: [CoreTypes.IntelligenceInsight] = [
-            // Kevin's Rubin Museum overdue tasks
             CoreTypes.IntelligenceInsight(
                 title: "3 urgent museum tasks overdue",
                 description: "Kevin's climate control check and security protocols at Rubin Museum require immediate attention",
-                type: .operations,  // Operations covers task scheduling
+                type: .operations,
                 priority: .critical,
                 actionRequired: true,
-                affectedBuildings: ["14"] // Rubin Museum
+                affectedBuildings: ["14"]
             ),
             
-            // DSNY compliance for West 17th Street corridor
             CoreTypes.IntelligenceInsight(
                 title: "DSNY set-out deadline 8:00 PM",
                 description: "Kevin must place trash for 136, 138 West 17th St and Rubin Museum. Pickup window: 6 AM - 12 PM",
                 type: .compliance,
                 priority: .high,
                 actionRequired: true,
-                affectedBuildings: ["13", "5", "14"] // 136 W 17th, 138 W 17th, Rubin
+                affectedBuildings: ["13", "5", "14"]
             ),
             
-            // Mercedes' glass cleaning route optimization
             CoreTypes.IntelligenceInsight(
                 title: "Glass circuit optimization available",
                 description: "Mercedes can save 20 minutes by reordering: 117 → 135-139 → 136 → 138 West 17th",
-                type: .routing,  // Routing for route optimization (now available in CoreTypes)
+                type: .routing,
                 priority: .medium,
                 actionRequired: false,
-                affectedBuildings: ["9", "3", "13", "5"] // West 17th corridor
-            ),
-            
-            // Edwin's park maintenance
-            CoreTypes.IntelligenceInsight(
-                title: "Stuyvesant Cove power wash scheduled",
-                description: "Monthly walkway cleaning due today. Edwin allocated 2 hours (7-9 AM)",
-                type: .maintenance,
-                priority: .medium,
-                actionRequired: true,
-                affectedBuildings: ["16"] // Stuyvesant Cove Park
-            ),
-            
-            // Building performance trend
-            CoreTypes.IntelligenceInsight(
-                title: "Perry Street showing 15% efficiency gain",
-                description: "Luis' preventive maintenance reducing emergency calls at 131 & 68 Perry",
-                type: .quality,  // Quality improvements from maintenance
-                priority: .low,
-                actionRequired: false,
-                affectedBuildings: ["10", "6"] // Perry Street buildings
-            )
-        ]
-        
-        // Scenario-specific insights
-        let urgentScenario: [CoreTypes.IntelligenceInsight] = [
-            CoreTypes.IntelligenceInsight(
-                title: "Kevin has 5 overdue Rubin tasks",
-                description: "Museum deep clean, trash area maintenance, and HVAC checks critically overdue",
-                type: .operations,  // Operations for critical task management
-                priority: .critical,
-                actionRequired: true,
-                affectedBuildings: ["14"]
-            ),
-            CoreTypes.IntelligenceInsight(
-                title: "Angel missing DSNY deadline",
-                description: "123 1st Avenue trash not set out. Fine risk: $100-$300",
-                type: .compliance,
-                priority: .critical,
-                actionRequired: true,
-                affectedBuildings: ["11"]
+                affectedBuildings: ["9", "3", "13", "5"]
             )
         ]
         
@@ -968,17 +1231,8 @@ struct IntelligencePreviewPanel_Previews: PreviewProvider {
                 displayMode: .compact,
                 onNavigate: { target in
                     print("Navigate to: \(target)")
-                }
-            )
-            .frame(height: 60)
-            
-            // Compact mode - urgent scenario
-            IntelligencePreviewPanel(
-                insights: urgentScenario,
-                displayMode: .compact,
-                onNavigate: { target in
-                    print("URGENT Navigate to: \(target)")
-                }
+                },
+                contextEngine: WorkerContextEngine.shared
             )
             .frame(height: 60)
             

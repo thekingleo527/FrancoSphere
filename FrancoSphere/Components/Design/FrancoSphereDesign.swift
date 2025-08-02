@@ -8,6 +8,7 @@
 //  ✅ INTEGRATED: Actor-compatible design patterns
 //  ✅ ADDED: Centralized color system for all CoreTypes enums
 //  ✅ MERGED: Incorporated utilities from ModelColorsExtensions
+//  ✅ UPDATED: Dark Elegance theme implementation
 //
 
 import SwiftUI
@@ -52,22 +53,22 @@ enum FrancoSphereDesign {
         static let glassCard: CGFloat = 20
     }
     
-    // MARK: - Shadows
+    // MARK: - Shadows (Updated for Dark Theme)
     enum Shadow {
-        static let sm = ShadowStyle(radius: 5, x: 0, y: 2)
-        static let md = ShadowStyle(radius: 10, x: 0, y: 5)
-        static let lg = ShadowStyle(radius: 20, x: 0, y: 10)
-        static let xl = ShadowStyle(radius: 30, x: 0, y: 15)
+        static let sm = ShadowStyle(radius: 5, x: 0, y: 2, color: .black.opacity(0.3))
+        static let md = ShadowStyle(radius: 10, x: 0, y: 5, color: .black.opacity(0.3))
+        static let lg = ShadowStyle(radius: 20, x: 0, y: 10, color: .black.opacity(0.3))
+        static let xl = ShadowStyle(radius: 30, x: 0, y: 15, color: .black.opacity(0.3))
         
         // PropertyCard shadows (NEW for v6.0)
-        static let propertyCard = ShadowStyle(radius: 8, x: 0, y: 4)
-        static let glassCard = ShadowStyle(radius: 12, x: 0, y: 6)
+        static let propertyCard = ShadowStyle(radius: 8, x: 0, y: 4, color: .black.opacity(0.3))
+        static let glassCard = ShadowStyle(radius: 12, x: 0, y: 6, color: .black.opacity(0.3))
         
         struct ShadowStyle {
             let radius: CGFloat
             let x: CGFloat
             let y: CGFloat
-            let color: Color = .black.opacity(0.2)
+            let color: Color
         }
     }
     
@@ -134,91 +135,126 @@ enum FrancoSphereDesign {
         static let propertyCard: CGFloat = 15
     }
     
-    // MARK: - Glass Properties (ENHANCED for v6.0)
+    // MARK: - Glass Properties (Updated for Dark Theme)
     enum Glass {
-        static let backgroundOpacity: Double = 0.7
-        static let borderOpacity: Double = 0.3
-        static let gradientOpacity: Double = 0.15
-        static let shadowOpacity: Double = 0.2
+        static let backgroundOpacity: Double = 0.02    // Very subtle for dark theme
+        static let borderOpacity: Double = 0.05        // Barely visible
+        static let gradientOpacity: Double = 0.03      // Subtle highlight
+        static let shadowOpacity: Double = 0.3         // Deeper shadows
         
-        // Dashboard-specific glass properties
-        static let dashboardCardOpacity: Double = 0.8
-        static let propertyCardOpacity: Double = 0.75
+        // Component-specific
+        static let cardBackgroundOpacity: Double = 0.03
+        static let panelBackgroundOpacity: Double = 0.95
+        static let overlayBackgroundOpacity: Double = 0.98
         static let headerOpacity: Double = 0.9
     }
     
-    // MARK: - Dashboard Colors (NEW for v6.0)
+    // MARK: - Dashboard Colors (DARK ELEGANCE THEME)
     enum DashboardColors {
-        // Worker Dashboard
-        static let workerPrimary = Color.blue
-        static let workerSecondary = Color.blue.opacity(0.7)
-        static let workerAccent = Color.cyan
+        // Base colors
+        static let baseBackground = Color(hex: "0a0a0a")
+        static let cardBackground = Color(hex: "0f0f0f")
+        static let glassOverlay = Color.white.opacity(0.05)
+        static let borderSubtle = Color.white.opacity(0.05)
         
-        // Admin Dashboard
-        static let adminPrimary = Color.purple
-        static let adminSecondary = Color.purple.opacity(0.7)
-        static let adminAccent = Color.pink
+        // Action colors
+        static let primaryAction = Color(hex: "10b981")      // Success green
+        static let secondaryAction = Color(hex: "0ea5e9")    // Sky blue
+        static let tertiaryAction = Color(hex: "8b5cf6")     // Purple
         
-        // Client Dashboard
-        static let clientPrimary = Color.green
-        static let clientSecondary = Color.green.opacity(0.7)
-        static let clientAccent = Color.mint
+        // Status colors
+        static let success = Color(hex: "10b981")
+        static let warning = Color(hex: "f59e0b")
+        static let critical = Color(hex: "ef4444")
+        static let info = Color(hex: "0ea5e9")
+        static let inactive = Color.white.opacity(0.3)
         
-        // Status Colors
-        static let compliant = Color.green
-        static let warning = Color.orange
-        static let critical = Color.red
-        static let inactive = Color.gray
+        // Text colors (Dark theme optimized)
+        static let primaryText = Color.white.opacity(0.9)
+        static let secondaryText = Color.white.opacity(0.7)
+        static let tertiaryText = Color.white.opacity(0.5)
+        
+        // Worker Dashboard specific
+        static let workerPrimary = Color(hex: "10b981")     // Green for worker actions
+        static let workerSecondary = Color(hex: "0ea5e9")   // Blue for navigation
+        static let workerAccent = Color(hex: "06b6d4")      // Cyan for highlights
+        static let workerHeroGradient = [
+            Color(hex: "1f2937"),  // gray-800
+            Color(hex: "374151")   // gray-700
+        ]
+        
+        // Admin Dashboard specific
+        static let adminPrimary = Color(hex: "8b5cf6")      // Purple
+        static let adminSecondary = Color(hex: "a855f7")    // Light purple
+        static let adminAccent = Color(hex: "ec4899")       // Pink
+        static let adminHeroGradient = [
+            Color(hex: "312e81"),  // indigo-900
+            Color(hex: "4c1d95")   // purple-900
+        ]
+        
+        // Client Dashboard specific
+        static let clientPrimary = Color(hex: "10b981")     // Green
+        static let clientSecondary = Color(hex: "34d399")   // Light green
+        static let clientAccent = Color(hex: "6ee7b7")      // Mint
+        static let clientHeroGradient = [
+            Color(hex: "14532d"),  // green-900
+            Color(hex: "166534")   // green-800
+        ]
+        
+        // Status Colors (Updated for dark theme)
+        static let compliant = Color(hex: "10b981")
+        static let pending = Color(hex: "f59e0b")
+        static let violation = Color(hex: "ef4444")
     }
     
-    // MARK: - Enum Colors (Centralized from CoreTypes)
+    // MARK: - Enum Colors (Updated for Dark Theme)
     enum EnumColors {
         
         // MARK: AI Priority Colors
         static func aiPriority(_ priority: CoreTypes.AIPriority) -> Color {
             switch priority {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .critical: return .red
+            case .low: return DashboardColors.success
+            case .medium: return Color(hex: "fbbf24")    // Amber
+            case .high: return DashboardColors.warning
+            case .critical: return DashboardColors.critical
             }
         }
         
         // MARK: Insight Category Colors
         static func insightCategory(_ category: CoreTypes.InsightCategory) -> Color {
             switch category {
-            case .efficiency: return .blue
-            case .cost: return .green
-            case .safety: return .red
-            case .compliance: return .orange
-            case .quality: return .purple
-            case .operations: return .gray
-            case .maintenance: return .yellow
+            case .efficiency: return DashboardColors.info
+            case .cost: return DashboardColors.success
+            case .safety: return DashboardColors.critical
+            case .compliance: return DashboardColors.warning
+            case .quality: return DashboardColors.tertiaryAction
+            case .operations: return Color.white.opacity(0.6)
+            case .maintenance: return Color(hex: "fbbf24")
             }
         }
         
         // MARK: Task Status Colors
         static func taskStatus(_ status: CoreTypes.TaskStatus) -> Color {
             switch status {
-            case .pending: return .gray
-            case .inProgress: return .blue
-            case .completed: return .green
-            case .overdue: return .red
-            case .cancelled: return .gray
-            case .paused: return .orange
-            case .waiting: return .yellow
+            case .pending: return DashboardColors.inactive
+            case .inProgress: return DashboardColors.info
+            case .completed: return DashboardColors.success
+            case .overdue: return DashboardColors.critical
+            case .cancelled: return DashboardColors.inactive
+            case .paused: return DashboardColors.warning
+            case .waiting: return Color(hex: "fbbf24")
             }
         }
         
         // MARK: Task Urgency Colors
         static func taskUrgency(_ urgency: CoreTypes.TaskUrgency) -> Color {
             switch urgency {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .urgent: return .purple
-            case .critical: return .red
-            case .emergency: return .red
+            case .low: return DashboardColors.success
+            case .medium: return Color(hex: "fbbf24")
+            case .high: return DashboardColors.warning
+            case .urgent: return DashboardColors.tertiaryAction
+            case .critical: return DashboardColors.critical
+            case .emergency: return DashboardColors.critical
             }
         }
         
@@ -227,21 +263,21 @@ enum FrancoSphereDesign {
             switch status {
             case .compliant: return DashboardColors.compliant
             case .warning: return DashboardColors.warning
-            case .violation, .nonCompliant: return DashboardColors.critical
-            case .pending, .needsReview: return DashboardColors.warning
+            case .violation, .nonCompliant: return DashboardColors.violation
+            case .pending, .needsReview: return DashboardColors.pending
             case .atRisk: return DashboardColors.warning
             case .open: return DashboardColors.critical
-            case .inProgress: return DashboardColors.warning
-            case .resolved: return .blue
+            case .inProgress: return DashboardColors.info
+            case .resolved: return DashboardColors.info
             }
         }
         
         // MARK: Compliance Severity Colors
         static func complianceSeverity(_ severity: CoreTypes.ComplianceSeverity) -> Color {
             switch severity {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
+            case .low: return DashboardColors.success
+            case .medium: return Color(hex: "fbbf24")
+            case .high: return DashboardColors.warning
             case .critical: return DashboardColors.critical
             }
         }
@@ -249,116 +285,116 @@ enum FrancoSphereDesign {
         // MARK: Compliance Issue Type Colors
         static func complianceIssueType(_ type: CoreTypes.ComplianceIssueType) -> Color {
             switch type {
-            case .safety: return .red
-            case .environmental: return .green
-            case .regulatory: return .blue
-            case .financial: return .orange
-            case .operational: return .purple
-            case .documentation: return .gray
+            case .safety: return DashboardColors.critical
+            case .environmental: return DashboardColors.success
+            case .regulatory: return DashboardColors.info
+            case .financial: return DashboardColors.warning
+            case .operational: return DashboardColors.tertiaryAction
+            case .documentation: return DashboardColors.inactive
             }
         }
         
         // MARK: Worker Status Colors
         static func workerStatus(_ status: CoreTypes.WorkerStatus) -> Color {
             switch status {
-            case .available: return .green
-            case .clockedIn: return .blue
-            case .onBreak: return .orange
-            case .offline: return .gray
+            case .available: return DashboardColors.success
+            case .clockedIn: return DashboardColors.info
+            case .onBreak: return DashboardColors.warning
+            case .offline: return DashboardColors.inactive
             }
         }
         
         // MARK: User Role Colors
         static func userRole(_ role: CoreTypes.UserRole) -> Color {
             switch role {
-            case .admin: return .red
-            case .manager: return .orange
-            case .worker: return .blue
-            case .client: return .green
+            case .admin: return DashboardColors.adminPrimary
+            case .manager: return DashboardColors.warning
+            case .worker: return DashboardColors.workerPrimary
+            case .client: return DashboardColors.clientPrimary
             }
         }
         
         // MARK: Building Type Colors
         static func buildingType(_ type: CoreTypes.BuildingType) -> Color {
             switch type {
-            case .office: return .blue
-            case .residential: return .green
-            case .retail: return .purple
-            case .industrial: return .orange
-            case .warehouse: return .brown
-            case .medical: return .red
-            case .educational: return .yellow
-            case .mixed: return .gray
+            case .office: return DashboardColors.info
+            case .residential: return DashboardColors.success
+            case .retail: return DashboardColors.tertiaryAction
+            case .industrial: return DashboardColors.warning
+            case .warehouse: return Color(hex: "92400e")  // Brown
+            case .medical: return DashboardColors.critical
+            case .educational: return Color(hex: "fbbf24")
+            case .mixed: return DashboardColors.inactive
             }
         }
         
         // MARK: Dashboard Sync Status Colors
         static func dashboardSyncStatus(_ status: CoreTypes.DashboardSyncStatus) -> Color {
             switch status {
-            case .synced: return .green
-            case .syncing: return .blue
-            case .failed: return .red
-            case .offline: return .gray
+            case .synced: return DashboardColors.success
+            case .syncing: return DashboardColors.info
+            case .failed: return DashboardColors.critical
+            case .offline: return DashboardColors.inactive
             }
         }
         
         // MARK: Verification Status Colors
         static func verificationStatus(_ status: CoreTypes.VerificationStatus) -> Color {
             switch status {
-            case .pending: return .orange
-            case .verified: return .green
-            case .rejected: return .red
-            case .notRequired: return .gray
+            case .pending: return DashboardColors.warning
+            case .verified: return DashboardColors.success
+            case .rejected: return DashboardColors.critical
+            case .notRequired: return DashboardColors.inactive
             }
         }
         
         // MARK: Outdoor Work Risk Colors
         static func outdoorWorkRisk(_ risk: CoreTypes.OutdoorWorkRisk) -> Color {
             switch risk {
-            case .low: return .green
-            case .medium: return .yellow
-            case .high: return .orange
-            case .extreme: return .red
+            case .low: return DashboardColors.success
+            case .medium: return Color(hex: "fbbf24")
+            case .high: return DashboardColors.warning
+            case .extreme: return DashboardColors.critical
             }
         }
         
         // MARK: Trend Direction Colors
         static func trendDirection(_ direction: CoreTypes.TrendDirection) -> Color {
             switch direction {
-            case .up, .improving: return .green
-            case .down, .declining: return .red
-            case .stable: return .blue
-            case .unknown: return .gray
+            case .up, .improving: return DashboardColors.success
+            case .down, .declining: return DashboardColors.critical
+            case .stable: return DashboardColors.info
+            case .unknown: return DashboardColors.inactive
             }
         }
         
         // MARK: Skill Level Colors
         static func skillLevel(_ level: CoreTypes.SkillLevel) -> Color {
             switch level {
-            case .beginner: return .red
-            case .intermediate: return .orange
-            case .advanced: return .yellow
-            case .expert: return .green
+            case .beginner: return DashboardColors.critical
+            case .intermediate: return DashboardColors.warning
+            case .advanced: return Color(hex: "fbbf24")
+            case .expert: return DashboardColors.success
             }
         }
         
         // MARK: Restock Status Colors
         static func restockStatus(_ status: CoreTypes.RestockStatus) -> Color {
             switch status {
-            case .inStock: return .green
-            case .lowStock: return .orange
-            case .outOfStock: return .red
-            case .ordered: return .blue
+            case .inStock: return DashboardColors.success
+            case .lowStock: return DashboardColors.warning
+            case .outOfStock: return DashboardColors.critical
+            case .ordered: return DashboardColors.info
             }
         }
         
         // MARK: Data Health Status Colors
         static func dataHealthStatus(_ status: CoreTypes.DataHealthStatus) -> Color {
             switch status {
-            case .healthy: return .green
-            case .warning: return .yellow
-            case .error: return .red
-            case .unknown: return .gray
+            case .healthy: return DashboardColors.success
+            case .warning: return DashboardColors.warning
+            case .error: return DashboardColors.critical
+            case .unknown: return DashboardColors.inactive
             }
         }
         
@@ -367,27 +403,27 @@ enum FrancoSphereDesign {
         /// Generic status color helper for string-based statuses
         static func genericStatusColor(for status: String) -> Color {
             switch status.lowercased() {
-            case "verified", "completed", "success", "compliant": return .green
-            case "pending", "in progress", "processing": return .orange
-            case "failed", "error", "rejected": return .red
-            case "warning", "caution": return .yellow
-            default: return .gray
+            case "verified", "completed", "success", "compliant": return DashboardColors.success
+            case "pending", "in progress", "processing": return DashboardColors.warning
+            case "failed", "error", "rejected": return DashboardColors.critical
+            case "warning", "caution": return Color(hex: "fbbf24")
+            default: return DashboardColors.inactive
             }
         }
         
         /// Generic category color helper for string-based categories
         static func genericCategoryColor(for category: String) -> Color {
             switch category.lowercased() {
-            case "maintenance": return .orange
-            case "cleaning": return .blue
-            case "repair": return .red
-            case "inspection": return .purple
-            case "emergency": return .red
-            case "safety": return .yellow
-            case "equipment": return .indigo
-            case "supplies": return .green
-            case "sanitation": return .cyan
-            default: return .gray
+            case "maintenance": return DashboardColors.warning
+            case "cleaning": return DashboardColors.info
+            case "repair": return DashboardColors.critical
+            case "inspection": return DashboardColors.tertiaryAction
+            case "emergency": return DashboardColors.critical
+            case "safety": return Color(hex: "fbbf24")
+            case "equipment": return Color(hex: "6366f1")  // Indigo
+            case "supplies": return DashboardColors.success
+            case "sanitation": return DashboardColors.workerAccent
+            default: return DashboardColors.inactive
             }
         }
     }
@@ -455,6 +491,33 @@ enum FrancoSphereDesign {
     }
 }
 
+// MARK: - Color Hex Extension
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
 // MARK: - String Extensions (Merged from ModelColorsExtensions)
 extension String {
     /// Returns color for string-based status
@@ -515,43 +578,48 @@ extension View {
         self.clipShape(RoundedRectangle(cornerRadius: radius))
     }
     
-    // Glass background - Enhanced for v6.0
+    // Glass background - Updated for Dark Theme
     func francoGlassBackground(
         cornerRadius: CGFloat = FrancoSphereDesign.CornerRadius.xl,
         opacity: Double = FrancoSphereDesign.Glass.backgroundOpacity
     ) -> some View {
         self.background(
             RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(.ultraThinMaterial)
-                .opacity(opacity)
+                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                 .overlay(
                     RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(FrancoSphereDesign.Glass.gradientOpacity),
-                                    Color.clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(
-                            Color.white.opacity(FrancoSphereDesign.Glass.borderOpacity),
-                            lineWidth: 1
-                        )
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
                 )
         )
+        .francoShadow()
+    }
+    
+    // Dark card background
+    func francoDarkCardBackground(
+        cornerRadius: CGFloat = FrancoSphereDesign.CornerRadius.lg
+    ) -> some View {
+        self.background(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(
+                    LinearGradient(
+                        colors: FrancoSphereDesign.DashboardColors.workerHeroGradient,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
+        .francoShadow()
     }
     
     // PropertyCard glass background (NEW for v6.0)
     func francoPropertyCardBackground() -> some View {
         self.francoGlassBackground(
             cornerRadius: FrancoSphereDesign.CornerRadius.propertyCard,
-            opacity: FrancoSphereDesign.Glass.propertyCardOpacity
+            opacity: FrancoSphereDesign.Glass.cardBackgroundOpacity
         )
     }
     
@@ -578,7 +646,7 @@ extension View {
     }
 }
 
-// MARK: - Dashboard Role Support (NEW for v6.0)
+// MARK: - Dashboard Role Support (Updated for Dark Theme)
 enum DashboardRole: String, CaseIterable {
     case worker = "worker"
     case admin = "admin"
@@ -613,6 +681,14 @@ enum DashboardRole: String, CaseIterable {
         case .worker: return FrancoSphereDesign.DashboardColors.workerAccent
         case .admin: return FrancoSphereDesign.DashboardColors.adminAccent
         case .client: return FrancoSphereDesign.DashboardColors.clientAccent
+        }
+    }
+    
+    var heroGradient: [Color] {
+        switch self {
+        case .worker: return FrancoSphereDesign.DashboardColors.workerHeroGradient
+        case .admin: return FrancoSphereDesign.DashboardColors.adminHeroGradient
+        case .client: return FrancoSphereDesign.DashboardColors.clientHeroGradient
         }
     }
 }
@@ -650,7 +726,7 @@ extension View {
     }
 }
 
-// MARK: - Loading State (ENHANCED for v6.0)
+// MARK: - Loading State (Updated for Dark Theme)
 struct FrancoLoadingView: View {
     let message: String
     let role: DashboardRole?
@@ -663,20 +739,19 @@ struct FrancoLoadingView: View {
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.md) {
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: role?.primaryColor ?? .white))
+                .progressViewStyle(CircularProgressViewStyle(tint: role?.primaryColor ?? FrancoSphereDesign.DashboardColors.primaryText))
                 .scaleEffect(1.2)
             
             Text(message)
                 .francoTypography(FrancoSphereDesign.Typography.body)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
         .francoCardPadding()
         .francoGlassBackground()
-        .francoShadow()
     }
 }
 
-// MARK: - Empty State (ENHANCED for v6.0)
+// MARK: - Empty State (Updated for Dark Theme)
 struct FrancoEmptyState: View {
     let icon: String
     let title: String
@@ -705,16 +780,16 @@ struct FrancoEmptyState: View {
         VStack(spacing: FrancoSphereDesign.Spacing.lg) {
             Image(systemName: icon)
                 .font(.system(size: 48))
-                .foregroundColor((role?.primaryColor ?? .white).opacity(0.6))
+                .foregroundColor((role?.primaryColor ?? FrancoSphereDesign.DashboardColors.primaryText).opacity(0.6))
             
             VStack(spacing: FrancoSphereDesign.Spacing.sm) {
                 Text(title)
                     .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Text(message)
                     .francoTypography(FrancoSphereDesign.Typography.body)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .multilineTextAlignment(.center)
             }
             
@@ -727,16 +802,7 @@ struct FrancoEmptyState: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            role?.primaryColor ?? .blue,
-                            (role?.primaryColor ?? .blue).opacity(0.8)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .background(role?.primaryColor ?? FrancoSphereDesign.DashboardColors.primaryAction)
                 .cornerRadius(8)
                 .padding(.top, FrancoSphereDesign.Spacing.sm)
             }
@@ -746,14 +812,14 @@ struct FrancoEmptyState: View {
     }
 }
 
-// MARK: - Metrics Display Components (NEW for v6.0)
+// MARK: - Metrics Display Components (Updated for Dark Theme)
 struct FrancoMetricsProgress: View {
     let value: Double
     let role: DashboardRole?
     
     var body: some View {
         ProgressView(value: value)
-            .progressViewStyle(LinearProgressViewStyle(tint: role?.primaryColor ?? .blue))
+            .progressViewStyle(LinearProgressViewStyle(tint: role?.primaryColor ?? FrancoSphereDesign.DashboardColors.primaryAction))
             .frame(height: FrancoSphereDesign.MetricsDisplay.progressBarHeight)
             .cornerRadius(FrancoSphereDesign.MetricsDisplay.progressBarCornerRadius)
     }
@@ -765,7 +831,7 @@ struct FrancoStatusIndicator: View {
     
     var body: some View {
         Circle()
-            .fill(isActive ? (role?.primaryColor ?? .green) : FrancoSphereDesign.DashboardColors.inactive)
+            .fill(isActive ? (role?.primaryColor ?? FrancoSphereDesign.DashboardColors.success) : FrancoSphereDesign.DashboardColors.inactive)
             .frame(
                 width: FrancoSphereDesign.MetricsDisplay.statusIndicatorSize,
                 height: FrancoSphereDesign.MetricsDisplay.statusIndicatorSize
@@ -773,7 +839,7 @@ struct FrancoStatusIndicator: View {
     }
 }
 
-// MARK: - Preview Helpers (NEW for v6.0)
+// MARK: - Preview Helpers (Updated for Dark Theme)
 #Preview("Loading States") {
     VStack(spacing: 20) {
         FrancoLoadingView(message: "Loading worker data...", role: .worker)
@@ -781,7 +847,7 @@ struct FrancoStatusIndicator: View {
         FrancoLoadingView(message: "Loading client reports...", role: .client)
     }
     .padding()
-    .background(Color.black)
+    .background(FrancoSphereDesign.DashboardColors.baseBackground)
 }
 
 #Preview("Empty States") {
@@ -796,7 +862,7 @@ struct FrancoStatusIndicator: View {
         )
     }
     .padding()
-    .background(Color.black)
+    .background(FrancoSphereDesign.DashboardColors.baseBackground)
 }
 
 #Preview("Metrics Components") {
@@ -812,5 +878,64 @@ struct FrancoStatusIndicator: View {
         }
     }
     .padding()
-    .background(Color.black)
+    .background(FrancoSphereDesign.DashboardColors.baseBackground)
+}
+
+#Preview("Color Swatches") {
+    ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Dark Elegance Color Palette")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            
+            Group {
+                Text("Base Colors").font(.headline)
+                HStack(spacing: 16) {
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.baseBackground, label: "Base")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.cardBackground, label: "Card")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.glassOverlay, label: "Glass")
+                }
+                
+                Text("Action Colors").font(.headline).padding(.top)
+                HStack(spacing: 16) {
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.primaryAction, label: "Primary")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.secondaryAction, label: "Secondary")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.tertiaryAction, label: "Tertiary")
+                }
+                
+                Text("Status Colors").font(.headline).padding(.top)
+                HStack(spacing: 16) {
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.success, label: "Success")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.warning, label: "Warning")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.critical, label: "Critical")
+                    ColorSwatch(color: FrancoSphereDesign.DashboardColors.info, label: "Info")
+                }
+            }
+        }
+        .padding()
+    }
+    .background(FrancoSphereDesign.DashboardColors.baseBackground)
+}
+
+// Helper view for color preview
+struct ColorSwatch: View {
+    let color: Color
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(color)
+                .frame(width: 60, height: 60)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+            
+            Text(label)
+                .font(.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+        }
+    }
 }

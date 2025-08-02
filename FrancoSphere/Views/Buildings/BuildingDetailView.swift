@@ -2,10 +2,10 @@
 //  BuildingDetailView.swift
 //  FrancoSphere v6.0
 //
-//  🏢 COMPREHENSIVE: Tab-based building management
-//  📱 ADAPTIVE: Role-based content visibility
+//  🏢 STREAMLINED: Consolidated tab structure for better mobile UX
+//  🎨 DARK ELEGANCE: Integrated with v6.0 dark theme system
 //  🔄 REAL-TIME: Live updates via DashboardSync
-//  📸 PHOTO-READY: Integrated photo management with evidence system
+//  🔐 SPACES & ACCESS: Enhanced for utility rooms, access codes, and evidence photos
 //  ✅ ENHANCED: Worker assignment for routines
 //
 
@@ -32,8 +32,11 @@ struct BuildingDetailView: View {
     @State private var selectedRoutine: DailyRoutine?
     @State private var showWorkerAssignment = false
     @State private var capturedImage: UIImage?
-    @State private var photoCategory: FrancoPhotoCategory = .all
+    @State private var photoCategory: FrancoPhotoCategory = .utilities
     @State private var photoNotes: String = ""
+    @State private var isHeaderExpanded = false
+    @State private var selectedSpace: SpaceAccess?
+    @State private var showingSpaceDetail = false
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Initialization
@@ -51,17 +54,29 @@ struct BuildingDetailView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            // Background
-            Color.black.ignoresSafeArea()
+            // Dark base background
+            FrancoSphereDesign.DashboardColors.baseBackground
+                .ignoresSafeArea()
+            
+            // Subtle gradient overlay
+            LinearGradient(
+                colors: [
+                    FrancoSphereDesign.DashboardColors.baseBackground,
+                    FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.3)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Custom header
                 headerView
                 
-                // Hero image with status
+                // Hero section with collapsible info
                 heroSection
                 
-                // Tab bar
+                // Streamlined tab bar (4 tabs instead of 5)
                 tabBar
                 
                 // Tab content
@@ -79,11 +94,16 @@ struct BuildingDetailView: View {
         .task {
             await viewModel.loadBuildingData()
         }
+        .onReceive(dashboardSync.$lastUpdate) { update in
+            if update?.buildingId == buildingId {
+                Task { await viewModel.refreshData() }
+            }
+        }
         .sheet(isPresented: $showingPhotoCapture) {
-            // Integrated photo capture system
             PhotoCaptureSheet(
                 buildingId: buildingId,
                 buildingName: buildingName,
+                category: photoCategory,
                 onCapture: { image, category, notes in
                     Task {
                         await viewModel.savePhoto(
@@ -94,6 +114,17 @@ struct BuildingDetailView: View {
                     }
                 }
             )
+        }
+        .sheet(isPresented: $showingSpaceDetail) {
+            if let space = selectedSpace {
+                SpaceDetailSheet(
+                    space: space,
+                    buildingName: buildingName,
+                    onUpdate: { updatedSpace in
+                        viewModel.updateSpace(updatedSpace)
+                    }
+                )
+            }
         }
         .sheet(isPresented: $showingMessageComposer) {
             MessageComposerView(
@@ -127,14 +158,14 @@ struct BuildingDetailView: View {
                     Text("Back")
                 }
                 .font(.subheadline)
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
             }
             
             Spacer()
             
             Text(buildingName)
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
                 .lineLimit(1)
             
             Spacer()
@@ -162,87 +193,141 @@ struct BuildingDetailView: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.title3)
-                    .foregroundColor(.white)
+                    .foregroundColor(.white.opacity(0.9))
                     .frame(width: 44, height: 44)
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
+        .background(
+            FrancoSphereDesign.DashboardColors.cardBackground
+                .opacity(0.95)
+                .overlay(
+                    Rectangle()
+                        .fill(FrancoSphereDesign.DashboardColors.borderSubtle)
+                        .frame(height: 1),
+                    alignment: .bottom
+                )
+        )
     }
     
-    // MARK: - Hero Section
+    // MARK: - Hero Section (Streamlined)
     private var heroSection: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Building image
-            if let image = viewModel.buildingImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 200)
-                    .clipped()
-            } else {
-                // Placeholder
+        VStack(spacing: 0) {
+            // Compact hero with status badges
+            ZStack(alignment: .bottomLeading) {
+                // Dark gradient background
                 LinearGradient(
-                    colors: [Color.gray.opacity(0.3), Color.gray.opacity(0.5)],
-                    startPoint: .top,
-                    endPoint: .bottom
+                    colors: FrancoSphereDesign.DashboardColors.workerHeroGradient.map { $0.opacity(0.9) },
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                .frame(height: 200)
-                .overlay(
+                .frame(height: isHeaderExpanded ? 200 : 120)
+                
+                // Building icon overlay
+                HStack {
+                    Spacer()
                     Image(systemName: viewModel.buildingIcon)
                         .font(.system(size: 60))
-                        .foregroundColor(.gray.opacity(0.7))
-                )
-            }
-            
-            // Gradient overlay
-            LinearGradient(
-                colors: [Color.clear, Color.black.opacity(0.7)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-            
-            // Status overlay
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.buildingType)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    HStack(spacing: 12) {
-                        statusBadge(
-                            "\(viewModel.completionPercentage)%",
-                            icon: "checkmark.circle.fill",
-                            color: completionColor
-                        )
+                        .foregroundColor(.white.opacity(0.1))
+                        .padding()
+                }
+                
+                // Status overlay
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(viewModel.buildingType)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
                         
-                        if viewModel.workersOnSite > 0 {
+                        HStack(spacing: 12) {
                             statusBadge(
-                                "\(viewModel.workersOnSite) On-Site",
-                                icon: "person.fill",
-                                color: .blue
+                                "\(viewModel.completionPercentage)%",
+                                icon: "checkmark.circle.fill",
+                                color: completionColor
                             )
-                        }
-                        
-                        if let status = viewModel.complianceStatus {
-                            statusBadge(
-                                status.rawValue.capitalized,
-                                icon: complianceIcon(status),
-                                color: complianceColor(status)
-                            )
+                            
+                            if viewModel.workersOnSite > 0 {
+                                statusBadge(
+                                    "\(viewModel.workersOnSite) On-Site",
+                                    icon: "person.fill",
+                                    color: FrancoSphereDesign.DashboardColors.secondaryAction
+                                )
+                            }
+                            
+                            if let status = viewModel.complianceStatus {
+                                statusBadge(
+                                    status.rawValue.capitalized,
+                                    icon: complianceIcon(status),
+                                    color: complianceColor(status)
+                                )
+                            }
                         }
                     }
+                    
+                    Spacer()
+                    
+                    // Expand/Collapse button
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            isHeaderExpanded.toggle()
+                        }
+                    }) {
+                        Image(systemName: isHeaderExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                            )
+                    }
+                }
+                .padding()
+            }
+            .clipped()
+            
+            // Expandable building info
+            if isHeaderExpanded {
+                buildingInfoExpanded
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .background(
+            FrancoSphereDesign.DashboardColors.cardBackground
+                .overlay(
+                    Rectangle()
+                        .fill(FrancoSphereDesign.DashboardColors.borderSubtle)
+                        .frame(height: 1),
+                    alignment: .bottom
+                )
+        )
+    }
+    
+    // MARK: - Expandable Building Info
+    private var buildingInfoExpanded: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    InfoRow("Address", value: buildingAddress)
+                    InfoRow("Size", value: "\(viewModel.buildingSize.formatted()) sq ft")
+                    InfoRow("Floors", value: "\(viewModel.floors)")
                 }
                 
                 Spacer()
+                
+                VStack(alignment: .trailing, spacing: 8) {
+                    InfoRow("Units", value: "\(viewModel.units)")
+                    InfoRow("Built", value: "\(viewModel.yearBuilt)")
+                    InfoRow("Contract", value: viewModel.contractType ?? "Standard")
+                }
             }
-            .padding()
         }
-        .frame(height: 200)
+        .padding()
+        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
     }
     
-    // MARK: - Tab Bar
+    // MARK: - Tab Bar (Consolidated)
     private var tabBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
@@ -255,7 +340,7 @@ struct BuildingDetailView: View {
             .padding(.horizontal)
         }
         .frame(height: 44)
-        .background(Color.black.opacity(0.3))
+        .background(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.5))
     }
     
     private func tabButton(_ tab: BuildingDetailTab) -> some View {
@@ -268,11 +353,11 @@ struct BuildingDetailView: View {
                 Text(tab.title)
                     .font(.subheadline)
                     .fontWeight(selectedTab == tab ? .semibold : .regular)
-                    .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
+                    .foregroundColor(selectedTab == tab ? .white.opacity(0.9) : .white.opacity(0.5))
                 
                 // Selection indicator
                 Rectangle()
-                    .fill(selectedTab == tab ? Color.blue : Color.clear)
+                    .fill(selectedTab == tab ? FrancoSphereDesign.DashboardColors.primaryAction : Color.clear)
                     .frame(height: 3)
                     .cornerRadius(1.5)
             }
@@ -284,123 +369,262 @@ struct BuildingDetailView: View {
     @ViewBuilder
     private var tabContent: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 switch selectedTab {
                 case .overview:
                     overviewContent
-                case .routines:
-                    routinesContent
-                case .history:
-                    historyContent
-                case .inventory:
-                    inventoryContent
-                case .team:
-                    teamContent
+                case .operations:
+                    operationsContent
+                case .spacesAccess:
+                    spacesAccessContent
+                case .activity:
+                    activityContent
                 }
             }
             .padding(.horizontal)
             .padding(.vertical, 20)
+            .padding(.bottom, 80) // Space for quick actions
         }
     }
     
-    // MARK: - Overview Tab
+    // MARK: - Overview Tab (Streamlined)
     private var overviewContent: some View {
         VStack(spacing: 20) {
-            // Building info card
-            buildingInfoCard
-            
-            // Today's snapshot
+            // Today's snapshot (prominent)
             todaysSnapshotCard
             
-            // Key contacts
+            // Key contacts (essential)
             keyContactsCard
             
-            // Spaces & access with integrated photo gallery
-            spacesAccessCard
-        }
-    }
-    
-    private var buildingInfoCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Building Information", systemImage: "info.circle.fill")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                InfoRow("Address", value: buildingAddress)
-                InfoRow("Type", value: viewModel.buildingType)
-                InfoRow("Size", value: "\(viewModel.buildingSize.formatted()) sq ft")
-                InfoRow("Floors", value: "\(viewModel.floors)")
-                InfoRow("Units", value: "\(viewModel.units)")
-                InfoRow("Built", value: "\(viewModel.yearBuilt)")
+            // Quick metrics
+            if viewModel.userRole != .client {
+                quickMetricsCard
             }
         }
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
     }
     
     private var todaysSnapshotCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Label("Today's Snapshot", systemImage: "calendar.circle.fill")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 if let activeTasks = viewModel.todaysTasks {
-                    HStack {
-                        Text("Active Tasks:")
-                        Spacer()
-                        Text("\(activeTasks.completed) of \(activeTasks.total)")
-                            .foregroundColor(.blue)
-                    }
+                    MetricRow(
+                        icon: "checkmark.circle",
+                        label: "Active Tasks",
+                        value: "\(activeTasks.completed) of \(activeTasks.total)",
+                        color: FrancoSphereDesign.DashboardColors.secondaryAction,
+                        progress: Double(activeTasks.completed) / Double(activeTasks.total)
+                    )
                 }
                 
                 if !viewModel.workersPresent.isEmpty {
-                    HStack {
-                        Text("Workers Present:")
-                        Spacer()
-                        Text(viewModel.workersPresent.joined(separator: ", "))
-                            .foregroundColor(.green)
-                            .lineLimit(1)
-                    }
+                    MetricRow(
+                        icon: "person.2.fill",
+                        label: "Workers Present",
+                        value: viewModel.workersPresent.joined(separator: ", "),
+                        color: FrancoSphereDesign.DashboardColors.primaryAction
+                    )
                 }
                 
                 if let nextCritical = viewModel.nextCriticalTask {
-                    HStack {
-                        Text("Next Critical:")
-                        Spacer()
-                        Text(nextCritical)
-                            .foregroundColor(.orange)
-                            .lineLimit(1)
-                    }
+                    MetricRow(
+                        icon: "exclamationmark.triangle.fill",
+                        label: "Next Critical",
+                        value: nextCritical,
+                        color: FrancoSphereDesign.DashboardColors.warning
+                    )
                 }
                 
                 if let specialNote = viewModel.todaysSpecialNote {
-                    HStack(alignment: .top) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.yellow)
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                            .font(.caption)
                         Text(specialNote)
                             .font(.caption)
-                            .foregroundColor(.yellow)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
+    }
+    
+    // MARK: - Operations Tab (Routines + Inventory)
+    private var operationsContent: some View {
+        VStack(spacing: 20) {
+            // Daily routines
+            dailyRoutinesCard
+            
+            // Inventory summary
+            if viewModel.userRole != .client {
+                inventorySummaryCard
+            }
+            
+            // Compliance checklist
+            complianceChecklistCard
+        }
+    }
+    
+    // MARK: - Spaces & Access Tab (Enhanced)
+    private var spacesAccessContent: some View {
+        VStack(spacing: 20) {
+            // Search/Filter
+            HStack {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.white.opacity(0.5))
+                    TextField("Search spaces...", text: $viewModel.spaceSearchQuery)
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                )
+                
+                // Add space button (admin)
+                if viewModel.userRole == .admin {
+                    Button(action: {
+                        photoCategory = .utilities
+                        showingPhotoCapture = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
                     }
                 }
             }
-            .font(.subheadline)
+            
+            // Space categories
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(SpaceCategory.allCases, id: \.self) { category in
+                        CategoryPill(
+                            title: category.displayName,
+                            icon: category.icon,
+                            isSelected: viewModel.selectedSpaceCategory == category,
+                            action: { viewModel.selectedSpaceCategory = category }
+                        )
+                    }
+                }
+            }
+            
+            // Spaces grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 16) {
+                ForEach(viewModel.filteredSpaces) { space in
+                    SpaceAccessCard(space: space) {
+                        selectedSpace = space
+                        showingSpaceDetail = true
+                    }
+                }
+                
+                // Add new space card
+                Button(action: {
+                    photoCategory = .utilities
+                    showingPhotoCapture = true
+                }) {
+                    VStack(spacing: 12) {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                            .frame(height: 140)
+                            .overlay(
+                                VStack(spacing: 8) {
+                                    Image(systemName: "camera.fill")
+                                        .font(.title)
+                                    Text("Add Space")
+                                        .font(.caption)
+                                }
+                                .foregroundColor(.white.opacity(0.5))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                                    .foregroundColor(.white.opacity(0.2))
+                            )
+                    }
+                }
+            }
+            
+            // Access codes section
+            if !viewModel.accessCodes.isEmpty {
+                accessCodesCard
+            }
         }
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+    }
+    
+    // MARK: - Activity Tab (History + Team)
+    private var activityContent: some View {
+        VStack(spacing: 20) {
+            // Active workers
+            activeWorkersCard
+            
+            // Recent activity feed
+            recentActivityCard
+            
+            // Maintenance history
+            maintenanceHistoryCard
+        }
+    }
+    
+    // MARK: - Supporting Cards
+    
+    private var quickMetricsCard: some View {
+        HStack(spacing: 16) {
+            MetricCard(
+                title: "Efficiency",
+                value: "\(viewModel.efficiencyScore)%",
+                trend: .up,
+                color: FrancoSphereDesign.DashboardColors.primaryAction
+            )
+            
+            MetricCard(
+                title: "Compliance",
+                value: viewModel.complianceScore,
+                trend: .stable,
+                color: FrancoSphereDesign.DashboardColors.secondaryAction
+            )
+            
+            MetricCard(
+                title: "Issues",
+                value: "\(viewModel.openIssues)",
+                trend: viewModel.openIssues > 0 ? .down : .stable,
+                color: viewModel.openIssues > 0 ? FrancoSphereDesign.DashboardColors.warning : FrancoSphereDesign.DashboardColors.inactive
+            )
+        }
     }
     
     private var keyContactsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Key Contacts", systemImage: "phone.circle.fill")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
             
             VStack(spacing: 12) {
-                // Building contacts
+                // Building contacts from database
                 if let primaryContact = viewModel.primaryContact {
                     ContactRowView(
                         contact: primaryContact,
@@ -410,466 +634,377 @@ struct BuildingDetailView: View {
                     )
                 }
                 
-                // Franco contacts
+                // Franco HQ contacts
                 ContactRowView(
                     contact: BuildingContact(
-                        name: "JM Office",
-                        role: "Franco HQ",
+                        name: "24/7 Emergency",
+                        role: "Franco Response",
                         email: nil,
-                        phone: "(212) 555-XXXX",
+                        phone: "(212) 555-0911",
                         isEmergencyContact: true
                     ),
-                    icon: "briefcase.fill",
-                    onCall: { callJMOffice() },
+                    icon: "exclamationmark.shield.fill",
+                    iconColor: FrancoSphereDesign.DashboardColors.critical,
+                    onCall: { callEmergency() },
                     onMessage: nil
                 )
                 
-                ContactRowView(
-                    contact: BuildingContact(
-                        name: "David",
-                        role: "Operations",
-                        email: "david@francosphere.com",
-                        phone: nil,
-                        isEmergencyContact: false
-                    ),
-                    icon: "person.fill",
-                    onCall: nil,
-                    onMessage: { messageContact("david@francosphere.com") }
-                )
-                
-                ContactRowView(
-                    contact: BuildingContact(
-                        name: "Jerry",
-                        role: "Management",
-                        email: "jerry@francosphere.com",
-                        phone: nil,
-                        isEmergencyContact: false
-                    ),
-                    icon: "person.fill",
-                    onCall: nil,
-                    onMessage: { messageContact("jerry@francosphere.com") }
-                )
+                // Collapsible additional contacts
+                DisclosureGroup {
+                    VStack(spacing: 12) {
+                        ContactRowView(
+                            contact: BuildingContact(
+                                name: "David Rodriguez",
+                                role: "Operations Manager",
+                                email: "david@francosphere.com",
+                                phone: "(212) 555-0123",
+                                isEmergencyContact: false
+                            ),
+                            icon: "person.fill",
+                            onCall: { callNumber("2125550123") },
+                            onMessage: { messageContact("david@francosphere.com") }
+                        )
+                        
+                        ContactRowView(
+                            contact: BuildingContact(
+                                name: "Jerry Martinez",
+                                role: "Regional Manager",
+                                email: "jerry@francosphere.com",
+                                phone: "(212) 555-0124",
+                                isEmergencyContact: false
+                            ),
+                            icon: "person.fill",
+                            onCall: { callNumber("2125550124") },
+                            onMessage: { messageContact("jerry@francosphere.com") }
+                        )
+                    }
+                } label: {
+                    HStack {
+                        Text("More Contacts")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        Spacer()
+                    }
+                    .padding(.top, 4)
+                }
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
     }
     
-    private var spacesAccessCard: some View {
+    private var accessCodesCard: some View {
         VStack(alignment: .leading, spacing: 12) {
+            Label("Access Codes", systemImage: "lock.circle.fill")
+                .font(.headline)
+                .foregroundColor(.white.opacity(0.9))
+            
+            VStack(spacing: 8) {
+                ForEach(viewModel.accessCodes) { code in
+                    AccessCodeRow(code: code)
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
+    }
+    
+    private var dailyRoutinesCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Label("Spaces & Access", systemImage: "key.fill")
+                Label("Daily Routines", systemImage: "calendar.circle.fill")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(.white.opacity(0.9))
                 
                 Spacer()
                 
-                // Navigate to full photo gallery
-                NavigationLink {
-                    FrancoBuildingPhotoGallery(buildingId: buildingId)
-                } label: {
-                    Label("View All", systemImage: "photo.on.rectangle")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
+                Text("\(viewModel.completedRoutines)/\(viewModel.totalRoutines)")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
             }
-            
-            // Photo grid
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                ForEach(viewModel.spacePhotos.prefix(5), id: \.id) { space in
-                    SpacePhotoThumbnail(space: space) {
-                        viewModel.viewSpaceDetails(space)
-                    }
-                }
-                
-                // Add photo button
-                Button(action: { showingPhotoCapture = true }) {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(height: 80)
-                        .overlay(
-                            VStack(spacing: 4) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                Text("Add")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.white.opacity(0.5))
-                        )
-                }
-            }
-        }
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
-    }
-    
-    // MARK: - Routines Tab
-    private var routinesContent: some View {
-        VStack(spacing: 20) {
-            // Filter pills
-            routineFilterPills
-            
-            // Phase 1: Core functionality
-            // TODO: Phase 4 will add worker capability adaptations
-            Group {
-                if viewModel.isLoadingRoutines {
-                    ProgressView("Loading routines...")
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                } else {
-                    // Daily routines
-                    if viewModel.routineFilter == .all || viewModel.routineFilter == .daily {
-                        dailyRoutinesCard
-                    }
-                    
-                    // Weekly routines placeholder
-                    if viewModel.routineFilter == .all || viewModel.routineFilter == .weekly {
-                        placeholderCard(title: "Weekly Routines", message: "Coming in Phase 2")
-                    }
-                    
-                    // Monthly routines placeholder
-                    if viewModel.routineFilter == .all || viewModel.routineFilter == .monthly {
-                        placeholderCard(title: "Monthly Routines", message: "Coming in Phase 2")
-                    }
-                }
-            }
-            
-            // Add routine button (admin only) - Phase 4
-            if viewModel.userRole == .admin {
-                addRoutineButtonPlaceholder
-            }
-        }
-    }
-    
-    private var routineFilterPills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(RoutineFilterType.allCases, id: \.self) { filter in
-                    FilterPill(
-                        title: filter.rawValue,
-                        isSelected: viewModel.routineFilter == filter,
-                        action: { viewModel.routineFilter = filter }
-                    )
-                }
-            }
-        }
-    }
-    
-    // ENHANCED: Daily Routines Card with worker assignment
-    private var dailyRoutinesCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label("Daily Routines", systemImage: "calendar.circle.fill")
-                .font(.headline)
-                .foregroundColor(.white)
             
             if viewModel.dailyRoutines.isEmpty {
-                Text("No daily routines configured")
+                Text("No routines scheduled today")
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(.white.opacity(0.5))
                     .padding(.vertical, 20)
             } else {
                 ForEach(viewModel.dailyRoutines) { routine in
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Existing routine display
-                        HStack {
-                            Button(action: { viewModel.toggleRoutineCompletion(routine) }) {
-                                Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(routine.isCompleted ? .green : .white.opacity(0.5))
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(routine.title)
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.9))
-                                    .strikethrough(routine.isCompleted)
-                                
-                                if let time = routine.scheduledTime {
-                                    Text(time)
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.6))
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            // NEW: Worker assignment button
-                            if viewModel.userRole == .admin && !routine.isCompleted {
-                                Button(action: {
-                                    selectedRoutine = routine
-                                    showWorkerAssignment = true
-                                }) {
-                                    Image(systemName: "person.badge.plus")
-                                        .font(.caption)
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        }
-                        
-                        // NEW: Show assigned worker
-                        if let assignedWorker = routine.assignedWorker {
-                            HStack {
-                                Image(systemName: "person.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                Text(assignedWorker)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.leading, 24)
-                        }
-                        
-                        // NEW: Show required inventory
-                        if !routine.requiredInventory.isEmpty {
-                            HStack {
-                                Image(systemName: "shippingbox")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                Text("\(routine.requiredInventory.count) items")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.leading, 24)
-                        }
-                    }
-                    .padding(.vertical, 4)
+                    RoutineRowView(
+                        routine: routine,
+                        onToggle: { viewModel.toggleRoutineCompletion(routine) },
+                        onAssign: {
+                            selectedRoutine = routine
+                            showWorkerAssignment = true
+                        },
+                        canAssign: viewModel.userRole == .admin
+                    )
                     
                     if routine.id != viewModel.dailyRoutines.last?.id {
                         Divider()
-                            .background(Color.white.opacity(0.2))
+                            .background(FrancoSphereDesign.DashboardColors.borderSubtle)
                     }
                 }
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
     }
     
-    // MARK: - History Tab
-    private var historyContent: some View {
-        VStack(spacing: 20) {
-            if viewModel.userRole == .worker {
-                // Phase 1: Basic maintenance log
-                basicMaintenanceLog
-            } else {
-                // Phase 2: Full history with analytics
-                placeholderCard(
-                    title: "Complete History",
-                    message: "Advanced analytics coming in Phase 2"
+    private var inventorySummaryCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Inventory Status", systemImage: "shippingbox.fill")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                Spacer()
+                
+                NavigationLink {
+                    BuildingInventoryDetailView(buildingId: buildingId)
+                } label: {
+                    Text("View All")
+                        .font(.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                }
+            }
+            
+            // Summary grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                InventorySummaryItem(
+                    category: "Cleaning",
+                    icon: "sparkles",
+                    itemsLow: viewModel.inventorySummary.cleaningLow,
+                    total: viewModel.inventorySummary.cleaningTotal
+                )
+                
+                InventorySummaryItem(
+                    category: "Equipment",
+                    icon: "wrench.fill",
+                    itemsLow: viewModel.inventorySummary.equipmentLow,
+                    total: viewModel.inventorySummary.equipmentTotal
+                )
+                
+                InventorySummaryItem(
+                    category: "Maintenance",
+                    icon: "hammer.fill",
+                    itemsLow: viewModel.inventorySummary.maintenanceLow,
+                    total: viewModel.inventorySummary.maintenanceTotal
+                )
+                
+                InventorySummaryItem(
+                    category: "Safety",
+                    icon: "shield.fill",
+                    itemsLow: viewModel.inventorySummary.safetyLow,
+                    total: viewModel.inventorySummary.safetyTotal
                 )
             }
         }
-    }
-    
-    private var basicMaintenanceLog: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Recent Maintenance", systemImage: "wrench.and.screwdriver.fill")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            if viewModel.maintenanceHistory.isEmpty {
-                Text("No recent maintenance records")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.vertical, 20)
-            } else {
-                ForEach(viewModel.maintenanceHistory.prefix(5)) { record in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(record.title)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                        
-                        Text(record.date, style: .date)
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.6))
-                        
-                        if let description = record.description {
-                            Text(description)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
-                                .lineLimit(2)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    
-                    if record.id != viewModel.maintenanceHistory.prefix(5).last?.id {
-                        Divider()
-                            .background(Color.white.opacity(0.2))
-                    }
-                }
-            }
-        }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
     }
     
-    // MARK: - Inventory Tab
-    private var inventoryContent: some View {
-        VStack(spacing: 20) {
-            // Phase 3: Basic inventory view
-            if viewModel.userRole == .worker || viewModel.userRole == .admin {
-                ForEach(CoreTypes.InventoryCategory.allCases, id: \.self) { category in
-                    if let items = viewModel.inventory[category], !items.isEmpty {
-                        inventoryCategorySection(category: category, items: items)
-                    }
-                }
+    private var complianceChecklistCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Compliance Checklist", systemImage: "checkmark.seal.fill")
+                .font(.headline)
+                .foregroundColor(.white.opacity(0.9))
+            
+            VStack(spacing: 8) {
+                ComplianceCheckItem(
+                    title: "DSNY Requirements",
+                    status: viewModel.dsnyCompliance,
+                    nextAction: viewModel.nextDSNYAction
+                )
                 
-                if viewModel.inventory.isEmpty {
-                    placeholderCard(
-                        title: "Inventory Management",
-                        message: "Full inventory tracking coming in Phase 3"
-                    )
-                }
-            }
-        }
-    }
-    
-    private func inventoryCategorySection(category: CoreTypes.InventoryCategory, items: [CoreTypes.InventoryItem]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(category.rawValue, systemImage: getCategoryIcon(category))
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            ForEach(items) { item in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.name)
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                        
-                        Text("\(item.currentStock) \(item.unit)")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.6))
-                    }
-                    
-                    Spacer()
-                    
-                    // Stock level indicator
-                    stockLevelIndicator(item: item)
-                }
-                .padding(.vertical, 4)
+                ComplianceCheckItem(
+                    title: "Fire Safety",
+                    status: viewModel.fireSafetyCompliance,
+                    nextAction: viewModel.nextFireSafetyAction
+                )
+                
+                ComplianceCheckItem(
+                    title: "Health Inspections",
+                    status: viewModel.healthCompliance,
+                    nextAction: viewModel.nextHealthAction
+                )
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
     }
     
-    // MARK: - Team Tab
-    private var teamContent: some View {
-        VStack(spacing: 20) {
-            // Phase 1: Basic worker list
-            assignedWorkersSection
-            
-            // Phase 2: Coverage calendar placeholder
-            placeholderCard(
-                title: "Coverage Calendar",
-                message: "Schedule visualization coming in Phase 2"
-            )
-            
-            // Emergency contacts
-            emergencyContactsSection
-        }
-    }
-    
-    private var assignedWorkersSection: some View {
+    private var activeWorkersCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Assigned Workers", systemImage: "person.2.fill")
+            Label("Active Workers", systemImage: "person.2.fill")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
             
             if viewModel.assignedWorkers.isEmpty {
-                Text("No workers assigned")
+                Text("No workers currently assigned")
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(.white.opacity(0.5))
                     .padding(.vertical, 20)
             } else {
                 ForEach(viewModel.assignedWorkers) { worker in
-                    HStack {
-                        Circle()
-                            .fill(worker.isOnSite ? Color.green : Color.gray)
-                            .frame(width: 8, height: 8)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(worker.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                            
-                            Text(worker.schedule)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.6))
-                        }
-                        
-                        Spacer()
-                        
-                        if worker.isOnSite {
-                            Text("On-site")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                                .background(Color.green.opacity(0.2))
-                                .cornerRadius(8)
-                        }
-                    }
-                    .padding(.vertical, 4)
+                    WorkerStatusRow(worker: worker)
                 }
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
     }
     
-    private var emergencyContactsSection: some View {
+    private var recentActivityCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Emergency Contacts", systemImage: "phone.circle.fill")
-                .font(.headline)
-                .foregroundColor(.white)
+            HStack {
+                Label("Recent Activity", systemImage: "clock.arrow.circlepath")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                Spacer()
+                
+                Text("Last 24h")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
             
-            VStack(alignment: .leading, spacing: 8) {
-                BuildingEmergencyRow(title: "Franco 24/7 Hotline", number: "(212) 555-XXXX")
-                BuildingEmergencyRow(title: "Building Security", number: "(212) 555-XXXX")
-                BuildingEmergencyRow(title: "Facilities Manager", number: "(212) 555-XXXX")
+            if viewModel.recentActivities.isEmpty {
+                Text("No recent activity")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(viewModel.recentActivities.prefix(5)) { activity in
+                    ActivityRow(activity: activity)
+                    
+                    if activity.id != viewModel.recentActivities.prefix(5).last?.id {
+                        Divider()
+                            .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                    }
+                }
             }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
+    }
+    
+    private var maintenanceHistoryCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Maintenance History", systemImage: "wrench.and.screwdriver.fill")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                Spacer()
+                
+                NavigationLink {
+                    BuildingMaintenanceHistoryView(buildingId: buildingId)
+                } label: {
+                    Text("View All")
+                        .font(.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                }
+            }
+            
+            if viewModel.maintenanceHistory.isEmpty {
+                Text("No recent maintenance")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(viewModel.maintenanceHistory.prefix(3)) { record in
+                    MaintenanceRecordRow(record: record)
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
     }
     
     // MARK: - Quick Actions Bar
     private var quickActionsBar: some View {
         HStack(spacing: 0) {
             QuickActionButton(
-                icon: "phone.fill",
-                title: "Call",
-                action: { showingCallMenu = true }
-            )
-            
-            QuickActionButton(
-                icon: "message.fill",
-                title: "Message",
-                action: { showingMessageComposer = true }
-            )
-            
-            QuickActionButton(
                 icon: "camera.fill",
                 title: "Photo",
-                action: { showingPhotoCapture = true }
+                color: FrancoSphereDesign.DashboardColors.primaryAction,
+                action: {
+                    photoCategory = .general
+                    showingPhotoCapture = true
+                }
+            )
+            
+            QuickActionButton(
+                icon: "phone.fill",
+                title: "Call",
+                color: FrancoSphereDesign.DashboardColors.secondaryAction,
+                action: { showingCallMenu = true }
             )
             
             QuickActionButton(
                 icon: "map.fill",
                 title: "Navigate",
+                color: FrancoSphereDesign.DashboardColors.info,
                 action: { openInMaps() }
             )
             
@@ -880,6 +1015,10 @@ struct BuildingDetailView: View {
                 
                 Button(action: { viewModel.requestSupplies() }) {
                     Label("Request Supplies", systemImage: "shippingbox")
+                }
+                
+                Button(action: { showingMessageComposer = true }) {
+                    Label("Send Message", systemImage: "message")
                 }
                 
                 Button(action: { viewModel.addNote() }) {
@@ -895,22 +1034,30 @@ struct BuildingDetailView: View {
                 QuickActionButton(
                     icon: "plus.circle.fill",
                     title: "More",
+                    color: FrancoSphereDesign.DashboardColors.inactive,
                     action: { }
                 )
             }
         }
         .frame(height: 60)
-        .background(.ultraThinMaterial)
+        .background(
+            FrancoSphereDesign.DashboardColors.cardBackground
+                .opacity(0.98)
+                .overlay(
+                    Rectangle()
+                        .fill(FrancoSphereDesign.DashboardColors.borderSubtle)
+                        .frame(height: 1),
+                    alignment: .top
+                )
+        )
     }
     
     // MARK: - Helper Methods
     
     private func shouldShowTab(_ tab: BuildingDetailTab) -> Bool {
         switch tab {
-        case .inventory:
-            return viewModel.userRole != .client
-        case .history:
-            return true
+        case .spacesAccess:
+            return viewModel.userRole != .client // Clients can't see utility access
         default:
             return true
         }
@@ -919,10 +1066,10 @@ struct BuildingDetailView: View {
     private var completionColor: Color {
         let percentage = viewModel.completionPercentage
         switch percentage {
-        case 90...100: return .green
-        case 70..<90: return .yellow
-        case 50..<70: return .orange
-        default: return .red
+        case 90...100: return FrancoSphereDesign.DashboardColors.success
+        case 70..<90: return FrancoSphereDesign.DashboardColors.warning
+        case 50..<70: return Color.orange
+        default: return FrancoSphereDesign.DashboardColors.critical
         }
     }
     
@@ -936,12 +1083,7 @@ struct BuildingDetailView: View {
     }
     
     private func complianceColor(_ status: CoreTypes.ComplianceStatus) -> Color {
-        switch status {
-        case .compliant: return .green
-        case .nonCompliant: return .red
-        case .pending: return .orange
-        default: return .gray
-        }
+        FrancoSphereDesign.EnumColors.complianceStatus(status)
     }
     
     private func statusBadge(_ text: String, icon: String, color: Color) -> some View {
@@ -955,8 +1097,14 @@ struct BuildingDetailView: View {
         .foregroundColor(color)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(color.opacity(0.2))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.15))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.25), lineWidth: 1)
+                )
+        )
     }
     
     private func getMessageRecipients() -> [String] {
@@ -965,7 +1113,7 @@ struct BuildingDetailView: View {
         if let contact = selectedContact, let email = contact.email {
             recipients.append(email)
         } else {
-            // Default to David and Jerry
+            // Default to ops team
             recipients = ["david@francosphere.com", "jerry@francosphere.com"]
         }
         
@@ -993,14 +1141,14 @@ struct BuildingDetailView: View {
                 }
             }
             
-            Button(action: { callJMOffice() }) {
-                Text("Call JM Office")
+            Button(action: { callEmergency() }) {
+                Text("Call Emergency Line")
             }
             
-            if let emergencyContact = viewModel.emergencyContact,
-               let phone = emergencyContact.phone {
+            if let primaryContact = viewModel.primaryContact,
+               let phone = primaryContact.phone {
                 Button(action: { callNumber(phone) }) {
-                    Text("Call Emergency Contact")
+                    Text("Call Building Contact")
                 }
             }
             
@@ -1009,12 +1157,13 @@ struct BuildingDetailView: View {
     }
     
     private func callNumber(_ number: String) {
-        guard let url = URL(string: "tel://\(number)") else { return }
+        let cleanNumber = number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        guard let url = URL(string: "tel://\(cleanNumber)") else { return }
         UIApplication.shared.open(url)
     }
     
-    private func callJMOffice() {
-        callNumber("2125551234") // Replace with actual number
+    private func callEmergency() {
+        callNumber("2125550911")
     }
     
     private func messageContact(_ email: String) {
@@ -1033,117 +1182,902 @@ struct BuildingDetailView: View {
         guard let url = URL(string: "maps://?address=\(address)") else { return }
         UIApplication.shared.open(url)
     }
+}
+
+// MARK: - Supporting Types
+
+enum BuildingDetailTab: String, CaseIterable {
+    case overview = "Overview"
+    case operations = "Operations"
+    case spacesAccess = "Spaces"
+    case activity = "Activity"
     
-    private func getCategoryIcon(_ category: CoreTypes.InventoryCategory) -> String {
-        switch category {
-        case .cleaning: return "sparkles"
-        case .equipment: return "wrench.fill"
-        case .maintenance: return "house.fill"
-        default: return "shippingbox.fill"
+    var title: String { rawValue }
+}
+
+enum SpaceCategory: String, CaseIterable {
+    case all = "All"
+    case utility = "Utility"
+    case mechanical = "Mechanical"
+    case storage = "Storage"
+    case electrical = "Electrical"
+    case access = "Access Points"
+    
+    var displayName: String {
+        switch self {
+        case .all: return "All Spaces"
+        default: return rawValue
         }
     }
     
-    private func stockLevelIndicator(item: CoreTypes.InventoryItem) -> some View {
-        let needsRestock = item.currentStock <= item.minimumStock
-        
-        return HStack(spacing: 4) {
-            if needsRestock {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                Text("Low")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(.green)
-                Text("OK")
-                    .font(.caption)
-                    .foregroundColor(.green)
-            }
+    var icon: String {
+        switch self {
+        case .all: return "square.grid.2x2"
+        case .utility: return "wrench.fill"
+        case .mechanical: return "gear"
+        case .storage: return "shippingbox"
+        case .electrical: return "bolt.fill"
+        case .access: return "key.fill"
         }
-    }
-    
-    private func placeholderCard(title: String, message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "clock.badge.checkmark")
-                .font(.largeTitle)
-                .foregroundColor(.white.opacity(0.3))
-            
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.white.opacity(0.8))
-            
-            Text(message)
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-        .padding(.horizontal)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(16)
-    }
-    
-    private var addRoutineButtonPlaceholder: some View {
-        Button(action: {
-            // Phase 4: Implement add routine functionality
-        }) {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                Text("Add Custom Routine")
-            }
-            .font(.subheadline)
-            .foregroundColor(.blue)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(12)
-        }
-        .disabled(true)
-        .opacity(0.6)
     }
 }
 
-// MARK: - Photo Capture Sheet (Integrated with Evidence System)
+// MARK: - Data Models
+
+struct SpaceAccess: Identifiable {
+    let id: String
+    let name: String
+    let category: SpaceCategory
+    let thumbnail: UIImage?
+    let lastUpdated: Date
+    let accessCode: String?
+    let notes: String?
+    let requiresKey: Bool
+    let photos: [FrancoBuildingPhoto]
+}
+
+struct AccessCode: Identifiable {
+    let id: String
+    let location: String
+    let code: String
+    let type: String // "keypad", "lock box", "alarm"
+    let updatedDate: Date
+}
+
+struct BuildingActivity: Identifiable {
+    let id: String
+    let type: ActivityType
+    let description: String
+    let timestamp: Date
+    let workerName: String?
+    let photoId: String?
+    
+    enum ActivityType {
+        case taskCompleted
+        case photoAdded
+        case issueReported
+        case workerArrived
+        case workerDeparted
+        case routineCompleted
+        case inventoryUsed
+    }
+}
+
+// MARK: - Supporting Views
+
+struct InfoRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(label + ":")
+                .foregroundColor(.white.opacity(0.5))
+            Text(value)
+                .foregroundColor(.white.opacity(0.9))
+                .fontWeight(.medium)
+        }
+        .font(.caption)
+    }
+}
+
+struct MetricRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    let color: Color
+    var progress: Double? = nil
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(label)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Spacer()
+                    
+                    Text(value)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(color)
+                }
+                
+                if let progress = progress {
+                    ProgressView(value: progress)
+                        .progressViewStyle(LinearProgressViewStyle(tint: color))
+                        .frame(height: 4)
+                        .background(color.opacity(0.2))
+                        .cornerRadius(2)
+                }
+            }
+        }
+    }
+}
+
+struct MetricCard: View {
+    let title: String
+    let value: String
+    let trend: CoreTypes.TrendDirection
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+                
+                Spacer()
+                
+                TrendIndicator(direction: trend)
+            }
+            
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
+
+struct TrendIndicator: View {
+    let direction: CoreTypes.TrendDirection
+    
+    var body: some View {
+        Image(systemName: icon)
+            .font(.caption)
+            .foregroundColor(color)
+    }
+    
+    private var icon: String {
+        switch direction {
+        case .up: return "arrow.up.right"
+        case .down: return "arrow.down.right"
+        case .stable: return "minus"
+        default: return "questionmark"
+        }
+    }
+    
+    private var color: Color {
+        FrancoSphereDesign.EnumColors.trendDirection(direction)
+    }
+}
+
+struct ContactRowView: View {
+    let contact: BuildingContact
+    let icon: String
+    var iconColor: Color = FrancoSphereDesign.DashboardColors.secondaryAction
+    var onCall: (() -> Void)?
+    var onMessage: (() -> Void)?
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(iconColor)
+                .frame(width: 40, height: 40)
+                .background(
+                    Circle()
+                        .fill(iconColor.opacity(0.15))
+                        .overlay(
+                            Circle()
+                                .stroke(iconColor.opacity(0.25), lineWidth: 1)
+                        )
+                )
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(contact.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                if let role = contact.role {
+                    Text(role)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                if let phone = contact.phone {
+                    Text(phone)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 12) {
+                if let onCall = onCall, contact.phone != nil {
+                    Button(action: onCall) {
+                        Image(systemName: "phone.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(FrancoSphereDesign.DashboardColors.primaryAction.opacity(0.15))
+                                    .overlay(
+                                        Circle()
+                                            .stroke(FrancoSphereDesign.DashboardColors.primaryAction.opacity(0.25), lineWidth: 1)
+                                    )
+                            )
+                    }
+                }
+                
+                if let onMessage = onMessage, contact.email != nil {
+                    Button(action: onMessage) {
+                        Image(systemName: "message.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(FrancoSphereDesign.DashboardColors.secondaryAction.opacity(0.15))
+                                    .overlay(
+                                        Circle()
+                                            .stroke(FrancoSphereDesign.DashboardColors.secondaryAction.opacity(0.25), lineWidth: 1)
+                                    )
+                            )
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct SpaceAccessCard: View {
+    let space: SpaceAccess
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                // Photo or icon
+                if let photo = space.thumbnail {
+                    Image(uiImage: photo)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 120)
+                        .clipped()
+                        .cornerRadius(8)
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: FrancoSphereDesign.DashboardColors.workerHeroGradient.map { $0.opacity(0.5) },
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(height: 120)
+                        .overlay(
+                            Image(systemName: space.category.icon)
+                                .font(.title)
+                                .foregroundColor(.white.opacity(0.5))
+                        )
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(space.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white.opacity(0.9))
+                        .lineLimit(1)
+                    
+                    HStack(spacing: 8) {
+                        if space.requiresKey {
+                            Label("Key", systemImage: "key.fill")
+                                .font(.caption2)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                        }
+                        
+                        if space.accessCode != nil {
+                            Label("Code", systemImage: "lock.fill")
+                                .font(.caption2)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                        }
+                        
+                        Spacer()
+                        
+                        Text(space.lastUpdated, style: .relative)
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct AccessCodeRow: View {
+    let code: AccessCode
+    @State private var isRevealed = false
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(code.location)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                Text(code.type.capitalized)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 8) {
+                Text(isRevealed ? code.code : "••••••")
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                
+                Button(action: { isRevealed.toggle() }) {
+                    Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+            )
+        }
+    }
+}
+
+struct CategoryPill: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(isSelected ? .semibold : .regular)
+            }
+            .foregroundColor(isSelected ? .white.opacity(0.9) : .white.opacity(0.6))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(isSelected ? FrancoSphereDesign.DashboardColors.primaryAction : FrancoSphereDesign.DashboardColors.glassOverlay)
+                    .overlay(
+                        Capsule()
+                            .stroke(
+                                isSelected ? FrancoSphereDesign.DashboardColors.primaryAction.opacity(0.5) : FrancoSphereDesign.DashboardColors.borderSubtle,
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+    }
+}
+
+struct RoutineRowView: View {
+    let routine: DailyRoutine
+    let onToggle: () -> Void
+    let onAssign: () -> Void
+    let canAssign: Bool
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Button(action: onToggle) {
+                Image(systemName: routine.isCompleted ? "checkmark.square.fill" : "square")
+                    .foregroundColor(routine.isCompleted ? FrancoSphereDesign.DashboardColors.primaryAction : .white.opacity(0.5))
+                    .font(.title3)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(routine.title)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.9))
+                    .strikethrough(routine.isCompleted)
+                
+                HStack(spacing: 12) {
+                    if let time = routine.scheduledTime {
+                        Label(time, systemImage: "clock")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    
+                    if let assignedWorker = routine.assignedWorker {
+                        Label(assignedWorker, systemImage: "person.fill")
+                            .font(.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                    }
+                    
+                    if !routine.requiredInventory.isEmpty {
+                        Label("\(routine.requiredInventory.count) items", systemImage: "shippingbox")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            if canAssign && !routine.isCompleted && routine.assignedWorker == nil {
+                Button(action: onAssign) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                        .padding(6)
+                        .background(
+                            Circle()
+                                .fill(FrancoSphereDesign.DashboardColors.secondaryAction.opacity(0.15))
+                        )
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct InventorySummaryItem: View {
+    let category: String
+    let icon: String
+    let itemsLow: Int
+    let total: Int
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+                Text(category)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            
+            HStack {
+                if itemsLow > 0 {
+                    Text("\(itemsLow) low")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                } else {
+                    Text("Stocked")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                }
+                
+                Spacer()
+                
+                Text("/ \(total)")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(
+                            itemsLow > 0 ? FrancoSphereDesign.DashboardColors.warning.opacity(0.3) : FrancoSphereDesign.DashboardColors.borderSubtle,
+                            lineWidth: 1
+                        )
+                )
+        )
+    }
+}
+
+struct ComplianceCheckItem: View {
+    let title: String
+    let status: CoreTypes.ComplianceStatus
+    let nextAction: String?
+    
+    var body: some View {
+        HStack(alignment: .top) {
+            Image(systemName: status == .compliant ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundColor(FrancoSphereDesign.EnumColors.complianceStatus(status))
+                .font(.title3)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                if let action = nextAction {
+                    Text(action)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct WorkerStatusRow: View {
+    let worker: AssignedWorker
+    
+    var body: some View {
+        HStack {
+            Circle()
+                .fill(worker.isOnSite ? FrancoSphereDesign.DashboardColors.primaryAction : FrancoSphereDesign.DashboardColors.inactive)
+                .frame(width: 8, height: 8)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(worker.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                Text(worker.schedule)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            
+            Spacer()
+            
+            if worker.isOnSite {
+                Text("On-site")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(FrancoSphereDesign.DashboardColors.primaryAction.opacity(0.15))
+                    )
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct ActivityRow: View {
+    let activity: BuildingActivity
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: iconForActivity(activity.type))
+                .font(.caption)
+                .foregroundColor(colorForActivity(activity.type))
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(colorForActivity(activity.type).opacity(0.15))
+                )
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(activity.description)
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.9))
+                
+                HStack(spacing: 8) {
+                    if let worker = activity.workerName {
+                        Text(worker)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
+                    Text(activity.timestamp, style: .relative)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func iconForActivity(_ type: BuildingActivity.ActivityType) -> String {
+        switch type {
+        case .taskCompleted: return "checkmark.circle"
+        case .photoAdded: return "camera"
+        case .issueReported: return "exclamationmark.triangle"
+        case .workerArrived: return "person.crop.circle.badge.checkmark"
+        case .workerDeparted: return "person.crop.circle.badge.minus"
+        case .routineCompleted: return "calendar.badge.checkmark"
+        case .inventoryUsed: return "shippingbox"
+        }
+    }
+    
+    private func colorForActivity(_ type: BuildingActivity.ActivityType) -> Color {
+        switch type {
+        case .taskCompleted, .routineCompleted, .workerArrived:
+            return FrancoSphereDesign.DashboardColors.primaryAction
+        case .photoAdded:
+            return FrancoSphereDesign.DashboardColors.secondaryAction
+        case .issueReported:
+            return FrancoSphereDesign.DashboardColors.warning
+        case .workerDeparted, .inventoryUsed:
+            return FrancoSphereDesign.DashboardColors.inactive
+        }
+    }
+}
+
+struct MaintenanceRecordRow: View {
+    let record: MaintenanceRecord
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(record.title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.white.opacity(0.9))
+            
+            HStack {
+                Text(record.date, style: .date)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+                
+                if let cost = record.cost {
+                    Spacer()
+                    Text("$\(cost, specifier: "%.2f")")
+                        .font(.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                }
+            }
+            
+            if let description = record.description {
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+struct QuickActionButton: View {
+    let icon: String
+    let title: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.title3)
+                Text(title)
+                    .font(.caption2)
+            }
+            .foregroundColor(color)
+            .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+// MARK: - Space Detail Sheet
+struct SpaceDetailSheet: View {
+    let space: SpaceAccess
+    let buildingName: String
+    let onUpdate: (SpaceAccess) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingPhotoCapture = false
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Photos section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Label("Photos", systemImage: "photo.on.rectangle")
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            Button(action: { showingPhotoCapture = true }) {
+                                Label("Add Photo", systemImage: "plus.circle")
+                                    .font(.caption)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                            }
+                        }
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(space.photos) { photo in
+                                    if let image = photo.thumbnail {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 120, height: 120)
+                                            .cornerRadius(8)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Access information
+                    if space.accessCode != nil || space.requiresKey {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("Access Information", systemImage: "key.fill")
+                                .font(.headline)
+                            
+                            if let code = space.accessCode {
+                                HStack {
+                                    Text("Access Code:")
+                                        .foregroundColor(.white.opacity(0.7))
+                                    Spacer()
+                                    Text(code)
+                                        .font(.system(.body, design: .monospaced))
+                                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                                }
+                            }
+                            
+                            if space.requiresKey {
+                                HStack {
+                                    Text("Physical Key Required")
+                                        .foregroundColor(.white.opacity(0.7))
+                                    Spacer()
+                                    Image(systemName: "key.fill")
+                                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        )
+                    }
+                    
+                    // Notes
+                    if let notes = space.notes {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Notes", systemImage: "note.text")
+                                .font(.headline)
+                            
+                            Text(notes)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                    
+                    // Last updated
+                    HStack {
+                        Text("Last updated")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                        Text(space.lastUpdated, style: .relative)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+                .padding()
+            }
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .navigationTitle(space.name)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .sheet(isPresented: $showingPhotoCapture) {
+            PhotoCaptureSheet(
+                buildingId: space.id,
+                buildingName: buildingName,
+                category: .utilities,
+                onCapture: { image, _, notes in
+                    // Handle photo capture
+                    dismiss()
+                }
+            )
+        }
+    }
+}
+
+// MARK: - Photo Capture Sheet (Updated for Dark Theme)
 struct PhotoCaptureSheet: View {
     let buildingId: String
     let buildingName: String
+    let category: FrancoPhotoCategory
     let onCapture: (UIImage, FrancoPhotoCategory, String) -> Void
 
     @State private var selectedImage: UIImage?
     @State private var showingImagePicker = false
     @State private var showingCamera = false
-    @State private var selectedCategory: FrancoPhotoCategory = .all
+    @State private var selectedCategory: FrancoPhotoCategory
     @State private var notes: String = ""
     @State private var isProcessing = false
     @Environment(\.dismiss) private var dismiss
     
+    init(buildingId: String, buildingName: String, category: FrancoPhotoCategory, onCapture: @escaping (UIImage, FrancoPhotoCategory, String) -> Void) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.category = category
+        self.onCapture = onCapture
+        self._selectedCategory = State(initialValue: category)
+    }
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                // Photo preview or placeholder
+                // Photo preview
                 if let image = selectedImage {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
                         .frame(maxHeight: 300)
                         .cornerRadius(12)
-                        .shadow(radius: 4)
+                        .shadow(color: .black.opacity(0.3), radius: 8)
                 } else {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                         .frame(height: 300)
                         .overlay(
                             VStack(spacing: 12) {
                                 Image(systemName: "camera.fill")
                                     .font(.system(size: 50))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.white.opacity(0.3))
                                 Text("Tap to add photo")
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.white.opacity(0.5))
                             }
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
                         )
                         .onTapGesture {
                             showPhotoOptions()
@@ -1154,22 +2088,35 @@ struct PhotoCaptureSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Category")
                         .font(.headline)
+                        .foregroundColor(.white.opacity(0.9))
                     
-                    Picker("Category", selection: $selectedCategory) {
-                        ForEach(FrancoBuildingPhotoCategory.allCases, id: \.self) { category in
-                            Text(category.displayName).tag(category)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(FrancoPhotoCategory.allCases, id: \.self) { cat in
+                                CategoryPill(
+                                    title: cat.displayName,
+                                    icon: iconForCategory(cat),
+                                    isSelected: selectedCategory == cat,
+                                    action: { selectedCategory = cat }
+                                )
+                            }
                         }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                 }
                 
                 // Notes field
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Notes (Optional)")
                         .font(.headline)
+                        .foregroundColor(.white.opacity(0.9))
                     
                     TextField("Add notes about this photo...", text: $notes, axis: .vertical)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        )
+                        .foregroundColor(.white.opacity(0.9))
                         .lineLimit(3...6)
                 }
                 
@@ -1180,30 +2127,47 @@ struct PhotoCaptureSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.red)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                     
                     Spacer()
                     
                     if selectedImage == nil {
                         Button(action: showPhotoOptions) {
                             Label("Add Photo", systemImage: "camera.fill")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(FrancoSphereDesign.DashboardColors.primaryAction)
+                                .cornerRadius(12)
                         }
-                        .buttonStyle(.borderedProminent)
                     } else {
                         Button(action: savePhoto) {
                             if isProcessing {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(FrancoSphereDesign.DashboardColors.primaryAction)
+                                    .cornerRadius(12)
                             } else {
                                 Label("Save Photo", systemImage: "checkmark.circle.fill")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(FrancoSphereDesign.DashboardColors.primaryAction)
+                                    .cornerRadius(12)
                             }
                         }
-                        .buttonStyle(.borderedProminent)
                         .disabled(isProcessing)
                     }
                 }
             }
             .padding()
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
             .navigationTitle("Add Building Photo")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -1216,7 +2180,6 @@ struct PhotoCaptureSheet: View {
     }
     
     private func showPhotoOptions() {
-        // Check camera availability
         if UIImagePickerController.isSourceTypeAvailable(.camera) {
             showingCamera = true
         } else {
@@ -1230,444 +2193,26 @@ struct PhotoCaptureSheet: View {
         isProcessing = true
         onCapture(image, selectedCategory, notes)
         
-        // Dismiss after short delay to show processing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             dismiss()
         }
     }
-}
-
-// MARK: - Camera View
-struct CameraView: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    @Environment(\.dismiss) private var dismiss
     
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraView
-        
-        init(_ parent: CameraView) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.image = image
-            }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
+    private func iconForCategory(_ category: FrancoPhotoCategory) -> String {
+        switch category {
+        case .entrance: return "door.left.hand.open"
+        case .lobby: return "building"
+        case .utilities: return "wrench.fill"
+        case .basement: return "arrow.down.to.line"
+        case .roof: return "arrow.up.to.line"
+        case .mechanical: return "gear"
+        case .storage: return "shippingbox.fill"
+        case .general: return "photo"
         }
     }
 }
 
-// MARK: - Supporting Types
-
-enum BuildingDetailTab: String, CaseIterable {
-    case overview = "Overview"
-    case routines = "Routines"
-    case history = "History"
-    case inventory = "Inventory"
-    case team = "Team"
-    
-    var title: String { rawValue }
-}
-
-enum RoutineFilterType: String, CaseIterable {
-    case all = "All"
-    case daily = "Daily"
-    case weekly = "Weekly"
-    case monthly = "Monthly"
-}
-
-// MARK: - Data Models
-
-struct BuildingContact: Identifiable {
-    let id = UUID()
-    let name: String
-    let role: String?
-    let email: String?
-    let phone: String?
-    let isEmergencyContact: Bool
-}
-
-struct SpacePhoto: Identifiable {
-    let id: String
-    let name: String
-    let icon: String
-    let thumbnail: UIImage?
-}
-
-// ENHANCED: DailyRoutine with worker assignment and inventory
-struct DailyRoutine: Identifiable {
-    let id: String
-    let title: String
-    let scheduledTime: String?
-    var isCompleted: Bool = false
-    var assignedWorker: String? = nil  // Worker name
-    var requiredInventory: [String] = [] // Inventory item names
-}
-
-struct MaintenanceRecord: Identifiable {
-    let id: String
-    let title: String
-    let date: Date
-    let description: String?
-    let cost: Decimal?
-}
-
-struct AssignedWorker: Identifiable {
-    let id: String
-    let name: String
-    let schedule: String
-    let isOnSite: Bool
-}
-
-// MARK: - Supporting Views
-
-struct InfoRow: View {
-    let label: String
-    let value: String
-    
-    init(_ label: String, value: String) {
-        self.label = label
-        self.value = value
-    }
-    
-    var body: some View {
-        HStack {
-            Text(label + ":")
-                .foregroundColor(.white.opacity(0.6))
-            Spacer()
-            Text(value)
-                .foregroundColor(.white)
-                .fontWeight(.medium)
-        }
-        .font(.subheadline)
-    }
-}
-
-struct ContactRowView: View {
-    let contact: BuildingContact
-    let icon: String
-    var onCall: (() -> Void)?
-    var onMessage: (() -> Void)?
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(.blue)
-                .frame(width: 40, height: 40)
-                .background(Color.blue.opacity(0.2))
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(contact.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                if let role = contact.role {
-                    Text(role)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                
-                if let phone = contact.phone {
-                    Text(phone)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                
-                if let email = contact.email {
-                    Text(email)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 12) {
-                if let onCall = onCall, contact.phone != nil {
-                    Button(action: onCall) {
-                        Image(systemName: "phone.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.green)
-                            .frame(width: 32, height: 32)
-                            .background(Color.green.opacity(0.2))
-                            .clipShape(Circle())
-                    }
-                }
-                
-                if let onMessage = onMessage, contact.email != nil {
-                    Button(action: onMessage) {
-                        Image(systemName: "message.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.blue)
-                            .frame(width: 32, height: 32)
-                            .background(Color.blue.opacity(0.2))
-                            .clipShape(Circle())
-                    }
-                }
-            }
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-struct SpacePhotoThumbnail: View {
-    let space: SpacePhoto
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 4) {
-                if let image = space.thumbnail {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                } else {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 80)
-                        .overlay(
-                            Image(systemName: space.icon)
-                                .font(.title2)
-                                .foregroundColor(.gray)
-                        )
-                }
-                
-                Text(space.name)
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
-            }
-        }
-    }
-}
-
-struct FilterPill: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : .white.opacity(0.6))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? Color.blue : Color.white.opacity(0.1))
-                )
-        }
-    }
-}
-
-struct QuickActionButton: View {
-    let icon: String
-    let title: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.title3)
-                Text(title)
-                    .font(.caption2)
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-        }
-    }
-}
-
-// Renamed to avoid conflict with EmergencyContactsSheet
-struct BuildingEmergencyRow: View {
-    let title: String
-    let number: String
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
-            Spacer()
-            Text(number)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-        }
-    }
-}
-
-// NEW: Worker Assignment Sheet
-struct WorkerAssignmentSheet: View {
-    let buildingId: String
-    let routine: DailyRoutine
-    let onAssign: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var availableWorkers: [AssignedWorker] = []
-    @State private var selectedWorkerId: String?
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Header
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Assign Worker")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(routine.title)
-                            .font(.headline)
-                        
-                        if let time = routine.scheduledTime {
-                            Text(time)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(12)
-                }
-                .padding()
-                
-                // Worker list
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(availableWorkers) { worker in
-                            WorkerSelectionRow(
-                                worker: worker,
-                                isSelected: selectedWorkerId == worker.id,
-                                onSelect: {
-                                    selectedWorkerId = worker.id
-                                }
-                            )
-                        }
-                    }
-                    .padding()
-                }
-                
-                // Action buttons
-                HStack(spacing: 12) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(.systemGray5))
-                    .cornerRadius(12)
-                    
-                    Button("Assign") {
-                        if let workerId = selectedWorkerId {
-                            onAssign(workerId)
-                            dismiss()
-                        }
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        selectedWorkerId != nil ? Color.blue : Color.gray
-                    )
-                    .cornerRadius(12)
-                    .disabled(selectedWorkerId == nil)
-                }
-                .padding()
-            }
-            .navigationBarHidden(true)
-        }
-        .presentationDetents([.medium])
-        .task {
-            loadAvailableWorkers()
-        }
-    }
-    
-    private func loadAvailableWorkers() {
-        // Load real workers assigned to this building
-        // For now, using sample data
-        availableWorkers = [
-            AssignedWorker(id: "4", name: "Kevin Dutan", schedule: "6 AM - 2 PM", isOnSite: true),
-            AssignedWorker(id: "2", name: "Edwin Lema", schedule: "2 PM - 10 PM", isOnSite: false),
-            AssignedWorker(id: "5", name: "Mercedes Inamagua", schedule: "6 AM - 2 PM", isOnSite: false)
-        ]
-    }
-}
-
-struct WorkerSelectionRow: View {
-    let worker: AssignedWorker
-    let isSelected: Bool
-    let onSelect: () -> Void
-    
-    var body: some View {
-        Button(action: onSelect) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(worker.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    HStack(spacing: 8) {
-                        Text(worker.schedule)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        if worker.isOnSite {
-                            Label("On-site", systemImage: "location.fill")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundColor(isSelected ? .blue : .gray)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
-        }
-    }
-}
-
-// MARK: - View Model
+// MARK: - View Model (Enhanced for Real Data)
 
 @MainActor
 class BuildingDetailVM: ObservableObject {
@@ -1678,9 +2223,13 @@ class BuildingDetailVM: ObservableObject {
     // Services
     private let photoStorageService = FrancoPhotoStorageService.shared
     private let locationManager = LocationManager.shared
+    private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
+    private let inventoryService = InventoryService.shared
+    private let workerService = WorkerService.shared
     
     // User context
-    @Published var userRole: CoreTypes.UserRole = CoreTypes.UserRole.worker
+    @Published var userRole: CoreTypes.UserRole = .worker
     
     // Overview data
     @Published var buildingImage: UIImage?
@@ -1690,7 +2239,6 @@ class BuildingDetailVM: ObservableObject {
     @Published var todaysTasks: (total: Int, completed: Int)?
     @Published var nextCriticalTask: String?
     @Published var todaysSpecialNote: String?
-    @Published var spacePhotos: [SpacePhoto] = []
     @Published var isFavorite: Bool = false
     @Published var complianceStatus: CoreTypes.ComplianceStatus?
     @Published var primaryContact: BuildingContact?
@@ -1702,20 +2250,58 @@ class BuildingDetailVM: ObservableObject {
     @Published var floors: Int = 0
     @Published var units: Int = 0
     @Published var yearBuilt: Int = 1900
+    @Published var contractType: String?
+    
+    // Metrics
+    @Published var efficiencyScore: Int = 0
+    @Published var complianceScore: String = "A"
+    @Published var openIssues: Int = 0
+    
+    // Spaces & Access
+    @Published var spaceSearchQuery: String = ""
+    @Published var selectedSpaceCategory: SpaceCategory = .all
+    @Published var spaces: [SpaceAccess] = []
+    @Published var accessCodes: [AccessCode] = []
+    
+    var filteredSpaces: [SpaceAccess] {
+        var filtered = spaces
+        
+        // Category filter
+        if selectedSpaceCategory != .all {
+            filtered = filtered.filter { $0.category == selectedSpaceCategory }
+        }
+        
+        // Search filter
+        if !spaceSearchQuery.isEmpty {
+            filtered = filtered.filter {
+                $0.name.localizedCaseInsensitiveContains(spaceSearchQuery) ||
+                $0.notes?.localizedCaseInsensitiveContains(spaceSearchQuery) ?? false
+            }
+        }
+        
+        return filtered
+    }
     
     // Routines data
-    @Published var routineFilter: RoutineFilterType = .all
     @Published var dailyRoutines: [DailyRoutine] = []
-    @Published var isLoadingRoutines: Bool = false
+    @Published var completedRoutines: Int = 0
+    @Published var totalRoutines: Int = 0
     
-    // History data
-    @Published var maintenanceHistory: [MaintenanceRecord] = []
+    // Inventory summary
+    @Published var inventorySummary = InventorySummary()
     
-    // Inventory data
-    @Published var inventory: [CoreTypes.InventoryCategory: [CoreTypes.InventoryItem]] = [:]
+    // Compliance
+    @Published var dsnyCompliance: CoreTypes.ComplianceStatus = .compliant
+    @Published var nextDSNYAction: String?
+    @Published var fireSafetyCompliance: CoreTypes.ComplianceStatus = .compliant
+    @Published var nextFireSafetyAction: String?
+    @Published var healthCompliance: CoreTypes.ComplianceStatus = .compliant
+    @Published var nextHealthAction: String?
     
-    // Team data
+    // Activity data
     @Published var assignedWorkers: [AssignedWorker] = []
+    @Published var recentActivities: [BuildingActivity] = []
+    @Published var maintenanceHistory: [MaintenanceRecord] = []
     
     // Computed properties
     var buildingIcon: String {
@@ -1736,326 +2322,351 @@ class BuildingDetailVM: ObservableObject {
     }
     
     func loadBuildingData() async {
-        // Load all data for the building
-        await loadOverviewData()
-        await loadRoutines()
-        await loadHistory()
-        await loadInventory()
-        await loadTeamData()
-        await loadBuildingPhotos()
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadBuildingDetails() }
+            group.addTask { await self.loadTodaysMetrics() }
+            group.addTask { await self.loadRoutines() }
+            group.addTask { await self.loadSpacesAndAccess() }
+            group.addTask { await self.loadInventorySummary() }
+            group.addTask { await self.loadComplianceStatus() }
+            group.addTask { await self.loadActivityData() }
+        }
+    }
+    
+    func refreshData() async {
+        await loadTodaysMetrics()
+        await loadActivityData()
     }
     
     private func loadUserRole() {
-        // Get from auth manager
         if let roleString = NewAuthManager.shared.currentUser?.role,
            let role = CoreTypes.UserRole(rawValue: roleString) {
             userRole = role
-        } else {
-            userRole = .worker // Default to worker role
         }
     }
     
-    private func loadOverviewData() async {
-        // Phase 1: Mock data based on real buildings
-        // For Rubin Museum
-        if buildingId == "14" {
-            completionPercentage = 87
-            workersOnSite = 2
-            workersPresent = ["Kevin D.", "Edwin L."]
-            todaysTasks = (total: 38, completed: 33)
-            nextCriticalTask = "DSNY Trash set-out @ 8 PM"
-            complianceStatus = .compliant
-            
-            buildingSize = 70000
-            floors = 7
-            units = 1
-            yearBuilt = 1998
-            todaysSpecialNote = "Gallery event tonight - extra cleaning required"
-        } else {
-            // Default data
-            completionPercentage = Int.random(in: 70...100)
-            workersOnSite = Int.random(in: 0...3)
-            workersPresent = ["Kevin D."]
-            todaysTasks = (total: 12, completed: 8)
-            nextCriticalTask = "Trash pickup @ 6 PM"
-            complianceStatus = .compliant
-            
-            buildingSize = 45000
-            floors = 6
-            units = 12
-            yearBuilt = 1920
-        }
-    }
-    
-    private func loadBuildingPhotos() async {
-        // Load photos from storage service
+    private func loadBuildingDetails() async {
         do {
-            let photos = try await photoStorageService.loadPhotos(for: buildingId)
+            let building = try await buildingService.getBuildingDetails(buildingId)
             
-            // Convert to SpacePhoto format for display
-            spacePhotos = photos.prefix(6).compactMap { photo in
-                guard let thumbnail = photo.thumbnail else { return nil }
+            await MainActor.run {
+                self.buildingType = building.type.rawValue.capitalized
+                self.buildingSize = building.squareFootage
+                self.floors = building.floors
+                self.units = building.units ?? 1
+                self.yearBuilt = building.yearBuilt ?? 1900
+                self.contractType = building.contractType
                 
-                return SpacePhoto(
-                    id: photo.id,
-                    name: photo.category.displayName,
-                    icon: iconForCategory(photo.category),
-                    thumbnail: thumbnail
-                )
+                // Load primary contact
+                if let contact = building.primaryContact {
+                    self.primaryContact = BuildingContact(
+                        name: contact.name,
+                        role: contact.role,
+                        email: contact.email,
+                        phone: contact.phone,
+                        isEmergencyContact: contact.isEmergency
+                    )
+                }
             }
         } catch {
-            print("❌ Error loading building photos: \(error)")
+            print("❌ Error loading building details: \(error)")
         }
     }
     
-    func savePhoto(_ photo: UIImage, category: FrancoPhotoCategory, notes: String) async {
-        switch category {
-        case .entrance: return "door.left.hand.open"
-        case .lobby: return "building"
-        case .utilities: return "wrench.fill"
-        case .basement: return "arrow.down.to.line"
-        case .roof: return "arrow.up.to.line"
-        case .mechanical: return "gear"
-        case .storage: return "shippingbox.fill"
-        case .general: return "photo"
+    private func loadTodaysMetrics() async {
+        do {
+            let metrics = try await buildingService.getTodaysMetrics(buildingId)
+            
+            await MainActor.run {
+                self.completionPercentage = metrics.completionPercentage
+                self.workersOnSite = metrics.workersOnSite
+                self.workersPresent = metrics.workersPresent
+                self.todaysTasks = (metrics.totalTasks, metrics.completedTasks)
+                self.nextCriticalTask = metrics.nextCriticalTask
+                self.todaysSpecialNote = metrics.specialNote
+                self.efficiencyScore = metrics.efficiencyScore
+                self.openIssues = metrics.openIssues
+            }
+        } catch {
+            print("❌ Error loading metrics: \(error)")
         }
     }
     
     private func loadRoutines() async {
-        isLoadingRoutines = true
-        
-        // Simulate loading
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        
-        // Real routines based on building
-        if buildingId == "14" { // Rubin Museum
-            dailyRoutines = [
-                DailyRoutine(
-                    id: "1",
-                    title: "Gallery floors dust mop & spot clean",
-                    scheduledTime: "6:00 AM",
-                    assignedWorker: "Kevin D.",
-                    requiredInventory: ["Dust mop", "Microfiber cloths"]
-                ),
-                DailyRoutine(
-                    id: "2",
-                    title: "Public restroom deep clean",
-                    scheduledTime: "7:00 AM",
-                    assignedWorker: nil,
-                    requiredInventory: ["Disinfectant", "Paper towels", "Toilet cleaner"]
-                ),
-                DailyRoutine(
-                    id: "3",
-                    title: "Loading dock sweep & mop",
-                    scheduledTime: "9:00 AM",
-                    isCompleted: true,
-                    assignedWorker: "Kevin D.",
-                    requiredInventory: ["Broom", "Mop", "Degreaser"]
-                ),
-                DailyRoutine(
-                    id: "4",
-                    title: "Exhibition space patrol & touch-up",
-                    scheduledTime: "2:00 PM",
-                    requiredInventory: ["Glass cleaner", "Microfiber cloths"]
-                ),
-                DailyRoutine(
-                    id: "5",
-                    title: "DSNY compliant trash staging",
-                    scheduledTime: "8:00 PM",
-                    assignedWorker: "Edwin L.",
-                    requiredInventory: ["Trash bags", "Recycling bins"]
-                )
-            ]
-        } else {
-            // Default routines
-            dailyRoutines = [
-                DailyRoutine(id: "1", title: "Lobby cleaning & mopping", scheduledTime: "6:00 AM"),
-                DailyRoutine(id: "2", title: "Elevator wipe down", scheduledTime: "7:00 AM"),
-                DailyRoutine(id: "3", title: "Common area patrol", scheduledTime: "2:00 PM"),
-                DailyRoutine(id: "4", title: "Trash collection", scheduledTime: "5:00 PM")
-            ]
-        }
-        
-        isLoadingRoutines = false
-    }
-    
-    private func loadHistory() async {
-        // Phase 1: Basic maintenance records
-        maintenanceHistory = [
-            MaintenanceRecord(
-                id: "1",
-                title: "Elevator B Service",
-                date: Date().addingTimeInterval(-86400),
-                description: "Annual inspection completed",
-                cost: nil
-            ),
-            MaintenanceRecord(
-                id: "2",
-                title: "HVAC Filter Replacement",
-                date: Date().addingTimeInterval(-604800),
-                description: "Replaced all filters on floors 1-3",
-                cost: 450
-            )
-        ]
-    }
-    
-    private func loadInventory() async {
-        // Real inventory based on building needs
-        inventory = [
-            .cleaning: [
-                CoreTypes.InventoryItem(
-                    id: "1",
-                    name: "Floor Cleaner",
-                    category: .cleaning,
-                    currentStock: 4,
-                    minimumStock: 2,
-                    maxStock: 10,
-                    unit: "gallons",
-                    cost: 25.99
-                ),
-                CoreTypes.InventoryItem(
-                    id: "2",
-                    name: "Glass Cleaner",
-                    category: .cleaning,
-                    currentStock: 8,
-                    minimumStock: 4,
-                    maxStock: 12,
-                    unit: "bottles",
-                    cost: 4.99
-                )
-            ],
-            .equipment: [
-                CoreTypes.InventoryItem(
-                    id: "3",
-                    name: "Mop Heads",
-                    category: .equipment,
-                    currentStock: 3,
-                    minimumStock: 4,
-                    maxStock: 10,
-                    unit: "units",
-                    cost: 12.99
-                )
-            ]
-        ]
-    }
-    
-    private func loadTeamData() async {
-        // Real worker assignments
-        if buildingId == "14" { // Rubin Museum
-            assignedWorkers = [
-                AssignedWorker(
-                    id: "4",
-                    name: "Kevin Dutan",
-                    schedule: "M-F 6 AM - 2 PM",
-                    isOnSite: true
-                ),
-                AssignedWorker(
-                    id: "2",
-                    name: "Edwin Lema",
-                    schedule: "M-F 2 PM - 10 PM",
-                    isOnSite: Calendar.current.component(.hour, from: Date()) >= 14
-                )
-            ]
-        } else {
-            assignedWorkers = [
-                AssignedWorker(
-                    id: "4",
-                    name: "Kevin Dutan",
-                    schedule: "M-F 6 AM - 2 PM",
-                    isOnSite: true
-                )
-            ]
-        }
-    }
-    
-    // Action methods
-    func toggleRoutineCompletion(_ routine: DailyRoutine) {
-        // Update routine completion status
-        if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
-            dailyRoutines[index].isCompleted.toggle()
-            
-            // Update completion percentage
-            let completed = dailyRoutines.filter { $0.isCompleted }.count
-            let total = dailyRoutines.count
-            completionPercentage = total > 0 ? Int((Double(completed) / Double(total)) * 100) : 0
-            
-            // Broadcast update
-            let update = CoreTypes.DashboardUpdate(
-                source: CoreTypes.DashboardUpdate.Source.worker,
-                type: CoreTypes.DashboardUpdate.UpdateType.taskCompleted,
-                buildingId: buildingId,
-                workerId: NewAuthManager.shared.workerId ?? "",
-                data: [
-                    "routineId": routine.id,
-                    "routineTitle": routine.title,
-                    "isCompleted": String(dailyRoutines[index].isCompleted)
-                ]
-            )
-            DashboardSyncService.shared.broadcastWorkerUpdate(update)
-        }
-    }
-    
-    // NEW: Assign worker to routine
-    func assignWorkerToRoutine(_ routine: DailyRoutine, workerId: String) {
-        if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
-            // Find worker name
-            let workerName = assignedWorkers.first(where: { $0.id == workerId })?.name ?? "Unknown"
-            dailyRoutines[index].assignedWorker = workerName
-            
-            // Broadcast update
-            let update = CoreTypes.DashboardUpdate(
-                source: CoreTypes.DashboardUpdate.Source.admin,
-                type: CoreTypes.DashboardUpdate.UpdateType.taskUpdated,
-                buildingId: buildingId,
-                workerId: workerId,
-                data: [
-                    "routineId": routine.id,
-                    "routineTitle": routine.title,
-                    "assignedWorker": workerName,
-                    "action": "workerAssigned"
-                ]
-            )
-            DashboardSyncService.shared.broadcastAdminUpdate(update)
-        }
-    }
-    
-    func reportIssue() {
-        // Phase 2: Open issue reporting
-    }
-    
-    func requestSupplies() {
-        // Phase 3: Open supply request
-    }
-    
-    func addNote() {
-        // Phase 2: Add note to building
-    }
-    
-    func logVendorVisit() {
-        // Phase 2: Log vendor visit
-    }
-    
-    private func iconForCategory(_ category: FrancoPhotoCategory) -> String {
-        // Get current location if available
-        let location = await locationManager.getCurrentLocation()
-        
-        // Create metadata
-        let metadata = FrancoBuildingPhotoMetadata(
-            buildingId: buildingId,
-            category: category,
-            notes: notes.isEmpty ? nil : notes,
-            location: location,
-            taskId: nil,
-            workerId: NewAuthManager.shared.workerId,
-            timestamp: Date()
-        )
-        
         do {
-            let savedPhoto = try await photoStorageService.savePhoto(photo, metadata: metadata)
-            print("✅ Photo saved to building gallery: \(savedPhoto.id)")
+            let routines = try await taskService.getDailyRoutines(buildingId: buildingId)
             
-            // Reload photos to update UI
-            await loadBuildingPhotos()
+            await MainActor.run {
+                self.dailyRoutines = routines.map { routine in
+                    DailyRoutine(
+                        id: routine.id,
+                        title: routine.title,
+                        scheduledTime: routine.scheduledTime?.formatted(date: .omitted, time: .shortened),
+                        isCompleted: routine.status == .completed,
+                        assignedWorker: routine.assignedWorkerName,
+                        requiredInventory: routine.requiredInventory ?? []
+                    )
+                }
+                
+                self.completedRoutines = dailyRoutines.filter { $0.isCompleted }.count
+                self.totalRoutines = dailyRoutines.count
+            }
+        } catch {
+            print("❌ Error loading routines: \(error)")
+        }
+    }
+    
+    private func loadSpacesAndAccess() async {
+        do {
+            // Load spaces with photos
+            let buildingSpaces = try await buildingService.getSpaces(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.spaces = buildingSpaces.map { space in
+                    SpaceAccess(
+                        id: space.id,
+                        name: space.name,
+                        category: mapToSpaceCategory(space.type),
+                        thumbnail: nil, // Load async
+                        lastUpdated: space.lastPhotoDate ?? Date(),
+                        accessCode: space.accessCode,
+                        notes: space.notes,
+                        requiresKey: space.requiresPhysicalKey,
+                        photos: []
+                    )
+                }
+                
+                // Load access codes
+                self.accessCodes = buildingSpaces.compactMap { space in
+                    guard let code = space.accessCode else { return nil }
+                    return AccessCode(
+                        id: space.id,
+                        location: space.name,
+                        code: code,
+                        type: space.accessType ?? "keypad",
+                        updatedDate: space.lastUpdated
+                    )
+                }
+            }
+            
+            // Load thumbnails
+            await loadSpaceThumbnails()
+            
+        } catch {
+            print("❌ Error loading spaces: \(error)")
+        }
+    }
+    
+    private func loadSpaceThumbnails() async {
+        for (index, space) in spaces.enumerated() {
+            do {
+                let photos = try await photoStorageService.loadPhotosForSpace(spaceId: space.id, limit: 1)
+                if let firstPhoto = photos.first, let thumbnail = firstPhoto.thumbnail {
+                    await MainActor.run {
+                        self.spaces[index] = SpaceAccess(
+                            id: space.id,
+                            name: space.name,
+                            category: space.category,
+                            thumbnail: thumbnail,
+                            lastUpdated: space.lastUpdated,
+                            accessCode: space.accessCode,
+                            notes: space.notes,
+                            requiresKey: space.requiresKey,
+                            photos: photos
+                        )
+                    }
+                }
+            } catch {
+                print("❌ Error loading thumbnail for space \(space.id): \(error)")
+            }
+        }
+    }
+    
+    private func loadInventorySummary() async {
+        do {
+            let summary = try await inventoryService.getBuildingInventorySummary(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.inventorySummary = InventorySummary(
+                    cleaningLow: summary.categorySummaries[.cleaning]?.lowStockCount ?? 0,
+                    cleaningTotal: summary.categorySummaries[.cleaning]?.totalItems ?? 0,
+                    equipmentLow: summary.categorySummaries[.equipment]?.lowStockCount ?? 0,
+                    equipmentTotal: summary.categorySummaries[.equipment]?.totalItems ?? 0,
+                    maintenanceLow: summary.categorySummaries[.maintenance]?.lowStockCount ?? 0,
+                    maintenanceTotal: summary.categorySummaries[.maintenance]?.totalItems ?? 0,
+                    safetyLow: summary.categorySummaries[.safety]?.lowStockCount ?? 0,
+                    safetyTotal: summary.categorySummaries[.safety]?.totalItems ?? 0
+                )
+            }
+        } catch {
+            print("❌ Error loading inventory summary: \(error)")
+        }
+    }
+    
+    private func loadComplianceStatus() async {
+        do {
+            let compliance = try await buildingService.getComplianceStatus(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.complianceStatus = compliance.overallStatus
+                
+                // DSNY compliance
+                if let dsny = compliance.categories.first(where: { $0.type == "DSNY" }) {
+                    self.dsnyCompliance = dsny.status
+                    self.nextDSNYAction = dsny.nextRequiredAction
+                }
+                
+                // Fire safety
+                if let fire = compliance.categories.first(where: { $0.type == "Fire Safety" }) {
+                    self.fireSafetyCompliance = fire.status
+                    self.nextFireSafetyAction = fire.nextRequiredAction
+                }
+                
+                // Health
+                if let health = compliance.categories.first(where: { $0.type == "Health" }) {
+                    self.healthCompliance = health.status
+                    self.nextHealthAction = health.nextRequiredAction
+                }
+            }
+        } catch {
+            print("❌ Error loading compliance: \(error)")
+        }
+    }
+    
+    private func loadActivityData() async {
+        do {
+            // Load assigned workers
+            let workers = try await workerService.getAssignedWorkers(buildingId: buildingId)
+            
+            // Load recent activities
+            let activities = try await buildingService.getRecentActivity(buildingId: buildingId, limit: 20)
+            
+            // Load maintenance history
+            let maintenance = try await buildingService.getMaintenanceHistory(buildingId: buildingId, limit: 5)
+            
+            await MainActor.run {
+                self.assignedWorkers = workers.map { worker in
+                    AssignedWorker(
+                        id: worker.id,
+                        name: worker.displayName,
+                        schedule: worker.schedule,
+                        isOnSite: worker.clockStatus == .clockedIn && worker.currentBuildingId == buildingId
+                    )
+                }
+                
+                self.recentActivities = activities.map { activity in
+                    BuildingActivity(
+                        id: activity.id,
+                        type: mapActivityType(activity.type),
+                        description: activity.description,
+                        timestamp: activity.timestamp,
+                        workerName: activity.workerName,
+                        photoId: activity.relatedPhotoId
+                    )
+                }
+                
+                self.maintenanceHistory = maintenance.map { record in
+                    MaintenanceRecord(
+                        id: record.id,
+                        title: record.title,
+                        date: record.date,
+                        description: record.description,
+                        cost: record.cost
+                    )
+                }
+            }
+        } catch {
+            print("❌ Error loading activity data: \(error)")
+        }
+    }
+    
+    // MARK: - Actions
+    
+    func toggleRoutineCompletion(_ routine: DailyRoutine) {
+        Task {
+            do {
+                let newStatus: CoreTypes.TaskStatus = routine.isCompleted ? .pending : .completed
+                try await taskService.updateTaskStatus(routine.id, status: newStatus)
+                
+                // Update local state
+                if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
+                    dailyRoutines[index].isCompleted.toggle()
+                    completedRoutines = dailyRoutines.filter { $0.isCompleted }.count
+                }
+                
+                // Broadcast update
+                let update = CoreTypes.DashboardUpdate(
+                    source: .worker,
+                    type: .taskCompleted,
+                    buildingId: buildingId,
+                    workerId: NewAuthManager.shared.workerId ?? "",
+                    data: [
+                        "routineId": routine.id,
+                        "routineTitle": routine.title,
+                        "isCompleted": String(!routine.isCompleted)
+                    ]
+                )
+                DashboardSyncService.shared.broadcastWorkerUpdate(update)
+                
+            } catch {
+                print("❌ Error updating routine: \(error)")
+            }
+        }
+    }
+    
+    func assignWorkerToRoutine(_ routine: DailyRoutine, workerId: String) {
+        Task {
+            do {
+                try await taskService.assignWorker(taskId: routine.id, workerId: workerId)
+                
+                // Update local state
+                if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
+                    let workerName = assignedWorkers.first(where: { $0.id == workerId })?.name ?? "Unknown"
+                    dailyRoutines[index].assignedWorker = workerName
+                }
+                
+                // Broadcast update
+                let update = CoreTypes.DashboardUpdate(
+                    source: .admin,
+                    type: .taskUpdated,
+                    buildingId: buildingId,
+                    workerId: workerId,
+                    data: [
+                        "routineId": routine.id,
+                        "action": "workerAssigned"
+                    ]
+                )
+                DashboardSyncService.shared.broadcastAdminUpdate(update)
+                
+            } catch {
+                print("❌ Error assigning worker: \(error)")
+            }
+        }
+    }
+    
+    func savePhoto(_ photo: UIImage, category: FrancoPhotoCategory, notes: String) async {
+        do {
+            // Get current location
+            let location = await locationManager.getCurrentLocation()
+            
+            // Create metadata
+            let metadata = FrancoBuildingPhotoMetadata(
+                buildingId: buildingId,
+                category: category,
+                notes: notes.isEmpty ? nil : notes,
+                location: location,
+                taskId: nil,
+                workerId: NewAuthManager.shared.workerId,
+                timestamp: Date()
+            )
+            
+            let savedPhoto = try await photoStorageService.savePhoto(photo, metadata: metadata)
+            print("✅ Photo saved: \(savedPhoto.id)")
+            
+            // Reload spaces if it was a space photo
+            if category == .utilities || category == .mechanical || category == .storage {
+                await loadSpacesAndAccess()
+            }
             
             // Broadcast update
             let update = CoreTypes.DashboardUpdate(
@@ -2076,46 +2687,129 @@ class BuildingDetailVM: ObservableObject {
         }
     }
     
-    func viewSpaceDetails(_ space: SpacePhoto) {
-        // Phase 3: View space details
+    func updateSpace(_ space: SpaceAccess) {
+        if let index = spaces.firstIndex(where: { $0.id == space.id }) {
+            spaces[index] = space
+        }
     }
     
     func exportBuildingReport() {
-        // Phase 2: Export building report
+        // TODO: Implement report generation
     }
     
     func toggleFavorite() {
         isFavorite.toggle()
+        // TODO: Save to user preferences
     }
     
     func editBuildingInfo() {
-        // Phase 4: Edit building information (admin only)
+        // TODO: Navigate to edit screen (admin only)
+    }
+    
+    func reportIssue() {
+        // TODO: Open issue reporting flow
+    }
+    
+    func requestSupplies() {
+        // TODO: Open supply request flow
+    }
+    
+    func addNote() {
+        // TODO: Add note to building
+    }
+    
+    func logVendorVisit() {
+        // TODO: Log vendor visit
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func mapToSpaceCategory(_ type: String) -> SpaceCategory {
+        switch type.lowercased() {
+        case "utility": return .utility
+        case "mechanical": return .mechanical
+        case "storage": return .storage
+        case "electrical": return .electrical
+        case "access": return .access
+        default: return .utility
+        }
+    }
+    
+    private func mapActivityType(_ type: String) -> BuildingActivity.ActivityType {
+        switch type {
+        case "task_completed": return .taskCompleted
+        case "photo_added": return .photoAdded
+        case "issue_reported": return .issueReported
+        case "worker_arrived": return .workerArrived
+        case "worker_departed": return .workerDeparted
+        case "routine_completed": return .routineCompleted
+        case "inventory_used": return .inventoryUsed
+        default: return .taskCompleted
+        }
     }
 }
 
-// MARK: - Placeholder Views for Missing Components
+// MARK: - Supporting Models
 
-struct MessageComposerView: View {
-    let recipients: [String]
-    let subject: String
-    let prefilledBody: String
-    @Environment(\.dismiss) private var dismiss
+struct InventorySummary {
+    var cleaningLow: Int = 0
+    var cleaningTotal: Int = 0
+    var equipmentLow: Int = 0
+    var equipmentTotal: Int = 0
+    var maintenanceLow: Int = 0
+    var maintenanceTotal: Int = 0
+    var safetyLow: Int = 0
+    var safetyTotal: Int = 0
+}
+
+// MARK: - Placeholder Views
+
+struct BuildingInventoryDetailView: View {
+    let buildingId: String
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("Message Composer")
-                    .font(.largeTitle)
-                Text("Email integration coming in Phase 2")
-                    .foregroundColor(.secondary)
+        Text("Inventory Detail View - Coming Soon")
+            .navigationTitle("Inventory")
+    }
+}
+
+struct BuildingMaintenanceHistoryView: View {
+    let buildingId: String
+    
+    var body: some View {
+        Text("Maintenance History - Coming Soon")
+            .navigationTitle("Maintenance History")
+    }
+}
+
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.image = image
             }
-            .navigationTitle("New Message")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
+            picker.dismiss(animated: true)
         }
     }
 }
