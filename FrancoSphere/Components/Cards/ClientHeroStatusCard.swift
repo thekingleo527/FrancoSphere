@@ -1,884 +1,700 @@
 //
 //  ClientHeroStatusCard.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 8/2/25.
-//
-
-
-//
-//  ClientHeroStatusCard.swift
 //  FrancoSphere v6.0
 //
-//  ✅ DYNAMIC: Real-time portfolio metrics from all sources
-//  ✅ COMPREHENSIVE: Aggregates worker, compliance, and building data
-//  ✅ INTELLIGENT: Shows actionable insights and trends
-//  ✅ VISUAL: Rich animations and live status indicators
-//  ✅ RESPONSIVE: Adapts to critical situations
+//  Hero status card specifically designed for client dashboard
+//  Shows real-time routine status across all client buildings
 //
 
 import SwiftUI
-import Charts
+import MapKit
 
 struct ClientHeroStatusCard: View {
-    // MARK: - Properties
-    let portfolioHealth: CoreTypes.PortfolioHealth
-    let realtimeMetrics: CoreTypes.RealtimePortfolioMetrics
-    let activeWorkers: CoreTypes.ActiveWorkerStatus
-    let complianceStatus: CoreTypes.ComplianceOverview
-    let criticalAlerts: [CoreTypes.ClientAlert]
-    let buildingPerformance: [String: Double]
-    let syncStatus: SyncStatus
+    // Real-time data inputs
+    let routineMetrics: RealtimeRoutineMetrics
+    let activeWorkers: ActiveWorkerStatus
+    let complianceStatus: ClientComplianceStatus  // Renamed to avoid ambiguity
+    let monthlyMetrics: MonthlyMetrics
     
-    // Callbacks
-    let onPortfolioTap: () -> Void
-    let onComplianceTap: () -> Void
-    let onWorkersTap: () -> Void
-    let onAlertsTap: () -> Void
-    let onSyncTap: () -> Void
-    
-    // Animation states
-    @State private var animateMetrics = false
-    @State private var pulseAnimation = false
-    @State private var showDetailedView = false
-    
-    // MARK: - Enums
-    enum SyncStatus {
-        case synced
-        case syncing(progress: Double)
-        case error(String)
-        case offline
-    }
+    // Callback for building tap
+    let onBuildingTap: (CoreTypes.NamedCoordinate) -> Void
     
     // MARK: - Computed Properties
-    private var hasCriticalSituation: Bool {
-        portfolioHealth.criticalIssues > 0 ||
-        complianceStatus.criticalViolations > 0 ||
-        criticalAlerts.contains { $0.severity == .critical }
-    }
     
-    private var overallStatus: StatusLevel {
-        if hasCriticalSituation {
-            return .critical
-        } else if portfolioHealth.overallScore < 0.7 || complianceStatus.overallScore < 0.8 {
-            return .warning
+    private var overallStatus: OverallStatus {
+        if routineMetrics.behindScheduleCount > 0 {
+            return .behindSchedule
+        } else if routineMetrics.overallCompletion > 0.9 {
+            return .onTrack
+        } else if routineMetrics.overallCompletion > 0.7 {
+            return .inProgress
         } else {
-            return .healthy
+            return .starting
         }
     }
     
     private var statusColor: Color {
         switch overallStatus {
-        case .critical: return FrancoSphereDesign.DashboardColors.critical
-        case .warning: return FrancoSphereDesign.DashboardColors.warning
-        case .healthy: return FrancoSphereDesign.DashboardColors.success
+        case .onTrack: return FrancoSphereDesign.DashboardColors.success
+        case .inProgress: return FrancoSphereDesign.DashboardColors.info
+        case .behindSchedule: return FrancoSphereDesign.DashboardColors.warning
+        case .starting: return FrancoSphereDesign.DashboardColors.inactive
         }
     }
     
-    enum StatusLevel {
-        case healthy, warning, critical
+    private var timeOfDayGreeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good Morning"
+        case 12..<17: return "Good Afternoon"
+        case 17..<22: return "Good Evening"
+        default: return "Hello"
+        }
+    }
+    
+    private var priorityBuildings: [ClientBuildingRoutineStatus] {
+        // Get buildings that need attention first
+        routineMetrics.buildingStatuses.values
+            .map { ClientBuildingRoutineStatus(from: $0) }
+            .sorted { b1, b2 in
+                // Priority order: behind schedule > low completion > alphabetical
+                if b1.isBehindSchedule != b2.isBehindSchedule {
+                    return b1.isBehindSchedule
+                }
+                return b1.completionRate < b2.completionRate
+            }
+            .prefix(5)
+            .map { $0 }
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Main card content
-            VStack(spacing: 20) {
-                // Header with status
-                headerSection
-                
-                // Real-time metrics grid
-                metricsGrid
-                
-                // Live activity monitor
-                liveActivitySection
-                
-                // Compliance and alerts bar
-                complianceAlertsBar
-                
-                // Performance trend chart
-                performanceTrendSection
-                
-                // Action buttons
-                actionButtons
-            }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.xl)
-                    .fill(
-                        LinearGradient(
-                            colors: FrancoSphereDesign.DashboardColors.clientHeroGradient,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.xl)
-                            .stroke(statusColor.opacity(hasCriticalSituation ? 0.5 : 0.2), lineWidth: 2)
-                            .blur(radius: hasCriticalSituation ? 4 : 0)
-                            .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: hasCriticalSituation)
-                    )
-            )
-            .francoShadow(FrancoSphereDesign.Shadow.lg)
+        VStack(spacing: 20) {
+            // Header with greeting and status
+            headerSection
             
-            // Sync status bar
-            syncStatusBar
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.6)) {
-                animateMetrics = true
+            // Real-time building status cards
+            if !priorityBuildings.isEmpty {
+                buildingStatusSection
             }
-            if hasCriticalSituation {
-                pulseAnimation = true
+            
+            // Overall metrics row
+            metricsRow
+            
+            // Monthly budget indicator (if over threshold)
+            if monthlyMetrics.budgetUtilization > 0.8 {
+                budgetWarningRow
+            }
+            
+            // Compliance status (if issues)
+            if complianceStatus.criticalViolations > 0 {
+                complianceAlertRow
             }
         }
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     // MARK: - Header Section
+    
     private var headerSection: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 12) {
-                    // Portfolio health score with animation
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Portfolio Health")
-                            .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
-                        
-                        HStack(baseline: .bottom, spacing: 4) {
-                            Text("\(Int(portfolioHealth.overallScore * 100))")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundColor(statusColor)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: portfolioHealth.overallScore)
-                            
-                            Text("%")
-                                .font(.title3)
-                                .foregroundColor(statusColor.opacity(0.8))
-                        }
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(timeOfDayGreeting)
+                        .francoTypography(FrancoSphereDesign.Typography.headline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
-                    // Trend indicator
-                    VStack(alignment: .center, spacing: 4) {
-                        Image(systemName: trendIcon)
-                            .font(.title2)
-                            .foregroundColor(trendColor)
-                            .rotationEffect(.degrees(trendRotation))
-                            .animation(.spring(), value: portfolioHealth.trend)
-                        
-                        Text(trendText)
-                            .font(.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                    }
+                    Text("Service Status Overview")
+                        .francoTypography(FrancoSphereDesign.Typography.dashboardTitle)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
                 
-                // Live status indicator
-                HStack(spacing: 6) {
+                Spacer()
+                
+                // Live indicator
+                HStack(spacing: 4) {
                     Circle()
-                        .fill(FrancoSphereDesign.DashboardColors.success)
+                        .fill(Color.green)
                         .frame(width: 6, height: 6)
-                        .overlay(
-                            Circle()
-                                .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.4), lineWidth: 6)
-                                .scaleEffect(pulseAnimation ? 2 : 1)
-                                .opacity(pulseAnimation ? 0 : 1)
-                                .animation(.easeOut(duration: 1.5).repeatForever(autoreverses: false), value: pulseAnimation)
-                        )
+                        .opacity(1)
+                        .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: UUID())
                     
                     Text("LIVE")
-                        .font(.caption2)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
-                    
-                    Text("•")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
-                    
-                    Text("Updated \(realtimeMetrics.lastUpdateTime.formatted(.relative(presentation: .numeric)))")
-                        .font(.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(.green)
                 }
             }
             
-            Spacer()
-            
-            // Critical alerts indicator
-            if hasCriticalSituation {
-                Button(action: onAlertsTap) {
-                    VStack(spacing: 4) {
-                        ZStack {
-                            Circle()
-                                .fill(FrancoSphereDesign.DashboardColors.critical)
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.title3)
-                                .foregroundColor(.white)
-                        }
-                        
-                        Text("\(criticalAlerts.filter { $0.severity == .critical }.count) Critical")
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                    }
+            // Overall status pill
+            HStack(spacing: 12) {
+                StatusPill(
+                    label: overallStatus.displayText,
+                    color: statusColor,
+                    icon: overallStatus.icon
+                )
+                
+                if routineMetrics.behindScheduleCount > 0 {
+                    StatusPill(
+                        label: "\(routineMetrics.behindScheduleCount) behind schedule",
+                        color: FrancoSphereDesign.DashboardColors.warning,
+                        icon: "exclamationmark.triangle.fill"
+                    )
                 }
-                .buttonStyle(ScaleButtonStyle())
             }
         }
     }
     
-    // MARK: - Metrics Grid
-    private var metricsGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 12) {
-            // Buildings metric
-            MetricCard(
-                icon: "building.2.fill",
-                title: "Buildings",
-                value: "\(portfolioHealth.totalBuildings)",
-                subtitle: "\(portfolioHealth.activeBuildings) active",
-                color: FrancoSphereDesign.DashboardColors.clientPrimary,
-                progress: Double(portfolioHealth.activeBuildings) / Double(portfolioHealth.totalBuildings),
-                onTap: onPortfolioTap
-            )
-            
-            // Workers metric with real-time status
-            MetricCard(
-                icon: "person.3.fill",
-                title: "Workers",
-                value: "\(activeWorkers.totalActive)",
-                subtitle: "\(Int(activeWorkers.utilizationRate * 100))% utilized",
-                color: FrancoSphereDesign.DashboardColors.info,
-                progress: activeWorkers.utilizationRate,
-                isLive: true,
-                onTap: onWorkersTap
-            )
-            
-            // Compliance metric
-            MetricCard(
-                icon: "checkmark.shield.fill",
-                title: "Compliance",
-                value: "\(Int(complianceStatus.overallScore * 100))%",
-                subtitle: complianceStatus.criticalViolations > 0 ? "\(complianceStatus.criticalViolations) violations" : "All clear",
-                color: complianceScoreColor,
-                progress: complianceStatus.overallScore,
-                hasIssue: complianceStatus.criticalViolations > 0,
-                onTap: onComplianceTap
-            )
-        }
-        .opacity(animateMetrics ? 1 : 0)
-        .offset(y: animateMetrics ? 0 : 20)
-        .animation(.easeOut(duration: 0.4).delay(0.1), value: animateMetrics)
-    }
+    // MARK: - Building Status Section
     
-    // MARK: - Live Activity Section
-    private var liveActivitySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var buildingStatusSection: some View {
+        VStack(spacing: 12) {
             HStack {
-                Label("Live Activity", systemImage: "dot.radiowaves.left.and.right")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                Text("Property Status")
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
-                // Activity indicator
-                HStack(spacing: 3) {
-                    ForEach(0..<3) { index in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(FrancoSphereDesign.DashboardColors.success)
-                            .frame(width: 3, height: CGFloat.random(in: 8...16))
-                            .animation(
-                                .easeInOut(duration: 0.5)
-                                    .repeatForever(autoreverses: true)
-                                    .delay(Double(index) * 0.1),
-                                value: pulseAnimation
-                            )
-                    }
-                }
+                Text("\(routineMetrics.buildingStatuses.count) Properties")
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             }
             
-            // Real-time activity feed
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(realtimeMetrics.recentActivities.prefix(3), id: \.id) { activity in
-                    ActivityRow(activity: activity)
-                }
+            ForEach(priorityBuildings, id: \.buildingId) { building in
+                BuildingStatusRow(
+                    status: building,
+                    onTap: {
+                        if let coord = buildingToCoordinate(building.buildingId) {
+                            onBuildingTap(coord)
+                        }
+                    }
+                )
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.05))
-            )
         }
-        .opacity(animateMetrics ? 1 : 0)
-        .offset(y: animateMetrics ? 0 : 20)
-        .animation(.easeOut(duration: 0.4).delay(0.2), value: animateMetrics)
     }
     
-    // MARK: - Compliance & Alerts Bar
-    private var complianceAlertsBar: some View {
-        HStack(spacing: 16) {
-            // Compliance summary
-            Button(action: onComplianceTap) {
-                HStack(spacing: 8) {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .font(.title3)
-                        .foregroundColor(complianceScoreColor)
-                    
+    // MARK: - Metrics Row
+    
+    private var metricsRow: some View {
+        HStack(spacing: 12) {
+            MetricCard(
+                value: "\(Int(routineMetrics.overallCompletion * 100))%",
+                label: "Complete",
+                color: completionColor,
+                icon: "chart.pie.fill"
+            )
+            
+            MetricCard(
+                value: "\(activeWorkers.totalActive)",
+                label: "Active Workers",
+                color: FrancoSphereDesign.DashboardColors.info,
+                icon: "person.3.fill"
+            )
+            
+            MetricCard(
+                value: "\(Int(complianceStatus.overallScore * 100))%",
+                label: "Compliance",
+                color: complianceColor,
+                icon: "checkmark.shield.fill"
+            )
+        }
+    }
+    
+    // MARK: - Budget Warning Row
+    
+    private var budgetWarningRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "dollarsign.circle.fill")
+                .font(.title3)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Monthly Budget Alert")
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                Text("\(Int(monthlyMetrics.budgetUtilization * 100))% utilized • \(monthlyMetrics.daysRemaining) days remaining")
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+            }
+            
+            Spacer()
+            
+            Text("$\(String(format: "%.0f", monthlyMetrics.dailyBurnRate))/day")
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .fontWeight(.medium)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+    
+    // MARK: - Compliance Alert Row
+    
+    private var complianceAlertRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.shield.fill")
+                .font(.title3)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Compliance Issues Detected")
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                Text("\(complianceStatus.criticalViolations) critical • \(complianceStatus.pendingInspections) pending inspections")
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func buildingToCoordinate(_ buildingId: String) -> CoreTypes.NamedCoordinate? {
+        // This would need to be implemented based on your data model
+        // For now, returning nil
+        return nil
+    }
+    
+    private var completionColor: Color {
+        if routineMetrics.overallCompletion > 0.8 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if routineMetrics.overallCompletion > 0.6 {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else {
+            return FrancoSphereDesign.DashboardColors.critical
+        }
+    }
+    
+    private var complianceColor: Color {
+        if complianceStatus.overallScore >= 0.9 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if complianceStatus.overallScore >= 0.8 {
+            return FrancoSphereDesign.DashboardColors.info
+        } else if complianceStatus.overallScore >= 0.7 {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else {
+            return FrancoSphereDesign.DashboardColors.critical
+        }
+    }
+    
+    // MARK: - Supporting Types
+    
+    enum OverallStatus {
+        case onTrack
+        case inProgress
+        case behindSchedule
+        case starting
+        
+        var displayText: String {
+            switch self {
+            case .onTrack: return "On Track"
+            case .inProgress: return "In Progress"
+            case .behindSchedule: return "Behind Schedule"
+            case .starting: return "Starting"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .onTrack: return "checkmark.circle.fill"
+            case .inProgress: return "clock.fill"
+            case .behindSchedule: return "exclamationmark.triangle.fill"
+            case .starting: return "play.circle.fill"
+            }
+        }
+    }
+}
+
+// MARK: - Building Status Row Component
+
+struct BuildingStatusRow: View {
+    let status: ClientBuildingRoutineStatus
+    let onTap: () -> Void
+    
+    private var timeBlockColor: Color {
+        switch status.timeBlock {
+        case .morning: return Color.orange
+        case .afternoon: return Color.blue
+        case .evening: return Color.purple
+        case .overnight: return Color.indigo
+        }
+    }
+    
+    private var statusText: String {
+        if status.isBehindSchedule {
+            return "Behind Schedule"
+        } else if status.completionRate >= 1.0 {
+            return "Complete"
+        } else if status.activeWorkerCount > 0 {
+            return "In Progress"
+        } else {
+            return "Scheduled"
+        }
+    }
+    
+    private var statusColor: Color {
+        if status.isBehindSchedule {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else if status.completionRate >= 1.0 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if status.activeWorkerCount > 0 {
+            return FrancoSphereDesign.DashboardColors.info
+        } else {
+            return FrancoSphereDesign.DashboardColors.inactive
+        }
+    }
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 8) {
+                // Building name and status
+                HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Compliance")
-                            .font(.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        Text(status.buildingName)
+                            .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
-                        HStack(spacing: 4) {
-                            if complianceStatus.criticalViolations > 0 {
-                                Text("\(complianceStatus.criticalViolations)")
-                                    .fontWeight(.bold)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                                + Text(" critical")
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                            } else {
-                                Text("All Clear")
-                                    .fontWeight(.medium)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                        HStack(spacing: 8) {
+                            // Time block indicator
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(timeBlockColor)
+                                    .frame(width: 6, height: 6)
+                                Text(status.timeBlock.rawValue.capitalized)
+                                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                             }
+                            
+                            Text("•")
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            
+                            Text(statusText)
+                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(statusColor)
                         }
-                        .font(.caption)
                     }
                     
                     Spacer()
+                    
+                    // Worker count (anonymized)
+                    if status.activeWorkerCount > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "person.fill")
+                                .font(.caption)
+                            Text("\(status.activeWorkerCount)")
+                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    }
                     
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
-                .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(complianceScoreColor.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(complianceScoreColor.opacity(0.3), lineWidth: 1)
-                        )
-                )
-            }
-            .buttonStyle(ScaleButtonStyle())
-            
-            // Alerts summary
-            if !criticalAlerts.isEmpty {
-                Button(action: onAlertsTap) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "bell.badge.fill")
-                            .font(.title3)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                
+                // Progress bar
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                            .frame(height: 6)
                         
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Alerts")
-                                .font(.caption2)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
-                            
-                            Text("\(criticalAlerts.count) active")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(statusColor)
+                            .frame(width: geometry.size.width * status.completionRate, height: 6)
+                            .animation(.easeOut(duration: 0.5), value: status.completionRate)
+                    }
+                }
+                .frame(height: 6)
+                
+                // Completion percentage and ETA
+                HStack {
+                    Text("\(Int(status.completionRate * 100))% Complete")
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    
+                    Spacer()
+                    
+                    if let eta = status.estimatedCompletion {
+                        Text("ETA: \(eta, style: .time)")
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
                             .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                     }
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.3), lineWidth: 1)
-                            )
-                    )
                 }
-                .buttonStyle(ScaleButtonStyle())
             }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+            )
         }
-        .opacity(animateMetrics ? 1 : 0)
-        .offset(y: animateMetrics ? 0 : 20)
-        .animation(.easeOut(duration: 0.4).delay(0.3), value: animateMetrics)
-    }
-    
-    // MARK: - Performance Trend Section
-    private var performanceTrendSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("7-Day Performance")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                
-                Spacer()
-                
-                Text("\(performanceChange > 0 ? "+" : "")\(performanceChange)%")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(performanceChange > 0 ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.critical)
-            }
-            
-            // Mini chart
-            PerformanceTrendChart(data: realtimeMetrics.performanceTrend)
-                .frame(height: 60)
-        }
-        .opacity(animateMetrics ? 1 : 0)
-        .offset(y: animateMetrics ? 0 : 20)
-        .animation(.easeOut(duration: 0.4).delay(0.4), value: animateMetrics)
-    }
-    
-    // MARK: - Action Buttons
-    private var actionButtons: some View {
-        HStack(spacing: 12) {
-            // Quick actions based on context
-            if hasCriticalSituation {
-                Button(action: onAlertsTap) {
-                    Label("View Critical Issues", systemImage: "exclamationmark.triangle")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(GlassButtonStyle(style: .danger))
-            } else {
-                Button(action: onPortfolioTap) {
-                    Label("Portfolio Analysis", systemImage: "chart.pie")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(GlassButtonStyle(style: .primary))
-            }
-            
-            // Secondary action
-            Button(action: {
-                showDetailedView = true
-            }) {
-                Image(systemName: showDetailedView ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                    .font(.title3)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
-            }
-            .buttonStyle(ScaleButtonStyle())
-        }
-        .opacity(animateMetrics ? 1 : 0)
-        .offset(y: animateMetrics ? 0 : 20)
-        .animation(.easeOut(duration: 0.4).delay(0.5), value: animateMetrics)
-    }
-    
-    // MARK: - Sync Status Bar
-    private var syncStatusBar: some View {
-        HStack(spacing: 8) {
-            // Status icon
-            Image(systemName: syncStatusIcon)
-                .font(.caption)
-                .foregroundColor(syncStatusColor)
-                .animation(.easeInOut(duration: 0.5), value: syncStatus)
-            
-            // Status text
-            Text(syncStatusText)
-                .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-            
-            Spacer()
-            
-            // Sync button
-            Button(action: onSyncTap) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
-                    .rotationEffect(.degrees(isSyncing ? 360 : 0))
-                    .animation(isSyncing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isSyncing)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.02))
-        )
-    }
-    
-    // MARK: - Helper Properties
-    
-    private var trendIcon: String {
-        switch portfolioHealth.trend {
-        case .up, .improving: return "arrow.up.circle.fill"
-        case .down, .declining: return "arrow.down.circle.fill"
-        case .stable: return "minus.circle.fill"
-        case .unknown: return "questionmark.circle.fill"
-        }
-    }
-    
-    private var trendColor: Color {
-        switch portfolioHealth.trend {
-        case .up, .improving: return FrancoSphereDesign.DashboardColors.success
-        case .down, .declining: return FrancoSphereDesign.DashboardColors.critical
-        case .stable: return FrancoSphereDesign.DashboardColors.info
-        case .unknown: return FrancoSphereDesign.DashboardColors.inactive
-        }
-    }
-    
-    private var trendRotation: Double {
-        switch portfolioHealth.trend {
-        case .up, .improving: return -45
-        case .down, .declining: return 45
-        case .stable, .unknown: return 0
-        }
-    }
-    
-    private var trendText: String {
-        switch portfolioHealth.trend {
-        case .up: return "Up"
-        case .down: return "Down"
-        case .stable: return "Stable"
-        case .improving: return "Improving"
-        case .declining: return "Declining"
-        case .unknown: return "Unknown"
-        }
-    }
-    
-    private var complianceScoreColor: Color {
-        if complianceStatus.overallScore >= 0.9 {
-            return FrancoSphereDesign.DashboardColors.compliant
-        } else if complianceStatus.overallScore >= 0.7 {
-            return FrancoSphereDesign.DashboardColors.warning
-        } else {
-            return FrancoSphereDesign.DashboardColors.violation
-        }
-    }
-    
-    private var performanceChange: Int {
-        guard let firstValue = realtimeMetrics.performanceTrend.first,
-              let lastValue = realtimeMetrics.performanceTrend.last else { return 0 }
-        
-        let change = ((lastValue - firstValue) / firstValue) * 100
-        return Int(change)
-    }
-    
-    private var syncStatusIcon: String {
-        switch syncStatus {
-        case .synced: return "checkmark.circle.fill"
-        case .syncing: return "arrow.triangle.2.circlepath"
-        case .error: return "exclamationmark.triangle.fill"
-        case .offline: return "wifi.slash"
-        }
-    }
-    
-    private var syncStatusColor: Color {
-        switch syncStatus {
-        case .synced: return FrancoSphereDesign.DashboardColors.success
-        case .syncing: return FrancoSphereDesign.DashboardColors.info
-        case .error: return FrancoSphereDesign.DashboardColors.critical
-        case .offline: return FrancoSphereDesign.DashboardColors.inactive
-        }
-    }
-    
-    private var syncStatusText: String {
-        switch syncStatus {
-        case .synced: return "All data synced"
-        case .syncing(let progress): return "Syncing... \(Int(progress * 100))%"
-        case .error(let message): return message
-        case .offline: return "Offline mode"
-        }
-    }
-    
-    private var isSyncing: Bool {
-        if case .syncing = syncStatus { return true }
-        return false
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
 // MARK: - Supporting Components
 
-struct MetricCard: View {
-    let icon: String
-    let title: String
-    let value: String
-    let subtitle: String
+struct StatusPill: View {
+    let label: String
     let color: Color
-    let progress: Double
-    var isLive: Bool = false
-    var hasIssue: Bool = false
-    let onTap: () -> Void
-    
-    @State private var isPressed = false
+    let icon: String?
     
     var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: icon)
-                        .font(.caption)
-                        .foregroundColor(color)
-                    
-                    Spacer()
-                    
-                    if isLive {
-                        Circle()
-                            .fill(FrancoSphereDesign.DashboardColors.success)
-                            .frame(width: 4, height: 4)
-                    }
-                    
-                    if hasIssue {
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .font(.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                    }
-                }
-                
-                Text(value)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                
-                Text(title)
-                    .font(.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                
-                // Progress bar
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.white.opacity(0.1))
-                        
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(color)
-                            .frame(width: geometry.size.width * progress)
-                    }
-                }
-                .frame(height: 3)
-                
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
-                    .lineLimit(1)
+        HStack(spacing: 4) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.caption)
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(color.opacity(0.2), lineWidth: 1)
-                    )
-            )
-            .scaleEffect(isPressed ? 0.95 : 1)
+            Text(label)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .fontWeight(.medium)
         }
-        .buttonStyle(PlainButtonStyle())
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = pressing
-            }
-        }, perform: {})
+        .foregroundColor(color)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.15))
+                .overlay(
+                    Capsule()
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
 
-struct ActivityRow: View {
-    let activity: CoreTypes.RealtimeActivity
+struct MetricCard: View {
+    let value: String
+    let label: String
+    let color: Color
+    let icon: String
     
     var body: some View {
         HStack(spacing: 8) {
-            // Activity type icon
-            Image(systemName: activityIcon)
-                .font(.caption2)
-                .foregroundColor(activityColor)
-                .frame(width: 16, height: 16)
-                .background(
-                    Circle()
-                        .fill(activityColor.opacity(0.2))
-                )
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(color)
             
-            // Activity description
-            VStack(alignment: .leading, spacing: 2) {
-                Text(activity.description)
-                    .font(.caption)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                    .lineLimit(1)
                 
-                HStack(spacing: 4) {
-                    if let worker = activity.workerName {
-                        Text(worker)
-                            .font(.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.info)
-                    }
-                    
-                    if let building = activity.buildingName {
-                        Text("•")
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
-                        Text(building)
-                            .font(.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                    }
-                }
+                Text(label)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
-            
-            Spacer()
-            
-            // Time
-            Text(activity.timestamp.formatted(.relative(presentation: .numeric)))
-                .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Data Models (Client-specific to avoid ambiguity)
+
+struct RealtimeRoutineMetrics {
+    var overallCompletion: Double = 0.0
+    var activeWorkerCount: Int = 0
+    var behindScheduleCount: Int = 0
+    var buildingStatuses: [String: ClientBuildingRoutineStatus] = [:]
+    
+    var hasActiveIssues: Bool {
+        behindScheduleCount > 0 || buildingStatuses.contains { $0.value.hasIssue }
+    }
+}
+
+struct ClientBuildingRoutineStatus {
+    let buildingId: String
+    let buildingName: String
+    let completionRate: Double
+    let timeBlock: TimeBlock
+    let activeWorkerCount: Int
+    let isOnSchedule: Bool
+    let estimatedCompletion: Date?
+    let hasIssue: Bool
+    
+    var isBehindSchedule: Bool {
+        !isOnSchedule && completionRate < expectedCompletionForTime()
+    }
+    
+    private func expectedCompletionForTime() -> Double {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 7..<11: return 0.3  // Morning should be 30% done
+        case 11..<15: return 0.6 // Afternoon should be 60% done
+        case 15..<19: return 0.9 // Evening should be 90% done
+        default: return 1.0
         }
     }
     
-    private var activityIcon: String {
-        switch activity.type {
-        case .taskCompleted: return "checkmark.circle.fill"
-        case .workerClockIn: return "person.crop.circle.badge.checkmark"
-        case .workerClockOut: return "person.crop.circle.badge.xmark"
-        case .issueReported: return "exclamationmark.bubble"
-        case .complianceUpdate: return "shield.lefthalf.filled"
-        case .buildingUpdate: return "building.2"
-        }
+    init(from status: ClientBuildingRoutineStatus) {
+        self.buildingId = status.buildingId
+        self.buildingName = status.buildingName
+        self.completionRate = status.completionRate
+        self.timeBlock = status.timeBlock
+        self.activeWorkerCount = status.activeWorkerCount
+        self.isOnSchedule = status.isOnSchedule
+        self.estimatedCompletion = status.estimatedCompletion
+        self.hasIssue = status.hasIssue
     }
     
-    private var activityColor: Color {
-        switch activity.type {
-        case .taskCompleted: return FrancoSphereDesign.DashboardColors.success
-        case .workerClockIn, .workerClockOut: return FrancoSphereDesign.DashboardColors.info
-        case .issueReported: return FrancoSphereDesign.DashboardColors.warning
-        case .complianceUpdate: return FrancoSphereDesign.DashboardColors.compliant
-        case .buildingUpdate: return FrancoSphereDesign.DashboardColors.clientPrimary
+    init(
+        buildingId: String,
+        buildingName: String,
+        completionRate: Double,
+        activeWorkerCount: Int,
+        isOnSchedule: Bool,
+        estimatedCompletion: Date? = nil,
+        hasIssue: Bool = false
+    ) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.completionRate = completionRate
+        self.timeBlock = TimeBlock.current
+        self.activeWorkerCount = activeWorkerCount
+        self.isOnSchedule = isOnSchedule
+        self.estimatedCompletion = estimatedCompletion
+        self.hasIssue = hasIssue
+    }
+    
+    enum TimeBlock: String {
+        case morning = "morning"
+        case afternoon = "afternoon"
+        case evening = "evening"
+        case overnight = "overnight"
+        
+        static var current: TimeBlock {
+            let hour = Calendar.current.component(.hour, from: Date())
+            switch hour {
+            case 6..<12: return .morning
+            case 12..<17: return .afternoon
+            case 17..<22: return .evening
+            default: return .overnight
+            }
         }
     }
 }
 
-struct PerformanceTrendChart: View {
-    let data: [Double]
-    
-    var body: some View {
-        GeometryReader { geometry in
-            Path { path in
-                guard data.count > 1 else { return }
-                
-                let width = geometry.size.width
-                let height = geometry.size.height
-                let maxValue = data.max() ?? 1
-                let minValue = data.min() ?? 0
-                let range = maxValue - minValue
-                
-                for (index, value) in data.enumerated() {
-                    let x = width * CGFloat(index) / CGFloat(data.count - 1)
-                    let normalizedValue = range > 0 ? (value - minValue) / range : 0.5
-                    let y = height * (1 - normalizedValue)
-                    
-                    if index == 0 {
-                        path.move(to: CGPoint(x: x, y: y))
-                    } else {
-                        path.addLine(to: CGPoint(x: x, y: y))
-                    }
-                }
-            }
-            .stroke(
-                LinearGradient(
-                    colors: [
-                        FrancoSphereDesign.DashboardColors.clientPrimary,
-                        FrancoSphereDesign.DashboardColors.clientSecondary
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-            )
-            
-            // Add gradient fill
-            Path { path in
-                guard data.count > 1 else { return }
-                
-                let width = geometry.size.width
-                let height = geometry.size.height
-                let maxValue = data.max() ?? 1
-                let minValue = data.min() ?? 0
-                let range = maxValue - minValue
-                
-                path.move(to: CGPoint(x: 0, y: height))
-                
-                for (index, value) in data.enumerated() {
-                    let x = width * CGFloat(index) / CGFloat(data.count - 1)
-                    let normalizedValue = range > 0 ? (value - minValue) / range : 0.5
-                    let y = height * (1 - normalizedValue)
-                    
-                    path.addLine(to: CGPoint(x: x, y: y))
-                }
-                
-                path.addLine(to: CGPoint(x: width, y: height))
-                path.closeSubpath()
-            }
-            .fill(
-                LinearGradient(
-                    colors: [
-                        FrancoSphereDesign.DashboardColors.clientPrimary.opacity(0.3),
-                        FrancoSphereDesign.DashboardColors.clientPrimary.opacity(0.1)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-        }
-    }
+struct ActiveWorkerStatus {
+    let totalActive: Int
+    let byBuilding: [String: Int]
+    let utilizationRate: Double
 }
 
-// MARK: - Button Styles
+struct ClientComplianceStatus {
+    let overallScore: Double
+    let criticalViolations: Int
+    let pendingInspections: Int
+    let lastUpdated: Date
+}
 
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+struct MonthlyMetrics {
+    let currentSpend: Double
+    let monthlyBudget: Double
+    let projectedSpend: Double
+    let daysRemaining: Int
+    
+    var budgetUtilization: Double {
+        currentSpend / monthlyBudget
+    }
+    
+    var isOverBudget: Bool {
+        projectedSpend > monthlyBudget
+    }
+    
+    var dailyBurnRate: Double {
+        let daysInMonth = Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
+        let daysPassed = daysInMonth - daysRemaining
+        return daysPassed > 0 ? currentSpend / Double(daysPassed) : 0
     }
 }
 
 // MARK: - Preview
 
-#Preview("Client Hero Card - Healthy") {
-    ClientHeroStatusCard(
-        portfolioHealth: .preview,
-        realtimeMetrics: .preview,
-        activeWorkers: .preview,
-        complianceStatus: .previewHealthy,
-        criticalAlerts: [],
-        buildingPerformance: [
-            "building1": 0.92,
-            "building2": 0.85,
-            "building3": 0.78
-        ],
-        syncStatus: .synced,
-        onPortfolioTap: {},
-        onComplianceTap: {},
-        onWorkersTap: {},
-        onAlertsTap: {},
-        onSyncTap: {}
-    )
-    .padding()
-    .background(FrancoSphereDesign.DashboardColors.baseBackground)
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Client Hero Card - Critical") {
-    ClientHeroStatusCard(
-        portfolioHealth: .previewCritical,
-        realtimeMetrics: .previewWithAlerts,
-        activeWorkers: .previewLowUtilization,
-        complianceStatus: .previewWithViolations,
-        criticalAlerts: CoreTypes.ClientAlert.previewCritical,
-        buildingPerformance: [
-            "building1": 0.65,
-            "building2": 0.45,
-            "building3": 0.72
-        ],
-        syncStatus: .syncing(progress: 0.67),
-        onPortfolioTap: {},
-        onComplianceTap: {},
-        onWorkersTap: {},
-        onAlertsTap: {},
-        onSyncTap: {}
-    )
-    .padding()
-    .background(FrancoSphereDesign.DashboardColors.baseBackground)
-    .preferredColorScheme(.dark)
+struct ClientHeroStatusCard_Previews: PreviewProvider {
+    static var previews: some View {
+        ClientHeroStatusCard(
+            routineMetrics: RealtimeRoutineMetrics(
+                overallCompletion: 0.72,
+                activeWorkerCount: 5,
+                behindScheduleCount: 1,
+                buildingStatuses: [
+                    "building1": ClientBuildingRoutineStatus(
+                        buildingId: "building1",
+                        buildingName: "123 Main St",
+                        completionRate: 0.95,
+                        activeWorkerCount: 2,
+                        isOnSchedule: true
+                    ),
+                    "building2": ClientBuildingRoutineStatus(
+                        buildingId: "building2",
+                        buildingName: "456 Oak Ave",
+                        completionRate: 0.60,
+                        activeWorkerCount: 1,
+                        isOnSchedule: false,
+                        estimatedCompletion: Date().addingTimeInterval(7200)
+                    ),
+                    "building3": ClientBuildingRoutineStatus(
+                        buildingId: "building3",
+                        buildingName: "789 Park Pl",
+                        completionRate: 0.0,
+                        activeWorkerCount: 0,
+                        isOnSchedule: true
+                    )
+                ]
+            ),
+            activeWorkers: ActiveWorkerStatus(
+                totalActive: 5,
+                byBuilding: ["building1": 2, "building2": 1, "building3": 2],
+                utilizationRate: 0.83
+            ),
+            complianceStatus: ClientComplianceStatus(
+                overallScore: 0.92,
+                criticalViolations: 0,
+                pendingInspections: 2,
+                lastUpdated: Date()
+            ),
+            monthlyMetrics: MonthlyMetrics(
+                currentSpend: 42000,
+                monthlyBudget: 50000,
+                projectedSpend: 48000,
+                daysRemaining: 8
+            ),
+            onBuildingTap: { building in
+                print("Tapped building: \(building.name)")
+            }
+        )
+        .padding()
+        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .preferredColorScheme(.dark)
+    }
 }

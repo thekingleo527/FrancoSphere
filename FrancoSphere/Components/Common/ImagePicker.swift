@@ -18,6 +18,10 @@ import PhotosUI
 import CoreLocation
 import Combine
 
+// MARK: - Type Aliases to Avoid Ambiguity
+typealias FrancoImagePicker = ImagePicker
+typealias PhotoCategory = FrancoPhotoCategory
+
 // MARK: - Basic Image Picker (Existing - Enhanced)
 
 struct ImagePicker: UIViewControllerRepresentable {
@@ -46,9 +50,9 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: ImagePicker
+        let parent: FrancoImagePicker  // Use type alias
         
-        init(_ parent: ImagePicker) {
+        init(_ parent: FrancoImagePicker) {  // Use type alias
             self.parent = parent
         }
         
@@ -132,7 +136,7 @@ struct FrancoPhotoPicker: View {
 struct FrancoBuildingPhotoGallery: View {
     let buildingId: String
     @StateObject private var viewModel = FrancoPhotoGalleryViewModel()
-    @State private var selectedCategory = FrancoPhotoCategory.all
+    @State private var selectedCategory = PhotoCategory.all  // Use type alias
     @State private var showingFullScreen = false
     @State private var selectedPhoto: FrancoBuildingPhoto?
     @State private var showingAddPhoto = false
@@ -148,7 +152,7 @@ struct FrancoBuildingPhotoGallery: View {
             // Category filter
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(FrancoPhotoCategory.allCases, id: \.self) { category in
+                    ForEach(PhotoCategory.allCases, id: \.self) { category in  // Use type alias
                         FrancoCategoryPill(
                             category: category,
                             isSelected: selectedCategory == category,
@@ -235,10 +239,10 @@ struct FrancoBuildingPhotoGallery: View {
 
 struct FrancoBuildingPhotoCaptureView: View {
     let buildingId: String
-    let onCapture: (UIImage, FrancoPhotoCategory, String) async -> Void
+    let onCapture: (UIImage, PhotoCategory, String) async -> Void  // Use type alias
     
     @State private var capturedImage: UIImage?
-    @State private var category = FrancoPhotoCategory.general
+    @State private var category = PhotoCategory.general  // Use type alias
     @State private var notes = ""
     @State private var showingCamera = true
     @StateObject private var locationManager = LocationManager.shared
@@ -258,7 +262,7 @@ struct FrancoBuildingPhotoCaptureView: View {
                     Form {
                         Section("Details") {
                             Picker("Category", selection: $category) {
-                                ForEach(FrancoPhotoCategory.allCases, id: \.self) { cat in
+                                ForEach(PhotoCategory.allCases, id: \.self) { cat in  // Use type alias
                                     if cat != .all { // 'All' is not a valid category for a new photo
                                         Label(cat.rawValue, systemImage: cat.icon).tag(cat)
                                     }
@@ -295,7 +299,7 @@ struct FrancoBuildingPhotoCaptureView: View {
                     }
                 }
             } else if showingCamera {
-                ImagePicker(
+                FrancoImagePicker(  // Use type alias
                     image: $capturedImage,
                     onImagePicked: { image in
                         capturedImage = image
@@ -348,7 +352,7 @@ enum FrancoPhotoCategory: String, CaseIterable {
 // MARK: - Category Pill
 
 struct FrancoCategoryPill: View {
-    let category: FrancoPhotoCategory
+    let category: PhotoCategory  // Use type alias
     let isSelected: Bool
     let count: Int
     let action: () -> Void
@@ -719,7 +723,7 @@ class FrancoPhotoGalleryViewModel: ObservableObject {
         isLoading = false
     }
     
-    func savePhoto(_ image: UIImage, buildingId: String, category: FrancoPhotoCategory = .general, notes: String? = nil) async {
+    func savePhoto(_ image: UIImage, buildingId: String, category: PhotoCategory = .general, notes: String? = nil) async {  // Use type alias
         do {
             let metadata = FrancoBuildingPhotoMetadata(
                 buildingId: buildingId,
@@ -740,14 +744,14 @@ class FrancoPhotoGalleryViewModel: ObservableObject {
         }
     }
     
-    func photoCount(for category: FrancoPhotoCategory) -> Int {
+    func photoCount(for category: PhotoCategory) -> Int {  // Use type alias
         if category == .all {
             return photos.count
         }
         return photos.filter { $0.category == category }.count
     }
     
-    func filteredPhotos(for category: FrancoPhotoCategory) -> [FrancoBuildingPhoto] {
+    func filteredPhotos(for category: PhotoCategory) -> [FrancoBuildingPhoto] {  // Use type alias
         if category == .all {
             return photos.sorted { $0.timestamp > $1.timestamp }
         }
@@ -760,7 +764,7 @@ class FrancoPhotoGalleryViewModel: ObservableObject {
 struct FrancoBuildingPhoto: Identifiable, Hashable {
     let id: String
     let buildingId: String
-    let category: FrancoPhotoCategory
+    let category: PhotoCategory  // Use type alias
     let timestamp: Date
     let uploadedBy: String?
     let notes: String?
@@ -773,11 +777,21 @@ struct FrancoBuildingPhoto: Identifiable, Hashable {
     let location: CLLocation?
     let taskId: String?
     let fileSize: Int?
+    
+    // Implement Hashable
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    // Implement Equatable
+    static func == (lhs: FrancoBuildingPhoto, rhs: FrancoBuildingPhoto) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 struct FrancoBuildingPhotoMetadata {
     let buildingId: String
-    let category: FrancoPhotoCategory
+    let category: PhotoCategory  // Use type alias
     let notes: String?
     let location: CLLocation?
     let taskId: String?

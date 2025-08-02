@@ -185,6 +185,10 @@
 		23800F732E3DE468006F9E44 /* ClientHeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F722E3DE468006F9E44 /* ClientHeroStatusCard.swift */; };
 		23800F752E3DE53F006F9E44 /* ClientContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F742E3DE53F006F9E44 /* ClientContextEngine.swift */; };
 		23800F772E3DE61B006F9E44 /* ClientMainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */; };
+		23800F792E3E50DF006F9E44 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F782E3E50DF006F9E44 /* AnalyticsService.swift */; };
+		23800F7B2E3E5125006F9E44 /* ComplianceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7A2E3E5125006F9E44 /* ComplianceService.swift */; };
+		23800F7D2E3E51E4006F9E44 /* BuildingServiceWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */; };
+		23800F7F2E3E53E4006F9E44 /* ReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7E2E3E53E4006F9E44 /* ReportService.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 		23A1B9542E3992C80011F091 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94C2E3992C80011F091 /* TaskDisplayHelpers.swift */; };
 		23A1B9552E3992C80011F091 /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94A2E3992C80011F091 /* ProfileBadge.swift */; };
@@ -421,6 +425,10 @@
 		23800F722E3DE468006F9E44 /* ClientHeroStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientHeroStatusCard.swift; sourceTree = "<group>"; };
 		23800F742E3DE53F006F9E44 /* ClientContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientContextEngine.swift; sourceTree = "<group>"; };
 		23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientMainMenuView.swift; sourceTree = "<group>"; };
+		23800F782E3E50DF006F9E44 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
+		23800F7A2E3E5125006F9E44 /* ComplianceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceService.swift; sourceTree = "<group>"; };
+		23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingServiceWrapper.swift; sourceTree = "<group>"; };
+		23800F7E2E3E53E4006F9E44 /* ReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportService.swift; sourceTree = "<group>"; };
 		23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
 		23A1B9442E3992C80011F091 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
@@ -568,6 +576,7 @@
 		23779F1D2E39885600F4A10F /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */,
 				2326C1E42E3AA63D0080F005 /* ImagePicker.swift */,
 				23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */,
 				23A1B9442E3992C80011F091 /* Building.swift */,
@@ -939,6 +948,9 @@
 		23779FAE2E39885600F4A10F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				23800F7E2E3E53E4006F9E44 /* ReportService.swift */,
+				23800F7A2E3E5125006F9E44 /* ComplianceService.swift */,
+				23800F782E3E50DF006F9E44 /* AnalyticsService.swift */,
 				2326C2292E3B396C0080F005 /* ReportGenerator.swift */,
 				2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */,
 				2326C2052E3B15BF0080F005 /* SiteLogService.swift */,
@@ -1320,6 +1332,7 @@
 				23800F772E3DE61B006F9E44 /* ClientMainMenuView.swift in Sources */,
 				2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */,
 				2326C2062E3B15BF0080F005 /* SiteLogService.swift in Sources */,
+				23800F7B2E3E5125006F9E44 /* ComplianceService.swift in Sources */,
 				2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */,
 				23779FED2E39885600F4A10F /* EnhancedClockInGlassCard.swift in Sources */,
 				23779FF02E39885600F4A10F /* WorkerAssignmentEngine.swift in Sources */,
@@ -1330,6 +1343,7 @@
 				23779FF62E39885600F4A10F /* GRDBManager.swift in Sources */,
 				2326C1F02E3AB3D40080F005 /* BuildingHistoryComponents.swift in Sources */,
 				23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */,
+				23800F7F2E3E53E4006F9E44 /* ReportService.swift in Sources */,
 				2326C1F62E3AB7B00080F005 /* BuildingComplianceComponents.swift in Sources */,
 				23779FF82E39885600F4A10F /* PortfolioOverviewView.swift in Sources */,
 				23779FF92E39885600F4A10F /* BuildingFeatureConfiguration.swift in Sources */,
@@ -1342,6 +1356,7 @@
 				2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */,
 				2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */,
 				2377A0032E39885600F4A10F /* NovaImageLoader.swift in Sources */,
+				23800F792E3E50DF006F9E44 /* AnalyticsService.swift in Sources */,
 				23A1B96E2E3993610011F091 /* NotificationManager.swift in Sources */,
 				2326C23F2E3B3DB30080F005 /* IntegrationManager.swift in Sources */,
 				2326C1E52E3AA63D0080F005 /* ImagePicker.swift in Sources */,
@@ -1478,6 +1493,7 @@
 				2377A0692E39885600F4A10F /* BuildingIntelligenceDTO.swift in Sources */,
 				23A1B9662E3992F90011F091 /* DatabaseInitializer.swift in Sources */,
 				2377A06D2E39885600F4A10F /* InventoryView.swift in Sources */,
+				23800F7D2E3E51E4006F9E44 /* BuildingServiceWrapper.swift in Sources */,
 				2377A06E2E39885600F4A10F /* SignUpView.swift in Sources */,
 				2377A06F2E39885600F4A10F /* FilteredTaskResult.swift in Sources */,
 				2377A0702E39885600F4A10F /* WorkerEventOutbox.swift in Sources */,

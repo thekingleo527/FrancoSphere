@@ -518,7 +518,7 @@ struct ClientPortfolioReport {
     let buildingMetrics: [String: CoreTypes.BuildingMetrics]
     let complianceOverview: CoreTypes.ComplianceOverview
     let insights: [String]
-}te func loadBuildingMetrics() async {
+    private func loadBuildingMetrics() async {
         for building in buildingsList {
             do {
                 let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
@@ -965,93 +965,94 @@ struct ClientPortfolioReport {
             print("📱 Client Dashboard: Received update type \(update.type)")
         }
     }
-
-// MARK: - Supporting Types
-
-extension ClientDashboardViewModel {
-    /// Client-specific filter options
-    public enum FilterOption: String, CaseIterable {
-        case all = "All"
-        case critical = "Critical"
-        case highPriority = "High Priority"
-        case compliance = "Compliance"
-        case efficiency = "Efficiency"
+    
+    // MARK: - Supporting Types
+    
+    extension ClientDashboardViewModel {
+        /// Client-specific filter options
+        public enum FilterOption: String, CaseIterable {
+            case all = "All"
+            case critical = "Critical"
+            case highPriority = "High Priority"
+            case compliance = "Compliance"
+            case efficiency = "Efficiency"
+            
+            public var icon: String {
+                switch self {
+                case .all: return "list.bullet"
+                case .critical: return "exclamationmark.triangle.fill"
+                case .highPriority: return "flag.fill"
+                case .compliance: return "shield.fill"
+                case .efficiency: return "speedometer"
+                }
+            }
+        }
         
-        public var icon: String {
-            switch self {
-            case .all: return "list.bullet"
-            case .critical: return "exclamationmark.triangle.fill"
-            case .highPriority: return "flag.fill"
-            case .compliance: return "shield.fill"
-            case .efficiency: return "speedometer"
+        /// Executive dashboard time range
+        public enum TimeRange: String, CaseIterable {
+            case today = "Today"
+            case week = "This Week"
+            case month = "This Month"
+            case quarter = "This Quarter"
+            case year = "This Year"
+            
+            public var days: Int {
+                switch self {
+                case .today: return 1
+                case .week: return 7
+                case .month: return 30
+                case .quarter: return 90
+                case .year: return 365
+                }
             }
         }
     }
     
-    /// Executive dashboard time range
-    public enum TimeRange: String, CaseIterable {
-        case today = "Today"
-        case week = "This Week"
-        case month = "This Month"
-        case quarter = "This Quarter"
-        case year = "This Year"
-        
-        public var days: Int {
-            switch self {
-            case .today: return 1
-            case .week: return 7
-            case .month: return 30
-            case .quarter: return 90
-            case .year: return 365
-            }
+    // MARK: - Preview Helpers
+    
+#if DEBUG
+    extension ClientDashboardViewModel {
+        static func preview() -> ClientDashboardViewModel {
+            let viewModel = ClientDashboardViewModel()
+            
+            // Mock portfolio intelligence
+            viewModel.portfolioIntelligence = CoreTypes.PortfolioIntelligence(
+                totalBuildings: 12,
+                activeWorkers: 8,
+                completionRate: 0.85,
+                criticalIssues: 2,
+                monthlyTrend: .improving,
+                complianceScore: 92.5,
+                generatedAt: Date()
+            )
+            
+            // Mock buildings
+            viewModel.buildingsList = [
+                CoreTypes.NamedCoordinate(
+                    id: "14",
+                    name: "Rubin Museum",
+                    address: "150 W 17th St, New York, NY 10011",
+                    latitude: 40.7397,
+                    longitude: -73.9978
+                ),
+                CoreTypes.NamedCoordinate(
+                    id: "4",
+                    name: "131 Perry Street",
+                    address: "131 Perry St, New York, NY 10014",
+                    latitude: 40.7350,
+                    longitude: -74.0045
+                )
+            ]
+            
+            // Mock metrics
+            viewModel.totalBuildings = 12
+            viewModel.activeWorkers = 8
+            viewModel.completionRate = 0.85
+            viewModel.criticalIssues = 2
+            viewModel.complianceScore = 92
+            
+            return viewModel
         }
     }
-}
-
-// MARK: - Preview Helpers
-
-#if DEBUG
-extension ClientDashboardViewModel {
-    static func preview() -> ClientDashboardViewModel {
-        let viewModel = ClientDashboardViewModel()
-        
-        // Mock portfolio intelligence
-        viewModel.portfolioIntelligence = CoreTypes.PortfolioIntelligence(
-            totalBuildings: 12,
-            activeWorkers: 8,
-            completionRate: 0.85,
-            criticalIssues: 2,
-            monthlyTrend: .improving,
-            complianceScore: 92.5,
-            generatedAt: Date()
-        )
-        
-        // Mock buildings
-        viewModel.buildingsList = [
-            CoreTypes.NamedCoordinate(
-                id: "14",
-                name: "Rubin Museum",
-                address: "150 W 17th St, New York, NY 10011",
-                latitude: 40.7397,
-                longitude: -73.9978
-            ),
-            CoreTypes.NamedCoordinate(
-                id: "4",
-                name: "131 Perry Street",
-                address: "131 Perry St, New York, NY 10014",
-                latitude: 40.7350,
-                longitude: -74.0045
-            )
-        ]
-        
-        // Mock metrics
-        viewModel.totalBuildings = 12
-        viewModel.activeWorkers = 8
-        viewModel.completionRate = 0.85
-        viewModel.criticalIssues = 2
-        viewModel.complianceScore = 92
-        
-        return viewModel
-    }
-}
 #endif
+}

@@ -663,3 +663,89 @@ extension CoreTypes.ClientAlert {
         ]
     }
 }
+// Extension for WorkerService (add to WorkerService.swift or a new file)
+extension WorkerService {
+    func getActiveWorkers() async throws -> [CoreTypes.WorkerProfile] {
+        // This should query workers with status = 'clockedIn'
+        let query = """
+            SELECT * FROM workers 
+            WHERE status = 'Clocked In' AND isActive = 1
+            ORDER BY name
+        """
+        
+        let rows = try await GRDBManager.shared.query(query)
+        
+        return rows.compactMap { row in
+            guard let id = row["id"] as? String ?? (row["id"] as? Int64).map(String.init),
+                  let name = row["name"] as? String,
+                  let email = row["email"] as? String,
+                  let roleStr = row["role"] as? String,
+                  let role = CoreTypes.UserRole(rawValue: roleStr) else {
+                return nil
+            }
+            
+            return CoreTypes.WorkerProfile(
+                id: id,
+                name: name,
+                email: email,
+                role: role,
+                status: .clockedIn
+            )
+        }
+    }
+}
+
+// Extension for TaskService (add to TaskService.swift or a new file)
+extension TaskService {
+    func getAverageTasksPerWorker() async throws -> Double {
+        let query = """
+            SELECT 
+                COUNT(DISTINCT t.id) as task_count,
+                COUNT(DISTINCT t.assigned_worker_id) as worker_count
+            FROM routine_tasks t
+            WHERE date(t.scheduled_date) = date('now')
+        """
+        
+        let rows = try await GRDBManager.shared.query(query)
+        
+        guard let row = rows.first,
+              let taskCount = row["task_count"] as? Int64,
+              let workerCount = row["worker_count"] as? Int64,
+              workerCount > 0 else {
+            return 0.0
+        }
+        
+        return Double(taskCount) / Double(workerCount)
+    }
+    
+    func getOverallCompletionRate() async throws -> Double {
+        let query = """
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
+            FROM routine_tasks
+            WHERE date(scheduled_date) >= date('now', '-7 days')
+        """
+        
+        let rows = try await GRDBManager.shared.query(query)
+        
+        guard let row = rows.first,
+              let total = row["total"] as? Int64,
+              let completed = row["completed"] as? Int64,
+              total > 0 else {
+            return 0.0
+        }
+        
+        return Double(completed) / Double(total)
+    }
+}
+
+// Fix for PortfolioOverviewView - add this to the file or create an extension
+extension CoreTypes {
+    // Type alias for backward compatibility
+    typealias ClientPortfolioIntelligence = PortfolioIntelligence
+}
+
+// Alternative: If you want ClientPortfolioIntelligence to be distinct,
+// use the full implementation I provided earlier and update PortfolioOverviewView
+// to use the correct type

@@ -5,10 +5,11 @@
 //  Cross-dashboard synchronization service for real-time updates
 //  Manages communication between Worker, Admin, and Client dashboards
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: Properly handles GRDBManager execute return types
-//  ✅ FIXED: Actor isolation issues resolved
-//  ✅ FIXED: SystemConfiguration properties added
+//  ✅ UPDATED: Added publisher aliases for dashboard compatibility
+//  ✅ UPDATED: Implemented client data anonymization
+//  ✅ UPDATED: Added specialized broadcast methods for routine status
+//  ✅ UPDATED: Enhanced context engine integration
+//  ✅ UPDATED: Added debouncing for high-frequency updates
 //  ✅ STREAM B INTEGRATED: WebSocket support for real-time server sync
 //
 
@@ -29,6 +30,11 @@ public class DashboardSyncService: ObservableObject {
         crossDashboardSubject.eraseToAnyPublisher()
     }
     
+    // Publisher aliases for dashboard compatibility
+    public var crossDashboardPublisher: AnyPublisher<CoreTypes.DashboardUpdate, Never> {
+        crossDashboardUpdates
+    }
+    
     // MARK: - Dashboard-Specific Publishers
     
     private let workerUpdatesSubject = PassthroughSubject<CoreTypes.DashboardUpdate, Never>()
@@ -44,6 +50,11 @@ public class DashboardSyncService: ObservableObject {
     private let clientUpdatesSubject = PassthroughSubject<CoreTypes.DashboardUpdate, Never>()
     public var clientDashboardUpdates: AnyPublisher<CoreTypes.DashboardUpdate, Never> {
         clientUpdatesSubject.eraseToAnyPublisher()
+    }
+    
+    // Publisher alias for client dashboard compatibility
+    public var clientUpdatePublisher: AnyPublisher<CoreTypes.DashboardUpdate, Never> {
+        clientDashboardUpdates
     }
     
     // MARK: - Live Update Feeds
@@ -80,6 +91,9 @@ public class DashboardSyncService: ObservableObject {
     private var cleanupTimer: Timer?
     private var isInitialized = false
     
+    // Debouncing for high-frequency updates
+    private var updateDebouncer: [String: Timer] = [:]
+    
     // Debug mode for logging
     #if DEBUG
     private let debugMode = true
@@ -96,6 +110,7 @@ public class DashboardSyncService: ObservableObject {
         offlineQueueTimer?.invalidate()
         urgentQueueTimer?.invalidate()
         cleanupTimer?.invalidate()
+        updateDebouncer.values.forEach { $0.invalidate() }
     }
     
     // MARK: - Initialization
@@ -202,12 +217,15 @@ public class DashboardSyncService: ObservableObject {
             // Send to specific dashboard streams
             workerUpdatesSubject.send(enrichedUpdate)
             adminUpdatesSubject.send(enrichedUpdate)
-            clientUpdatesSubject.send(enrichedUpdate)
+            
+            // Send anonymized version to clients
+            let anonymizedUpdate = anonymizeUpdateForClient(enrichedUpdate)
+            clientUpdatesSubject.send(anonymizedUpdate)
             
             // Create live updates for real-time feeds
             createLiveWorkerUpdate(from: enrichedUpdate)
             createLiveAdminAlert(from: enrichedUpdate)
-            createLiveClientMetric(from: enrichedUpdate)
+            createLiveClientMetric(from: anonymizedUpdate)
             
             // Update unified state
             updateUnifiedState(from: enrichedUpdate)
@@ -238,11 +256,14 @@ public class DashboardSyncService: ObservableObject {
             // Send to specific dashboard streams
             adminUpdatesSubject.send(enrichedUpdate)
             workerUpdatesSubject.send(enrichedUpdate)
-            clientUpdatesSubject.send(enrichedUpdate)
+            
+            // Send anonymized version to clients
+            let anonymizedUpdate = anonymizeUpdateForClient(enrichedUpdate)
+            clientUpdatesSubject.send(anonymizedUpdate)
             
             // Create live updates
             createLiveAdminAlert(from: enrichedUpdate)
-            createLiveClientMetric(from: enrichedUpdate)
+            createLiveClientMetric(from: anonymizedUpdate)
             
             // Update unified state
             updateUnifiedState(from: enrichedUpdate)
@@ -264,6 +285,7 @@ public class DashboardSyncService: ObservableObject {
     public func broadcastClientUpdate(_ update: CoreTypes.DashboardUpdate) {
         guard isLive else { return }
         
+        // Client updates are already anonymized
         let enrichedUpdate = enrichUpdateWithRealData(update)
         
         if isOnline {
@@ -295,6 +317,266 @@ public class DashboardSyncService: ObservableObject {
         }
     }
     
+    // MARK: - Client-Specific Broadcasting Methods
+    
+    /// Broadcast real-time routine status update for client dashboards
+    public func broadcastRealtimeRoutineUpdate(
+        buildingId: String,
+        completionRate: Double,
+        activeWorkerCount: Int,
+        isOnSchedule: Bool,
+        estimatedCompletion: Date? = nil
+    ) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .system,
+            type: .routineStatusChanged,
+            buildingId: buildingId,
+            workerId: "",
+            data: [
+                "completionRate": String(completionRate),
+                "activeWorkerCount": String(activeWorkerCount),
+                "isOnSchedule": String(isOnSchedule),
+                "timeBlock": String(describing: BuildingRoutineStatus.TimeBlock.current),
+                "estimatedCompletion": estimatedCompletion?.ISO8601Format() ?? "",
+                "buildingName": operationalDataManager.getBuilding(byId: buildingId)?.name ?? ""
+            ]
+        )
+        broadcastClientUpdate(update)
+    }
+    
+    /// Broadcast building routine statuses for multiple buildings
+    public func broadcastBuildingRoutineStatuses(
+        _ statuses: [String: BuildingRoutineStatus]
+    ) {
+        for (buildingId, status) in statuses {
+            broadcastRealtimeRoutineUpdate(
+                buildingId: buildingId,
+                completionRate: status.completionRate,
+                activeWorkerCount: status.activeWorkerCount,
+                isOnSchedule: status.isOnSchedule,
+                estimatedCompletion: status.estimatedCompletion
+            )
+        }
+    }
+    
+    /// Broadcast compliance update for client dashboards
+    public func broadcastComplianceUpdate(
+        buildingId: String,
+        score: Double,
+        violations: Int,
+        pendingInspections: Int = 0
+    ) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .admin,
+            type: .complianceStatusChanged,
+            buildingId: buildingId,
+            workerId: "",
+            data: [
+                "complianceScore": String(score),
+                "violations": String(violations),
+                "pendingInspections": String(pendingInspections),
+                "lastUpdated": ISO8601DateFormatter().string(from: Date())
+            ]
+        )
+        broadcastClientUpdate(update)
+    }
+    
+    /// Broadcast DSNY deadline for compliance tracking
+    public func broadcastDSNYDeadline(
+        buildingId: String,
+        deadline: Date,
+        status: String
+    ) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .system,
+            type: .complianceStatusChanged,
+            buildingId: buildingId,
+            workerId: "",
+            data: [
+                "complianceType": "DSNY",
+                "deadline": ISO8601DateFormatter().string(from: deadline),
+                "status": status,
+                "requiresAction": "true"
+            ]
+        )
+        
+        // Send to both admin and client
+        broadcastAdminUpdate(update)
+        broadcastClientUpdate(update)  // Will be anonymized
+    }
+    
+    /// Broadcast monthly metrics update for client dashboards
+    public func broadcastMonthlyMetricsUpdate(
+        currentSpend: Double,
+        monthlyBudget: Double,
+        projectedSpend: Double,
+        daysRemaining: Int
+    ) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .system,
+            type: .monthlyMetricsUpdated,
+            buildingId: "",
+            workerId: "",
+            data: [
+                "currentSpend": String(currentSpend),
+                "monthlyBudget": String(monthlyBudget),
+                "projectedSpend": String(projectedSpend),
+                "daysRemaining": String(daysRemaining),
+                "budgetUtilization": String(currentSpend / monthlyBudget)
+            ]
+        )
+        broadcastClientUpdate(update)
+    }
+    
+    // MARK: - Admin-Specific Broadcasting Methods
+    
+    /// Broadcast critical alert for admin dashboards
+    public func broadcastCriticalAlert(
+        _ alert: CoreTypes.AdminAlert
+    ) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .admin,
+            type: .criticalAlert,
+            buildingId: alert.buildingId,
+            workerId: "",
+            data: [
+                "alertId": alert.id,
+                "title": alert.title,
+                "urgency": alert.urgency.rawValue,
+                "type": alert.type.rawValue,
+                "affectedBuilding": alert.affectedBuilding ?? "",
+                "timestamp": alert.timestamp.ISO8601Format()
+            ]
+        )
+        
+        // Only broadcast to admin dashboards
+        adminUpdatesSubject.send(update)
+        
+        // Create live admin alert
+        createLiveAdminAlert(from: update)
+    }
+    
+    /// Broadcast portfolio metrics for admin dashboards
+    public func broadcastPortfolioMetrics(
+        _ metrics: CoreTypes.PortfolioMetrics
+    ) {
+        let update = CoreTypes.DashboardUpdate(
+            source: .admin,
+            type: .portfolioMetricsChanged,
+            buildingId: "",
+            workerId: "",
+            data: [
+                "totalBuildings": String(metrics.totalBuildings),
+                "totalWorkers": String(metrics.totalWorkers),
+                "activeWorkers": String(metrics.activeWorkers),
+                "overallCompletionRate": String(metrics.overallCompletionRate),
+                "criticalIssues": String(metrics.criticalIssues),
+                "complianceScore": String(metrics.complianceScore)
+            ]
+        )
+        broadcastAdminUpdate(update)
+    }
+    
+    // MARK: - Data Anonymization
+    
+    /// Anonymize update for client consumption
+    private func anonymizeUpdateForClient(_ update: CoreTypes.DashboardUpdate) -> CoreTypes.DashboardUpdate {
+        var anonymizedData = update.data
+        
+        // Remove worker-specific information
+        anonymizedData.removeValue(forKey: "workerName")
+        anonymizedData.removeValue(forKey: "workerId")
+        anonymizedData.removeValue(forKey: "workerEmail")
+        anonymizedData.removeValue(forKey: "workerPhone")
+        
+        // Replace with anonymous indicators
+        if !update.workerId.isEmpty {
+            anonymizedData["workerPresent"] = "true"
+            anonymizedData["hasActiveWorker"] = "true"
+        }
+        
+        // Anonymize any worker lists
+        if let workerList = anonymizedData["workers"] {
+            // Replace with count only
+            if let workers = workerList.split(separator: ",") {
+                anonymizedData["workerCount"] = String(workers.count)
+                anonymizedData.removeValue(forKey: "workers")
+            }
+        }
+        
+        // Create anonymized update
+        return CoreTypes.DashboardUpdate(
+            id: update.id,
+            source: update.source,
+            type: update.type,
+            buildingId: update.buildingId,
+            workerId: "", // Clear worker ID
+            data: anonymizedData,
+            timestamp: update.timestamp
+        )
+    }
+    
+    // MARK: - Context Engine Integration
+    
+    /// Sync updates with AdminContextEngine
+    public func syncAdminContextEngine(_ contextEngine: AdminContextEngine) {
+        adminDashboardUpdates
+            .sink { [weak contextEngine] update in
+                Task { @MainActor in
+                    contextEngine?.handleDashboardUpdate(update)
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    /// Sync updates with ClientContextEngine
+    public func syncClientContextEngine(_ contextEngine: ClientContextEngine) {
+        clientDashboardUpdates
+            .filter { [weak contextEngine] update in
+                // Only updates for client's buildings
+                contextEngine?.clientBuildings.contains { $0.id == update.buildingId } ?? false
+            }
+            .sink { [weak contextEngine] update in
+                Task { @MainActor in
+                    contextEngine?.handleDashboardUpdate(update)
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    /// Sync updates with WorkerContextEngine
+    public func syncWorkerContextEngine(_ contextEngine: WorkerContextEngine) {
+        workerDashboardUpdates
+            .filter { [weak contextEngine] update in
+                // Only updates relevant to the worker
+                update.workerId == contextEngine?.currentWorker?.id ||
+                update.buildingId == contextEngine?.assignedBuilding?.id
+            }
+            .sink { [weak contextEngine] update in
+                Task { @MainActor in
+                    contextEngine?.handleDashboardUpdate(update)
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    // MARK: - Debounced Updates
+    
+    /// Debounce high-frequency updates
+    private func debouncedBroadcast(
+        key: String,
+        delay: TimeInterval = 0.5,
+        update: @escaping () -> Void
+    ) {
+        updateDebouncer[key]?.invalidate()
+        updateDebouncer[key] = Timer.scheduledTimer(
+            withTimeInterval: delay,
+            repeats: false
+        ) { _ in
+            update()
+        }
+    }
+    
     // MARK: - WebSocket Integration (STREAM B)
     
     /// Send update to server via WebSocket
@@ -319,10 +601,19 @@ public class DashboardSyncService: ObservableObject {
             switch update.source {
             case .worker:
                 workerUpdatesSubject.send(update)
+                // Also send anonymized version to clients
+                let anonymized = anonymizeUpdateForClient(update)
+                clientUpdatesSubject.send(anonymized)
             case .admin:
                 adminUpdatesSubject.send(update)
+                // Send relevant updates to clients
+                if shouldClientSeeUpdate(update) {
+                    let anonymized = anonymizeUpdateForClient(update)
+                    clientUpdatesSubject.send(anonymized)
+                }
             case .client:
                 clientUpdatesSubject.send(update)
+                adminUpdatesSubject.send(update)
             case .system:
                 crossDashboardSubject.send(update)
             }
@@ -330,6 +621,25 @@ public class DashboardSyncService: ObservableObject {
             // Update local state
             createLiveUpdateFromRemote(update)
             updateUnifiedState(from: update)
+        }
+    }
+    
+    /// Determine if client should see an update
+    private func shouldClientSeeUpdate(_ update: CoreTypes.DashboardUpdate) -> Bool {
+        switch update.type {
+        case .buildingMetricsChanged,
+             .complianceStatusChanged,
+             .routineStatusChanged,
+             .monthlyMetricsUpdated:
+            return true
+        case .taskCompleted:
+            // Only if it affects completion rate
+            return true
+        case .workerClockedIn, .workerClockedOut:
+            // Only as anonymous count changes
+            return true
+        default:
+            return false
         }
     }
     
@@ -564,6 +874,10 @@ public class DashboardSyncService: ObservableObject {
                 return .normal // Metrics can wait a bit
             case .complianceStatusChanged:
                 return .urgent // Compliance is critical
+            case .criticalAlert:
+                return .urgent // Critical alerts are urgent
+            case .routineStatusChanged:
+                return .high // Real-time status is important
             default:
                 return .normal
             }
@@ -1104,25 +1418,33 @@ public class DashboardSyncService: ObservableObject {
     }
     
     /// Worker clocked out
-    public func onWorkerClockedOut(workerId: String, buildingId: String) {
+    public func onWorkerClockedOut(workerId: String, buildingId: String, duration: TimeInterval? = nil) {
         let workerName = operationalDataManager.getWorker(byId: workerId)?.name ?? ""
         let buildingName = operationalDataManager.getBuilding(byId: buildingId)?.name ?? ""
+        
+        var data: [String: String] = [
+            "buildingName": buildingName,
+            "workerName": workerName
+        ]
+        
+        if let duration = duration {
+            let hours = Int(duration / 3600)
+            let minutes = Int((duration.truncatingRemainder(dividingBy: 3600)) / 60)
+            data["duration"] = "\(hours)h \(minutes)m"
+        }
         
         let update = CoreTypes.DashboardUpdate(
             source: .worker,
             type: .workerClockedOut,
             buildingId: buildingId,
             workerId: workerId,
-            data: [
-                "buildingName": buildingName,
-                "workerName": workerName
-            ]
+            data: data
         )
         broadcastWorkerUpdate(update)
     }
     
     /// Task completed
-    public func onTaskCompleted(taskId: String, workerId: String, buildingId: String) {
+    public func onTaskCompleted(taskId: String, workerId: String, buildingId: String, taskName: String? = nil) {
         let workerName = operationalDataManager.getWorker(byId: workerId)?.name ?? ""
         let buildingName = operationalDataManager.getBuilding(byId: buildingId)?.name ?? ""
         
@@ -1133,6 +1455,7 @@ public class DashboardSyncService: ObservableObject {
             workerId: workerId,
             data: [
                 "taskId": taskId,
+                "taskName": taskName ?? "task",
                 "buildingName": buildingName,
                 "workerName": workerName
             ]
@@ -1140,34 +1463,38 @@ public class DashboardSyncService: ObservableObject {
         broadcastWorkerUpdate(update)
     }
     
-    /// Building metrics changed
+    /// Building metrics changed (with debouncing)
     public func onBuildingMetricsChanged(buildingId: String, metrics: CoreTypes.BuildingMetrics) {
-        // Record metric values for trend analysis
-        operationalDataManager.recordMetricValue(
-            metricName: "building_\(buildingId)_completion",
-            value: metrics.completionRate
-        )
-        
-        let update = CoreTypes.DashboardUpdate(
-            source: .admin,
-            type: .buildingMetricsChanged,
-            buildingId: buildingId,
-            workerId: "",
-            data: [
-                "completionRate": String(metrics.completionRate),
-                "overdueTasks": String(metrics.overdueTasks),
-                "urgentTasks": String(metrics.urgentTasksCount),
-                "activeWorkers": String(metrics.activeWorkers)
-            ]
-        )
-        broadcastAdminUpdate(update)
+        debouncedBroadcast(key: "metrics_\(buildingId)", delay: 0.5) { [weak self] in
+            guard let self = self else { return }
+            
+            // Record metric values for trend analysis
+            self.operationalDataManager.recordMetricValue(
+                metricName: "building_\(buildingId)_completion",
+                value: metrics.completionRate
+            )
+            
+            let update = CoreTypes.DashboardUpdate(
+                source: .admin,
+                type: .buildingMetricsChanged,
+                buildingId: buildingId,
+                workerId: "",
+                data: [
+                    "completionRate": String(metrics.completionRate),
+                    "overdueTasks": String(metrics.overdueTasks),
+                    "urgentTasks": String(metrics.urgentTasksCount),
+                    "activeWorkers": String(metrics.activeWorkers)
+                ]
+            )
+            self.broadcastAdminUpdate(update)
+        }
     }
     
     /// Intelligence insights generated
     public func onIntelligenceGenerated(insights: [CoreTypes.IntelligenceInsight]) {
         let update = CoreTypes.DashboardUpdate(
             source: .admin,
-            type: .buildingMetricsChanged,  // Using existing type
+            type: .intelligenceGenerated,
             buildingId: "",
             workerId: "",
             data: [
@@ -1182,13 +1509,12 @@ public class DashboardSyncService: ObservableObject {
     // MARK: - Live Update Creation
     
     private func createLiveWorkerUpdate(from update: CoreTypes.DashboardUpdate) {
-        guard !update.workerId.isEmpty,
-              update.source == .worker else { return }
+        guard update.source == .worker else { return }
         
         let workerUpdate = LiveWorkerUpdate(
             workerId: update.workerId,
-            workerName: update.data["workerName"],
-            action: generateActionDescription(for: update),
+            workerName: update.data["workerName"], // Only for admin dashboard
+            action: generateDetailedAction(for: update),
             buildingId: update.buildingId.isEmpty ? nil : update.buildingId,
             buildingName: update.data["buildingName"]
         )
@@ -1199,13 +1525,16 @@ public class DashboardSyncService: ObservableObject {
     
     private func createLiveAdminAlert(from update: CoreTypes.DashboardUpdate) {
         guard update.type == .buildingMetricsChanged ||
-              update.type == .complianceStatusChanged else { return }
+              update.type == .complianceStatusChanged ||
+              update.type == .criticalAlert else { return }
         
         // Use real thresholds from OperationalDataManager
         let config = operationalDataManager.getSystemConfiguration()
         
         let severity: LiveAdminAlert.Severity = {
-            if let overdueTasks = Int(update.data["overdueTasks"] ?? "0"),
+            if update.type == .criticalAlert {
+                return .critical
+            } else if let overdueTasks = Int(update.data["overdueTasks"] ?? "0"),
                overdueTasks > config.criticalOverdueThreshold {
                 return .critical
             } else if let completionRate = Double(update.data["completionRate"] ?? "0"),
@@ -1219,8 +1548,10 @@ public class DashboardSyncService: ObservableObject {
             }
         }()
         
+        let title = update.data["title"] ?? update.type.rawValue
+        
         let alert = LiveAdminAlert(
-            title: update.type.rawValue,
+            title: title,
             severity: severity,
             buildingId: update.buildingId
         )
@@ -1230,7 +1561,9 @@ public class DashboardSyncService: ObservableObject {
     }
     
     private func createLiveClientMetric(from update: CoreTypes.DashboardUpdate) {
-        guard update.type == .buildingMetricsChanged else { return }
+        guard update.type == .buildingMetricsChanged ||
+              update.type == .routineStatusChanged ||
+              update.type == .monthlyMetricsUpdated else { return }
         
         // Calculate real trend from OperationalDataManager historical data
         let trend: CoreTypes.TrendDirection = {
@@ -1247,15 +1580,28 @@ public class DashboardSyncService: ObservableObject {
             return .stable
         }()
         
+        let metricName: String = {
+            switch update.type {
+            case .routineStatusChanged:
+                return "Routine Status"
+            case .monthlyMetricsUpdated:
+                return "Monthly Budget"
+            default:
+                return "Building Metrics"
+            }
+        }()
+        
         let metricValue: String = {
             if let value = update.data["completionRate"] {
-                return value
+                return "\(value)%"
+            } else if let value = update.data["budgetUtilization"] {
+                return "\(value)%"
             }
             return "N/A"
         }()
         
         let metric = LiveClientMetric(
-            name: update.type.rawValue,
+            name: metricName,
             value: metricValue,
             trend: trend
         )
@@ -1396,6 +1742,30 @@ public class DashboardSyncService: ObservableObject {
             return update.type.rawValue
         }
     }
+    
+    private func generateDetailedAction(for update: CoreTypes.DashboardUpdate) -> String {
+        switch update.type {
+        case .taskCompleted:
+            if let taskName = update.data["taskName"] {
+                return "completed \(taskName)"
+            }
+            return "completed task"
+        case .workerClockedIn:
+            return "clocked in"
+        case .workerClockedOut:
+            if let duration = update.data["duration"] {
+                return "clocked out after \(duration)"
+            }
+            return "clocked out"
+        case .taskStarted:
+            if let taskName = update.data["taskName"] {
+                return "started \(taskName)"
+            }
+            return "started task"
+        default:
+            return update.type.rawValue
+        }
+    }
 }
 
 // MARK: - Extensions for SwiftUI Integration
@@ -1458,14 +1828,14 @@ extension DashboardSyncService {
     /// Publisher for admin-specific updates
     public var adminUpdates: AnyPublisher<CoreTypes.DashboardUpdate, Never> {
         adminDashboardUpdates
-            .filter { $0.source == .admin || $0.type == .buildingMetricsChanged }
+            .filter { $0.source == .admin || $0.type == .buildingMetricsChanged || $0.type == .criticalAlert }
             .eraseToAnyPublisher()
     }
     
     /// Publisher for client-specific updates
     public var clientUpdates: AnyPublisher<CoreTypes.DashboardUpdate, Never> {
         clientDashboardUpdates
-            .filter { $0.source == .client || $0.type == .buildingMetricsChanged }
+            .filter { $0.source == .client || $0.type == .buildingMetricsChanged || $0.type == .routineStatusChanged }
             .eraseToAnyPublisher()
     }
 }
@@ -1514,4 +1884,80 @@ extension DashboardSyncService {
 
 extension Notification.Name {
     static let networkStatusChanged = Notification.Name("networkStatusChanged")
+}
+
+// MARK: - Supporting Types for Client Dashboard
+
+/// Building routine status for real-time client updates
+public struct BuildingRoutineStatus {
+    public let buildingId: String
+    public let buildingName: String
+    public let completionRate: Double
+    public let timeBlock: TimeBlock
+    public let activeWorkerCount: Int
+    public let isOnSchedule: Bool
+    public let estimatedCompletion: Date?
+    public let hasIssue: Bool
+    
+    public var isBehindSchedule: Bool {
+        !isOnSchedule && completionRate < expectedCompletionForTime()
+    }
+    
+    private func expectedCompletionForTime() -> Double {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 7..<11: return 0.3  // Morning should be 30% done
+        case 11..<15: return 0.6 // Afternoon should be 60% done
+        case 15..<19: return 0.9 // Evening should be 90% done
+        default: return 1.0
+        }
+    }
+    
+    public enum TimeBlock: String {
+        case morning = "morning"
+        case afternoon = "afternoon"
+        case evening = "evening"
+        case overnight = "overnight"
+        
+        public static var current: TimeBlock {
+            let hour = Calendar.current.component(.hour, from: Date())
+            switch hour {
+            case 6..<12: return .morning
+            case 12..<17: return .afternoon
+            case 17..<22: return .evening
+            default: return .overnight
+            }
+        }
+    }
+    
+    public init(
+        buildingId: String,
+        buildingName: String,
+        completionRate: Double,
+        activeWorkerCount: Int,
+        isOnSchedule: Bool,
+        estimatedCompletion: Date? = nil,
+        hasIssue: Bool = false
+    ) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.completionRate = completionRate
+        self.timeBlock = TimeBlock.current
+        self.activeWorkerCount = activeWorkerCount
+        self.isOnSchedule = isOnSchedule
+        self.estimatedCompletion = estimatedCompletion
+        self.hasIssue = hasIssue
+    }
+}
+
+// MARK: - Extension for Update Types
+
+extension CoreTypes.DashboardUpdate.UpdateType {
+    // Add new update types for client dashboard
+    static let routineStatusChanged = CoreTypes.DashboardUpdate.UpdateType(rawValue: "routineStatusChanged")!
+    static let monthlyMetricsUpdated = CoreTypes.DashboardUpdate.UpdateType(rawValue: "monthlyMetricsUpdated")!
+    static let activeWorkersChanged = CoreTypes.DashboardUpdate.UpdateType(rawValue: "activeWorkersChanged")!
+    static let criticalAlert = CoreTypes.DashboardUpdate.UpdateType(rawValue: "criticalAlert")!
+    static let intelligenceGenerated = CoreTypes.DashboardUpdate.UpdateType(rawValue: "intelligenceGenerated")!
+    static let portfolioMetricsChanged = CoreTypes.DashboardUpdate.UpdateType(rawValue: "portfolioMetricsChanged")!
 }

@@ -1923,7 +1923,185 @@ public struct CoreTypes {
             self.generatedAt = Date()
         }
     }
-    
+    // MARK: - Client Portfolio Intelligence (NEW)
+
+    public struct ClientPortfolioIntelligence: Codable, Identifiable {
+        public let id: String
+        public let portfolioHealth: PortfolioHealth
+        public let executiveSummary: ExecutiveSummary
+        public let benchmarks: [PortfolioBenchmark]
+        public let strategicRecommendations: [StrategicRecommendation]
+        public let costInsights: [CostInsight]
+        public let performanceTrends: [Double]
+        public let generatedAt: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            portfolioHealth: PortfolioHealth,
+            executiveSummary: ExecutiveSummary,
+            benchmarks: [PortfolioBenchmark] = [],
+            strategicRecommendations: [StrategicRecommendation] = [],
+            costInsights: [CostInsight] = [],
+            performanceTrends: [Double] = [],
+            generatedAt: Date = Date()
+        ) {
+            self.id = id
+            self.portfolioHealth = portfolioHealth
+            self.executiveSummary = executiveSummary
+            self.benchmarks = benchmarks
+            self.strategicRecommendations = strategicRecommendations
+            self.costInsights = costInsights
+            self.performanceTrends = performanceTrends
+            self.generatedAt = generatedAt
+        }
+        
+        // Convenience properties for UI
+        public var overallScore: Double {
+            portfolioHealth.overallScore
+        }
+        
+        public var hasCriticalIssues: Bool {
+            portfolioHealth.criticalIssues > 0
+        }
+        
+        public var topRecommendations: [StrategicRecommendation] {
+            Array(strategicRecommendations
+                .sorted { $0.priority.priorityValue > $1.priority.priorityValue }
+                .prefix(3))
+        }
+        
+        public var totalPotentialSavings: Double {
+            costInsights.reduce(0) { $0 + $1.potentialSavings }
+        }
+        
+        // Preview helpers
+        public static var preview: ClientPortfolioIntelligence {
+            ClientPortfolioIntelligence(
+                portfolioHealth: .preview,
+                executiveSummary: ExecutiveSummary(
+                    totalBuildings: 12,
+                    totalWorkers: 24,
+                    portfolioHealth: 0.85,
+                    monthlyPerformance: "Improving"
+                ),
+                benchmarks: [
+                    PortfolioBenchmark(
+                        metric: "Task Completion",
+                        value: 0.85,
+                        benchmark: 0.90,
+                        trend: "Stable",
+                        period: "This Month"
+                    )
+                ],
+                strategicRecommendations: [
+                    StrategicRecommendation(
+                        title: "Optimize Worker Routes",
+                        description: "Implement route optimization to reduce travel time",
+                        priority: .high,
+                        timeframe: "2 weeks",
+                        estimatedImpact: "15% efficiency gain"
+                    )
+                ],
+                costInsights: [
+                    CostInsight(
+                        category: "Labor",
+                        description: "Reduce overtime costs through better scheduling",
+                        potentialSavings: 5000,
+                        implementationEffort: .medium,
+                        affectedBuildings: ["14", "4", "7"]
+                    )
+                ],
+                performanceTrends: [0.72, 0.74, 0.71, 0.75, 0.78, 0.76, 0.80]
+            )
+        }
+        
+        public static var previewWithIssues: ClientPortfolioIntelligence {
+            ClientPortfolioIntelligence(
+                portfolioHealth: .previewCritical,
+                executiveSummary: ExecutiveSummary(
+                    totalBuildings: 12,
+                    totalWorkers: 20,
+                    portfolioHealth: 0.62,
+                    monthlyPerformance: "Declining"
+                ),
+                benchmarks: [
+                    PortfolioBenchmark(
+                        metric: "Task Completion",
+                        value: 0.62,
+                        benchmark: 0.90,
+                        trend: "Declining",
+                        period: "This Month"
+                    )
+                ],
+                strategicRecommendations: [
+                    StrategicRecommendation(
+                        title: "Address Critical Compliance Issues",
+                        description: "3 buildings have critical compliance violations",
+                        priority: .critical,
+                        timeframe: "Immediate",
+                        estimatedImpact: "Avoid penalties"
+                    )
+                ],
+                costInsights: [],
+                performanceTrends: [0.82, 0.78, 0.71, 0.65, 0.68, 0.62, 0.60]
+            )
+        }
+    }
+    // MARK: - Client Portfolio Types
+    public struct ClientPortfolioIntelligence: Codable, Identifiable {
+        public let id: String
+        public let totalProperties: Int
+        public let serviceLevel: Double
+        public let complianceScore: Int
+        public let complianceIssues: Int
+        public let monthlyTrend: TrendDirection
+        public let coveragePercentage: Double
+        public let monthlySpend: Double
+        public let monthlyBudget: Double
+        public let showCostData: Bool
+        public let generatedAt: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            totalProperties: Int,
+            serviceLevel: Double,
+            complianceScore: Int,
+            complianceIssues: Int,
+            monthlyTrend: TrendDirection,
+            coveragePercentage: Double,
+            monthlySpend: Double,
+            monthlyBudget: Double,
+            showCostData: Bool,
+            generatedAt: Date = Date()
+        ) {
+            self.id = id
+            self.totalProperties = totalProperties
+            self.serviceLevel = serviceLevel
+            self.complianceScore = complianceScore
+            self.complianceIssues = complianceIssues
+            self.monthlyTrend = monthlyTrend
+            self.coveragePercentage = coveragePercentage
+            self.monthlySpend = monthlySpend
+            self.monthlyBudget = monthlyBudget
+            self.showCostData = showCostData
+            self.generatedAt = generatedAt
+        }
+        
+        // Convenience initializer from PortfolioIntelligence
+        public init(from portfolio: PortfolioIntelligence, properties: Int, spend: Double, budget: Double, showCost: Bool = true) {
+            self.id = portfolio.id
+            self.totalProperties = properties
+            self.serviceLevel = portfolio.completionRate
+            self.complianceScore = Int(portfolio.complianceScore * 100)
+            self.complianceIssues = portfolio.criticalIssues
+            self.monthlyTrend = portfolio.monthlyTrend
+            self.coveragePercentage = portfolio.completionRate * 100
+            self.monthlySpend = spend
+            self.monthlyBudget = budget
+            self.showCostData = showCost
+            self.generatedAt = portfolio.generatedAt
+        }
+    }
     // MARK: - Compliance Types
     public enum ComplianceTab: String, CaseIterable {
         case overview = "overview"
