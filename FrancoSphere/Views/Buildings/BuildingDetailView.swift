@@ -7,6 +7,11 @@
 //  🔄 REAL-TIME: Live updates via DashboardSync
 //  ✨ UNIFIED: Consistent with BuildingIntelligencePanel patterns
 //
+//  Dependencies:
+//  - Uses FrancoBuildingPhoto and FrancoBuildingPhotoMetadata from ImagePicker.swift
+//  - Uses existing MaintenanceTaskView from MaintenanceTaskView.swift
+//  - Uses existing InventoryView components
+//
 
 import SwiftUI
 import MapKit
@@ -23,7 +28,7 @@ struct BuildingDetailView: View {
     @EnvironmentObject private var dashboardSync: DashboardSyncService
     
     // MARK: - State
-    @State private var selectedTab = BuildingTab.overview
+    @State private var selectedTab = BuildingDetailTab.overview
     @State private var showingPhotoCapture = false
     @State private var showingMessageComposer = false
     @State private var showingCallMenu = false
@@ -73,6 +78,9 @@ struct BuildingDetailView: View {
                         removal: .move(edge: .leading).combined(with: .opacity)
                     ))
             }
+            
+            // Floating action button
+            floatingActionButton
         }
         .navigationBarHidden(true)
         .task {
@@ -228,14 +236,14 @@ struct BuildingDetailView: View {
                         
                         // Status badges
                         HStack(spacing: 12) {
-                            StatusBadge(
+                            BuildingStatusBadge(
                                 label: "\(viewModel.completionPercentage)%",
                                 icon: "checkmark.circle.fill",
                                 color: completionColor
                             )
                             
                             if viewModel.workersOnSite > 0 {
-                                StatusBadge(
+                                BuildingStatusBadge(
                                     label: "\(viewModel.workersOnSite) On-Site",
                                     icon: "person.fill",
                                     color: FrancoSphereDesign.DashboardColors.info
@@ -243,7 +251,7 @@ struct BuildingDetailView: View {
                             }
                             
                             if let status = viewModel.complianceStatus {
-                                StatusBadge(
+                                BuildingStatusBadge(
                                     label: status.rawValue.capitalized,
                                     icon: complianceIcon(status),
                                     color: complianceColor(status)
@@ -312,21 +320,21 @@ struct BuildingDetailView: View {
             
             // Quick stats
             HStack(spacing: 16) {
-                QuickStatCard(
+                BuildingQuickStatCard(
                     title: "Efficiency",
                     value: "\(viewModel.efficiencyScore)%",
                     trend: .up,
                     color: FrancoSphereDesign.DashboardColors.success
                 )
                 
-                QuickStatCard(
+                BuildingQuickStatCard(
                     title: "Compliance",
                     value: viewModel.complianceScore,
                     trend: .stable,
                     color: FrancoSphereDesign.DashboardColors.info
                 )
                 
-                QuickStatCard(
+                BuildingQuickStatCard(
                     title: "Issues",
                     value: "\(viewModel.openIssues)",
                     trend: viewModel.openIssues > 0 ? .down : .stable,
@@ -480,7 +488,7 @@ struct BuildingDetailView: View {
     
     // MARK: - Helper Methods
     
-    private func shouldShowTab(_ tab: BuildingTab) -> Bool {
+    private func shouldShowTab(_ tab: BuildingDetailTab) -> Bool {
         switch tab {
         case .inventory, .spaces:
             return viewModel.userRole != .client
@@ -578,7 +586,7 @@ struct BuildingDetailView: View {
 }
 
 // MARK: - Tab Enum
-enum BuildingTab: String, CaseIterable {
+enum BuildingDetailTab: String, CaseIterable {
     case overview = "Overview"
     case tasks = "Tasks"
     case workers = "Workers"
@@ -602,7 +610,7 @@ enum BuildingTab: String, CaseIterable {
 
 // MARK: - Tab Button Component
 struct TabButton: View {
-    let tab: BuildingTab
+    let tab: BuildingDetailTab
     let isSelected: Bool
     let action: () -> Void
     
@@ -645,7 +653,7 @@ struct TabButton: View {
 }
 
 // MARK: - Status Badge Component
-struct StatusBadge: View {
+struct BuildingStatusBadge: View {
     let label: String
     let icon: String
     let color: Color
@@ -698,7 +706,7 @@ struct InfoRow: View {
 }
 
 // MARK: - Quick Stat Card
-struct QuickStatCard: View {
+struct BuildingQuickStatCard: View {
     let title: String
     let value: String
     let trend: CoreTypes.TrendDirection
@@ -862,7 +870,7 @@ struct BuildingOverviewTab: View {
     
     private var keyMetricsSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            MetricCard(
+            BuildingMetricCard(
                 title: "Efficiency",
                 value: "\(viewModel.efficiencyScore)%",
                 icon: "speedometer",
@@ -870,7 +878,7 @@ struct BuildingOverviewTab: View {
                 trend: .up
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Compliance",
                 value: viewModel.complianceScore,
                 icon: "checkmark.seal",
@@ -878,7 +886,7 @@ struct BuildingOverviewTab: View {
                 trend: .stable
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Open Issues",
                 value: "\(viewModel.openIssues)",
                 icon: "exclamationmark.circle",
@@ -886,7 +894,7 @@ struct BuildingOverviewTab: View {
                 trend: viewModel.openIssues > 0 ? .down : .stable
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Inventory",
                 value: "\(viewModel.inventorySummary.cleaningLow) Low",
                 icon: "shippingbox",
@@ -919,7 +927,7 @@ struct BuildingOverviewTab: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(viewModel.recentActivities.prefix(5)) { activity in
-                        ActivityRow(activity: activity)
+                        BuildingActivityRow(activity: activity)
                     }
                 }
             }
@@ -936,7 +944,7 @@ struct BuildingOverviewTab: View {
             
             VStack(spacing: 12) {
                 if let primaryContact = viewModel.primaryContact {
-                    ContactRow(
+                    BuildingContactRow(
                         name: primaryContact.name,
                         role: primaryContact.role ?? "Building Contact",
                         phone: primaryContact.phone,
@@ -944,7 +952,7 @@ struct BuildingOverviewTab: View {
                     )
                 }
                 
-                ContactRow(
+                BuildingContactRow(
                     name: "24/7 Emergency",
                     role: "Franco Response",
                     phone: "(212) 555-0911",
@@ -1008,7 +1016,7 @@ struct BuildingTasksTab: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 ForEach(TaskFilter.allCases, id: \.self) { filter in
-                    FilterPill(
+                    BuildingFilterPill(
                         title: filter.rawValue,
                         icon: filter.icon,
                         isSelected: selectedTaskFilter == filter,
@@ -1287,7 +1295,7 @@ struct BuildingMaintenanceTab: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(MaintenanceFilter.allCases, id: \.self) { filter in
-                        FilterPill(
+                        BuildingFilterPill(
                             title: filter.rawValue,
                             icon: filter.icon,
                             isSelected: filterOption == filter,
@@ -1398,7 +1406,7 @@ struct BuildingInventoryTab: View {
                 .animatedGlassAppear(delay: 0.4)
         }
         .sheet(isPresented: $showingAddItem) {
-            AddInventoryItemSheet(buildingId: buildingId) { success in
+            BuildingAddInventoryItemSheet(buildingId: buildingId) { success in
                 if success {
                     Task { await viewModel.loadInventoryData() }
                 }
@@ -1670,7 +1678,7 @@ struct BuildingEmergencyTab: View {
                 .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             VStack(spacing: 12) {
-                EmergencyContactRow(
+                BuildingEmergencyContactRow(
                     name: "24/7 Emergency Line",
                     role: "Franco Response Team",
                     phone: "(212) 555-0911",
@@ -1679,7 +1687,7 @@ struct BuildingEmergencyTab: View {
                 )
                 
                 if let buildingEmergency = viewModel.emergencyContact {
-                    EmergencyContactRow(
+                    BuildingEmergencyContactRow(
                         name: buildingEmergency.name,
                         role: buildingEmergency.role ?? "Building Emergency",
                         phone: buildingEmergency.phone ?? "N/A",
@@ -1688,7 +1696,7 @@ struct BuildingEmergencyTab: View {
                     )
                 }
                 
-                EmergencyContactRow(
+                BuildingEmergencyContactRow(
                     name: "Operations Manager",
                     role: "David Rodriguez",
                     phone: "(212) 555-0123",
@@ -1733,7 +1741,7 @@ struct BuildingEmergencyTab: View {
                 .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             VStack(spacing: 12) {
-                ProcedureRow(
+                BuildingProcedureRow(
                     title: "Fire Emergency",
                     icon: "flame.fill",
                     color: .red,
@@ -1745,7 +1753,7 @@ struct BuildingEmergencyTab: View {
                     ]
                 )
                 
-                ProcedureRow(
+                BuildingProcedureRow(
                     title: "Medical Emergency",
                     icon: "cross.circle.fill",
                     color: .red,
@@ -1757,7 +1765,7 @@ struct BuildingEmergencyTab: View {
                     ]
                 )
                 
-                ProcedureRow(
+                BuildingProcedureRow(
                     title: "Building Security",
                     icon: "lock.shield.fill",
                     color: .orange,
@@ -1783,7 +1791,7 @@ struct BuildingEmergencyTab: View {
 
 // MARK: - Supporting Components
 
-struct MetricCard: View {
+struct BuildingMetricCard: View {
     let title: String
     let value: String
     let icon: String
@@ -1832,7 +1840,7 @@ struct MetricCard: View {
     }
 }
 
-struct ActivityRow: View {
+struct BuildingActivityRow: View {
     let activity: BuildingDetailActivity
     
     var body: some View {
@@ -1894,7 +1902,7 @@ struct ActivityRow: View {
     }
 }
 
-struct ContactRow: View {
+struct BuildingContactRow: View {
     let name: String
     let role: String
     let phone: String?
@@ -1932,7 +1940,7 @@ struct ContactRow: View {
     }
 }
 
-struct FilterPill: View {
+struct BuildingFilterPill: View {
     let title: String
     let icon: String
     let isSelected: Bool
@@ -2350,7 +2358,7 @@ struct SpaceCard: View {
     }
 }
 
-struct EmergencyContactRow: View {
+struct BuildingEmergencyContactRow: View {
     let name: String
     let role: String
     let phone: String
@@ -2423,7 +2431,7 @@ struct EmergencyActionButton: View {
     }
 }
 
-struct ProcedureRow: View {
+struct BuildingProcedureRow: View {
     let title: String
     let icon: String
     let color: Color
@@ -2499,7 +2507,7 @@ struct MaintenanceTaskDetailSheet: View {
     }
 }
 
-struct AddInventoryItemSheet: View {
+struct BuildingAddInventoryItemSheet: View {
     let buildingId: String
     let onComplete: (Bool) -> Void
     @Environment(\.dismiss) private var dismiss
@@ -2512,6 +2520,30 @@ struct AddInventoryItemSheet: View {
                 dismiss()
             }
         )
+    }
+}
+
+enum FrancoPhotoCategory: String, CaseIterable {
+    case entrance = "entrance"
+    case lobby = "lobby"
+    case utilities = "utilities"
+    case basement = "basement"
+    case roof = "roof"
+    case mechanical = "mechanical"
+    case storage = "storage"
+    case general = "general"
+    
+    var displayName: String {
+        switch self {
+        case .entrance: return "Entrance"
+        case .lobby: return "Lobby"
+        case .utilities: return "Utilities"
+        case .basement: return "Basement"
+        case .roof: return "Roof"
+        case .mechanical: return "Mechanical"
+        case .storage: return "Storage"
+        case .general: return "General"
+        }
     }
 }
 
@@ -2609,15 +2641,1043 @@ extension BuildingDetailVM {
     }
 }
 
-// Reuse the same MaintenanceTaskView from the existing code
-struct MaintenanceTaskView: View {
-    let task: CoreTypes.MaintenanceTask
+// MARK: - Status badge helper
+struct StatusBadge: View {
+    let isCompleted: Bool
+    let urgency: CoreTypes.TaskUrgency
+
+    private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
+        switch urgency {
+        case .low:       return .green
+        case .medium:    return .yellow
+        case .high:      return .orange
+        case .urgent:    return .purple
+        case .critical:  return .red
+        case .emergency: return .red
+        }
+    }
+
+    var body: some View {
+        Text(isCompleted ? "Completed" : urgency.rawValue.capitalized)
+            .font(.caption).fontWeight(.bold)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(isCompleted ? Color.gray : getUrgencyColor(urgency))
+            .foregroundColor(.white)
+            .cornerRadius(20)
+    }
+}
+
+// MARK: - Data Types
+
+struct BuildingContact: Identifiable {
+    let id = UUID()
+    let name: String
+    let role: String?
+    let email: String?
+    let phone: String?
+    let isEmergencyContact: Bool
+}
+
+struct BuildingDetailActivity: Identifiable {
+    let id: String
+    let type: ActivityType
+    let description: String
+    let timestamp: Date
+    let workerName: String?
+    let photoId: String?
+    
+    enum ActivityType {
+        case taskCompleted
+        case photoAdded
+        case issueReported
+        case workerArrived
+        case workerDeparted
+        case routineCompleted
+        case inventoryUsed
+    }
+}
+
+struct DailyRoutine: Identifiable {
+    let id: String
+    let title: String
+    let scheduledTime: String?
+    var isCompleted: Bool = false
+    var assignedWorker: String? = nil
+    var requiredInventory: [String] = []
+}
+
+struct AssignedWorker: Identifiable {
+    let id: String
+    let name: String
+    let schedule: String
+    let isOnSite: Bool
+}
+
+struct MaintenanceRecord: Identifiable {
+    let id: String
+    let title: String
+    let date: Date
+    let description: String?
+    let cost: Decimal?
+}
+
+struct SpaceAccess: Identifiable {
+    let id: String
+    let name: String
+    let category: SpaceCategory
+    let thumbnail: UIImage?
+    let lastUpdated: Date
+    let accessCode: String?
+    let notes: String?
+    let requiresKey: Bool
+    let photos: [FrancoBuildingPhoto]
+}
+
+struct AccessCode: Identifiable {
+    let id: String
+    let location: String
+    let code: String
+    let type: String // "keypad", "lock box", "alarm"
+    let updatedDate: Date
+}
+
+enum SpaceCategory: String, CaseIterable {
+    case all = "All"
+    case utility = "Utility"
+    case mechanical = "Mechanical"
+    case storage = "Storage"
+    case electrical = "Electrical"
+    case access = "Access Points"
+    
+    var displayName: String {
+        switch self {
+        case .all: return "All Spaces"
+        default: return rawValue
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .all: return "square.grid.2x2"
+        case .utility: return "wrench.fill"
+        case .mechanical: return "gear"
+        case .storage: return "shippingbox"
+        case .electrical: return "bolt.fill"
+        case .access: return "key.fill"
+        }
+    }
+}
+
+// MARK: - View Model
+
+@MainActor
+class BuildingDetailVM: ObservableObject {
+    let buildingId: String
     let buildingName: String
+    let buildingAddress: String
+    
+    // Services
+    private let photoStorageService = FrancoPhotoStorageService.shared
+    private let locationManager = LocationManager.shared
+    private let buildingService = BuildingService.shared
+    private let taskService = TaskService.shared
+    private let inventoryService = InventoryService.shared
+    private let workerService = WorkerService.shared
+    
+    // User context
+    @Published var userRole: CoreTypes.UserRole = .worker
+    
+    // Overview data
+    @Published var buildingImage: UIImage?
+    @Published var completionPercentage: Int = 0
+    @Published var workersOnSite: Int = 0
+    @Published var workersPresent: [String] = []
+    @Published var todaysTasks: (total: Int, completed: Int)?
+    @Published var nextCriticalTask: String?
+    @Published var todaysSpecialNote: String?
+    @Published var isFavorite: Bool = false
+    @Published var complianceStatus: CoreTypes.ComplianceStatus?
+    @Published var primaryContact: BuildingContact?
+    @Published var emergencyContact: BuildingContact?
+    
+    // Building details
+    @Published var buildingType: String = "Commercial"
+    @Published var buildingSize: Int = 0
+    @Published var floors: Int = 0
+    @Published var units: Int = 0
+    @Published var yearBuilt: Int = 1900
+    @Published var contractType: String?
+    
+    // Metrics
+    @Published var efficiencyScore: Int = 0
+    @Published var complianceScore: String = "A"
+    @Published var openIssues: Int = 0
+    
+    // Spaces & Access
+    @Published var spaceSearchQuery: String = ""
+    @Published var selectedSpaceCategory: SpaceCategory = .all
+    @Published var spaces: [SpaceAccess] = []
+    @Published var accessCodes: [AccessCode] = []
+    
+    var filteredSpaces: [SpaceAccess] {
+        var filtered = spaces
+        
+        // Category filter
+        if selectedSpaceCategory != .all {
+            filtered = filtered.filter { $0.category == selectedSpaceCategory }
+        }
+        
+        // Search filter
+        if !spaceSearchQuery.isEmpty {
+            filtered = filtered.filter {
+                $0.name.localizedCaseInsensitiveContains(spaceSearchQuery) ||
+                $0.notes?.localizedCaseInsensitiveContains(spaceSearchQuery) ?? false
+            }
+        }
+        
+        return filtered
+    }
+    
+    // Routines data
+    @Published var dailyRoutines: [DailyRoutine] = []
+    @Published var completedRoutines: Int = 0
+    @Published var totalRoutines: Int = 0
+    
+    // Inventory summary
+    @Published var inventorySummary = InventorySummary()
+    
+    // Compliance
+    @Published var dsnyCompliance: CoreTypes.ComplianceStatus = .compliant
+    @Published var nextDSNYAction: String?
+    @Published var fireSafetyCompliance: CoreTypes.ComplianceStatus = .compliant
+    @Published var nextFireSafetyAction: String?
+    @Published var healthCompliance: CoreTypes.ComplianceStatus = .compliant
+    @Published var nextHealthAction: String?
+    
+    // Activity data
+    @Published var assignedWorkers: [AssignedWorker] = []
+    @Published var recentActivities: [BuildingDetailActivity] = []
+    @Published var maintenanceHistory: [MaintenanceRecord] = []
+    
+    // Computed properties
+    var buildingIcon: String {
+        if buildingName.lowercased().contains("museum") {
+            return "building.columns.fill"
+        } else if buildingName.lowercased().contains("park") {
+            return "leaf.fill"
+        } else {
+            return "building.2.fill"
+        }
+    }
+    
+    var onSiteWorkers: [AssignedWorker] {
+        assignedWorkers.filter { $0.isOnSite }
+    }
+    
+    var maintenanceTasks: [CoreTypes.MaintenanceTask] {
+        // This would fetch actual maintenance tasks from the database
+        []
+    }
+    
+    var hasComplianceIssues: Bool {
+        dsnyCompliance != .compliant ||
+        fireSafetyCompliance != .compliant ||
+        healthCompliance != .compliant
+    }
+    
+    var hasLowStockItems: Bool {
+        lowStockCount > 0
+    }
+    
+    var lowStockCount: Int {
+        inventorySummary.cleaningLow +
+        inventorySummary.equipmentLow +
+        inventorySummary.maintenanceLow +
+        inventorySummary.safetyLow
+    }
+    
+    var totalInventoryItems: Int {
+        inventorySummary.cleaningTotal +
+        inventorySummary.equipmentTotal +
+        inventorySummary.maintenanceTotal +
+        inventorySummary.safetyTotal
+    }
+    
+    var totalInventoryValue: Double {
+        // Calculate from actual inventory items
+        1250.50
+    }
+    
+    var maintenanceThisWeek: Int {
+        // Calculate from maintenance history
+        8
+    }
+    
+    var repairCount: Int {
+        // Count repairs from maintenance history
+        3
+    }
+    
+    var totalMaintenanceCost: Double {
+        // Sum from maintenance history
+        487.50
+    }
+    
+    var averageWorkerHours: Int {
+        // Calculate average from worker data
+        8
+    }
+    
+    var buildingRating: String {
+        // Calculate based on metrics
+        "A+"
+    }
+    
+    var inventoryItems: [InventoryItem] {
+        // Fetch from database
+        []
+    }
+    
+    init(buildingId: String, buildingName: String, buildingAddress: String) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.buildingAddress = buildingAddress
+        loadUserRole()
+    }
+    
+    func loadBuildingData() async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadBuildingDetails() }
+            group.addTask { await self.loadTodaysMetrics() }
+            group.addTask { await self.loadRoutines() }
+            group.addTask { await self.loadSpacesAndAccess() }
+            group.addTask { await self.loadInventorySummary() }
+            group.addTask { await self.loadComplianceStatus() }
+            group.addTask { await self.loadActivityData() }
+        }
+    }
+    
+    func refreshData() async {
+        await loadTodaysMetrics()
+        await loadActivityData()
+    }
+    
+    private func loadUserRole() {
+        if let roleString = NewAuthManager.shared.currentUser?.role,
+           let role = CoreTypes.UserRole(rawValue: roleString) {
+            userRole = role
+        }
+    }
+    
+    private func loadBuildingDetails() async {
+        do {
+            let building = try await buildingService.getBuildingDetails(buildingId)
+            
+            await MainActor.run {
+                self.buildingType = building.type.rawValue.capitalized
+                self.buildingSize = building.squareFootage
+                self.floors = building.floors
+                self.units = building.units ?? 1
+                self.yearBuilt = building.yearBuilt ?? 1900
+                self.contractType = building.contractType
+                
+                // Load primary contact
+                if let contact = building.primaryContact {
+                    self.primaryContact = BuildingContact(
+                        name: contact.name,
+                        role: contact.role,
+                        email: contact.email,
+                        phone: contact.phone,
+                        isEmergencyContact: contact.isEmergency
+                    )
+                }
+            }
+        } catch {
+            print("❌ Error loading building details: \(error)")
+        }
+    }
+    
+    private func loadTodaysMetrics() async {
+        do {
+            let metrics = try await buildingService.getTodaysMetrics(buildingId)
+            
+            await MainActor.run {
+                self.completionPercentage = metrics.completionPercentage
+                self.workersOnSite = metrics.workersOnSite
+                self.workersPresent = metrics.workersPresent
+                self.todaysTasks = (metrics.totalTasks, metrics.completedTasks)
+                self.nextCriticalTask = metrics.nextCriticalTask
+                self.todaysSpecialNote = metrics.specialNote
+                self.efficiencyScore = metrics.efficiencyScore
+                self.openIssues = metrics.openIssues
+            }
+        } catch {
+            print("❌ Error loading metrics: \(error)")
+        }
+    }
+    
+    private func loadRoutines() async {
+        do {
+            let routines = try await taskService.getDailyRoutines(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.dailyRoutines = routines.map { routine in
+                    DailyRoutine(
+                        id: routine.id,
+                        title: routine.title,
+                        scheduledTime: routine.scheduledTime?.formatted(date: .omitted, time: .shortened),
+                        isCompleted: routine.status == .completed,
+                        assignedWorker: routine.assignedWorkerName,
+                        requiredInventory: routine.requiredInventory ?? []
+                    )
+                }
+                
+                self.completedRoutines = dailyRoutines.filter { $0.isCompleted }.count
+                self.totalRoutines = dailyRoutines.count
+            }
+        } catch {
+            print("❌ Error loading routines: \(error)")
+        }
+    }
+    
+    private func loadSpacesAndAccess() async {
+        do {
+            // Load spaces with photos
+            let buildingSpaces = try await buildingService.getSpaces(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.spaces = buildingSpaces.map { space in
+                    SpaceAccess(
+                        id: space.id,
+                        name: space.name,
+                        category: mapToSpaceCategory(space.type),
+                        thumbnail: nil, // Load async
+                        lastUpdated: space.lastPhotoDate ?? Date(),
+                        accessCode: space.accessCode,
+                        notes: space.notes,
+                        requiresKey: space.requiresPhysicalKey,
+                        photos: []
+                    )
+                }
+                
+                // Load access codes
+                self.accessCodes = buildingSpaces.compactMap { space in
+                    guard let code = space.accessCode else { return nil }
+                    return AccessCode(
+                        id: space.id,
+                        location: space.name,
+                        code: code,
+                        type: space.accessType ?? "keypad",
+                        updatedDate: space.lastUpdated
+                    )
+                }
+            }
+            
+            // Load thumbnails
+            await loadSpaceThumbnails()
+            
+        } catch {
+            print("❌ Error loading spaces: \(error)")
+        }
+    }
+    
+    private func loadSpaceThumbnails() async {
+        for (index, space) in spaces.enumerated() {
+            do {
+                // Load photos for the building and filter by space
+                let photos = try await photoStorageService.loadPhotos(for: buildingId)
+                let spacePhotos = photos.filter { photo in
+                    // Filter photos that might belong to this space based on category or notes
+                    if space.category == .utilities && photo.category == .utilities {
+                        return true
+                    }
+                    // Additional filtering logic could be added here
+                    return false
+                }
+                
+                if let firstPhoto = spacePhotos.first, let thumbnail = firstPhoto.thumbnail {
+                    await MainActor.run {
+                        self.spaces[index] = SpaceAccess(
+                            id: space.id,
+                            name: space.name,
+                            category: space.category,
+                            thumbnail: thumbnail,
+                            lastUpdated: space.lastUpdated,
+                            accessCode: space.accessCode,
+                            notes: space.notes,
+                            requiresKey: space.requiresKey,
+                            photos: spacePhotos
+                        )
+                    }
+                }
+            } catch {
+                print("❌ Error loading thumbnail for space \(space.id): \(error)")
+            }
+        }
+    }
+    
+    private func loadInventorySummary() async {
+        do {
+            let summary = try await inventoryService.getBuildingInventorySummary(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.inventorySummary = InventorySummary(
+                    cleaningLow: summary.categorySummaries[.cleaning]?.lowStockCount ?? 0,
+                    cleaningTotal: summary.categorySummaries[.cleaning]?.totalItems ?? 0,
+                    equipmentLow: summary.categorySummaries[.equipment]?.lowStockCount ?? 0,
+                    equipmentTotal: summary.categorySummaries[.equipment]?.totalItems ?? 0,
+                    maintenanceLow: summary.categorySummaries[.maintenance]?.lowStockCount ?? 0,
+                    maintenanceTotal: summary.categorySummaries[.maintenance]?.totalItems ?? 0,
+                    safetyLow: summary.categorySummaries[.safety]?.lowStockCount ?? 0,
+                    safetyTotal: summary.categorySummaries[.safety]?.totalItems ?? 0
+                )
+            }
+        } catch {
+            print("❌ Error loading inventory summary: \(error)")
+        }
+    }
+    
+    private func loadComplianceStatus() async {
+        do {
+            let compliance = try await buildingService.getComplianceStatus(buildingId: buildingId)
+            
+            await MainActor.run {
+                self.complianceStatus = compliance.overallStatus
+                
+                // DSNY compliance
+                if let dsny = compliance.categories.first(where: { $0.type == "DSNY" }) {
+                    self.dsnyCompliance = dsny.status
+                    self.nextDSNYAction = dsny.nextRequiredAction
+                }
+                
+                // Fire safety
+                if let fire = compliance.categories.first(where: { $0.type == "Fire Safety" }) {
+                    self.fireSafetyCompliance = fire.status
+                    self.nextFireSafetyAction = fire.nextRequiredAction
+                }
+                
+                // Health
+                if let health = compliance.categories.first(where: { $0.type == "Health" }) {
+                    self.healthCompliance = health.status
+                    self.nextHealthAction = health.nextRequiredAction
+                }
+            }
+        } catch {
+            print("❌ Error loading compliance: \(error)")
+        }
+    }
+    
+    private func loadActivityData() async {
+        do {
+            // Load assigned workers
+            let workers = try await workerService.getAssignedWorkers(buildingId: buildingId)
+            
+            // Load recent activities
+            let activities = try await buildingService.getRecentActivity(buildingId: buildingId, limit: 20)
+            
+            // Load maintenance history
+            let maintenance = try await buildingService.getMaintenanceHistory(buildingId: buildingId, limit: 5)
+            
+            await MainActor.run {
+                self.assignedWorkers = workers.map { worker in
+                    AssignedWorker(
+                        id: worker.id,
+                        name: worker.displayName,
+                        schedule: worker.schedule,
+                        isOnSite: worker.clockStatus == .clockedIn && worker.currentBuildingId == buildingId
+                    )
+                }
+                
+                self.recentActivities = activities.map { activity in
+                    BuildingDetailActivity(
+                        id: activity.id,
+                        type: mapActivityType(activity.type),
+                        description: activity.description,
+                        timestamp: activity.timestamp,
+                        workerName: activity.workerName,
+                        photoId: activity.relatedPhotoId
+                    )
+                }
+                
+                self.maintenanceHistory = maintenance.map { record in
+                    MaintenanceRecord(
+                        id: record.id,
+                        title: record.title,
+                        date: record.date,
+                        description: record.description,
+                        cost: record.cost
+                    )
+                }
+            }
+        } catch {
+            print("❌ Error loading activity data: \(error)")
+        }
+    }
+    
+    // MARK: - Actions
+    
+    func toggleRoutineCompletion(_ routine: DailyRoutine) {
+        Task {
+            do {
+                let newStatus: CoreTypes.TaskStatus = routine.isCompleted ? .pending : .completed
+                try await taskService.updateTaskStatus(routine.id, status: newStatus)
+                
+                // Update local state
+                if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
+                    dailyRoutines[index].isCompleted.toggle()
+                    completedRoutines = dailyRoutines.filter { $0.isCompleted }.count
+                }
+                
+                // Broadcast update
+                let update = CoreTypes.DashboardUpdate(
+                    source: .worker,
+                    type: .taskCompleted,
+                    buildingId: buildingId,
+                    workerId: NewAuthManager.shared.workerId ?? "",
+                    data: [
+                        "routineId": routine.id,
+                        "routineTitle": routine.title,
+                        "isCompleted": String(!routine.isCompleted)
+                    ]
+                )
+                DashboardSyncService.shared.broadcastWorkerUpdate(update)
+                
+            } catch {
+                print("❌ Error updating routine: \(error)")
+            }
+        }
+    }
+    
+    func assignWorkerToRoutine(_ routine: DailyRoutine, workerId: String) {
+        Task {
+            do {
+                try await taskService.assignWorker(taskId: routine.id, workerId: workerId)
+                
+                // Update local state
+                if let index = dailyRoutines.firstIndex(where: { $0.id == routine.id }) {
+                    let workerName = assignedWorkers.first(where: { $0.id == workerId })?.name ?? "Unknown"
+                    dailyRoutines[index].assignedWorker = workerName
+                }
+                
+                // Broadcast update
+                let update = CoreTypes.DashboardUpdate(
+                    source: .admin,
+                    type: .taskUpdated,
+                    buildingId: buildingId,
+                    workerId: workerId,
+                    data: [
+                        "routineId": routine.id,
+                        "action": "workerAssigned"
+                    ]
+                )
+                DashboardSyncService.shared.broadcastAdminUpdate(update)
+                
+            } catch {
+                print("❌ Error assigning worker: \(error)")
+            }
+        }
+    }
+    
+    func savePhoto(_ photo: UIImage, category: FrancoPhotoCategory, notes: String) async {
+        do {
+            // Get current location
+            let location = await locationManager.getCurrentLocation()
+            
+            // Create metadata
+            let metadata = FrancoBuildingPhotoMetadata(
+                buildingId: buildingId,
+                category: category,
+                notes: notes.isEmpty ? nil : notes,
+                location: location,
+                taskId: nil,
+                workerId: NewAuthManager.shared.workerId,
+                timestamp: Date()
+            )
+            
+            let savedPhoto = try await photoStorageService.savePhoto(photo, metadata: metadata)
+            print("✅ Photo saved: \(savedPhoto.id)")
+            
+            // Reload spaces if it was a space photo
+            if category == .utilities || category == .mechanical || category == .storage {
+                await loadSpacesAndAccess()
+            }
+            
+            // Broadcast update
+            let update = CoreTypes.DashboardUpdate(
+                source: .worker,
+                type: .buildingMetricsChanged,
+                buildingId: buildingId,
+                workerId: NewAuthManager.shared.workerId ?? "",
+                data: [
+                    "action": "photoAdded",
+                    "photoId": savedPhoto.id,
+                    "category": category.rawValue
+                ]
+            )
+            DashboardSyncService.shared.broadcastWorkerUpdate(update)
+            
+        } catch {
+            print("❌ Failed to save photo: \(error)")
+        }
+    }
+    
+    func updateSpace(_ space: SpaceAccess) {
+        if let index = spaces.firstIndex(where: { $0.id == space.id }) {
+            spaces[index] = space
+        }
+    }
+    
+    func loadInventoryData() async {
+        // Load inventory data
+    }
+    
+    func updateInventoryItem(_ item: InventoryItem) {
+        // Update inventory item
+    }
+    
+    func initiateReorder() {
+        // Initiate reorder process
+    }
+    
+    func exportBuildingReport() {
+        // TODO: Implement report generation
+    }
+    
+    func toggleFavorite() {
+        isFavorite.toggle()
+        // TODO: Save to user preferences
+    }
+    
+    func editBuildingInfo() {
+        // TODO: Navigate to edit screen (admin only)
+    }
+    
+    func reportIssue() {
+        // TODO: Open issue reporting flow
+    }
+    
+    func requestSupplies() {
+        // TODO: Open supply request flow
+    }
+    
+    func addNote() {
+        // TODO: Add note to building
+    }
+    
+    func logVendorVisit() {
+        // TODO: Log vendor visit
+    }
+    
+    func reportEmergencyIssue() {
+        // Report emergency issue
+    }
+    
+    func alertEmergencyTeam() {
+        // Alert emergency team
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func mapToSpaceCategory(_ type: String) -> SpaceCategory {
+        switch type.lowercased() {
+        case "utility": return .utility
+        case "mechanical": return .mechanical
+        case "storage": return .storage
+        case "electrical": return .electrical
+        case "access": return .access
+        default: return .utility
+        }
+    }
+    
+    private func mapActivityType(_ type: String) -> BuildingDetailActivity.ActivityType {
+        switch type {
+        case "task_completed": return .taskCompleted
+        case "photo_added": return .photoAdded
+        case "issue_reported": return .issueReported
+        case "worker_arrived": return .workerArrived
+        case "worker_departed": return .workerDeparted
+        case "routine_completed": return .routineCompleted
+        case "inventory_used": return .inventoryUsed
+        default: return .taskCompleted
+        }
+    }
+}
+
+// MARK: - Supporting Models
+
+struct InventorySummary {
+    var cleaningLow: Int = 0
+    var cleaningTotal: Int = 0
+    var equipmentLow: Int = 0
+    var equipmentTotal: Int = 0
+    var maintenanceLow: Int = 0
+    var maintenanceTotal: Int = 0
+    var safetyLow: Int = 0
+    var safetyTotal: Int = 0
+}
+
+// MARK: - Placeholder Views
+
+struct BuildingInventoryDetailView: View {
+    let buildingId: String
     
     var body: some View {
-        // Use the existing MaintenanceTaskView implementation
-        Text("Maintenance Task Detail")
-            .navigationTitle(task.title)
+        Text("Inventory Detail View - Coming Soon")
+            .navigationTitle("Inventory")
+    }
+}
+
+struct BuildingMaintenanceHistoryView: View {
+    let buildingId: String
+    
+    var body: some View {
+        Text("Maintenance History - Coming Soon")
+            .navigationTitle("Maintenance History")
+    }
+}
+
+struct MessageComposerView: View {
+    let recipients: [String]
+    let subject: String
+    let prefilledBody: String
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Message Composer")
+                    .font(.largeTitle)
+                Text("Email integration coming in Phase 2")
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("New Message")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Camera View (Using existing ImagePicker)
+struct CameraView: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraView
+        
+        init(_ parent: CameraView) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.image = image
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
+// MARK: - Worker Assignment Sheet
+struct WorkerAssignmentSheet: View {
+    let buildingId: String
+    let routine: DailyRoutine
+    let onAssign: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var availableWorkers: [AssignedWorker] = []
+    @State private var selectedWorkerId: String?
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Header
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Assign Worker")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(routine.title)
+                            .font(.headline)
+                        
+                        if let time = routine.scheduledTime {
+                            Text(time)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+                }
+                .padding()
+                
+                // Worker list
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(availableWorkers) { worker in
+                            WorkerSelectionRow(
+                                worker: worker,
+                                isSelected: selectedWorkerId == worker.id,
+                                onSelect: {
+                                    selectedWorkerId = worker.id
+                                }
+                            )
+                        }
+                    }
+                    .padding()
+                }
+                
+                // Action buttons
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+                    
+                    Button("Assign") {
+                        if let workerId = selectedWorkerId {
+                            onAssign(workerId)
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        selectedWorkerId != nil ? Color.blue : Color.gray
+                    )
+                    .cornerRadius(12)
+                    .disabled(selectedWorkerId == nil)
+                }
+                .padding()
+            }
+            .navigationBarHidden(true)
+        }
+        .presentationDetents([.medium])
+        .task {
+            loadAvailableWorkers()
+        }
+    }
+    
+    private func loadAvailableWorkers() {
+        // Load real workers assigned to this building
+        // For now, using sample data
+        availableWorkers = [
+            AssignedWorker(id: "4", name: "Kevin Dutan", schedule: "6 AM - 2 PM", isOnSite: true),
+            AssignedWorker(id: "2", name: "Edwin Lema", schedule: "2 PM - 10 PM", isOnSite: false),
+            AssignedWorker(id: "5", name: "Mercedes Inamagua", schedule: "6 AM - 2 PM", isOnSite: false)
+        ]
+    }
+}
+
+struct WorkerSelectionRow: View {
+    let worker: AssignedWorker
+    let isSelected: Bool
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(worker.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: 8) {
+                        Text(worker.schedule)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        if worker.isOnSite {
+                            Label("On-site", systemImage: "location.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundColor(isSelected ? .blue : .gray)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+            )
+        }
+    }
+}
+
+// MARK: - Image Picker
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.image = image
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
     }
 }
 
