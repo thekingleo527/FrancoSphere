@@ -11,6 +11,7 @@
 //  ✅ UPDATED: Enhanced context engine integration
 //  ✅ UPDATED: Added debouncing for high-frequency updates
 //  ✅ STREAM B INTEGRATED: WebSocket support for real-time server sync
+//  ✅ FIXED: Changed context engine sync methods to internal visibility
 //
 
 import Foundation
@@ -517,9 +518,10 @@ public class DashboardSyncService: ObservableObject {
     }
     
     // MARK: - Context Engine Integration
+    // NOTE: These methods are internal to match the visibility of the context engine types
     
     /// Sync updates with AdminContextEngine
-    public func syncAdminContextEngine(_ contextEngine: AdminContextEngine) {
+    internal func syncAdminContextEngine(_ contextEngine: AdminContextEngine) {
         adminDashboardUpdates
             .sink { [weak contextEngine] update in
                 Task { @MainActor in
@@ -530,7 +532,7 @@ public class DashboardSyncService: ObservableObject {
     }
     
     /// Sync updates with ClientContextEngine
-    public func syncClientContextEngine(_ contextEngine: ClientContextEngine) {
+    internal func syncClientContextEngine(_ contextEngine: ClientContextEngine) {
         clientDashboardUpdates
             .filter { [weak contextEngine] update in
                 // Only updates for client's buildings
@@ -545,7 +547,7 @@ public class DashboardSyncService: ObservableObject {
     }
     
     /// Sync updates with WorkerContextEngine
-    public func syncWorkerContextEngine(_ contextEngine: WorkerContextEngine) {
+    internal func syncWorkerContextEngine(_ contextEngine: WorkerContextEngine) {
         workerDashboardUpdates
             .filter { [weak contextEngine] update in
                 // Only updates relevant to the worker

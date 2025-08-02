@@ -1,4 +1,5 @@
 //
+//
 //  StatCard.swift
 //  FrancoSphere v6.0
 //
@@ -6,11 +7,14 @@
 //  ✅ ENHANCED: Glass morphism effects
 //  ✅ ALIGNED: With FrancoSphereDesign system
 //  ✅ IMPROVED: Trend indicators and animations
+//  ✅ FIXED: Renamed to avoid redeclaration conflicts
 //
 
 import SwiftUI
 
-struct StatCard: View {
+// MARK: - Enhanced Stat Card (Renamed to avoid conflict)
+
+struct EnhancedStatCard: View {
     let title: String
     let value: String
     let trend: String?
@@ -146,7 +150,7 @@ struct PressableStatCard: View {
     @State private var isPressed = false
     
     var body: some View {
-        StatCard(
+        EnhancedStatCard(
             title: title,
             value: value,
             trend: trend,
@@ -210,6 +214,10 @@ struct CompactStatCard: View {
     }
 }
 
+// MARK: - Type Alias for Backward Compatibility
+// If you have existing code using StatCard, you can uncomment this:
+// typealias StatCard = EnhancedStatCard
+
 // MARK: - Preview
 
 struct StatCard_Previews: PreviewProvider {
@@ -217,7 +225,7 @@ struct StatCard_Previews: PreviewProvider {
         VStack(spacing: 20) {
             // Standard cards
             HStack(spacing: 16) {
-                StatCard(
+                EnhancedStatCard(
                     title: "Total Buildings",
                     value: "24",
                     trend: "↑ 2",
@@ -225,7 +233,7 @@ struct StatCard_Previews: PreviewProvider {
                     color: FrancoSphereDesign.DashboardColors.info
                 )
                 
-                StatCard(
+                EnhancedStatCard(
                     title: "Completion Rate",
                     value: "87%",
                     trend: nil,

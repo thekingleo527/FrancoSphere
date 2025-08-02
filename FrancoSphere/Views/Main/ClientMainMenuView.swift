@@ -3,7 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ REFACTORED: Aligned with CoreTypes
-//  ✅ FIXED: No duplicate declarations
+//  ✅ FIXED: Renamed conflicting declarations
 //  ✅ NAMESPACED: Prefixed components to avoid conflicts
 //  ✅ INTEGRATED: Works with ClientDashboard architecture
 //
@@ -11,9 +11,9 @@
 import SwiftUI
 import MapKit
 
-// MARK: - Client Main Menu View
+// MARK: - Client Main Menu View (Renamed to avoid conflict)
 
-public struct ClientMainMenuView: View {
+public struct ClientMainMenuViewV6: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var contextEngine = ClientContextEngine.shared
     
@@ -941,8 +941,8 @@ struct ClientDetailRow: View {
     }
 }
 
-// Additional helper views
-struct ClientProfileView: View {
+// Additional helper views (Renamed to avoid conflicts)
+struct ClientProfileViewPlaceholder: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -960,7 +960,7 @@ struct ClientProfileView: View {
     }
 }
 
-struct ClientBuildingDetailView: View {
+struct ClientBuildingDetailViewPlaceholder: View {
     let building: CoreTypes.NamedCoordinate
     
     var body: some View {
@@ -973,7 +973,7 @@ struct ClientBuildingDetailView: View {
 struct ClientMainMenuView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            ClientMainMenuView()
+            ClientMainMenuViewV6()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Main Menu")
             
