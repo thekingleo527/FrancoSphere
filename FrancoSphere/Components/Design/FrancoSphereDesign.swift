@@ -12,6 +12,7 @@
 //  ✅ MERGED: Incorporated utilities from ModelColorsExtensions
 //  ✅ UPDATED: Dark Elegance theme implementation
 //  ✅ ADDED: Dashboard gradients for all views
+//  ✅ REMOVED: Placeholder CoreTypes enum - now uses actual CoreTypes from Models
 //
 
 import SwiftUI
@@ -155,45 +156,45 @@ enum FrancoSphereDesign {
     // MARK: - Dashboard Gradients (NEW for v6.0)
     enum DashboardGradients {
         // Main background gradient
-        static let backgroundGradient = LinearGradient(
+        static let backgroundGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "0a0a0a"),  // baseBackground
-                Color(hex: "0f0f0f")   // cardBackground
+                Color(red: 10/255, green: 10/255, blue: 10/255),  // baseBackground
+                Color(red: 15/255, green: 15/255, blue: 15/255)   // cardBackground
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        // Role-specific gradients
-        static let workerGradient = LinearGradient(
+        // Role-specific gradients - Fixed with explicit type annotations
+        static let workerGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "1f2937"),  // gray-800
-                Color(hex: "374151")   // gray-700
+                Color(red: 31/255, green: 41/255, blue: 55/255),   // gray-800
+                Color(red: 55/255, green: 65/255, blue: 81/255)    // gray-700
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let adminGradient = LinearGradient(
+        static let adminGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "312e81"),  // indigo-900
-                Color(hex: "4c1d95")   // purple-900
+                Color(red: 49/255, green: 46/255, blue: 129/255),  // indigo-900
+                Color(red: 76/255, green: 29/255, blue: 149/255)   // purple-900
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let clientGradient = LinearGradient(
+        static let clientGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "14532d"),  // green-900
-                Color(hex: "166534")   // green-800
+                Color(red: 20/255, green: 83/255, blue: 45/255),   // green-900
+                Color(red: 22/255, green: 101/255, blue: 52/255)   // green-800
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
         // Glass effect gradients
-        static let glassOverlay = LinearGradient(
+        static let glassOverlay: LinearGradient = LinearGradient(
             colors: [
                 Color.white.opacity(0.05),
                 Color.white.opacity(0.02)
@@ -202,55 +203,55 @@ enum FrancoSphereDesign {
             endPoint: .bottomTrailing
         )
         
-        // Status gradients
-        static let successGradient = LinearGradient(
+        // Status gradients - Fixed with explicit Color types
+        static let successGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "10b981"),
-                Color(hex: "10b981").opacity(0.8)
+                Color(red: 16/255, green: 185/255, blue: 129/255),
+                Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.8)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let warningGradient = LinearGradient(
+        static let warningGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "f59e0b"),
-                Color(hex: "f59e0b").opacity(0.8)
+                Color(red: 245/255, green: 158/255, blue: 11/255),
+                Color(red: 245/255, green: 158/255, blue: 11/255).opacity(0.8)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let criticalGradient = LinearGradient(
+        static let criticalGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "ef4444"),
-                Color(hex: "ef4444").opacity(0.8)
+                Color(red: 239/255, green: 68/255, blue: 68/255),
+                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.8)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let infoGradient = LinearGradient(
+        static let infoGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "0ea5e9"),
-                Color(hex: "0ea5e9").opacity(0.8)
+                Color(red: 14/255, green: 165/255, blue: 233/255),
+                Color(red: 14/255, green: 165/255, blue: 233/255).opacity(0.8)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
         // Subtle card gradients
-        static let cardGradient = LinearGradient(
+        static let cardGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "0f0f0f"),
-                Color(hex: "0f0f0f").opacity(0.95)
+                Color(red: 15/255, green: 15/255, blue: 15/255),
+                Color(red: 15/255, green: 15/255, blue: 15/255).opacity(0.95)
             ],
             startPoint: .top,
             endPoint: .bottom
         )
         
         // Shine effect for interactive elements
-        static let shineGradient = LinearGradient(
+        static let shineGradient: LinearGradient = LinearGradient(
             colors: [
                 Color.white.opacity(0),
                 Color.white.opacity(0.1),
@@ -260,46 +261,46 @@ enum FrancoSphereDesign {
             endPoint: .bottomTrailing
         )
         
-        // Hero card gradients (matching role colors)
-        static let workerHeroGradient = LinearGradient(
+        // Hero card gradients (matching role colors) - Fixed with arrays
+        static let workerHeroGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "1f2937"),  // gray-800
-                Color(hex: "374151")   // gray-700
+                Color(red: 31/255, green: 41/255, blue: 55/255),   // gray-800
+                Color(red: 55/255, green: 65/255, blue: 81/255)    // gray-700
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let adminHeroGradient = LinearGradient(
+        static let adminHeroGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "312e81"),  // indigo-900
-                Color(hex: "4c1d95")   // purple-900
+                Color(red: 49/255, green: 46/255, blue: 129/255),  // indigo-900
+                Color(red: 76/255, green: 29/255, blue: 149/255)   // purple-900
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
-        static let clientHeroGradient = LinearGradient(
+        static let clientHeroGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "14532d"),  // green-900
-                Color(hex: "166534")   // green-800
+                Color(red: 20/255, green: 83/255, blue: 45/255),   // green-900
+                Color(red: 22/255, green: 101/255, blue: 52/255)   // green-800
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
         // Progress bar gradients
-        static let progressGradient = LinearGradient(
+        static let progressGradient: LinearGradient = LinearGradient(
             colors: [
-                Color(hex: "10b981"),
-                Color(hex: "34d399")
+                Color(red: 16/255, green: 185/255, blue: 129/255),
+                Color(red: 52/255, green: 211/255, blue: 153/255)
             ],
             startPoint: .leading,
             endPoint: .trailing
         )
         
         // Overlay gradients for depth
-        static let depthGradient = LinearGradient(
+        static let depthGradient: LinearGradient = LinearGradient(
             colors: [
                 Color.black.opacity(0.4),
                 Color.black.opacity(0)
@@ -311,22 +312,22 @@ enum FrancoSphereDesign {
     
     // MARK: - Dashboard Colors (DARK ELEGANCE THEME)
     enum DashboardColors {
-        // Base colors
-        static let baseBackground = Color(hex: "0a0a0a")
-        static let cardBackground = Color(hex: "0f0f0f")
+        // Base colors - Using RGB values to avoid hex ambiguity
+        static let baseBackground = Color(red: 10/255, green: 10/255, blue: 10/255)       // #0a0a0a
+        static let cardBackground = Color(red: 15/255, green: 15/255, blue: 15/255)       // #0f0f0f
         static let glassOverlay = Color.white.opacity(0.05)
         static let borderSubtle = Color.white.opacity(0.05)
         
         // Action colors
-        static let primaryAction = Color(hex: "10b981")      // Success green
-        static let secondaryAction = Color(hex: "0ea5e9")    // Sky blue
-        static let tertiaryAction = Color(hex: "8b5cf6")     // Purple
+        static let primaryAction = Color(red: 16/255, green: 185/255, blue: 129/255)      // #10b981 Success green
+        static let secondaryAction = Color(red: 14/255, green: 165/255, blue: 233/255)    // #0ea5e9 Sky blue
+        static let tertiaryAction = Color(red: 139/255, green: 92/255, blue: 246/255)     // #8b5cf6 Purple
         
         // Status colors
-        static let success = Color(hex: "10b981")
-        static let warning = Color(hex: "f59e0b")
-        static let critical = Color(hex: "ef4444")
-        static let info = Color(hex: "0ea5e9")
+        static let success = Color(red: 16/255, green: 185/255, blue: 129/255)            // #10b981
+        static let warning = Color(red: 245/255, green: 158/255, blue: 11/255)            // #f59e0b
+        static let critical = Color(red: 239/255, green: 68/255, blue: 68/255)            // #ef4444
+        static let info = Color(red: 14/255, green: 165/255, blue: 233/255)               // #0ea5e9
         static let inactive = Color.white.opacity(0.3)
         
         // Text colors (Dark theme optimized)
@@ -335,46 +336,46 @@ enum FrancoSphereDesign {
         static let tertiaryText = Color.white.opacity(0.5)
         
         // Worker Dashboard specific
-        static let workerPrimary = Color(hex: "10b981")     // Green for worker actions
-        static let workerSecondary = Color(hex: "0ea5e9")   // Blue for navigation
-        static let workerAccent = Color(hex: "06b6d4")      // Cyan for highlights
+        static let workerPrimary = Color(red: 16/255, green: 185/255, blue: 129/255)      // #10b981 Green
+        static let workerSecondary = Color(red: 14/255, green: 165/255, blue: 233/255)    // #0ea5e9 Blue
+        static let workerAccent = Color(red: 6/255, green: 182/255, blue: 212/255)        // #06b6d4 Cyan
         static let workerHeroGradient: [Color] = [
-            Color(hex: "1f2937"),  // gray-800
-            Color(hex: "374151")   // gray-700
+            Color(red: 31/255, green: 41/255, blue: 55/255),   // gray-800
+            Color(red: 55/255, green: 65/255, blue: 81/255)    // gray-700
         ]
         
         // Admin Dashboard specific
-        static let adminPrimary = Color(hex: "8b5cf6")      // Purple
-        static let adminSecondary = Color(hex: "a855f7")    // Light purple
-        static let adminAccent = Color(hex: "ec4899")       // Pink
+        static let adminPrimary = Color(red: 139/255, green: 92/255, blue: 246/255)       // #8b5cf6 Purple
+        static let adminSecondary = Color(red: 168/255, green: 85/255, blue: 247/255)     // #a855f7 Light purple
+        static let adminAccent = Color(red: 236/255, green: 72/255, blue: 153/255)        // #ec4899 Pink
         static let adminHeroGradient: [Color] = [
-            Color(hex: "312e81"),  // indigo-900
-            Color(hex: "4c1d95")   // purple-900
+            Color(red: 49/255, green: 46/255, blue: 129/255),  // indigo-900
+            Color(red: 76/255, green: 29/255, blue: 149/255)   // purple-900
         ]
         
         // Client Dashboard specific
-        static let clientPrimary = Color(hex: "10b981")     // Green
-        static let clientSecondary = Color(hex: "34d399")   // Light green
-        static let clientAccent = Color(hex: "6ee7b7")      // Mint
+        static let clientPrimary = Color(red: 16/255, green: 185/255, blue: 129/255)      // #10b981 Green
+        static let clientSecondary = Color(red: 52/255, green: 211/255, blue: 153/255)    // #34d399 Light green
+        static let clientAccent = Color(red: 110/255, green: 231/255, blue: 183/255)      // #6ee7b7 Mint
         static let clientHeroGradient: [Color] = [
-            Color(hex: "14532d"),  // green-900
-            Color(hex: "166534")   // green-800
+            Color(red: 20/255, green: 83/255, blue: 45/255),   // green-900
+            Color(red: 22/255, green: 101/255, blue: 52/255)   // green-800
         ]
         
         // Status Colors (Updated for dark theme)
-        static let compliant = Color(hex: "10b981")
-        static let pending = Color(hex: "f59e0b")
-        static let violation = Color(hex: "ef4444")
+        static let compliant = Color(red: 16/255, green: 185/255, blue: 129/255)          // #10b981
+        static let pending = Color(red: 245/255, green: 158/255, blue: 11/255)            // #f59e0b
+        static let violation = Color(red: 239/255, green: 68/255, blue: 68/255)           // #ef4444
     }
     
-    // MARK: - Enum Colors (Updated for Dark Theme)
+    // MARK: - Enum Colors (Updated for Dark Theme - Now uses actual CoreTypes)
     enum EnumColors {
         
         // MARK: AI Priority Colors
         static func aiPriority(_ priority: CoreTypes.AIPriority) -> Color {
             switch priority {
             case .low: return DashboardColors.success
-            case .medium: return Color(hex: "fbbf24")    // Amber
+            case .medium: return Color(red: 251/255, green: 191/255, blue: 36/255)    // Amber
             case .high: return DashboardColors.warning
             case .critical: return DashboardColors.critical
             }
@@ -389,7 +390,8 @@ enum FrancoSphereDesign {
             case .compliance: return DashboardColors.warning
             case .quality: return DashboardColors.tertiaryAction
             case .operations: return Color.white.opacity(0.6)
-            case .maintenance: return Color(hex: "fbbf24")
+            case .maintenance: return Color(red: 251/255, green: 191/255, blue: 36/255)
+            case .routing: return DashboardColors.info
             }
         }
         
@@ -402,7 +404,7 @@ enum FrancoSphereDesign {
             case .overdue: return DashboardColors.critical
             case .cancelled: return DashboardColors.inactive
             case .paused: return DashboardColors.warning
-            case .waiting: return Color(hex: "fbbf24")
+            case .waiting: return Color(red: 251/255, green: 191/255, blue: 36/255)
             }
         }
         
@@ -410,7 +412,7 @@ enum FrancoSphereDesign {
         static func taskUrgency(_ urgency: CoreTypes.TaskUrgency) -> Color {
             switch urgency {
             case .low: return DashboardColors.success
-            case .medium: return Color(hex: "fbbf24")
+            case .medium: return Color(red: 251/255, green: 191/255, blue: 36/255)
             case .high: return DashboardColors.warning
             case .urgent: return DashboardColors.tertiaryAction
             case .critical: return DashboardColors.critical
@@ -436,7 +438,7 @@ enum FrancoSphereDesign {
         static func complianceSeverity(_ severity: CoreTypes.ComplianceSeverity) -> Color {
             switch severity {
             case .low: return DashboardColors.success
-            case .medium: return Color(hex: "fbbf24")
+            case .medium: return Color(red: 251/255, green: 191/255, blue: 36/255)
             case .high: return DashboardColors.warning
             case .critical: return DashboardColors.critical
             }
@@ -481,9 +483,9 @@ enum FrancoSphereDesign {
             case .residential: return DashboardColors.success
             case .retail: return DashboardColors.tertiaryAction
             case .industrial: return DashboardColors.warning
-            case .warehouse: return Color(hex: "92400e")  // Brown
+            case .warehouse: return Color(red: 146/255, green: 64/255, blue: 14/255)  // Brown
             case .medical: return DashboardColors.critical
-            case .educational: return Color(hex: "fbbf24")
+            case .educational: return Color(red: 251/255, green: 191/255, blue: 36/255)
             case .mixed: return DashboardColors.inactive
             }
         }
@@ -505,6 +507,7 @@ enum FrancoSphereDesign {
             case .verified: return DashboardColors.success
             case .rejected: return DashboardColors.critical
             case .notRequired: return DashboardColors.inactive
+            case .needsReview: return DashboardColors.warning
             }
         }
         
@@ -512,7 +515,7 @@ enum FrancoSphereDesign {
         static func outdoorWorkRisk(_ risk: CoreTypes.OutdoorWorkRisk) -> Color {
             switch risk {
             case .low: return DashboardColors.success
-            case .medium: return Color(hex: "fbbf24")
+            case .medium: return Color(red: 251/255, green: 191/255, blue: 36/255)
             case .high: return DashboardColors.warning
             case .extreme: return DashboardColors.critical
             }
@@ -533,7 +536,7 @@ enum FrancoSphereDesign {
             switch level {
             case .beginner: return DashboardColors.critical
             case .intermediate: return DashboardColors.warning
-            case .advanced: return Color(hex: "fbbf24")
+            case .advanced: return Color(red: 251/255, green: 191/255, blue: 36/255)
             case .expert: return DashboardColors.success
             }
         }
@@ -553,6 +556,7 @@ enum FrancoSphereDesign {
             switch status {
             case .healthy: return DashboardColors.success
             case .warning: return DashboardColors.warning
+            case .critical: return DashboardColors.critical
             case .error: return DashboardColors.critical
             case .unknown: return DashboardColors.inactive
             }
@@ -566,7 +570,7 @@ enum FrancoSphereDesign {
             case "verified", "completed", "success", "compliant": return DashboardColors.success
             case "pending", "in progress", "processing": return DashboardColors.warning
             case "failed", "error", "rejected": return DashboardColors.critical
-            case "warning", "caution": return Color(hex: "fbbf24")
+            case "warning", "caution": return Color(red: 251/255, green: 191/255, blue: 36/255)
             default: return DashboardColors.inactive
             }
         }
@@ -579,8 +583,8 @@ enum FrancoSphereDesign {
             case "repair": return DashboardColors.critical
             case "inspection": return DashboardColors.tertiaryAction
             case "emergency": return DashboardColors.critical
-            case "safety": return Color(hex: "fbbf24")
-            case "equipment": return Color(hex: "6366f1")  // Indigo
+            case "safety": return Color(red: 251/255, green: 191/255, blue: 36/255)
+            case "equipment": return Color(red: 99/255, green: 102/255, blue: 241/255)  // Indigo
             case "supplies": return DashboardColors.success
             case "sanitation": return DashboardColors.workerAccent
             default: return DashboardColors.inactive
@@ -1097,84 +1101,5 @@ struct ColorSwatch: View {
                 .font(.caption)
                 .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
-    }
-}
-
-// MARK: - CoreTypes Support (Placeholder)
-// This enum should be replaced with your actual CoreTypes implementation
-enum CoreTypes {
-    enum AIPriority: String, CaseIterable {
-        case low, medium, high, critical
-    }
-    
-    enum InsightCategory: String, CaseIterable {
-        case efficiency, cost, safety, compliance, quality, operations, maintenance
-    }
-    
-    enum TaskStatus: String, CaseIterable {
-        case pending, inProgress, completed, overdue, cancelled, paused, waiting
-    }
-    
-    enum TaskUrgency: String, CaseIterable {
-        case low, medium, high, urgent, critical, emergency
-    }
-    
-    enum ComplianceStatus: String, CaseIterable {
-        case compliant, warning, violation, nonCompliant, pending, needsReview
-        case atRisk, open, inProgress, resolved
-    }
-    
-    enum ComplianceSeverity: String, CaseIterable {
-        case low, medium, high, critical
-    }
-    
-    enum ComplianceIssueType: String, CaseIterable {
-        case safety, environmental, regulatory, financial, operational, documentation
-    }
-    
-    enum WorkerStatus: String, CaseIterable {
-        case available, clockedIn, onBreak, offline
-    }
-    
-    enum UserRole: String, CaseIterable {
-        case admin, manager, worker, client
-    }
-    
-    enum BuildingType: String, CaseIterable {
-        case office, residential, retail, industrial, warehouse, medical, educational, mixed
-    }
-    
-    enum DashboardSyncStatus: String, CaseIterable {
-        case synced, syncing, failed, offline
-    }
-    
-    enum VerificationStatus: String, CaseIterable {
-        case pending, verified, rejected, notRequired
-    }
-    
-    enum OutdoorWorkRisk: String, CaseIterable {
-        case low, medium, high, extreme
-    }
-    
-    enum TrendDirection: String, CaseIterable {
-        case up, down, stable, unknown, improving, declining
-    }
-    
-    enum SkillLevel: String, CaseIterable {
-        case beginner, intermediate, advanced, expert
-    }
-    
-    enum RestockStatus: String, CaseIterable {
-        case inStock, lowStock, outOfStock, ordered
-    }
-    
-    enum DataHealthStatus: String, CaseIterable {
-        case healthy, warning, error, unknown
-    }
-    
-    enum InventoryCategory: String, CaseIterable {
-        case cleaning, equipment, building, sanitation, office, seasonal
-        case supplies, maintenance, electrical, safety, tools, materials
-        case plumbing, general, other
     }
 }

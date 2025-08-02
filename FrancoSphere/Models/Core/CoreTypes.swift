@@ -5,6 +5,8 @@
 //  ✅ UNIFIED: Single source of truth for all dashboard types
 //  ✅ FIXED: All Codable conformance issues resolved
 //  ✅ FIXED: Removed all duplicate declarations
+//  ✅ FIXED: Added missing types (DashboardSource, UrgencyLevel)
+//  ✅ FIXED: Added utilities case to FrancoPhotoCategory
 //  ✅ ORGANIZED: Clear namespacing to prevent conflicts
 //  ✅ COMPLETE: Includes all client, admin, and worker types
 //
@@ -64,6 +66,35 @@ public struct CoreTypes {
         public var displayName: String { name }
     }
     
+    // MARK: - Dashboard Source (ADDED)
+    public enum DashboardSource: String, Codable {
+        case admin = "admin"
+        case worker = "worker"
+        case client = "client"
+        case system = "system"
+    }
+    
+    // MARK: - Urgency Level (ADDED)
+    public enum UrgencyLevel: String, Codable, CaseIterable {
+        case low = "low"
+        case medium = "medium"
+        case high = "high"
+        case urgent = "urgent"
+        case critical = "critical"
+        case emergency = "emergency"
+        
+        public var priority: Int {
+            switch self {
+            case .low: return 1
+            case .medium: return 2
+            case .high: return 3
+            case .urgent: return 4
+            case .critical: return 5
+            case .emergency: return 6
+            }
+        }
+    }
+    
     // MARK: - Dashboard Sync Types
     public enum DashboardSyncStatus: String, Codable, CaseIterable {
         case syncing = "Syncing"
@@ -84,7 +115,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Dashboard Update
+    // MARK: - Dashboard Update (FIXED)
     public struct DashboardUpdate: Codable, Identifiable {
         public enum Source: String, Codable {
             case admin = "admin"
@@ -237,7 +268,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Photo Evidence Types
+    // MARK: - Photo Evidence Types (FIXED - Added utilities case)
     public struct ActionEvidence: Codable, Identifiable {
         public let id: String
         public let photoUrl: String?
@@ -274,9 +305,10 @@ public struct CoreTypes {
         case inventory = "inventory"
         case compliance = "compliance"
         case emergency = "emergency"
+        case utilities = "utilities"  // ADDED
     }
     
-    // MARK: - Worker Route Types
+    // MARK: - Worker Route Types (FIXED)
     public struct WorkerDailyRoute: Codable, Identifiable {
         public let id: String
         public let workerId: String
@@ -308,10 +340,11 @@ public struct CoreTypes {
         }
     }
     
+    // FIXED: Removed duplicate buildingName property
     public struct RouteStop: Codable, Identifiable {
         public let id: String
         public let buildingId: String
-        public let buildingName: String
+        public let name: String  // Changed from buildingName to avoid duplication
         public let address: String
         public let latitude: Double
         public let longitude: Double
@@ -324,7 +357,7 @@ public struct CoreTypes {
         public init(
             id: String = UUID().uuidString,
             buildingId: String,
-            buildingName: String,
+            name: String,
             address: String,
             latitude: Double,
             longitude: Double,
@@ -336,7 +369,7 @@ public struct CoreTypes {
         ) {
             self.id = id
             self.buildingId = buildingId
-            self.buildingName = buildingName
+            self.name = name
             self.address = address
             self.latitude = latitude
             self.longitude = longitude
@@ -346,6 +379,9 @@ public struct CoreTypes {
             self.actualArrival = actualArrival
             self.estimatedDuration = estimatedDuration
         }
+        
+        // Computed property for backward compatibility
+        public var buildingName: String { name }
     }
     
     public struct RouteOptimization: Codable {
@@ -479,6 +515,7 @@ public struct CoreTypes {
         case verified = "verified"
         case rejected = "rejected"
         case needsReview = "needs_review"
+        case notRequired = "not_required"  // Added for compatibility
     }
     
     public struct TaskCompletionRecord: Codable, Identifiable {
@@ -588,7 +625,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Weather Types
+    // MARK: - Weather Types (FIXED)
     public struct WeatherData: Codable, Identifiable {
         public let id: String
         public let temperature: Double
@@ -768,6 +805,7 @@ public struct CoreTypes {
         case healthy = "healthy"
         case warning = "warning"
         case critical = "critical"
+        case error = "error"  // Added
         case unknown = "unknown"
     }
     
@@ -1255,7 +1293,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Portfolio Types
+    // MARK: - Portfolio Types (FIXED: Removed duplicate empty)
     public struct PortfolioHealth: Codable {
         public let overallScore: Double
         public let totalBuildings: Int
@@ -1672,7 +1710,7 @@ public struct CoreTypes {
         )
     }
     
-    // MARK: - Task Types
+    // MARK: - Task Types (FIXED - removed duplicate icon)
     public enum TaskCategory: String, Codable, CaseIterable {
         case cleaning = "cleaning"
         case maintenance = "maintenance"
@@ -2186,7 +2224,7 @@ public struct CoreTypes {
     }
 }
 
-// MARK: - Global Type Aliases (For backward compatibility)
+// MARK: - Global Type Aliases (For backward compatibility - NO DUPLICATES)
 public typealias WorkerID = CoreTypes.WorkerID
 public typealias BuildingID = CoreTypes.BuildingID
 public typealias TaskID = CoreTypes.TaskID
@@ -2221,16 +2259,12 @@ public typealias PortfolioMetrics = CoreTypes.PortfolioMetrics
 public typealias PortfolioIntelligence = CoreTypes.PortfolioIntelligence
 public typealias AdminAlert = CoreTypes.AdminAlert
 public typealias WorkerCapabilities = CoreTypes.WorkerCapabilities
-
-// Client-specific type aliases
 public typealias ClientPortfolioIntelligence = CoreTypes.ClientPortfolioIntelligence
 public typealias ClientPortfolioReport = CoreTypes.ClientPortfolioReport
 public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
 public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
 public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
 public typealias BuildingRoutineStatus = CoreTypes.BuildingRoutineStatus
-
-// Additional type aliases
 public typealias ActionEvidence = CoreTypes.ActionEvidence
 public typealias FrancoPhotoCategory = CoreTypes.FrancoPhotoCategory
 public typealias WorkerDailyRoute = CoreTypes.WorkerDailyRoute
@@ -2259,6 +2293,10 @@ public typealias ClientAlert = CoreTypes.ClientAlert
 public typealias CostInsight = CoreTypes.CostInsight
 public typealias WorkerProductivityInsight = CoreTypes.WorkerProductivityInsight
 public typealias RealtimeActivity = CoreTypes.RealtimeActivity
+
+// MARK: - Added Missing Types
+public typealias DashboardSource = CoreTypes.DashboardSource
+public typealias UrgencyLevel = CoreTypes.UrgencyLevel
 
 // MARK: - Camera Model for Photo Capture
 extension CoreTypes {
