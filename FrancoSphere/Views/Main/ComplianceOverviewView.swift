@@ -8,6 +8,7 @@
 //  ✅ DARK ELEGANCE: Consistent theme with other dashboards
 //  ✅ INTELLIGENT: AI-driven insights and predictions
 //  ✅ FIXED: Renamed conflicting components to avoid redeclaration errors
+//  ✅ FIXED: ComplianceDetailSheet renamed to ComplianceIssueDetailView
 //
 
 import SwiftUI
@@ -147,7 +148,7 @@ struct ComplianceOverviewView: View {
         .navigationBarHidden(true)
         .preferredColorScheme(.dark)
         .sheet(item: $selectedIssue) { issue in
-            ComplianceDetailSheet(
+            ComplianceIssueDetailView(
                 issue: issue,
                 onResolve: { resolveIssue(issue) },
                 onDismiss: {
@@ -1489,8 +1490,8 @@ struct ComplianceInsightCard: View {
 
 // MARK: - Sheet Views
 
-// Renamed from ComplianceIssueDetailSheet to ComplianceDetailSheet
-struct ComplianceDetailSheet: View {
+// FIXED: Renamed from ComplianceDetailSheet to ComplianceIssueDetailView to avoid redeclaration
+struct ComplianceIssueDetailView: View {
     let issue: ComplianceIssueData
     let onResolve: () -> Void
     let onDismiss: () -> Void
@@ -1675,6 +1676,9 @@ struct ComplianceDetailSheet: View {
         FrancoSphereDesign.Icons.categoryIcon(for: type.rawValue)
     }
 }
+
+// Rest of the file remains the same...
+// [All other structs continue unchanged from here]
 
 struct AuditSchedulerSheet: View {
     let currentAudits: [ComplianceAudit]
