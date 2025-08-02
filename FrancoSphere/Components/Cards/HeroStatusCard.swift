@@ -619,12 +619,12 @@ private struct HeroWeatherCard: View {
                         }
                     }
                     
-                    Text(weather.condition)
+                    Text(weather.condition.rawValue.capitalized)
                         .font(.subheadline)
                         .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     // DSNY Alert if relevant
-                    if weather.condition.lowercased().contains("snow") {
+                    if weather.condition == .snow {
                         HeroDSNYAlert()
                     }
                 }
@@ -640,31 +640,30 @@ private struct HeroWeatherCard: View {
     }
     
     private var weatherIcon: String {
-        switch weather.condition.lowercased() {
-        case "sunny", "clear": return "sun.max.fill"
-        case "partly cloudy": return "cloud.sun.fill"
-        case "cloudy": return "cloud.fill"
-        case "rainy": return "cloud.rain.fill"
-        case "stormy": return "cloud.bolt.fill"
-        case "snowy": return "cloud.snow.fill"
-        case "foggy": return "cloud.fog.fill"
-        default: return "sun.max.fill"
+        switch weather.condition {
+        case .clear: return "sun.max.fill"
+        case .cloudy: return "cloud.fill"
+        case .rain: return "cloud.rain.fill"
+        case .snow: return "cloud.snow.fill"
+        case .storm: return "cloud.bolt.fill"
+        case .fog: return "cloud.fog.fill"
+        case .windy: return "wind"
         }
     }
     
     private var weatherGradient: LinearGradient {
         let colors: [Color]
         
-        switch weather.condition.lowercased() {
-        case "sunny", "clear":
+        switch weather.condition {
+        case .clear:
             colors = [Color(hex: "fbbf24"), FrancoSphereDesign.DashboardColors.warning]
-        case "cloudy", "partly cloudy":
+        case .cloudy:
             colors = [FrancoSphereDesign.DashboardColors.inactive, FrancoSphereDesign.DashboardColors.inactive.opacity(0.6)]
-        case "rainy", "stormy":
+        case .rain, .storm:
             colors = [FrancoSphereDesign.DashboardColors.info, FrancoSphereDesign.DashboardColors.info.opacity(0.6)]
-        case "snowy":
+        case .snow:
             colors = [FrancoSphereDesign.DashboardColors.primaryText, FrancoSphereDesign.DashboardColors.info.opacity(0.3)]
-        default:
+        case .fog, .windy:
             colors = [FrancoSphereDesign.DashboardColors.info, FrancoSphereDesign.DashboardColors.workerAccent]
         }
         
@@ -1331,7 +1330,7 @@ struct PreviewHelpers {
             weather: CoreTypes.WeatherData(
                 id: UUID().uuidString,
                 temperature: 32,
-                condition: "Snowy",
+                condition: .snow,  // Fixed: Using enum value instead of string
                 humidity: 0.85,
                 windSpeed: 15,
                 outdoorWorkRisk: .high,

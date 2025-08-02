@@ -1,10 +1,11 @@
-//
+///
 //  ClientDashboardView.swift
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Main actor isolation issues resolved
 //  ✅ FIXED: Removed duplicate type declarations
+//  ✅ FIXED: Renamed MetricCard to ClientMetricCard to avoid conflicts
 //  ✅ STREAMLINED: Real-time routine status focus
 //  ✅ NO SCROLL: Everything fits on one screen
 //  ✅ LIVE DATA: Shows what's happening RIGHT NOW
@@ -15,11 +16,11 @@ import SwiftUI
 import MapKit
 
 struct ClientDashboardView: View {
-    @StateObject private var viewModel: ClientDashboardViewModel
+    // Fix: Remove custom init and let SwiftUI handle StateObject creation
+    @StateObject private var viewModel = ClientDashboardViewModel()
     @ObservedObject private var contextEngine = ClientContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
-    // Fix: Remove @StateObject and use @ObservedObject for shared singleton
     @ObservedObject private var novaEngine = NovaIntelligenceEngine.shared
     
     // MARK: - State Variables
@@ -54,11 +55,6 @@ struct ClientDashboardView: View {
         projectedSpend: 0,
         daysRemaining: 30
     )
-    
-    // MARK: - Initialization
-    init(viewModel: ClientDashboardViewModel = ClientDashboardViewModel()) {
-        self._viewModel = StateObject(wrappedValue: viewModel)
-    }
     
     // MARK: - Enums
     enum ViewContext {
@@ -349,7 +345,6 @@ extension ClientContextEngine {
 }
 
 // MARK: - Client Hero Status Card Component
-// This should be in a separate file normally, but including here for completeness
 
 struct ClientHeroStatusCard: View {
     let routineMetrics: CoreTypes.RealtimeRoutineMetrics
@@ -363,7 +358,7 @@ struct ClientHeroStatusCard: View {
             // Main metrics row
             HStack(spacing: 16) {
                 // Completion metric
-                MetricCard(
+                ClientMetricCard(
                     title: "Today's Progress",
                     value: String(format: "%.0f%%", routineMetrics.overallCompletion * 100),
                     subtitle: "\(routineMetrics.activeWorkerCount) workers active",
@@ -371,7 +366,7 @@ struct ClientHeroStatusCard: View {
                 )
                 
                 // Compliance metric
-                MetricCard(
+                ClientMetricCard(
                     title: "Compliance",
                     value: String(format: "%.0f%%", complianceStatus.overallScore * 100),
                     subtitle: complianceStatus.criticalViolations > 0 ?
@@ -426,8 +421,8 @@ struct ClientHeroStatusCard: View {
     }
 }
 
-// MARK: - Metric Card Component
-struct MetricCard: View {
+// MARK: - Client Metric Card Component (Renamed to avoid conflict with AdminDashboardView)
+struct ClientMetricCard: View {
     let title: String
     let value: String
     let subtitle: String
@@ -455,11 +450,261 @@ struct MetricCard: View {
     }
 }
 
+// MARK: - Client Main Menu View (Placeholder)
+struct ClientMainMenuView: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            List {
+                Section("Portfolio") {
+                    Label("Buildings", systemImage: "building.2")
+                    Label("Reports", systemImage: "doc.text")
+                    Label("Compliance", systemImage: "checkmark.shield")
+                }
+                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                
+                Section("Services") {
+                    Label("Service History", systemImage: "clock.arrow.circlepath")
+                    Label("Invoices", systemImage: "doc.badge.ellipsis")
+                    Label("Support", systemImage: "message")
+                }
+                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                
+                Section("Account") {
+                    Label("Profile", systemImage: "person.circle")
+                    Label("Settings", systemImage: "gear")
+                    Label("Help", systemImage: "questionmark.circle")
+                }
+                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+            }
+            .scrollContentBackground(.hidden)
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .navigationTitle("Menu")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Client Profile View (Placeholder)
+struct ClientProfileView: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Profile image placeholder
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 100))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                    
+                    Text("Client Name")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    
+                    Text("client@example.com")
+                        .font(.subheadline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    // Profile details sections
+                    VStack(spacing: 16) {
+                        ProfileSection(title: "Company", value: "Example Corp")
+                        ProfileSection(title: "Portfolio Size", value: "12 Buildings")
+                        ProfileSection(title: "Member Since", value: "January 2023")
+                        ProfileSection(title: "Service Plan", value: "Premium")
+                    }
+                    .padding()
+                }
+                .padding()
+            }
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+
+struct ProfileSection: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+            Spacer()
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+        )
+    }
+}
+
+// MARK: - Client Building Detail View (Placeholder)
+struct ClientBuildingDetailView: View {
+    let building: CoreTypes.NamedCoordinate
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Building header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(building.name)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        
+                        Text(building.address)
+                            .font(.subheadline)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Quick stats
+                    HStack(spacing: 16) {
+                        BuildingStatCard(title: "Completion", value: "87%", color: .green)
+                        BuildingStatCard(title: "Workers", value: "3", color: .blue)
+                        BuildingStatCard(title: "Compliance", value: "95%", color: .orange)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Service details
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Today's Service")
+                            .font(.headline)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        
+                        // Mock service items
+                        ServiceItemRow(title: "Lobby Cleaning", status: "Completed", time: "8:00 AM")
+                        ServiceItemRow(title: "Trash Collection", status: "In Progress", time: "10:30 AM")
+                        ServiceItemRow(title: "Floor Maintenance", status: "Scheduled", time: "2:00 PM")
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                    )
+                    .padding(.horizontal)
+                }
+                .padding(.vertical)
+            }
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .navigationTitle("Building Detail")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+
+struct BuildingStatCard: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            Text(title)
+                .font(.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(color.opacity(0.1))
+        )
+    }
+}
+
+struct ServiceItemRow: View {
+    let title: String
+    let status: String
+    let time: String
+    
+    var statusColor: Color {
+        switch status {
+        case "Completed": return .green
+        case "In Progress": return .blue
+        default: return .gray
+        }
+    }
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                Text(time)
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+            }
+            
+            Spacer()
+            
+            Text(status)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(statusColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(statusColor.opacity(0.15))
+                )
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 // MARK: - Preview
 
 struct ClientDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        ClientDashboardView(viewModel: ClientDashboardViewModel())
+        ClientDashboardView()
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)

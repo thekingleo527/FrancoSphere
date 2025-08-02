@@ -182,7 +182,7 @@
 		2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0952E398AA800F4A10F /* WorkerDashboardViewModel.swift */; };
 		2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0912E398AA800F4A10F /* BuildingIntelligenceViewModel.swift */; };
 		23800F712E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */; };
-		23800F732E3DE468006F9E44 /* ClientHeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F722E3DE468006F9E44 /* ClientHeroStatusCard.swift */; };
+		23800F732E3DE468006F9E44 /* ClientHeroCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F722E3DE468006F9E44 /* ClientHeroCard.swift */; };
 		23800F752E3DE53F006F9E44 /* ClientContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F742E3DE53F006F9E44 /* ClientContextEngine.swift */; };
 		23800F772E3DE61B006F9E44 /* ClientMainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */; };
 		23800F792E3E50DF006F9E44 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F782E3E50DF006F9E44 /* AnalyticsService.swift */; };
@@ -422,7 +422,7 @@
 		2377A0972E398AA800F4A10F /* WorkerRoutineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineViewModel.swift; sourceTree = "<group>"; };
 		2377A0992E398AA800F4A10F /* InitializationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationViewModel.swift; sourceTree = "<group>"; };
 		23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedTaskDetailView.swift; sourceTree = "<group>"; };
-		23800F722E3DE468006F9E44 /* ClientHeroStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientHeroStatusCard.swift; sourceTree = "<group>"; };
+		23800F722E3DE468006F9E44 /* ClientHeroCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientHeroCard.swift; sourceTree = "<group>"; };
 		23800F742E3DE53F006F9E44 /* ClientContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientContextEngine.swift; sourceTree = "<group>"; };
 		23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientMainMenuView.swift; sourceTree = "<group>"; };
 		23800F782E3E50DF006F9E44 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
@@ -563,7 +563,7 @@
 		23779F092E39885600F4A10F /* Cards */ = {
 			isa = PBXGroup;
 			children = (
-				23800F722E3DE468006F9E44 /* ClientHeroStatusCard.swift */,
+				23800F722E3DE468006F9E44 /* ClientHeroCard.swift */,
 				23779F042E39885600F4A10F /* CoverageInfoCard.swift */,
 				23779F052E39885600F4A10F /* HeroStatusCard.swift */,
 				23779F062E39885600F4A10F /* MySitesCard.swift */,
@@ -1377,7 +1377,7 @@
 				23A1B9602E3992C80011F091 /* TodaysProgressDetailView.swift in Sources */,
 				2326C2602E3C06FD0080F005 /* WorkerDashboardContainerView.swift in Sources */,
 				23A1B9612E3992C80011F091 /* WorkersInlineList.swift in Sources */,
-				23800F732E3DE468006F9E44 /* ClientHeroStatusCard.swift in Sources */,
+				23800F732E3DE468006F9E44 /* ClientHeroCard.swift in Sources */,
 				23A1B9622E3992C80011F091 /* WeatherViewModifier.swift in Sources */,
 				23A1B9642E3992C80011F091 /* MyAssignedBuildingsSection.swift in Sources */,
 				2377A00B2E39885600F4A10F /* ClockInGlassModal.swift in Sources */,

@@ -1,16 +1,16 @@
 //
-//  ClientHeroStatusCard.swift
+//  ClientHeroCard.swift
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All type conflicts resolved
 //  ✅ NAMESPACED: Using CoreTypes for shared models
-//  ✅ UNIQUE: Component names are prefixed to avoid conflicts
+//  ✅ UNIQUE: Component renamed to ClientHeroCard to avoid conflicts
 //
 
 import SwiftUI
 import MapKit
 
-struct ClientHeroStatusCard: View {
+struct ClientHeroCard: View {
     // Real-time data inputs using CoreTypes
     let routineMetrics: CoreTypes.RealtimeRoutineMetrics
     let activeWorkers: CoreTypes.ActiveWorkerStatus
@@ -128,14 +128,14 @@ struct ClientHeroStatusCard: View {
             
             // Overall status pill
             HStack(spacing: 12) {
-                ClientStatusPill(
+                ClientStatusIndicator(
                     label: overallStatus.displayText,
                     color: statusColor,
                     icon: overallStatus.icon
                 )
                 
                 if routineMetrics.behindScheduleCount > 0 {
-                    ClientStatusPill(
+                    ClientStatusIndicator(
                         label: "\(routineMetrics.behindScheduleCount) behind schedule",
                         color: FrancoSphereDesign.DashboardColors.warning,
                         icon: "exclamationmark.triangle.fill"
@@ -162,7 +162,7 @@ struct ClientHeroStatusCard: View {
             }
             
             ForEach(priorityBuildings, id: \.buildingId) { building in
-                ClientBuildingStatusRow(
+                ClientPropertyStatusRow(
                     status: building,
                     onTap: {
                         if let coord = buildingToCoordinate(building.buildingId) {
@@ -178,21 +178,21 @@ struct ClientHeroStatusCard: View {
     
     private var metricsRow: some View {
         HStack(spacing: 12) {
-            ClientMetricCard(
+            ClientMetricDisplay(
                 value: "\(Int(routineMetrics.overallCompletion * 100))%",
                 label: "Complete",
                 color: completionColor,
                 icon: "chart.pie.fill"
             )
             
-            ClientMetricCard(
+            ClientMetricDisplay(
                 value: "\(activeWorkers.totalActive)",
                 label: "Active Workers",
                 color: FrancoSphereDesign.DashboardColors.info,
                 icon: "person.3.fill"
             )
             
-            ClientMetricCard(
+            ClientMetricDisplay(
                 value: "\(Int(complianceStatus.overallScore * 100))%",
                 label: "Compliance",
                 color: complianceColor,
@@ -332,9 +332,9 @@ struct ClientHeroStatusCard: View {
     }
 }
 
-// MARK: - Building Status Row Component (Prefixed)
+// MARK: - Property Status Row Component (Renamed)
 
-struct ClientBuildingStatusRow: View {
+struct ClientPropertyStatusRow: View {
     let status: CoreTypes.BuildingRoutineStatus
     let onTap: () -> Void
     
@@ -462,9 +462,9 @@ struct ClientBuildingStatusRow: View {
     }
 }
 
-// MARK: - Supporting Components (Prefixed to avoid conflicts)
+// MARK: - Supporting Components (Renamed to avoid conflicts)
 
-struct ClientStatusPill: View {
+struct ClientStatusIndicator: View {
     let label: String
     let color: Color
     let icon: String?
@@ -499,7 +499,7 @@ struct ClientStatusPill: View {
     }
 }
 
-struct ClientMetricCard: View {
+struct ClientMetricDisplay: View {
     let value: String
     let label: String
     let color: Color
@@ -527,9 +527,9 @@ struct ClientMetricCard: View {
 
 // MARK: - Preview
 
-struct ClientHeroStatusCard_Previews: PreviewProvider {
+struct ClientHeroCard_Previews: PreviewProvider {
     static var previews: some View {
-        ClientHeroStatusCard(
+        ClientHeroCard(
             routineMetrics: CoreTypes.RealtimeRoutineMetrics(
                 overallCompletion: 0.72,
                 activeWorkerCount: 5,

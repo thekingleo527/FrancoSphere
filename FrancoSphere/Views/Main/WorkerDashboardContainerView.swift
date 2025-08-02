@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct WorkerDashboardContainerView: View {
-    // Create the ViewModel here. It becomes the single source of truth for all worker views.
     @StateObject private var viewModel = WorkerDashboardViewModel()
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
@@ -12,15 +11,15 @@ struct WorkerDashboardContainerView: View {
         NavigationView {
             Group {
                 if viewModel.isLoading {
-                    // Show a loading view while the initial data (including capabilities) is fetched.
+                    // Loading view
                     LoadingDashboardView()
                 } else if viewModel.workerCapabilities?.simplifiedInterface == true {
-                    // If the worker has simplified capabilities, show the simplified dashboard.
+                    // Simplified dashboard for workers with simplified capabilities
                     SimplifiedDashboard(viewModel: viewModel)
                         .environmentObject(authManager)
                         .environmentObject(dashboardSync)
                 } else {
-                    // Otherwise, show the full-featured standard dashboard.
+                    // Full-featured standard dashboard
                     WorkerDashboardView(viewModel: viewModel)
                         .environmentObject(authManager)
                         .environmentObject(dashboardSync)
@@ -30,7 +29,6 @@ struct WorkerDashboardContainerView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .task {
-            // Load all necessary data for the worker when this container appears.
             do {
                 await viewModel.loadInitialData()
             } catch {

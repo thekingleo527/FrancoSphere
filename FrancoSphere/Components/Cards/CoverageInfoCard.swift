@@ -2,6 +2,7 @@
 //  CoverageInfoCard.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Renamed StatusPill to CoverageStatusPill to avoid conflicts
 //  ✅ UPDATED: Dark Elegance theme applied
 //  ✅ ENHANCED: Glass morphism effects
 //  ✅ INTEGRATED: FrancoSphereDesign system
@@ -177,8 +178,8 @@ struct CoverageInfoCard: View {
             
             Spacer()
             
-            // Status indicator
-            StatusPill(
+            // Status indicator - renamed to avoid conflict
+            CoverageStatusPill(
                 text: "Available",
                 icon: "circle.fill",
                 color: FrancoSphereDesign.DashboardColors.success
@@ -549,9 +550,9 @@ struct TrainingAccessCard: View {
     }
 }
 
-// MARK: - Supporting Components
+// MARK: - Supporting Components (Renamed to avoid conflicts)
 
-struct StatusPill: View {
+struct CoverageStatusPill: View {
     let text: String
     let icon: String
     let color: Color
