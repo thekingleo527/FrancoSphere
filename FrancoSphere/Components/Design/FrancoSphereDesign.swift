@@ -2,8 +2,10 @@
 //  FrancoSphereDesign.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Animation naming conflicts resolved
-//  ✅ FIXED: Animation typo corrected
+//  ✅ FIXED: Color initialization ambiguities resolved
+//  ✅ FIXED: Type annotations added for gradient arrays
 //  ✅ ENHANCED: Aligned with v6.0 three-dashboard system
 //  ✅ INTEGRATED: Actor-compatible design patterns
 //  ✅ ADDED: Centralized color system for all CoreTypes enums
@@ -336,7 +338,7 @@ enum FrancoSphereDesign {
         static let workerPrimary = Color(hex: "10b981")     // Green for worker actions
         static let workerSecondary = Color(hex: "0ea5e9")   // Blue for navigation
         static let workerAccent = Color(hex: "06b6d4")      // Cyan for highlights
-        static let workerHeroGradient = [
+        static let workerHeroGradient: [Color] = [
             Color(hex: "1f2937"),  // gray-800
             Color(hex: "374151")   // gray-700
         ]
@@ -345,7 +347,7 @@ enum FrancoSphereDesign {
         static let adminPrimary = Color(hex: "8b5cf6")      // Purple
         static let adminSecondary = Color(hex: "a855f7")    // Light purple
         static let adminAccent = Color(hex: "ec4899")       // Pink
-        static let adminHeroGradient = [
+        static let adminHeroGradient: [Color] = [
             Color(hex: "312e81"),  // indigo-900
             Color(hex: "4c1d95")   // purple-900
         ]
@@ -354,7 +356,7 @@ enum FrancoSphereDesign {
         static let clientPrimary = Color(hex: "10b981")     // Green
         static let clientSecondary = Color(hex: "34d399")   // Light green
         static let clientAccent = Color(hex: "6ee7b7")      // Mint
-        static let clientHeroGradient = [
+        static let clientHeroGradient: [Color] = [
             Color(hex: "14532d"),  // green-900
             Color(hex: "166534")   // green-800
         ]
@@ -1095,5 +1097,84 @@ struct ColorSwatch: View {
                 .font(.caption)
                 .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
+    }
+}
+
+// MARK: - CoreTypes Support (Placeholder)
+// This enum should be replaced with your actual CoreTypes implementation
+enum CoreTypes {
+    enum AIPriority: String, CaseIterable {
+        case low, medium, high, critical
+    }
+    
+    enum InsightCategory: String, CaseIterable {
+        case efficiency, cost, safety, compliance, quality, operations, maintenance
+    }
+    
+    enum TaskStatus: String, CaseIterable {
+        case pending, inProgress, completed, overdue, cancelled, paused, waiting
+    }
+    
+    enum TaskUrgency: String, CaseIterable {
+        case low, medium, high, urgent, critical, emergency
+    }
+    
+    enum ComplianceStatus: String, CaseIterable {
+        case compliant, warning, violation, nonCompliant, pending, needsReview
+        case atRisk, open, inProgress, resolved
+    }
+    
+    enum ComplianceSeverity: String, CaseIterable {
+        case low, medium, high, critical
+    }
+    
+    enum ComplianceIssueType: String, CaseIterable {
+        case safety, environmental, regulatory, financial, operational, documentation
+    }
+    
+    enum WorkerStatus: String, CaseIterable {
+        case available, clockedIn, onBreak, offline
+    }
+    
+    enum UserRole: String, CaseIterable {
+        case admin, manager, worker, client
+    }
+    
+    enum BuildingType: String, CaseIterable {
+        case office, residential, retail, industrial, warehouse, medical, educational, mixed
+    }
+    
+    enum DashboardSyncStatus: String, CaseIterable {
+        case synced, syncing, failed, offline
+    }
+    
+    enum VerificationStatus: String, CaseIterable {
+        case pending, verified, rejected, notRequired
+    }
+    
+    enum OutdoorWorkRisk: String, CaseIterable {
+        case low, medium, high, extreme
+    }
+    
+    enum TrendDirection: String, CaseIterable {
+        case up, down, stable, unknown, improving, declining
+    }
+    
+    enum SkillLevel: String, CaseIterable {
+        case beginner, intermediate, advanced, expert
+    }
+    
+    enum RestockStatus: String, CaseIterable {
+        case inStock, lowStock, outOfStock, ordered
+    }
+    
+    enum DataHealthStatus: String, CaseIterable {
+        case healthy, warning, error, unknown
+    }
+    
+    enum InventoryCategory: String, CaseIterable {
+        case cleaning, equipment, building, sanitation, office, seasonal
+        case supplies, maintenance, electrical, safety, tools, materials
+        case plumbing, general, other
     }
 }

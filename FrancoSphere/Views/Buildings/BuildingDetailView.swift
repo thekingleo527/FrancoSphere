@@ -34,7 +34,7 @@ struct BuildingDetailView: View {
     @State private var showingCallMenu = false
     @State private var selectedContact: BuildingContact?
     @State private var capturedImage: UIImage?
-    @State private var photoCategory: FrancoPhotoCategory = .utilities
+    @State private var photoCategory: CoreTypes.FrancoPhotoCategory = .utilities
     @State private var photoNotes: String = ""
     @State private var isHeaderExpanded = false
     @State private var animateCards = false
@@ -1359,7 +1359,7 @@ struct BuildingMaintenanceTab: View {
         .francoDarkCardBackground()
     }
     
-    private var filteredMaintenanceRecords: [MaintenanceRecord] {
+    private var filteredMaintenanceRecords: [CoreTypes.MaintenanceRecord] {
         viewModel.maintenanceHistory.filter { record in
             // Filter by category
             if filterOption != .all {
@@ -2197,8 +2197,7 @@ struct AssignedWorkerRow: View {
 }
 
 struct MaintenanceHistoryRow: View {
-    let record: MaintenanceRecord
-    
+    @Published var maintenanceHistory: [CoreTypes.MaintenanceRecord] = []
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
@@ -2523,30 +2522,6 @@ struct BuildingAddInventoryItemSheet: View {
     }
 }
 
-enum FrancoPhotoCategory: String, CaseIterable {
-    case entrance = "entrance"
-    case lobby = "lobby"
-    case utilities = "utilities"
-    case basement = "basement"
-    case roof = "roof"
-    case mechanical = "mechanical"
-    case storage = "storage"
-    case general = "general"
-    
-    var displayName: String {
-        switch self {
-        case .entrance: return "Entrance"
-        case .lobby: return "Lobby"
-        case .utilities: return "Utilities"
-        case .basement: return "Basement"
-        case .roof: return "Roof"
-        case .mechanical: return "Mechanical"
-        case .storage: return "Storage"
-        case .general: return "General"
-        }
-    }
-}
-
 // MARK: - View Model Extension
 
 extension BuildingDetailVM {
@@ -2641,32 +2616,6 @@ extension BuildingDetailVM {
     }
 }
 
-// MARK: - Status badge helper
-struct StatusBadge: View {
-    let isCompleted: Bool
-    let urgency: CoreTypes.TaskUrgency
-
-    private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
-        switch urgency {
-        case .low:       return .green
-        case .medium:    return .yellow
-        case .high:      return .orange
-        case .urgent:    return .purple
-        case .critical:  return .red
-        case .emergency: return .red
-        }
-    }
-
-    var body: some View {
-        Text(isCompleted ? "Completed" : urgency.rawValue.capitalized)
-            .font(.caption).fontWeight(.bold)
-            .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(isCompleted ? Color.gray : getUrgencyColor(urgency))
-            .foregroundColor(.white)
-            .cornerRadius(20)
-    }
-}
-
 // MARK: - Data Types
 
 struct BuildingContact: Identifiable {
@@ -2711,14 +2660,6 @@ struct AssignedWorker: Identifiable {
     let name: String
     let schedule: String
     let isOnSite: Bool
-}
-
-struct MaintenanceRecord: Identifiable {
-    let id: String
-    let title: String
-    let date: Date
-    let description: String?
-    let cost: Decimal?
 }
 
 struct SpaceAccess: Identifiable {
@@ -2853,90 +2794,6 @@ class BuildingDetailVM: ObservableObject {
     @Published var nextFireSafetyAction: String?
     @Published var healthCompliance: CoreTypes.ComplianceStatus = .compliant
     @Published var nextHealthAction: String?
-    
-    // Activity data
-    @Published var assignedWorkers: [AssignedWorker] = []
-    @Published var recentActivities: [BuildingDetailActivity] = []
-    @Published var maintenanceHistory: [MaintenanceRecord] = []
-    
-    // Computed properties
-    var buildingIcon: String {
-        if buildingName.lowercased().contains("museum") {
-            return "building.columns.fill"
-        } else if buildingName.lowercased().contains("park") {
-            return "leaf.fill"
-        } else {
-            return "building.2.fill"
-        }
-    }
-    
-    var onSiteWorkers: [AssignedWorker] {
-        assignedWorkers.filter { $0.isOnSite }
-    }
-    
-    var maintenanceTasks: [CoreTypes.MaintenanceTask] {
-        // This would fetch actual maintenance tasks from the database
-        []
-    }
-    
-    var hasComplianceIssues: Bool {
-        dsnyCompliance != .compliant ||
-        fireSafetyCompliance != .compliant ||
-        healthCompliance != .compliant
-    }
-    
-    var hasLowStockItems: Bool {
-        lowStockCount > 0
-    }
-    
-    var lowStockCount: Int {
-        inventorySummary.cleaningLow +
-        inventorySummary.equipmentLow +
-        inventorySummary.maintenanceLow +
-        inventorySummary.safetyLow
-    }
-    
-    var totalInventoryItems: Int {
-        inventorySummary.cleaningTotal +
-        inventorySummary.equipmentTotal +
-        inventorySummary.maintenanceTotal +
-        inventorySummary.safetyTotal
-    }
-    
-    var totalInventoryValue: Double {
-        // Calculate from actual inventory items
-        1250.50
-    }
-    
-    var maintenanceThisWeek: Int {
-        // Calculate from maintenance history
-        8
-    }
-    
-    var repairCount: Int {
-        // Count repairs from maintenance history
-        3
-    }
-    
-    var totalMaintenanceCost: Double {
-        // Sum from maintenance history
-        487.50
-    }
-    
-    var averageWorkerHours: Int {
-        // Calculate average from worker data
-        8
-    }
-    
-    var buildingRating: String {
-        // Calculate based on metrics
-        "A+"
-    }
-    
-    var inventoryItems: [InventoryItem] {
-        // Fetch from database
-        []
-    }
     
     init(buildingId: String, buildingName: String, buildingAddress: String) {
         self.buildingId = buildingId
