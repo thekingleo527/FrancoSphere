@@ -1,15 +1,8 @@
-//
-//  ReportService.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 8/2/25.
-//
-
-
-//
+///
 //  ReportService.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: DateRange issue resolved
 //  ✅ PRODUCTION READY: PDF and CSV report generation
 //  ✅ ASYNC: Non-blocking report generation
 //  ✅ SHAREABLE: Returns URLs for easy sharing
@@ -18,6 +11,30 @@
 import Foundation
 import PDFKit
 import UniformTypeIdentifiers
+
+// MARK: - Date Range Enum
+
+public enum ReportDateRange: String, CaseIterable {
+    case today = "Today"
+    case thisWeek = "This Week"
+    case thisMonth = "This Month"
+    case thisQuarter = "This Quarter"
+    case thisYear = "This Year"
+    case custom = "Custom"
+    
+    public var days: Int {
+        switch self {
+        case .today: return 1
+        case .thisWeek: return 7
+        case .thisMonth: return 30
+        case .thisQuarter: return 90
+        case .thisYear: return 365
+        case .custom: return 30 // Default for custom
+        }
+    }
+}
+
+// MARK: - Report Service
 
 @MainActor
 public final class ReportService: ObservableObject {
@@ -40,7 +57,7 @@ public final class ReportService: ObservableObject {
     
     // MARK: - Public Methods
     
-    public func generateClientReport(_ data: ClientPortfolioReport) async throws -> URL {
+    public func generateClientReport(_ data: ClientPortfolioReportData) async throws -> URL {
         let fileName = "Portfolio_Report_\(ISO8601DateFormatter().string(from: data.generatedAt)).pdf"
         let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
         
@@ -75,8 +92,8 @@ public final class ReportService: ObservableObject {
             
             let row = [
                 building.id,
-                building.name,
-                building.address,
+                building.name.replacingOccurrences(of: ",", with: ";"), // Escape commas in names
+                building.address.replacingOccurrences(of: ",", with: ";"), // Escape commas in addresses
                 String(format: "%.2f", buildingMetrics.completionRate * 100),
                 String(buildingMetrics.totalTasks),
                 String(buildingMetrics.pendingTasks),
@@ -111,7 +128,7 @@ public final class ReportService: ObservableObject {
         fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
     
-    private func createFullPortfolioReport(data: ClientPortfolioReport) -> Data {
+    private func createFullPortfolioReport(data: ClientPortfolioReportData) -> Data {
         let pdfMetaData = [
             kCGPDFContextCreator: "FrancoSphere",
             kCGPDFContextAuthor: "FrancoSphere System",
@@ -148,7 +165,7 @@ public final class ReportService: ObservableObject {
         return data
     }
     
-    private func drawCoverPage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReport, pageRect: CGRect) {
+    private func drawCoverPage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReportData, pageRect: CGRect) {
         // Title
         let titleAttributes = [
             NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 36),
@@ -180,7 +197,7 @@ public final class ReportService: ObservableObject {
         generatedText.draw(in: footerRect, withAttributes: footerAttributes)
     }
     
-    private func drawSummaryPage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReport, pageRect: CGRect) {
+    private func drawSummaryPage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReportData, pageRect: CGRect) {
         // Title
         let titleAttributes = [
             NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 24)
@@ -202,7 +219,7 @@ public final class ReportService: ObservableObject {
             "Active Buildings: \(data.portfolioHealth.activeBuildings)",
             "Critical Issues: \(data.portfolioHealth.criticalIssues)",
             "Compliance Score: \(String(format: "%.1f%%", data.complianceOverview.overallScore * 100))",
-            "Open Issues: \(data.complianceOverview.openIssues)"
+            "Critical Violations: \(data.complianceOverview.criticalViolations)"
         ]
         
         for item in summaryItems {
@@ -225,7 +242,7 @@ public final class ReportService: ObservableObject {
         }
     }
     
-    private func drawBuildingsPage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReport, pageRect: CGRect) {
+    private func drawBuildingsPage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReportData, pageRect: CGRect) {
         let titleAttributes = [
             NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 24)
         ]
@@ -286,14 +303,14 @@ public final class ReportService: ObservableObject {
             xPosition += columnWidth
             
             // Status
-            let status = metrics.displayStatus
+            let status = metrics.isCompliant ? "Compliant" : "Non-Compliant"
             status.draw(at: CGPoint(x: xPosition, y: yPosition), withAttributes: contentAttributes)
             
             yPosition += 20
         }
     }
     
-    private func drawCompliancePage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReport, pageRect: CGRect) {
+    private func drawCompliancePage(in context: UIGraphicsPDFRendererContext, data: ClientPortfolioReportData, pageRect: CGRect) {
         let titleAttributes = [
             NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 24)
         ]
@@ -309,9 +326,9 @@ public final class ReportService: ObservableObject {
         
         let complianceItems = [
             "Overall Compliance Score: \(String(format: "%.1f%%", data.complianceOverview.overallScore * 100))",
-            "Total Issues: \(data.complianceOverview.totalIssues)",
-            "Open Issues: \(data.complianceOverview.openIssues)",
-            "Critical Violations: \(data.complianceOverview.criticalViolations)"
+            "Critical Violations: \(data.complianceOverview.criticalViolations)",
+            "Pending Inspections: \(data.complianceOverview.pendingInspections)",
+            "Last Updated: \(dateFormatter.string(from: data.complianceOverview.lastUpdated))"
         ]
         
         for item in complianceItems {
@@ -319,21 +336,17 @@ public final class ReportService: ObservableObject {
             yPosition += lineHeight
         }
         
-        // Add audit dates if available
-        if let lastAudit = data.complianceOverview.lastAudit {
+        // Add upcoming deadlines if available
+        if !data.complianceOverview.upcomingDeadlines.isEmpty {
             yPosition += 20
-            "Last Audit: \(dateFormatter.string(from: lastAudit))".draw(
-                at: CGPoint(x: 50, y: yPosition),
-                withAttributes: contentAttributes
-            )
-        }
-        
-        if let nextAudit = data.complianceOverview.nextAudit {
-            yPosition += lineHeight
-            "Next Audit: \(dateFormatter.string(from: nextAudit))".draw(
-                at: CGPoint(x: 50, y: yPosition),
-                withAttributes: contentAttributes
-            )
+            "Upcoming Deadlines".draw(at: CGPoint(x: 50, y: yPosition), withAttributes: titleAttributes)
+            yPosition += 30
+            
+            for deadline in data.complianceOverview.upcomingDeadlines.prefix(5) {
+                let deadlineText = "• \(deadline.title): \(dateFormatter.string(from: deadline.dueDate))"
+                deadlineText.draw(at: CGPoint(x: 50, y: yPosition), withAttributes: contentAttributes)
+                yPosition += lineHeight
+            }
         }
     }
     
@@ -482,9 +495,9 @@ public enum ReportError: LocalizedError {
 
 // MARK: - Report Data Types
 
-public struct ClientPortfolioReport {
+public struct ClientPortfolioReportData {
     public let generatedAt: Date
-    public let dateRange: ClientDashboardViewModel.DateRange
+    public let dateRange: ReportDateRange
     public let portfolioHealth: CoreTypes.PortfolioHealth
     public let buildings: [CoreTypes.NamedCoordinate]
     public let buildingMetrics: [String: CoreTypes.BuildingMetrics]
@@ -493,7 +506,7 @@ public struct ClientPortfolioReport {
     
     public init(
         generatedAt: Date,
-        dateRange: ClientDashboardViewModel.DateRange,
+        dateRange: ReportDateRange,
         portfolioHealth: CoreTypes.PortfolioHealth,
         buildings: [CoreTypes.NamedCoordinate],
         buildingMetrics: [String: CoreTypes.BuildingMetrics],
@@ -507,5 +520,24 @@ public struct ClientPortfolioReport {
         self.buildingMetrics = buildingMetrics
         self.complianceOverview = complianceOverview
         self.insights = insights
+    }
+}
+
+// MARK: - Extensions
+
+extension CoreTypes.BuildingMetrics {
+    /// Helper property for display status in reports
+    var displayStatus: String {
+        if overdueTasks > 0 {
+            return "Overdue"
+        } else if completionRate >= 1.0 {
+            return "Complete"
+        } else if completionRate >= 0.8 {
+            return "On Track"
+        } else if completionRate >= 0.5 {
+            return "In Progress"
+        } else {
+            return "Behind"
+        }
     }
 }

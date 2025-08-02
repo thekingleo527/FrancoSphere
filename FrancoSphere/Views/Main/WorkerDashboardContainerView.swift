@@ -1,43 +1,114 @@
-//
-//  WorkerDashboardContainerView.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
-//
-//  WorkerDashboardContainerView.swift
-//  FrancoSphere
-//
-//  This view acts as a factory and router for the worker experience.
-//  It creates the ViewModel and decides whether to show the standard or simplified dashboard.
-//
-
 import SwiftUI
 
 struct WorkerDashboardContainerView: View {
     // Create the ViewModel here. It becomes the single source of truth for all worker views.
     @StateObject private var viewModel = WorkerDashboardViewModel()
     @EnvironmentObject private var authManager: NewAuthManager
+    @EnvironmentObject private var dashboardSync: DashboardSyncService
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
 
     var body: some View {
-        Group {
-            if viewModel.isLoading {
-                // Show a loading view while the initial data (including capabilities) is fetched.
-                ProgressView("Loading Your Dashboard...")
-            } else if viewModel.workerCapabilities?.simplifiedInterface == true {
-                // If the worker has simplified capabilities, show the simplified dashboard.
-                SimplifiedDashboard(viewModel: viewModel)
-            } else {
-                // Otherwise, show the full-featured standard dashboard.
-                WorkerDashboardView(viewModel: viewModel)
+        NavigationView {
+            Group {
+                if viewModel.isLoading {
+                    // Show a loading view while the initial data (including capabilities) is fetched.
+                    LoadingDashboardView()
+                } else if viewModel.workerCapabilities?.simplifiedInterface == true {
+                    // If the worker has simplified capabilities, show the simplified dashboard.
+                    SimplifiedDashboard(viewModel: viewModel)
+                        .environmentObject(authManager)
+                        .environmentObject(dashboardSync)
+                } else {
+                    // Otherwise, show the full-featured standard dashboard.
+                    WorkerDashboardView(viewModel: viewModel)
+                        .environmentObject(authManager)
+                        .environmentObject(dashboardSync)
+                }
             }
+            .navigationBarHidden(true)
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .task {
             // Load all necessary data for the worker when this container appears.
-            // This single data load will power either dashboard version.
-            await viewModel.loadInitialData()
+            do {
+                await viewModel.loadInitialData()
+            } catch {
+                errorMessage = "Failed to load dashboard: \(error.localizedDescription)"
+                showErrorAlert = true
+            }
+        }
+        .alert("Error", isPresented: $showErrorAlert) {
+            Button("Retry") {
+                Task {
+                    await viewModel.loadInitialData()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
         }
     }
 }
+
+// MARK: - Loading View Component
+private struct LoadingDashboardView: View {
+    @State private var loadingProgress: Double = 0.0
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "1a1a1a"),
+                    Color(hex: "2d2d2d")
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                // FrancoSphere Logo or Icon
+                Image(systemName: "building.2.crop.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.3), radius: 10)
+                
+                Text("Loading Your Dashboard")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                
+                // Progress indicator
+                ProgressView(value: loadingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .tint(.blue)
+                    .scaleEffect(x: 1, y: 2, anchor: .center)
+                    .frame(width: 200)
+                
+                Text("Preparing your workspace...")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .padding()
+        }
+        .onAppear {
+            // Animate progress bar
+            withAnimation(.easeInOut(duration: 2.0)) {
+                loadingProgress = 0.8
+            }
+        }
+    }
+}
+
+#if DEBUG
+struct WorkerDashboardContainerView_Previews: PreviewProvider {
+    static var previews: some View {
+        WorkerDashboardContainerView()
+            .environmentObject(NewAuthManager.shared)
+            .environmentObject(DashboardSyncService.shared)
+            .preferredColorScheme(.dark)
+    }
+}
+#endif

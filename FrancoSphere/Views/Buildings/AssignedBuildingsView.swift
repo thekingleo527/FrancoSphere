@@ -14,8 +14,10 @@ import Foundation
 
 struct AssignedBuildingsView: View {
     @StateObject private var contextEngine = WorkerContextEngine.shared
-    @StateObject private var buildingService = BuildingService.shared
     @Environment(\.dismiss) private var dismiss
+    
+    // Use BuildingService directly without StateObject
+    private let buildingService = BuildingService.shared
     
     @State private var buildingMetrics: [String: BuildingMetrics] = [:]
     @State private var isLoading = true
@@ -219,19 +221,19 @@ struct AssignedBuildingCard: View {
                 // Status badges
                 HStack(spacing: FrancoSphereDesign.Spacing.sm) {
                     if isCurrentBuilding {
-                        StatusBadge(
+                        BuildingStatusBadge(
                             title: "CURRENT",
                             icon: "location.fill",
                             color: FrancoSphereDesign.DashboardColors.success
                         )
                     } else if isPrimaryAssignment {
-                        StatusBadge(
+                        BuildingStatusBadge(
                             title: "PRIMARY",
                             icon: "star.fill",
                             color: FrancoSphereDesign.DashboardColors.warning
                         )
                     } else {
-                        StatusBadge(
+                        BuildingStatusBadge(
                             title: "Assigned",
                             icon: "checkmark.circle.fill",
                             color: FrancoSphereDesign.DashboardColors.info
@@ -308,9 +310,9 @@ struct AssignedBuildingCard: View {
     }
 }
 
-// MARK: - Status Badge Component
+// MARK: - Building Status Badge Component (Renamed to avoid conflict)
 
-struct StatusBadge: View {
+struct BuildingStatusBadge: View {
     let title: String
     let icon: String
     let color: Color

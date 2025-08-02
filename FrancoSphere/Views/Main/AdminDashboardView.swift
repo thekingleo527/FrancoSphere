@@ -2,6 +2,7 @@
 //  AdminDashboardView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: ViewBuilder compilation error resolved
 //  ✅ REDESIGNED: Mirrors WorkerDashboardView structure
 //  ✅ DARK ELEGANCE: Consistent theme with worker dashboard
 //  ✅ INTELLIGENT: Contextual AI insights at bottom
@@ -19,7 +20,7 @@ struct AdminDashboardView: View {
     @ObservedObject private var contextEngine = AdminContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
-    @StateObject private var novaEngine = NovaIntelligenceEngine.shared
+    @ObservedObject private var novaEngine = NovaIntelligenceEngine.shared
     
     // MARK: - State Variables (Mirroring Worker + Admin additions)
     @State private var isHeroCollapsed = false
@@ -46,6 +47,11 @@ struct AdminDashboardView: View {
     // Future phase states
     @State private var voiceCommandEnabled = false
     @State private var arModeEnabled = false
+    
+    // MARK: - Initialization
+    init(viewModel: AdminDashboardViewModel = AdminDashboardViewModel()) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
+    }
     
     // MARK: - Enums (Same as Worker)
     enum ViewContext {
@@ -480,7 +486,7 @@ struct AdminDashboardView: View {
             ))
         }
         
-        return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
     private func handleIntelligenceNavigation(_ target: IntelligencePreviewPanel.NavigationTarget) {
@@ -548,7 +554,7 @@ struct AdminDashboardView: View {
         case .worker:
             showingWorkerManagement = true
         case .building:
-            if let buildingId = alert.metadata["buildingId"] as? String,
+            if let buildingId = alert.metadata["buildingId"],
                let building = contextEngine.buildings.first(where: { $0.id == buildingId }) {
                 selectedBuilding = building
                 showBuildingDetail = true
@@ -997,29 +1003,52 @@ struct AdminHeroStatusCard: View {
     }
 }
 
-// MARK: - Supporting Components
+// MARK: - Supporting Components (FIXED)
 
-struct MetricCard: View {
+struct MetricCard<CustomContent: View>: View {
     let value: String
     let label: String
     var subtitle: String? = nil
     let color: Color
     let icon: String
     let onTap: () -> Void
-    let customContent: (() -> AnyView)?
+    let customContent: () -> CustomContent
     
-    init(value: String, label: String, subtitle: String? = nil, color: Color, icon: String, onTap: @escaping () -> Void, @ViewBuilder customContent: (() -> some View)? = nil) {
+    // Standard initializer without custom content
+    init(
+        value: String,
+        label: String,
+        subtitle: String? = nil,
+        color: Color,
+        icon: String,
+        onTap: @escaping () -> Void
+    ) where CustomContent == EmptyView {
         self.value = value
         self.label = label
         self.subtitle = subtitle
         self.color = color
         self.icon = icon
         self.onTap = onTap
-        if let content = customContent {
-            self.customContent = { AnyView(content()) }
-        } else {
-            self.customContent = nil
-        }
+        self.customContent = { EmptyView() }
+    }
+    
+    // Initializer with custom content using @ViewBuilder
+    init(
+        value: String,
+        label: String,
+        subtitle: String? = nil,
+        color: Color,
+        icon: String,
+        onTap: @escaping () -> Void,
+        @ViewBuilder customContent: @escaping () -> CustomContent
+    ) {
+        self.value = value
+        self.label = label
+        self.subtitle = subtitle
+        self.color = color
+        self.icon = icon
+        self.onTap = onTap
+        self.customContent = customContent
     }
     
     var body: some View {
@@ -1032,9 +1061,7 @@ struct MetricCard: View {
                     
                     Spacer()
                     
-                    if let customContent = customContent {
-                        customContent()
-                    }
+                    customContent()
                 }
                 
                 Text(value)

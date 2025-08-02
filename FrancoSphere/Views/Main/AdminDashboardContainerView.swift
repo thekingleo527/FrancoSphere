@@ -1,16 +1,26 @@
-
-//  AdminDashboardContainerView.swift
-//  FrancoSphere v6.0
-//
-//  Container view for Admin/Manager Dashboard
-//
+import SwiftUI
 
 struct AdminDashboardContainerView: View {
     @EnvironmentObject private var authManager: NewAuthManager
+    @EnvironmentObject private var dashboardSync: DashboardSyncService
     
     var body: some View {
-        // AdminDashboardView creates its own ViewModel internally
-        AdminDashboardView()
-            .environmentObject(authManager)
+        NavigationView {
+            AdminDashboardView()
+                .environmentObject(authManager)
+                .environmentObject(dashboardSync)
+        }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
+
+#if DEBUG
+struct AdminDashboardContainerView_Previews: PreviewProvider {
+    static var previews: some View {
+        AdminDashboardContainerView()
+            .environmentObject(NewAuthManager.shared)
+            .environmentObject(DashboardSyncService.shared)
+            .preferredColorScheme(.dark)
+    }
+}
+#endif

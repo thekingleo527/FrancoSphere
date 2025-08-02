@@ -12,9 +12,9 @@ import SwiftUI
 import CoreLocation
 import Combine
 
-// MARK: - Supporting Types (Local to this ViewModel)
+// MARK: - Supporting Types (Local to this ViewModel with BD prefix to avoid conflicts)
 
-public struct DailyRoutine: Identifiable {
+public struct BDDailyRoutine: Identifiable {
     public let id: String
     public let title: String
     public let scheduledTime: String?
@@ -39,7 +39,7 @@ public struct DailyRoutine: Identifiable {
     }
 }
 
-public struct InventorySummary {
+public struct BDInventorySummary {
     public var cleaningLow: Int = 0
     public var cleaningTotal: Int = 0
     public var equipmentLow: Int = 0
@@ -70,7 +70,7 @@ public struct InventorySummary {
     }
 }
 
-public enum SpaceCategory: String, CaseIterable {
+public enum BDSpaceCategory: String, CaseIterable {
     case all = "All"
     case utility = "Utility"
     case mechanical = "Mechanical"
@@ -79,27 +79,27 @@ public enum SpaceCategory: String, CaseIterable {
     case access = "Access"
 }
 
-public struct SpaceAccess: Identifiable {
+public struct BDSpaceAccess: Identifiable {
     public let id: String
     public let name: String
-    public let category: SpaceCategory
+    public let category: BDSpaceCategory
     public let thumbnail: UIImage?
     public let lastUpdated: Date
     public let accessCode: String?
     public let notes: String?
     public let requiresKey: Bool
-    public let photos: [FrancoBuildingPhoto]
+    public let photoIds: [String]  // Changed from [FrancoBuildingPhoto] to [String]
     
     public init(
         id: String,
         name: String,
-        category: SpaceCategory,
+        category: BDSpaceCategory,
         thumbnail: UIImage? = nil,
         lastUpdated: Date = Date(),
         accessCode: String? = nil,
         notes: String? = nil,
         requiresKey: Bool = false,
-        photos: [FrancoBuildingPhoto] = []
+        photoIds: [String] = []  // Changed parameter
     ) {
         self.id = id
         self.name = name
@@ -109,11 +109,11 @@ public struct SpaceAccess: Identifiable {
         self.accessCode = accessCode
         self.notes = notes
         self.requiresKey = requiresKey
-        self.photos = photos
+        self.photoIds = photoIds
     }
 }
 
-public struct AccessCode: Identifiable {
+public struct BDAccessCode: Identifiable {
     public let id: String
     public let location: String
     public let code: String
@@ -135,7 +135,7 @@ public struct AccessCode: Identifiable {
     }
 }
 
-public struct BuildingContact: Identifiable {
+public struct BDBuildingContact: Identifiable {
     public let id = UUID().uuidString
     public let name: String
     public let role: String
@@ -158,7 +158,7 @@ public struct BuildingContact: Identifiable {
     }
 }
 
-public struct AssignedWorker: Identifiable {
+public struct BDAssignedWorker: Identifiable {
     public let id: String
     public let name: String
     public let schedule: String?
@@ -177,7 +177,7 @@ public struct AssignedWorker: Identifiable {
     }
 }
 
-public struct BuildingMaintenanceRecord: Identifiable {
+public struct BDMaintenanceRecord: Identifiable {
     public let id: String
     public let title: String
     public let date: Date
@@ -199,7 +199,7 @@ public struct BuildingMaintenanceRecord: Identifiable {
     }
 }
 
-public struct BuildingDetailActivity: Identifiable {
+public struct BDBuildingDetailActivity: Identifiable {
     public enum ActivityType {
         case taskCompleted
         case photoAdded
@@ -234,7 +234,7 @@ public struct BuildingDetailActivity: Identifiable {
     }
 }
 
-public struct BuildingDetailStatistics {
+public struct BDBuildingDetailStatistics {
     public let totalTasks: Int
     public let completedTasks: Int
     public let workersAssigned: Int
@@ -301,8 +301,8 @@ public class BuildingDetailViewModel: ObservableObject {
     @Published var todaysSpecialNote: String?
     @Published var isFavorite: Bool = false
     @Published var complianceStatus: CoreTypes.ComplianceStatus?
-    @Published var primaryContact: BuildingContact?
-    @Published var emergencyContact: BuildingContact?
+    @Published var primaryContact: BDBuildingContact?
+    @Published var emergencyContact: BDBuildingContact?
     
     // Building details
     @Published var buildingType: String = "Commercial"
@@ -318,33 +318,33 @@ public class BuildingDetailViewModel: ObservableObject {
     @Published var openIssues: Int = 0
     
     // Tasks & Routines
-    @Published var dailyRoutines: [DailyRoutine] = []
+    @Published var dailyRoutines: [BDDailyRoutine] = []
     @Published var completedRoutines: Int = 0
     @Published var totalRoutines: Int = 0
     @Published var maintenanceTasks: [CoreTypes.MaintenanceTask] = []
     
     // Workers
-    @Published var assignedWorkers: [AssignedWorker] = []
-    @Published var onSiteWorkers: [AssignedWorker] = []
+    @Published var assignedWorkers: [BDAssignedWorker] = []
+    @Published var onSiteWorkers: [BDAssignedWorker] = []
     
     // Maintenance
-    @Published var maintenanceHistory: [BuildingMaintenanceRecord] = []
+    @Published var maintenanceHistory: [BDMaintenanceRecord] = []
     @Published var maintenanceThisWeek: Int = 0
     @Published var repairCount: Int = 0
     @Published var totalMaintenanceCost: Double = 0
     
     // Inventory
-    @Published var inventorySummary = InventorySummary()
+    @Published var inventorySummary = BDInventorySummary()
     @Published var inventoryItems: [CoreTypes.InventoryItem] = []
     @Published var totalInventoryItems: Int = 0
     @Published var lowStockCount: Int = 0
     @Published var totalInventoryValue: Double = 0
     
     // Spaces & Access
-    @Published var spaces: [SpaceAccess] = []
-    @Published var accessCodes: [AccessCode] = []
+    @Published var spaces: [BDSpaceAccess] = []
+    @Published var accessCodes: [BDAccessCode] = []
     @Published var spaceSearchQuery: String = ""
-    @Published var selectedSpaceCategory: SpaceCategory = .all
+    @Published var selectedSpaceCategory: BDSpaceCategory = .all
     
     // Compliance
     @Published var dsnyCompliance: CoreTypes.ComplianceStatus = .compliant
@@ -355,10 +355,10 @@ public class BuildingDetailViewModel: ObservableObject {
     @Published var nextHealthAction: String?
     
     // Activity
-    @Published var recentActivities: [BuildingDetailActivity] = []
+    @Published var recentActivities: [BDBuildingDetailActivity] = []
     
     // Statistics (for compatibility with existing code)
-    @Published var buildingStatistics: BuildingDetailStatistics?
+    @Published var buildingStatistics: BDBuildingDetailStatistics?
     
     // Context data
     @Published var buildingTasks: [CoreTypes.ContextualTask] = []
@@ -410,7 +410,7 @@ public class BuildingDetailViewModel: ObservableObject {
         lowStockCount > 0
     }
     
-    var filteredSpaces: [SpaceAccess] {
+    var filteredSpaces: [BDSpaceAccess] {
         var filtered = spaces
         
         // Category filter
@@ -525,7 +525,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 
                 // Load primary contact
                 if let contact = building.primaryContact {
-                    self.primaryContact = BuildingContact(
+                    self.primaryContact = BDBuildingContact(
                         name: contact.name,
                         role: contact.role,
                         email: contact.email,
@@ -535,7 +535,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 }
                 
                 // Set emergency contact
-                self.emergencyContact = BuildingContact(
+                self.emergencyContact = BDBuildingContact(
                     name: "24/7 Emergency Line",
                     role: "Franco Response Team",
                     email: "emergency@francosphere.com",
@@ -583,7 +583,7 @@ public class BuildingDetailViewModel: ObservableObject {
             
             await MainActor.run {
                 self.dailyRoutines = routines.map { routine in
-                    DailyRoutine(
+                    BDDailyRoutine(
                         id: routine.id,
                         title: routine.title,
                         scheduledTime: routine.scheduledTime?.formatted(date: .omitted, time: .shortened),
@@ -607,7 +607,7 @@ public class BuildingDetailViewModel: ObservableObject {
             
             await MainActor.run {
                 self.spaces = buildingSpaces.map { space in
-                    SpaceAccess(
+                    BDSpaceAccess(
                         id: space.id,
                         name: space.name,
                         category: self.mapToSpaceCategory(space.type),
@@ -616,13 +616,13 @@ public class BuildingDetailViewModel: ObservableObject {
                         accessCode: space.accessCode,
                         notes: space.notes,
                         requiresKey: space.requiresPhysicalKey,
-                        photos: []
+                        photoIds: []
                     )
                 }
                 
                 self.accessCodes = buildingSpaces.compactMap { space in
                     guard let code = space.accessCode else { return nil }
-                    return AccessCode(
+                    return BDAccessCode(
                         id: space.id,
                         location: space.name,
                         code: code,
@@ -644,16 +644,17 @@ public class BuildingDetailViewModel: ObservableObject {
         for (index, space) in spaces.enumerated() {
             do {
                 let photos = try await photoStorageService.loadPhotos(for: buildingId)
-                let spacePhotos = photos.filter { photo in
+                let spacePhotoIds = photos.filter { photo in
                     if space.category == .utility && photo.category == .utilities {
                         return true
                     }
                     return false
-                }
+                }.map { $0.id }
                 
-                if let firstPhoto = spacePhotos.first, let thumbnail = firstPhoto.thumbnail {
+                if let firstPhoto = photos.first(where: { spacePhotoIds.contains($0.id) }),
+                   let thumbnail = firstPhoto.thumbnail {
                     await MainActor.run {
-                        self.spaces[index] = SpaceAccess(
+                        self.spaces[index] = BDSpaceAccess(
                             id: space.id,
                             name: space.name,
                             category: space.category,
@@ -662,7 +663,7 @@ public class BuildingDetailViewModel: ObservableObject {
                             accessCode: space.accessCode,
                             notes: space.notes,
                             requiresKey: space.requiresKey,
-                            photos: spacePhotos
+                            photoIds: spacePhotoIds
                         )
                     }
                 }
@@ -677,7 +678,7 @@ public class BuildingDetailViewModel: ObservableObject {
             let summary = try await inventoryService.getBuildingInventorySummary(buildingId: buildingId)
             
             await MainActor.run {
-                self.inventorySummary = InventorySummary(
+                self.inventorySummary = BDInventorySummary(
                     cleaningLow: summary.categorySummaries[.cleaning]?.lowStockCount ?? 0,
                     cleaningTotal: summary.categorySummaries[.cleaning]?.totalItems ?? 0,
                     equipmentLow: summary.categorySummaries[.equipment]?.lowStockCount ?? 0,
@@ -749,7 +750,7 @@ public class BuildingDetailViewModel: ObservableObject {
             await MainActor.run {
                 // Process workers
                 self.assignedWorkers = workers.map { worker in
-                    AssignedWorker(
+                    BDAssignedWorker(
                         id: worker.id,
                         name: worker.displayName,
                         schedule: worker.schedule,
@@ -762,7 +763,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 
                 // Process activities
                 self.recentActivities = activities.map { activity in
-                    BuildingDetailActivity(
+                    BDBuildingDetailActivity(
                         id: activity.id,
                         type: self.mapActivityType(activity.type),
                         description: activity.description,
@@ -774,7 +775,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 
                 // Process maintenance history
                 self.maintenanceHistory = maintenance.map { record in
-                    BuildingMaintenanceRecord(
+                    BDMaintenanceRecord(
                         id: record.id,
                         title: record.title,
                         date: record.date,
@@ -804,7 +805,7 @@ public class BuildingDetailViewModel: ObservableObject {
     private func loadBuildingStatistics() async {
         // Create statistics from loaded data
         await MainActor.run {
-            self.buildingStatistics = BuildingDetailStatistics(
+            self.buildingStatistics = BDBuildingDetailStatistics(
                 totalTasks: todaysTasks?.total ?? 0,
                 completedTasks: todaysTasks?.completed ?? 0,
                 workersAssigned: assignedWorkers.count,
@@ -874,7 +875,7 @@ public class BuildingDetailViewModel: ObservableObject {
     
     // MARK: - Action Methods
     
-    public func toggleRoutineCompletion(_ routine: DailyRoutine) {
+    public func toggleRoutineCompletion(_ routine: BDDailyRoutine) {
         Task {
             do {
                 let newStatus: CoreTypes.TaskStatus = routine.isCompleted ? .pending : .completed
@@ -948,7 +949,7 @@ public class BuildingDetailViewModel: ObservableObject {
         }
     }
     
-    public func updateSpace(_ space: SpaceAccess) {
+    public func updateSpace(_ space: BDSpaceAccess) {
         if let index = spaces.firstIndex(where: { $0.id == space.id }) {
             spaces[index] = space
         }
@@ -1096,7 +1097,7 @@ public class BuildingDetailViewModel: ObservableObject {
         }
     }
     
-    private func mapToSpaceCategory(_ type: String) -> SpaceCategory {
+    private func mapToSpaceCategory(_ type: String) -> BDSpaceCategory {
         switch type.lowercased() {
         case "utility": return .utility
         case "mechanical": return .mechanical
@@ -1107,7 +1108,7 @@ public class BuildingDetailViewModel: ObservableObject {
         }
     }
     
-    private func mapActivityType(_ type: String) -> BuildingDetailActivity.ActivityType {
+    private func mapActivityType(_ type: String) -> BDBuildingDetailActivity.ActivityType {
         switch type {
         case "task_completed": return .taskCompleted
         case "photo_added": return .photoAdded

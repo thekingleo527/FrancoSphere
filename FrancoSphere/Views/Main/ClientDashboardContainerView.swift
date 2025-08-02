@@ -1,18 +1,26 @@
-//
-//  ClientDashboardContainerView.swift
-//  FrancoSphere v6.0
-//
-//  Container view for Client Dashboard
-//
-
 import SwiftUI
 
 struct ClientDashboardContainerView: View {
     @EnvironmentObject private var authManager: NewAuthManager
+    @EnvironmentObject private var dashboardSync: DashboardSyncService
     
     var body: some View {
-        // ClientDashboardView creates its own ViewModel internally
-        ClientDashboardView()
-            .environmentObject(authManager)
+        NavigationView {
+            ClientDashboardView()
+                .environmentObject(authManager)
+                .environmentObject(dashboardSync)
+        }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
+
+#if DEBUG
+struct ClientDashboardContainerView_Previews: PreviewProvider {
+    static var previews: some View {
+        ClientDashboardContainerView()
+            .environmentObject(NewAuthManager.shared)
+            .environmentObject(DashboardSyncService.shared)
+            .preferredColorScheme(.dark)
+    }
+}
+#endif
