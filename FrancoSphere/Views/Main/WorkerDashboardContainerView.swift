@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct WorkerDashboardContainerView: View {
+struct WorkerDashboardContainerV6: View {
     @StateObject private var viewModel = WorkerDashboardViewModel()
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
@@ -101,9 +101,9 @@ private struct LoadingDashboardView: View {
 }
 
 #if DEBUG
-struct WorkerDashboardContainerView_Previews: PreviewProvider {
+struct WorkerDashboardContainerV6_Previews: PreviewProvider {
     static var previews: some View {
-        WorkerDashboardContainerView()
+        WorkerDashboardContainerV6()
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)

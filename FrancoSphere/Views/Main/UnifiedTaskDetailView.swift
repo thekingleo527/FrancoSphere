@@ -15,6 +15,7 @@ import PhotosUI
 import MapKit
 import Combine
 import AVFoundation
+import UIKit
 
 struct UnifiedTaskDetailView: View {
     // MARK: - Properties
@@ -1219,9 +1220,8 @@ struct SimplifiedPhotoCaptureView: View {
     let onCancel: () -> Void
     
     var body: some View {
-        // For simplified mode, we'll use the standard PhotoCaptureView
-        // wrapped in a simpler interface
-        PhotoCaptureView(image: .constant(nil)) { capturedImage in
+        // For simplified mode, we'll use a standard photo capture
+        PhotoCaptureView { capturedImage in
             if let image = capturedImage {
                 onPhotoTaken(image)
             } else {
@@ -1231,11 +1231,350 @@ struct SimplifiedPhotoCaptureView: View {
     }
 }
 
-// Simple Photo Capture View Extension
-extension PhotoCaptureView {
-    init(image: Binding<UIImage?>, completion: @escaping (UIImage?) -> Void) {
-        self.init(image: image)
-        // Add completion handler through a workaround if needed
+// MARK: - Photo Capture View
+
+struct PhotoCaptureView: View {
+    @Binding var image: UIImage?
+    let completion: ((UIImage?) -> Void)?
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var camera = CameraViewModel()
+    
+    init(image: Binding<UIImage?>) {
+        self._image = image
+        self.completion = nil
+    }
+    
+    init(completion: @escaping (UIImage?) -> Void) {
+        self._image = .constant(nil)
+        self.completion = completion
+    }
+    
+    var body: some View {
+        ZStack {
+            // Camera preview or image picker
+            if camera.isCameraAvailable {
+                CameraViewRepresentable(camera: camera)
+                    .ignoresSafeArea()
+            } else {
+                // Fallback to image picker for simulator
+                ImagePickerFallback(image: $image, completion: completion)
+            }
+            
+            // Overlay controls
+            VStack {
+                // Top bar
+                HStack {
+                    Button("Cancel") {
+                        if let completion = completion {
+                            completion(nil)
+                        } else {
+                            dismiss()
+                        }
+                    }
+                    .padding()
+                    .background(Color.black.opacity(0.5))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    
+                    Spacer()
+                }
+                .padding()
+                
+                Spacer()
+                
+                // Bottom controls
+                HStack(spacing: 50) {
+                    // Gallery button
+                    Button(action: {
+                        camera.openPhotoLibrary()
+                    }) {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
+                    // Capture button
+                    Button(action: {
+                        camera.capturePhoto { capturedImage in
+                            if let completion = completion {
+                                completion(capturedImage)
+                            } else {
+                                image = capturedImage
+                                dismiss()
+                            }
+                        }
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 70, height: 70)
+                            Circle()
+                                .stroke(Color.white, lineWidth: 3)
+                                .frame(width: 80, height: 80)
+                        }
+                    }
+                    
+                    // Flash button
+                    Button(action: {
+                        camera.toggleFlash()
+                    }) {
+                        Image(systemName: camera.flashMode == .on ? "bolt.fill" : "bolt.slash.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(.bottom, 30)
+            }
+        }
+        .onAppear {
+            camera.checkPermissions()
+        }
+    }
+}
+
+// MARK: - Camera View Model
+
+@MainActor
+class CameraViewModel: NSObject, ObservableObject {
+    @Published var isCameraAvailable = true
+    @Published var flashMode: AVCaptureDevice.FlashMode = .off
+    @Published var showImagePicker = false
+    
+    var captureSession: AVCaptureSession?
+    private var photoOutput: AVCapturePhotoOutput?
+    private var captureCompletion: ((UIImage?) -> Void)?
+    
+    override init() {
+        super.init()
+        #if targetEnvironment(simulator)
+        isCameraAvailable = false
+        #else
+        setupCamera()
+        #endif
+    }
+    
+    func checkPermissions() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            setupCamera()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                if granted {
+                    DispatchQueue.main.async {
+                        self?.setupCamera()
+                    }
+                }
+            }
+        default:
+            isCameraAvailable = false
+        }
+    }
+    
+    private func setupCamera() {
+        let session = AVCaptureSession()
+        session.beginConfiguration()
+        
+        // Add video input
+        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              let input = try? AVCaptureDeviceInput(device: camera) else {
+            isCameraAvailable = false
+            return
+        }
+        
+        if session.canAddInput(input) {
+            session.addInput(input)
+        }
+        
+        // Add photo output
+        let output = AVCapturePhotoOutput()
+        if session.canAddOutput(output) {
+            session.addOutput(output)
+        }
+        
+        session.commitConfiguration()
+        
+        self.captureSession = session
+        self.photoOutput = output
+        
+        // Start session on background queue
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.captureSession?.startRunning()
+        }
+    }
+    
+    func capturePhoto(completion: @escaping (UIImage?) -> Void) {
+        captureCompletion = completion
+        
+        guard let photoOutput = photoOutput else {
+            completion(nil)
+            return
+        }
+        
+        let settings = AVCapturePhotoSettings()
+        settings.flashMode = flashMode
+        
+        photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+    
+    func toggleFlash() {
+        flashMode = flashMode == .off ? .on : .off
+    }
+    
+    func openPhotoLibrary() {
+        showImagePicker = true
+    }
+    
+    deinit {
+        captureSession?.stopRunning()
+    }
+}
+
+// MARK: - Camera Delegate
+
+extension CameraViewModel: AVCapturePhotoCaptureDelegate {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        guard error == nil,
+              let imageData = photo.fileDataRepresentation(),
+              let image = UIImage(data: imageData) else {
+            captureCompletion?(nil)
+            return
+        }
+        
+        captureCompletion?(image)
+    }
+}
+
+// MARK: - Camera View Representable
+
+struct CameraViewRepresentable: UIViewRepresentable {
+    let camera: CameraViewModel
+    
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: UIScreen.main.bounds)
+        
+        // Add preview layer
+        if let session = camera.captureSession {
+            let previewLayer = AVCaptureVideoPreviewLayer(session: session)
+            previewLayer.frame = view.bounds
+            previewLayer.videoGravity = .resizeAspectFill
+            view.layer.addSublayer(previewLayer)
+        }
+        
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // Update if needed
+    }
+}
+
+// MARK: - Image Picker Fallback
+
+struct ImagePickerFallback: View {
+    @Binding var image: UIImage?
+    let completion: ((UIImage?) -> Void)?
+    @State private var showingImagePicker = false
+    @State private var inputImage: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                Image(systemName: "camera.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.white.opacity(0.5))
+                
+                Text("Camera not available")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                
+                Text("Use photo library instead")
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.7))
+                
+                Button(action: {
+                    showingImagePicker = true
+                }) {
+                    Label("Choose Photo", systemImage: "photo.on.rectangle")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                
+                Button("Cancel") {
+                    if let completion = completion {
+                        completion(nil)
+                    } else {
+                        dismiss()
+                    }
+                }
+                .foregroundColor(.white.opacity(0.7))
+                .padding()
+            }
+        }
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker(image: $inputImage)
+        }
+        .onChange(of: inputImage) { newImage in
+            if let newImage = newImage {
+                if let completion = completion {
+                    completion(newImage)
+                } else {
+                    image = newImage
+                    dismiss()
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Image Picker
+
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let uiImage = info[.originalImage] as? UIImage {
+                parent.image = uiImage
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
     }
 }
 

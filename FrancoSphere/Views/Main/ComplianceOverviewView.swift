@@ -42,6 +42,20 @@ struct ComplianceOverviewView: View {
     let onScheduleAudit: (() -> Void)?
     let onExportReport: (() -> Void)?
     
+    // MARK: - Initialization
+    
+    init(
+        intelligence: CoreTypes.PortfolioIntelligence? = nil,
+        onIssuesTap: ((ComplianceIssueData) -> Void)? = nil,
+        onScheduleAudit: (() -> Void)? = nil,
+        onExportReport: (() -> Void)? = nil
+    ) {
+        self.intelligence = intelligence
+        self.onIssuesTap = onIssuesTap
+        self.onScheduleAudit = onScheduleAudit
+        self.onExportReport = onExportReport
+    }
+    
     // MARK: - Enums
     
     enum ViewContext {
@@ -204,6 +218,14 @@ struct ComplianceOverviewView: View {
         }
         .sheet(isPresented: $showingComplianceGuide) {
             ComplianceGuideView()
+        }
+        .onAppear {
+            #if DEBUG
+            // Generate sample compliance updates for testing
+            if dashboardSync.complianceUpdates.isEmpty {
+                dashboardSync.generateSampleComplianceUpdates()
+            }
+            #endif
         }
     }
     
@@ -477,7 +499,8 @@ struct ComplianceOverviewView: View {
                     type: .regulatory,
                     severity: .critical,
                     description: update.description,
-                    buildingId: update.buildingId,
+                    buildingId: update.buildingId ?? "",
+                    buildingName: update.buildingName,
                     dueDate: Date().addingTimeInterval(3600 * 24) // 24 hours
                 )
             }
@@ -490,10 +513,21 @@ struct ComplianceOverviewView: View {
     private func getRecentComplianceActivity() -> [ComplianceActivity] {
         // Convert dashboard sync updates to compliance activities
         return dashboardSync.complianceUpdates.map { update in
-            ComplianceActivity(
+            // Map ComplianceUpdate.ComplianceUpdateType to ComplianceActivity.ActivityType
+            let activityType: ComplianceActivity.ActivityType = {
+                switch update.type {
+                case .violation: return .violation
+                case .resolved: return .resolved
+                case .taskCompleted: return .taskCompleted
+                case .auditScheduled: return .auditScheduled
+                case .photoUploaded: return .photoUploaded
+                }
+            }()
+            
+            return ComplianceActivity(
                 id: update.id,
                 timestamp: update.timestamp,
-                type: update.type,
+                type: activityType,
                 description: update.description,
                 workerName: update.workerName,
                 buildingName: update.buildingName,
@@ -2829,8 +2863,16 @@ struct ComplianceOverviewView_Previews: PreviewProvider {
             complianceScore: 85
         )
         
-        ComplianceOverviewView(intelligence: sampleIntelligence)
-            .environmentObject(DashboardSyncService.shared)
+        // Initialize DashboardSyncService for preview
+        let dashboardSync = DashboardSyncService.shared
+        dashboardSync.initialize()
+        
+        return ComplianceOverviewView(intelligence: sampleIntelligence)
+            .environmentObject(dashboardSync)
             .preferredColorScheme(.dark)
+            .onAppear {
+                // Generate sample data for preview
+                dashboardSync.generateSampleComplianceUpdates()
+            }
     }
 }
