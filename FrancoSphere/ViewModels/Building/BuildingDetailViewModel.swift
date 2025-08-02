@@ -2,15 +2,267 @@
 //  BuildingDetailViewModel.swift
 //  FrancoSphere v6.0
 //
-//  ✅ EXTRACTED: Separated from BuildingDetailView for better organization
+//  ✅ FIXED: All type ambiguities resolved
+//  ✅ NAMESPACED: Proper CoreTypes usage
 //  ✅ COMPREHENSIVE: Handles all building detail functionality
-//  ✅ REAL-TIME: Integrated with DashboardSyncService
 //  ✅ SERVICE-ORIENTED: Uses all necessary services
 //
 
 import SwiftUI
 import CoreLocation
 import Combine
+
+// MARK: - Supporting Types (Local to this ViewModel)
+
+public struct DailyRoutine: Identifiable {
+    public let id: String
+    public let title: String
+    public let scheduledTime: String?
+    public var isCompleted: Bool
+    public let assignedWorker: String?
+    public let requiredInventory: [String]
+    
+    public init(
+        id: String,
+        title: String,
+        scheduledTime: String? = nil,
+        isCompleted: Bool = false,
+        assignedWorker: String? = nil,
+        requiredInventory: [String] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.scheduledTime = scheduledTime
+        self.isCompleted = isCompleted
+        self.assignedWorker = assignedWorker
+        self.requiredInventory = requiredInventory
+    }
+}
+
+public struct InventorySummary {
+    public var cleaningLow: Int = 0
+    public var cleaningTotal: Int = 0
+    public var equipmentLow: Int = 0
+    public var equipmentTotal: Int = 0
+    public var maintenanceLow: Int = 0
+    public var maintenanceTotal: Int = 0
+    public var safetyLow: Int = 0
+    public var safetyTotal: Int = 0
+    
+    public init(
+        cleaningLow: Int = 0,
+        cleaningTotal: Int = 0,
+        equipmentLow: Int = 0,
+        equipmentTotal: Int = 0,
+        maintenanceLow: Int = 0,
+        maintenanceTotal: Int = 0,
+        safetyLow: Int = 0,
+        safetyTotal: Int = 0
+    ) {
+        self.cleaningLow = cleaningLow
+        self.cleaningTotal = cleaningTotal
+        self.equipmentLow = equipmentLow
+        self.equipmentTotal = equipmentTotal
+        self.maintenanceLow = maintenanceLow
+        self.maintenanceTotal = maintenanceTotal
+        self.safetyLow = safetyLow
+        self.safetyTotal = safetyTotal
+    }
+}
+
+public enum SpaceCategory: String, CaseIterable {
+    case all = "All"
+    case utility = "Utility"
+    case mechanical = "Mechanical"
+    case storage = "Storage"
+    case electrical = "Electrical"
+    case access = "Access"
+}
+
+public struct SpaceAccess: Identifiable {
+    public let id: String
+    public let name: String
+    public let category: SpaceCategory
+    public let thumbnail: UIImage?
+    public let lastUpdated: Date
+    public let accessCode: String?
+    public let notes: String?
+    public let requiresKey: Bool
+    public let photos: [FrancoBuildingPhoto]
+    
+    public init(
+        id: String,
+        name: String,
+        category: SpaceCategory,
+        thumbnail: UIImage? = nil,
+        lastUpdated: Date = Date(),
+        accessCode: String? = nil,
+        notes: String? = nil,
+        requiresKey: Bool = false,
+        photos: [FrancoBuildingPhoto] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.category = category
+        self.thumbnail = thumbnail
+        self.lastUpdated = lastUpdated
+        self.accessCode = accessCode
+        self.notes = notes
+        self.requiresKey = requiresKey
+        self.photos = photos
+    }
+}
+
+public struct AccessCode: Identifiable {
+    public let id: String
+    public let location: String
+    public let code: String
+    public let type: String
+    public let updatedDate: Date
+    
+    public init(
+        id: String,
+        location: String,
+        code: String,
+        type: String,
+        updatedDate: Date = Date()
+    ) {
+        self.id = id
+        self.location = location
+        self.code = code
+        self.type = type
+        self.updatedDate = updatedDate
+    }
+}
+
+public struct BuildingContact: Identifiable {
+    public let id = UUID().uuidString
+    public let name: String
+    public let role: String
+    public let email: String?
+    public let phone: String?
+    public let isEmergencyContact: Bool
+    
+    public init(
+        name: String,
+        role: String,
+        email: String? = nil,
+        phone: String? = nil,
+        isEmergencyContact: Bool = false
+    ) {
+        self.name = name
+        self.role = role
+        self.email = email
+        self.phone = phone
+        self.isEmergencyContact = isEmergencyContact
+    }
+}
+
+public struct AssignedWorker: Identifiable {
+    public let id: String
+    public let name: String
+    public let schedule: String?
+    public let isOnSite: Bool
+    
+    public init(
+        id: String,
+        name: String,
+        schedule: String? = nil,
+        isOnSite: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.schedule = schedule
+        self.isOnSite = isOnSite
+    }
+}
+
+public struct BuildingMaintenanceRecord: Identifiable {
+    public let id: String
+    public let title: String
+    public let date: Date
+    public let description: String
+    public let cost: NSDecimalNumber?
+    
+    public init(
+        id: String,
+        title: String,
+        date: Date,
+        description: String,
+        cost: NSDecimalNumber? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.date = date
+        self.description = description
+        self.cost = cost
+    }
+}
+
+public struct BuildingDetailActivity: Identifiable {
+    public enum ActivityType {
+        case taskCompleted
+        case photoAdded
+        case issueReported
+        case workerArrived
+        case workerDeparted
+        case routineCompleted
+        case inventoryUsed
+    }
+    
+    public let id: String
+    public let type: ActivityType
+    public let description: String
+    public let timestamp: Date
+    public let workerName: String?
+    public let photoId: String?
+    
+    public init(
+        id: String,
+        type: ActivityType,
+        description: String,
+        timestamp: Date,
+        workerName: String? = nil,
+        photoId: String? = nil
+    ) {
+        self.id = id
+        self.type = type
+        self.description = description
+        self.timestamp = timestamp
+        self.workerName = workerName
+        self.photoId = photoId
+    }
+}
+
+public struct BuildingDetailStatistics {
+    public let totalTasks: Int
+    public let completedTasks: Int
+    public let workersAssigned: Int
+    public let workersOnSite: Int
+    public let complianceScore: Double
+    public let lastInspectionDate: Date
+    public let nextScheduledMaintenance: Date
+    
+    public init(
+        totalTasks: Int,
+        completedTasks: Int,
+        workersAssigned: Int,
+        workersOnSite: Int,
+        complianceScore: Double,
+        lastInspectionDate: Date,
+        nextScheduledMaintenance: Date
+    ) {
+        self.totalTasks = totalTasks
+        self.completedTasks = completedTasks
+        self.workersAssigned = workersAssigned
+        self.workersOnSite = workersOnSite
+        self.complianceScore = complianceScore
+        self.lastInspectionDate = lastInspectionDate
+        self.nextScheduledMaintenance = nextScheduledMaintenance
+    }
+}
+
+// MARK: - Main ViewModel
 
 @MainActor
 public class BuildingDetailViewModel: ObservableObject {
@@ -76,14 +328,14 @@ public class BuildingDetailViewModel: ObservableObject {
     @Published var onSiteWorkers: [AssignedWorker] = []
     
     // Maintenance
-    @Published var maintenanceHistory: [MaintenanceRecord] = []
+    @Published var maintenanceHistory: [BuildingMaintenanceRecord] = []
     @Published var maintenanceThisWeek: Int = 0
     @Published var repairCount: Int = 0
     @Published var totalMaintenanceCost: Double = 0
     
     // Inventory
     @Published var inventorySummary = InventorySummary()
-    @Published var inventoryItems: [InventoryItem] = []
+    @Published var inventoryItems: [CoreTypes.InventoryItem] = []
     @Published var totalInventoryItems: Int = 0
     @Published var lowStockCount: Int = 0
     @Published var totalInventoryValue: Double = 0
@@ -106,11 +358,11 @@ public class BuildingDetailViewModel: ObservableObject {
     @Published var recentActivities: [BuildingDetailActivity] = []
     
     // Statistics (for compatibility with existing code)
-    @Published var buildingStatistics: BuildingStatistics?
+    @Published var buildingStatistics: BuildingDetailStatistics?
     
     // Context data
     @Published var buildingTasks: [CoreTypes.ContextualTask] = []
-    @Published var workerProfiles: [WorkerProfile] = []
+    @Published var workerProfiles: [CoreTypes.WorkerProfile] = []
     
     // MARK: - Private Properties
     
@@ -393,7 +645,7 @@ public class BuildingDetailViewModel: ObservableObject {
             do {
                 let photos = try await photoStorageService.loadPhotos(for: buildingId)
                 let spacePhotos = photos.filter { photo in
-                    if space.category == .utilities && photo.category == .utilities {
+                    if space.category == .utility && photo.category == .utilities {
                         return true
                     }
                     return false
@@ -522,7 +774,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 
                 // Process maintenance history
                 self.maintenanceHistory = maintenance.map { record in
-                    MaintenanceRecord(
+                    BuildingMaintenanceRecord(
                         id: record.id,
                         title: record.title,
                         date: record.date,
@@ -536,7 +788,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 
                 // Create worker profiles for compatibility
                 self.workerProfiles = workers.map { worker in
-                    WorkerProfile(
+                    CoreTypes.WorkerProfile(
                         id: worker.id,
                         name: worker.displayName,
                         email: worker.email ?? "",
@@ -552,7 +804,7 @@ public class BuildingDetailViewModel: ObservableObject {
     private func loadBuildingStatistics() async {
         // Create statistics from loaded data
         await MainActor.run {
-            self.buildingStatistics = BuildingStatistics(
+            self.buildingStatistics = BuildingDetailStatistics(
                 totalTasks: todaysTasks?.total ?? 0,
                 completedTasks: todaysTasks?.completed ?? 0,
                 workersAssigned: assignedWorkers.count,
@@ -575,28 +827,23 @@ public class BuildingDetailViewModel: ObservableObject {
                         id: task.id,
                         title: task.title,
                         description: task.description ?? "",
+                        status: task.status,
+                        dueDate: task.dueDate,
                         category: task.category,
                         urgency: task.urgency,
-                        status: task.status,
-                        building: NamedCoordinate(
+                        building: CoreTypes.NamedCoordinate(
                             id: buildingId,
                             name: buildingName,
+                            address: buildingAddress,
                             latitude: 0,
                             longitude: 0
                         ),
-                        dueTime: task.dueDate,
-                        estimatedDuration: task.estimatedDuration ?? 30,
-                        requiredSkills: task.requiredSkills ?? [],
+                        buildingId: buildingId,
+                        buildingName: buildingName,
+                        assignedWorkerId: task.assignedWorkerId,
+                        priority: task.urgency,
                         requiresPhoto: task.requiresPhotoEvidence,
-                        isRecurring: task.isRecurring,
-                        lastCompletedBy: task.lastCompletedBy,
-                        lastCompletedAt: task.lastCompletedAt,
-                        notes: task.notes,
-                        isCompleted: task.status == .completed,
-                        completedAt: task.completedAt,
-                        completedBy: task.completedBy,
-                        photosRequired: task.photosRequired,
-                        photosUploaded: task.photosUploaded ?? 0
+                        estimatedDuration: task.estimatedDuration ?? 1800
                     )
                 }
                 
@@ -607,22 +854,16 @@ public class BuildingDetailViewModel: ObservableObject {
                         CoreTypes.MaintenanceTask(
                             id: task.id,
                             title: task.title,
-                            description: task.description,
-                            category: task.category,
-                            urgency: task.urgency,
+                            description: task.description ?? "",
+                            category: task.category ?? .maintenance,
+                            urgency: task.urgency ?? .medium,
                             status: task.status,
                             buildingId: buildingId,
-                            buildingName: buildingName,
-                            dueDate: task.dueTime,
-                            assignedWorkerId: nil,
-                            estimatedDuration: task.estimatedDuration,
-                            actualDuration: nil,
-                            completedAt: task.completedAt,
-                            notes: task.notes,
-                            requiresPhotoEvidence: task.requiresPhoto,
-                            photoEvidenceIds: [],
-                            createdAt: Date(),
-                            updatedAt: Date()
+                            assignedWorkerId: task.assignedWorkerId,
+                            estimatedDuration: task.estimatedDuration ?? 3600,
+                            createdDate: task.createdAt,
+                            dueDate: task.dueDate,
+                            completedDate: task.completedAt
                         )
                     }
             }
@@ -666,7 +907,7 @@ public class BuildingDetailViewModel: ObservableObject {
         }
     }
     
-    public func savePhoto(_ photo: UIImage, category: FrancoPhotoCategory, notes: String) async {
+    public func savePhoto(_ photo: UIImage, category: CoreTypes.FrancoPhotoCategory, notes: String) async {
         do {
             let location = await locationManager.getCurrentLocation()
             
@@ -684,7 +925,7 @@ public class BuildingDetailViewModel: ObservableObject {
             print("✅ Photo saved: \(savedPhoto.id)")
             
             // Reload spaces if it was a space photo
-            if category == .utilities || category == .mechanical || category == .storage {
+            if category == .compliance || category == .issue {
                 await loadSpacesAndAccess()
             }
             
@@ -717,7 +958,7 @@ public class BuildingDetailViewModel: ObservableObject {
         await loadInventorySummary()
     }
     
-    public func updateInventoryItem(_ item: InventoryItem) {
+    public func updateInventoryItem(_ item: CoreTypes.InventoryItem) {
         Task {
             do {
                 try await inventoryService.updateItem(item)
@@ -738,7 +979,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 for item in lowStockItems {
                     try await inventoryService.createReorderRequest(
                         itemId: item.id,
-                        quantity: item.reorderQuantity
+                        quantity: item.maxStock - item.currentStock
                     )
                 }
                 
@@ -780,7 +1021,7 @@ public class BuildingDetailViewModel: ObservableObject {
         Task {
             let update = CoreTypes.DashboardUpdate(
                 source: .worker,
-                type: .criticalAlert,
+                type: .criticalUpdate,
                 buildingId: buildingId,
                 workerId: authManager.workerId ?? "",
                 data: [
@@ -798,7 +1039,7 @@ public class BuildingDetailViewModel: ObservableObject {
             // Send emergency notification
             let update = CoreTypes.DashboardUpdate(
                 source: .admin,
-                type: .criticalAlert,
+                type: .criticalUpdate,
                 buildingId: buildingId,
                 workerId: "",
                 data: [
@@ -839,7 +1080,7 @@ public class BuildingDetailViewModel: ObservableObject {
         }.count
         
         totalMaintenanceCost = maintenanceHistory.compactMap { record in
-            record.cost.map { Double(truncating: $0 as NSNumber) }
+            record.cost.map { Double(truncating: $0) }
         }.reduce(0, +)
     }
     
@@ -877,35 +1118,5 @@ public class BuildingDetailViewModel: ObservableObject {
         case "inventory_used": return .inventoryUsed
         default: return .taskCompleted
         }
-    }
-}
-
-// MARK: - Supporting Models (if not defined elsewhere)
-
-public struct BuildingStatistics {
-    public let totalTasks: Int
-    public let completedTasks: Int
-    public let workersAssigned: Int
-    public let workersOnSite: Int
-    public let complianceScore: Double
-    public let lastInspectionDate: Date
-    public let nextScheduledMaintenance: Date
-    
-    public init(
-        totalTasks: Int,
-        completedTasks: Int,
-        workersAssigned: Int,
-        workersOnSite: Int,
-        complianceScore: Double,
-        lastInspectionDate: Date,
-        nextScheduledMaintenance: Date
-    ) {
-        self.totalTasks = totalTasks
-        self.completedTasks = completedTasks
-        self.workersAssigned = workersAssigned
-        self.workersOnSite = workersOnSite
-        self.complianceScore = complianceScore
-        self.lastInspectionDate = lastInspectionDate
-        self.nextScheduledMaintenance = nextScheduledMaintenance
     }
 }
