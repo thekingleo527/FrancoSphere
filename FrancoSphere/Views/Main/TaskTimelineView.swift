@@ -68,7 +68,7 @@ struct TaskTimelineView: View {
             }
             .sheet(item: $showingTaskDetail) { task in
                 NavigationView {
-                    TaskDetailView(task: task)
+                    UnifiedTaskDetailView(task: task, mode: .worker)
                 }
             }
             .sheet(isPresented: $showingNovaInsights) {

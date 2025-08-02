@@ -195,7 +195,7 @@ struct WorkerDashboardView: View {
         }
         .sheet(isPresented: $showTaskDetail) {
             if let task = selectedTask {
-                TaskDetailView(task: task)
+                UnifiedTaskDetailView(task: task, mode: .worker)
                     .onAppear { currentContext = .taskFlow }
                     .onDisappear {
                         currentContext = .dashboard

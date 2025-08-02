@@ -1,12 +1,13 @@
 //
 //  ProfileView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
 //  ✅ ALL COMPILATION ERRORS FIXED
 //  ✅ No async operations in computed properties or view builders
 //  ✅ Proper ViewBuilder usage
 //  ✅ Cross-dashboard integration ready
 //  ✅ FIXED: Proper error handling for logout
+//  ✅ DARK ELEGANCE: Updated with new theme system
 //
 
 import SwiftUI
@@ -23,7 +24,15 @@ struct ProfileView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     
-    // ✅ FIXED: No async in computed properties
+    // Determine user's dashboard role for theming
+    private var dashboardRole: DashboardRole {
+        switch authManager.userRole {
+        case .admin, .manager: return .admin
+        case .client: return .client
+        case .worker, .none: return .worker
+        }
+    }
+    
     private var currentWorkerRole: String {
         contextEngine.currentWorker?.role.rawValue.capitalized ?? "Worker"
     }
@@ -35,7 +44,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: FrancoSphereDesign.Spacing.lg) {
                     // Profile header
                     profileHeader
                     
@@ -53,10 +62,10 @@ struct ProfileView: View {
                     
                     Spacer(minLength: 40)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                .padding(.horizontal, FrancoSphereDesign.Spacing.md)
+                .padding(.top, FrancoSphereDesign.Spacing.md)
             }
-            .background(Color.black.ignoresSafeArea())
+            .background(FrancoSphereDesign.DashboardColors.baseBackground.ignoresSafeArea())
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .navigationBarBackButtonHidden(true)
@@ -72,7 +81,7 @@ struct ProfileView: View {
                             Text("Back")
                                 .font(.subheadline)
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(dashboardRole.primaryColor)
                     }
                 }
                 
@@ -81,7 +90,7 @@ struct ProfileView: View {
                         HapticManager.impact(.light)
                         dismiss()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(dashboardRole.primaryColor)
                     .fontWeight(.semibold)
                 }
             }
@@ -112,7 +121,7 @@ struct ProfileView: View {
     // MARK: - Profile Header
     
     private var profileHeader: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: FrancoSphereDesign.Spacing.md) {
             // Profile image
             Button(action: {
                 HapticManager.impact(.light)
@@ -122,7 +131,7 @@ struct ProfileView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                                colors: dashboardRole.heroGradient,
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -147,7 +156,7 @@ struct ProfileView: View {
                         HStack {
                             Spacer()
                             Circle()
-                                .fill(Color.blue)
+                                .fill(dashboardRole.primaryColor)
                                 .frame(width: 28, height: 28)
                                 .overlay(
                                     Image(systemName: "camera.fill")
@@ -163,20 +172,19 @@ struct ProfileView: View {
             .buttonStyle(PlainButtonStyle())
             
             // Worker name and role
-            VStack(spacing: 4) {
+            VStack(spacing: FrancoSphereDesign.Spacing.xs) {
                 Text(authManager.currentWorkerName)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .francoTypography(FrancoSphereDesign.Typography.title2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Text(currentWorkerRole)
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(dashboardRole.primaryColor)
                 
                 if let email = currentWorkerEmail {
                     Text(email)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
             }
         }
@@ -185,160 +193,143 @@ struct ProfileView: View {
     // MARK: - Worker Information
     
     private var workerInfoSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
             Text("Worker Information")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
-            VStack(spacing: 16) {
+            VStack(spacing: FrancoSphereDesign.Spacing.md) {
                 ProfileInfoRow(
                     icon: "person.badge.key.fill",
                     label: "Worker ID",
-                    value: authManager.workerId ?? "Unknown"
+                    value: authManager.workerId ?? "Unknown",
+                    role: dashboardRole
                 )
                 
                 ProfileInfoRow(
                     icon: "building.2.fill",
                     label: "Assigned Buildings",
-                    value: "\(contextEngine.assignedBuildings.count)"
+                    value: "\(contextEngine.assignedBuildings.count)",
+                    role: dashboardRole
                 )
                 
                 ProfileInfoRow(
                     icon: "clock.fill",
                     label: "Employment Status",
-                    value: "Active"
+                    value: "Active",
+                    role: dashboardRole
                 )
                 
                 ProfileInfoRow(
                     icon: "calendar.badge.clock",
                     label: "Member Since",
-                    value: "March 2024"
+                    value: "March 2024",
+                    role: dashboardRole
                 )
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     // MARK: - Statistics Section
     
     private var statisticsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
             Text("Performance Stats")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
-            VStack(spacing: 16) {
-                HStack(spacing: 16) {
+            VStack(spacing: FrancoSphereDesign.Spacing.md) {
+                HStack(spacing: FrancoSphereDesign.Spacing.md) {
                     ProfileStatCard(
                         title: "Tasks Today",
                         value: "\(contextEngine.todaysTasks.count)",
-                        color: .blue
+                        color: FrancoSphereDesign.DashboardColors.info
                     )
                     
                     ProfileStatCard(
                         title: "Completed",
                         value: "\(getCompletedTasksCount())",
-                        color: .green
+                        color: FrancoSphereDesign.DashboardColors.success
                     )
                 }
                 
-                HStack(spacing: 16) {
+                HStack(spacing: FrancoSphereDesign.Spacing.md) {
                     ProfileStatCard(
                         title: "Pending",
                         value: "\(getPendingTasksCount())",
-                        color: .orange
+                        color: FrancoSphereDesign.DashboardColors.warning
                     )
                     
                     ProfileStatCard(
                         title: "Urgent",
                         value: "\(getUrgentTasksCount())",
-                        color: .red
+                        color: FrancoSphereDesign.DashboardColors.critical
                     )
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     // MARK: - Settings Section
     
     private var settingsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
             Text("Settings")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             VStack(spacing: 0) {
                 SettingsRow(
                     icon: "bell.fill",
                     title: "Notifications",
                     subtitle: "Push notifications and alerts",
-                    hasChevron: true
+                    hasChevron: true,
+                    role: dashboardRole
                 ) {
                     // Handle notifications settings
                 }
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
-                    .padding(.vertical, 8)
+                    .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                    .padding(.vertical, FrancoSphereDesign.Spacing.sm)
                 
                 SettingsRow(
                     icon: "moon.fill",
                     title: "Dark Mode",
                     subtitle: "Always enabled for better visibility",
-                    hasChevron: false
+                    hasChevron: false,
+                    role: dashboardRole
                 ) {
                     // Dark mode is always on
                 }
                 
                 Divider()
-                    .background(Color.white.opacity(0.1))
-                    .padding(.vertical, 8)
+                    .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                    .padding(.vertical, FrancoSphereDesign.Spacing.sm)
                 
                 SettingsRow(
                     icon: "questionmark.circle.fill",
                     title: "Help & Support",
                     subtitle: "FAQs and contact information",
-                    hasChevron: true
+                    hasChevron: true,
+                    role: dashboardRole
                 ) {
                     // Handle help & support
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     // MARK: - Actions Section
     
     private var actionsSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             Button {
                 HapticManager.impact(.medium)
                 Task {
@@ -351,17 +342,11 @@ struct ProfileView: View {
                     Text("Refresh Data")
                         .font(.subheadline.weight(.semibold))
                 }
-                .foregroundColor(.blue)
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.2))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.blue.opacity(0.4), lineWidth: 1)
-                        )
-                )
+                .background(dashboardRole.primaryColor)
+                .francoCornerRadius(FrancoSphereDesign.CornerRadius.md)
             }
             
             Button {
@@ -374,15 +359,15 @@ struct ProfileView: View {
                     Text("Sign Out")
                         .font(.subheadline.weight(.semibold))
                 }
-                .foregroundColor(.red)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.red.opacity(0.2))
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                        .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.1))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                                .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
                         )
                 )
             }
@@ -391,7 +376,6 @@ struct ProfileView: View {
     
     // MARK: - Helper Methods
     
-    // ✅ FIXED: Proper error handling for logout
     private func handleLogout() {
         HapticManager.impact(.heavy)
         Task {
@@ -448,24 +432,25 @@ struct ProfileInfoRow: View {
     let icon: String
     let label: String
     let value: String
+    let role: DashboardRole
     
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .font(.subheadline)
-                .foregroundColor(.blue)
+                .foregroundColor(role.primaryColor)
                 .frame(width: 20)
             
             Text(label)
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
-                .font(.subheadline)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
     }
 }
@@ -476,24 +461,23 @@ struct ProfileStatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
+                .francoTypography(FrancoSphereDesign.Typography.title)
                 .foregroundColor(color)
             
             Text(title)
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, FrancoSphereDesign.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
                 .fill(color.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
         )
@@ -505,25 +489,26 @@ struct SettingsRow: View {
     let title: String
     let subtitle: String
     let hasChevron: Bool
+    let role: DashboardRole
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
                 Image(systemName: icon)
                     .font(.subheadline)
-                    .foregroundColor(.blue)
+                    .foregroundColor(role.primaryColor)
                     .frame(width: 20)
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs / 2) {
                     Text(title)
-                        .font(.subheadline)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     
                     Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
                 
                 Spacer()
@@ -531,10 +516,10 @@ struct SettingsRow: View {
                 if hasChevron {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, FrancoSphereDesign.Spacing.xs)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -579,5 +564,15 @@ struct FrancoSphereImagePicker: UIViewControllerRepresentable {
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
             parent.isPresented = false
         }
+    }
+}
+
+// MARK: - Preview Provider
+
+struct ProfileView_Previews: PreviewProvider {
+    static var previews: some View {
+        ProfileView()
+            .environmentObject(NewAuthManager.shared)
+            .preferredColorScheme(.dark)
     }
 }

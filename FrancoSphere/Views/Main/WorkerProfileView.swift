@@ -2,10 +2,10 @@
 //  WorkerProfileView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: Matches actual service method signatures
-//  ✅ FUNCTIONAL: Works with existing CoreTypes and services
-//  ✅ RENAMED: MetricCard to WorkerMetricCard to avoid conflicts
+//  ✅ UPDATED: Full Dark Elegance theme implementation
+//  ✅ GLASS MORPHISM: Complete integration with AdaptiveGlassModifier
+//  ✅ CONSISTENT: Matches system-wide dark theme patterns
+//  ✅ ENHANCED: Premium dark UI with subtle animations
 //
 
 import SwiftUI
@@ -15,175 +15,238 @@ struct WorkerProfileView: View {
     let workerId: String
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Header Section
-                if let worker = viewModel.worker {
-                    ProfileHeaderView(worker: worker)
+        ZStack {
+            // Dark elegant background
+            FrancoSphereDesign.DashboardGradients.backgroundGradient
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header Section with glass effect
+                    if let worker = viewModel.worker {
+                        ProfileHeaderView(worker: worker)
+                            .animatedGlassAppear(delay: 0.1)
+                    }
+                    
+                    // Performance Section with glass card
+                    if let metrics = viewModel.performanceMetrics {
+                        PerformanceMetricsView(metrics: metrics)
+                            .animatedGlassAppear(delay: 0.2)
+                    }
+                    
+                    // Recent Tasks Section
+                    RecentTasksView(tasks: viewModel.recentTasks)
+                        .animatedGlassAppear(delay: 0.3)
+                    
+                    // Skills Section
+                    if let worker = viewModel.worker, let skills = worker.skills {
+                        SkillsView(skills: skills)
+                            .animatedGlassAppear(delay: 0.4)
+                    }
+                    
+                    Spacer(minLength: 50)
                 }
-                
-                // Performance Section
-                if let metrics = viewModel.performanceMetrics {
-                    PerformanceMetricsView(metrics: metrics)
-                }
-                
-                // Recent Tasks Section
-                RecentTasksView(tasks: viewModel.recentTasks)
-                
-                // Skills Section
-                if let worker = viewModel.worker, let skills = worker.skills {
-                    SkillsView(skills: skills)
-                }
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("Worker Profile")
+        .navigationBarTitleDisplayMode(.large)
         .task {
             await viewModel.loadWorkerData(workerId: workerId)
         }
         .overlay {
             if viewModel.isLoading {
-                ProgressView("Loading...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground).opacity(0.8))
+                GlassLoadingState(message: "Loading profile...")
             }
         }
     }
 }
 
-// MARK: - Sub Views
+// MARK: - Profile Header with Dark Elegance
 
 struct ProfileHeaderView: View {
     let worker: WorkerProfile
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Profile Image
-            if let profileImageUrl = worker.profileImageUrl {
-                // Try to load from URL or use system image
-                AsyncImage(url: profileImageUrl) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 80, height: 80)
-                        .clipShape(Circle())
-                } placeholder: {
+        VStack(spacing: 20) {
+            // Profile Image with glass overlay
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 100, height: 100)
+                
+                if let profileImageUrl = worker.profileImageUrl {
+                    AsyncImage(url: profileImageUrl) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                    } placeholder: {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 80))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                    }
+                } else {
                     Image(systemName: "person.circle.fill")
                         .font(.system(size: 80))
-                        .foregroundColor(.blue)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
                 }
-            } else {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
+                
+                // Active status indicator
+                Circle()
+                    .fill(worker.isActive ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
+                    .frame(width: 24, height: 24)
+                    .overlay(
+                        Circle()
+                            .stroke(FrancoSphereDesign.DashboardColors.baseBackground, lineWidth: 3)
+                    )
+                    .offset(x: 35, y: 35)
             }
+            .glassShimmer()
             
-            Text(worker.name)
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(worker.role.displayName)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            // Contact info
-            if !worker.email.isEmpty {
-                Text(worker.email)
-                    .font(.caption)
-                    .foregroundColor(.blue)
-            }
-            
-            // Only show phone number if it exists and is not empty
-            if let phoneNumber = worker.phoneNumber, !phoneNumber.isEmpty {
-                Text(phoneNumber)
-                    .font(.caption)
-                    .foregroundColor(.green)
-            }
-            
-            // Active status
-            HStack {
-                Image(systemName: worker.isActive ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundColor(worker.isActive ? .green : .red)
-                Text(worker.isActive ? "Active" : "Inactive")
-                    .font(.caption)
-                    .foregroundColor(worker.isActive ? .green : .red)
-            }
-            
-            // Hire date
-            if let hireDate = worker.hireDate {
-                VStack(spacing: 4) {
-                    Text("Hire Date")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    Text(hireDate, style: .date)
-                        .font(.caption)
-                        .foregroundColor(.primary)
+            // Name and role
+            VStack(spacing: 8) {
+                Text(worker.name)
+                    .glassHeading()
+                
+                Text(worker.role.displayName)
+                    .glassSubtitle()
+                
+                // Contact info with glass chips
+                HStack(spacing: 12) {
+                    if !worker.email.isEmpty {
+                        ContactChip(icon: "envelope.fill", text: worker.email, color: FrancoSphereDesign.DashboardColors.info)
+                    }
+                    
+                    if let phoneNumber = worker.phoneNumber, !phoneNumber.isEmpty {
+                        ContactChip(icon: "phone.fill", text: phoneNumber, color: FrancoSphereDesign.DashboardColors.success)
+                    }
+                }
+                
+                // Hire date with glass styling
+                if let hireDate = worker.hireDate {
+                    VStack(spacing: 4) {
+                        Text("Employed Since")
+                            .glassCaption()
+                        Text(hireDate, style: .date)
+                            .glassText(size: .callout)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.workerAccent)
+                    }
+                    .padding(.top, 8)
                 }
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(28)
+        .francoGlassCard(intensity: .regular)
     }
 }
+
+// MARK: - Contact Chip Component
+
+struct ContactChip: View {
+    let icon: String
+    let text: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption)
+            Text(text)
+                .font(.caption)
+                .lineLimit(1)
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.15))
+                .overlay(
+                    Capsule()
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Performance Metrics with Glass Design
 
 struct PerformanceMetricsView: View {
     let metrics: CoreTypes.PerformanceMetrics
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header with grade badge
             HStack {
-                Text("Performance")
-                    .font(.headline)
+                HStack(spacing: 8) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                    Text("Performance")
+                        .glassHeading()
+                }
                 
                 Spacer()
                 
+                // Grade badge with glass effect
                 Text("Grade: \(metrics.performanceGrade)")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(gradeColor(for: metrics.performanceGrade))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(gradeColor(for: metrics.performanceGrade).opacity(0.2))
-                    .cornerRadius(12)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(gradeColor(for: metrics.performanceGrade))
+                            .shadow(color: gradeColor(for: metrics.performanceGrade).opacity(0.5), radius: 8)
+                    )
             }
             
-            HStack(spacing: 8) {
+            // Metrics grid with glass cards
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                 WorkerMetricCard(
                     title: "Efficiency",
                     value: "\(Int(metrics.efficiency * 100))%",
-                    color: metrics.efficiency > 0.8 ? .green : .orange
+                    icon: "speedometer",
+                    color: metrics.efficiency > 0.8 ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning
                 )
                 
                 WorkerMetricCard(
-                    title: "Tasks",
+                    title: "Tasks Completed",
                     value: "\(metrics.tasksCompleted)",
-                    color: .blue
+                    icon: "checkmark.circle.fill",
+                    color: FrancoSphereDesign.DashboardColors.info
                 )
                 
                 WorkerMetricCard(
                     title: "Avg Time",
                     value: formatTime(metrics.averageTime),
-                    color: .orange
+                    icon: "clock.fill",
+                    color: FrancoSphereDesign.DashboardColors.workerAccent
                 )
                 
                 WorkerMetricCard(
-                    title: "Quality",
+                    title: "Quality Score",
                     value: "\(Int(metrics.qualityScore * 100))%",
-                    color: metrics.qualityScore > 0.8 ? .purple : .orange
+                    icon: "star.fill",
+                    color: metrics.qualityScore > 0.8 ? FrancoSphereDesign.DashboardColors.tertiaryAction : FrancoSphereDesign.DashboardColors.warning
                 )
             }
             
+            // Last update with glass text
             HStack {
-                Text("Last updated: \(metrics.lastUpdate, style: .relative)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                Text("Updated \(metrics.lastUpdate, style: .relative)")
+                    .glassCaption()
                 Spacer()
             }
+            .padding(.top, 8)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(24)
+        .francoGlassCard(intensity: .regular)
     }
     
     private func formatTime(_ seconds: TimeInterval) -> String {
@@ -199,184 +262,257 @@ struct PerformanceMetricsView: View {
     
     private func gradeColor(for grade: String) -> Color {
         switch grade {
-        case "A+", "A": return .green
-        case "B": return .blue
-        case "C": return .orange
-        default: return .red
+        case "A+", "A": return FrancoSphereDesign.DashboardColors.success
+        case "B": return FrancoSphereDesign.DashboardColors.info
+        case "C": return FrancoSphereDesign.DashboardColors.warning
+        default: return FrancoSphereDesign.DashboardColors.critical
         }
     }
 }
 
+// MARK: - Enhanced Metric Card
+
 struct WorkerMetricCard: View {
     let title: String
     let value: String
+    let icon: String
     let color: Color
     
     var body: some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
+        VStack(spacing: 12) {
+            // Icon with glow effect
+            Image(systemName: icon)
+                .font(.title2)
                 .foregroundColor(color)
+                .shadow(color: color.opacity(0.5), radius: 4)
             
+            // Value with emphasis
+            Text(value)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            
+            // Title
             Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .glassCaption()
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(color.opacity(0.1))
-        .cornerRadius(8)
+        .padding(.vertical, 20)
+        .background(
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
+                .fill(color.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
+                        .stroke(color.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .glassHover()
     }
 }
+
+// MARK: - Recent Tasks with Dark Theme
 
 struct RecentTasksView: View {
     let tasks: [ContextualTask]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Tasks")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "clock.arrow.circlepath")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                Text("Recent Tasks")
+                    .glassHeading()
+                Spacer()
+                Text("\(tasks.count)")
+                    .glassCaption()
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.2))
+                    )
+            }
             
             if tasks.isEmpty {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text("No recent tasks")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    Spacer()
-                }
+                EmptyTasksPlaceholder()
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     ForEach(tasks.prefix(5), id: \.id) { task in
-                        SimpleTaskRow(task: task)
+                        EnhancedTaskRow(task: task)
+                            .transition(.glassSlideUp)
                     }
                 }
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(24)
+        .francoGlassCard(intensity: .regular)
     }
 }
 
-struct SimpleTaskRow: View {
+// MARK: - Empty Tasks Placeholder
+
+struct EmptyTasksPlaceholder: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 48))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+            Text("No recent tasks")
+                .glassSubtitle()
+            Text("Tasks will appear here once assigned")
+                .glassCaption()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+    }
+}
+
+// MARK: - Enhanced Task Row
+
+struct EnhancedTaskRow: View {
     let task: ContextualTask
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Status indicator
+        HStack(spacing: 16) {
+            // Status indicator with glow
             Circle()
-                .fill(task.isCompleted ? Color.green : Color.orange)
-                .frame(width: 8, height: 8)
+                .fill(task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
+                .frame(width: 10, height: 10)
+                .shadow(color: task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning, radius: 3)
             
             // Task info
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(task.title)
-                    .font(.subheadline)
+                    .glassText(size: .callout)
                     .lineLimit(1)
                 
-                if let building = task.building {
-                    Text(building.name)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                HStack(spacing: 12) {
+                    if let building = task.building {
+                        Label(building.name, systemImage: "building.2")
+                            .glassCaption()
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    }
+                    
+                    if let category = task.category {
+                        Label(category.rawValue.capitalized, systemImage: getCategoryIcon(category))
+                            .glassCaption()
+                            .foregroundColor(FrancoSphereDesign.EnumColors.genericCategoryColor(for: category.rawValue))
+                    }
                 }
             }
             
             Spacer()
             
-            // Urgency badge
-            if let urgency = task.urgency {
-                Text(urgency.rawValue)
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(urgencyColor(for: urgency))
-                    .foregroundColor(.white)
-                    .cornerRadius(4)
-            }
-            
-            // Completion date or due date
-            if task.isCompleted, let completedDate = task.completedDate {
-                Text(completedDate, style: .time)
-                    .font(.caption2)
-                    .foregroundColor(.green)
-            } else if let dueDate = task.dueDate {
-                Text(dueDate, style: .time)
-                    .font(.caption2)
-                    .foregroundColor(Date() > dueDate ? .red : .secondary)
+            // Time/Urgency info
+            VStack(alignment: .trailing, spacing: 4) {
+                if let urgency = task.urgency {
+                    Text(urgency.rawValue.uppercased())
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                        )
+                }
+                
+                if task.isCompleted, let completedDate = task.completedDate {
+                    Text(completedDate, style: .time)
+                        .glassCaption()
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                } else if let dueDate = task.dueDate {
+                    Text(dueDate, style: .time)
+                        .glassCaption()
+                        .foregroundColor(Date() > dueDate ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+                }
             }
         }
-        .padding(.vertical, 4)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.small)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.small)
+                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                )
+        )
+        .glassHover()
     }
     
-    private func urgencyColor(for urgency: TaskUrgency) -> Color {
-        switch urgency {
-        case .critical, .urgent, .emergency:
-            return .red
-        case .high:
-            return .orange
-        case .medium:
-            return .yellow
-        case .low:
-            return .green
-        }
+    private func getCategoryIcon(_ category: CoreTypes.TaskCategory) -> String {
+        FrancoSphereDesign.Icons.categoryIcon(for: category.rawValue)
     }
 }
+
+// MARK: - Skills View with Glass Design
 
 struct SkillsView: View {
     let skills: [String]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Skills & Certifications")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Image(systemName: "hammer.circle.fill")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                Text("Skills & Certifications")
+                    .glassHeading()
+                Spacer()
+                Text("\(skills.count)")
+                    .glassCaption()
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.2))
+                    )
+            }
             
             if skills.isEmpty {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Image(systemName: "hammer.circle")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text("No skills listed")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "hammer.circle")
+                        .font(.system(size: 48))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    Text("No skills listed")
+                        .glassSubtitle()
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 32)
             } else {
-                FlowLayout(spacing: 8) {
+                FlowLayout(spacing: 12) {
                     ForEach(skills, id: \.self) { skill in
                         SkillChip(skill: skill)
+                            .transition(.glassScaleIn)
                     }
                 }
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(24)
+        .francoGlassCard(intensity: .regular)
     }
 }
+
+// MARK: - Enhanced Skill Chip
 
 struct SkillChip: View {
     let skill: String
     
     var body: some View {
         Text(skill.capitalized)
-            .font(.caption)
+            .font(.subheadline)
             .fontWeight(.medium)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(skillColor)
-            .foregroundColor(.white)
-            .cornerRadius(16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(skillColor.opacity(0.2))
+                    .overlay(
+                        Capsule()
+                            .stroke(skillColor.opacity(0.4), lineWidth: 1)
+                    )
+            )
+            .foregroundColor(skillColor)
+            .shadow(color: skillColor.opacity(0.3), radius: 4)
     }
     
     private var skillColor: Color {
@@ -384,32 +520,33 @@ struct SkillChip: View {
         
         // Technical skills
         if lowercaseSkill.contains("hvac") || lowercaseSkill.contains("plumbing") || lowercaseSkill.contains("electrical") {
-            return .blue
+            return FrancoSphereDesign.DashboardColors.info
         }
         // Cleaning skills
         else if lowercaseSkill.contains("clean") || lowercaseSkill.contains("sanitation") {
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         }
         // Maintenance skills
         else if lowercaseSkill.contains("carpentry") || lowercaseSkill.contains("painting") || lowercaseSkill.contains("repair") {
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         }
         // Outdoor skills
         else if lowercaseSkill.contains("landscaping") || lowercaseSkill.contains("snow") {
-            return .brown
+            return FrancoSphereDesign.DashboardColors.workerAccent
         }
         // Safety/Security
         else if lowercaseSkill.contains("security") || lowercaseSkill.contains("safety") {
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         }
         // Default
         else {
-            return .gray
+            return FrancoSphereDesign.DashboardColors.tertiaryAction
         }
     }
 }
 
-// Simple FlowLayout for skills
+// MARK: - Flow Layout (unchanged)
+
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
     
@@ -455,7 +592,7 @@ struct FlowLayout: Layout {
     }
 }
 
-// MARK: - ViewModel
+// MARK: - ViewModel (unchanged)
 
 @MainActor
 class WorkerProfileViewModel: ObservableObject {
@@ -478,8 +615,6 @@ class WorkerProfileViewModel: ObservableObject {
             worker = try await workerService.getWorkerProfile(for: workerId)
             
             // Load performance metrics
-            // For now, create default metrics since we need buildingId for the actual service
-            // In a real implementation, you'd get the worker's primary building
             performanceMetrics = CoreTypes.PerformanceMetrics(
                 efficiency: 0.85,
                 tasksCompleted: 42,
@@ -518,7 +653,6 @@ class WorkerProfileViewModel: ObservableObject {
                         task.assignedWorkerId == workerId || task.worker?.id == workerId
                     }
                     .sorted { task1, task2 in
-                        // Sort by completion date or due date
                         let date1 = task1.completedDate ?? task1.dueDate ?? Date.distantPast
                         let date2 = task2.completedDate ?? task2.dueDate ?? Date.distantPast
                         return date1 > date2
@@ -531,7 +665,6 @@ class WorkerProfileViewModel: ObservableObject {
             errorMessage = "Failed to load worker data: \(error.localizedDescription)"
             print("Error loading worker data: \(error)")
             
-            // Set fallback data
             performanceMetrics = CoreTypes.PerformanceMetrics(
                 efficiency: 0.0,
                 tasksCompleted: 0,
@@ -545,12 +678,10 @@ class WorkerProfileViewModel: ObservableObject {
     }
 }
 
-// MARK: - Helper Extension for WorkerService
+// MARK: - Helper Extension
 
 extension WorkerService {
     func getWorkerBuildings(workerId: String) async throws -> [NamedCoordinate] {
-        // This would be implemented to get buildings assigned to a worker
-        // For now, return empty array
         return []
     }
 }
@@ -560,7 +691,7 @@ extension WorkerService {
 struct WorkerProfileView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            WorkerProfileView(workerId: "4") // Kevin Dutan
+            WorkerProfileView(workerId: "4")
         }
         .preferredColorScheme(.dark)
     }

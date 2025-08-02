@@ -56,7 +56,6 @@
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
-		23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD82E39885600F4A10F /* TaskDetailView.swift */; };
 		23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB02E39885600F4A10F /* RouteStatItem.swift */; };
 		23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F062E39885600F4A10F /* MySitesCard.swift */; };
 		23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F362E39885600F4A10F /* GlassTypes.swift */; };
@@ -75,9 +74,7 @@
 		23779FFA2E39885600F4A10F /* ComplianceDataDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F5C2E39885600F4A10F /* ComplianceDataDTO.swift */; };
 		23779FFB2E39885600F4A10F /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F052E39885600F4A10F /* HeroStatusCard.swift */; };
 		23779FFC2E39885600F4A10F /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F082E39885600F4A10F /* StatCard.swift */; };
-		23779FFD2E39885600F4A10F /* DashboardTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD42E39885600F4A10F /* DashboardTaskDetailView.swift */; };
 		23779FFE2E39885600F4A10F /* FrancoSphereDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F212E39885600F4A10F /* FrancoSphereDesign.swift */; };
-		23779FFF2E39885600F4A10F /* BuildingTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC82E39885600F4A10F /* BuildingTaskDetailView.swift */; };
 		2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F262E39885600F4A10F /* WeatherTaskTimelineCard.swift */; };
 		2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F3E2E39885600F4A10F /* EmergencyContactsSheet.swift */; };
 		2377A0032E39885600F4A10F /* NovaImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F752E39885600F4A10F /* NovaImageLoader.swift */; };
@@ -393,7 +390,6 @@
 		23779FC52E39885600F4A10F /* BuildingMapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingMapDetailView.swift; sourceTree = "<group>"; };
 		23779FC62E39885600F4A10F /* BuildingSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingSelectionView.swift; sourceTree = "<group>"; };
 		23779FC72E39885600F4A10F /* BuildingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingsView.swift; sourceTree = "<group>"; };
-		23779FC82E39885600F4A10F /* BuildingTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingTaskDetailView.swift; sourceTree = "<group>"; };
 		23779FC92E39885600F4A10F /* InventoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryView.swift; sourceTree = "<group>"; };
 		23779FCA2E39885600F4A10F /* MaintenanceHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceHistoryView.swift; sourceTree = "<group>"; };
 		23779FCB2E39885600F4A10F /* MaintenanceTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceTaskView.swift; sourceTree = "<group>"; };
@@ -404,11 +400,9 @@
 		23779FD12E39885600F4A10F /* ClientDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardView.swift; sourceTree = "<group>"; };
 		23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
 		23779FD32E39885600F4A10F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		23779FD42E39885600F4A10F /* DashboardTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTaskDetailView.swift; sourceTree = "<group>"; };
 		23779FD52E39885600F4A10F /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
 		23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
 		23779FD72E39885600F4A10F /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		23779FD82E39885600F4A10F /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		23779FD92E39885600F4A10F /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		23779FDA2E39885600F4A10F /* TaskTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineView.swift; sourceTree = "<group>"; };
 		23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardView.swift; sourceTree = "<group>"; };
@@ -1040,7 +1034,6 @@
 				23779FC52E39885600F4A10F /* BuildingMapDetailView.swift */,
 				23779FC62E39885600F4A10F /* BuildingSelectionView.swift */,
 				23779FC72E39885600F4A10F /* BuildingsView.swift */,
-				23779FC82E39885600F4A10F /* BuildingTaskDetailView.swift */,
 				23779FC92E39885600F4A10F /* InventoryView.swift */,
 				23779FCA2E39885600F4A10F /* MaintenanceHistoryView.swift */,
 				23779FCB2E39885600F4A10F /* MaintenanceTaskView.swift */,
@@ -1065,11 +1058,9 @@
 				23779FD12E39885600F4A10F /* ClientDashboardView.swift */,
 				23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */,
 				23779FD32E39885600F4A10F /* ContentView.swift */,
-				23779FD42E39885600F4A10F /* DashboardTaskDetailView.swift */,
 				23779FD52E39885600F4A10F /* InitializationView.swift */,
 				23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */,
 				23779FD72E39885600F4A10F /* ProfileView.swift */,
-				23779FD82E39885600F4A10F /* TaskDetailView.swift */,
 				23779FD92E39885600F4A10F /* TaskRequestView.swift */,
 				23779FDA2E39885600F4A10F /* TaskTimelineView.swift */,
 				23779FDB2E39885600F4A10F /* WorkerDashboardView.swift */,
@@ -1304,7 +1295,6 @@
 				2326C1F82E3AC14F0080F005 /* InventoryService.swift in Sources */,
 				23779FDF2E39885600F4A10F /* LoginView.swift in Sources */,
 				2326C2002E3B117B0080F005 /* StringExtensions.swift in Sources */,
-				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
 				2326C2122E3B27BB0080F005 /* ConflictResolutionService.swift in Sources */,
 				2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
@@ -1337,9 +1327,7 @@
 				23779FFB2E39885600F4A10F /* HeroStatusCard.swift in Sources */,
 				2326C23B2E3B3D720080F005 /* RouteOptimizer.swift in Sources */,
 				23779FFC2E39885600F4A10F /* StatCard.swift in Sources */,
-				23779FFD2E39885600F4A10F /* DashboardTaskDetailView.swift in Sources */,
 				23779FFE2E39885600F4A10F /* FrancoSphereDesign.swift in Sources */,
-				23779FFF2E39885600F4A10F /* BuildingTaskDetailView.swift in Sources */,
 				23C839A22E39E6C000C6866E /* MigrationView.swift in Sources */,
 				2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */,
 				2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */,
