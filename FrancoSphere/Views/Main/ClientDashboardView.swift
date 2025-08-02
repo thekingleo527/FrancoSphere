@@ -2,54 +2,51 @@
 //  ClientDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ REDESIGNED: Mirrors Worker/Admin dashboard structure
-//  ✅ UNIFIED: Same MapRevealContainer + HeaderV3B pattern
-//  ✅ DYNAMIC: Real-time hero card with live portfolio metrics
-//  ✅ INTELLIGENT: Contextual AI insights at bottom
-//  ✅ STREAMLINED: No tabs, single-scroll prioritized content
+//  ✅ CLIENT-SPECIFIC: Only shows data for client's buildings
+//  ✅ PRIVACY: Anonymized worker information
+//  ✅ FILTERED: All metrics scoped to client's properties
+//  ✅ DARK ELEGANCE: Consistent with admin/worker dashboards
 //
 
 import SwiftUI
 import MapKit
-import CoreLocation
-import Combine
 
 struct ClientDashboardView: View {
-    @StateObject private var viewModel = ClientDashboardViewModel()
+    @StateObject private var viewModel: ClientDashboardViewModel
     @ObservedObject private var contextEngine = ClientContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
     @StateObject private var novaEngine = NovaIntelligenceEngine.shared
     
-    // MARK: - State Variables (Mirroring Worker/Admin)
+    // MARK: - State Variables
     @State private var isHeroCollapsed = false
     @State private var showProfileView = false
     @State private var showNovaAssistant = false
-    @State private var selectedBuilding: NamedCoordinate?
+    @State private var selectedBuilding: CoreTypes.NamedCoordinate?
     @State private var showBuildingDetail = false
     @State private var showAllBuildings = false
-    @State private var showComplianceDetails = false
+    @State private var showReports = false
     @State private var showMainMenu = false
     @State private var refreshID = UUID()
     @State private var selectedInsight: CoreTypes.IntelligenceInsight?
-    @State private var selectedComplianceIssue: CoreTypes.ComplianceIssue?
+    
+    // Client-specific states
+    @State private var showingCostAnalysis = false
+    @State private var showingComplianceReport = false
+    @State private var showingServiceHistory = false
     
     // Intelligence panel state
     @State private var currentContext: ViewContext = .dashboard
     @AppStorage("clientPanelPreference") private var userPanelPreference: IntelPanelState = .collapsed
     
-    // Future phase states
-    @State private var voiceCommandEnabled = false
-    @State private var arModeEnabled = false
-    
-    // MARK: - Enums (Same as Worker/Admin)
+    // MARK: - Enums
     enum ViewContext {
         case dashboard
         case buildingDetail
-        case complianceReview
-        case portfolioAnalysis
+        case costAnalysis
+        case compliance
         case novaChat
-        case emergency
+        case reports
     }
     
     enum IntelPanelState: String {
@@ -64,33 +61,32 @@ struct ClientDashboardView: View {
     private var intelligencePanelState: IntelPanelState {
         switch currentContext {
         case .dashboard:
-            return hasUrgentMatters() ? .expanded : userPanelPreference
+            return hasImportantUpdates() ? .expanded : userPanelPreference
         case .buildingDetail:
             return .minimal
-        case .complianceReview:
-            return .expanded
-        case .portfolioAnalysis:
-            return .expanded
+        case .costAnalysis:
+            return .hidden
+        case .compliance:
+            return .minimal
         case .novaChat:
             return .fullscreen
-        case .emergency:
-            return .expanded
+        case .reports:
+            return .hidden
         }
     }
     
-    private func hasUrgentMatters() -> Bool {
-        novaEngine.insights.contains { $0.priority == .critical } ||
-        contextEngine.portfolioHealth.criticalIssues > 0 ||
-        contextEngine.realtimeAlerts.contains { $0.severity == .critical }
+    private func hasImportantUpdates() -> Bool {
+        contextEngine.clientMetrics.complianceScore < 80 ||
+        contextEngine.clientMetrics.hasOverdueTasks ||
+        !contextEngine.recentActivity.isEmpty
     }
     
     var body: some View {
-        // EXACT SAME STRUCTURE AS WORKER/ADMIN
+        // Only show client's buildings on the map
         MapRevealContainer(
             buildings: contextEngine.clientBuildings,
             currentBuildingId: selectedBuilding?.id,
             focusBuildingId: selectedBuilding?.id,
-            showBuildingPerformance: true, // Client sees performance overlay
             onBuildingTap: { building in
                 selectedBuilding = building
                 showBuildingDetail = true
@@ -103,11 +99,11 @@ struct ClientDashboardView: View {
                 
                 // Main content
                 VStack(spacing: 0) {
-                    // Updated HeaderV3B - Client variant (5-7%)
+                    // Client Header (simplified version)
                     HeaderV3B(
-                        workerName: authManager.currentUser?.name ?? "Client",
-                        nextTaskName: getMostUrgentItem()?.title,
-                        showClockPill: false, // Clients don't clock in
+                        workerName: contextEngine.clientProfile?.name ?? "Client",
+                        nextTaskName: nil, // Clients don't have tasks
+                        showClockPill: false, // No clock for clients
                         isNovaProcessing: {
                             switch novaEngine.processingState {
                             case .idle: return false
@@ -118,9 +114,9 @@ struct ClientDashboardView: View {
                         onNovaPress: { showNovaAssistant = true },
                         onNovaLongPress: { handleNovaQuickAction() },
                         onLogoTap: { showMainMenu = true },
-                        onClockAction: nil, // Not applicable for client
-                        onVoiceCommand: voiceCommandEnabled ? handleVoiceCommand : nil,
-                        onARModeToggle: arModeEnabled ? handleARMode : nil,
+                        onClockAction: nil,
+                        onVoiceCommand: nil,
+                        onARModeToggle: nil,
                         onWearableSync: nil
                     )
                     .zIndex(100)
@@ -128,60 +124,31 @@ struct ClientDashboardView: View {
                     // Main content area
                     ScrollView {
                         VStack(spacing: 16) {
-                            // Collapsible Client Hero Status Card - DYNAMIC & REAL-TIME
+                            // Collapsible Client Hero Status Card
                             CollapsibleClientHeroWrapper(
                                 isCollapsed: $isHeroCollapsed,
-                                portfolioHealth: contextEngine.portfolioHealth,
-                                realtimeMetrics: contextEngine.realtimeMetrics,
-                                activeWorkers: contextEngine.activeWorkerStatus,
-                                complianceStatus: contextEngine.complianceOverview,
-                                criticalAlerts: contextEngine.realtimeAlerts,
-                                buildingPerformance: contextEngine.buildingPerformanceMap,
-                                syncStatus: getSyncStatus(),
-                                onPortfolioTap: { currentContext = .portfolioAnalysis },
-                                onComplianceTap: { showComplianceDetails = true },
-                                onWorkersTap: { /* Show worker overview */ },
-                                onAlertsTap: { showCriticalAlerts() },
-                                onSyncTap: { Task { await viewModel.forceRefresh() } }
+                                metrics: contextEngine.clientMetrics,
+                                buildings: contextEngine.clientBuildings,
+                                recentActivity: contextEngine.recentActivity,
+                                onBuildingsTap: { showAllBuildings = true },
+                                onComplianceTap: { showingComplianceReport = true },
+                                onCostTap: { showingCostAnalysis = true },
+                                onReportsTap: { showReports = true },
+                                onRefreshTap: { Task { await viewModel.refreshData() } }
                             )
                             .zIndex(50)
                             
-                            // Priority Content Cards (replacing tabs)
-                            VStack(spacing: 16) {
-                                // Executive Intelligence Summary
-                                if let executiveSummary = contextEngine.executiveIntelligence {
-                                    ExecutiveIntelligenceCard(
-                                        summary: executiveSummary,
-                                        onDetailTap: { showNovaAssistant = true }
-                                    )
-                                }
-                                
-                                // Critical Compliance Issues
-                                if !contextEngine.criticalComplianceIssues.isEmpty {
-                                    CriticalComplianceCard(
-                                        issues: contextEngine.criticalComplianceIssues,
-                                        onIssueTap: { issue in
-                                            selectedComplianceIssue = issue
-                                            showComplianceDetails = true
-                                        }
-                                    )
-                                }
-                                
-                                // Building Performance Grid
-                                BuildingPerformanceGrid(
-                                    buildings: contextEngine.topPerformanceBuildings,
-                                    onBuildingTap: { building in
-                                        selectedBuilding = building
-                                        showBuildingDetail = true
-                                    }
-                                )
-                                
-                                // Worker Productivity Insights
-                                if !contextEngine.workerProductivityInsights.isEmpty {
-                                    WorkerProductivityCard(
-                                        insights: contextEngine.workerProductivityInsights
-                                    )
-                                }
+                            // Quick Actions Section
+                            clientQuickActions
+                            
+                            // Recent Updates (anonymized)
+                            if !contextEngine.recentActivity.isEmpty {
+                                recentUpdatesSection
+                            }
+                            
+                            // Building Performance Summary
+                            if contextEngine.clientBuildings.count > 1 {
+                                buildingPerformanceSection
                             }
                             
                             // Spacer for bottom intelligence bar
@@ -191,16 +158,15 @@ struct ClientDashboardView: View {
                         .padding(.top, 16)
                     }
                     .refreshable {
-                        await viewModel.forceRefresh()
-                        await contextEngine.refreshAllData()
+                        await viewModel.refreshData()
                         refreshID = UUID()
                     }
                     
-                    // Intelligence Preview Panel (SAME AS WORKER/ADMIN)
+                    // Intelligence Preview Panel (Client-focused)
                     if intelligencePanelState != .hidden && (!novaEngine.insights.isEmpty || hasIntelligenceToShow()) {
                         IntelligencePreviewPanel(
-                            insights: getCurrentInsights(),
-                            displayMode: intelligencePanelState == .minimal ? .compact : .expanded,
+                            insights: getClientInsights(),
+                            displayMode: intelligencePanelState == .minimal ? .compact : .compact,
                             onNavigate: { target in
                                 handleIntelligenceNavigation(target)
                             },
@@ -218,7 +184,7 @@ struct ClientDashboardView: View {
             ClientProfileView()
         }
         .sheet(isPresented: $showNovaAssistant) {
-            NovaInteractionView()
+            NovaInteractionView(clientMode: true) // Limited to client queries
                 .presentationDetents([.large])
                 .onAppear { currentContext = .novaChat }
                 .onDisappear { currentContext = .dashboard }
@@ -228,11 +194,11 @@ struct ClientDashboardView: View {
         }
         .sheet(isPresented: $showBuildingDetail) {
             if let building = selectedBuilding {
-                BuildingDetailView(building: building)
+                ClientBuildingDetailView(building: building)
                     .onAppear { currentContext = .buildingDetail }
                     .onDisappear {
                         currentContext = .dashboard
-                        Task { await contextEngine.refreshAllData() }
+                        Task { await contextEngine.refreshContext() }
                     }
             }
         }
@@ -240,14 +206,13 @@ struct ClientDashboardView: View {
             NavigationView {
                 ClientBuildingsListView(
                     buildings: contextEngine.clientBuildings,
-                    performanceMap: contextEngine.buildingPerformanceMap,
                     onSelectBuilding: { building in
                         selectedBuilding = building
                         showBuildingDetail = true
                         showAllBuildings = false
                     }
                 )
-                .navigationTitle("Portfolio Buildings")
+                .navigationTitle("Your Properties")
                 .navigationBarTitleDisplayMode(.large)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
@@ -261,107 +226,170 @@ struct ClientDashboardView: View {
             }
             .preferredColorScheme(.dark)
         }
-        .sheet(isPresented: $showComplianceDetails) {
-            NavigationView {
-                ClientComplianceDetailView(
-                    complianceOverview: contextEngine.complianceOverview,
-                    issues: contextEngine.allComplianceIssues,
-                    selectedIssue: selectedComplianceIssue
-                )
-                .navigationTitle("Compliance Details")
-                .navigationBarTitleDisplayMode(.large)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            showComplianceDetails = false
-                        }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                    }
-                }
-                .background(FrancoSphereDesign.DashboardColors.baseBackground)
-            }
-            .preferredColorScheme(.dark)
-            .onAppear { currentContext = .complianceReview }
+        .sheet(isPresented: $showingComplianceReport) {
+            ClientComplianceView(
+                buildings: contextEngine.clientBuildings,
+                complianceData: contextEngine.clientComplianceData
+            )
+            .onAppear { currentContext = .compliance }
             .onDisappear { currentContext = .dashboard }
+        }
+        .sheet(isPresented: $showingCostAnalysis) {
+            ClientCostAnalysisView(
+                buildings: contextEngine.clientBuildings,
+                costData: contextEngine.clientCostData
+            )
+            .onAppear { currentContext = .costAnalysis }
+            .onDisappear { currentContext = .dashboard }
+        }
+        .sheet(isPresented: $showReports) {
+            ClientReportsView()
+                .presentationDetents([.medium, .large])
+                .onAppear { currentContext = .reports }
+                .onDisappear { currentContext = .dashboard }
         }
         .sheet(isPresented: $showMainMenu) {
             ClientMainMenuView()
                 .presentationDetents([.medium, .large])
         }
-        .onAppear {
-            checkFeatureFlags()
-            startRealtimeUpdates()
-        }
-        .onReceive(dashboardSync.$lastUpdate) { _ in
-            // React to real-time updates
-            Task {
-                await contextEngine.refreshAllData()
-            }
+    }
+    
+    // MARK: - Quick Actions Section
+    
+    private var clientQuickActions: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: 12) {
+            QuickActionCard(
+                title: "Compliance",
+                value: "\(Int(contextEngine.clientMetrics.complianceScore))%",
+                icon: "checkmark.shield.fill",
+                color: complianceScoreColor,
+                showBadge: contextEngine.clientMetrics.hasComplianceIssues,
+                badgeCount: contextEngine.clientMetrics.complianceIssueCount,
+                action: { showingComplianceReport = true }
+            )
+            
+            QuickActionCard(
+                title: "Service Level",
+                value: "\(Int(contextEngine.clientMetrics.serviceLevel * 100))%",
+                icon: "star.fill",
+                color: FrancoSphereDesign.DashboardColors.tertiaryAction,
+                action: { showingServiceHistory = true }
+            )
+            
+            QuickActionCard(
+                title: "This Month",
+                value: formatCurrency(contextEngine.clientMetrics.monthlySpend),
+                icon: "dollarsign.circle",
+                color: FrancoSphereDesign.DashboardColors.info,
+                action: { showingCostAnalysis = true }
+            )
+            
+            QuickActionCard(
+                title: "Reports",
+                value: "View",
+                icon: "doc.text",
+                color: FrancoSphereDesign.DashboardColors.secondaryAction,
+                action: { showReports = true }
+            )
         }
     }
     
-    // MARK: - Real-time Update Management
+    // MARK: - Recent Updates Section (Anonymized)
     
-    private func startRealtimeUpdates() {
-        // Connect to real-time data streams
-        contextEngine.startRealtimeMonitoring()
-        
-        // Subscribe to worker activity updates
-        contextEngine.subscribeToWorkerUpdates()
-        
-        // Monitor compliance changes
-        contextEngine.monitorComplianceChanges()
+    private var recentUpdatesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Recent Updates", systemImage: "clock")
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                Spacer()
+            }
+            
+            VStack(spacing: 8) {
+                ForEach(contextEngine.recentActivity.prefix(5)) { activity in
+                    ClientActivityRow(activity: activity)
+                }
+            }
+        }
+        .francoCardPadding()
+        .francoDarkCardBackground()
+    }
+    
+    // MARK: - Building Performance Section
+    
+    private var buildingPerformanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Property Performance")
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            
+            ForEach(contextEngine.clientBuildings.prefix(3)) { building in
+                BuildingPerformanceRow(
+                    building: building,
+                    metrics: contextEngine.buildingMetrics[building.id] ?? CoreTypes.BuildingMetrics.empty,
+                    onTap: {
+                        selectedBuilding = building
+                        showBuildingDetail = true
+                    }
+                )
+            }
+            
+            if contextEngine.clientBuildings.count > 3 {
+                Button(action: { showAllBuildings = true }) {
+                    Text("View All Properties")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     // MARK: - Intelligence Methods (Client-specific)
     
-    private func getCurrentInsights() -> [CoreTypes.IntelligenceInsight] {
-        var insights = novaEngine.insights
-        
-        // Add client-specific real-time insights
-        
-        // Compliance insights
-        if contextEngine.complianceOverview.criticalViolations > 0 {
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "\(contextEngine.complianceOverview.criticalViolations) critical compliance violations",
-                description: "Immediate action required to avoid penalties",
-                type: .compliance,
-                priority: .critical,
-                actionRequired: true,
-                affectedBuildings: contextEngine.buildingsWithViolations
-            ))
+    private func getClientInsights() -> [CoreTypes.IntelligenceInsight] {
+        var insights = novaEngine.insights.filter { insight in
+            // Filter insights to only client's buildings
+            insight.affectedBuildings.isEmpty ||
+            insight.affectedBuildings.contains { buildingId in
+                contextEngine.clientBuildings.contains { $0.id == buildingId }
+            }
         }
         
-        // Performance insights
-        let underperformingBuildings = contextEngine.buildingPerformanceMap.filter { $0.value < 0.7 }
-        if underperformingBuildings.count > 0 {
+        // Add client-specific insights
+        if contextEngine.clientMetrics.complianceScore < 80 {
             insights.append(CoreTypes.IntelligenceInsight(
-                title: "\(underperformingBuildings.count) buildings below 70% performance",
-                description: "Review staffing and task allocation for these properties",
-                type: .efficiency,
+                id: UUID().uuidString,
+                title: "Compliance needs attention",
+                description: "Your properties have compliance scores below target",
+                type: .compliance,
                 priority: .high,
                 actionRequired: true,
-                affectedBuildings: Array(underperformingBuildings.keys)
-            ))
-        }
-        
-        // Worker productivity insights
-        if contextEngine.activeWorkerStatus.utilizationRate < 0.6 {
-            insights.append(CoreTypes.IntelligenceInsight(
-                title: "Low worker utilization at \(Int(contextEngine.activeWorkerStatus.utilizationRate * 100))%",
-                description: "Consider optimizing task distribution or adjusting workforce",
-                type: .operations,
-                priority: .medium,
-                actionRequired: false
+                recommendedAction: "View Compliance Report",
+                affectedBuildings: contextEngine.clientBuildings.map { $0.id }
             ))
         }
         
         // Cost optimization insights
-        if let costSavingOpportunity = contextEngine.identifyCostSavings() {
-            insights.append(costSavingOpportunity)
+        if contextEngine.clientMetrics.monthlySpend > contextEngine.clientMetrics.monthlyBudget * 1.1 {
+            insights.append(CoreTypes.IntelligenceInsight(
+                id: UUID().uuidString,
+                title: "Monthly spending exceeds budget",
+                description: "Current spending is 10% over your monthly budget",
+                type: .cost,
+                priority: .medium,
+                actionRequired: false,
+                recommendedAction: "Review Cost Analysis"
+            ))
         }
         
-        return insights
+        return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
     }
     
     private func handleIntelligenceNavigation(_ target: IntelligencePreviewPanel.NavigationTarget) {
@@ -369,20 +397,23 @@ struct ClientDashboardView: View {
         case .buildings(_):
             showAllBuildings = true
             
-        case .compliance(_):
-            showComplianceDetails = true
-            
         case .buildingDetail(let id):
             if let building = contextEngine.clientBuildings.first(where: { $0.id == id }) {
                 selectedBuilding = building
                 showBuildingDetail = true
             }
             
+        case .compliance:
+            showingComplianceReport = true
+            
         case .fullInsights:
             showNovaAssistant = true
             
-        case .allBuildings:
-            showAllBuildings = true
+        case .profile:
+            showProfileView = true
+            
+        case .settings:
+            showMainMenu = true
             
         default:
             // Handle other navigation targets
@@ -390,109 +421,62 @@ struct ClientDashboardView: View {
         }
     }
     
-    // MARK: - Action Handlers
-    
-    private func handleNovaQuickAction() {
-        if hasUrgentMatters() {
-            // Focus on urgent matters
-            currentContext = .emergency
-        }
-        showNovaAssistant = true
-    }
-    
-    private func showCriticalAlerts() {
-        currentContext = .emergency
-        showNovaAssistant = true
-    }
-    
-    private func handleVoiceCommand() {
-        print("Client voice command activated")
-    }
-    
-    private func handleARMode() {
-        print("Client AR mode toggled - show portfolio in AR")
-    }
-    
-    private func checkFeatureFlags() {
-        #if DEBUG
-        voiceCommandEnabled = false
-        arModeEnabled = false
-        #else
-        voiceCommandEnabled = UserDefaults.standard.bool(forKey: "feature.voice.enabled")
-        arModeEnabled = UserDefaults.standard.bool(forKey: "feature.ar.enabled")
-        #endif
-    }
-    
     // MARK: - Helper Methods
     
-    private func getMostUrgentItem() -> (title: String, urgency: CoreTypes.AIPriority)? {
-        // Check for critical compliance
-        if contextEngine.complianceOverview.criticalViolations > 0 {
-            return ("Critical compliance violations", .critical)
+    private func handleNovaQuickAction() {
+        if hasImportantUpdates() {
+            showNovaAssistant = true
+        } else {
+            showNovaAssistant = true
         }
-        
-        // Check for critical alerts
-        if let criticalAlert = contextEngine.realtimeAlerts.first(where: { $0.severity == .critical }) {
-            return (criticalAlert.title, .critical)
-        }
-        
-        // Check for critical insights
-        if let criticalInsight = novaEngine.insights.first(where: { $0.priority == .critical }) {
-            return (criticalInsight.title, criticalInsight.priority)
-        }
-        
-        return nil
     }
     
-    private func getSyncStatus() -> ClientHeroStatusCard.SyncStatus {
-        switch viewModel.dashboardSyncStatus {
-        case .synced: return .synced
-        case .syncing: return .syncing(progress: contextEngine.syncProgress)
-        case .failed: return .error("Sync failed")
-        case .offline: return .offline
-        }
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+    
+    private var complianceScoreColor: Color {
+        let score = contextEngine.clientMetrics.complianceScore
+        if score >= 90 { return FrancoSphereDesign.DashboardColors.success }
+        if score >= 80 { return FrancoSphereDesign.DashboardColors.info }
+        if score >= 70 { return FrancoSphereDesign.DashboardColors.warning }
+        return FrancoSphereDesign.DashboardColors.critical
     }
     
     private func hasIntelligenceToShow() -> Bool {
-        return !contextEngine.workerProductivityInsights.isEmpty ||
-               contextEngine.complianceOverview.openIssues > 0 ||
-               hasCostSavingOpportunities()
-    }
-    
-    private func hasCostSavingOpportunities() -> Bool {
-        // Check if there are any cost optimization insights
-        return contextEngine.estimatedMonthlySavings > 1000
+        return contextEngine.clientBuildings.count > 0 ||
+               contextEngine.clientMetrics.hasComplianceIssues ||
+               contextEngine.clientMetrics.hasOverdueTasks
     }
 }
 
-// MARK: - CollapsibleClientHeroWrapper (Dynamic Real-time)
+// MARK: - Collapsible Client Hero Wrapper
 
 struct CollapsibleClientHeroWrapper: View {
     @Binding var isCollapsed: Bool
     
-    let portfolioHealth: CoreTypes.PortfolioHealth
-    let realtimeMetrics: CoreTypes.RealtimePortfolioMetrics
-    let activeWorkers: CoreTypes.ActiveWorkerStatus
-    let complianceStatus: CoreTypes.ComplianceOverview
-    let criticalAlerts: [CoreTypes.ClientAlert]
-    let buildingPerformance: [String: Double]
-    let syncStatus: ClientHeroStatusCard.SyncStatus
+    let metrics: ClientMetrics
+    let buildings: [CoreTypes.NamedCoordinate]
+    let recentActivity: [ClientActivity]
     
-    let onPortfolioTap: () -> Void
+    let onBuildingsTap: () -> Void
     let onComplianceTap: () -> Void
-    let onWorkersTap: () -> Void
-    let onAlertsTap: () -> Void
-    let onSyncTap: () -> Void
+    let onCostTap: () -> Void
+    let onReportsTap: () -> Void
+    let onRefreshTap: () -> Void
     
     var body: some View {
         VStack(spacing: 0) {
             if isCollapsed {
-                // Minimal collapsed version with key metrics
+                // Minimal collapsed version
                 MinimalClientHeroCard(
-                    portfolioScore: portfolioHealth.overallScore,
-                    activeWorkers: activeWorkers.totalActive,
-                    criticalAlerts: criticalAlerts.filter { $0.severity == .critical }.count,
-                    complianceScore: complianceStatus.overallScore,
+                    propertyCount: buildings.count,
+                    complianceScore: metrics.complianceScore,
+                    serviceLevel: metrics.serviceLevel,
+                    hasAlerts: metrics.hasComplianceIssues || metrics.hasOverdueTasks,
                     onExpand: {
                         withAnimation(FrancoSphereDesign.Animations.spring) {
                             isCollapsed = false
@@ -504,18 +488,14 @@ struct CollapsibleClientHeroWrapper: View {
                 // Full ClientHeroStatusCard with collapse button
                 ZStack(alignment: .topTrailing) {
                     ClientHeroStatusCard(
-                        portfolioHealth: portfolioHealth,
-                        realtimeMetrics: realtimeMetrics,
-                        activeWorkers: activeWorkers,
-                        complianceStatus: complianceStatus,
-                        criticalAlerts: criticalAlerts,
-                        buildingPerformance: buildingPerformance,
-                        syncStatus: syncStatus,
-                        onPortfolioTap: onPortfolioTap,
+                        metrics: metrics,
+                        buildings: buildings,
+                        recentActivity: recentActivity,
+                        onBuildingsTap: onBuildingsTap,
                         onComplianceTap: onComplianceTap,
-                        onWorkersTap: onWorkersTap,
-                        onAlertsTap: onAlertsTap,
-                        onSyncTap: onSyncTap
+                        onCostTap: onCostTap,
+                        onReportsTap: onReportsTap,
+                        onRefreshTap: onRefreshTap
                     )
                     
                     // Collapse button overlay
@@ -537,82 +517,238 @@ struct CollapsibleClientHeroWrapper: View {
     }
 }
 
-// MARK: - MinimalClientHeroCard
+// MARK: - Client Hero Status Card
+
+struct ClientHeroStatusCard: View {
+    let metrics: ClientMetrics
+    let buildings: [CoreTypes.NamedCoordinate]
+    let recentActivity: [ClientActivity]
+    
+    let onBuildingsTap: () -> Void
+    let onComplianceTap: () -> Void
+    let onCostTap: () -> Void
+    let onReportsTap: () -> Void
+    let onRefreshTap: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Property Overview")
+                        .francoTypography(FrancoSphereDesign.Typography.dashboardTitle)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    
+                    Text("\(buildings.count) properties managed by FrancoSphere")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                }
+                
+                Spacer()
+            }
+            
+            // Metrics grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                MetricCard(
+                    value: "\(buildings.count)",
+                    label: "Properties",
+                    icon: "building.2.fill",
+                    color: FrancoSphereDesign.DashboardColors.info,
+                    onTap: onBuildingsTap
+                )
+                
+                MetricCard(
+                    value: "\(Int(metrics.complianceScore))%",
+                    label: "Compliance",
+                    subtitle: metrics.hasComplianceIssues ? "Issues detected" : "Good standing",
+                    color: complianceColor,
+                    icon: "checkmark.shield.fill",
+                    onTap: onComplianceTap
+                )
+                
+                MetricCard(
+                    value: "\(Int(metrics.serviceLevel * 100))%",
+                    label: "Service Level",
+                    icon: "star.fill",
+                    color: FrancoSphereDesign.DashboardColors.tertiaryAction,
+                    onTap: onReportsTap
+                )
+                
+                MetricCard(
+                    value: formatCurrency(metrics.monthlySpend),
+                    label: "Monthly Spend",
+                    subtitle: spendingStatus,
+                    color: spendingColor,
+                    icon: "dollarsign.circle",
+                    onTap: onCostTap
+                )
+            }
+        }
+        .francoCardPadding()
+        .francoDarkCardBackground()
+    }
+    
+    private var complianceColor: Color {
+        if metrics.complianceScore >= 90 { return FrancoSphereDesign.DashboardColors.success }
+        if metrics.complianceScore >= 80 { return FrancoSphereDesign.DashboardColors.info }
+        if metrics.complianceScore >= 70 { return FrancoSphereDesign.DashboardColors.warning }
+        return FrancoSphereDesign.DashboardColors.critical
+    }
+    
+    private var spendingStatus: String {
+        let percentOfBudget = metrics.monthlySpend / metrics.monthlyBudget
+        if percentOfBudget > 1.1 { return "Over budget" }
+        if percentOfBudget > 0.9 { return "Near budget" }
+        return "On track"
+    }
+    
+    private var spendingColor: Color {
+        let percentOfBudget = metrics.monthlySpend / metrics.monthlyBudget
+        if percentOfBudget > 1.1 { return FrancoSphereDesign.DashboardColors.critical }
+        if percentOfBudget > 0.9 { return FrancoSphereDesign.DashboardColors.warning }
+        return FrancoSphereDesign.DashboardColors.success
+    }
+    
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+}
+
+// MARK: - Supporting Types
+
+struct ClientMetrics {
+    let complianceScore: Double
+    let serviceLevel: Double
+    let monthlySpend: Double
+    let monthlyBudget: Double
+    let hasComplianceIssues: Bool
+    let complianceIssueCount: Int
+    let hasOverdueTasks: Bool
+}
+
+struct ClientActivity: Identifiable {
+    let id = UUID()
+    let type: ActivityType
+    let description: String
+    let buildingName: String?
+    let timestamp: Date
+    
+    enum ActivityType {
+        case taskCompleted
+        case complianceUpdate
+        case serviceComplete
+        case reportAvailable
+    }
+}
+
+// MARK: - Client Context Engine
+
+class ClientContextEngine: ObservableObject {
+    static let shared = ClientContextEngine()
+    
+    @Published var clientProfile: ClientProfile?
+    @Published var clientBuildings: [CoreTypes.NamedCoordinate] = []
+    @Published var clientMetrics = ClientMetrics(
+        complianceScore: 85,
+        serviceLevel: 0.92,
+        monthlySpend: 15000,
+        monthlyBudget: 18000,
+        hasComplianceIssues: false,
+        complianceIssueCount: 0,
+        hasOverdueTasks: false
+    )
+    @Published var recentActivity: [ClientActivity] = []
+    @Published var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
+    @Published var clientComplianceData: [String: ComplianceData] = [:]
+    @Published var clientCostData: [String: CostData] = [:]
+    
+    func refreshContext() async {
+        // Refresh client-specific data
+    }
+}
+
+struct ClientProfile {
+    let id: String
+    let name: String
+    let email: String
+    let buildingIds: [String]
+}
+
+struct ComplianceData {
+    let buildingId: String
+    let score: Double
+    let violations: [String]
+    let lastInspection: Date
+}
+
+struct CostData {
+    let buildingId: String
+    let monthlyAverage: Double
+    let currentMonth: Double
+    let trend: CoreTypes.TrendDirection
+}
+
+// MARK: - Additional Components
 
 struct MinimalClientHeroCard: View {
-    let portfolioScore: Double
-    let activeWorkers: Int
-    let criticalAlerts: Int
+    let propertyCount: Int
     let complianceScore: Double
+    let serviceLevel: Double
+    let hasAlerts: Bool
     let onExpand: () -> Void
-    
-    private var statusColor: Color {
-        if criticalAlerts > 0 {
-            return FrancoSphereDesign.DashboardColors.critical
-        } else if portfolioScore < 0.7 || complianceScore < 0.8 {
-            return FrancoSphereDesign.DashboardColors.warning
-        } else {
-            return FrancoSphereDesign.DashboardColors.success
-        }
-    }
-    
-    private var hasCritical: Bool {
-        criticalAlerts > 0
-    }
     
     var body: some View {
         Button(action: onExpand) {
             HStack(spacing: 12) {
-                // Status indicator with pulse animation for critical
+                // Status indicator
                 Circle()
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
-                    .overlay(
-                        Circle()
-                            .stroke(statusColor.opacity(0.3), lineWidth: 8)
-                            .scaleEffect(1.5)
-                            .opacity(hasCritical ? 0.6 : 0)
-                            .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: hasCritical)
-                    )
                 
-                // Key metrics in compact form
-                HStack(spacing: 16) {
-                    MetricPill(
-                        value: "\(Int(portfolioScore * 100))%",
-                        label: "Health",
-                        color: portfolioScoreColor
-                    )
-                    
-                    MetricPill(
-                        value: "\(activeWorkers)",
-                        label: "Active",
-                        color: FrancoSphereDesign.DashboardColors.info
-                    )
-                    
-                    if criticalAlerts > 0 {
-                        MetricPill(
-                            value: "\(criticalAlerts)",
-                            label: "Critical",
-                            color: FrancoSphereDesign.DashboardColors.critical
-                        )
-                    }
-                    
-                    MetricPill(
-                        value: "\(Int(complianceScore * 100))%",
-                        label: "Compliance",
-                        color: complianceScoreColor
-                    )
+                // Property count
+                HStack(spacing: 4) {
+                    Image(systemName: "building.2")
+                        .font(.caption)
+                    Text("\(propertyCount)")
                 }
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                
+                Text("•")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                
+                // Compliance
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.shield")
+                        .font(.caption)
+                    Text("\(Int(complianceScore))%")
+                }
+                .foregroundColor(complianceColor)
+                
+                Text("•")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                
+                // Service level
+                HStack(spacing: 4) {
+                    Image(systemName: "star")
+                        .font(.caption)
+                    Text("\(Int(serviceLevel * 100))%")
+                }
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
-                // Real-time indicator
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
-                    .opacity(0.6)
+                if hasAlerts {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                }
                 
-                // Expand indicator
                 Image(systemName: "chevron.down")
                     .font(.caption)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
@@ -624,289 +760,87 @@ struct MinimalClientHeroCard: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private var portfolioScoreColor: Color {
-        if portfolioScore > 0.8 {
-            return FrancoSphereDesign.DashboardColors.success
-        } else if portfolioScore > 0.6 {
+    private var statusColor: Color {
+        if hasAlerts || complianceScore < 70 {
             return FrancoSphereDesign.DashboardColors.warning
-        } else {
-            return FrancoSphereDesign.DashboardColors.critical
         }
+        return FrancoSphereDesign.DashboardColors.success
     }
     
-    private var complianceScoreColor: Color {
-        if complianceScore > 0.9 {
-            return FrancoSphereDesign.DashboardColors.compliant
-        } else if complianceScore > 0.7 {
-            return FrancoSphereDesign.DashboardColors.warning
-        } else {
-            return FrancoSphereDesign.DashboardColors.violation
-        }
+    private var complianceColor: Color {
+        if complianceScore >= 90 { return FrancoSphereDesign.DashboardColors.success }
+        if complianceScore >= 80 { return FrancoSphereDesign.DashboardColors.info }
+        if complianceScore >= 70 { return FrancoSphereDesign.DashboardColors.warning }
+        return FrancoSphereDesign.DashboardColors.critical
     }
 }
 
-// MARK: - Supporting Components
-
-struct ExecutiveIntelligenceCard: View {
-    let summary: CoreTypes.ExecutiveIntelligence
-    let onDetailTap: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Executive Intelligence", systemImage: "brain")
-                    .font(.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
-                
-                Spacer()
-                
-                Text("Live")
-                    .font(.caption2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(FrancoSphereDesign.DashboardColors.success)
-                    )
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(summary.keyInsights.prefix(3), id: \.self) { insight in
-                    HStack(alignment: .top, spacing: 8) {
-                        Circle()
-                            .fill(FrancoSphereDesign.DashboardColors.clientAccent)
-                            .frame(width: 4, height: 4)
-                            .padding(.top, 6)
-                        
-                        Text(insight)
-                            .font(.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                    }
-                }
-            }
-            
-            Button(action: onDetailTap) {
-                Text("View Full Analysis")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
-            }
-        }
-        .padding()
-        .francoDarkCardBackground()
-    }
-}
-
-struct CriticalComplianceCard: View {
-    let issues: [CoreTypes.ComplianceIssue]
-    let onIssueTap: (CoreTypes.ComplianceIssue) -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Critical Compliance", systemImage: "exclamationmark.shield")
-                    .font(.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                
-                Spacer()
-                
-                Text("\(issues.count) issues")
-                    .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-            }
-            
-            VStack(spacing: 8) {
-                ForEach(issues.prefix(3)) { issue in
-                    Button(action: { onIssueTap(issue) }) {
-                        ComplianceIssueRow(issue: issue)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-        }
-        .padding()
-        .francoDarkCardBackground()
-    }
-}
-
-struct BuildingPerformanceGrid: View {
-    let buildings: [NamedCoordinate]
-    let onBuildingTap: (NamedCoordinate) -> Void
-    
-    private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Building Performance")
-                .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-            
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(buildings.prefix(4), id: \.id) { building in
-                    BuildingPerformanceTile(
-                        building: building,
-                        onTap: { onBuildingTap(building) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-struct WorkerProductivityCard: View {
-    let insights: [CoreTypes.WorkerProductivityInsight]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Worker Productivity", systemImage: "person.3.fill")
-                .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.info)
-            
-            VStack(spacing: 8) {
-                ForEach(insights.prefix(3)) { insight in
-                    HStack {
-                        Image(systemName: insight.trend.icon)
-                            .font(.caption)
-                            .foregroundColor(insight.trend.color)
-                        
-                        Text(insight.description)
-                            .font(.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                        
-                        Spacer()
-                        
-                        Text(insight.metric)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(insight.trend.color)
-                    }
-                }
-            }
-        }
-        .padding()
-        .francoDarkCardBackground()
-    }
-}
-
-// MARK: - Helper Views
-
-struct ComplianceIssueRow: View {
-    let issue: CoreTypes.ComplianceIssue
+struct ClientActivityRow: View {
+    let activity: ClientActivity
     
     var body: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(severityColor)
+                .fill(activityColor)
                 .frame(width: 6, height: 6)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(issue.title)
-                    .font(.caption)
-                    .fontWeight(.medium)
+                Text(activity.description)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     .lineLimit(1)
                 
-                if let building = issue.buildingName {
-                    Text(building)
-                        .font(.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                if let buildingName = activity.buildingName {
+                    Text(buildingName)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
             }
             
             Spacer()
             
-            if let dueDate = issue.dueDate {
-                Text(dueDate.formatted(.dateTime.day().month()))
-                    .font(.caption2)
-                    .foregroundColor(Date() > dueDate ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
-            }
+            Text(activity.timestamp, style: .relative)
+                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.03))
-        )
+        .padding(.vertical, 4)
     }
     
-    private var severityColor: Color {
-        switch issue.severity {
-        case .critical: return FrancoSphereDesign.DashboardColors.critical
-        case .high: return FrancoSphereDesign.DashboardColors.warning
-        case .medium: return Color(hex: "fbbf24")
-        case .low: return FrancoSphereDesign.DashboardColors.info
+    private var activityColor: Color {
+        switch activity.type {
+        case .taskCompleted: return FrancoSphereDesign.DashboardColors.success
+        case .complianceUpdate: return FrancoSphereDesign.DashboardColors.info
+        case .serviceComplete: return FrancoSphereDesign.DashboardColors.tertiaryAction
+        case .reportAvailable: return FrancoSphereDesign.DashboardColors.secondaryAction
         }
     }
 }
 
-struct BuildingPerformanceTile: View {
-    let building: NamedCoordinate
+struct BuildingPerformanceRow: View {
+    let building: CoreTypes.NamedCoordinate
+    let metrics: CoreTypes.BuildingMetrics
     let onTap: () -> Void
-    @ObservedObject private var contextEngine = ClientContextEngine.shared
-    
-    private var performance: Double {
-        contextEngine.buildingPerformanceMap[building.id] ?? 0.0
-    }
-    
-    private var performanceColor: Color {
-        if performance > 0.8 {
-            return FrancoSphereDesign.DashboardColors.success
-        } else if performance > 0.6 {
-            return FrancoSphereDesign.DashboardColors.warning
-        } else {
-            return FrancoSphereDesign.DashboardColors.critical
-        }
-    }
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "building.2")
-                        .font(.caption)
-                        .foregroundColor(performanceColor)
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(building.name)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     
-                    Spacer()
-                    
-                    Text("\(Int(performance * 100))%")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(performanceColor)
+                    Text("\(metrics.totalTasks) tasks • \(Int(metrics.completionRate * 100))% complete")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
                 
-                Text(building.name)
+                Spacer()
+                
+                Image(systemName: "chevron.right")
                     .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                    .lineLimit(1)
-                
-                // Mini progress bar
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.white.opacity(0.1))
-                        
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(performanceColor)
-                            .frame(width: geometry.size.width * performance)
-                    }
-                }
-                .frame(height: 4)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(performanceColor.opacity(0.3), lineWidth: 1)
-                    )
-            )
+            .padding(.vertical, 8)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -916,7 +850,7 @@ struct BuildingPerformanceTile: View {
 
 struct ClientDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        ClientDashboardView()
+        ClientDashboardView(viewModel: ClientDashboardViewModel())
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)

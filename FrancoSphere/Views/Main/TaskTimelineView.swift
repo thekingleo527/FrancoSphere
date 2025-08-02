@@ -7,6 +7,7 @@
 //  ✅ INTEGRATED: Cross-dashboard sync support
 //  ✅ ENHANCED: Nova AI insights integration
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ DARK ELEGANCE: Full theme integration with glass morphism
 //
 
 import SwiftUI
@@ -33,13 +34,19 @@ struct TaskTimelineView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                datePickerHeader
+            ZStack {
+                // Dark Elegance Background
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
                 
-                if viewModel.isLoading {
-                    loadingView
-                } else {
-                    taskTimelineContent
+                VStack(spacing: 0) {
+                    datePickerHeader
+                    
+                    if viewModel.isLoading {
+                        loadingView
+                    } else {
+                        taskTimelineContent
+                    }
                 }
             }
             .navigationTitle("Task Timeline")
@@ -60,6 +67,7 @@ struct TaskTimelineView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     }
                 }
             }
@@ -86,6 +94,7 @@ struct TaskTimelineView: View {
                 loadTasksForSelectedDate()
             }
         }
+        .preferredColorScheme(.dark)
     }
     
     // MARK: - UI Components
@@ -97,17 +106,18 @@ struct TaskTimelineView: View {
                 Button(action: { moveDate(by: -1) }) {
                     Image(systemName: "chevron.left")
                         .font(.title3)
-                        .foregroundColor(.blue)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
                 }
                 
                 DatePicker("", selection: $selectedDate, displayedComponents: .date)
                     .datePickerStyle(.compact)
                     .labelsHidden()
+                    .accentColor(FrancoSphereDesign.DashboardColors.primaryAction)
                 
                 Button(action: { moveDate(by: 1) }) {
                     Image(systemName: "chevron.right")
                         .font(.title3)
-                        .foregroundColor(.blue)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
                 }
                 
                 Spacer()
@@ -115,8 +125,7 @@ struct TaskTimelineView: View {
                 Button("Today") {
                     selectedDate = Date()
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .buttonStyle(FrancoGlassButtonStyle())
             }
             .padding(.horizontal)
             
@@ -125,16 +134,18 @@ struct TaskTimelineView: View {
             }
         }
         .padding(.bottom)
-        .background(Color(.systemBackground))
-        .shadow(color: Color.black.opacity(0.1), radius: 2, y: 2)
+        .background(
+            FrancoSphereDesign.DashboardColors.cardBackground
+                .shadow(color: Color.black.opacity(0.3), radius: 2, y: 2)
+        )
     }
     
     private var taskSummaryView: some View {
         HStack(spacing: 20) {
-            taskSummaryItem("Total", count: viewModel.taskStats.total, color: .blue)
-            taskSummaryItem("Completed", count: viewModel.taskStats.completed, color: .green)
-            taskSummaryItem("Pending", count: viewModel.taskStats.pending, color: .orange)
-            taskSummaryItem("Overdue", count: viewModel.taskStats.overdue, color: .red)
+            taskSummaryItem("Total", count: viewModel.taskStats.total, color: FrancoSphereDesign.DashboardColors.info)
+            taskSummaryItem("Completed", count: viewModel.taskStats.completed, color: FrancoSphereDesign.DashboardColors.success)
+            taskSummaryItem("Pending", count: viewModel.taskStats.pending, color: FrancoSphereDesign.DashboardColors.warning)
+            taskSummaryItem("Overdue", count: viewModel.taskStats.overdue, color: FrancoSphereDesign.DashboardColors.critical)
         }
         .padding(.horizontal)
     }
@@ -142,12 +153,12 @@ struct TaskTimelineView: View {
     private func taskSummaryItem(_ title: String, count: Int, color: Color) -> some View {
         VStack(spacing: 4) {
             Text("\(count)")
-                .font(.title2)
+                .francoTypography(FrancoSphereDesign.Typography.title2)
                 .fontWeight(.bold)
                 .foregroundColor(color)
             Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -156,8 +167,10 @@ struct TaskTimelineView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
+                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.primaryAction))
             Text("Loading timeline...")
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.body)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -192,34 +205,39 @@ struct TaskTimelineView: View {
     
     private func timeGroupHeader(_ timeGroup: String) -> some View {
         Text(timeGroup)
-            .font(.headline)
-            .foregroundColor(.secondary)
+            .francoTypography(FrancoSphereDesign.Typography.headline)
+            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(Color(.systemBackground).opacity(0.95))
+            .background(
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .opacity(0.95)
+                    .blur(radius: 10)
+            )
     }
     
     private var emptyStateView: some View {
         VStack(spacing: 16) {
             Image(systemName: viewModel.hasActiveTasks ? "line.3.horizontal.decrease.circle" : "calendar.badge.exclamationmark")
                 .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.inactive)
             
             Text(viewModel.hasActiveTasks ? "No tasks match filters" : "No tasks scheduled")
-                .font(.title2)
+                .francoTypography(FrancoSphereDesign.Typography.title2)
                 .fontWeight(.medium)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text(emptyStateMessage)
-                .font(.body)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.body)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 .multilineTextAlignment(.center)
             
             if viewModel.hasActiveTasks {
                 Button("Clear Filters") {
                     viewModel.clearFilters()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(FrancoGlassButtonStyle(style: .prominent))
             }
         }
     }
@@ -248,7 +266,7 @@ struct TaskTimelineView: View {
         VStack(spacing: 0) {
             if !isFirst {
                 Rectangle()
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                     .frame(width: 2, height: 20)
             }
             
@@ -267,7 +285,7 @@ struct TaskTimelineView: View {
             
             if !isLast {
                 Rectangle()
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                     .frame(width: 2)
             }
         }
@@ -276,9 +294,9 @@ struct TaskTimelineView: View {
     
     private func indicatorColor(for task: CoreTypes.ContextualTask) -> Color {
         if task.isCompleted {
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         } else if isOverdue(task) {
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         } else {
             return FrancoSphereDesign.EnumColors.taskUrgency(task.urgency ?? .medium)
         }
@@ -310,7 +328,7 @@ struct TaskTimelineView: View {
     }
 }
 
-// MARK: - Task Timeline Card
+// MARK: - Task Timeline Card (Dark Elegance)
 
 struct TaskTimelineCard: View {
     let task: CoreTypes.ContextualTask
@@ -325,14 +343,14 @@ struct TaskTimelineCard: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(task.title)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                            .francoTypography(FrancoSphereDesign.Typography.headline)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                             .multilineTextAlignment(.leading)
                         
                         if let building = task.building {
                             Label(building.name, systemImage: "building.2")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         }
                     }
                     
@@ -344,8 +362,8 @@ struct TaskTimelineCard: View {
                 // Description
                 if let description = task.description, !description.isEmpty {
                     Text(description)
-                        .font(.body)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.body)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         .lineLimit(2)
                 }
                 
@@ -361,13 +379,11 @@ struct TaskTimelineCard: View {
                     }
                 }
             }
-            .padding()
+            .francoCardPadding()
             .background(cardBackground)
-            .cornerRadius(12)
-            .shadow(color: shadowColor, radius: isPressed ? 2 : 4, y: isPressed ? 1 : 2)
             .scaleEffect(isPressed ? 0.98 : 1.0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PlainButtonStyle())
         .onLongPressGesture(minimumDuration: 0.1) {
             // Action handled by button
         } onPressingChanged: { pressing in
@@ -378,43 +394,44 @@ struct TaskTimelineCard: View {
     }
     
     private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color(.secondarySystemBackground))
+        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+            .fill(FrancoSphereDesign.DashboardColors.cardBackground)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
                     .stroke(borderColor, lineWidth: 1)
             )
+            .shadow(color: shadowColor, radius: isPressed ? 2 : 4, y: isPressed ? 1 : 2)
     }
     
     private var borderColor: Color {
         if task.isCompleted {
-            return .green.opacity(0.3)
+            return FrancoSphereDesign.DashboardColors.success.opacity(0.3)
         } else if isOverdue {
-            return .red.opacity(0.3)
+            return FrancoSphereDesign.DashboardColors.critical.opacity(0.3)
         } else {
-            return Color(.separator).opacity(0.5)
+            return FrancoSphereDesign.DashboardColors.glassOverlay
         }
     }
     
     private var shadowColor: Color {
         if task.isCompleted {
-            return .green.opacity(0.1)
+            return FrancoSphereDesign.DashboardColors.success.opacity(0.1)
         } else if isOverdue {
-            return .red.opacity(0.1)
+            return FrancoSphereDesign.DashboardColors.critical.opacity(0.1)
         } else {
-            return .black.opacity(0.1)
+            return Color.black.opacity(0.3)
         }
     }
     
     private var statusBadge: some View {
         Text(statusText)
-            .font(.caption)
+            .francoTypography(FrancoSphereDesign.Typography.caption)
             .fontWeight(.medium)
             .foregroundColor(.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(statusColor)
-            .cornerRadius(8)
+            .cornerRadius(FrancoSphereDesign.CornerRadius.sm)
     }
     
     private var statusText: String {
@@ -429,11 +446,11 @@ struct TaskTimelineCard: View {
     
     private var statusColor: Color {
         if task.isCompleted {
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         } else if isOverdue {
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         } else {
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         }
     }
     
@@ -445,14 +462,16 @@ struct TaskTimelineCard: View {
     private var categoryBadge: some View {
         Group {
             if let category = task.category {
-                Label(category.rawValue.capitalized, systemImage: categoryIcon(category))
-                    .font(.caption2)
+                Label(category.rawValue.capitalized, systemImage: category.icon)
+                    .francoTypography(FrancoSphereDesign.Typography.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(categoryColor(for: category))
+                    .foregroundColor(FrancoSphereDesign.EnumColors.taskCategory(category))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(categoryColor(for: category).opacity(0.1))
-                    .cornerRadius(6)
+                    .background(
+                        FrancoSphereDesign.EnumColors.taskCategory(category).opacity(0.1)
+                    )
+                    .cornerRadius(FrancoSphereDesign.CornerRadius.sm)
             }
         }
     }
@@ -461,21 +480,21 @@ struct TaskTimelineCard: View {
         Group {
             if let urgency = task.urgency {
                 Text(urgency.rawValue.capitalized)
-                    .font(.caption2)
+                    .francoTypography(FrancoSphereDesign.Typography.caption2)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
-                    .cornerRadius(6)
+                    .cornerRadius(FrancoSphereDesign.CornerRadius.sm)
             }
         }
     }
     
     private func timeDisplay(for date: Date) -> some View {
         Label(timeFormatter.string(from: date), systemImage: "clock")
-            .font(.caption)
-            .foregroundColor(.secondary)
+            .francoTypography(FrancoSphereDesign.Typography.caption)
+            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
     }
     
     private var timeFormatter: DateFormatter {
@@ -483,44 +502,317 @@ struct TaskTimelineCard: View {
         formatter.timeStyle = .short
         return formatter
     }
+}
+
+// MARK: - Task Filter View (Dark Elegance)
+
+struct TaskFilterView: View {
+    @Binding var filterOptions: TaskFilterOptions
+    @Environment(\.dismiss) private var dismiss
     
-    private func categoryIcon(_ category: CoreTypes.TaskCategory) -> String {
-        switch category {
-        case .cleaning: return "sparkles"
-        case .maintenance: return "wrench.and.screwdriver"
-        case .repair: return "hammer"
-        case .sanitation: return "trash"
-        case .inspection: return "magnifyingglass"
-        case .landscaping: return "leaf"
-        case .security: return "shield"
-        case .emergency: return "exclamationmark.triangle.fill"
-        case .installation: return "plus.square"
-        case .utilities: return "bolt"
-        case .renovation: return "building.2"
-        case .administrative: return "folder"
+    var body: some View {
+        NavigationView {
+            ZStack {
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
+                
+                Form {
+                    Section("Display Options") {
+                        Toggle("Show Completed Tasks", isOn: $filterOptions.showCompleted)
+                            .tint(FrancoSphereDesign.DashboardColors.primaryAction)
+                    }
+                    .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                    
+                    Section("Categories") {
+                        ForEach(CoreTypes.TaskCategory.allCases, id: \.self) { category in
+                            Toggle(category.rawValue.capitalized, isOn: Binding(
+                                get: { filterOptions.categories.contains(category) },
+                                set: { isOn in
+                                    if isOn {
+                                        filterOptions.categories.insert(category)
+                                    } else {
+                                        filterOptions.categories.remove(category)
+                                    }
+                                }
+                            ))
+                            .tint(FrancoSphereDesign.EnumColors.taskCategory(category))
+                        }
+                    }
+                    .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                    
+                    Section("Urgency Levels") {
+                        ForEach(CoreTypes.TaskUrgency.allCases, id: \.self) { urgency in
+                            Toggle(urgency.rawValue.capitalized, isOn: Binding(
+                                get: { filterOptions.urgencies.contains(urgency) },
+                                set: { isOn in
+                                    if isOn {
+                                        filterOptions.urgencies.insert(urgency)
+                                    } else {
+                                        filterOptions.urgencies.remove(urgency)
+                                    }
+                                }
+                            ))
+                            .tint(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                        }
+                    }
+                    .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                }
+                .scrollContentBackground(.hidden)
+            }
+            .navigationTitle("Filter Tasks")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Clear All") {
+                        filterOptions = TaskFilterOptions()
+                    }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Nova Task Insights View (Dark Elegance)
+
+struct NovaTaskInsightsView: View {
+    let workerId: String
+    let date: Date
+    
+    @State private var insights: [CoreTypes.IntelligenceInsight] = []
+    @State private var isLoading = true
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
+                
+                Group {
+                    if isLoading {
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.primaryAction))
+                            Text("Analyzing tasks...")
+                                .francoTypography(FrancoSphereDesign.Typography.body)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if insights.isEmpty {
+                        ContentUnavailableView(
+                            "No Insights Available",
+                            systemImage: "brain",
+                            description: Text("Nova AI couldn't generate insights for this date")
+                        )
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    } else {
+                        List(insights) { insight in
+                            NovaInsightRow(insight: insight)
+                                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                        }
+                        .scrollContentBackground(.hidden)
+                    }
+                }
+            }
+            .navigationTitle("AI Task Insights")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                }
+            }
+            .task {
+                await loadInsights()
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+    
+    private func loadInsights() async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            // Use IntelligenceService to generate insights
+            let intelligenceService = IntelligenceService.shared
+            let allInsights = try await intelligenceService.generatePortfolioInsights()
+            
+            // Filter insights relevant to tasks and efficiency
+            insights = allInsights.filter { insight in
+                insight.type == .operations ||
+                insight.type == .efficiency ||
+                insight.type == .maintenance
+            }
+            
+            // If no insights, generate some based on the date
+            if insights.isEmpty {
+                insights = generateLocalInsights()
+            }
+            
+        } catch {
+            print("Failed to load Nova insights: \(error)")
+            insights = generateLocalInsights()
         }
     }
     
-    // Custom color function for task categories
-    private func categoryColor(for category: CoreTypes.TaskCategory) -> Color {
-        switch category {
-        case .cleaning: return .blue
-        case .maintenance: return .orange
-        case .repair: return .red
-        case .sanitation: return .brown
-        case .inspection: return .purple
-        case .landscaping: return .green
-        case .security: return .indigo
-        case .emergency: return .red
-        case .installation: return .cyan
-        case .utilities: return .yellow
-        case .renovation: return .pink
-        case .administrative: return .gray
+    private func generateLocalInsights() -> [CoreTypes.IntelligenceInsight] {
+        let calendar = Calendar.current
+        let isWeekend = calendar.isDateInWeekend(date)
+        
+        var localInsights: [CoreTypes.IntelligenceInsight] = []
+        
+        if isWeekend {
+            localInsights.append(CoreTypes.IntelligenceInsight(
+                title: "Weekend Schedule",
+                description: "Weekend tasks typically have lower urgency. Focus on routine maintenance and catch-up work.",
+                type: .operations,
+                priority: .low,
+                actionRequired: false
+            ))
+        }
+        
+        let dayOfWeek = calendar.component(.weekday, from: date)
+        if dayOfWeek == 2 { // Monday
+            localInsights.append(CoreTypes.IntelligenceInsight(
+                title: "Monday Task Load",
+                description: "Mondays typically see 20% higher task volume. Consider starting earlier to accommodate the increased workload.",
+                type: .efficiency,
+                priority: .medium,
+                actionRequired: true
+            ))
+        }
+        
+        return localInsights
+    }
+}
+
+// MARK: - Nova Insight Row (Dark Elegance)
+
+struct NovaInsightRow: View {
+    let insight: CoreTypes.IntelligenceInsight
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: iconForType(insight.type))
+                    .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(insight.type))
+                
+                Text(insight.title)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                Spacer()
+                
+                Text(insight.priority.rawValue.capitalized)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(FrancoSphereDesign.EnumColors.aiPriority(insight.priority))
+                    .cornerRadius(FrancoSphereDesign.CornerRadius.sm)
+            }
+            
+            Text(insight.description)
+                .francoTypography(FrancoSphereDesign.Typography.body)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+            
+            if insight.actionRequired {
+                Label("Action Required", systemImage: "exclamationmark.circle.fill")
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func iconForType(_ type: CoreTypes.InsightCategory) -> String {
+        switch type {
+        case .efficiency: return "speedometer"
+        case .cost: return "dollarsign.circle"
+        case .safety: return "shield"
+        case .compliance: return "checkmark.shield"
+        case .quality: return "star"
+        case .operations: return "gearshape.2"
+        case .maintenance: return "wrench.and.screwdriver"
+        @unknown default: return "lightbulb" // Handle any future cases
         }
     }
 }
 
-// MARK: - View Model
+// MARK: - Franco Glass Button Style
+
+struct FrancoGlassButtonStyle: ButtonStyle {
+    enum Style {
+        case normal
+        case prominent
+    }
+    
+    let style: Style
+    
+    init(style: Style = .normal) {
+        self.style = style
+    }
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .francoTypography(FrancoSphereDesign.Typography.caption)
+            .fontWeight(.medium)
+            .foregroundColor(foregroundColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                    .fill(backgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                            .stroke(borderColor, lineWidth: 1)
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+    
+    private var foregroundColor: Color {
+        switch style {
+        case .normal:
+            return FrancoSphereDesign.DashboardColors.primaryText
+        case .prominent:
+            return .white
+        }
+    }
+    
+    private var backgroundColor: Color {
+        switch style {
+        case .normal:
+            return FrancoSphereDesign.DashboardColors.glassOverlay
+        case .prominent:
+            return FrancoSphereDesign.DashboardColors.primaryAction
+        }
+    }
+    
+    private var borderColor: Color {
+        switch style {
+        case .normal:
+            return FrancoSphereDesign.DashboardColors.glassBorder
+        case .prominent:
+            return FrancoSphereDesign.DashboardColors.primaryAction.opacity(0.3)
+        }
+    }
+}
+
+// MARK: - View Model (Same as before)
 
 @MainActor
 class TaskTimelineViewModel: ObservableObject {
@@ -684,232 +976,11 @@ struct TaskFilterOptions {
     var urgencies: Set<CoreTypes.TaskUrgency> = []
 }
 
-// MARK: - Task Filter View
-
-struct TaskFilterView: View {
-    @Binding var filterOptions: TaskFilterOptions
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            Form {
-                Section("Display Options") {
-                    Toggle("Show Completed Tasks", isOn: $filterOptions.showCompleted)
-                }
-                
-                Section("Categories") {
-                    ForEach(CoreTypes.TaskCategory.allCases, id: \.self) { category in
-                        Toggle(category.rawValue.capitalized, isOn: Binding(
-                            get: { filterOptions.categories.contains(category) },
-                            set: { isOn in
-                                if isOn {
-                                    filterOptions.categories.insert(category)
-                                } else {
-                                    filterOptions.categories.remove(category)
-                                }
-                            }
-                        ))
-                    }
-                }
-                
-                Section("Urgency Levels") {
-                    ForEach(CoreTypes.TaskUrgency.allCases, id: \.self) { urgency in
-                        Toggle(urgency.rawValue.capitalized, isOn: Binding(
-                            get: { filterOptions.urgencies.contains(urgency) },
-                            set: { isOn in
-                                if isOn {
-                                    filterOptions.urgencies.insert(urgency)
-                                } else {
-                                    filterOptions.urgencies.remove(urgency)
-                                }
-                            }
-                        ))
-                    }
-                }
-            }
-            .navigationTitle("Filter Tasks")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Clear All") {
-                        filterOptions = TaskFilterOptions()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Nova Task Insights View
-
-struct NovaTaskInsightsView: View {
-    let workerId: String
-    let date: Date
-    
-    @State private var insights: [CoreTypes.IntelligenceInsight] = []
-    @State private var isLoading = true
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            Group {
-                if isLoading {
-                    ProgressView("Analyzing tasks...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if insights.isEmpty {
-                    ContentUnavailableView(
-                        "No Insights Available",
-                        systemImage: "brain",
-                        description: Text("Nova AI couldn't generate insights for this date")
-                    )
-                } else {
-                    List(insights) { insight in
-                        NovaInsightRow(insight: insight)
-                    }
-                }
-            }
-            .navigationTitle("AI Task Insights")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .task {
-                await loadInsights()
-            }
-        }
-    }
-    
-    private func loadInsights() async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            // Use IntelligenceService to generate insights
-            let intelligenceService = IntelligenceService.shared
-            let allInsights = try await intelligenceService.generatePortfolioInsights()
-            
-            // Filter insights relevant to tasks and efficiency
-            insights = allInsights.filter { insight in
-                insight.type == .operations ||
-                insight.type == .efficiency ||
-                insight.type == .maintenance
-            }
-            
-            // If no insights, generate some based on the date
-            if insights.isEmpty {
-                insights = generateLocalInsights()
-            }
-            
-        } catch {
-            print("Failed to load Nova insights: \(error)")
-            insights = generateLocalInsights()
-        }
-    }
-    
-    private func generateLocalInsights() -> [CoreTypes.IntelligenceInsight] {
-        let calendar = Calendar.current
-        let isWeekend = calendar.isDateInWeekend(date)
-        
-        var localInsights: [CoreTypes.IntelligenceInsight] = []
-        
-        if isWeekend {
-            localInsights.append(CoreTypes.IntelligenceInsight(
-                title: "Weekend Schedule",
-                description: "Weekend tasks typically have lower urgency. Focus on routine maintenance and catch-up work.",
-                type: .operations,
-                priority: .low,
-                actionRequired: false
-            ))
-        }
-        
-        let dayOfWeek = calendar.component(.weekday, from: date)
-        if dayOfWeek == 2 { // Monday
-            localInsights.append(CoreTypes.IntelligenceInsight(
-                title: "Monday Task Load",
-                description: "Mondays typically see 20% higher task volume. Consider starting earlier to accommodate the increased workload.",
-                type: .efficiency,
-                priority: .medium,
-                actionRequired: true
-            ))
-        }
-        
-        return localInsights
-    }
-}
-
-// MARK: - Nova Insight Row
-
-struct NovaInsightRow: View {
-    let insight: CoreTypes.IntelligenceInsight
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: iconForType(insight.type))
-                    .foregroundColor(colorForPriority(insight.priority))
-                
-                Text(insight.title)
-                    .font(.headline)
-                
-                Spacer()
-                
-                Text(insight.priority.rawValue.capitalized)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(colorForPriority(insight.priority))
-                    .cornerRadius(6)
-            }
-            
-            Text(insight.description)
-                .font(.body)
-                .foregroundColor(.secondary)
-            
-            if insight.actionRequired {
-                Label("Action Required", systemImage: "exclamationmark.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-    
-    private func iconForType(_ type: CoreTypes.InsightCategory) -> String {
-        switch type {
-        case .efficiency: return "speedometer"
-        case .cost: return "dollarsign.circle"
-        case .safety: return "shield"
-        case .compliance: return "checkmark.shield"
-        case .quality: return "star"
-        case .operations: return "gearshape.2"
-        case .maintenance: return "wrench.and.screwdriver"
-        @unknown default: return "lightbulb" // Handle any future cases
-        }
-    }
-    
-    private func colorForPriority(_ priority: CoreTypes.AIPriority) -> Color {
-        switch priority {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
-        case .critical: return .purple
-        }
-    }
-}
-
 // MARK: - Preview Provider
 
 struct TaskTimelineView_Previews: PreviewProvider {
     static var previews: some View {
         TaskTimelineView(workerId: "4", workerName: "Kevin Dutan")
+            .preferredColorScheme(.dark)
     }
 }

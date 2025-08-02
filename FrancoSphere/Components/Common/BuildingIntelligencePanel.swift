@@ -2,8 +2,8 @@
 //  BuildingIntelligencePanel.swift
 //  FrancoSphere v6.0
 //
+//  ✅ DARK ELEGANCE: Full theme integration with glass morphism
 //  ✅ FIXED: All compilation errors resolved
-//  ✅ FIXED: LoadingView reference corrected to IntelligenceLoadingView
 //  ✅ ALIGNED: With existing CoreTypes and BuildingIntelligenceViewModel
 //  ✅ USES: Existing service patterns and data types
 //  ✅ INTEGRATED: With real operational data
@@ -22,7 +22,6 @@ struct BuildingIntelligencePanel: View {
     @StateObject private var viewModel = BuildingIntelligenceViewModel()
     @StateObject private var contextAdapter = WorkerContextEngineAdapter.shared
     
-    // ✅ FIXED: Correct usage of @Environment property wrapper for dismiss action
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Initialization
@@ -53,11 +52,11 @@ struct BuildingIntelligencePanel: View {
         
         var color: Color {
             switch self {
-            case .overview: return .blue
-            case .allWorkers: return .green
-            case .fullSchedule: return .purple
-            case .history: return .orange
-            case .emergency: return .red
+            case .overview: return FrancoSphereDesign.DashboardColors.info
+            case .allWorkers: return FrancoSphereDesign.DashboardColors.success
+            case .fullSchedule: return FrancoSphereDesign.DashboardColors.tertiaryAction
+            case .history: return FrancoSphereDesign.DashboardColors.warning
+            case .emergency: return FrancoSphereDesign.DashboardColors.critical
             }
         }
     }
@@ -65,19 +64,24 @@ struct BuildingIntelligencePanel: View {
     // MARK: - Body
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Coverage indicator if not my building
-                if !isMyBuilding {
-                    coverageIndicatorBanner
+            ZStack {
+                // Dark Elegance Background
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Coverage indicator if not my building
+                    if !isMyBuilding {
+                        coverageIndicatorBanner
+                    }
+                    
+                    // Tab bar
+                    intelligenceTabBar
+                    
+                    // Tab content
+                    tabContent
                 }
-                
-                // Tab bar
-                intelligenceTabBar
-                
-                // Tab content
-                tabContent
             }
-            .background(Color.black)
             .navigationTitle(building.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -85,7 +89,7 @@ struct BuildingIntelligencePanel: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -104,17 +108,17 @@ struct BuildingIntelligencePanel: View {
     private var coverageIndicatorBanner: some View {
         HStack(spacing: 8) {
             Image(systemName: "info.circle.fill")
-                .foregroundColor(.orange)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
             
             Text("Coverage Mode - Emergency/Support Access")
-                .font(.caption)
-                .foregroundColor(.orange)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
             
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.orange.opacity(0.1))
+        .background(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
     }
     
     // MARK: - Intelligence Tab Bar
@@ -128,7 +132,7 @@ struct BuildingIntelligencePanel: View {
             }
             .padding(.horizontal, 16)
         }
-        .background(.ultraThinMaterial)
+        .background(FrancoSphereDesign.DashboardColors.cardBackground)
     }
     
     private func tabButton(for tab: IntelligenceTab) -> some View {
@@ -140,11 +144,11 @@ struct BuildingIntelligencePanel: View {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
                     .font(.caption)
-                    .foregroundColor(selectedTab == tab ? tab.color : .secondary)
+                    .foregroundColor(selectedTab == tab ? tab.color : FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Text(tab.rawValue)
-                    .font(.caption2)
-                    .foregroundColor(selectedTab == tab ? tab.color : .secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption2)
+                    .foregroundColor(selectedTab == tab ? tab.color : FrancoSphereDesign.DashboardColors.secondaryText)
                     .fontWeight(selectedTab == tab ? .semibold : .regular)
             }
             .frame(maxWidth: .infinity)
@@ -162,16 +166,16 @@ struct BuildingIntelligencePanel: View {
     private var coverageStatusButton: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(isMyBuilding ? .green : .orange)
+                .fill(isMyBuilding ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
                 .frame(width: 8, height: 8)
             
             Text(isMyBuilding ? "My Building" : "Coverage")
-                .font(.caption2)
-                .foregroundColor(isMyBuilding ? .green : .orange)
+                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .foregroundColor(isMyBuilding ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(.ultraThinMaterial)
+        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
         .cornerRadius(12)
     }
     
@@ -226,7 +230,6 @@ struct BuildingIntelligencePanel: View {
             }
             .padding()
         }
-        .background(Color.black)
     }
 }
 
@@ -259,11 +262,11 @@ struct BuildingOverviewTab: View {
             HStack {
                 Image(systemName: "building.2.fill")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                 
                 Text("Building Status")
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             
             VStack(alignment: .leading, spacing: 8) {
@@ -276,17 +279,16 @@ struct BuildingOverviewTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private func metricsGrid(_ metrics: CoreTypes.BuildingMetrics) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-            metricCard("Completion Rate", "\(Int(metrics.completionRate * 100))%", "checkmark.circle.fill", .green)
-            metricCard("Active Workers", "\(metrics.activeWorkers)", "person.fill", .blue)
-            metricCard("Pending Tasks", "\(metrics.pendingTasks)", "clock.fill", .orange)
-            metricCard("Overdue Tasks", "\(metrics.overdueTasks)", "exclamationmark.triangle.fill", .red)
+            metricCard("Completion Rate", "\(Int(metrics.completionRate * 100))%", "checkmark.circle.fill", FrancoSphereDesign.DashboardColors.success)
+            metricCard("Active Workers", "\(metrics.activeWorkers)", "person.fill", FrancoSphereDesign.DashboardColors.info)
+            metricCard("Pending Tasks", "\(metrics.pendingTasks)", "clock.fill", FrancoSphereDesign.DashboardColors.warning)
+            metricCard("Overdue Tasks", "\(metrics.overdueTasks)", "exclamationmark.triangle.fill", FrancoSphereDesign.DashboardColors.critical)
         }
     }
     
@@ -296,46 +298,44 @@ struct BuildingOverviewTab: View {
                 Image(systemName: icon)
                     .foregroundColor(color)
                 Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
             
             Text(value)
-                .font(.title2)
+                .francoTypography(FrancoSphereDesign.Typography.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
         .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(8)
+        .francoGlassBackground()
     }
     
     private var currentActivitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Current Activity")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text("Real-time building activity and worker status")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private func statusRow(_ title: String, _ value: String) -> some View {
         HStack {
             Text(title)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
-                .font(.subheadline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
     }
 }
@@ -364,16 +364,15 @@ struct AllWorkersTab: View {
     private var currentWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Currently On Site")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if workersOnSite.isEmpty {
                 Text("No workers currently on site")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(workersOnSite, id: \.id) { worker in
@@ -382,24 +381,22 @@ struct AllWorkersTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private var primaryWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Primary Workers")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if primaryWorkers.isEmpty {
                 Text("No primary workers assigned")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(primaryWorkers, id: \.id) { worker in
@@ -408,24 +405,22 @@ struct AllWorkersTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private var allWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("All Assigned Workers")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if allWorkers.isEmpty {
                 Text("No workers assigned")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(allWorkers, id: \.id) { worker in
@@ -434,9 +429,8 @@ struct AllWorkersTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
 }
 
@@ -462,16 +456,15 @@ struct FullScheduleTab: View {
     private var todaysScheduleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Today's Schedule")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if todaysSchedule.isEmpty {
                 Text("No scheduled activities today")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(todaysSchedule, id: \.id) { task in
@@ -480,24 +473,22 @@ struct FullScheduleTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private var weeklyRoutinesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Weekly Routines")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if weeklySchedule.isEmpty {
                 Text("No weekly routines configured")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(weeklySchedule, id: \.id) { task in
@@ -506,9 +497,8 @@ struct FullScheduleTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
 }
 
@@ -534,16 +524,15 @@ struct BuildingHistoryTab: View {
     private var recentHistorySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Activity")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if history.isEmpty {
                 Text("No recent activity")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(history.prefix(10), id: \.id) { task in
@@ -552,24 +541,22 @@ struct BuildingHistoryTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private var patternsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Patterns & Insights")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if patterns.isEmpty {
                 Text("No patterns detected")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(patterns, id: \.self) { pattern in
@@ -578,9 +565,8 @@ struct BuildingHistoryTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
 }
 
@@ -612,16 +598,15 @@ struct EmergencyInfoTab: View {
     private var emergencyContactsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Emergency Contacts")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if contacts.isEmpty {
                 Text("No emergency contacts configured")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(contacts, id: \.self) { contact in
@@ -630,24 +615,22 @@ struct EmergencyInfoTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     private var emergencyProceduresSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Emergency Procedures")
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if procedures.isEmpty {
                 Text("No emergency procedures configured")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .francoGlassBackground()
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(procedures, id: \.self) { procedure in
@@ -656,9 +639,8 @@ struct EmergencyInfoTab: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
 }
 
@@ -678,37 +660,37 @@ struct WorkerRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(Color.blue.opacity(0.3))
+                .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.3))
                 .frame(width: 40, height: 40)
                 .overlay(
                     Text(String(worker.name.prefix(1)))
-                        .font(.headline)
+                        .francoTypography(FrancoSphereDesign.Typography.headline)
                         .fontWeight(.bold)
-                        .foregroundColor(.blue)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                 )
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text(worker.name)
-                        .font(.subheadline)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     
                     if showPrimaryBadge {
                         Text("PRIMARY")
-                            .font(.caption2)
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(.blue)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.2))
+                            .background(FrancoSphereDesign.DashboardColors.info.opacity(0.2))
                             .clipShape(Capsule())
                     }
                 }
                 
                 Text(worker.role.rawValue.capitalized)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -717,18 +699,18 @@ struct WorkerRow: View {
                 if showOnSiteStatus {
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(worker.isActive ? .green : .gray)
+                            .fill(worker.isActive ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
                             .frame(width: 8, height: 8)
                         
                         Text(worker.isActive ? "Active" : "Inactive")
-                            .font(.caption2)
-                            .foregroundColor(worker.isActive ? .green : .gray)
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .foregroundColor(worker.isActive ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
                     }
                 }
                 
                 Text("Standard")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
         }
         .padding(.vertical, 4)
@@ -742,14 +724,14 @@ struct TaskScheduleRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
-                    .font(.subheadline)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 if let description = task.description {
                     Text(description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         .lineLimit(2)
                 }
             }
@@ -759,29 +741,20 @@ struct TaskScheduleRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 if task.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 } else {
                     Image(systemName: "clock")
-                        .foregroundColor(.orange)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                 }
                 
                 if let urgency = task.urgency {
                     Text(urgency.rawValue)
-                        .font(.caption2)
-                        .foregroundColor(urgencyColor(urgency))
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
                 }
             }
         }
         .padding(.vertical, 4)
-    }
-    
-    private func urgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
-        switch urgency {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical, .urgent, .emergency: return .red
-        }
     }
 }
 
@@ -792,21 +765,21 @@ struct TaskHistoryRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
-                    .font(.subheadline)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 if let completedDate = task.completedDate {
                     Text("Completed: \(completedDate.formatted(.dateTime.month().day().hour().minute()))")
-                        .font(.caption)
-                        .foregroundColor(.green)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 }
             }
             
             Spacer()
             
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
         }
         .padding(.vertical, 4)
     }
@@ -818,11 +791,11 @@ struct PatternRow: View {
     var body: some View {
         HStack {
             Image(systemName: "chart.line.uptrend.xyaxis")
-                .foregroundColor(.blue)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.info)
             
             Text(pattern)
-                .font(.subheadline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Spacer()
         }
@@ -836,11 +809,11 @@ struct ContactRow: View {
     var body: some View {
         HStack {
             Image(systemName: "phone.fill")
-                .foregroundColor(.red)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
             
             Text(contact)
-                .font(.subheadline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Spacer()
         }
@@ -854,11 +827,11 @@ struct ProcedureRow: View {
     var body: some View {
         HStack(alignment: .top) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(.orange)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
             
             Text(procedure)
-                .font(.subheadline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Spacer()
         }
@@ -873,15 +846,14 @@ struct IntelligenceLoadingView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-                .tint(.blue)
+                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.info))
             
             Text(message)
-                .font(.headline)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 100)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .francoGlassBackground()
     }
 }
 

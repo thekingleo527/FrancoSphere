@@ -1,29 +1,29 @@
-//
-//  PortfolioOverviewView.swift
+////
+//  ClientPortfolioOverviewView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ALIGNED: Mirrors WorkerDashboardView design patterns
-//  ✅ ENHANCED: Glass morphism effects and animations
-//  ✅ FIXED: All colors now use FrancoSphereDesign.DashboardColors
+//  ✅ CLIENT-FILTERED: Only shows data for client's properties
+//  ✅ PRIVACY: No worker-specific information exposed
+//  ✅ FOCUSED: Metrics relevant to property owners
+//  ✅ DARK ELEGANCE: Consistent theme with dashboards
 //
 
 import SwiftUI
 
-struct PortfolioOverviewView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct ClientPortfolioOverviewView: View {
+    let clientIntelligence: CoreTypes.ClientPortfolioIntelligence
     let onBuildingTap: ((NamedCoordinate) -> Void)?
     let onRefresh: (() async -> Void)?
     
-    @State private var selectedMetric: MetricType = .efficiency
+    @State private var selectedMetric: ClientMetricType = .service
     @State private var showingDetailView = false
     @State private var isRefreshing = false
     @State private var isHeroCollapsed = false
     
-    init(intelligence: CoreTypes.PortfolioIntelligence,
+    init(clientIntelligence: CoreTypes.ClientPortfolioIntelligence,
          onBuildingTap: ((NamedCoordinate) -> Void)? = nil,
          onRefresh: (() async -> Void)? = nil) {
-        self.intelligence = intelligence
+        self.clientIntelligence = clientIntelligence
         self.onBuildingTap = onBuildingTap
         self.onRefresh = onRefresh
     }
@@ -36,9 +36,9 @@ struct PortfolioOverviewView: View {
             
             ScrollView {
                 LazyVStack(spacing: FrancoSphereDesign.Spacing.lg) {
-                    // Portfolio Hero Section (Collapsible like Worker Dashboard)
-                    PortfolioHeroCard(
-                        intelligence: intelligence,
+                    // Client Portfolio Hero Section (Collapsible)
+                    ClientPortfolioHeroCard(
+                        intelligence: clientIntelligence,
                         isCollapsed: $isHeroCollapsed
                     )
                     .zIndex(50)
@@ -49,11 +49,16 @@ struct PortfolioOverviewView: View {
                     // Selected Metric Detail
                     selectedMetricDetailSection
                     
-                    // Performance Summary
-                    performanceSummarySection
+                    // Service Summary
+                    serviceSummarySection
                     
-                    // Alert Summary
-                    alertSummarySection
+                    // Cost Overview
+                    if clientIntelligence.showCostData {
+                        costOverviewSection
+                    }
+                    
+                    // Property Status
+                    propertyStatusSection
                     
                     // Last Updated Info
                     lastUpdatedSection
@@ -71,8 +76,8 @@ struct PortfolioOverviewView: View {
             .overlay(
                 isRefreshing ?
                 FrancoLoadingView(
-                    message: "Refreshing portfolio data...",
-                    role: .admin
+                    message: "Refreshing your property data...",
+                    role: .client
                 ) : nil
             )
         }
@@ -83,22 +88,24 @@ struct PortfolioOverviewView: View {
     
     private var metricSelectorSection: some View {
         VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
-            Text("Key Metrics")
+            Text("Property Metrics")
                 .francoTypography(FrancoSphereDesign.Typography.headline)
                 .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: FrancoSphereDesign.Spacing.sm) {
-                    ForEach(MetricType.allCases, id: \.self) { metric in
-                        MetricSelectorButton(
-                            metric: metric,
-                            isSelected: selectedMetric == metric,
-                            onTap: {
-                                withAnimation(FrancoSphereDesign.Animations.spring) {
-                                    selectedMetric = metric
+                    ForEach(ClientMetricType.allCases, id: \.self) { metric in
+                        if metric != .cost || clientIntelligence.showCostData {
+                            MetricSelectorButton(
+                                metric: metric,
+                                isSelected: selectedMetric == metric,
+                                onTap: {
+                                    withAnimation(FrancoSphereDesign.Animations.spring) {
+                                        selectedMetric = metric
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -123,14 +130,14 @@ struct PortfolioOverviewView: View {
             
             Group {
                 switch selectedMetric {
-                case .efficiency:
-                    EfficiencyDetailView(intelligence: intelligence)
-                case .tasks:
-                    TasksDetailView(intelligence: intelligence)
-                case .performance:
-                    PerformanceDetailView(intelligence: intelligence)
-                case .alerts:
-                    AlertsDetailView(intelligence: intelligence)
+                case .service:
+                    ClientServiceDetailView(intelligence: clientIntelligence)
+                case .compliance:
+                    ClientComplianceDetailView(intelligence: clientIntelligence)
+                case .coverage:
+                    ClientCoverageDetailView(intelligence: clientIntelligence)
+                case .cost:
+                    ClientCostDetailView(intelligence: clientIntelligence)
                 }
             }
             .transition(.asymmetric(
@@ -142,23 +149,23 @@ struct PortfolioOverviewView: View {
         .francoDarkCardBackground()
     }
     
-    // MARK: - Performance Summary Section
+    // MARK: - Service Summary Section
     
-    private var performanceSummarySection: some View {
+    private var serviceSummarySection: some View {
         VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
-            Text("Performance Summary")
+            Text("Service Performance")
                 .francoTypography(FrancoSphereDesign.Typography.headline)
                 .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Compliance Score")
+                    Text("Service Level")
                         .francoTypography(FrancoSphereDesign.Typography.caption)
                         .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
-                    Text("\(intelligence.complianceScore)%")
+                    Text("\(Int(clientIntelligence.serviceLevel * 100))%")
                         .francoTypography(FrancoSphereDesign.Typography.title2)
-                        .foregroundColor(complianceColor)
+                        .foregroundColor(serviceLevelColor)
                 }
                 
                 Spacer()
@@ -169,14 +176,14 @@ struct PortfolioOverviewView: View {
                         .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     HStack(spacing: 4) {
-                        Image(systemName: trendIcon(for: intelligence.monthlyTrend))
+                        Image(systemName: trendIcon(for: clientIntelligence.monthlyTrend))
                             .font(.caption)
-                            .foregroundColor(trendColor(for: intelligence.monthlyTrend))
+                            .foregroundColor(trendColor(for: clientIntelligence.monthlyTrend))
                         
-                        Text(intelligence.monthlyTrend.rawValue.capitalized)
+                        Text(clientIntelligence.monthlyTrend.rawValue.capitalized)
                             .francoTypography(FrancoSphereDesign.Typography.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(trendColor(for: intelligence.monthlyTrend))
+                            .foregroundColor(trendColor(for: clientIntelligence.monthlyTrend))
                     }
                 }
             }
@@ -185,45 +192,108 @@ struct PortfolioOverviewView: View {
         }
     }
     
-    // MARK: - Alert Summary Section
+    // MARK: - Cost Overview Section
     
-    private var alertSummarySection: some View {
+    private var costOverviewSection: some View {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+            HStack {
+                Image(systemName: "dollarsign.circle")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                
+                Text("Cost Overview")
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            }
+            
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("This Month")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    Text(formatCurrency(clientIntelligence.monthlySpend))
+                        .francoTypography(FrancoSphereDesign.Typography.title3)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text("Budget")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    Text(formatCurrency(clientIntelligence.monthlyBudget))
+                        .francoTypography(FrancoSphereDesign.Typography.title3)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                }
+            }
+            
+            // Budget progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        .frame(height: 8)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(budgetProgressColor)
+                        .frame(
+                            width: min(
+                                geometry.size.width * (clientIntelligence.monthlySpend / clientIntelligence.monthlyBudget),
+                                geometry.size.width
+                            ),
+                            height: 8
+                        )
+                        .animation(.easeOut(duration: 0.5), value: clientIntelligence.monthlySpend)
+                }
+            }
+            .frame(height: 8)
+            .padding(.top, 8)
+        }
+        .francoCardPadding()
+        .francoDarkCardBackground()
+    }
+    
+    // MARK: - Property Status Section
+    
+    private var propertyStatusSection: some View {
         VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
             HStack {
                 Image(systemName: "info.circle")
                     .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                 
-                Text("Portfolio Status")
+                Text("Property Status")
                     .francoTypography(FrancoSphereDesign.Typography.headline)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             
             VStack(spacing: FrancoSphereDesign.Spacing.sm) {
                 StatusRow(
-                    title: "Buildings Monitored",
-                    value: "\(intelligence.totalBuildings)",
+                    title: "Properties Managed",
+                    value: "\(clientIntelligence.totalProperties)",
                     icon: "building.2",
                     color: FrancoSphereDesign.DashboardColors.info
                 )
                 
                 StatusRow(
-                    title: "Active Workers",
-                    value: "\(intelligence.activeWorkers)",
-                    icon: "person.2",
+                    title: "Service Coverage",
+                    value: "\(Int(clientIntelligence.coveragePercentage))%",
+                    icon: "mappin.circle",
                     color: FrancoSphereDesign.DashboardColors.tertiaryAction
                 )
                 
                 StatusRow(
-                    title: "Critical Issues",
-                    value: "\(intelligence.criticalIssues)",
+                    title: "Compliance Issues",
+                    value: "\(clientIntelligence.complianceIssues)",
                     icon: "exclamationmark.triangle",
-                    color: intelligence.criticalIssues > 0 ?
+                    color: clientIntelligence.complianceIssues > 0 ?
                         FrancoSphereDesign.DashboardColors.critical :
                         FrancoSphereDesign.DashboardColors.success
                 )
                 
                 StatusRow(
-                    title: "Overall Health",
+                    title: "Overall Status",
                     value: healthStatus,
                     icon: healthIcon,
                     color: healthColor
@@ -259,25 +329,31 @@ struct PortfolioOverviewView: View {
     
     // MARK: - Computed Properties
     
-    private var efficiencyColor: Color {
-        FrancoSphereDesign.EnumColors.trendDirection(
-            intelligence.completionRate >= 0.9 ? .up :
-            intelligence.completionRate >= 0.7 ? .stable : .down
-        )
+    private var serviceLevelColor: Color {
+        if clientIntelligence.serviceLevel >= 0.9 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if clientIntelligence.serviceLevel >= 0.8 {
+            return FrancoSphereDesign.DashboardColors.info
+        } else if clientIntelligence.serviceLevel >= 0.7 {
+            return FrancoSphereDesign.DashboardColors.warning
+        }
+        return FrancoSphereDesign.DashboardColors.critical
     }
     
-    private var complianceColor: Color {
-        let score = Double(intelligence.complianceScore) / 100.0
-        return FrancoSphereDesign.EnumColors.complianceStatus(
-            score >= 0.9 ? .compliant :
-            score >= 0.7 ? .warning : .violation
-        )
+    private var budgetProgressColor: Color {
+        let percentage = clientIntelligence.monthlySpend / clientIntelligence.monthlyBudget
+        if percentage > 1.0 {
+            return FrancoSphereDesign.DashboardColors.critical
+        } else if percentage > 0.9 {
+            return FrancoSphereDesign.DashboardColors.warning
+        }
+        return FrancoSphereDesign.DashboardColors.success
     }
     
     private var healthStatus: String {
-        let efficiency = intelligence.completionRate
-        let compliance = Double(intelligence.complianceScore) / 100.0
-        let average = (efficiency + compliance) / 2
+        let service = clientIntelligence.serviceLevel
+        let compliance = Double(clientIntelligence.complianceScore) / 100.0
+        let average = (service + compliance) / 2
         
         if average >= 0.9 { return "Excellent" }
         if average >= 0.8 { return "Good" }
@@ -286,9 +362,9 @@ struct PortfolioOverviewView: View {
     }
     
     private var healthIcon: String {
-        let efficiency = intelligence.completionRate
-        let compliance = Double(intelligence.complianceScore) / 100.0
-        let average = (efficiency + compliance) / 2
+        let service = clientIntelligence.serviceLevel
+        let compliance = Double(clientIntelligence.complianceScore) / 100.0
+        let average = (service + compliance) / 2
         
         if average >= 0.9 { return "checkmark.circle.fill" }
         if average >= 0.8 { return "checkmark.circle" }
@@ -297,9 +373,9 @@ struct PortfolioOverviewView: View {
     }
     
     private var healthColor: Color {
-        let efficiency = intelligence.completionRate
-        let compliance = Double(intelligence.complianceScore) / 100.0
-        let average = (efficiency + compliance) / 2
+        let service = clientIntelligence.serviceLevel
+        let compliance = Double(clientIntelligence.complianceScore) / 100.0
+        let average = (service + compliance) / 2
         
         return FrancoSphereDesign.EnumColors.dataHealthStatus(
             average >= 0.9 ? .healthy :
@@ -308,6 +384,13 @@ struct PortfolioOverviewView: View {
     }
     
     // MARK: - Helper Functions
+    
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
     
     private func trendIcon(for trend: CoreTypes.TrendDirection) -> String {
         FrancoSphereDesign.Icons.statusIcon(for: trend.rawValue)
@@ -318,17 +401,17 @@ struct PortfolioOverviewView: View {
     }
 }
 
-// MARK: - Portfolio Hero Card
+// MARK: - Client Portfolio Hero Card
 
-struct PortfolioHeroCard: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct ClientPortfolioHeroCard: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     @Binding var isCollapsed: Bool
     
     var body: some View {
         VStack(spacing: 0) {
             if isCollapsed {
                 // Minimal collapsed version
-                MinimalPortfolioHero(
+                MinimalClientPortfolioHero(
                     intelligence: intelligence,
                     onExpand: {
                         withAnimation(FrancoSphereDesign.Animations.spring) {
@@ -338,7 +421,7 @@ struct PortfolioHeroCard: View {
                 )
             } else {
                 // Full hero card
-                FullPortfolioHero(
+                FullClientPortfolioHero(
                     intelligence: intelligence,
                     onCollapse: {
                         withAnimation(FrancoSphereDesign.Animations.spring) {
@@ -351,8 +434,8 @@ struct PortfolioHeroCard: View {
     }
 }
 
-struct MinimalPortfolioHero: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct MinimalClientPortfolioHero: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     let onExpand: () -> Void
     
     var body: some View {
@@ -363,7 +446,7 @@ struct MinimalPortfolioHero: View {
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
                 
-                Text("Portfolio Overview")
+                Text("Property Overview")
                     .francoTypography(FrancoSphereDesign.Typography.headline)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
@@ -374,7 +457,7 @@ struct MinimalPortfolioHero: View {
                 HStack(spacing: 4) {
                     Image(systemName: "building.2")
                         .font(.caption)
-                    Text("\(intelligence.totalBuildings)")
+                    Text("\(intelligence.totalProperties)")
                 }
                 .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
@@ -382,9 +465,9 @@ struct MinimalPortfolioHero: View {
                     .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 
                 HStack(spacing: 4) {
-                    Image(systemName: "speedometer")
+                    Image(systemName: "star")
                         .font(.caption)
-                    Text("\(Int(intelligence.completionRate * 100))%")
+                    Text("\(Int(intelligence.serviceLevel * 100))%")
                 }
                 .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
@@ -402,19 +485,19 @@ struct MinimalPortfolioHero: View {
     }
     
     private var statusColor: Color {
-        let average = (intelligence.completionRate + Double(intelligence.complianceScore) / 100.0) / 2
+        let average = (intelligence.serviceLevel + Double(intelligence.complianceScore) / 100.0) / 2
         return average >= 0.8 ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning
     }
 }
 
-struct FullPortfolioHero: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct FullClientPortfolioHero: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     let onCollapse: () -> Void
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
             VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
-                Text("Portfolio Overview")
+                Text("Your Properties")
                     .francoTypography(FrancoSphereDesign.Typography.title2)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
@@ -423,36 +506,46 @@ struct FullPortfolioHero: View {
                     GridItem(.flexible())
                 ], spacing: FrancoSphereDesign.Spacing.sm) {
                     SummaryCard(
-                        title: "Total Buildings",
-                        value: "\(intelligence.totalBuildings)",
+                        title: "Properties",
+                        value: "\(intelligence.totalProperties)",
                         icon: "building.2",
                         color: FrancoSphereDesign.DashboardColors.info,
                         trend: nil
                     )
                     
                     SummaryCard(
-                        title: "Completion Rate",
-                        value: "\(Int(intelligence.completionRate * 100))%",
-                        icon: "speedometer",
-                        color: efficiencyColor,
+                        title: "Service Level",
+                        value: "\(Int(intelligence.serviceLevel * 100))%",
+                        icon: "star",
+                        color: serviceLevelColor,
                         trend: intelligence.monthlyTrend
                     )
                     
                     SummaryCard(
-                        title: "Completed Tasks",
-                        value: "\(intelligence.completedTasks)",
-                        icon: "checkmark.circle",
-                        color: FrancoSphereDesign.DashboardColors.success,
+                        title: "Compliance",
+                        value: "\(intelligence.complianceScore)%",
+                        icon: "checkmark.shield",
+                        color: complianceColor,
                         trend: nil
                     )
                     
-                    SummaryCard(
-                        title: "Active Workers",
-                        value: "\(intelligence.activeWorkers)",
-                        icon: "person.2",
-                        color: FrancoSphereDesign.DashboardColors.tertiaryAction,
-                        trend: nil
-                    )
+                    if intelligence.showCostData {
+                        SummaryCard(
+                            title: "Monthly Cost",
+                            value: formatCurrency(intelligence.monthlySpend),
+                            icon: "dollarsign.circle",
+                            color: costColor,
+                            trend: nil
+                        )
+                    } else {
+                        SummaryCard(
+                            title: "Coverage",
+                            value: "\(Int(intelligence.coveragePercentage))%",
+                            icon: "mappin.circle",
+                            color: FrancoSphereDesign.DashboardColors.tertiaryAction,
+                            trend: nil
+                        )
+                    }
                 }
             }
             .francoCardPadding()
@@ -473,15 +566,45 @@ struct FullPortfolioHero: View {
         }
     }
     
-    private var efficiencyColor: Color {
-        FrancoSphereDesign.EnumColors.trendDirection(
-            intelligence.completionRate >= 0.9 ? .up :
-            intelligence.completionRate >= 0.7 ? .stable : .down
-        )
+    private var serviceLevelColor: Color {
+        if intelligence.serviceLevel >= 0.9 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if intelligence.serviceLevel >= 0.8 {
+            return FrancoSphereDesign.DashboardColors.info
+        }
+        return FrancoSphereDesign.DashboardColors.warning
+    }
+    
+    private var complianceColor: Color {
+        if intelligence.complianceScore >= 90 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if intelligence.complianceScore >= 80 {
+            return FrancoSphereDesign.DashboardColors.info
+        } else if intelligence.complianceScore >= 70 {
+            return FrancoSphereDesign.DashboardColors.warning
+        }
+        return FrancoSphereDesign.DashboardColors.critical
+    }
+    
+    private var costColor: Color {
+        let percentage = intelligence.monthlySpend / intelligence.monthlyBudget
+        if percentage > 1.0 {
+            return FrancoSphereDesign.DashboardColors.critical
+        } else if percentage > 0.9 {
+            return FrancoSphereDesign.DashboardColors.warning
+        }
+        return FrancoSphereDesign.DashboardColors.success
+    }
+    
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
     }
 }
 
-// MARK: - Supporting Components (Updated for Dark Theme)
+// MARK: - Supporting Components
 
 struct SummaryCard: View {
     let title: String
@@ -536,7 +659,7 @@ struct SummaryCard: View {
 }
 
 struct MetricSelectorButton: View {
-    let metric: MetricType
+    let metric: ClientMetricType
     let isSelected: Bool
     let onTap: () -> Void
     
@@ -594,68 +717,48 @@ struct StatusRow: View {
     }
 }
 
-// MARK: - Metric Detail Views (Updated for Dark Theme)
+// MARK: - Client Metric Detail Views
 
-struct EfficiencyDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct ClientServiceDetailView: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             HStack {
-                Text("Portfolio Efficiency")
+                Text("Service Performance")
                     .francoTypography(FrancoSphereDesign.Typography.subheadline)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
-                Text("\(Int(intelligence.completionRate * 100))%")
+                Text("\(Int(intelligence.serviceLevel * 100))%")
                     .francoTypography(FrancoSphereDesign.Typography.title)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             
             FrancoMetricsProgress(
-                value: intelligence.completionRate,
-                role: .admin
+                value: intelligence.serviceLevel,
+                role: .client
             )
             
-            HStack {
-                Text("Target: 85%")
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Service includes regular cleaning, maintenance, and compliance monitoring for all your properties.")
                     .francoTypography(FrancoSphereDesign.Typography.caption)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
-                
-                Spacer()
-                
-                Text(intelligence.completionRate >= 0.85 ? "Above Target" : "Below Target")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(intelligence.completionRate >= 0.85 ?
-                        FrancoSphereDesign.DashboardColors.success :
-                        FrancoSphereDesign.DashboardColors.warning
-                    )
+                    .multilineTextAlignment(.leading)
             }
         }
     }
 }
 
-struct TasksDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct ClientComplianceDetailView: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             HStack {
                 VStack(alignment: .leading) {
-                    Text("Completed Tasks")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                    
-                    Text("\(intelligence.completedTasks)")
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing) {
-                    Text("Compliance")
+                    Text("Compliance Score")
                         .francoTypography(FrancoSphereDesign.Typography.caption)
                         .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
@@ -663,259 +766,178 @@ struct TasksDetailView: View {
                         .francoTypography(FrancoSphereDesign.Typography.title2)
                         .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
-            }
-            
-            HStack {
-                Label("Tasks Completed", systemImage: "checkmark.circle")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 
                 Spacer()
                 
-                Label("Active Workers: \(intelligence.activeWorkers)", systemImage: "person.2")
+                VStack(alignment: .trailing) {
+                    Text("Issues")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    Text("\(intelligence.complianceIssues)")
+                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .foregroundColor(intelligence.complianceIssues > 0 ?
+                            FrancoSphereDesign.DashboardColors.warning :
+                            FrancoSphereDesign.DashboardColors.success
+                        )
+                }
+            }
+            
+            if intelligence.complianceIssues > 0 {
+                Text("\(intelligence.complianceIssues) compliance issues require attention across your properties.")
                     .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+            } else {
+                Text("All properties are in good standing with local regulations.")
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
             }
         }
     }
 }
 
-struct PerformanceDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct ClientCoverageDetailView: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
-            Text("Performance is calculated based on completion rates, compliance scores, and worker productivity across your portfolio.")
+            HStack {
+                Text("Service Coverage")
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                
+                Spacer()
+                
+                Text("\(Int(intelligence.coveragePercentage))%")
+                    .francoTypography(FrancoSphereDesign.Typography.title)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            }
+            
+            FrancoMetricsProgress(
+                value: intelligence.coveragePercentage / 100.0,
+                role: .client
+            )
+            
+            Text("Coverage indicates the percentage of scheduled services completed on time across all properties.")
                 .francoTypography(FrancoSphereDesign.Typography.caption)
                 .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 .multilineTextAlignment(.leading)
-            
-            HStack {
-                PerformanceMetricItem(
-                    title: "Completion",
-                    value: "\(Int(intelligence.completionRate * 100))%",
-                    color: intelligence.completionRate >= 0.8 ?
-                        FrancoSphereDesign.DashboardColors.success :
-                        FrancoSphereDesign.DashboardColors.warning
-                )
-                
-                Spacer()
-                
-                PerformanceMetricItem(
-                    title: "Compliance",
-                    value: "\(intelligence.complianceScore)%",
-                    color: intelligence.complianceScore >= 80 ?
-                        FrancoSphereDesign.DashboardColors.success :
-                        FrancoSphereDesign.DashboardColors.warning
-                )
-            }
         }
     }
 }
 
-struct AlertsDetailView: View {
-    let intelligence: CoreTypes.PortfolioIntelligence
+struct ClientCostDetailView: View {
+    let intelligence: CoreTypes.ClientPortfolioIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
-            let overallHealth = (intelligence.completionRate + Double(intelligence.complianceScore) / 100.0) / 2
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Monthly Spend")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    Text(formatCurrency(intelligence.monthlySpend))
+                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing) {
+                    Text("Budget")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    Text(formatCurrency(intelligence.monthlyBudget))
+                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                }
+            }
             
-            if overallHealth >= 0.8 && intelligence.criticalIssues == 0 {
-                HStack {
-                    Image(systemName: "checkmark.circle")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
-                    
-                    Text("Portfolio performing well")
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
-                }
-            } else {
-                VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
-                    if intelligence.criticalIssues > 0 {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle")
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                            
-                            Text("\(intelligence.criticalIssues) critical issues require attention")
-                                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
-                        }
-                    }
-                    
-                    if intelligence.completionRate < 0.8 {
-                        Text("Completion rate needs improvement")
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
-                    }
-                    
-                    if intelligence.complianceScore < 80 {
-                        Text("Compliance requires attention")
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
-                    }
-                }
+            // Budget utilization
+            let utilization = intelligence.monthlySpend / intelligence.monthlyBudget
+            HStack {
+                Text("Budget Utilization: \(Int(utilization * 100))%")
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                
+                Spacer()
+                
+                Text(budgetStatus)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(budgetStatusColor)
             }
         }
     }
-}
-
-struct PerformanceMetricItem: View {
-    let title: String
-    let value: String
-    let color: Color
     
-    var body: some View {
-        VStack {
-            Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.title3)
-                .foregroundColor(color)
-            
-            Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-        }
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+    
+    private var budgetStatus: String {
+        let utilization = intelligence.monthlySpend / intelligence.monthlyBudget
+        if utilization > 1.0 { return "Over Budget" }
+        if utilization > 0.9 { return "Near Budget" }
+        return "On Track"
+    }
+    
+    private var budgetStatusColor: Color {
+        let utilization = intelligence.monthlySpend / intelligence.monthlyBudget
+        if utilization > 1.0 { return FrancoSphereDesign.DashboardColors.critical }
+        if utilization > 0.9 { return FrancoSphereDesign.DashboardColors.warning }
+        return FrancoSphereDesign.DashboardColors.success
     }
 }
 
 // MARK: - Metric Types
 
-enum MetricType: String, CaseIterable {
-    case efficiency = "Efficiency"
-    case tasks = "Tasks"
-    case performance = "Performance"
-    case alerts = "Alerts"
+enum ClientMetricType: String, CaseIterable {
+    case service = "Service"
+    case compliance = "Compliance"
+    case coverage = "Coverage"
+    case cost = "Cost"
     
     var title: String { rawValue }
     
     var icon: String {
         switch self {
-        case .efficiency: return "speedometer"
-        case .tasks: return "checklist"
-        case .performance: return "chart.line.uptrend.xyaxis"
-        case .alerts: return "exclamationmark.triangle"
+        case .service: return "star"
+        case .compliance: return "checkmark.shield"
+        case .coverage: return "mappin.circle"
+        case .cost: return "dollarsign.circle"
         }
     }
     
     var darkThemeColor: Color {
         switch self {
-        case .efficiency: return FrancoSphereDesign.DashboardColors.info
-        case .tasks: return FrancoSphereDesign.DashboardColors.success
-        case .performance: return FrancoSphereDesign.DashboardColors.tertiaryAction
-        case .alerts: return FrancoSphereDesign.DashboardColors.warning
+        case .service: return FrancoSphereDesign.DashboardColors.tertiaryAction
+        case .compliance: return FrancoSphereDesign.DashboardColors.success
+        case .coverage: return FrancoSphereDesign.DashboardColors.info
+        case .cost: return FrancoSphereDesign.DashboardColors.warning
         }
-    }
-}
-
-// MARK: - Insight Detail View
-
-struct InsightDetailView: View {
-    let insight: CoreTypes.IntelligenceInsight
-    @Environment(\.dismiss) var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.lg) {
-                // Insight header
-                VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
-                    HStack {
-                        Image(systemName: iconForInsightType(insight.type))
-                            .foregroundColor(colorForInsightType(insight.type))
-                        
-                        Text(insight.type.rawValue.capitalized)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                        
-                        Spacer()
-                        
-                        if insight.actionRequired {
-                            Label("Action Required", systemImage: "exclamationmark.circle.fill")
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
-                        }
-                    }
-                    
-                    Text(insight.title)
-                        .francoTypography(FrancoSphereDesign.Typography.title3)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                }
-                
-                // Description
-                Text(insight.description)
-                    .francoTypography(FrancoSphereDesign.Typography.body)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                
-                // Affected buildings
-                if !insight.affectedBuildings.isEmpty {
-                    VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
-                        Text("Affected Buildings")
-                            .francoTypography(FrancoSphereDesign.Typography.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                        
-                        ForEach(insight.affectedBuildings, id: \.self) { buildingId in
-                            HStack {
-                                Image(systemName: "building.2")
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                                
-                                Text("Building \(buildingId)")
-                                    .francoTypography(FrancoSphereDesign.Typography.body)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                            }
-                            .padding(.vertical, FrancoSphereDesign.Spacing.xs)
-                        }
-                    }
-                    .francoCardPadding()
-                    .francoGlassBackground()
-                }
-                
-                Spacer()
-            }
-            .padding(FrancoSphereDesign.Spacing.lg)
-            .background(FrancoSphereDesign.DashboardColors.baseBackground)
-            .navigationTitle("Insight Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-    
-    private func iconForInsightType(_ type: CoreTypes.InsightCategory) -> String {
-        switch type {
-        case .efficiency: return "speedometer"
-        case .cost: return "dollarsign.circle"
-        case .safety: return "shield"
-        case .compliance: return "checkmark.shield"
-        case .quality: return "star"
-        case .operations: return "gear"
-        case .maintenance: return "wrench"
-        }
-    }
-    
-    private func colorForInsightType(_ type: CoreTypes.InsightCategory) -> Color {
-        FrancoSphereDesign.EnumColors.insightCategory(type)
     }
 }
 
 // MARK: - Preview
 
-struct PortfolioOverviewView_Previews: PreviewProvider {
+struct ClientPortfolioOverviewView_Previews: PreviewProvider {
     static var previews: some View {
-        PortfolioOverviewView(
-            intelligence: CoreTypes.PortfolioIntelligence(
-                totalBuildings: 12,
-                activeWorkers: 24,
-                completionRate: 0.87,
-                criticalIssues: 3,
-                monthlyTrend: .up,
-                completedTasks: 132,
-                complianceScore: 92,
-                weeklyTrend: 0.05
+        ClientPortfolioOverviewView(
+            clientIntelligence: CoreTypes.ClientPortfolioIntelligence(
+                totalProperties: 3,
+                serviceLevel: 0.92,
+                complianceScore: 88,
+                complianceIssues: 1,
+                monthlyTrend: .stable,
+                coveragePercentage: 95,
+                monthlySpend: 15000,
+                monthlyBudget: 18000,
+                showCostData: true
             )
         )
         .preferredColorScheme(.dark)
