@@ -594,21 +594,21 @@ struct BuildingDetailView: View {
     
     private var quickMetricsCard: some View {
         HStack(spacing: 16) {
-            MetricCard(
+            BuildingMetricCard(
                 title: "Efficiency",
                 value: "\(viewModel.efficiencyScore)%",
                 trend: .up,
                 color: FrancoSphereDesign.DashboardColors.primaryAction
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Compliance",
                 value: viewModel.complianceScore,
                 trend: .stable,
                 color: FrancoSphereDesign.DashboardColors.secondaryAction
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Issues",
                 value: "\(viewModel.openIssues)",
                 trend: viewModel.openIssues > 0 ? .down : .stable,
@@ -885,7 +885,7 @@ struct BuildingDetailView: View {
                     .padding(.vertical, 20)
             } else {
                 ForEach(viewModel.assignedWorkers) { worker in
-                    WorkerStatusRow(worker: worker)
+                    BuildingWorkerStatusRow(worker: worker)
                 }
             }
         }
@@ -966,7 +966,7 @@ struct BuildingDetailView: View {
                     .padding(.vertical, 20)
             } else {
                 ForEach(viewModel.maintenanceHistory.prefix(3)) { record in
-                    MaintenanceRecordRow(record: record)
+                    BuildingMaintenanceRecordRow(record: record)
                 }
             }
         }
@@ -984,7 +984,7 @@ struct BuildingDetailView: View {
     // MARK: - Quick Actions Bar
     private var quickActionsBar: some View {
         HStack(spacing: 0) {
-            QuickActionButton(
+            BuildingQuickActionButton(
                 icon: "camera.fill",
                 title: "Photo",
                 color: FrancoSphereDesign.DashboardColors.primaryAction,
@@ -994,14 +994,14 @@ struct BuildingDetailView: View {
                 }
             )
             
-            QuickActionButton(
+            BuildingQuickActionButton(
                 icon: "phone.fill",
                 title: "Call",
                 color: FrancoSphereDesign.DashboardColors.secondaryAction,
                 action: { showingCallMenu = true }
             )
             
-            QuickActionButton(
+            BuildingQuickActionButton(
                 icon: "map.fill",
                 title: "Navigate",
                 color: FrancoSphereDesign.DashboardColors.info,
@@ -1031,7 +1031,7 @@ struct BuildingDetailView: View {
                     }
                 }
             } label: {
-                QuickActionButton(
+                BuildingQuickActionButton(
                     icon: "plus.circle.fill",
                     title: "More",
                     color: FrancoSphereDesign.DashboardColors.inactive,
@@ -1224,6 +1224,39 @@ enum SpaceCategory: String, CaseIterable {
 
 // MARK: - Data Models
 
+struct BuildingContact: Identifiable {
+    let id = UUID()
+    let name: String
+    let role: String?
+    let email: String?
+    let phone: String?
+    let isEmergencyContact: Bool
+}
+
+struct DailyRoutine: Identifiable {
+    let id: String
+    let title: String
+    let scheduledTime: String?
+    var isCompleted: Bool = false
+    var assignedWorker: String? = nil
+    var requiredInventory: [String] = []
+}
+
+struct AssignedWorker: Identifiable {
+    let id: String
+    let name: String
+    let schedule: String
+    let isOnSite: Bool
+}
+
+struct MaintenanceRecord: Identifiable {
+    let id: String
+    let title: String
+    let date: Date
+    let description: String?
+    let cost: Decimal?
+}
+
 struct SpaceAccess: Identifiable {
     let id: String
     let name: String
@@ -1244,7 +1277,7 @@ struct AccessCode: Identifiable {
     let updatedDate: Date
 }
 
-struct BuildingActivity: Identifiable {
+struct BuildingDetailActivity: Identifiable {
     let id: String
     let type: ActivityType
     let description: String
@@ -1320,7 +1353,7 @@ struct MetricRow: View {
     }
 }
 
-struct MetricCard: View {
+struct BuildingQuickMetricCard: View {
     let title: String
     let value: String
     let trend: CoreTypes.TrendDirection
@@ -1335,7 +1368,7 @@ struct MetricCard: View {
                 
                 Spacer()
                 
-                TrendIndicator(direction: trend)
+                BuildingTrendIndicator(direction: trend)
             }
             
             Text(value)
@@ -1356,7 +1389,7 @@ struct MetricCard: View {
     }
 }
 
-struct TrendIndicator: View {
+struct BuildingTrendIndicator: View {
     let direction: CoreTypes.TrendDirection
     
     var body: some View {
@@ -1750,7 +1783,7 @@ struct ComplianceCheckItem: View {
     }
 }
 
-struct WorkerStatusRow: View {
+struct BuildingWorkerStatusRow: View {
     let worker: AssignedWorker
     
     var body: some View {
@@ -1789,7 +1822,7 @@ struct WorkerStatusRow: View {
 }
 
 struct ActivityRow: View {
-    let activity: BuildingActivity
+    let activity: BuildingDetailActivity
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -1825,7 +1858,7 @@ struct ActivityRow: View {
         .padding(.vertical, 4)
     }
     
-    private func iconForActivity(_ type: BuildingActivity.ActivityType) -> String {
+    private func iconForActivity(_ type: BuildingDetailActivity.ActivityType) -> String {
         switch type {
         case .taskCompleted: return "checkmark.circle"
         case .photoAdded: return "camera"
@@ -1837,7 +1870,7 @@ struct ActivityRow: View {
         }
     }
     
-    private func colorForActivity(_ type: BuildingActivity.ActivityType) -> Color {
+    private func colorForActivity(_ type: BuildingDetailActivity.ActivityType) -> Color {
         switch type {
         case .taskCompleted, .routineCompleted, .workerArrived:
             return FrancoSphereDesign.DashboardColors.primaryAction
@@ -1851,7 +1884,7 @@ struct ActivityRow: View {
     }
 }
 
-struct MaintenanceRecordRow: View {
+struct BuildingMaintenanceRecordRow: View {
     let record: MaintenanceRecord
     
     var body: some View {
@@ -1885,7 +1918,7 @@ struct MaintenanceRecordRow: View {
     }
 }
 
-struct QuickActionButton: View {
+struct BuildingQuickActionButton: View {
     let icon: String
     let title: String
     let color: Color
@@ -2033,9 +2066,9 @@ struct PhotoCaptureSheet: View {
     let buildingId: String
     let buildingName: String
     let category: FrancoPhotoCategory
-    let onCapture: (UIImage, FrancoPhotoCategory, String) -> Void
+    let onCapture: (UIImage, FrancoPhotoCategory, String) async -> Void
 
-    @State private var selectedImage: UIImage?
+    @State private var capturedImage: UIImage?
     @State private var showingImagePicker = false
     @State private var showingCamera = false
     @State private var selectedCategory: FrancoPhotoCategory
@@ -2043,7 +2076,7 @@ struct PhotoCaptureSheet: View {
     @State private var isProcessing = false
     @Environment(\.dismiss) private var dismiss
     
-    init(buildingId: String, buildingName: String, category: FrancoPhotoCategory, onCapture: @escaping (UIImage, FrancoPhotoCategory, String) -> Void) {
+    init(buildingId: String, buildingName: String, category: FrancoPhotoCategory, onCapture: @escaping (UIImage, FrancoPhotoCategory, String) async -> Void) {
         self.buildingId = buildingId
         self.buildingName = buildingName
         self.category = category
@@ -2055,7 +2088,7 @@ struct PhotoCaptureSheet: View {
         NavigationView {
             VStack(spacing: 20) {
                 // Photo preview
-                if let image = selectedImage {
+                if let image = capturedImage {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
@@ -2172,10 +2205,10 @@ struct PhotoCaptureSheet: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(image: $selectedImage)
+            ImagePicker(image: $capturedImage)
         }
         .fullScreenCover(isPresented: $showingCamera) {
-            CameraView(image: $selectedImage)
+            CameraView(image: $capturedImage)
         }
     }
     
@@ -2188,13 +2221,14 @@ struct PhotoCaptureSheet: View {
     }
     
     private func savePhoto() {
-        guard let image = selectedImage else { return }
+        guard let image = capturedImage else { return }
         
         isProcessing = true
-        onCapture(image, selectedCategory, notes)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            dismiss()
+        Task {
+            await onCapture(image, selectedCategory, notes)
+            await MainActor.run {
+                dismiss()
+            }
         }
     }
     
@@ -2300,7 +2334,7 @@ class BuildingDetailVM: ObservableObject {
     
     // Activity data
     @Published var assignedWorkers: [AssignedWorker] = []
-    @Published var recentActivities: [BuildingActivity] = []
+    @Published var recentActivities: [BuildingDetailActivity] = []
     @Published var maintenanceHistory: [MaintenanceRecord] = []
     
     // Computed properties
@@ -2555,7 +2589,7 @@ class BuildingDetailVM: ObservableObject {
                 }
                 
                 self.recentActivities = activities.map { activity in
-                    BuildingActivity(
+                    BuildingDetailActivity(
                         id: activity.id,
                         type: mapActivityType(activity.type),
                         description: activity.description,
@@ -2735,7 +2769,7 @@ class BuildingDetailVM: ObservableObject {
         }
     }
     
-    private func mapActivityType(_ type: String) -> BuildingActivity.ActivityType {
+    private func mapActivityType(_ type: String) -> BuildingDetailActivity.ActivityType {
         switch type {
         case "task_completed": return .taskCompleted
         case "photo_added": return .photoAdded
@@ -2782,13 +2816,40 @@ struct BuildingMaintenanceHistoryView: View {
     }
 }
 
-struct ImagePicker: UIViewControllerRepresentable {
+struct MessageComposerView: View {
+    let recipients: [String]
+    let subject: String
+    let prefilledBody: String
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Message Composer")
+                    .font(.largeTitle)
+                Text("Email integration coming in Phase 2")
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("New Message")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Camera View (Using existing ImagePicker)
+struct CameraView: UIViewControllerRepresentable {
     @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
+        picker.sourceType = .camera
         picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
         return picker
     }
     
@@ -2799,9 +2860,9 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: ImagePicker
+        let parent: CameraView
         
-        init(_ parent: ImagePicker) {
+        init(_ parent: CameraView) {
             self.parent = parent
         }
         
@@ -2809,7 +2870,155 @@ struct ImagePicker: UIViewControllerRepresentable {
             if let image = info[.originalImage] as? UIImage {
                 parent.image = image
             }
-            picker.dismiss(animated: true)
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
+// MARK: - Worker Assignment Sheet
+struct WorkerAssignmentSheet: View {
+    let buildingId: String
+    let routine: DailyRoutine
+    let onAssign: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var availableWorkers: [AssignedWorker] = []
+    @State private var selectedWorkerId: String?
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Header
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Assign Worker")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(routine.title)
+                            .font(.headline)
+                        
+                        if let time = routine.scheduledTime {
+                            Text(time)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+                }
+                .padding()
+                
+                // Worker list
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(availableWorkers) { worker in
+                            WorkerSelectionRow(
+                                worker: worker,
+                                isSelected: selectedWorkerId == worker.id,
+                                onSelect: {
+                                    selectedWorkerId = worker.id
+                                }
+                            )
+                        }
+                    }
+                    .padding()
+                }
+                
+                // Action buttons
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+                    
+                    Button("Assign") {
+                        if let workerId = selectedWorkerId {
+                            onAssign(workerId)
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        selectedWorkerId != nil ? Color.blue : Color.gray
+                    )
+                    .cornerRadius(12)
+                    .disabled(selectedWorkerId == nil)
+                }
+                .padding()
+            }
+            .navigationBarHidden(true)
+        }
+        .presentationDetents([.medium])
+        .task {
+            loadAvailableWorkers()
+        }
+    }
+    
+    private func loadAvailableWorkers() {
+        // Load real workers assigned to this building
+        // For now, using sample data
+        availableWorkers = [
+            AssignedWorker(id: "4", name: "Kevin Dutan", schedule: "6 AM - 2 PM", isOnSite: true),
+            AssignedWorker(id: "2", name: "Edwin Lema", schedule: "2 PM - 10 PM", isOnSite: false),
+            AssignedWorker(id: "5", name: "Mercedes Inamagua", schedule: "6 AM - 2 PM", isOnSite: false)
+        ]
+    }
+}
+
+struct WorkerSelectionRow: View {
+    let worker: AssignedWorker
+    let isSelected: Bool
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(worker.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: 8) {
+                        Text(worker.schedule)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        if worker.isOnSite {
+                            Label("On-site", systemImage: "location.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundColor(isSelected ? .blue : .gray)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+            )
         }
     }
 }

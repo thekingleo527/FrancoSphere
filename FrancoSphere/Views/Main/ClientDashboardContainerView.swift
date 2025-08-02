@@ -1,23 +1,18 @@
 //
 //  ClientDashboardContainerView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
-//
-//  ClientDashboardContainerView.swift
-//  FrancoSphere
+//  Container view for Client Dashboard
 //
 
 import SwiftUI
 
 struct ClientDashboardContainerView: View {
-    // This view creates the ViewModel for the client experience.
-    @StateObject private var viewModel = ClientDashboardViewModel()
-
+    @EnvironmentObject private var authManager: NewAuthManager
+    
     var body: some View {
-        ClientDashboardView(viewModel: viewModel)
+        // ClientDashboardView creates its own ViewModel internally
+        ClientDashboardView()
+            .environmentObject(authManager)
     }
 }

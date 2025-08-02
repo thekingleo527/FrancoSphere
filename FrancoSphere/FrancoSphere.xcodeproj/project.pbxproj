@@ -48,7 +48,6 @@
 		2326C2602E3C06FD0080F005 /* WorkerDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */; };
 		2326C2622E3C070B0080F005 /* AdminDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */; };
 		2326C2642E3C07170080F005 /* ClientDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */; };
-		2326C2662E3C1C210080F005 /* NextStepsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2652E3C1C210080F005 /* NextStepsSection.swift */; };
 		2326C2692E3C23A20080F005 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */; };
 		2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */; };
 		2326C2702E3C36250080F005 /* DSNYModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26F2E3C36250080F005 /* DSNYModels.swift */; };
@@ -286,7 +285,6 @@
 		2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardContainerView.swift; sourceTree = "<group>"; };
 		2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardContainerView.swift; sourceTree = "<group>"; };
 		2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardContainerView.swift; sourceTree = "<group>"; };
-		2326C2652E3C1C210080F005 /* NextStepsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextStepsSection.swift; sourceTree = "<group>"; };
 		2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
 		2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FrancoSphereTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
@@ -1065,7 +1063,6 @@
 		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
-				2326C2652E3C1C210080F005 /* NextStepsSection.swift */,
 				2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */,
 				2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */,
 				2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */,
@@ -1394,7 +1391,6 @@
 				2326C21D2E3B2AD70080F005 /* SyncStatusView.swift in Sources */,
 				2377A0152E39885600F4A10F /* NovaTypes.swift in Sources */,
 				2377A0172E39885600F4A10F /* CLLocationCoordinate2DExtension.swift in Sources */,
-				2326C2662E3C1C210080F005 /* NextStepsSection.swift in Sources */,
 				2326C2102E3B27740080F005 /* WebSocketManager.swift in Sources */,
 				2377A0182E39885600F4A10F /* WorkerFeedbackManager.swift in Sources */,
 				2377A0192E39885600F4A10F /* FrancoSphereModels.swift in Sources */,

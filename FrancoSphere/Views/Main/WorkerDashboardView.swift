@@ -10,6 +10,7 @@
 //  ✅ FIXED: Switch statements are now exhaustive
 //  ✅ DARK ELEGANCE: Updated with new theme colors
 //  ✅ OPTIMIZED: Removed NextStepsView for cleaner layout
+//  ✅ FIXED: @AppStorage now works with raw value enum
 //
 
 import Foundation
@@ -54,12 +55,12 @@ struct WorkerDashboardView: View {
         case emergency
     }
     
-    enum IntelPanelState {
-        case hidden
-        case minimal
-        case collapsed
-        case expanded
-        case fullscreen
+    enum IntelPanelState: String {
+        case hidden = "hidden"
+        case minimal = "minimal"
+        case collapsed = "collapsed"
+        case expanded = "expanded"
+        case fullscreen = "fullscreen"
     }
     
     // MARK: - Computed Properties
@@ -91,6 +92,7 @@ struct WorkerDashboardView: View {
             focusBuildingId: nil,
             onBuildingTap: { building in
                 // Handle building tap if needed
+                print("Building tapped: \(building.name)")
             }
         ) {
             ZStack {
@@ -298,16 +300,16 @@ struct WorkerDashboardView: View {
     
     private func handleIntelligenceNavigation(_ target: IntelligencePreviewPanel.NavigationTarget) {
         switch target {
-        case .tasks(let urgentCount):
+        case .tasks(_):
             showAllTasks = true
             
-        case .buildings(let affected):
-            print("Navigate to buildings: \(affected)")
+        case .buildings(_):
+            print("Navigate to buildings")
             
-        case .compliance(let deadline):
+        case .compliance(_):
             showAllTasks = true
             
-        case .maintenance(let overdue):
+        case .maintenance(_):
             showAllTasks = true
             
         case .fullInsights:

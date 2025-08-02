@@ -1,20 +1,16 @@
 
-//  Created by Shawn Magloire on 7/31/25.
-//
-
-
-//
 //  AdminDashboardContainerView.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
+//
+//  Container view for Admin/Manager Dashboard
 //
 
-import SwiftUI
-
-struct AdminDashboardContainerView_WithEnvironment: View {
-    @StateObject private var viewModel = AdminDashboardViewModel()
+struct AdminDashboardContainerView: View {
+    @EnvironmentObject private var authManager: NewAuthManager
     
     var body: some View {
+        // AdminDashboardView creates its own ViewModel internally
         AdminDashboardView()
-            .environmentObject(viewModel)
+            .environmentObject(authManager)
     }
 }
