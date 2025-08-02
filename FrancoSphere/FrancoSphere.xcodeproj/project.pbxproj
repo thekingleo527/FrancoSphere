@@ -69,7 +69,7 @@
 		23779FF52E39885600F4A10F /* NovaInteractionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F762E39885600F4A10F /* NovaInteractionView.swift */; };
 		23779FF62E39885600F4A10F /* GRDBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F422E39885600F4A10F /* GRDBManager.swift */; };
 		23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F6B2E39885600F4A10F /* UserExtensions.swift */; };
-		23779FF82E39885600F4A10F /* PortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */; };
+		23779FF82E39885600F4A10F /* ClientPortfolioOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD62E39885600F4A10F /* ClientPortfolioOverviewView.swift */; };
 		23779FF92E39885600F4A10F /* BuildingFeatureConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F932E39885600F4A10F /* BuildingFeatureConfiguration.swift */; };
 		23779FFA2E39885600F4A10F /* ComplianceDataDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F5C2E39885600F4A10F /* ComplianceDataDTO.swift */; };
 		23779FFB2E39885600F4A10F /* HeroStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F052E39885600F4A10F /* HeroStatusCard.swift */; };
@@ -408,7 +408,7 @@
 		23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceOverviewView.swift; sourceTree = "<group>"; };
 		23779FD32E39885600F4A10F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		23779FD52E39885600F4A10F /* InitializationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationView.swift; sourceTree = "<group>"; };
-		23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioOverviewView.swift; sourceTree = "<group>"; };
+		23779FD62E39885600F4A10F /* ClientPortfolioOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPortfolioOverviewView.swift; sourceTree = "<group>"; };
 		23779FD72E39885600F4A10F /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		23779FD92E39885600F4A10F /* TaskRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRequestView.swift; sourceTree = "<group>"; };
 		23779FDA2E39885600F4A10F /* TaskTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTimelineView.swift; sourceTree = "<group>"; };
@@ -1080,7 +1080,7 @@
 				23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */,
 				23779FD32E39885600F4A10F /* ContentView.swift */,
 				23779FD52E39885600F4A10F /* InitializationView.swift */,
-				23779FD62E39885600F4A10F /* PortfolioOverviewView.swift */,
+				23779FD62E39885600F4A10F /* ClientPortfolioOverviewView.swift */,
 				23779FD72E39885600F4A10F /* ProfileView.swift */,
 				23779FD92E39885600F4A10F /* TaskRequestView.swift */,
 				23779FDA2E39885600F4A10F /* TaskTimelineView.swift */,
@@ -1345,7 +1345,7 @@
 				23779FF72E39885600F4A10F /* UserExtensions.swift in Sources */,
 				23800F7F2E3E53E4006F9E44 /* ReportService.swift in Sources */,
 				2326C1F62E3AB7B00080F005 /* BuildingComplianceComponents.swift in Sources */,
-				23779FF82E39885600F4A10F /* PortfolioOverviewView.swift in Sources */,
+				23779FF82E39885600F4A10F /* ClientPortfolioOverviewView.swift in Sources */,
 				23779FF92E39885600F4A10F /* BuildingFeatureConfiguration.swift in Sources */,
 				23779FFA2E39885600F4A10F /* ComplianceDataDTO.swift in Sources */,
 				23779FFB2E39885600F4A10F /* HeroStatusCard.swift in Sources */,

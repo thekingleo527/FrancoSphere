@@ -1,15 +1,9 @@
 //
 //  ClientContextEngine.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 8/2/25.
-//
-
-
-//
-//  ClientContextEngine.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Removed duplicate type declarations
+//  ✅ UPDATED: Added missing properties for ClientDashboardView
 //  ✅ REAL-TIME: Aggregates live data from all sources
 //  ✅ INTELLIGENT: Processes worker activity into client insights
 //  ✅ REACTIVE: Responds to dashboard sync updates
@@ -24,7 +18,51 @@ import SwiftUI
 final class ClientContextEngine: ObservableObject {
     static let shared = ClientContextEngine()
     
-    // MARK: - Published Properties
+    // MARK: - NEW Properties for ClientDashboardView Compatibility
+    // Note: These types should be imported from ClientDashboardView or defined in CoreTypes
+    
+    @Published var realtimeRoutineMetrics: RealtimeRoutineMetrics = {
+        var metrics = RealtimeRoutineMetrics()
+        metrics.overallCompletion = 0.0
+        metrics.activeWorkerCount = 0
+        metrics.behindScheduleCount = 0
+        metrics.buildingStatuses = [:]
+        return metrics
+    }()
+    
+    @Published var activeWorkerStatus: ActiveWorkerStatus = {
+        return ActiveWorkerStatus(
+            totalActive: 0,
+            byBuilding: [:],
+            utilizationRate: 0.0
+        )
+    }()
+    
+    @Published var complianceStatus: ComplianceStatus = {
+        return ComplianceStatus(
+            overallScore: 0.85,
+            criticalViolations: 0,
+            pendingInspections: 0,
+            lastUpdated: Date()
+        )
+    }()
+    
+    @Published var monthlyMetrics: MonthlyMetrics = {
+        return MonthlyMetrics(
+            currentSpend: 0,
+            monthlyBudget: 10000,
+            projectedSpend: 0,
+            daysRemaining: 30
+        )
+    }()
+    
+    // Client profile for header
+    @Published var clientProfile: ClientProfile? = nil
+    
+    // Compliance data by building
+    @Published var clientComplianceData: [String: ComplianceData] = [:]
+    
+    // MARK: - Original Published Properties
     
     // Portfolio Overview
     @Published var portfolioHealth: CoreTypes.PortfolioHealth = .empty
@@ -34,10 +72,6 @@ final class ClientContextEngine: ObservableObject {
     // Real-time Metrics
     @Published var realtimeMetrics: CoreTypes.RealtimePortfolioMetrics = .empty
     @Published var syncProgress: Double = 0.0
-    
-    // Worker Activity
-    @Published var activeWorkerStatus: CoreTypes.ActiveWorkerStatus = .empty
-    @Published var workerProductivityInsights: [CoreTypes.WorkerProductivityInsight] = []
     
     // Compliance
     @Published var complianceOverview: CoreTypes.ComplianceOverview = .empty
@@ -58,6 +92,13 @@ final class ClientContextEngine: ObservableObject {
     @Published var estimatedMonthlySavings: Double = 0
     @Published var costOptimizationInsights: [CoreTypes.CostInsight] = []
     
+    // Worker Activity (keeping original)
+    @Published var workerProductivityInsights: [CoreTypes.WorkerProductivityInsight] = []
+    
+    // MARK: - Computed Properties for ClientDashboardView
+    // Note: These are now part of the extension in ClientDashboardView
+    // Removing duplicates to avoid redeclaration errors
+    
     // MARK: - Private Properties
     
     private let dashboardSync = DashboardSyncService.shared
@@ -76,9 +117,138 @@ final class ClientContextEngine: ObservableObject {
     private init() {
         setupSubscriptions()
         startRealtimeMonitoring()
+        loadClientProfile()
     }
     
-    // MARK: - Public Methods
+    // MARK: - NEW Methods for ClientDashboardView
+    
+    func refreshContext() async {
+        await refreshAllData()
+        await updateRealtimeRoutineMetrics()
+        await updateActiveWorkerStatus()
+        await updateComplianceStatus()
+        await updateMonthlyMetrics()
+    }
+    
+    private func updateRealtimeRoutineMetrics() async {
+        var newMetrics = RealtimeRoutineMetrics()
+        
+        // Calculate overall completion across all buildings
+        var totalCompletion = 0.0
+        var totalWorkers = 0
+        var behindCount = 0
+        var buildingStatuses: [String: BuildingRoutineStatus] = [:]
+        
+        for building in clientBuildings {
+            if let metrics = buildingMetrics[building.id] {
+                let status = BuildingRoutineStatus(
+                    buildingId: building.id,
+                    buildingName: building.name,
+                    completionRate: metrics.completionRate,
+                    timeBlock: .current,
+                    activeWorkerCount: metrics.activeWorkers,
+                    isOnSchedule: metrics.completionRate >= expectedCompletionForCurrentTime(),
+                    estimatedCompletion: estimateCompletionTime(metrics),
+                    hasIssue: metrics.criticalIssues > 0
+                )
+                
+                buildingStatuses[building.id] = status
+                totalCompletion += metrics.completionRate
+                totalWorkers += metrics.activeWorkers
+                
+                if status.isBehindSchedule {
+                    behindCount += 1
+                }
+            }
+        }
+        
+        newMetrics.overallCompletion = clientBuildings.isEmpty ? 0 : totalCompletion / Double(clientBuildings.count)
+        newMetrics.activeWorkerCount = totalWorkers
+        newMetrics.behindScheduleCount = behindCount
+        newMetrics.buildingStatuses = buildingStatuses
+        
+        await MainActor.run {
+            self.realtimeRoutineMetrics = newMetrics
+        }
+    }
+    
+    private func updateActiveWorkerStatus() async {
+        // Get worker data from existing activeWorkerStatus
+        let workers = try? await workerService.getActiveWorkers()
+        let totalActive = workers?.count ?? 0
+        
+        // Calculate by building
+        var byBuilding: [String: Int] = [:]
+        for building in clientBuildings {
+            if let metrics = buildingMetrics[building.id] {
+                byBuilding[building.id] = metrics.activeWorkers
+            }
+        }
+        
+        // Calculate utilization
+        let totalAssigned = try? await workerService.getTotalAssignedWorkers()
+        let utilizationRate = (totalAssigned ?? 0) > 0 ? Double(totalActive) / Double(totalAssigned ?? 1) : 0.0
+        
+        await MainActor.run {
+            self.activeWorkerStatus = ActiveWorkerStatus(
+                totalActive: totalActive,
+                byBuilding: byBuilding,
+                utilizationRate: utilizationRate
+            )
+        }
+    }
+    
+    private func updateComplianceStatus() async {
+        // Use existing compliance data
+        await MainActor.run {
+            self.complianceStatus = ComplianceStatus(
+                overallScore: self.complianceOverview.overallScore,
+                criticalViolations: self.complianceOverview.criticalViolations,
+                pendingInspections: self.complianceOverview.openIssues,
+                lastUpdated: Date()
+            )
+            
+            // Update compliance data by building
+            for building in self.clientBuildings {
+                self.clientComplianceData[building.id] = ComplianceData(
+                    buildingId: building.id,
+                    score: self.buildingMetrics[building.id]?.complianceScore ?? 1.0,
+                    violations: self.allComplianceIssues.filter { $0.buildingId == building.id }.count
+                )
+            }
+        }
+    }
+    
+    private func updateMonthlyMetrics() async {
+        // Calculate monthly metrics from available data
+        let currentSpend = try? await calculateMonthlySpend()
+        let budget = try? await getMonthlyBudget()
+        let projectedSpend = calculateProjectedSpend(current: currentSpend ?? 0)
+        let daysRemaining = calculateDaysRemainingInMonth()
+        
+        await MainActor.run {
+            self.monthlyMetrics = MonthlyMetrics(
+                currentSpend: currentSpend ?? 0,
+                monthlyBudget: budget ?? 10000,
+                projectedSpend: projectedSpend,
+                daysRemaining: daysRemaining
+            )
+        }
+    }
+    
+    private func loadClientProfile() {
+        // Load client profile data
+        Task {
+            if let userId = await NewAuthManager.shared.currentUserId {
+                let profile = try? await fetchClientProfile(userId: userId)
+                await MainActor.run {
+                    self.clientProfile = profile
+                }
+            }
+        }
+    }
+    
+    // MARK: - Original Public Methods
     
     func refreshAllData() async {
         do {
@@ -101,7 +271,13 @@ final class ClientContextEngine: ObservableObject {
             self.complianceOverview = try await compliance
             syncProgress = 0.7
             
-            self.activeWorkerStatus = try await workers
+            // Process worker status into new format
+            let workerStatus = try await workers
+            self.activeWorkerStatus = ActiveWorkerStatus(
+                totalActive: workerStatus.totalActive,
+                byBuilding: [:], // Will be updated in updateActiveWorkerStatus
+                utilizationRate: workerStatus.utilizationRate
+            )
             syncProgress = 0.9
             
             // Generate insights
@@ -109,6 +285,12 @@ final class ClientContextEngine: ObservableObject {
             await updateBuildingPerformance()
             await generateWorkerInsights()
             await identifyCostSavings()
+            
+            // Update new properties for ClientDashboardView
+            await updateRealtimeRoutineMetrics()
+            await updateActiveWorkerStatus()
+            await updateComplianceStatus()
+            await updateMonthlyMetrics()
             
             syncProgress = 1.0
             lastUpdateTime = Date()
@@ -164,7 +346,8 @@ final class ClientContextEngine: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func identifyCostSavings() -> CoreTypes.IntelligenceInsight? {
+    @discardableResult
+    func identifyCostSavings() async -> CoreTypes.IntelligenceInsight? {
         // Analyze data for cost saving opportunities
         let inefficientBuildings = buildingPerformanceMap.filter { $0.value < 0.6 }
         let potentialSavings = Double(inefficientBuildings.count) * 2500 // Estimated monthly savings per building
@@ -186,7 +369,70 @@ final class ClientContextEngine: ObservableObject {
         return nil
     }
     
-    // MARK: - Private Methods
+    // MARK: - Private Helper Methods
+    
+    private func expectedCompletionForCurrentTime() -> Double {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 7..<11: return 0.3
+        case 11..<15: return 0.6
+        case 15..<19: return 0.9
+        default: return 1.0
+        }
+    }
+    
+    private func estimateCompletionTime(_ metrics: CoreTypes.BuildingMetrics) -> Date? {
+        guard metrics.completionRate < 1.0 else { return nil }
+        
+        let remainingWork = 1.0 - metrics.completionRate
+        let hoursNeeded = remainingWork * 8 // Assume 8 hours for full completion
+        return Date().addingTimeInterval(hoursNeeded * 3600)
+    }
+    
+    private func calculateMonthlySpend() async throws -> Double {
+        // Calculate actual monthly spend from services
+        // This is a placeholder - implement based on your billing logic
+        let baseRate = 5000.0 // Base rate per building
+        return Double(clientBuildings.count) * baseRate * 0.85 // 85% utilization
+    }
+    
+    private func getMonthlyBudget() async throws -> Double {
+        // Get client's monthly budget
+        // This is a placeholder - implement based on your contract data
+        let baseRate = 5000.0
+        return Double(clientBuildings.count) * baseRate * 1.2 // 20% buffer
+    }
+    
+    private func calculateProjectedSpend(current: Double) -> Double {
+        let daysInMonth = Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
+        let daysPassed = daysInMonth - calculateDaysRemainingInMonth()
+        guard daysPassed > 0 else { return current }
+        
+        let dailyRate = current / Double(daysPassed)
+        return dailyRate * Double(daysInMonth)
+    }
+    
+    private func calculateDaysRemainingInMonth() -> Int {
+        let calendar = Calendar.current
+        let now = Date()
+        let range = calendar.range(of: .day, in: .month, for: now)!
+        let currentDay = calendar.component(.day, from: now)
+        return range.count - currentDay
+    }
+    
+    private func fetchClientProfile(userId: String) async throws -> ClientProfile {
+        // Fetch client profile from database or service
+        // This is a placeholder implementation
+        return ClientProfile(
+            id: userId,
+            name: "Client User",
+            email: "client@example.com",
+            company: "Client Company",
+            role: .client
+        )
+    }
+    
+    // MARK: - Private Methods (Original)
     
     private func setupSubscriptions() {
         // Subscribe to Nova Intelligence updates
@@ -216,15 +462,17 @@ final class ClientContextEngine: ObservableObject {
         let buildings = try await buildingService.getClientBuildings()
         let metrics = try await buildingService.getBuildingMetrics(for: buildings.map { $0.id })
         
+        // Store metrics for use in other calculations
+        self.buildingMetrics = metrics
+        
         // Calculate overall health
         let totalBuildings = buildings.count
         let activeBuildings = buildings.filter { $0.isActive }.count
-        let avgCompletionRate = metrics.values.map { $0.completionRate }.reduce(0, +) / Double(metrics.count)
+        let avgCompletionRate = metrics.values.map { $0.completionRate }.reduce(0, +) / Double(max(metrics.count, 1))
         let criticalIssues = metrics.values.filter { $0.criticalIssues > 0 }.count
         
         // Determine trend
         let trend: CoreTypes.TrendDirection = {
-            // Compare with historical data
             if avgCompletionRate > 0.85 { return .improving }
             else if avgCompletionRate < 0.65 { return .declining }
             else { return .stable }
@@ -316,9 +564,8 @@ final class ClientContextEngine: ObservableObject {
     private func updateBuildingPerformance() async {
         // Update performance map for each building
         for building in clientBuildings {
-            if let metrics = try? await buildingService.getBuildingMetrics(for: [building.id]).first {
-                buildingPerformanceMap[building.id] = metrics.value.completionRate
-                buildingMetrics[building.id] = metrics.value
+            if let metrics = buildingMetrics[building.id] {
+                buildingPerformanceMap[building.id] = metrics.completionRate
             }
         }
         
@@ -341,8 +588,8 @@ final class ClientContextEngine: ObservableObject {
             ),
             CoreTypes.WorkerProductivityInsight(
                 id: UUID().uuidString,
-                metric: "\(activeWorkerStatus.avgTasksPerWorker) tasks",
-                description: "Average tasks per worker today",
+                metric: "\(Int(activeWorkerStatus.totalActive)) workers",
+                description: "Currently active on site",
                 trend: .stable,
                 recommendation: nil
             )
@@ -353,7 +600,7 @@ final class ClientContextEngine: ObservableObject {
     
     private func updateRealtimeMetrics() {
         // Generate performance trend (last 7 days)
-        let trend = [0.72, 0.74, 0.71, 0.75, 0.78, 0.76, 0.80] // Sample data
+        let trend = buildingPerformanceMap.values.sorted().suffix(7).map { $0 }
         
         // Recent activities
         let activities = dashboardSync.recentUpdates.prefix(5).map { update in
@@ -369,7 +616,7 @@ final class ClientContextEngine: ObservableObject {
         
         realtimeMetrics = CoreTypes.RealtimePortfolioMetrics(
             lastUpdateTime: lastUpdateTime,
-            performanceTrend: trend,
+            performanceTrend: Array(trend),
             recentActivities: activities,
             activeAlerts: realtimeAlerts.count,
             pendingActions: criticalComplianceIssues.count
@@ -403,6 +650,10 @@ final class ClientContextEngine: ObservableObject {
                     realtimeAlerts.insert(alert, at: 0)
                     criticalAlerts = realtimeAlerts.filter { $0.severity == .critical }
                 }
+                
+                // Update new metrics for ClientDashboardView
+                await updateRealtimeRoutineMetrics()
+                await updateActiveWorkerStatus()
             }
         }
         
@@ -412,7 +663,7 @@ final class ClientContextEngine: ObservableObject {
     
     private func handleWorkerUpdate(_ notification: Notification) async {
         // Update worker status based on activity
-        await fetchActiveWorkerStatus()
+        await updateActiveWorkerStatus()
         await generateWorkerInsights()
         updateRealtimeMetrics()
     }
@@ -420,12 +671,17 @@ final class ClientContextEngine: ObservableObject {
     private func handleComplianceUpdate(_ notification: Notification) async {
         // Update compliance data
         complianceOverview = try! await fetchComplianceOverview()
+        await updateComplianceStatus()
         updateRealtimeMetrics()
     }
     
     private func updateRealtimeData() async {
         // Periodic update of real-time data
         await updateBuildingPerformance()
+        await updateRealtimeRoutineMetrics()
+        await updateActiveWorkerStatus()
+        await updateComplianceStatus()
+        await updateMonthlyMetrics()
         updateRealtimeMetrics()
     }
     
@@ -458,16 +714,32 @@ final class ClientContextEngine: ObservableObject {
         criticalAlerts = realtimeAlerts.filter { $0.severity == .critical }
     }
     
-    private func mapUpdateType(_ type: DashboardUpdate.UpdateType) -> CoreTypes.RealtimeActivity.ActivityType {
+    private func mapUpdateType(_ type: CoreTypes.DashboardUpdate.UpdateType) -> CoreTypes.RealtimeActivity.ActivityType {
         switch type {
-        case .taskComplete: return .taskCompleted
+        case .taskCompleted: return .taskCompleted
         case .workerClockIn: return .workerClockIn
         case .workerClockOut: return .workerClockOut
-        case .buildingUpdate: return .buildingUpdate
-        case .complianceUpdate: return .complianceUpdate
+        case .buildingMetricsChanged: return .buildingUpdate
+        case .complianceIssue: return .complianceUpdate
         default: return .buildingUpdate
         }
     }
+}
+
+// MARK: - Supporting Types for ClientDashboardView
+
+struct ClientProfile {
+    let id: String
+    let name: String
+    let email: String
+    let company: String?
+    let role: CoreTypes.UserRole
+}
+
+struct ComplianceData {
+    let buildingId: String
+    let score: Double
+    let violations: Int
 }
 
 // MARK: - Notification Names
@@ -477,7 +749,7 @@ extension Notification.Name {
     static let complianceStatusChanged = Notification.Name("complianceStatusChanged")
 }
 
-// MARK: - Supporting Types Extensions
+// MARK: - Extensions for CoreTypes compatibility (keeping original)
 
 extension CoreTypes.PortfolioHealth {
     static var empty: CoreTypes.PortfolioHealth {
@@ -487,28 +759,6 @@ extension CoreTypes.PortfolioHealth {
             activeBuildings: 0,
             criticalIssues: 0,
             trend: .unknown,
-            lastUpdated: Date()
-        )
-    }
-    
-    static var preview: CoreTypes.PortfolioHealth {
-        CoreTypes.PortfolioHealth(
-            overallScore: 0.85,
-            totalBuildings: 12,
-            activeBuildings: 10,
-            criticalIssues: 0,
-            trend: .improving,
-            lastUpdated: Date()
-        )
-    }
-    
-    static var previewCritical: CoreTypes.PortfolioHealth {
-        CoreTypes.PortfolioHealth(
-            overallScore: 0.62,
-            totalBuildings: 12,
-            activeBuildings: 8,
-            criticalIssues: 3,
-            trend: .declining,
             lastUpdated: Date()
         )
     }
@@ -524,52 +774,6 @@ extension CoreTypes.RealtimePortfolioMetrics {
             pendingActions: 0
         )
     }
-    
-    static var preview: CoreTypes.RealtimePortfolioMetrics {
-        CoreTypes.RealtimePortfolioMetrics(
-            lastUpdateTime: Date(),
-            performanceTrend: [0.72, 0.74, 0.71, 0.75, 0.78, 0.76, 0.80],
-            recentActivities: [
-                CoreTypes.RealtimeActivity(
-                    id: "1",
-                    type: .taskCompleted,
-                    description: "Lobby cleaning completed",
-                    workerName: "John Smith",
-                    buildingName: "123 Main St",
-                    timestamp: Date().addingTimeInterval(-300)
-                ),
-                CoreTypes.RealtimeActivity(
-                    id: "2",
-                    type: .workerClockIn,
-                    description: "Worker clocked in",
-                    workerName: "Jane Doe",
-                    buildingName: "456 Park Ave",
-                    timestamp: Date().addingTimeInterval(-600)
-                )
-            ],
-            activeAlerts: 2,
-            pendingActions: 5
-        )
-    }
-    
-    static var previewWithAlerts: CoreTypes.RealtimePortfolioMetrics {
-        CoreTypes.RealtimePortfolioMetrics(
-            lastUpdateTime: Date(),
-            performanceTrend: [0.82, 0.78, 0.71, 0.65, 0.68, 0.62, 0.60],
-            recentActivities: [
-                CoreTypes.RealtimeActivity(
-                    id: "1",
-                    type: .issueReported,
-                    description: "Compliance violation reported",
-                    workerName: nil,
-                    buildingName: "789 Broadway",
-                    timestamp: Date().addingTimeInterval(-120)
-                )
-            ],
-            activeAlerts: 5,
-            pendingActions: 8
-        )
-    }
 }
 
 extension CoreTypes.ActiveWorkerStatus {
@@ -580,26 +784,6 @@ extension CoreTypes.ActiveWorkerStatus {
             utilizationRate: 0,
             avgTasksPerWorker: 0,
             completionRate: 0
-        )
-    }
-    
-    static var preview: CoreTypes.ActiveWorkerStatus {
-        CoreTypes.ActiveWorkerStatus(
-            totalActive: 24,
-            totalAssigned: 30,
-            utilizationRate: 0.8,
-            avgTasksPerWorker: 12.5,
-            completionRate: 0.85
-        )
-    }
-    
-    static var previewLowUtilization: CoreTypes.ActiveWorkerStatus {
-        CoreTypes.ActiveWorkerStatus(
-            totalActive: 15,
-            totalAssigned: 30,
-            utilizationRate: 0.5,
-            avgTasksPerWorker: 8.2,
-            completionRate: 0.68
         )
     }
 }
@@ -615,58 +799,23 @@ extension CoreTypes.ComplianceOverview {
             nextAudit: nil
         )
     }
-    
-    static var previewHealthy: CoreTypes.ComplianceOverview {
-        CoreTypes.ComplianceOverview(
-            overallScore: 0.95,
-            totalIssues: 12,
-            openIssues: 2,
-            criticalViolations: 0,
-            lastAudit: Date().addingTimeInterval(-604800), // 1 week ago
-            nextAudit: Date().addingTimeInterval(1814400) // 3 weeks from now
-        )
-    }
-    
-    static var previewWithViolations: CoreTypes.ComplianceOverview {
-        CoreTypes.ComplianceOverview(
-            overallScore: 0.72,
-            totalIssues: 28,
-            openIssues: 15,
-            criticalViolations: 3,
-            lastAudit: Date().addingTimeInterval(-259200), // 3 days ago
-            nextAudit: Date().addingTimeInterval(604800) // 1 week from now
-        )
-    }
 }
 
-extension CoreTypes.ClientAlert {
-    static var previewCritical: [CoreTypes.ClientAlert] {
-        [
-            CoreTypes.ClientAlert(
-                id: "1",
-                title: "DSNY Compliance Violation",
-                message: "Trash not set out on time at 123 Main St",
-                severity: .critical,
-                buildingId: "building1",
-                timestamp: Date().addingTimeInterval(-1800),
-                actionRequired: true
-            ),
-            CoreTypes.ClientAlert(
-                id: "2",
-                title: "Worker No-Show",
-                message: "No coverage for evening shift at 456 Park Ave",
-                severity: .critical,
-                buildingId: "building2",
-                timestamp: Date().addingTimeInterval(-3600),
-                actionRequired: true
-            )
-        ]
-    }
-}
-// Extension for WorkerService (add to WorkerService.swift or a new file)
+// MARK: - Service Extensions (keep your existing ones)
+
 extension WorkerService {
+    func getTotalAssignedWorkers() async throws -> Int {
+        let query = """
+            SELECT COUNT(*) as count FROM workers 
+            WHERE isActive = 1
+        """
+        
+        let rows = try await GRDBManager.shared.query(query)
+        return Int((rows.first?["count"] as? Int64) ?? 0)
+    }
+    
     func getActiveWorkers() async throws -> [CoreTypes.WorkerProfile] {
-        // This should query workers with status = 'clockedIn'
+        // Implementation from your original file
         let query = """
             SELECT * FROM workers 
             WHERE status = 'Clocked In' AND isActive = 1
@@ -695,9 +844,9 @@ extension WorkerService {
     }
 }
 
-// Extension for TaskService (add to TaskService.swift or a new file)
 extension TaskService {
     func getAverageTasksPerWorker() async throws -> Double {
+        // Implementation from your original file
         let query = """
             SELECT 
                 COUNT(DISTINCT t.id) as task_count,
@@ -719,6 +868,7 @@ extension TaskService {
     }
     
     func getOverallCompletionRate() async throws -> Double {
+        // Implementation from your original file
         let query = """
             SELECT 
                 COUNT(*) as total,
@@ -739,13 +889,3 @@ extension TaskService {
         return Double(completed) / Double(total)
     }
 }
-
-// Fix for PortfolioOverviewView - add this to the file or create an extension
-extension CoreTypes {
-    // Type alias for backward compatibility
-    typealias ClientPortfolioIntelligence = PortfolioIntelligence
-}
-
-// Alternative: If you want ClientPortfolioIntelligence to be distinct,
-// use the full implementation I provided earlier and update PortfolioOverviewView
-// to use the correct type

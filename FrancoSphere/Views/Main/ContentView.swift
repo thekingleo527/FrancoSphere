@@ -6,6 +6,7 @@
 //  ✅ CLEAN: Only handles top-level routing based on user role.
 //  ✅ ROBUST: Aligned with a consistent ViewModel injection pattern.
 //  ✅ DARK ELEGANCE: Updated with new theme colors and transitions
+//  ✅ FIXED: Resolved userId and userRole property issues
 //
 
 import SwiftUI
@@ -27,17 +28,17 @@ struct ContentView: View {
                     // Admin and Manager share the same dashboard experience
                     AdminDashboardContainerView()
                         .transition(roleTransition)
-                        .id("admin-\(authManager.userId ?? "")")
+                        .id("admin-\(authManager.currentWorkerId ?? "")")
                     
                 case .client:
                     ClientDashboardContainerView()
                         .transition(roleTransition)
-                        .id("client-\(authManager.userId ?? "")")
+                        .id("client-\(authManager.currentWorkerId ?? "")")
                     
                 case .worker:
                     WorkerDashboardContainerView()
                         .transition(roleTransition)
-                        .id("worker-\(authManager.userId ?? "")")
+                        .id("worker-\(authManager.currentWorkerId ?? "")")
                     
                 case nil:
                     // Fallback with loading state for undefined role
@@ -163,8 +164,13 @@ struct UndefinedRoleView: View {
         
         Task {
             // Attempt to refresh the user's role
-            if let userId = authManager.userId {
-                try? await authManager.refreshUserRole(userId: userId)
+            if let workerId = authManager.currentWorkerId {
+                // Try to re-authenticate or refresh session
+                do {
+                    try await authManager.refreshSession()
+                } catch {
+                    print("Failed to refresh session: \(error)")
+                }
             }
             
             await MainActor.run {
@@ -222,44 +228,115 @@ struct RoleIndicatorPill: View {
 // MARK: - Preview Provider
 
 struct ContentView_Previews: PreviewProvider {
+    // Create mock auth managers for preview
+    static var workerAuth: NewAuthManager {
+        let auth = NewAuthManager.shared
+        // In real implementation, you'd need to set this through proper authentication
+        // For preview, we'll use a workaround
+        return auth
+    }
+    
+    static var adminAuth: NewAuthManager {
+        let auth = NewAuthManager.shared
+        // Set up admin preview state
+        return auth
+    }
+    
+    static var clientAuth: NewAuthManager {
+        let auth = NewAuthManager.shared
+        // Set up client preview state
+        return auth
+    }
+    
     static var previews: some View {
         Group {
             // Worker role preview
             ContentView()
-                .environmentObject({
-                    let auth = NewAuthManager.shared
-                    auth.userRole = .worker
-                    return auth
-                }())
+                .environmentObject(workerAuth)
                 .previewDisplayName("Worker Dashboard")
+                .onAppear {
+                    // Simulate worker login for preview
+                    Task {
+                        try? await workerAuth.authenticate(
+                            username: "worker@example.com",
+                            password: "preview",
+                            role: .worker
+                        )
+                    }
+                }
             
             // Admin role preview
             ContentView()
-                .environmentObject({
-                    let auth = NewAuthManager.shared
-                    auth.userRole = .admin
-                    return auth
-                }())
+                .environmentObject(adminAuth)
                 .previewDisplayName("Admin Dashboard")
+                .onAppear {
+                    // Simulate admin login for preview
+                    Task {
+                        try? await adminAuth.authenticate(
+                            username: "admin@example.com",
+                            password: "preview",
+                            role: .admin
+                        )
+                    }
+                }
             
             // Client role preview
             ContentView()
-                .environmentObject({
-                    let auth = NewAuthManager.shared
-                    auth.userRole = .client
-                    return auth
-                }())
+                .environmentObject(clientAuth)
                 .previewDisplayName("Client Dashboard")
+                .onAppear {
+                    // Simulate client login for preview
+                    Task {
+                        try? await clientAuth.authenticate(
+                            username: "client@example.com",
+                            password: "preview",
+                            role: .client
+                        )
+                    }
+                }
             
             // Undefined role preview
             ContentView()
-                .environmentObject({
-                    let auth = NewAuthManager.shared
-                    auth.userRole = nil
-                    return auth
-                }())
+                .environmentObject(NewAuthManager.shared)
                 .previewDisplayName("Undefined Role")
         }
         .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - Mock Container Views for Testing
+
+// These would normally be in separate files but included here for completeness
+
+struct AdminDashboardContainerView: View {
+    @EnvironmentObject private var authManager: NewAuthManager
+    
+    var body: some View {
+        // In the real implementation, this would create and inject the ViewModel
+        AdminDashboardView(viewModel: AdminDashboardViewModel())
+            .environmentObject(authManager)
+            .environmentObject(DashboardSyncService.shared)
+    }
+}
+
+struct ClientDashboardContainerView: View {
+    @EnvironmentObject private var authManager: NewAuthManager
+    
+    var body: some View {
+        // In the real implementation, this would create and inject the ViewModel
+        ClientDashboardView(viewModel: ClientDashboardViewModel())
+            .environmentObject(authManager)
+            .environmentObject(DashboardSyncService.shared)
+    }
+}
+
+struct WorkerDashboardContainerView: View {
+    @EnvironmentObject private var authManager: NewAuthManager
+    
+    var body: some View {
+        // In the real implementation, this would create and inject the ViewModel
+        WorkerDashboardView(viewModel: WorkerDashboardViewModel())
+            .environmentObject(authManager)
+            .environmentObject(DashboardSyncService.shared)
     }
 }

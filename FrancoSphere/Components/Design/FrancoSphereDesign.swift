@@ -9,6 +9,7 @@
 //  ✅ ADDED: Centralized color system for all CoreTypes enums
 //  ✅ MERGED: Incorporated utilities from ModelColorsExtensions
 //  ✅ UPDATED: Dark Elegance theme implementation
+//  ✅ ADDED: Dashboard gradients for all views
 //
 
 import SwiftUI
@@ -147,6 +148,163 @@ enum FrancoSphereDesign {
         static let panelBackgroundOpacity: Double = 0.95
         static let overlayBackgroundOpacity: Double = 0.98
         static let headerOpacity: Double = 0.9
+    }
+    
+    // MARK: - Dashboard Gradients (NEW for v6.0)
+    enum DashboardGradients {
+        // Main background gradient
+        static let backgroundGradient = LinearGradient(
+            colors: [
+                Color(hex: "0a0a0a"),  // baseBackground
+                Color(hex: "0f0f0f")   // cardBackground
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        // Role-specific gradients
+        static let workerGradient = LinearGradient(
+            colors: [
+                Color(hex: "1f2937"),  // gray-800
+                Color(hex: "374151")   // gray-700
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let adminGradient = LinearGradient(
+            colors: [
+                Color(hex: "312e81"),  // indigo-900
+                Color(hex: "4c1d95")   // purple-900
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let clientGradient = LinearGradient(
+            colors: [
+                Color(hex: "14532d"),  // green-900
+                Color(hex: "166534")   // green-800
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        // Glass effect gradients
+        static let glassOverlay = LinearGradient(
+            colors: [
+                Color.white.opacity(0.05),
+                Color.white.opacity(0.02)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        // Status gradients
+        static let successGradient = LinearGradient(
+            colors: [
+                Color(hex: "10b981"),
+                Color(hex: "10b981").opacity(0.8)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let warningGradient = LinearGradient(
+            colors: [
+                Color(hex: "f59e0b"),
+                Color(hex: "f59e0b").opacity(0.8)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let criticalGradient = LinearGradient(
+            colors: [
+                Color(hex: "ef4444"),
+                Color(hex: "ef4444").opacity(0.8)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let infoGradient = LinearGradient(
+            colors: [
+                Color(hex: "0ea5e9"),
+                Color(hex: "0ea5e9").opacity(0.8)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        // Subtle card gradients
+        static let cardGradient = LinearGradient(
+            colors: [
+                Color(hex: "0f0f0f"),
+                Color(hex: "0f0f0f").opacity(0.95)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        
+        // Shine effect for interactive elements
+        static let shineGradient = LinearGradient(
+            colors: [
+                Color.white.opacity(0),
+                Color.white.opacity(0.1),
+                Color.white.opacity(0)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        // Hero card gradients (matching role colors)
+        static let workerHeroGradient = LinearGradient(
+            colors: [
+                Color(hex: "1f2937"),  // gray-800
+                Color(hex: "374151")   // gray-700
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let adminHeroGradient = LinearGradient(
+            colors: [
+                Color(hex: "312e81"),  // indigo-900
+                Color(hex: "4c1d95")   // purple-900
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let clientHeroGradient = LinearGradient(
+            colors: [
+                Color(hex: "14532d"),  // green-900
+                Color(hex: "166534")   // green-800
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        // Progress bar gradients
+        static let progressGradient = LinearGradient(
+            colors: [
+                Color(hex: "10b981"),
+                Color(hex: "34d399")
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+        
+        // Overlay gradients for depth
+        static let depthGradient = LinearGradient(
+            colors: [
+                Color.black.opacity(0.4),
+                Color.black.opacity(0)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
     
     // MARK: - Dashboard Colors (DARK ELEGANCE THEME)

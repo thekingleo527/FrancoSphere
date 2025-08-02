@@ -6,12 +6,16 @@
 //  ✅ PRIVACY: No worker-specific information exposed
 //  ✅ FOCUSED: Metrics relevant to property owners
 //  ✅ DARK ELEGANCE: Consistent theme with dashboards
+//  ✅ FIXED: Resolved type ambiguity issues
 //
 
 import SwiftUI
 
 struct ClientPortfolioOverviewView: View {
-    let clientIntelligence: CoreTypes.ClientPortfolioIntelligence
+    // Using a type alias to resolve ambiguity
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let clientIntelligence: ClientIntelligence
     let onBuildingTap: ((NamedCoordinate) -> Void)?
     let onRefresh: (() async -> Void)?
     
@@ -20,7 +24,7 @@ struct ClientPortfolioOverviewView: View {
     @State private var isRefreshing = false
     @State private var isHeroCollapsed = false
     
-    init(clientIntelligence: CoreTypes.ClientPortfolioIntelligence,
+    init(clientIntelligence: ClientIntelligence,
          onBuildingTap: ((NamedCoordinate) -> Void)? = nil,
          onRefresh: (() async -> Void)? = nil) {
         self.clientIntelligence = clientIntelligence
@@ -404,7 +408,10 @@ struct ClientPortfolioOverviewView: View {
 // MARK: - Client Portfolio Hero Card
 
 struct ClientPortfolioHeroCard: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    // Using type alias to avoid ambiguity
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     @Binding var isCollapsed: Bool
     
     var body: some View {
@@ -435,7 +442,9 @@ struct ClientPortfolioHeroCard: View {
 }
 
 struct MinimalClientPortfolioHero: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     let onExpand: () -> Void
     
     var body: some View {
@@ -491,7 +500,9 @@ struct MinimalClientPortfolioHero: View {
 }
 
 struct FullClientPortfolioHero: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     let onCollapse: () -> Void
     
     var body: some View {
@@ -720,7 +731,9 @@ struct StatusRow: View {
 // MARK: - Client Metric Detail Views
 
 struct ClientServiceDetailView: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
@@ -752,7 +765,9 @@ struct ClientServiceDetailView: View {
 }
 
 struct ClientComplianceDetailView: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
@@ -797,7 +812,9 @@ struct ClientComplianceDetailView: View {
 }
 
 struct ClientCoverageDetailView: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
@@ -827,7 +844,9 @@ struct ClientCoverageDetailView: View {
 }
 
 struct ClientCostDetailView: View {
-    let intelligence: CoreTypes.ClientPortfolioIntelligence
+    typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
+    
+    let intelligence: ClientIntelligence
     
     var body: some View {
         VStack(spacing: FrancoSphereDesign.Spacing.sm) {
