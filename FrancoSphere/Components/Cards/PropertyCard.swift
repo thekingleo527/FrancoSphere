@@ -1,12 +1,11 @@
 //
 //  PropertyCard.swift
-//  FrancoSphere v6.0 - THEME FIXES
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Building image mapping with fallbacks
-//  ✅ FIXED: Dark mode compatibility
-//  ✅ FIXED: Copy changes from "My Sites" to "Portfolio"
-//  ✅ FIXED: Aligned with CoreTypes.BuildingMetrics properties
-//  ✅ FIXED: Removed redundant type aliases
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Glass morphism effects using FrancoSphereDesign
+//  ✅ FIXED: Consistent dark theme styling
+//  ✅ ALIGNED: With CoreTypes.BuildingMetrics properties
 //
 
 import SwiftUI
@@ -23,23 +22,39 @@ struct PropertyCard: View {
         case client
     }
     
+    @State private var isPressed = false
     private let imageSize: CGFloat = 60
     
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 16) {
+        Button(action: {
+            withAnimation(FrancoSphereDesign.Animations.quick) {
+                isPressed = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(FrancoSphereDesign.Animations.quick) {
+                    isPressed = false
+                }
+                onTap()
+            }
+        }) {
+            HStack(spacing: FrancoSphereDesign.Spacing.md) {
                 buildingImage
                 buildingContent
                 Spacer()
                 chevron
             }
-            .padding()
-            .background(.ultraThinMaterial)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .francoCardPadding()
+            .background(
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                    .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                    )
             )
-            .cornerRadius(12)
+            .francoShadow(FrancoSphereDesign.Shadow.sm)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -51,27 +66,40 @@ struct PropertyCard: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: imageSize, height: imageSize)
-                    .cornerRadius(8)
+                    .cornerRadius(FrancoSphereDesign.CornerRadius.sm)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                    )
             } else {
-                // Fallback placeholder
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
+                // Fallback placeholder with gradient
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                    .fill(
+                        LinearGradient(
+                            colors: FrancoSphereDesign.DashboardColors.workerHeroGradient.map { $0.opacity(0.3) },
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: imageSize, height: imageSize)
                     .overlay(
                         Image(systemName: "building.2.fill")
                             .font(.system(size: imageSize * 0.4))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
                     )
             }
         }
     }
     
     private var buildingContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             Text(building.name)
-                .font(.headline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 .lineLimit(2)
             
             switch mode {
@@ -86,124 +114,155 @@ struct PropertyCard: View {
     }
     
     private var workerContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             if let metrics = metrics {
                 HStack {
                     Label("Portfolio", systemImage: "building.2.fill")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Spacer()
                     
                     Text(metrics.pendingTasks > 0 ? "\(metrics.pendingTasks) remaining" : "All complete")
-                        .font(.caption)
-                        .foregroundColor(metrics.pendingTasks > 0 ? .blue : .green)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(metrics.pendingTasks > 0 ?
+                            FrancoSphereDesign.DashboardColors.info :
+                            FrancoSphereDesign.DashboardColors.success
+                        )
                 }
                 
                 // Progress bar
-                ProgressView(value: metrics.completionRate)
-                    .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
-                    .frame(height: 4)
+                FrancoMetricsProgress(value: metrics.completionRate, role: .worker)
+                    .frame(height: FrancoSphereDesign.MetricsDisplay.progressBarHeight)
             } else {
-                Text("Loading...")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Loading...")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                }
             }
         }
     }
     
     private var adminContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             if let metrics = metrics {
                 HStack {
                     Label("Efficiency", systemImage: "chart.line.uptrend.xyaxis")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Spacer()
                     
                     Text("\(Int(metrics.maintenanceEfficiency * 100))%")
-                        .font(.caption)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .fontWeight(.semibold)
                         .foregroundColor(efficiencyColor)
                 }
                 
                 HStack {
                     Label("Workers", systemImage: "person.3.fill")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                     
                     Spacer()
                     
                     Text("\(metrics.activeWorkers)")
-                        .font(.caption)
-                        .foregroundColor(.white)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
                 
                 if metrics.overdueTasks > 0 {
                     HStack {
                         Label("Overdue", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundColor(.red)
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                         
                         Spacer()
                         
                         Text("\(metrics.overdueTasks)")
-                            .font(.caption)
-                            .foregroundColor(.red)
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                     }
                 }
             } else {
-                Text("Loading metrics...")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                FrancoLoadingView(message: "Loading metrics...", role: .admin)
+                    .scaleEffect(0.8)
             }
         }
     }
     
     private var clientContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             if let metrics = metrics {
                 HStack {
                     Label("Compliance", systemImage: "checkmark.shield.fill")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Spacer()
                     
                     Text(metrics.isCompliant ? "Compliant" : "Review Needed")
-                        .font(.caption)
-                        .foregroundColor(metrics.isCompliant ? .green : .orange)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(metrics.isCompliant ?
+                            FrancoSphereDesign.DashboardColors.compliant :
+                            FrancoSphereDesign.DashboardColors.warning
+                        )
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill((metrics.isCompliant ?
+                                    FrancoSphereDesign.DashboardColors.compliant :
+                                    FrancoSphereDesign.DashboardColors.warning
+                                ).opacity(0.15))
+                        )
                 }
                 
                 HStack {
                     Label("Score", systemImage: "star.fill")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                     
                     Spacer()
                     
-                    Text("\(String(format: "%.1f", metrics.overallScore))")
-                        .font(.caption)
-                        .foregroundColor(.white)
+                    HStack(spacing: 2) {
+                        ForEach(0..<5) { index in
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(
+                                    index < Int(metrics.overallScore) ?
+                                    FrancoSphereDesign.DashboardColors.warning :
+                                    FrancoSphereDesign.DashboardColors.inactive
+                                )
+                        }
+                        Text(String(format: "%.1f", metrics.overallScore))
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    }
                 }
                 
                 if metrics.urgentTasksCount > 0 {
                     HStack {
                         Label("Urgent", systemImage: "flag.fill")
-                            .font(.caption)
-                            .foregroundColor(.orange)
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                         
                         Spacer()
                         
                         Text("\(metrics.urgentTasksCount)")
-                            .font(.caption)
-                            .foregroundColor(.orange)
+                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                     }
                 }
             } else {
-                Text("Loading compliance...")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                FrancoLoadingView(message: "Loading compliance...", role: .client)
+                    .scaleEffect(0.8)
             }
         }
     }
@@ -211,7 +270,12 @@ struct PropertyCard: View {
     private var chevron: some View {
         Image(systemName: "chevron.right")
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+            .padding(8)
+            .background(
+                Circle()
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+            )
     }
     
     // MARK: - Helper Properties
@@ -243,22 +307,60 @@ struct PropertyCard: View {
         }
     }
     
-    private var progressColor: Color {
-        guard let metrics = metrics else { return .gray }
-        switch Int(metrics.completionRate * 100) {
-        case 80...100: return .green
-        case 50...79: return .yellow
-        default: return .red
-        }
-    }
-    
     private var efficiencyColor: Color {
-        guard let metrics = metrics else { return .gray }
-        switch Int(metrics.maintenanceEfficiency * 100) {
-        case 90...100: return .green
-        case 70...89: return .yellow
-        default: return .red
+        guard let metrics = metrics else { return FrancoSphereDesign.DashboardColors.inactive }
+        return FrancoSphereDesign.EnumColors.trendDirection(
+            metrics.maintenanceEfficiency >= 0.9 ? .up :
+            metrics.maintenanceEfficiency >= 0.7 ? .stable : .down
+        )
+    }
+}
+
+// MARK: - Mini Property Card (for lists)
+
+struct MiniPropertyCard: View {
+    let building: NamedCoordinate
+    let subtitle: String
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+                // Building icon
+                Image(systemName: "building.2.fill")
+                    .font(.title3)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(FrancoSphereDesign.DashboardColors.secondaryAction.opacity(0.15))
+                    )
+                
+                // Content
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(building.name)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .lineLimit(1)
+                    
+                    Text(subtitle)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+            }
+            .padding(FrancoSphereDesign.Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+            )
         }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -266,42 +368,122 @@ struct PropertyCard: View {
 
 struct PropertyCard_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: 16) {
-            PropertyCard(
-                building: NamedCoordinate(
-                    id: "14",
-                    name: "Rubin Museum",
-                    latitude: 40.7401,
-                    longitude: -73.9978
-                ),
-                metrics: BuildingMetrics(
-                    buildingId: "14",
-                    completionRate: 0.75,
-                    overdueTasks: 1,
-                    totalTasks: 12,
-                    activeWorkers: 2,
-                    overallScore: 4.2,
-                    pendingTasks: 3,
-                    urgentTasksCount: 1
-                ),
-                mode: PropertyCard.PropertyCardMode.worker,
-                onTap: {}
-            )
-            
-            PropertyCard(
-                building: NamedCoordinate(
-                    id: "1",
-                    name: "12 West 18th Street",
-                    latitude: 40.7389,
-                    longitude: -73.9936
-                ),
-                metrics: nil,
-                mode: PropertyCard.PropertyCardMode.worker,
-                onTap: {}
-            )
+        ScrollView {
+            VStack(spacing: FrancoSphereDesign.Spacing.md) {
+                // Worker mode
+                PropertyCard(
+                    building: NamedCoordinate(
+                        id: "14",
+                        name: "Rubin Museum of Art",
+                        latitude: 40.7401,
+                        longitude: -73.9978
+                    ),
+                    metrics: BuildingMetrics(
+                        buildingId: "14",
+                        completionRate: 0.75,
+                        overdueTasks: 1,
+                        totalTasks: 12,
+                        activeWorkers: 2,
+                        overallScore: 4.2,
+                        pendingTasks: 3,
+                        urgentTasksCount: 1
+                    ),
+                    mode: .worker,
+                    onTap: {}
+                )
+                
+                // Admin mode
+                PropertyCard(
+                    building: NamedCoordinate(
+                        id: "1",
+                        name: "12 West 18th Street",
+                        latitude: 40.7389,
+                        longitude: -73.9936
+                    ),
+                    metrics: BuildingMetrics(
+                        buildingId: "1",
+                        completionRate: 0.92,
+                        overdueTasks: 0,
+                        totalTasks: 8,
+                        activeWorkers: 3,
+                        overallScore: 4.8,
+                        pendingTasks: 1,
+                        urgentTasksCount: 0,
+                        maintenanceEfficiency: 0.88
+                    ),
+                    mode: .admin,
+                    onTap: {}
+                )
+                
+                // Client mode
+                PropertyCard(
+                    building: NamedCoordinate(
+                        id: "16",
+                        name: "Stuyvesant Cove Park",
+                        latitude: 40.7335,
+                        longitude: -73.9745
+                    ),
+                    metrics: BuildingMetrics(
+                        buildingId: "16",
+                        completionRate: 1.0,
+                        overdueTasks: 0,
+                        totalTasks: 5,
+                        activeWorkers: 1,
+                        overallScore: 5.0,
+                        pendingTasks: 0,
+                        urgentTasksCount: 0,
+                        isCompliant: true
+                    ),
+                    mode: .client,
+                    onTap: {}
+                )
+                
+                // Loading state
+                PropertyCard(
+                    building: NamedCoordinate(
+                        id: "999",
+                        name: "Loading Building",
+                        latitude: 0,
+                        longitude: 0
+                    ),
+                    metrics: nil,
+                    mode: .worker,
+                    onTap: {}
+                )
+                
+                // Mini cards
+                VStack(spacing: 8) {
+                    Text("Mini Cards")
+                        .francoTypography(FrancoSphereDesign.Typography.headline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    
+                    MiniPropertyCard(
+                        building: NamedCoordinate(
+                            id: "1",
+                            name: "12 West 18th Street",
+                            latitude: 40.7389,
+                            longitude: -73.9936
+                        ),
+                        subtitle: "3 tasks remaining",
+                        onTap: {}
+                    )
+                    
+                    MiniPropertyCard(
+                        building: NamedCoordinate(
+                            id: "14",
+                            name: "Rubin Museum",
+                            latitude: 40.7401,
+                            longitude: -73.9978
+                        ),
+                        subtitle: "All tasks complete",
+                        onTap: {}
+                    )
+                }
+                .padding(.top)
+            }
+            .padding()
         }
-        .padding()
-        .background(Color.black)
+        .background(FrancoSphereDesign.DashboardColors.baseBackground)
         .preferredColorScheme(.dark)
     }
 }

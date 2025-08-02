@@ -184,6 +184,7 @@
 		2377A09F2E398AA800F4A10F /* InitializationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0992E398AA800F4A10F /* InitializationViewModel.swift */; };
 		2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0952E398AA800F4A10F /* WorkerDashboardViewModel.swift */; };
 		2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2377A0912E398AA800F4A10F /* BuildingIntelligenceViewModel.swift */; };
+		23800F712E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 		23A1B9542E3992C80011F091 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94C2E3992C80011F091 /* TaskDisplayHelpers.swift */; };
 		23A1B9552E3992C80011F091 /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94A2E3992C80011F091 /* ProfileBadge.swift */; };
@@ -419,6 +420,7 @@
 		2377A0952E398AA800F4A10F /* WorkerDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardViewModel.swift; sourceTree = "<group>"; };
 		2377A0972E398AA800F4A10F /* WorkerRoutineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerRoutineViewModel.swift; sourceTree = "<group>"; };
 		2377A0992E398AA800F4A10F /* InitializationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationViewModel.swift; sourceTree = "<group>"; };
+		23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedTaskDetailView.swift; sourceTree = "<group>"; };
 		23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
 		23A1B9442E3992C80011F091 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
@@ -1051,6 +1053,7 @@
 		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */,
 				2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */,
 				2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */,
 				2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */,
@@ -1429,6 +1432,7 @@
 				2377A0402E39885600F4A10F /* NewAuthManager.swift in Sources */,
 				2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */,
 				2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */,
+				23800F712E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift in Sources */,
 				2377A0452E39885600F4A10F /* ContentView.swift in Sources */,
 				23A1B9682E39931D0011F091 /* WorkerManager.swift in Sources */,
 				2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */,

@@ -2,10 +2,10 @@
 //  BuildingMapDetailView.swift
 //  FrancoSphere
 //
-//  ✅ COMPLETE VERSION: All missing components added
-//  ✅ FIXED: BuildingStatCard component defined
-//  ✅ FIXED: getUrgencyDisplay and getUrgencyColor methods implemented
-//  ✅ ALIGNED: With CoreTypes structure
+//  ✅ REFACTORED: Dark Elegant Design aligned with FrancoSphereDesign
+//  ✅ GLASS MORPHISM: Using AdaptiveGlassModifier components
+//  ✅ CONSISTENT: Matches WorkerDashboardView patterns
+//  ✅ DARK THEME: Full dark elegance implementation
 //
 
 import SwiftUI
@@ -25,34 +25,41 @@ struct BuildingMapDetailView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                LinearGradient(
-                    gradient: Gradient(colors: [.black, .blue.opacity(0.3)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Dark elegant background
+                FrancoSphereDesign.DashboardGradients.backgroundGradient
+                    .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Building header
+                    VStack(spacing: 24) {
+                        // Building header with glass effect
                         buildingHeader
+                            .animatedGlassAppear(delay: 0.1)
                         
-                        // Quick stats
+                        // Quick stats with glass cards
                         quickStats
+                            .animatedGlassAppear(delay: 0.2)
                         
-                        // Today's tasks
+                        // Today's tasks with glass container
                         if !tasks.isEmpty {
                             todaysTasksSection
+                                .animatedGlassAppear(delay: 0.3)
                         }
                         
-                        // Actions
+                        // Actions with glass buttons
                         actionsSection
+                            .animatedGlassAppear(delay: 0.4)
                         
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
+                }
+                
+                // Loading overlay
+                if isLoading {
+                    GlassLoadingState()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.8))
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -61,13 +68,12 @@ struct BuildingMapDetailView: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
                 
                 ToolbarItem(placement: .principal) {
                     Text(building.name)
-                        .font(.headline)
-                        .foregroundColor(.white)
+                        .glassHeading()
                         .lineLimit(1)
                 }
             }
@@ -87,36 +93,47 @@ struct BuildingMapDetailView: View {
     // MARK: - Building Header
     
     private var buildingHeader: some View {
-        VStack(spacing: 12) {
-            // Building image
-            if let buildingImage = getBuildingImage() {
-                Image(uiImage: buildingImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 150)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            } else {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 150)
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 40))
-                            .foregroundColor(.white.opacity(0.7))
-                    )
+        VStack(spacing: 16) {
+            // Building image with glass overlay
+            ZStack {
+                if let buildingImage = getBuildingImage() {
+                    Image(uiImage: buildingImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large))
+                        .overlay(
+                            LinearGradient(
+                                colors: [
+                                    Color.clear,
+                                    FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.3)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large))
+                        )
+                } else {
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large)
+                        .fill(.ultraThinMaterial)
+                        .frame(height: 180)
+                        .overlay(
+                            Image(systemName: "building.2.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        )
+                }
             }
+            .francoGlassCard(intensity: .ultraThin)
             
-            // Building info
-            VStack(spacing: 4) {
+            // Building info with glass text
+            VStack(spacing: 8) {
                 Text(building.name)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .glassHeading()
                     .multilineTextAlignment(.center)
                 
                 Text(building.address)
-                    .font(.callout)
-                    .foregroundColor(.white.opacity(0.7))
+                    .glassSubtitle()
                     .multilineTextAlignment(.center)
             }
         }
@@ -130,21 +147,21 @@ struct BuildingMapDetailView: View {
                 title: "Open Tasks",
                 value: "\(tasks.filter { !$0.isCompleted }.count)",
                 icon: "list.bullet",
-                color: .blue
+                color: FrancoSphereDesign.DashboardColors.info
             )
             
             BuildingStatCard(
                 title: "Urgent",
                 value: "\(getUrgentTaskCount())",
                 icon: "exclamationmark.triangle",
-                color: .orange
+                color: FrancoSphereDesign.DashboardColors.warning
             )
             
             BuildingStatCard(
                 title: "Completed",
                 value: "\(tasks.filter { $0.isCompleted }.count)",
                 icon: "checkmark.circle",
-                color: .green
+                color: FrancoSphereDesign.DashboardColors.success
             )
         }
     }
@@ -152,54 +169,58 @@ struct BuildingMapDetailView: View {
     // MARK: - Today's Tasks Section
     
     private var todaysTasksSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Today's Tasks")
-                .font(.headline)
-                .foregroundColor(.white)
+                .glassHeading()
+                .padding(.horizontal, 4)
             
-            LazyVStack(spacing: 8) {
+            VStack(spacing: 12) {
                 ForEach(tasks.prefix(5), id: \.id) { task in
                     BuildingTaskRow(task: task)
+                        .transition(.glassSlideUp)
                 }
             }
             
             if tasks.count > 5 {
-                Button("View All \(tasks.count) Tasks") {
-                    showAllTasks = true
+                Button(action: { showAllTasks = true }) {
+                    HStack {
+                        Text("View All \(tasks.count) Tasks")
+                        Image(systemName: "chevron.right")
+                    }
+                    .glassText(size: .callout)
                 }
-                .font(.callout)
-                .foregroundColor(.blue)
+                .glassButton(style: .ghost, size: .medium)
             }
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
+        .francoGlassCard(intensity: .regular)
     }
     
     // MARK: - Actions Section
     
     private var actionsSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Button(action: { showClockIn = true }) {
-                HStack {
+                HStack(spacing: 12) {
                     Image(systemName: "clock.fill")
+                        .font(.title3)
                     Text("Clock In at Building")
+                        .fontWeight(.semibold)
                 }
-                .font(.callout)
-                .fontWeight(.medium)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.green.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
             }
+            .glassButton(style: .success, size: .large)
+            .pulsingGlow(color: .green)
             
-            Button("View Building Details") {
-                showDetails = true
+            Button(action: { showDetails = true }) {
+                HStack {
+                    Text("View Building Details")
+                    Image(systemName: "arrow.right.circle")
+                }
+                .frame(maxWidth: .infinity)
             }
-            .font(.callout)
-            .foregroundColor(.blue)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .glassButton(style: .secondary, size: .medium)
         }
     }
     
@@ -289,23 +310,31 @@ struct BuildingStatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(.title2)
                 .foregroundColor(color)
             
             Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text(title)
-                .font(.caption2)
-                .foregroundColor(.white.opacity(0.7))
+                .glassCaption()
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 16)
+        .background(
+            ZStack {
+                color.opacity(0.1)
+                .ultraThinMaterial
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium))
+        .overlay(
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
     }
 }
 
@@ -315,38 +344,70 @@ struct BuildingTaskRow: View {
     let task: ContextualTask
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Status indicator
+        HStack(spacing: 16) {
+            // Status indicator with glow
             Circle()
-                .fill(task.isCompleted ? Color.green : Color.orange)
-                .frame(width: 8, height: 8)
+                .fill(task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
+                .frame(width: 10, height: 10)
+                .shadow(color: task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning, radius: 3)
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(task.title)
-                    .font(.callout)
-                    .foregroundColor(.white)
+                    .glassText(size: .callout)
                     .lineLimit(1)
                 
-                Text("Category: \(getCategoryString(task.category))")
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.6))
+                HStack(spacing: 8) {
+                    Label(getCategoryString(task.category), systemImage: getCategoryIcon(task.category))
+                        .glassCaption()
+                }
             }
             
             Spacer()
             
+            // Urgency badge with glass effect
             Text(getUrgencyDisplay(task.urgency))
-                .font(.caption2)
-                .fontWeight(.medium)
-                .foregroundColor(getUrgencyColor(task.urgency))
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(getUrgencyColor(task.urgency).opacity(0.8))
+                .clipShape(Capsule())
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.small)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.small)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        )
+        .glassHover()
     }
     
     // Helper methods for safe property access
     private func getCategoryString(_ category: CoreTypes.TaskCategory?) -> String {
         return category?.rawValue.capitalized ?? "General"
+    }
+    
+    private func getCategoryIcon(_ category: CoreTypes.TaskCategory?) -> String {
+        guard let category = category else { return "folder" }
+        
+        switch category {
+        case .cleaning: return "sparkles"
+        case .maintenance: return "wrench.and.screwdriver"
+        case .repair: return "hammer"
+        case .sanitation: return "trash"
+        case .inspection: return "magnifyingglass"
+        case .landscaping: return "leaf"
+        case .security: return "shield"
+        case .emergency: return "exclamationmark.triangle"
+        case .installation: return "plus.circle"
+        case .utilities: return "bolt"
+        case .renovation: return "paintbrush"
+        case .administrative: return "folder"
+        }
     }
     
     private func getUrgencyDisplay(_ urgency: CoreTypes.TaskUrgency?) -> String {
@@ -369,21 +430,21 @@ struct BuildingTaskRow: View {
     }
     
     private func getUrgencyColor(_ urgency: CoreTypes.TaskUrgency?) -> Color {
-        guard let urgency = urgency else { return .gray }
+        guard let urgency = urgency else { return FrancoSphereDesign.DashboardColors.secondaryText }
         
         switch urgency {
         case .low:
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         case .medium:
-            return .yellow
+            return FrancoSphereDesign.DashboardColors.info
         case .high:
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         case .urgent:
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         case .critical:
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         case .emergency:
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         }
     }
 }

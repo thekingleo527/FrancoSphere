@@ -1,13 +1,12 @@
 //
 //  AssignedBuildingsView.swift
-//  FrancoSphere v6.0 - DARK MODE FIXES
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: Dark mode empty state styling
-//  ✅ FIXED: Proper background colors
-//  ✅ ADDED: Better empty state messaging
-//  ✅ FIXED: Compilation errors (address property, getPrimaryBuilding)
-//  ✅ UPDATED: Uses WorkerContextEngine directly
-//  ✅ INTEGRATED: Uses BuildingConstants for image mapping
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Uses reusable PropertyCard component
+//  ✅ INTEGRATED: FrancoSphereDesign system
+//  ✅ IMPROVED: Better visual hierarchy and animations
+//  ✅ OPTIMIZED: Consistent with BuildingsView pattern
 //
 
 import SwiftUI
@@ -15,7 +14,11 @@ import Foundation
 
 struct AssignedBuildingsView: View {
     @StateObject private var contextEngine = WorkerContextEngine.shared
+    @StateObject private var buildingService = BuildingService.shared
     @Environment(\.dismiss) private var dismiss
+    
+    @State private var buildingMetrics: [String: BuildingMetrics] = [:]
+    @State private var isLoading = true
     
     var assignedBuildings: [NamedCoordinate] {
         contextEngine.assignedBuildings
@@ -24,10 +27,15 @@ struct AssignedBuildingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Color.black.ignoresSafeArea()
+                // Dark Elegance Background
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
                 
-                Group {
+                VStack(spacing: 0) {
+                    // Custom header
+                    headerView
+                    
+                    // Content
                     if assignedBuildings.isEmpty {
                         emptyState
                     } else {
@@ -35,112 +43,230 @@ struct AssignedBuildingsView: View {
                     }
                 }
             }
-            .navigationTitle("My Buildings")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .foregroundColor(.blue)
-                }
+            .navigationBarHidden(true)
+            .preferredColorScheme(.dark)
+            .task {
+                await loadBuildingMetrics()
             }
         }
-        .preferredColorScheme(.dark)
     }
+    
+    // MARK: - Header View
+    
+    private var headerView: some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("My Buildings")
+                        .francoTypography(FrancoSphereDesign.Typography.title)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    
+                    if !assignedBuildings.isEmpty {
+                        Text("\(assignedBuildings.count) assigned")
+                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    }
+                }
+                
+                Spacer()
+                
+                Button("Done") {
+                    dismiss()
+                }
+                .francoTypography(FrancoSphereDesign.Typography.body)
+                .fontWeight(.medium)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+            }
+            .padding(FrancoSphereDesign.Spacing.md)
+            
+            // Separator
+            Rectangle()
+                .fill(FrancoSphereDesign.DashboardColors.borderSubtle)
+                .frame(height: 1)
+        }
+        .background(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.95))
+    }
+    
+    // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "building.2.slash")
-                .font(.system(size: 64))
-                .foregroundColor(.gray)
-            
-            VStack(spacing: 12) {
-                Text("No Buildings Assigned")
-                    .font(.title2)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                Text("Contact your supervisor to get building assignments")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            
-            Button("Contact Supervisor") {
-                // Handle contact supervisor action
-                if let url = URL(string: "mailto:shawn@francomanagementgroup.com?subject=Building%20Assignment%20Request") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        FrancoEmptyState(
+            icon: "building.2.crop.circle",
+            title: "No Buildings Assigned",
+            message: "Contact your supervisor to get building assignments",
+            action: contactSupervisor,
+            actionTitle: "Contact Supervisor",
+            role: .worker
+        )
+        .padding(FrancoSphereDesign.Spacing.lg)
     }
     
+    // MARK: - Buildings List
+    
     private var buildingsList: some View {
-        List {
-            ForEach(assignedBuildings, id: \.id) { building in
-                AssignedBuildingRow(building: building)
+        ScrollView {
+            LazyVStack(spacing: FrancoSphereDesign.Spacing.sm) {
+                ForEach(assignedBuildings, id: \.id) { building in
+                    NavigationLink {
+                        BuildingDetailView(
+                            buildingId: building.id,
+                            buildingName: building.name,
+                            buildingAddress: building.address
+                        )
+                    } label: {
+                        AssignedBuildingCard(
+                            building: building,
+                            metrics: buildingMetrics[building.id],
+                            isCurrentBuilding: isCurrentBuilding(building),
+                            isPrimaryAssignment: isPrimaryAssignment(building),
+                            taskCount: getTaskCount(for: building)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(FrancoSphereDesign.Spacing.md)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func isCurrentBuilding(_ building: NamedCoordinate) -> Bool {
+        contextEngine.clockInStatus.isClockedIn &&
+        contextEngine.clockInStatus.building?.id == building.id
+    }
+    
+    private func isPrimaryAssignment(_ building: NamedCoordinate) -> Bool {
+        contextEngine.assignedBuildings.first?.id == building.id
+    }
+    
+    private func getTaskCount(for building: NamedCoordinate) -> Int {
+        contextEngine.getTasksForBuilding(building.id).count
+    }
+    
+    private func contactSupervisor() {
+        if let url = URL(string: "mailto:shawn@francomanagementgroup.com?subject=Building%20Assignment%20Request") {
+            UIApplication.shared.open(url)
+        }
+    }
+    
+    private func loadBuildingMetrics() async {
+        isLoading = true
+        
+        // Load metrics for each assigned building
+        await withTaskGroup(of: (String, BuildingMetrics?).self) { group in
+            for building in assignedBuildings {
+                group.addTask {
+                    do {
+                        let metrics = try await self.buildingService.getMetrics(for: building.id)
+                        return (building.id, metrics)
+                    } catch {
+                        return (building.id, nil)
+                    }
+                }
+            }
+            
+            // Collect results
+            var metricsMap: [String: BuildingMetrics] = [:]
+            for await (buildingId, metrics) in group {
+                if let metrics = metrics {
+                    metricsMap[buildingId] = metrics
+                }
+            }
+            
+            await MainActor.run {
+                self.buildingMetrics = metricsMap
+                self.isLoading = false
             }
         }
-        .listStyle(PlainListStyle())
-        .background(Color.black)
-        .scrollContentBackground(.hidden)
     }
 }
 
-struct AssignedBuildingRow: View {
+// MARK: - Assigned Building Card Component
+
+struct AssignedBuildingCard: View {
     let building: NamedCoordinate
-    @StateObject private var contextEngine = WorkerContextEngine.shared
+    let metrics: BuildingMetrics?
+    let isCurrentBuilding: Bool
+    let isPrimaryAssignment: Bool
+    let taskCount: Int
+    
+    @State private var isPressed = false
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Building image
-            buildingImage
+        HStack(spacing: FrancoSphereDesign.Spacing.md) {
+            // Building image using MySitesCard
+            MySitesCard(
+                building: building,
+                metrics: metrics,
+                showMetrics: false,
+                style: .compact
+            )
+            .frame(width: 60, height: 60)
             
             // Building info
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
                 Text(building.displayName)
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     .lineLimit(2)
                 
                 Text(building.fullAddress)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .lineLimit(1)
                 
-                HStack {
+                // Status badges
+                HStack(spacing: FrancoSphereDesign.Spacing.sm) {
                     if isCurrentBuilding {
-                        Label("CURRENT", systemImage: "location.fill")
-                            .font(.caption)
-                            .foregroundColor(.green)
+                        StatusBadge(
+                            title: "CURRENT",
+                            icon: "location.fill",
+                            color: FrancoSphereDesign.DashboardColors.success
+                        )
                     } else if isPrimaryAssignment {
-                        Label("PRIMARY", systemImage: "star.fill")
-                            .font(.caption)
-                            .foregroundColor(.yellow)
+                        StatusBadge(
+                            title: "PRIMARY",
+                            icon: "star.fill",
+                            color: FrancoSphereDesign.DashboardColors.warning
+                        )
                     } else {
-                        Label("Assigned", systemImage: "checkmark.circle.fill")
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                        StatusBadge(
+                            title: "Assigned",
+                            icon: "checkmark.circle.fill",
+                            color: FrancoSphereDesign.DashboardColors.info
+                        )
                     }
                     
                     Spacer()
                     
-                    // Task count
-                    let taskCount = contextEngine.getTasksForBuilding(building.id).count
-                    if taskCount > 0 {
+                    // Task count with metrics
+                    if let metrics = metrics {
+                        HStack(spacing: 4) {
+                            if metrics.urgentTasksCount > 0 {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                            }
+                            
+                            Text("\(taskCount) tasks")
+                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .foregroundColor(taskCount > 0 ?
+                                    FrancoSphereDesign.DashboardColors.warning :
+                                    FrancoSphereDesign.DashboardColors.tertiaryText
+                                )
+                        }
+                    } else if taskCount > 0 {
                         Text("\(taskCount) tasks")
-                            .font(.caption)
-                            .foregroundColor(.orange)
+                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                     }
+                }
+                
+                // Completion progress if available
+                if let metrics = metrics {
+                    FrancoMetricsProgress(value: metrics.completionRate, role: .worker)
+                        .frame(height: 4)
                 }
             }
             
@@ -148,47 +274,67 @@ struct AssignedBuildingRow: View {
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
         }
-        .padding(.vertical, 8)
-        .background(Color.black)
-    }
-    
-    private var buildingImage: some View {
-        Group {
-            if let assetName = building.imageAssetName,
-               let image = UIImage(named: assetName) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 50, height: 50)
-                    .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(building.buildingTypeColor.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Image(systemName: building.buildingIcon)
-                            .font(.system(size: 20))
-                            .foregroundColor(building.buildingTypeColor)
-                    )
+        .francoCardPadding()
+        .background(
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                .fill(isCurrentBuilding ?
+                    FrancoSphereDesign.DashboardColors.success.opacity(0.1) :
+                    FrancoSphereDesign.DashboardColors.cardBackground
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                        .stroke(
+                            isCurrentBuilding ?
+                            FrancoSphereDesign.DashboardColors.success.opacity(0.3) :
+                            FrancoSphereDesign.DashboardColors.borderSubtle,
+                            lineWidth: 1
+                        )
+                )
+        )
+        .francoShadow(FrancoSphereDesign.Shadow.sm)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .onTapGesture {
+            withAnimation(FrancoSphereDesign.Animations.quick) {
+                isPressed = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(FrancoSphereDesign.Animations.quick) {
+                    isPressed = false
+                }
             }
         }
     }
+}
+
+// MARK: - Status Badge Component
+
+struct StatusBadge: View {
+    let title: String
+    let icon: String
+    let color: Color
     
-    private var isCurrentBuilding: Bool {
-        // Check if this is the building the worker is currently clocked into
-        return contextEngine.clockInStatus.isClockedIn &&
-               contextEngine.clockInStatus.building?.id == building.id
-    }
-    
-    private var isPrimaryAssignment: Bool {
-        // Check if this is the first assigned building (primary)
-        return contextEngine.assignedBuildings.first?.id == building.id
+    var body: some View {
+        Label(title, systemImage: icon)
+            .francoTypography(FrancoSphereDesign.Typography.caption2)
+            .fontWeight(.medium)
+            .foregroundColor(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(
+                Capsule()
+                    .fill(color.opacity(0.15))
+                    .overlay(
+                        Capsule()
+                            .stroke(color.opacity(0.25), lineWidth: 1)
+                    )
+            )
     }
 }
 
 // MARK: - Preview
+
 struct AssignedBuildingsView_Previews: PreviewProvider {
     static var previews: some View {
         AssignedBuildingsView()

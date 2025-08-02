@@ -2,14 +2,17 @@
 //  CoverageInfoCard.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed unnecessary try-catch block
-//  ✅ FIXED: Updated to use WorkerContextEngine
-//  ✅ FIXED: Removed duplicate imports
-//  ✅ FIXED: Corrected NamedCoordinate initialization
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Glass morphism effects
+//  ✅ INTEGRATED: FrancoSphereDesign system
+//  ✅ IMPROVED: Visual hierarchy and animations
+//  ✅ MAINTAINED: All three access variants (Coverage, Emergency, Training)
 //
 
 import SwiftUI
 import Foundation
+
+// MARK: - Coverage Info Card (Default)
 
 struct CoverageInfoCard: View {
     let building: NamedCoordinate
@@ -22,9 +25,10 @@ struct CoverageInfoCard: View {
     @StateObject private var contextEngine = WorkerContextEngine.shared
     @State private var primaryWorker: String?
     @State private var isLoadingWorkerInfo = false
+    @State private var isPressed = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
             coverageHeader
             
             coverageDescription
@@ -35,15 +39,18 @@ struct CoverageInfoCard: View {
             
             actionButton
         }
-        .padding()
+        .francoCardPadding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.orange.opacity(0.1))
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(.orange.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                        .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.2), lineWidth: 1)
                 )
         )
+        .francoShadow(FrancoSphereDesign.Shadow.md)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(FrancoSphereDesign.Animations.quick, value: isPressed)
         .task {
             await loadPrimaryWorkerInfo()
         }
@@ -52,20 +59,24 @@ struct CoverageInfoCard: View {
     // MARK: - Coverage Header
     
     private var coverageHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: FrancoSphereDesign.Spacing.sm) {
             Image(systemName: "info.circle.fill")
                 .font(.title2)
-                .foregroundColor(.orange)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.15))
+                )
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Coverage Mode")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.orange)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                 
                 Text("Emergency/Support Access")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -74,13 +85,13 @@ struct CoverageInfoCard: View {
             if let currentWorker = contextEngine.currentWorker {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("You")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                     
                     Text(currentWorker.name)
-                        .font(.caption)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -89,14 +100,14 @@ struct CoverageInfoCard: View {
     // MARK: - Coverage Description
     
     private var coverageDescription: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             Text("This building is not in your regular assignments.")
-                .font(.subheadline)
-                .foregroundColor(.primary)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text("You have access to complete building information for coverage support, emergency situations, or cross-training purposes.")
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -104,94 +115,98 @@ struct CoverageInfoCard: View {
     // MARK: - Primary Worker Info
     
     private var primaryWorkerInfo: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             Text("Primary Coverage")
-                .font(.subheadline)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             if isLoadingWorkerInfo {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.8)
+                        .tint(FrancoSphereDesign.DashboardColors.primaryText)
                     
                     Text("Loading worker information...")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
+                .padding(FrancoSphereDesign.Spacing.sm)
             } else if let worker = primaryWorker {
                 primaryWorkerRow(worker)
             } else {
                 noPrimaryWorkerView
             }
         }
-        .padding(12)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .padding(FrancoSphereDesign.Spacing.sm)
+        .francoGlassBackground(cornerRadius: FrancoSphereDesign.CornerRadius.md)
     }
     
     // MARK: - Primary Worker Row
     
     private func primaryWorkerRow(_ workerName: String) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: FrancoSphereDesign.Spacing.sm) {
             // Worker avatar
-            Circle()
-                .fill(.blue.opacity(0.3))
-                .frame(width: 32, height: 32)
-                .overlay(
-                    Text(String(workerName.prefix(1)))
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.blue)
-                )
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: FrancoSphereDesign.DashboardColors.workerHeroGradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 40, height: 40)
+                
+                Text(String(workerName.prefix(1)))
+                    .francoTypography(FrancoSphereDesign.Typography.callout)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+            }
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(workerName)
-                    .font(.subheadline)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Text("Primary Worker")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
             
             // Status indicator
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(.green)
-                    .frame(width: 8, height: 8)
-                
-                Text("Available")
-                    .font(.caption2)
-                    .foregroundColor(.green)
-            }
+            StatusPill(
+                text: "Available",
+                icon: "circle.fill",
+                color: FrancoSphereDesign.DashboardColors.success
+            )
         }
     }
     
     // MARK: - No Primary Worker View
     
     private var noPrimaryWorkerView: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: FrancoSphereDesign.Spacing.sm) {
             Circle()
-                .fill(.gray.opacity(0.3))
-                .frame(width: 32, height: 32)
+                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: "person.fill")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                        .font(.title3)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 )
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("No primary worker assigned")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Text("Contact management for assistance")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             }
             
             Spacer()
@@ -201,31 +216,44 @@ struct CoverageInfoCard: View {
     // MARK: - Emergency Access Note
     
     private var emergencyAccessNote: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: FrancoSphereDesign.Spacing.xs) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.caption)
-                .foregroundColor(.yellow)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
             
             Text("Emergency situations grant full access to all building systems and procedures.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 .italic()
         }
-        .padding(8)
-        .background(.yellow.opacity(0.1))
-        .cornerRadius(8)
+        .padding(FrancoSphereDesign.Spacing.xs)
+        .background(
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
+        )
     }
     
     // MARK: - Action Button
     
     private var actionButton: some View {
-        Button(action: onViewFullInfo) {
-            HStack(spacing: 8) {
+        Button(action: {
+            withAnimation(FrancoSphereDesign.Animations.quick) {
+                isPressed = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(FrancoSphereDesign.Animations.quick) {
+                    isPressed = false
+                }
+                onViewFullInfo()
+            }
+        }) {
+            HStack(spacing: FrancoSphereDesign.Spacing.xs) {
                 Image(systemName: "brain.head.profile")
                     .font(.subheadline)
                 
                 Text("View Complete Building Intelligence")
-                    .font(.subheadline)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
                     .fontWeight(.medium)
                 
                 Spacer()
@@ -236,8 +264,8 @@ struct CoverageInfoCard: View {
             .foregroundColor(.white)
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.orange)
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                    .fill(FrancoSphereDesign.DashboardColors.warning)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -248,7 +276,6 @@ struct CoverageInfoCard: View {
     private func loadPrimaryWorkerInfo() async {
         isLoadingWorkerInfo = true
         
-        // Get primary worker for this building
         let primaryWorkerName = await getPrimaryWorkerForBuilding(building.id)
         
         await MainActor.run {
@@ -260,48 +287,65 @@ struct CoverageInfoCard: View {
     // MARK: - Helper Methods
     
     private func getPrimaryWorkerForBuilding(_ buildingId: String) async -> String? {
-        // Use existing WorkerAssignmentEngine logic
-        // Map workers to buildings based on current assignments
-        
+        // Worker assignments mapped to buildings
         switch buildingId {
-        case "14": return "Kevin Dutan" // Rubin Museum specialist
-        case "1": return "Greg Miller" // 12 West 18th Street
-        case "10": return "Mercedes Inamagua" // 131 Perry Street
-        case "4": return "Luis Lopez" // 41 Elizabeth Street
-        case "6": return "Luis Lopez" // 36 Walker Street
-        case "16": return "Edwin Lema" // Stuyvesant Park
-        case "7": return "Angel Cornejo" // 136 West 17th Street
-        case "8": return "Angel Cornejo" // 138 West 17th Street
-        case "9": return "Angel Cornejo" // 135 West 17th Street
-        case "5": return "Mercedes Inamagua" // 68 Perry Street
-        case "13": return "Shawn Magloire" // 104 Franklin Street
+        case "14": return "Kevin Dutan"
+        case "1": return "Greg Miller"
+        case "10": return "Mercedes Inamagua"
+        case "4": return "Luis Lopez"
+        case "6": return "Luis Lopez"
+        case "16": return "Edwin Lema"
+        case "7": return "Angel Cornejo"
+        case "8": return "Angel Cornejo"
+        case "9": return "Angel Cornejo"
+        case "5": return "Mercedes Inamagua"
+        case "13": return "Shawn Magloire"
         default: return nil
         }
     }
 }
 
-// MARK: - Emergency Access Variant
+// MARK: - Emergency Access Card
 
 struct EmergencyAccessCard: View {
     let building: NamedCoordinate
     let onViewFullInfo: () -> Void
     
+    @State private var isPressed = false
+    @State private var pulseAnimation = false
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.title2)
-                    .foregroundColor(.red)
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+            // Header with pulse animation
+            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.15))
+                        .frame(width: 48, height: 48)
+                    
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.title2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                }
+                .overlay(
+                    Circle()
+                        .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.3), lineWidth: 2)
+                        .scaleEffect(pulseAnimation ? 1.3 : 1.0)
+                        .opacity(pulseAnimation ? 0 : 1)
+                        .animation(
+                            .easeInOut(duration: 1.5).repeatForever(autoreverses: false),
+                            value: pulseAnimation
+                        )
+                )
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Emergency Access")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.red)
+                        .francoTypography(FrancoSphereDesign.Typography.headline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                     
                     Text("Complete building access authorized")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
                 
                 Spacer()
@@ -309,56 +353,62 @@ struct EmergencyAccessCard: View {
                 // Emergency timestamp
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("EMERGENCY")
-                        .font(.caption2)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
                         .fontWeight(.bold)
-                        .foregroundColor(.red)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                     
                     Text(Date().formatted(.dateTime.hour().minute()))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
             }
             
             Text("Emergency situation detected. You have full access to all building information and emergency procedures.")
-                .font(.subheadline)
-                .foregroundColor(.primary)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             // Emergency contacts quick access
-            HStack {
-                Button("911") {
-                    if let phoneURL = URL(string: "tel://911") {
-                        UIApplication.shared.open(phoneURL)
-                    }
-                }
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.red)
-                .cornerRadius(8)
+            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+                EmergencyButton(
+                    title: "911",
+                    action: {
+                        if let phoneURL = URL(string: "tel://911") {
+                            UIApplication.shared.open(phoneURL)
+                        }
+                    },
+                    isPrimary: true
+                )
                 
-                Button("Security") {
-                    // Contact building security
-                }
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.orange)
-                .cornerRadius(8)
+                EmergencyButton(
+                    title: "Security",
+                    action: {
+                        // Contact building security
+                    },
+                    isPrimary: false
+                )
                 
                 Spacer()
             }
             
-            Button(action: onViewFullInfo) {
-                HStack(spacing: 8) {
+            // Main action button
+            Button(action: {
+                withAnimation(FrancoSphereDesign.Animations.quick) {
+                    isPressed = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(FrancoSphereDesign.Animations.quick) {
+                        isPressed = false
+                    }
+                    onViewFullInfo()
+                }
+            }) {
+                HStack(spacing: FrancoSphereDesign.Spacing.xs) {
                     Image(systemName: "shield.lefthalf.filled")
                         .font(.subheadline)
                     
                     Text("Access Emergency Information")
-                        .font(.subheadline)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
                         .fontWeight(.medium)
                     
                     Spacer()
@@ -369,62 +419,105 @@ struct EmergencyAccessCard: View {
                 .foregroundColor(.white)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.red)
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                        .fill(FrancoSphereDesign.DashboardColors.critical)
                 )
             }
             .buttonStyle(PlainButtonStyle())
         }
-        .padding()
+        .francoCardPadding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.red.opacity(0.1))
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(.red.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                        .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.2), lineWidth: 1)
                 )
         )
+        .francoShadow(FrancoSphereDesign.Shadow.md)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(FrancoSphereDesign.Animations.quick, value: isPressed)
+        .onAppear {
+            pulseAnimation = true
+        }
     }
 }
 
-// MARK: - Training Access Variant
+// MARK: - Training Access Card
 
 struct TrainingAccessCard: View {
     let building: NamedCoordinate
     let onViewFullInfo: () -> Void
     
+    @State private var isPressed = false
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
                 Image(systemName: "book.fill")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.15))
+                    )
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Training Mode")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.blue)
+                        .francoTypography(FrancoSphereDesign.Typography.headline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                     
                     Text("Cross-training access")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
                 
                 Spacer()
             }
             
             Text("You're accessing this building for training purposes. View complete procedures and learn the systems.")
-                .font(.subheadline)
-                .foregroundColor(.primary)
+                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
-            Button(action: onViewFullInfo) {
-                HStack(spacing: 8) {
+            // Training progress indicator
+            VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
+                HStack {
+                    Text("Training Progress")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    Spacer()
+                    
+                    Text("0% Complete")
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                }
+                
+                FrancoMetricsProgress(value: 0, role: .worker)
+                    .frame(height: 4)
+            }
+            .padding(FrancoSphereDesign.Spacing.sm)
+            .francoGlassBackground(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+            
+            Button(action: {
+                withAnimation(FrancoSphereDesign.Animations.quick) {
+                    isPressed = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(FrancoSphereDesign.Animations.quick) {
+                        isPressed = false
+                    }
+                    onViewFullInfo()
+                }
+            }) {
+                HStack(spacing: FrancoSphereDesign.Spacing.xs) {
                     Image(systemName: "graduationcap.fill")
                         .font(.subheadline)
                     
                     Text("Access Training Materials")
-                        .font(.subheadline)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
                         .fontWeight(.medium)
                     
                     Spacer()
@@ -435,21 +528,79 @@ struct TrainingAccessCard: View {
                 .foregroundColor(.white)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.blue)
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                        .fill(FrancoSphereDesign.DashboardColors.info)
                 )
             }
             .buttonStyle(PlainButtonStyle())
         }
-        .padding()
+        .francoCardPadding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.blue.opacity(0.1))
+            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(.blue.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                        .stroke(FrancoSphereDesign.DashboardColors.info.opacity(0.2), lineWidth: 1)
                 )
         )
+        .francoShadow(FrancoSphereDesign.Shadow.md)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(FrancoSphereDesign.Animations.quick, value: isPressed)
+    }
+}
+
+// MARK: - Supporting Components
+
+struct StatusPill: View {
+    let text: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 8))
+                .foregroundColor(color)
+            
+            Text(text)
+                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .foregroundColor(color)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.15))
+                .overlay(
+                    Capsule()
+                        .stroke(color.opacity(0.25), lineWidth: 1)
+                )
+        )
+    }
+}
+
+struct EmergencyButton: View {
+    let title: String
+    let action: () -> Void
+    let isPrimary: Bool
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .fontWeight(isPrimary ? .bold : .medium)
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                        .fill(isPrimary ?
+                            FrancoSphereDesign.DashboardColors.critical :
+                            FrancoSphereDesign.DashboardColors.warning
+                        )
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -465,21 +616,23 @@ struct CoverageInfoCard_Previews: PreviewProvider {
             longitude: -73.9980
         )
         
-        VStack(spacing: 20) {
-            CoverageInfoCard(building: sampleBuilding) {
-                print("View full info tapped")
+        ScrollView {
+            VStack(spacing: FrancoSphereDesign.Spacing.lg) {
+                CoverageInfoCard(building: sampleBuilding) {
+                    print("View full info tapped")
+                }
+                
+                EmergencyAccessCard(building: sampleBuilding) {
+                    print("Emergency access tapped")
+                }
+                
+                TrainingAccessCard(building: sampleBuilding) {
+                    print("Training access tapped")
+                }
             }
-            
-            EmergencyAccessCard(building: sampleBuilding) {
-                print("Emergency access tapped")
-            }
-            
-            TrainingAccessCard(building: sampleBuilding) {
-                print("Training access tapped")
-            }
+            .padding()
         }
-        .padding()
-        .background(Color.black)
-        .previewLayout(.sizeThatFits)
+        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .preferredColorScheme(.dark)
     }
 }

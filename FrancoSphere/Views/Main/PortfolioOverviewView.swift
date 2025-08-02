@@ -2,10 +2,10 @@
 //  PortfolioOverviewView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Removed incorrect CoreTypes module import
-//  ✅ FIXED: All property references updated to match actual CoreTypes.PortfolioIntelligence structure
-//  ✅ ALIGNED: With actual CoreTypes properties (no overallEfficiency, averageComplianceScore, etc.)
-//  ✅ SIMPLIFIED: Uses available properties and calculates derived metrics
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ALIGNED: Mirrors WorkerDashboardView design patterns
+//  ✅ ENHANCED: Glass morphism effects and animations
+//  ✅ FIXED: All colors now use FrancoSphereDesign.DashboardColors
 //
 
 import SwiftUI
@@ -18,6 +18,7 @@ struct PortfolioOverviewView: View {
     @State private var selectedMetric: MetricType = .efficiency
     @State private var showingDetailView = false
     @State private var isRefreshing = false
+    @State private var isHeroCollapsed = false
     
     init(intelligence: CoreTypes.PortfolioIntelligence,
          onBuildingTap: ((NamedCoordinate) -> Void)? = nil,
@@ -28,111 +29,78 @@ struct PortfolioOverviewView: View {
     }
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 20) {
-                // Portfolio Summary Cards
-                portfolioSummarySection
-                
-                // Key Metrics Selector
-                metricSelectorSection
-                
-                // Selected Metric Detail
-                selectedMetricDetailSection
-                
-                // Performance Summary
-                performanceSummarySection
-                
-                // Alert Summary
-                alertSummarySection
-                
-                // Last Updated Info
-                lastUpdatedSection
-            }
-            .padding()
-        }
-        .refreshable {
-            if let onRefresh = onRefresh {
-                isRefreshing = true
-                await onRefresh()
-                isRefreshing = false
-            }
-        }
-        .overlay(
-            isRefreshing ? ProgressView("Refreshing...") : nil
-        )
-    }
-    
-    // MARK: - Portfolio Summary Section
-    
-    private var portfolioSummarySection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Portfolio Overview")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
+        ZStack {
+            // Dark Elegance Background
+            FrancoSphereDesign.DashboardColors.baseBackground
+                .ignoresSafeArea()
             
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                SummaryCard(
-                    title: "Total Buildings",
-                    value: "\(intelligence.totalBuildings)",
-                    icon: "building.2",
-                    color: .blue,
-                    trend: nil
-                )
-                
-                SummaryCard(
-                    title: "Completion Rate",
-                    value: "\(Int(intelligence.completionRate * 100))%",
-                    icon: "speedometer",
-                    color: efficiencyColor,
-                    trend: intelligence.monthlyTrend
-                )
-                
-                SummaryCard(
-                    title: "Completed Tasks",
-                    value: "\(intelligence.completedTasks)",
-                    icon: "checkmark.circle",
-                    color: .green,
-                    trend: nil
-                )
-                
-                SummaryCard(
-                    title: "Active Workers",
-                    value: "\(intelligence.activeWorkers)",
-                    icon: "person.2",
-                    color: .purple,
-                    trend: nil
-                )
+            ScrollView {
+                LazyVStack(spacing: FrancoSphereDesign.Spacing.lg) {
+                    // Portfolio Hero Section (Collapsible like Worker Dashboard)
+                    PortfolioHeroCard(
+                        intelligence: intelligence,
+                        isCollapsed: $isHeroCollapsed
+                    )
+                    .zIndex(50)
+                    
+                    // Key Metrics Selector
+                    metricSelectorSection
+                    
+                    // Selected Metric Detail
+                    selectedMetricDetailSection
+                    
+                    // Performance Summary
+                    performanceSummarySection
+                    
+                    // Alert Summary
+                    alertSummarySection
+                    
+                    // Last Updated Info
+                    lastUpdatedSection
+                }
+                .padding(.horizontal, FrancoSphereDesign.Spacing.md)
+                .padding(.vertical, FrancoSphereDesign.Spacing.lg)
             }
+            .refreshable {
+                if let onRefresh = onRefresh {
+                    isRefreshing = true
+                    await onRefresh()
+                    isRefreshing = false
+                }
+            }
+            .overlay(
+                isRefreshing ?
+                FrancoLoadingView(
+                    message: "Refreshing portfolio data...",
+                    role: .admin
+                ) : nil
+            )
         }
+        .preferredColorScheme(.dark)
     }
     
     // MARK: - Metric Selector Section
     
     private var metricSelectorSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
             Text("Key Metrics")
-                .font(.headline)
-                .foregroundColor(.primary)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: FrancoSphereDesign.Spacing.sm) {
                     ForEach(MetricType.allCases, id: \.self) { metric in
                         MetricSelectorButton(
                             metric: metric,
                             isSelected: selectedMetric == metric,
                             onTap: {
-                                withAnimation(Animation.easeInOut(duration: 0.3)) {
+                                withAnimation(FrancoSphereDesign.Animations.spring) {
                                     selectedMetric = metric
                                 }
                             }
                         )
                     }
                 }
-                .padding(.horizontal)
             }
         }
     }
@@ -140,15 +108,15 @@ struct PortfolioOverviewView: View {
     // MARK: - Selected Metric Detail Section
     
     private var selectedMetricDetailSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
             HStack {
                 Image(systemName: selectedMetric.icon)
                     .font(.title2)
-                    .foregroundColor(selectedMetric.color)
+                    .foregroundColor(selectedMetric.darkThemeColor)
                 
                 Text(selectedMetric.title)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Spacer()
             }
@@ -170,27 +138,26 @@ struct PortfolioOverviewView: View {
                 removal: .move(edge: .leading).combined(with: .opacity)
             ))
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .francoCardPadding()
+        .francoDarkCardBackground()
     }
     
     // MARK: - Performance Summary Section
     
     private var performanceSummarySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
             Text("Performance Summary")
-                .font(.headline)
-                .foregroundColor(.primary)
+                .francoTypography(FrancoSphereDesign.Typography.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Compliance Score")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Text("\(intelligence.complianceScore)%")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .francoTypography(FrancoSphereDesign.Typography.title2)
                         .foregroundColor(complianceColor)
                 }
                 
@@ -198,8 +165,8 @@ struct PortfolioOverviewView: View {
                 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Trend")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     HStack(spacing: 4) {
                         Image(systemName: trendIcon(for: intelligence.monthlyTrend))
@@ -207,50 +174,52 @@ struct PortfolioOverviewView: View {
                             .foregroundColor(trendColor(for: intelligence.monthlyTrend))
                         
                         Text(intelligence.monthlyTrend.rawValue.capitalized)
-                            .font(.caption)
+                            .francoTypography(FrancoSphereDesign.Typography.caption)
                             .fontWeight(.medium)
                             .foregroundColor(trendColor(for: intelligence.monthlyTrend))
                     }
                 }
             }
-            .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+            .francoCardPadding()
+            .francoDarkCardBackground()
         }
     }
     
     // MARK: - Alert Summary Section
     
     private var alertSummarySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
             HStack {
                 Image(systemName: "info.circle")
-                    .foregroundColor(.blue)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                 
                 Text("Portfolio Status")
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             
-            VStack(spacing: 8) {
+            VStack(spacing: FrancoSphereDesign.Spacing.sm) {
                 StatusRow(
                     title: "Buildings Monitored",
                     value: "\(intelligence.totalBuildings)",
                     icon: "building.2",
-                    color: .blue
+                    color: FrancoSphereDesign.DashboardColors.info
                 )
                 
                 StatusRow(
                     title: "Active Workers",
                     value: "\(intelligence.activeWorkers)",
                     icon: "person.2",
-                    color: .purple
+                    color: FrancoSphereDesign.DashboardColors.tertiaryAction
                 )
                 
                 StatusRow(
                     title: "Critical Issues",
                     value: "\(intelligence.criticalIssues)",
                     icon: "exclamationmark.triangle",
-                    color: intelligence.criticalIssues > 0 ? .red : .green
+                    color: intelligence.criticalIssues > 0 ?
+                        FrancoSphereDesign.DashboardColors.critical :
+                        FrancoSphereDesign.DashboardColors.success
                 )
                 
                 StatusRow(
@@ -260,13 +229,16 @@ struct PortfolioOverviewView: View {
                     color: healthColor
                 )
             }
+            .francoCardPadding()
+            .background(
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                    .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
+                            .stroke(FrancoSphereDesign.DashboardColors.info.opacity(0.2), lineWidth: 1)
+                    )
+            )
         }
-        .padding()
-        .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(.blue.opacity(0.3), lineWidth: 1)
-        )
     }
     
     // MARK: - Last Updated Section
@@ -275,32 +247,31 @@ struct PortfolioOverviewView: View {
         HStack {
             Image(systemName: "clock")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             
             Text("Last updated just now")
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             
             Spacer()
         }
-        .padding(.horizontal)
     }
     
-    // MARK: - Computed Properties (FIXED to use actual CoreTypes properties)
+    // MARK: - Computed Properties
     
     private var efficiencyColor: Color {
-        if intelligence.completionRate >= 0.9 { return .green }
-        if intelligence.completionRate >= 0.8 { return .blue }
-        if intelligence.completionRate >= 0.7 { return .orange }
-        return .red
+        FrancoSphereDesign.EnumColors.trendDirection(
+            intelligence.completionRate >= 0.9 ? .up :
+            intelligence.completionRate >= 0.7 ? .stable : .down
+        )
     }
     
     private var complianceColor: Color {
         let score = Double(intelligence.complianceScore) / 100.0
-        if score >= 0.9 { return .green }
-        if score >= 0.8 { return .blue }
-        if score >= 0.7 { return .orange }
-        return .red
+        return FrancoSphereDesign.EnumColors.complianceStatus(
+            score >= 0.9 ? .compliant :
+            score >= 0.7 ? .warning : .violation
+        )
     }
     
     private var healthStatus: String {
@@ -330,36 +301,187 @@ struct PortfolioOverviewView: View {
         let compliance = Double(intelligence.complianceScore) / 100.0
         let average = (efficiency + compliance) / 2
         
-        if average >= 0.9 { return .green }
-        if average >= 0.8 { return .blue }
-        if average >= 0.7 { return .orange }
-        return .red
+        return FrancoSphereDesign.EnumColors.dataHealthStatus(
+            average >= 0.9 ? .healthy :
+            average >= 0.7 ? .warning : .error
+        )
     }
     
     // MARK: - Helper Functions
     
     private func trendIcon(for trend: CoreTypes.TrendDirection) -> String {
-        switch trend {
-        case .up: return "arrow.up.circle"
-        case .down: return "arrow.down.circle"
-        case .stable: return "minus.circle"
-        case .improving: return "arrow.up.right.circle"
-        case .declining: return "arrow.down.right.circle"
-        case .unknown: return "questionmark.circle"
-        }
+        FrancoSphereDesign.Icons.statusIcon(for: trend.rawValue)
     }
     
     private func trendColor(for trend: CoreTypes.TrendDirection) -> Color {
-        switch trend {
-        case .up, .improving: return .green
-        case .down, .declining: return .red
-        case .stable: return .orange
-        case .unknown: return .gray
+        FrancoSphereDesign.EnumColors.trendDirection(trend)
+    }
+}
+
+// MARK: - Portfolio Hero Card
+
+struct PortfolioHeroCard: View {
+    let intelligence: CoreTypes.PortfolioIntelligence
+    @Binding var isCollapsed: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            if isCollapsed {
+                // Minimal collapsed version
+                MinimalPortfolioHero(
+                    intelligence: intelligence,
+                    onExpand: {
+                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                            isCollapsed = false
+                        }
+                    }
+                )
+            } else {
+                // Full hero card
+                FullPortfolioHero(
+                    intelligence: intelligence,
+                    onCollapse: {
+                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                            isCollapsed = true
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
-// MARK: - Supporting Components
+struct MinimalPortfolioHero: View {
+    let intelligence: CoreTypes.PortfolioIntelligence
+    let onExpand: () -> Void
+    
+    var body: some View {
+        Button(action: onExpand) {
+            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+                // Status indicator
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                
+                Text("Portfolio Overview")
+                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                Text("•")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                
+                // Key metrics
+                HStack(spacing: 4) {
+                    Image(systemName: "building.2")
+                        .font(.caption)
+                    Text("\(intelligence.totalBuildings)")
+                }
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                
+                Text("•")
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "speedometer")
+                        .font(.caption)
+                    Text("\(Int(intelligence.completionRate * 100))%")
+                }
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+            }
+            .padding(.horizontal, FrancoSphereDesign.Spacing.md)
+            .padding(.vertical, FrancoSphereDesign.Spacing.sm)
+            .francoDarkCardBackground(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var statusColor: Color {
+        let average = (intelligence.completionRate + Double(intelligence.complianceScore) / 100.0) / 2
+        return average >= 0.8 ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning
+    }
+}
+
+struct FullPortfolioHero: View {
+    let intelligence: CoreTypes.PortfolioIntelligence
+    let onCollapse: () -> Void
+    
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+                Text("Portfolio Overview")
+                    .francoTypography(FrancoSphereDesign.Typography.title2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: FrancoSphereDesign.Spacing.sm) {
+                    SummaryCard(
+                        title: "Total Buildings",
+                        value: "\(intelligence.totalBuildings)",
+                        icon: "building.2",
+                        color: FrancoSphereDesign.DashboardColors.info,
+                        trend: nil
+                    )
+                    
+                    SummaryCard(
+                        title: "Completion Rate",
+                        value: "\(Int(intelligence.completionRate * 100))%",
+                        icon: "speedometer",
+                        color: efficiencyColor,
+                        trend: intelligence.monthlyTrend
+                    )
+                    
+                    SummaryCard(
+                        title: "Completed Tasks",
+                        value: "\(intelligence.completedTasks)",
+                        icon: "checkmark.circle",
+                        color: FrancoSphereDesign.DashboardColors.success,
+                        trend: nil
+                    )
+                    
+                    SummaryCard(
+                        title: "Active Workers",
+                        value: "\(intelligence.activeWorkers)",
+                        icon: "person.2",
+                        color: FrancoSphereDesign.DashboardColors.tertiaryAction,
+                        trend: nil
+                    )
+                }
+            }
+            .francoCardPadding()
+            .francoDarkCardBackground()
+            
+            // Collapse button
+            Button(action: onCollapse) {
+                Image(systemName: "chevron.up")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .padding(8)
+                    .background(
+                        Circle()
+                            .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                    )
+            }
+            .padding(FrancoSphereDesign.Spacing.sm)
+        }
+    }
+    
+    private var efficiencyColor: Color {
+        FrancoSphereDesign.EnumColors.trendDirection(
+            intelligence.completionRate >= 0.9 ? .up :
+            intelligence.completionRate >= 0.7 ? .stable : .down
+        )
+    }
+}
+
+// MARK: - Supporting Components (Updated for Dark Theme)
 
 struct SummaryCard: View {
     let title: String
@@ -369,7 +491,7 @@ struct SummaryCard: View {
     let trend: CoreTypes.TrendDirection?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
             HStack {
                 Image(systemName: icon)
                     .font(.title3)
@@ -385,17 +507,16 @@ struct SummaryCard: View {
             }
             
             Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .francoTypography(FrancoSphereDesign.Typography.title2)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 .lineLimit(1)
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .francoCardPadding()
+        .francoGlassBackground()
     }
     
     private func trendIconForCard(_ trend: CoreTypes.TrendDirection) -> String {
@@ -410,12 +531,7 @@ struct SummaryCard: View {
     }
     
     private func trendColorForCard(_ trend: CoreTypes.TrendDirection) -> Color {
-        switch trend {
-        case .up, .improving: return .green
-        case .down, .declining: return .red
-        case .stable: return .orange
-        case .unknown: return .gray
-        }
+        FrancoSphereDesign.EnumColors.trendDirection(trend)
     }
 }
 
@@ -431,16 +547,22 @@ struct MetricSelectorButton: View {
                     .font(.caption)
                 
                 Text(metric.title)
-                    .font(.caption)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, FrancoSphereDesign.Spacing.sm)
             .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? metric.color : Color.gray.opacity(0.2))
+                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.round)
+                    .fill(isSelected ?
+                        metric.darkThemeColor :
+                        FrancoSphereDesign.DashboardColors.glassOverlay
+                    )
             )
-            .foregroundColor(isSelected ? .white : .primary)
+            .foregroundColor(isSelected ?
+                .white :
+                FrancoSphereDesign.DashboardColors.primaryText
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -459,52 +581,56 @@ struct StatusRow: View {
                 .foregroundColor(color)
             
             Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
-                .font(.caption)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
     }
 }
 
-// MARK: - Metric Detail Views (FIXED to use actual properties)
+// MARK: - Metric Detail Views (Updated for Dark Theme)
 
 struct EfficiencyDetailView: View {
     let intelligence: CoreTypes.PortfolioIntelligence
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             HStack {
                 Text("Portfolio Efficiency")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
                 Text("\(Int(intelligence.completionRate * 100))%")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .francoTypography(FrancoSphereDesign.Typography.title)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             
-            ProgressView(value: intelligence.completionRate)
-                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+            FrancoMetricsProgress(
+                value: intelligence.completionRate,
+                role: .admin
+            )
             
             HStack {
                 Text("Target: 85%")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 
                 Spacer()
                 
                 Text(intelligence.completionRate >= 0.85 ? "Above Target" : "Below Target")
-                    .font(.caption)
-                    .foregroundColor(intelligence.completionRate >= 0.85 ? .green : .orange)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(intelligence.completionRate >= 0.85 ?
+                        FrancoSphereDesign.DashboardColors.success :
+                        FrancoSphereDesign.DashboardColors.warning
+                    )
             }
         }
     }
@@ -514,43 +640,41 @@ struct TasksDetailView: View {
     let intelligence: CoreTypes.PortfolioIntelligence
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             HStack {
                 VStack(alignment: .leading) {
                     Text("Completed Tasks")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Text("\(intelligence.completedTasks)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing) {
                     Text("Compliance")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     
                     Text("\(intelligence.complianceScore)%")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 }
             }
             
             HStack {
                 Label("Tasks Completed", systemImage: "checkmark.circle")
-                    .font(.caption)
-                    .foregroundColor(.green)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 
                 Spacer()
                 
                 Label("Active Workers: \(intelligence.activeWorkers)", systemImage: "person.2")
-                    .font(.caption)
-                    .foregroundColor(.blue)
+                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
             }
         }
     }
@@ -560,17 +684,19 @@ struct PerformanceDetailView: View {
     let intelligence: CoreTypes.PortfolioIntelligence
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             Text("Performance is calculated based on completion rates, compliance scores, and worker productivity across your portfolio.")
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 .multilineTextAlignment(.leading)
             
             HStack {
                 PerformanceMetricItem(
                     title: "Completion",
                     value: "\(Int(intelligence.completionRate * 100))%",
-                    color: intelligence.completionRate >= 0.8 ? .green : .orange
+                    color: intelligence.completionRate >= 0.8 ?
+                        FrancoSphereDesign.DashboardColors.success :
+                        FrancoSphereDesign.DashboardColors.warning
                 )
                 
                 Spacer()
@@ -578,7 +704,9 @@ struct PerformanceDetailView: View {
                 PerformanceMetricItem(
                     title: "Compliance",
                     value: "\(intelligence.complianceScore)%",
-                    color: intelligence.complianceScore >= 80 ? .green : .orange
+                    color: intelligence.complianceScore >= 80 ?
+                        FrancoSphereDesign.DashboardColors.success :
+                        FrancoSphereDesign.DashboardColors.warning
                 )
             }
         }
@@ -589,41 +717,41 @@ struct AlertsDetailView: View {
     let intelligence: CoreTypes.PortfolioIntelligence
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
             let overallHealth = (intelligence.completionRate + Double(intelligence.complianceScore) / 100.0) / 2
             
             if overallHealth >= 0.8 && intelligence.criticalIssues == 0 {
                 HStack {
                     Image(systemName: "checkmark.circle")
-                        .foregroundColor(.green)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                     
                     Text("Portfolio performing well")
-                        .font(.subheadline)
-                        .foregroundColor(.green)
+                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 }
             } else {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
                     if intelligence.criticalIssues > 0 {
                         HStack {
                             Image(systemName: "exclamationmark.triangle")
-                                .foregroundColor(.red)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                             
                             Text("\(intelligence.criticalIssues) critical issues require attention")
-                                .font(.subheadline)
-                                .foregroundColor(.red)
+                                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                         }
                     }
                     
                     if intelligence.completionRate < 0.8 {
                         Text("Completion rate needs improvement")
-                            .font(.caption)
-                            .foregroundColor(.orange)
+                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                     }
                     
                     if intelligence.complianceScore < 80 {
                         Text("Compliance requires attention")
-                            .font(.caption)
-                            .foregroundColor(.orange)
+                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                     }
                 }
             }
@@ -639,13 +767,12 @@ struct PerformanceMetricItem: View {
     var body: some View {
         VStack {
             Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
+                .francoTypography(FrancoSphereDesign.Typography.title3)
                 .foregroundColor(color)
             
             Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
     }
 }
@@ -669,13 +796,109 @@ enum MetricType: String, CaseIterable {
         }
     }
     
-    var color: Color {
+    var darkThemeColor: Color {
         switch self {
-        case .efficiency: return .blue
-        case .tasks: return .green
-        case .performance: return .purple
-        case .alerts: return .orange
+        case .efficiency: return FrancoSphereDesign.DashboardColors.info
+        case .tasks: return FrancoSphereDesign.DashboardColors.success
+        case .performance: return FrancoSphereDesign.DashboardColors.tertiaryAction
+        case .alerts: return FrancoSphereDesign.DashboardColors.warning
         }
+    }
+}
+
+// MARK: - Insight Detail View
+
+struct InsightDetailView: View {
+    let insight: CoreTypes.IntelligenceInsight
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.lg) {
+                // Insight header
+                VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+                    HStack {
+                        Image(systemName: iconForInsightType(insight.type))
+                            .foregroundColor(colorForInsightType(insight.type))
+                        
+                        Text(insight.type.rawValue.capitalized)
+                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        
+                        Spacer()
+                        
+                        if insight.actionRequired {
+                            Label("Action Required", systemImage: "exclamationmark.circle.fill")
+                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                        }
+                    }
+                    
+                    Text(insight.title)
+                        .francoTypography(FrancoSphereDesign.Typography.title3)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                }
+                
+                // Description
+                Text(insight.description)
+                    .francoTypography(FrancoSphereDesign.Typography.body)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                
+                // Affected buildings
+                if !insight.affectedBuildings.isEmpty {
+                    VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+                        Text("Affected Buildings")
+                            .francoTypography(FrancoSphereDesign.Typography.headline)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        
+                        ForEach(insight.affectedBuildings, id: \.self) { buildingId in
+                            HStack {
+                                Image(systemName: "building.2")
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                
+                                Text("Building \(buildingId)")
+                                    .francoTypography(FrancoSphereDesign.Typography.body)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            }
+                            .padding(.vertical, FrancoSphereDesign.Spacing.xs)
+                        }
+                    }
+                    .francoCardPadding()
+                    .francoGlassBackground()
+                }
+                
+                Spacer()
+            }
+            .padding(FrancoSphereDesign.Spacing.lg)
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .navigationTitle("Insight Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+    
+    private func iconForInsightType(_ type: CoreTypes.InsightCategory) -> String {
+        switch type {
+        case .efficiency: return "speedometer"
+        case .cost: return "dollarsign.circle"
+        case .safety: return "shield"
+        case .compliance: return "checkmark.shield"
+        case .quality: return "star"
+        case .operations: return "gear"
+        case .maintenance: return "wrench"
+        }
+    }
+    
+    private func colorForInsightType(_ type: CoreTypes.InsightCategory) -> Color {
+        FrancoSphereDesign.EnumColors.insightCategory(type)
     }
 }
 
