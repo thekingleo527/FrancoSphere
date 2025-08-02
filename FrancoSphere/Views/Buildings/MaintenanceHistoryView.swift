@@ -6,6 +6,7 @@
 //  ✅ GLASS MORPHISM: Consistent with system design
 //  ✅ ANIMATIONS: Smooth transitions and effects
 //  ✅ REAL-TIME: Integrated with task completion data
+//  ✅ FIXED: Renamed StatCard to avoid redeclaration
 //
 
 import SwiftUI
@@ -161,28 +162,28 @@ struct MaintenanceHistoryView: View {
     private var statsOverview: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                StatCard(
+                MaintenanceStatCard(
                     title: "Total Tasks",
                     value: "\(maintRecords.count)",
                     icon: "checkmark.circle.fill",
                     color: FrancoSphereDesign.DashboardColors.success
                 )
                 
-                StatCard(
+                MaintenanceStatCard(
                     title: "This Week",
                     value: "\(recordsThisWeek.count)",
                     icon: "calendar.badge.clock",
                     color: FrancoSphereDesign.DashboardColors.info
                 )
                 
-                StatCard(
+                MaintenanceStatCard(
                     title: "Repairs",
                     value: "\(repairCount)",
                     icon: "hammer.fill",
                     color: FrancoSphereDesign.DashboardColors.warning
                 )
                 
-                StatCard(
+                MaintenanceStatCard(
                     title: "Total Cost",
                     value: totalCost.formatted(.currency(code: "USD")),
                     icon: "dollarsign.circle.fill",
@@ -553,7 +554,7 @@ struct MaintenanceHistoryView: View {
 
 // MARK: - Supporting Components
 
-struct StatCard: View {
+struct MaintenanceStatCard: View {
     let title: String
     let value: String
     let icon: String

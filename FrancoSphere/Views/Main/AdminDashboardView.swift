@@ -3,6 +3,7 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: ViewBuilder compilation error resolved
+//  ✅ FIXED: MainActor isolation for AdminContextEngine
 //  ✅ REDESIGNED: Mirrors WorkerDashboardView structure
 //  ✅ DARK ELEGANCE: Consistent theme with worker dashboard
 //  ✅ INTELLIGENT: Contextual AI insights at bottom
@@ -17,7 +18,7 @@ import CoreLocation
 
 struct AdminDashboardView: View {
     @StateObject var viewModel: AdminDashboardViewModel
-    @ObservedObject private var contextEngine = AdminContextEngine.shared
+    @StateObject private var contextEngine = AdminContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
     @ObservedObject private var novaEngine = NovaIntelligenceEngine.shared
@@ -1366,6 +1367,7 @@ struct AdminActivity: Identifiable {
 
 // MARK: - Admin Context Engine (Mock)
 
+@MainActor
 class AdminContextEngine: ObservableObject {
     static let shared = AdminContextEngine()
     
@@ -1389,6 +1391,10 @@ class AdminContextEngine: ObservableObject {
     @Published var todaysTaskCount = 47
     @Published var buildingsWithIssues: [String] = []
     @Published var upcomingDSNYDeadlines: [(buildingId: String, deadline: Date)] = []
+    
+    func handleDashboardUpdate(_ update: CoreTypes.DashboardUpdate) {
+        // Handle incoming dashboard updates
+    }
     
     func refreshContext() async {
         // Refresh all admin data

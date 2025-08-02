@@ -7,6 +7,7 @@
 //  ✅ INTEGRATED: FrancoSphereDesign system
 //  ✅ IMPROVED: Better map integration and transitions
 //  ✅ OPTIMIZED: Consistent with other building views
+//  ✅ FIXED: Renamed BuildingMapPin to avoid redeclaration
 //
 
 import SwiftUI
@@ -205,7 +206,7 @@ struct BuildingSelectionView: View {
                     latitude: building.latitude,
                     longitude: building.longitude
                 )) {
-                    BuildingMapPin(
+                    BuildingSelectionMapPin(
                         building: building,
                         isSelected: selectedBuilding?.id == building.id,
                         onTap: {
@@ -420,9 +421,9 @@ struct SelectedBuildingOverlay: View {
     }
 }
 
-// MARK: - Building Map Pin (Enhanced)
+// MARK: - Building Selection Map Pin (Renamed from BuildingMapPin to avoid conflict)
 
-struct BuildingMapPin: View {
+struct BuildingSelectionMapPin: View {
     let building: NamedCoordinate
     let isSelected: Bool
     let onTap: () -> Void

@@ -5,6 +5,7 @@
 //  Building metrics visualization components
 //  Integrates with BuildingMetricsService for real-time data
 //  ✅ FIXED: All async/await and compilation errors resolved.
+//  ✅ FIXED: Renamed MetricCard to avoid redeclaration
 //
 
 import SwiftUI
@@ -161,7 +162,7 @@ struct MetricsGridView: View {
     
     var body: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            MetricCard(
+            BuildingMetricCard(
                 title: "Completion Rate",
                 value: "\(Int(metrics.completionRate * 100))%",
                 icon: "checkmark.circle.fill",
@@ -169,7 +170,7 @@ struct MetricsGridView: View {
                 trend: metrics.weeklyCompletionTrend > metrics.completionRate ? .improving : .declining
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Active Workers",
                 value: "\(metrics.activeWorkers)",
                 icon: "person.2.fill",
@@ -177,7 +178,7 @@ struct MetricsGridView: View {
                 subtitle: metrics.hasWorkerOnSite ? "On-site now" : "None on-site"
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Tasks Today",
                 value: "\(metrics.totalTasks)",
                 icon: "list.bullet.clipboard",
@@ -185,7 +186,7 @@ struct MetricsGridView: View {
                 subtitle: "\(metrics.pendingTasks) pending"
             )
             
-            MetricCard(
+            BuildingMetricCard(
                 title: "Overdue Tasks",
                 value: "\(metrics.overdueTasks)",
                 icon: "clock.badge.exclamationmark",
@@ -206,9 +207,9 @@ struct MetricsGridView: View {
     }
 }
 
-// MARK: - Metric Card
+// MARK: - Building Metric Card (Renamed from MetricCard to avoid conflict)
 
-struct MetricCard: View {
+struct BuildingMetricCard: View {
     let title: String
     let value: String
     let icon: String
@@ -312,7 +313,7 @@ struct TaskCompletionChart: View {
         .cornerRadius(16)
         .padding(.horizontal)
         .task { loadChartData() }
-        .onChange(of: timeRange) { loadChartData() }
+        .onChange(of: timeRange) { _ in loadChartData() }
     }
     
     private func loadChartData() {
@@ -409,27 +410,171 @@ struct WorkerProductivityRow: View {
     }
 }
 
-// MARK: - Cost Analysis & Maintenance Efficiency Cards
+// MARK: - Cost Analysis Card
 
 struct CostAnalysisCard: View {
     let costData: CostAnalysisData
-    var body: some View { /* ... Full implementation ... */ }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Cost Analysis")
+                .font(.headline)
+            
+            HStack(spacing: 16) {
+                CostMetric(
+                    label: "Monthly Cost",
+                    value: costData.monthlyCost,
+                    trend: costData.monthlyTrend,
+                    format: .currency
+                )
+                
+                CostMetric(
+                    label: "Per Task",
+                    value: costData.costPerTask,
+                    trend: costData.taskCostTrend,
+                    format: .currency
+                )
+            }
+            
+            if let savings = costData.potentialSavings {
+                HStack {
+                    Image(systemName: "dollarsign.circle.fill")
+                        .foregroundColor(.green)
+                    Text("Potential Savings: $\(savings, specifier: "%.0f")")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(8)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(16)
+        .padding(.horizontal)
+    }
 }
 
 struct CostMetric: View {
-    let label: String; let value: Double; var trend: CoreTypes.TrendDirection? = nil; var format: Format = .currency
-    enum Format { case currency, percentage }
-    var body: some View { /* ... Full implementation ... */ }
+    let label: String
+    let value: Double
+    var trend: CoreTypes.TrendDirection? = nil
+    var format: Format = .currency
+    
+    enum Format {
+        case currency, percentage
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            HStack(spacing: 4) {
+                if format == .currency {
+                    Text("$\(value, specifier: "%.0f")")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                } else {
+                    Text("\(value, specifier: "%.1f")%")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                }
+                
+                if let trend = trend {
+                    Image(systemName: trend.icon)
+                        .font(.caption)
+                        .foregroundColor(trend.color)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
+
+// MARK: - Maintenance Efficiency Card
 
 struct MaintenanceEfficiencyCard: View {
     let efficiency: Double
-    var body: some View { /* ... Full implementation ... */ }
+    
+    private var efficiencyColor: Color {
+        switch efficiency {
+        case 0.9...: return .green
+        case 0.7..<0.9: return .yellow
+        default: return .orange
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Maintenance Efficiency")
+                .font(.headline)
+            
+            HStack(spacing: 24) {
+                EfficiencyMetric(
+                    label: "Overall",
+                    value: efficiency,
+                    icon: "gauge"
+                )
+                
+                EfficiencyMetric(
+                    label: "Response Time",
+                    value: 0.88,
+                    icon: "clock"
+                )
+                
+                EfficiencyMetric(
+                    label: "Quality",
+                    value: 0.92,
+                    icon: "star"
+                )
+            }
+            
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 8)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(efficiencyColor)
+                        .frame(width: geometry.size.width * efficiency, height: 8)
+                }
+            }
+            .frame(height: 8)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(16)
+        .padding(.horizontal)
+    }
 }
 
 struct EfficiencyMetric: View {
-    let label: String; let value: Double; let icon: String
-    var body: some View { /* ... Full implementation ... */ }
+    let label: String
+    let value: Double
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.accentColor)
+            
+            Text("\(Int(value * 100))%")
+                .font(.caption)
+                .fontWeight(.semibold)
+            
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
 }
 
 // MARK: - Utility Components
@@ -498,6 +643,7 @@ class BuildingMetricsViewModel: ObservableObject {
         await loadMetrics(for: buildingId)
     }
 }
+
 // MARK: - Supporting Types
 
 struct CostAnalysisData {
@@ -507,6 +653,30 @@ struct CostAnalysisData {
     let monthlyTrend: CoreTypes.TrendDirection
     let taskCostTrend: CoreTypes.TrendDirection
     let potentialSavings: Double?
+}
+
+// MARK: - CoreTypes Extensions for UI
+
+extension CoreTypes.TrendDirection {
+    var icon: String {
+        switch self {
+        case .up: return "arrow.up"
+        case .down: return "arrow.down"
+        case .stable: return "minus"
+        case .improving: return "arrow.up.right"
+        case .declining: return "arrow.down.right"
+        case .unknown: return "questionmark"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .up, .improving: return .green
+        case .down, .declining: return .red
+        case .stable: return .yellow
+        case .unknown: return .gray
+        }
+    }
 }
 
 // MARK: - Preview Support

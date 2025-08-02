@@ -6,6 +6,7 @@
 //  ✅ GLASS MORPHISM: Using AdaptiveGlassModifier components
 //  ✅ CONSISTENT: Matches WorkerDashboardView patterns
 //  ✅ DARK THEME: Full dark elegance implementation
+//  ✅ FIXED: Renamed BuildingStatCard to avoid redeclaration
 //
 
 import SwiftUI
@@ -143,21 +144,21 @@ struct BuildingMapDetailView: View {
     
     private var quickStats: some View {
         HStack(spacing: 16) {
-            BuildingStatCard(
+            BuildingQuickStatCard(
                 title: "Open Tasks",
                 value: "\(tasks.filter { !$0.isCompleted }.count)",
                 icon: "list.bullet",
                 color: FrancoSphereDesign.DashboardColors.info
             )
             
-            BuildingStatCard(
+            BuildingQuickStatCard(
                 title: "Urgent",
                 value: "\(getUrgentTaskCount())",
                 icon: "exclamationmark.triangle",
                 color: FrancoSphereDesign.DashboardColors.warning
             )
             
-            BuildingStatCard(
+            BuildingQuickStatCard(
                 title: "Completed",
                 value: "\(tasks.filter { $0.isCompleted }.count)",
                 icon: "checkmark.circle",
@@ -301,9 +302,9 @@ struct BuildingMapDetailView: View {
     }
 }
 
-// MARK: - Building Stat Card Component
+// MARK: - Building Quick Stat Card Component (Renamed from BuildingStatCard)
 
-struct BuildingStatCard: View {
+struct BuildingQuickStatCard: View {
     let title: String
     let value: String
     let icon: String
