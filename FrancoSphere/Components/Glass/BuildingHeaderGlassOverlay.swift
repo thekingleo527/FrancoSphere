@@ -1,8 +1,10 @@
 //
 //  BuildingHeaderGlassOverlay.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Glass overlay for building header with image background
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ IMPROVED: Glass effects optimized for dark theme
 //  ✅ FIXED: Works with NamedCoordinate that doesn't have imageAssetName
 //
 
@@ -13,6 +15,8 @@ struct BuildingHeaderGlassOverlay: View {
     let clockedInStatus: (isClockedIn: Bool, buildingId: Int64?)
     let onClockAction: () -> Void
     
+    @State private var isImageLoaded = false
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             // Building image background
@@ -22,64 +26,66 @@ struct BuildingHeaderGlassOverlay: View {
             VStack(spacing: 0) {
                 Spacer()
                 
-                GlassCard(intensity: GlassIntensity.regular) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Main building info row
-                        HStack(alignment: .top, spacing: 16) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(building.name)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .multilineTextAlignment(.leading)
+                // Glass card with dark theme
+                VStack(alignment: .leading, spacing: 16) {
+                    // Main building info row
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(building.name)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .multilineTextAlignment(.leading)
+                            
+                            // Location information using coordinates
+                            HStack(spacing: 6) {
+                                Image(systemName: "location.fill")
+                                    .font(.caption)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                                 
-                                // Location information using coordinates
-                                HStack(spacing: 6) {
-                                    Image(systemName: "location.fill")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                    
-                                    Text(getFormattedLocation())
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                        .lineLimit(2)
-                                }
-                                
-                                // Coordinates for technical reference
-                                Text("Lat: \(String(format: "%.4f", building.latitude)), Lon: \(String(format: "%.4f", building.longitude))")
-                                    .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .monospaced()
+                                Text(getFormattedLocation())
+                                    .font(.caption)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .lineLimit(2)
                             }
                             
-                            Spacer()
-                            
-                            VStack(spacing: 12) {
-                                // Building status badge
-                                buildingStatusBadge
-                                
-                                // Clock status and action
-                                clockStatusSection
-                            }
+                            // Coordinates for technical reference
+                            Text("Lat: \(String(format: "%.4f", building.latitude)), Lon: \(String(format: "%.4f", building.longitude))")
+                                .font(.caption2)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                                .monospaced()
                         }
                         
-                        // Building metrics row
-                        buildingMetricsRow
+                        Spacer()
+                        
+                        VStack(spacing: 12) {
+                            // Building status badge
+                            buildingStatusBadge
+                            
+                            // Clock status and action
+                            clockStatusSection
+                        }
                     }
-                    .padding(20)
+                    
+                    // Building metrics row
+                    buildingMetricsRow
                 }
+                .padding(20)
+                .background(darkGlassBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(glassOverlayBorder)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             }
         }
-        .frame(height: 280) // Fixed height for consistent layout
+        .frame(height: 280)
+        .animation(.easeInOut(duration: 0.3), value: isImageLoaded)
     }
     
     // MARK: - Sub-components
     
     private var buildingImageBackground: some View {
         Group {
-            // ✅ FIXED: Use building ID or name to determine image
             let imageName = getBuildingImageName()
             
             if let uiImage = UIImage(named: imageName) {
@@ -88,55 +94,106 @@ struct BuildingHeaderGlassOverlay: View {
                     .scaledToFill()
                     .frame(height: 280)
                     .clipped()
-                    .overlay(
-                        // Gradient overlay for better text readability
-                        LinearGradient(
-                            colors: [
-                                Color.black.opacity(0.4),
-                                Color.clear,
-                                Color.black.opacity(0.6)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .overlay(darkImageOverlay)
+                    .onAppear { isImageLoaded = true }
             } else {
-                // ✅ FIXED: Proper fallback gradient
+                // Fallback gradient with building icon
+                ZStack {
+                    LinearGradient(
+                        colors: [
+                            FrancoSphereDesign.DashboardColors.info.opacity(0.3),
+                            FrancoSphereDesign.DashboardColors.info.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    
+                    Image(systemName: "building.2.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.info.opacity(0.3))
+                }
+                .frame(height: 280)
+                .overlay(darkImageOverlay)
+            }
+        }
+    }
+    
+    private var darkImageOverlay: some View {
+        LinearGradient(
+            colors: [
+                FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.3),
+                Color.clear,
+                FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.8)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
+    private var darkGlassBackground: some View {
+        ZStack {
+            // Dark base
+            RoundedRectangle(cornerRadius: 20)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.9))
+            
+            // Glass material
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial.opacity(0.3))
+            
+            // Gradient overlay
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.2),
+                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        }
+    }
+    
+    private var glassOverlayBorder: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .stroke(
                 LinearGradient(
                     colors: [
-                        Color.blue.opacity(0.3),
-                        Color.purple.opacity(0.3)
+                        Color.white.opacity(0.2),
+                        Color.white.opacity(0.05)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
-                )
-                .frame(height: 280)
-                .overlay(
-                    Image(systemName: "building.2.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.white.opacity(0.5))
-                )
-            }
-        }
+                ),
+                lineWidth: 1
+            )
     }
     
     private var buildingStatusBadge: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(Color.green)
+                .fill(FrancoSphereDesign.DashboardColors.success)
                 .frame(width: 8, height: 8)
+                .overlay(
+                    Circle()
+                        .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.3), lineWidth: 8)
+                        .scaleEffect(1.5)
+                        .opacity(0.6)
+                        .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: true)
+                )
             
             Text("Operational")
                 .font(.caption)
                 .fontWeight(.medium)
         }
-        .foregroundColor(.white)
+        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(Color.white.opacity(0.15))
+        .background(FrancoSphereDesign.DashboardColors.success.opacity(0.15))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.3), lineWidth: 1)
         )
         .cornerRadius(20)
     }
@@ -147,20 +204,20 @@ struct BuildingHeaderGlassOverlay: View {
                 // Clocked in indicator
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(Color.green)
+                        .fill(FrancoSphereDesign.DashboardColors.success)
                         .frame(width: 8, height: 8)
                     
                     Text("On Site")
                         .font(.caption)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color.green.opacity(0.2))
+                .background(FrancoSphereDesign.DashboardColors.success.opacity(0.2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                        .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.4), lineWidth: 1)
                 )
                 .cornerRadius(16)
             }
@@ -168,20 +225,20 @@ struct BuildingHeaderGlassOverlay: View {
             // Clock action button
             Button(action: onClockAction) {
                 HStack(spacing: 6) {
-                    Image(systemName: isClockedInCurrentBuilding ? "clock.badge.checkmark" : "clock.badge")
+                    Image(systemName: isClockedInCurrentBuilding ? "clock.badge.xmark" : "clock.badge.checkmark")
                         .font(.caption)
                     
                     Text(isClockedInCurrentBuilding ? "Clock Out" : "Clock In")
                         .font(.caption)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.white.opacity(0.15))
+                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
                 .cornerRadius(20)
             }
@@ -199,7 +256,7 @@ struct BuildingHeaderGlassOverlay: View {
             
             Divider()
                 .frame(height: 30)
-                .background(Color.white.opacity(0.3))
+                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
             
             buildingMetric(
                 icon: "map",
@@ -209,7 +266,7 @@ struct BuildingHeaderGlassOverlay: View {
             
             Divider()
                 .frame(height: 30)
-                .background(Color.white.opacity(0.3))
+                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
             
             buildingMetric(
                 icon: "person.2",
@@ -223,16 +280,16 @@ struct BuildingHeaderGlassOverlay: View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             
             Text(value)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text(label)
                 .font(.caption2)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -246,7 +303,6 @@ struct BuildingHeaderGlassOverlay: View {
     
     // MARK: - Helper Methods
     
-    /// Determine the image asset name based on building ID or name
     private func getBuildingImageName() -> String {
         // Map building IDs to their image assets
         switch building.id {
@@ -333,7 +389,8 @@ struct BuildingHeaderGlassOverlay: View {
 struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            FrancoSphereDesign.DashboardColors.baseBackground
+                .ignoresSafeArea()
             
             VStack {
                 BuildingHeaderGlassOverlay(
@@ -344,54 +401,28 @@ struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
                         longitude: -73.998120
                     ),
                     clockedInStatus: (true, 15),
-                    onClockAction: {}
+                    onClockAction: {
+                        print("Clock action tapped")
+                    }
                 )
                 
                 Spacer()
+                
+                // Example without image
+                BuildingHeaderGlassOverlay(
+                    building: NamedCoordinate(
+                        id: "99",
+                        name: "New Building Complex",
+                        latitude: 40.750000,
+                        longitude: -74.000000
+                    ),
+                    clockedInStatus: (false, nil),
+                    onClockAction: {
+                        print("Clock action tapped")
+                    }
+                )
             }
         }
         .preferredColorScheme(.dark)
     }
 }
-
-// MARK: - Alternative Solutions
-
-/*
-OPTION 1: Extend NamedCoordinate with a computed property
-
-extension NamedCoordinate {
-    var imageAssetName: String? {
-        // Use the same logic as getBuildingImageName()
-        switch id {
-        case "14", "15": return "Rubin_Museum_142_148_West_17th_Street"
-        // ... etc
-        default: return nil
-        }
-    }
-}
-
-OPTION 2: Create a wrapper struct
-
-struct BuildingWithImage {
-    let coordinate: NamedCoordinate
-    let imageAssetName: String?
-    
-    init(coordinate: NamedCoordinate) {
-        self.coordinate = coordinate
-        self.imageAssetName = Self.getImageName(for: coordinate)
-    }
-    
-    private static func getImageName(for building: NamedCoordinate) -> String? {
-        // Image mapping logic
-    }
-}
-
-OPTION 3: Pass the image name as a separate parameter
-
-struct BuildingHeaderGlassOverlay: View {
-    let building: NamedCoordinate
-    let buildingImageName: String?  // Pass this separately
-    let clockedInStatus: (isClockedIn: Bool, buildingId: Int64?)
-    let onClockAction: () -> Void
-}
-*/

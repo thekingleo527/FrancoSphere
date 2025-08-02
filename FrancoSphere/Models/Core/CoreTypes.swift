@@ -2,21 +2,11 @@
 //  CoreTypes.swift
 //  FrancoSphere v6.0
 //
-//  ✅ REFACTORED: Services removed, only data types remain
-//  ✅ FIXED: All compilation errors eliminated
-//  ✅ FIXED: Removed all color properties - now in FrancoSphereDesign.EnumColors
-//  ✅ FIXED: Removed duplicate needsRestock property
-//  ✅ FIXED: Added missing BuildingIntelligence type
-//  ✅ FIXED: Made TaskFrequency accessible
-//  ✅ FIXED: Removed duplicate rawValue property from TaskUrgency
-//  ✅ FIXED: Removed all duplicate properties from InventoryItem
-//  ✅ ORGANIZED: Clean architecture with data types only
-//  ✅ STREAM A FIXED: Removed redundant rawValue from TaskFrequency
-//  ✅ STREAM A FIXED: Removed duplicate stockLevel and needsRestock from InventoryItem
-//  ✅ FIXED: Resolved priorityValue naming conflict
-//
-//  NOTE: All enum colors have been moved to FrancoSphereDesign.EnumColors
-//  Usage: FrancoSphereDesign.EnumColors.taskStatus(.completed)
+//  ✅ UNIFIED: Incorporates all types for three-dashboard system
+//  ✅ REAL-TIME: Support for live data updates across all roles
+//  ✅ COMPREHENSIVE: Worker, Admin, and Client dashboard types
+//  ✅ CLEAN: Data types only, no services or business logic
+//  ✅ ORGANIZED: Logical grouping by domain area
 //
 
 import Foundation
@@ -110,6 +100,12 @@ public struct CoreTypes {
             case buildingMetricsChanged = "buildingMetricsChanged"
             case inventoryUpdated = "inventoryUpdated"
             case complianceStatusChanged = "complianceStatusChanged"
+            case criticalUpdate = "criticalUpdate"
+            case workerClockIn = "workerClockIn"
+            case workerClockOut = "workerClockOut"
+            case buildingUpdate = "buildingUpdate"
+            case complianceUpdate = "complianceUpdate"
+            case taskComplete = "taskComplete"
         }
         
         public let id: String
@@ -119,6 +115,8 @@ public struct CoreTypes {
         public let workerId: String
         public let data: [String: String]
         public let timestamp: Date
+        public let description: String
+        public let metadata: [String: Any]
         
         public init(
             id: String = UUID().uuidString,
@@ -127,7 +125,9 @@ public struct CoreTypes {
             buildingId: String,
             workerId: String,
             data: [String: String] = [:],
-            timestamp: Date = Date()
+            timestamp: Date = Date(),
+            description: String = "",
+            metadata: [String: Any] = [:]
         ) {
             self.id = id
             self.source = source
@@ -135,6 +135,148 @@ public struct CoreTypes {
             self.buildingId = buildingId
             self.workerId = workerId
             self.data = data
+            self.timestamp = timestamp
+            self.description = description
+            self.metadata = metadata
+        }
+    }
+    
+    // MARK: - Portfolio Types (NEW for Unified Dashboard)
+    
+    public struct PortfolioHealth {
+        public let overallScore: Double
+        public let totalBuildings: Int
+        public let activeBuildings: Int
+        public let criticalIssues: Int
+        public let trend: TrendDirection
+        public let lastUpdated: Date
+        
+        public init(
+            overallScore: Double,
+            totalBuildings: Int,
+            activeBuildings: Int,
+            criticalIssues: Int,
+            trend: TrendDirection,
+            lastUpdated: Date
+        ) {
+            self.overallScore = overallScore
+            self.totalBuildings = totalBuildings
+            self.activeBuildings = activeBuildings
+            self.criticalIssues = criticalIssues
+            self.trend = trend
+            self.lastUpdated = lastUpdated
+        }
+    }
+    
+    public struct PortfolioMetrics: Codable, Identifiable {
+        public let id: String
+        public let totalBuildings: Int
+        public let activeWorkers: Int
+        public let overallCompletionRate: Double
+        public let criticalIssues: Int
+        public let totalTasks: Int
+        public let completedTasks: Int
+        public let pendingTasks: Int
+        public let overdueTasks: Int
+        public let complianceScore: Double
+        public let lastUpdated: Date
+        
+        public init(
+            id: String = UUID().uuidString,
+            totalBuildings: Int,
+            activeWorkers: Int,
+            overallCompletionRate: Double,
+            criticalIssues: Int,
+            totalTasks: Int,
+            completedTasks: Int,
+            pendingTasks: Int,
+            overdueTasks: Int,
+            complianceScore: Double,
+            lastUpdated: Date = Date()
+        ) {
+            self.id = id
+            self.totalBuildings = totalBuildings
+            self.activeWorkers = activeWorkers
+            self.overallCompletionRate = overallCompletionRate
+            self.criticalIssues = criticalIssues
+            self.totalTasks = totalTasks
+            self.completedTasks = completedTasks
+            self.pendingTasks = pendingTasks
+            self.overdueTasks = overdueTasks
+            self.complianceScore = complianceScore
+            self.lastUpdated = lastUpdated
+        }
+        
+        public static var empty: PortfolioMetrics {
+            PortfolioMetrics(
+                totalBuildings: 0,
+                activeWorkers: 0,
+                overallCompletionRate: 0.0,
+                criticalIssues: 0,
+                totalTasks: 0,
+                completedTasks: 0,
+                pendingTasks: 0,
+                overdueTasks: 0,
+                complianceScore: 1.0,
+                lastUpdated: Date()
+            )
+        }
+    }
+    
+    // MARK: - Real-time Activity Types (NEW)
+    
+    public struct RealtimePortfolioMetrics {
+        public let lastUpdateTime: Date
+        public let performanceTrend: [Double] // 7-day trend
+        public let recentActivities: [RealtimeActivity]
+        public let activeAlerts: Int
+        public let pendingActions: Int
+        
+        public init(
+            lastUpdateTime: Date,
+            performanceTrend: [Double],
+            recentActivities: [RealtimeActivity],
+            activeAlerts: Int,
+            pendingActions: Int
+        ) {
+            self.lastUpdateTime = lastUpdateTime
+            self.performanceTrend = performanceTrend
+            self.recentActivities = recentActivities
+            self.activeAlerts = activeAlerts
+            self.pendingActions = pendingActions
+        }
+    }
+    
+    public struct RealtimeActivity: Identifiable {
+        public let id: String
+        public let type: ActivityType
+        public let description: String
+        public let workerName: String?
+        public let buildingName: String?
+        public let timestamp: Date
+        
+        public enum ActivityType {
+            case taskCompleted
+            case workerClockIn
+            case workerClockOut
+            case issueReported
+            case complianceUpdate
+            case buildingUpdate
+        }
+        
+        public init(
+            id: String,
+            type: ActivityType,
+            description: String,
+            workerName: String?,
+            buildingName: String?,
+            timestamp: Date
+        ) {
+            self.id = id
+            self.type = type
+            self.description = description
+            self.workerName = workerName
+            self.buildingName = buildingName
             self.timestamp = timestamp
         }
     }
@@ -164,6 +306,7 @@ public struct CoreTypes {
         public let capabilities: WorkerCapabilities?
         public let createdAt: Date
         public let updatedAt: Date
+        public let status: WorkerStatus
         
         public init(
             id: String,
@@ -180,7 +323,8 @@ public struct CoreTypes {
             assignedBuildingIds: [String] = [],
             capabilities: WorkerCapabilities? = nil,
             createdAt: Date = Date(),
-            updatedAt: Date = Date()
+            updatedAt: Date = Date(),
+            status: WorkerStatus = .offline
         ) {
             self.id = id
             self.name = name
@@ -197,6 +341,7 @@ public struct CoreTypes {
             self.capabilities = capabilities
             self.createdAt = createdAt
             self.updatedAt = updatedAt
+            self.status = status
         }
         
         public var displayName: String { name }
@@ -204,6 +349,52 @@ public struct CoreTypes {
         public var isWorker: Bool { role == .worker }
         public var isManager: Bool { role == .manager }
         public var isClient: Bool { role == .client }
+    }
+    
+    // MARK: - Worker Status & Productivity (NEW)
+    
+    public struct ActiveWorkerStatus {
+        public let totalActive: Int
+        public let totalAssigned: Int
+        public let utilizationRate: Double
+        public let avgTasksPerWorker: Double
+        public let completionRate: Double
+        
+        public init(
+            totalActive: Int,
+            totalAssigned: Int,
+            utilizationRate: Double,
+            avgTasksPerWorker: Double,
+            completionRate: Double
+        ) {
+            self.totalActive = totalActive
+            self.totalAssigned = totalAssigned
+            self.utilizationRate = utilizationRate
+            self.avgTasksPerWorker = avgTasksPerWorker
+            self.completionRate = completionRate
+        }
+    }
+    
+    public struct WorkerProductivityInsight: Identifiable {
+        public let id: String
+        public let metric: String
+        public let description: String
+        public let trend: TrendDirection
+        public let recommendation: String?
+        
+        public init(
+            id: String,
+            metric: String,
+            description: String,
+            trend: TrendDirection,
+            recommendation: String?
+        ) {
+            self.id = id
+            self.metric = metric
+            self.description = description
+            self.trend = trend
+            self.recommendation = recommendation
+        }
     }
     
     // MARK: - Worker Capabilities
@@ -307,13 +498,15 @@ public struct CoreTypes {
         public let address: String
         public let latitude: Double
         public let longitude: Double
+        public let type: BuildingType?
         
-        public init(id: String, name: String, address: String, latitude: Double, longitude: Double) {
+        public init(id: String, name: String, address: String, latitude: Double, longitude: Double, type: BuildingType? = nil) {
             self.id = id
             self.name = name
             self.address = address
             self.latitude = latitude
             self.longitude = longitude
+            self.type = type
         }
         
         // Convenience initializer for compatibility
@@ -323,10 +516,15 @@ public struct CoreTypes {
             self.address = ""
             self.latitude = latitude
             self.longitude = longitude
+            self.type = nil
         }
         
         public var coordinate: CLLocationCoordinate2D {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        
+        public var location: CLLocation {
+            CLLocation(latitude: latitude, longitude: longitude)
         }
         
         public func distance(from other: NamedCoordinate) -> Double {
@@ -392,6 +590,7 @@ public struct CoreTypes {
         public let hasWorkerOnSite: Bool
         public let maintenanceEfficiency: Double
         public let weeklyCompletionTrend: Double
+        public let criticalIssues: Int
         
         public init(
             id: String = UUID().uuidString,
@@ -408,7 +607,8 @@ public struct CoreTypes {
             urgentTasksCount: Int,
             hasWorkerOnSite: Bool = false,
             maintenanceEfficiency: Double = 0.85,
-            weeklyCompletionTrend: Double = 0.0
+            weeklyCompletionTrend: Double = 0.0,
+            criticalIssues: Int = 0
         ) {
             self.id = id
             self.buildingId = buildingId
@@ -425,6 +625,7 @@ public struct CoreTypes {
             self.hasWorkerOnSite = hasWorkerOnSite
             self.maintenanceEfficiency = maintenanceEfficiency
             self.weeklyCompletionTrend = weeklyCompletionTrend
+            self.criticalIssues = criticalIssues
         }
         
         public static let empty = BuildingMetrics(
@@ -447,7 +648,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Building Intelligence (Added for compatibility)
+    // MARK: - Building Intelligence
     public struct BuildingIntelligence: Codable, Identifiable {
         public let id: String
         public let buildingId: String
@@ -608,7 +809,6 @@ public struct CoreTypes {
         case urgent = "urgent"
         case emergency = "emergency"
         
-        // Renamed to avoid conflict with AIPriority.priorityValue
         public var urgencyLevel: Int {
             switch self {
             case .low: return 1
@@ -1206,10 +1406,12 @@ public struct CoreTypes {
         case supplies = "Supplies"
         case equipment = "Equipment"
         case materials = "Materials"
+        case building = "Building"
+        case sanitation = "Sanitation"
+        case seasonal = "Seasonal"
         case other = "Other"
     }
     
-    // ✅ STREAM A FIX: Removed duplicate properties
     public struct InventoryItem: Codable, Identifiable {
         public let id: String
         public let name: String
@@ -1260,9 +1462,6 @@ public struct CoreTypes {
         public var stockPercentage: Double {
             maxStock > 0 ? Double(currentStock) / Double(maxStock) : 0
         }
-        
-        // Use stockPercentage as the single source of truth
-        // Remove: public var stockLevel: Double { stockPercentage }
     }
     
     // MARK: - AI Types
@@ -1405,6 +1604,7 @@ public struct CoreTypes {
         public let priority: AIPriority
         public let actionRequired: Bool
         public let affectedBuildings: [String]
+        public let estimatedImpact: String?
         public let generatedAt: Date
         
         public init(
@@ -1415,6 +1615,7 @@ public struct CoreTypes {
             priority: AIPriority,
             actionRequired: Bool = false,
             affectedBuildings: [String] = [],
+            estimatedImpact: String? = nil,
             generatedAt: Date = Date()
         ) {
             self.id = id
@@ -1424,6 +1625,7 @@ public struct CoreTypes {
             self.priority = priority
             self.actionRequired = actionRequired
             self.affectedBuildings = affectedBuildings
+            self.estimatedImpact = estimatedImpact
             self.generatedAt = generatedAt
         }
     }
@@ -1450,6 +1652,140 @@ public struct CoreTypes {
             self.metrics = metrics
             self.recommendations = recommendations
             self.generatedAt = generatedAt
+        }
+    }
+    
+    // MARK: - Client Types (NEW)
+    
+    public struct ClientAlert: Identifiable {
+        public let id: String
+        public let title: String
+        public let message: String
+        public let severity: AlertSeverity
+        public let buildingId: String?
+        public let buildingName: String?
+        public let timestamp: Date
+        public let actionRequired: Bool
+        
+        public enum AlertSeverity {
+            case info
+            case warning
+            case critical
+        }
+        
+        public init(
+            id: String,
+            title: String,
+            message: String,
+            severity: AlertSeverity,
+            buildingId: String?,
+            timestamp: Date,
+            actionRequired: Bool
+        ) {
+            self.id = id
+            self.title = title
+            self.message = message
+            self.severity = severity
+            self.buildingId = buildingId
+            self.buildingName = nil
+            self.timestamp = timestamp
+            self.actionRequired = actionRequired
+        }
+    }
+    
+    // MARK: - Admin Types (NEW)
+    
+    public struct AdminAlert: Identifiable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let severity: AlertSeverity
+        public let source: AlertSource
+        public let timestamp: Date
+        public let buildingId: String?
+        public let workerId: String?
+        
+        public enum AlertSeverity {
+            case info
+            case warning
+            case critical
+        }
+        
+        public enum AlertSource {
+            case system
+            case worker
+            case compliance
+            case building
+            case task
+        }
+        
+        public init(
+            id: String,
+            title: String,
+            description: String,
+            severity: AlertSeverity,
+            source: AlertSource,
+            timestamp: Date,
+            buildingId: String?,
+            workerId: String?
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.severity = severity
+            self.source = source
+            self.timestamp = timestamp
+            self.buildingId = buildingId
+            self.workerId = workerId
+        }
+    }
+    
+    // MARK: - Executive Intelligence (NEW)
+    
+    public struct ExecutiveIntelligence {
+        public let keyInsights: [String]
+        public let recommendations: [StrategicRecommendation]
+        public let generatedAt: Date
+        
+        public init(
+            keyInsights: [String],
+            recommendations: [StrategicRecommendation],
+            generatedAt: Date
+        ) {
+            self.keyInsights = keyInsights
+            self.recommendations = recommendations
+            self.generatedAt = generatedAt
+        }
+    }
+    
+    // MARK: - Cost Insights (NEW)
+    
+    public struct CostInsight: Identifiable {
+        public let id = UUID().uuidString
+        public let category: String
+        public let description: String
+        public let potentialSavings: Double
+        public let implementationEffort: EffortLevel
+        public let affectedBuildings: [String]
+        
+        public enum EffortLevel: String {
+            case low = "Low"
+            case medium = "Medium"
+            case high = "High"
+        }
+        
+        public init(
+            category: String,
+            description: String,
+            potentialSavings: Double,
+            implementationEffort: EffortLevel,
+            affectedBuildings: [String]
+        ) {
+            self.category = category
+            self.description = description
+            self.potentialSavings = potentialSavings
+            self.implementationEffort = implementationEffort
+            self.affectedBuildings = affectedBuildings
         }
     }
     
@@ -1509,32 +1845,16 @@ public struct CoreTypes {
         public let title: String
         public let description: String
         public let category: InsightCategory
-        public let priority: Priority
+        public let priority: AIPriority
         public let timeframe: String
         public let estimatedImpact: String
-        
-        public enum Priority: String, Codable, CaseIterable {
-            case low = "Low"
-            case medium = "Medium"
-            case high = "High"
-            case critical = "Critical"
-            
-            public var priorityColor: Color {
-                switch self {
-                case .low: return .green
-                case .medium: return .yellow
-                case .high: return .orange
-                case .critical: return .red
-                }
-            }
-        }
         
         public init(
             id: String = UUID().uuidString,
             title: String,
             description: String,
-            category: InsightCategory,
-            priority: Priority,
+            category: InsightCategory = .operations,
+            priority: AIPriority,
             timeframe: String,
             estimatedImpact: String
         ) {
@@ -1656,11 +1976,13 @@ public struct CoreTypes {
         public let description: String
         public let severity: ComplianceSeverity
         public let buildingId: String?
+        public let buildingName: String?
         public let status: ComplianceStatus
         public let dueDate: Date?
         public let assignedTo: String?
         public let createdAt: Date
-        public let type: ComplianceIssueType?
+        public let reportedDate: Date
+        public let type: ComplianceIssueType
         
         public init(
             id: String = UUID().uuidString,
@@ -1668,22 +1990,53 @@ public struct CoreTypes {
             description: String,
             severity: ComplianceSeverity,
             buildingId: String? = nil,
+            buildingName: String? = nil,
             status: ComplianceStatus = .open,
             dueDate: Date? = nil,
             assignedTo: String? = nil,
             createdAt: Date = Date(),
-            type: ComplianceIssueType? = nil
+            reportedDate: Date = Date(),
+            type: ComplianceIssueType
         ) {
             self.id = id
             self.title = title
             self.description = description
             self.severity = severity
             self.buildingId = buildingId
+            self.buildingName = buildingName
             self.status = status
             self.dueDate = dueDate
             self.assignedTo = assignedTo
             self.createdAt = createdAt
+            self.reportedDate = reportedDate
             self.type = type
+        }
+    }
+    
+    // MARK: - Compliance Overview (NEW)
+    
+    public struct ComplianceOverview {
+        public let overallScore: Double
+        public let totalIssues: Int
+        public let openIssues: Int
+        public let criticalViolations: Int
+        public let lastAudit: Date?
+        public let nextAudit: Date?
+        
+        public init(
+            overallScore: Double,
+            totalIssues: Int,
+            openIssues: Int,
+            criticalViolations: Int,
+            lastAudit: Date?,
+            nextAudit: Date?
+        ) {
+            self.overallScore = overallScore
+            self.totalIssues = totalIssues
+            self.openIssues = openIssues
+            self.criticalViolations = criticalViolations
+            self.lastAudit = lastAudit
+            self.nextAudit = nextAudit
         }
     }
     

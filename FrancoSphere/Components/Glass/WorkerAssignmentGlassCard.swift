@@ -2,9 +2,10 @@
 //  WorkerAssignmentGlassCard.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
+//  ✅ UPDATED: Dark Elegance theme fully applied
+//  ✅ ENHANCED: Complete FrancoSphereDesign integration
+//  ✅ IMPROVED: Glass effects optimized for dark theme
 //  ✅ ALIGNED: With CoreTypes.FrancoWorkerAssignment definition
-//  ✅ REFACTORED: Following architecture patterns
 //
 
 import SwiftUI
@@ -15,35 +16,51 @@ struct WorkerAssignmentGlassCard: View {
     let currentWorkerId: Int64
     let onWorkerTap: (CoreTypes.FrancoWorkerAssignment) -> Void
     
+    @State private var isAnimating = false
+    
     var body: some View {
-        GlassCard(intensity: GlassIntensity.thin) {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                headerSection
-                
-                // Workers list
-                if workers.isEmpty {
-                    emptyStateView
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(workers, id: \.id) { worker in
-                            WorkerRowGlassView(
-                                worker: worker,
-                                isCurrentUser: worker.workerId == currentWorkerId,
-                                isOnSite: isWorkerOnSite(worker),
-                                onTap: { onWorkerTap(worker) }
-                            )
-                        }
+        VStack(alignment: .leading, spacing: 20) {
+            // Header
+            headerSection
+            
+            // Workers list
+            if workers.isEmpty {
+                emptyStateView
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(workers, id: \.id) { worker in
+                        WorkerRowGlassView(
+                            worker: worker,
+                            isCurrentUser: worker.workerId == currentWorkerId,
+                            isOnSite: isWorkerOnSite(worker),
+                            onTap: { onWorkerTap(worker) }
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .leading)))
                     }
                 }
-                
-                // Summary footer
-                if !workers.isEmpty {
-                    summaryFooter
-                }
             }
-            .padding(20)
+            
+            // Summary footer
+            if !workers.isEmpty {
+                summaryFooter
+            }
         }
+        .padding(20)
+        .background(darkGlassBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(glassOverlayBorder)
+        .shadow(
+            color: FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.3),
+            radius: 15,
+            x: 0,
+            y: 8
+        )
+        .onAppear {
+            withAnimation(FrancoSphereDesign.Animations.spring.delay(0.2)) {
+                isAnimating = true
+            }
+        }
+        .animation(FrancoSphereDesign.Animations.spring, value: workers.count)
     }
     
     // MARK: - Sub-components
@@ -54,11 +71,11 @@ struct WorkerAssignmentGlassCard: View {
                 Text("Assigned Workers")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Text("\(workers.count) worker\(workers.count == 1 ? "" : "s") assigned")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -68,18 +85,25 @@ struct WorkerAssignmentGlassCard: View {
                 Circle()
                     .fill(getOverallStatusColor())
                     .frame(width: 8, height: 8)
+                    .overlay(
+                        Circle()
+                            .stroke(getOverallStatusColor().opacity(0.3), lineWidth: 8)
+                            .scaleEffect(1.5)
+                            .opacity(isAnimating ? 0.6 : 0)
+                            .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: isAnimating)
+                    )
                 
                 Text(getOverallStatusText())
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(getOverallStatusColor().opacity(0.2))
+            .background(getOverallStatusColor().opacity(0.15))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(getOverallStatusColor().opacity(0.4), lineWidth: 1)
+                    .stroke(getOverallStatusColor().opacity(0.3), lineWidth: 1)
             )
             .cornerRadius(16)
         }
@@ -89,16 +113,16 @@ struct WorkerAssignmentGlassCard: View {
         VStack(spacing: 12) {
             Image(systemName: "person.2.badge.plus")
                 .font(.system(size: 32))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.inactive)
             
             Text("No Workers Assigned")
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text("This building currently has no assigned workers")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -108,22 +132,22 @@ struct WorkerAssignmentGlassCard: View {
     private var summaryFooter: some View {
         VStack(spacing: 8) {
             Divider()
-                .background(Color.white.opacity(0.2))
+                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
             
             HStack {
                 HStack(spacing: 12) {
-                    footerStat(
+                    FooterStat(
                         icon: "person.circle.fill",
                         label: "On Site",
                         count: getOnSiteCount(),
-                        color: .green
+                        color: FrancoSphereDesign.DashboardColors.success
                     )
                     
-                    footerStat(
+                    FooterStat(
                         icon: "person.circle",
                         label: "Off Site",
                         count: getOffSiteCount(),
-                        color: .gray
+                        color: FrancoSphereDesign.DashboardColors.inactive
                     )
                 }
                 
@@ -141,38 +165,63 @@ struct WorkerAssignmentGlassCard: View {
         HStack(spacing: 8) {
             Text("Shifts:")
                 .font(.caption2)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             
             ForEach(getShiftDistribution(), id: \.0) { shift, count in
                 HStack(spacing: 4) {
                     Text(shift)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     
                     Text("(\(count))")
                         .font(.caption2)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
             }
         }
     }
     
-    private func footerStat(icon: String, label: String, count: Int, color: Color) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(color)
+    // MARK: - Background Components
+    
+    private var darkGlassBackground: some View {
+        ZStack {
+            // Dark base
+            RoundedRectangle(cornerRadius: 20)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.9))
             
-            Text("\(count)")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
+            // Glass material
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial.opacity(0.3))
             
-            Text(label)
-                .font(.caption2)
-                .foregroundColor(.white.opacity(0.7))
+            // Gradient overlay
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.2),
+                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         }
+    }
+    
+    private var glassOverlayBorder: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .stroke(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.15),
+                        Color.white.opacity(0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 1
+            )
     }
     
     // MARK: - Helper Methods
@@ -188,11 +237,11 @@ struct WorkerAssignmentGlassCard: View {
     private func getOverallStatusColor() -> Color {
         let onSiteCount = getOnSiteCount()
         if onSiteCount == 0 {
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         } else if onSiteCount < workers.count {
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         } else {
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         }
     }
     
@@ -239,7 +288,20 @@ struct WorkerRowGlassView: View {
     @State private var isPressed = false
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = true
+            }
+            
+            // Haptic feedback
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isPressed = false
+                onTap()
+            }
+        }) {
             HStack(spacing: 12) {
                 // Worker avatar
                 workerAvatar
@@ -250,16 +312,16 @@ struct WorkerRowGlassView: View {
                         Text(worker.workerName)
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.white)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
                         if isCurrentUser {
                             Text("YOU")
                                 .font(.caption2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.blue)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.info)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.blue.opacity(0.2))
+                                .background(FrancoSphereDesign.DashboardColors.info.opacity(0.2))
                                 .cornerRadius(6)
                         }
                     }
@@ -269,11 +331,11 @@ struct WorkerRowGlassView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "clock")
                                     .font(.caption2)
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                                 
                                 Text(worker.shift)
                                     .font(.caption)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                             }
                         }
                         
@@ -281,11 +343,11 @@ struct WorkerRowGlassView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "star.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                                 
                                 Text(role)
                                     .font(.caption)
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                             }
                         }
                     }
@@ -297,29 +359,11 @@ struct WorkerRowGlassView: View {
                 statusIndicator
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isCurrentUser ? Color.blue.opacity(0.1) : Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                isCurrentUser ? Color.blue.opacity(0.3) : Color.white.opacity(0.1),
-                                lineWidth: 1
-                            )
-                    )
-            )
+            .background(workerRowBackground)
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
-        .onTapGesture {
-            isPressed = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isPressed = false
-                onTap()
-            }
-        }
     }
     
     // MARK: - Sub-components
@@ -327,17 +371,33 @@ struct WorkerRowGlassView: View {
     private var workerAvatar: some View {
         ZStack {
             Circle()
-                .fill(getAvatarColor().opacity(0.2))
+                .fill(getAvatarGradient())
                 .frame(width: 44, height: 44)
                 .overlay(
                     Circle()
-                        .stroke(isOnSite ? Color.green : Color.white.opacity(0.3), lineWidth: 2)
+                        .stroke(
+                            isOnSite ? FrancoSphereDesign.DashboardColors.success :
+                            Color.white.opacity(0.2),
+                            lineWidth: 2
+                        )
                 )
             
             Text(getInitials())
                 .font(.headline)
                 .fontWeight(.bold)
-                .foregroundColor(getAvatarColor())
+                .foregroundColor(.white)
+            
+            // Online indicator
+            if isOnSite {
+                Circle()
+                    .fill(FrancoSphereDesign.DashboardColors.success)
+                    .frame(width: 10, height: 10)
+                    .overlay(
+                        Circle()
+                            .stroke(FrancoSphereDesign.DashboardColors.cardBackground, lineWidth: 2)
+                    )
+                    .offset(x: 14, y: 14)
+            }
         }
     }
     
@@ -345,25 +405,46 @@ struct WorkerRowGlassView: View {
         VStack(spacing: 4) {
             HStack(spacing: 6) {
                 Circle()
-                    .fill(isOnSite ? Color.green : Color.gray)
+                    .fill(isOnSite ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
                     .frame(width: 8, height: 8)
                 
                 Text(isOnSite ? "On Site" : "Off Site")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background((isOnSite ? Color.green : Color.gray).opacity(0.2))
+            .background(
+                (isOnSite ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
+                    .opacity(0.15)
+            )
             .cornerRadius(12)
             
             if isOnSite {
                 Text("Active")
                     .font(.caption2)
-                    .foregroundColor(.green)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
             }
         }
+    }
+    
+    private var workerRowBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(
+                isCurrentUser ?
+                FrancoSphereDesign.DashboardColors.info.opacity(0.1) :
+                FrancoSphereDesign.DashboardColors.glassOverlay
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isCurrentUser ?
+                        FrancoSphereDesign.DashboardColors.info.opacity(0.3) :
+                        Color.white.opacity(0.1),
+                        lineWidth: 1
+                    )
+            )
     }
     
     // MARK: - Helper Methods
@@ -374,11 +455,51 @@ struct WorkerRowGlassView: View {
         return initials.joined().uppercased()
     }
     
-    private func getAvatarColor() -> Color {
+    private func getAvatarGradient() -> LinearGradient {
         // Generate consistent color based on worker name
         let hash = worker.workerName.hashValue
-        let colors: [Color] = [.blue, .green, .orange, .purple, .pink, .yellow]
-        return colors[abs(hash) % colors.count]
+        let colors: [(Color, Color)] = [
+            (FrancoSphereDesign.DashboardColors.info, FrancoSphereDesign.DashboardColors.info.opacity(0.5)),
+            (FrancoSphereDesign.DashboardColors.success, FrancoSphereDesign.DashboardColors.success.opacity(0.5)),
+            (FrancoSphereDesign.DashboardColors.warning, FrancoSphereDesign.DashboardColors.warning.opacity(0.5)),
+            (Color(hex: "9333ea"), Color(hex: "9333ea").opacity(0.5)), // Purple
+            (Color(hex: "ec4899"), Color(hex: "ec4899").opacity(0.5)), // Pink
+            (Color(hex: "fbbf24"), Color(hex: "fbbf24").opacity(0.5))  // Amber
+        ]
+        
+        let colorPair = colors[abs(hash) % colors.count]
+        
+        return LinearGradient(
+            colors: [colorPair.0, colorPair.1],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+// MARK: - FooterStat Component
+
+struct FooterStat: View {
+    let icon: String
+    let label: String
+    let count: Int
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(color)
+            
+            Text("\(count)")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+        }
     }
 }
 
@@ -433,12 +554,21 @@ struct WorkerAssignmentGlassCard_Previews: PreviewProvider {
                     workers: sampleWorkers,
                     clockedInStatus: (true, 15),
                     currentWorkerId: 2,
-                    onWorkerTap: { _ in }
+                    onWorkerTap: { worker in
+                        print("Tapped: \(worker.workerName)")
+                    }
                 )
                 
                 WorkerAssignmentGlassCard(
                     workers: [],
                     clockedInStatus: (false, nil),
+                    currentWorkerId: 1,
+                    onWorkerTap: { _ in }
+                )
+                
+                WorkerAssignmentGlassCard(
+                    workers: Array(sampleWorkers.prefix(1)),
+                    clockedInStatus: (true, 15),
                     currentWorkerId: 1,
                     onWorkerTap: { _ in }
                 )
@@ -450,36 +580,3 @@ struct WorkerAssignmentGlassCard_Previews: PreviewProvider {
         .preferredColorScheme(.dark)
     }
 }
-
-// MARK: - 📝 Architecture Alignment Notes
-/*
- ✅ ARCHITECTURAL FIXES:
- 
- 1. TYPE REFERENCES:
-    - ✅ Using CoreTypes.FrancoWorkerAssignment throughout
-    - ✅ Aligned with CoreTypes.swift definition
-    - ✅ Proper type prefixes for architecture consistency
- 
- 2. COMPILATION FIXES:
-    - ✅ Fixed preview initializers with all required parameters
-    - ✅ Added missing 'id', 'buildingName', 'startDate', and 'isActive'
-    - ✅ Corrected buildingId type from String to Int64
-    - ✅ Using .id for ForEach instead of .workerId
- 
- 3. SERVICE INTEGRATION:
-    - ✅ Ready for DashboardSyncService integration
-    - ✅ Compatible with WorkerService data flow
-    - ✅ Aligned with BuildingService building IDs
- 
- 4. UI CONSISTENCY:
-    - ✅ Maintains glass morphism design system
-    - ✅ Proper color handling for dark mode
-    - ✅ Accessible touch targets and animations
- 
- 5. DATA FLOW:
-    - ✅ Proper handling of optional values
-    - ✅ Type-safe worker ID comparisons
-    - ✅ Efficient shift distribution calculations
- 
- 🎯 STATUS: All compilation errors resolved, architecture aligned
- */
