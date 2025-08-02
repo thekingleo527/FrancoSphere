@@ -47,7 +47,7 @@
 		2326C25E2E3BFF9B0080F005 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 2326C25D2E3BFF9B0080F005 /* SentrySwiftUI */; };
 		2326C2602E3C06FD0080F005 /* WorkerDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */; };
 		2326C2622E3C070B0080F005 /* AdminDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */; };
-		2326C2642E3C07170080F005 /* ClientDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */; };
+		2326C2642E3C07170080F005 /* ClientDashboardMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */; };
 		2326C2692E3C23A20080F005 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */; };
 		2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */; };
 		2326C2702E3C36250080F005 /* DSNYModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26F2E3C36250080F005 /* DSNYModels.swift */; };
@@ -285,7 +285,7 @@
 		2326C24A2E3B65590080F005 /* LanguageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageManager.swift; sourceTree = "<group>"; };
 		2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardContainerView.swift; sourceTree = "<group>"; };
 		2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardContainerView.swift; sourceTree = "<group>"; };
-		2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardContainerView.swift; sourceTree = "<group>"; };
+		2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardMainView.swift; sourceTree = "<group>"; };
 		2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
 		2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FrancoSphereTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestMigrationFlow.swift; sourceTree = "<group>"; };
@@ -1068,7 +1068,7 @@
 			children = (
 				23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */,
 				23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */,
-				2326C2632E3C07170080F005 /* ClientDashboardContainerView.swift */,
+				2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */,
 				2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */,
 				2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */,
 				2326C2462E3B468E0080F005 /* WorkerPreferencesView.swift */,
@@ -1443,7 +1443,7 @@
 				2377A03C2E39885600F4A10F /* WorkerContextEngine.swift in Sources */,
 				2377A03D2E39885600F4A10F /* FrancoSphereExtensions.swift in Sources */,
 				2377A03F2E39885600F4A10F /* GlassButton.swift in Sources */,
-				2326C2642E3C07170080F005 /* ClientDashboardContainerView.swift in Sources */,
+				2326C2642E3C07170080F005 /* ClientDashboardMainView.swift in Sources */,
 				2377A0402E39885600F4A10F /* NewAuthManager.swift in Sources */,
 				2377A0412E39885600F4A10F /* WorkerDashboardView.swift in Sources */,
 				2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */,

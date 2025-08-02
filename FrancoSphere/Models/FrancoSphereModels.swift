@@ -492,11 +492,11 @@ extension CoreTypes {
             productionBuildings.first { $0.id == buildingId }
         }
         
-        // Create route stops from the buildings
+        // Create route stops from the buildings - FIXED: Using 'name:' parameter instead of 'buildingName:'
         let stops = routeBuildings.enumerated().map { index, building in
             CoreTypes.RouteStop(
                 buildingId: building.id,
-                buildingName: building.name,
+                name: building.name,  // FIXED: Changed from buildingName to name
                 address: building.address,
                 latitude: building.latitude,
                 longitude: building.longitude,

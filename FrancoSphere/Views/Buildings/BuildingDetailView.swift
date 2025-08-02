@@ -350,7 +350,7 @@ struct BuildingDetailView: View {
     private var tabBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 20) {
-                ForEach(BuildingTab.allCases, id: \.self) { tab in
+                ForEach(BuildingDetailTab.allCases, id: \.self) { tab in
                     if shouldShowTab(tab) {
                         TabButton(
                             tab: tab,
@@ -1369,7 +1369,7 @@ struct BuildingMaintenanceTab: View {
             // Filter by date range
             let calendar = Calendar.current
             if let daysAgo = calendar.date(byAdding: .day, value: -dateRange.days, to: Date()) {
-                return record.date >= daysAgo
+                return record.completedAt >= daysAgo
             }
             
             return true
@@ -1382,7 +1382,7 @@ struct BuildingInventoryTab: View {
     let buildingId: String
     let buildingName: String
     @ObservedObject var viewModel: BuildingDetailVM
-    @State private var selectedCategory: InventoryCategory = .supplies
+    @State private var selectedCategory: CoreTypes.InventoryCategory = .supplies
     @State private var showingAddItem = false
     
     var body: some View {
@@ -1442,7 +1442,7 @@ struct BuildingInventoryTab: View {
     private var inventoryCategoryFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(InventoryCategory.allCases, id: \.self) { category in
+                ForEach(CoreTypes.InventoryCategory.allCases, id: \.self) { category in
                     CategoryButton(
                         category: category,
                         isSelected: selectedCategory == category,
@@ -1517,7 +1517,7 @@ struct BuildingInventoryTab: View {
         .francoDarkCardBackground()
     }
     
-    private var filteredInventoryItems: [InventoryItem] {
+    private var filteredInventoryItems: [CoreTypes.InventoryItem] {
         viewModel.inventoryItems.filter { item in
             selectedCategory == .other || item.category == selectedCategory
         }
@@ -2197,16 +2197,17 @@ struct AssignedWorkerRow: View {
 }
 
 struct MaintenanceHistoryRow: View {
-    @Published var maintenanceHistory: [CoreTypes.MaintenanceRecord] = []
+    let record: CoreTypes.MaintenanceRecord
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(record.title)
+                Text(record.description)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
-                Text(record.date, style: .date)
+                Text(record.completedAt, style: .date)
                     .font(.caption)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
             }
@@ -2220,6 +2221,36 @@ struct MaintenanceHistoryRow: View {
                     .foregroundColor(FrancoSphereDesign.DashboardColors.accent)
             }
         }
+    }
+}
+
+struct StatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(color)
+                Spacer()
+            }
+            
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+        }
+        .padding()
+        .frame(width: 120)
+        .francoDarkCardBackground()
     }
 }
 
@@ -2250,6 +2281,72 @@ struct InventoryStatCard: View {
         .padding()
         .frame(maxWidth: .infinity)
         .francoDarkCardBackground()
+    }
+}
+
+struct CategoryButton: View {
+    let category: CoreTypes.InventoryCategory
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(category.rawValue)
+                .font(.caption)
+                .fontWeight(isSelected ? .semibold : .regular)
+                .foregroundColor(isSelected ? .white : FrancoSphereDesign.DashboardColors.secondaryText)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? FrancoSphereDesign.DashboardColors.accent : FrancoSphereDesign.glassMorphism())
+                )
+        }
+    }
+}
+
+struct InventoryItemRow: View {
+    let item: CoreTypes.InventoryItem
+    let onUpdate: (CoreTypes.InventoryItem) -> Void
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                
+                HStack(spacing: 8) {
+                    Text("\(item.currentStock) \(item.unit)")
+                        .font(.caption)
+                        .foregroundColor(stockColor)
+                    
+                    if item.currentStock < item.minimumStock {
+                        Label("Low Stock", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Text(item.cost.formatted(.currency(code: "USD")))
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.accent)
+        }
+    }
+    
+    private var stockColor: Color {
+        if item.currentStock < item.minimumStock {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else if item.currentStock < item.minimumStock * 2 {
+            return FrancoSphereDesign.DashboardColors.secondaryText
+        } else {
+            return FrancoSphereDesign.DashboardColors.success
+        }
     }
 }
 
@@ -2522,6 +2619,141 @@ struct BuildingAddInventoryItemSheet: View {
     }
 }
 
+struct SpaceDetailSheet: View {
+    let space: SpaceAccess
+    let buildingName: String
+    let onUpdate: (SpaceAccess) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Space Details")
+                    .font(.largeTitle)
+                Text(space.name)
+                    .font(.title)
+                Text(buildingName)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("Space Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct PhotoCaptureSheet: View {
+    let buildingId: String
+    let buildingName: String
+    let category: CoreTypes.FrancoPhotoCategory
+    let onCapture: (UIImage, CoreTypes.FrancoPhotoCategory, String) -> Void
+    @State private var capturedImage: UIImage?
+    @State private var notes = ""
+    @State private var selectedCategory: CoreTypes.FrancoPhotoCategory
+    @Environment(\.dismiss) private var dismiss
+    
+    init(buildingId: String, buildingName: String, category: CoreTypes.FrancoPhotoCategory, onCapture: @escaping (UIImage, CoreTypes.FrancoPhotoCategory, String) -> Void) {
+        self.buildingId = buildingId
+        self.buildingName = buildingName
+        self.category = category
+        self.onCapture = onCapture
+        self._selectedCategory = State(initialValue: category)
+    }
+    
+    var body: some View {
+        NavigationView {
+            if let image = capturedImage {
+                VStack {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 300)
+                    
+                    Form {
+                        Picker("Category", selection: $selectedCategory) {
+                            ForEach(CoreTypes.FrancoPhotoCategory.allCases, id: \.self) { cat in
+                                Text(cat.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
+                                    .tag(cat)
+                            }
+                        }
+                        
+                        TextField("Notes (optional)", text: $notes)
+                    }
+                    
+                    HStack {
+                        Button("Retake") {
+                            capturedImage = nil
+                        }
+                        .foregroundColor(.red)
+                        
+                        Spacer()
+                        
+                        Button("Save") {
+                            onCapture(image, selectedCategory, notes)
+                            dismiss()
+                        }
+                        .fontWeight(.semibold)
+                    }
+                    .padding()
+                }
+                .navigationTitle("Photo Details")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                    }
+                }
+            } else {
+                BuildingCameraView(image: $capturedImage)
+                    .navigationBarHidden(true)
+            }
+        }
+    }
+}
+
+// MARK: - Camera View (Renamed to avoid conflicts)
+struct BuildingCameraView: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: BuildingCameraView
+        
+        init(_ parent: BuildingCameraView) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.image = image
+            }
+            picker.dismiss(animated: true)
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
 // MARK: - View Model Extension
 
 extension BuildingDetailVM {
@@ -2589,7 +2821,7 @@ extension BuildingDetailVM {
         "A+"
     }
     
-    var inventoryItems: [InventoryItem] {
+    var inventoryItems: [CoreTypes.InventoryItem] {
         // Fetch from database
         []
     }
@@ -2599,7 +2831,7 @@ extension BuildingDetailVM {
         // Load inventory data
     }
     
-    func updateInventoryItem(_ item: InventoryItem) {
+    func updateInventoryItem(_ item: CoreTypes.InventoryItem) {
         // Update inventory item
     }
     
@@ -2748,6 +2980,7 @@ class BuildingDetailVM: ObservableObject {
     @Published var units: Int = 0
     @Published var yearBuilt: Int = 1900
     @Published var contractType: String?
+    @Published var buildingIcon: String = "building.2"
     
     // Metrics
     @Published var efficiencyScore: Int = 0
@@ -2783,6 +3016,9 @@ class BuildingDetailVM: ObservableObject {
     @Published var dailyRoutines: [DailyRoutine] = []
     @Published var completedRoutines: Int = 0
     @Published var totalRoutines: Int = 0
+    @Published var assignedWorkers: [AssignedWorker] = []
+    @Published var recentActivities: [BuildingDetailActivity] = []
+    @Published var maintenanceHistory: [CoreTypes.MaintenanceRecord] = []
     
     // Inventory summary
     @Published var inventorySummary = InventorySummary()
@@ -3057,12 +3293,17 @@ class BuildingDetailVM: ObservableObject {
                 }
                 
                 self.maintenanceHistory = maintenance.map { record in
-                    MaintenanceRecord(
+                    CoreTypes.MaintenanceRecord(
                         id: record.id,
-                        title: record.title,
-                        date: record.date,
+                        buildingId: buildingId,
+                        taskId: record.taskId,
+                        workerId: record.workerId,
+                        category: record.category,
                         description: record.description,
-                        cost: record.cost
+                        completedAt: record.date,
+                        duration: record.duration,
+                        cost: record.cost,
+                        notes: record.notes
                     )
                 }
             }
@@ -3135,7 +3376,7 @@ class BuildingDetailVM: ObservableObject {
         }
     }
     
-    func savePhoto(_ photo: UIImage, category: FrancoPhotoCategory, notes: String) async {
+    func savePhoto(_ photo: UIImage, category: CoreTypes.FrancoPhotoCategory, notes: String) async {
         do {
             // Get current location
             let location = await locationManager.getCurrentLocation()
@@ -3184,18 +3425,6 @@ class BuildingDetailVM: ObservableObject {
         }
     }
     
-    func loadInventoryData() async {
-        // Load inventory data
-    }
-    
-    func updateInventoryItem(_ item: InventoryItem) {
-        // Update inventory item
-    }
-    
-    func initiateReorder() {
-        // Initiate reorder process
-    }
-    
     func exportBuildingReport() {
         // TODO: Implement report generation
     }
@@ -3223,14 +3452,6 @@ class BuildingDetailVM: ObservableObject {
     
     func logVendorVisit() {
         // TODO: Log vendor visit
-    }
-    
-    func reportEmergencyIssue() {
-        // Report emergency issue
-    }
-    
-    func alertEmergencyTeam() {
-        // Alert emergency team
     }
     
     // MARK: - Helper Methods
@@ -3265,290 +3486,4 @@ class BuildingDetailVM: ObservableObject {
 struct InventorySummary {
     var cleaningLow: Int = 0
     var cleaningTotal: Int = 0
-    var equipmentLow: Int = 0
-    var equipmentTotal: Int = 0
-    var maintenanceLow: Int = 0
-    var maintenanceTotal: Int = 0
-    var safetyLow: Int = 0
-    var safetyTotal: Int = 0
-}
-
-// MARK: - Placeholder Views
-
-struct BuildingInventoryDetailView: View {
-    let buildingId: String
-    
-    var body: some View {
-        Text("Inventory Detail View - Coming Soon")
-            .navigationTitle("Inventory")
-    }
-}
-
-struct BuildingMaintenanceHistoryView: View {
-    let buildingId: String
-    
-    var body: some View {
-        Text("Maintenance History - Coming Soon")
-            .navigationTitle("Maintenance History")
-    }
-}
-
-struct MessageComposerView: View {
-    let recipients: [String]
-    let subject: String
-    let prefilledBody: String
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("Message Composer")
-                    .font(.largeTitle)
-                Text("Email integration coming in Phase 2")
-                    .foregroundColor(.secondary)
-            }
-            .navigationTitle("New Message")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Camera View (Using existing ImagePicker)
-struct CameraView: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    @Environment(\.dismiss) private var dismiss
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraView
-        
-        init(_ parent: CameraView) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.image = image
-            }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
-        }
-    }
-}
-
-// MARK: - Worker Assignment Sheet
-struct WorkerAssignmentSheet: View {
-    let buildingId: String
-    let routine: DailyRoutine
-    let onAssign: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var availableWorkers: [AssignedWorker] = []
-    @State private var selectedWorkerId: String?
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Header
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Assign Worker")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(routine.title)
-                            .font(.headline)
-                        
-                        if let time = routine.scheduledTime {
-                            Text(time)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(12)
-                }
-                .padding()
-                
-                // Worker list
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(availableWorkers) { worker in
-                            WorkerSelectionRow(
-                                worker: worker,
-                                isSelected: selectedWorkerId == worker.id,
-                                onSelect: {
-                                    selectedWorkerId = worker.id
-                                }
-                            )
-                        }
-                    }
-                    .padding()
-                }
-                
-                // Action buttons
-                HStack(spacing: 12) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(.systemGray5))
-                    .cornerRadius(12)
-                    
-                    Button("Assign") {
-                        if let workerId = selectedWorkerId {
-                            onAssign(workerId)
-                            dismiss()
-                        }
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        selectedWorkerId != nil ? Color.blue : Color.gray
-                    )
-                    .cornerRadius(12)
-                    .disabled(selectedWorkerId == nil)
-                }
-                .padding()
-            }
-            .navigationBarHidden(true)
-        }
-        .presentationDetents([.medium])
-        .task {
-            loadAvailableWorkers()
-        }
-    }
-    
-    private func loadAvailableWorkers() {
-        // Load real workers assigned to this building
-        // For now, using sample data
-        availableWorkers = [
-            AssignedWorker(id: "4", name: "Kevin Dutan", schedule: "6 AM - 2 PM", isOnSite: true),
-            AssignedWorker(id: "2", name: "Edwin Lema", schedule: "2 PM - 10 PM", isOnSite: false),
-            AssignedWorker(id: "5", name: "Mercedes Inamagua", schedule: "6 AM - 2 PM", isOnSite: false)
-        ]
-    }
-}
-
-struct WorkerSelectionRow: View {
-    let worker: AssignedWorker
-    let isSelected: Bool
-    let onSelect: () -> Void
-    
-    var body: some View {
-        Button(action: onSelect) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(worker.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    HStack(spacing: 8) {
-                        Text(worker.schedule)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        if worker.isOnSite {
-                            Label("On-site", systemImage: "location.fill")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundColor(isSelected ? .blue : .gray)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
-        }
-    }
-}
-
-// MARK: - Image Picker
-struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    @Environment(\.dismiss) private var dismiss
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: ImagePicker
-        
-        init(_ parent: ImagePicker) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.image = image
-            }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
-        }
-    }
-}
-
-// MARK: - Preview
-
-struct BuildingDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        BuildingDetailView(
-            buildingId: "14",
-            buildingName: "Rubin Museum",
-            buildingAddress: "150 W 17th St, New York, NY 10011"
-        )
-        .preferredColorScheme(.dark)
-        .environmentObject(NewAuthManager.shared)
-        .environmentObject(DashboardSyncService.shared)
-    }
-}
+    var equipmentLow:

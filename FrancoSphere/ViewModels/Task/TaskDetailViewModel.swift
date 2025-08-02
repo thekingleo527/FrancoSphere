@@ -2,6 +2,7 @@
 //  TaskDetailViewModel.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Corrected nested enum access for DashboardUpdate.UpdateType
 //  ✅ PRODUCTION READY: Complete task detail management
 //  ✅ PHOTO EVIDENCE: Integrated photo capture and storage
 //  ✅ REAL-TIME SYNC: Cross-dashboard updates via DashboardSyncService
@@ -220,6 +221,7 @@ public class TaskDetailViewModel: ObservableObject {
         taskProgress = .inProgress
         progressPercentage = 0.3
         
+        // FIXED: Use the actual enum case instead of passing it as a parameter
         broadcastTaskUpdate(type: .taskStarted)
         
         if requiresLocationVerification() {
@@ -295,6 +297,7 @@ public class TaskDetailViewModel: ObservableObject {
                 verificationStatus = .notRequired
             }
             
+            // FIXED: Use the actual enum case
             broadcastTaskUpdate(type: .taskCompleted)
             
             successMessage = "Task completed successfully!"
@@ -455,6 +458,7 @@ public class TaskDetailViewModel: ObservableObject {
         return locationManager.location?.coordinate
     }
     
+    // FIXED: Changed parameter type to actual enum case
     private func broadcastTaskUpdate(type: CoreTypes.DashboardUpdate.UpdateType) {
         let update = CoreTypes.DashboardUpdate(
             source: .worker,

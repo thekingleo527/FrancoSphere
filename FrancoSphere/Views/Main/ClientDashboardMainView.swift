@@ -1,7 +1,10 @@
 //
-//  ClientDashboardContainerView.swift
+//  ClientDashboardMainView.swift  // RENAMED to avoid conflict
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Renamed to ClientDashboardMainView to avoid redeclaration
+//  ✅ FIXED: Removed duplicate Color init(hex:) extension
+//  ✅ FIXED: Renamed conflicting components with Client prefix
 //  ✅ USES ONLY EXISTING VIEWMODELS AND SERVICES
 //  ✅ NO INVENTED DEPENDENCIES
 //  ✅ WORKS WITH ACTUAL CORETYPES
@@ -11,7 +14,7 @@
 import SwiftUI
 import Combine
 
-struct ClientDashboardContainerView: View {
+struct ClientDashboardMainView: View {  // RENAMED from ClientDashboardContainerView
     // MARK: - Existing ViewModels Only
     @StateObject private var viewModel = ClientDashboardViewModel()
     @StateObject private var contextEngine = ClientContextEngine.shared
@@ -71,7 +74,7 @@ struct ClientDashboardContainerView: View {
                 
                 VStack(spacing: 0) {
                     // Header using actual data
-                    ClientHeaderView(
+                    ClientHeaderSection(  // RENAMED from ClientHeaderView
                         clientName: contextEngine.clientProfile?.name ?? "Client",
                         selectedBuilding: currentBuilding,
                         isRefreshing: viewModel.isRefreshing,
@@ -90,7 +93,7 @@ struct ClientDashboardContainerView: View {
                             }
                             
                             // Metrics Overview (using actual properties)
-                            MetricsOverviewGrid(
+                            ClientMetricsOverviewGrid(  // RENAMED from MetricsOverviewGrid
                                 totalBuildings: viewModel.totalBuildings,
                                 activeWorkers: viewModel.activeWorkers,
                                 completionRate: viewModel.completionRate,
@@ -184,8 +187,8 @@ struct ClientDashboardContainerView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             gradient: Gradient(colors: [
-                Color(hex: "0D1117"),
-                Color(hex: "161B22")
+                Color(red: 13/255, green: 17/255, blue: 23/255),
+                Color(red: 22/255, green: 27/255, blue: 34/255)
             ]),
             startPoint: .top,
             endPoint: .bottom
@@ -194,8 +197,8 @@ struct ClientDashboardContainerView: View {
     }
 }
 
-// MARK: - Client Header View (Simplified)
-struct ClientHeaderView: View {
+// MARK: - Client Header Section (RENAMED from ClientHeaderView)
+struct ClientHeaderSection: View {
     let clientName: String
     let selectedBuilding: CoreTypes.NamedCoordinate?
     let isRefreshing: Bool
@@ -261,7 +264,7 @@ struct ClientHeaderView: View {
             }
             .padding()
         }
-        .background(Color(hex: "161B22"))
+        .background(Color(red: 22/255, green: 27/255, blue: 34/255))
     }
 }
 
@@ -332,8 +335,8 @@ struct PortfolioIntelligenceCard: View {
     }
 }
 
-// MARK: - Metrics Overview Grid
-struct MetricsOverviewGrid: View {
+// MARK: - Client Metrics Overview Grid (RENAMED from MetricsOverviewGrid)
+struct ClientMetricsOverviewGrid: View {
     let totalBuildings: Int
     let activeWorkers: Int
     let completionRate: Double
@@ -345,28 +348,28 @@ struct MetricsOverviewGrid: View {
             GridItem(.flexible()),
             GridItem(.flexible())
         ], spacing: 12) {
-            MetricCard(
+            ClientMetricCard(  // RENAMED from MetricCard
                 icon: "building.2",
                 title: "Buildings",
                 value: "\(totalBuildings)",
                 color: .blue
             )
             
-            MetricCard(
+            ClientMetricCard(
                 icon: "person.3.fill",
                 title: "Active Workers",
                 value: "\(activeWorkers)",
                 color: .green
             )
             
-            MetricCard(
+            ClientMetricCard(
                 icon: "checkmark.circle.fill",
                 title: "Completion",
                 value: "\(Int(completionRate * 100))%",
                 color: .cyan
             )
             
-            MetricCard(
+            ClientMetricCard(
                 icon: "shield.fill",
                 title: "Compliance",
                 value: "\(complianceScore)%",
@@ -374,7 +377,7 @@ struct MetricsOverviewGrid: View {
             )
             
             if criticalIssues > 0 {
-                MetricCard(
+                ClientMetricCard(
                     icon: "exclamationmark.triangle.fill",
                     title: "Critical Issues",
                     value: "\(criticalIssues)",
@@ -385,8 +388,8 @@ struct MetricsOverviewGrid: View {
     }
 }
 
-// MARK: - Metric Card
-struct MetricCard: View {
+// MARK: - Client Metric Card (RENAMED from MetricCard)
+struct ClientMetricCard: View {
     let icon: String
     let title: String
     let value: String
@@ -935,37 +938,13 @@ struct ComplianceIssueDetailSheet: View {
 }
 
 // MARK: - Color Extension
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
+// REMOVED: Duplicate init(hex:) that was causing conflicts
 
 // MARK: - Preview
 #if DEBUG
-struct ClientDashboardContainerView_Previews: PreviewProvider {
+struct ClientDashboardMainView_Previews: PreviewProvider {
     static var previews: some View {
-        ClientDashboardContainerView()
+        ClientDashboardMainView()
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)

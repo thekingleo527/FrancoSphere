@@ -2,6 +2,7 @@
 //  ClientContextEngine.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Corrected nested enum access for DashboardUpdate.UpdateType
 //  ✅ FIXED: Removed duplicate type declarations
 //  ✅ UPDATED: Added missing properties for ClientDashboardView
 //  ✅ REAL-TIME: Aggregates live data from all sources
@@ -94,10 +95,6 @@ final class ClientContextEngine: ObservableObject {
     
     // Worker Activity (keeping original)
     @Published var workerProductivityInsights: [CoreTypes.WorkerProductivityInsight] = []
-    
-    // MARK: - Computed Properties for ClientDashboardView
-    // Note: These are now part of the extension in ClientDashboardView
-    // Removing duplicates to avoid redeclaration errors
     
     // MARK: - Private Properties
     
@@ -714,14 +711,21 @@ final class ClientContextEngine: ObservableObject {
         criticalAlerts = realtimeAlerts.filter { $0.severity == .critical }
     }
     
+    // FIXED: Changed parameter type to actual enum type and updated switch cases
     private func mapUpdateType(_ type: CoreTypes.DashboardUpdate.UpdateType) -> CoreTypes.RealtimeActivity.ActivityType {
         switch type {
-        case .taskCompleted: return .taskCompleted
-        case .workerClockIn: return .workerClockIn
-        case .workerClockOut: return .workerClockOut
-        case .buildingMetricsChanged: return .buildingUpdate
-        case .complianceIssue: return .complianceUpdate
-        default: return .buildingUpdate
+        case .taskCompleted:
+            return .taskCompleted
+        case .workerClockedIn:
+            return .workerClockIn
+        case .workerClockedOut:
+            return .workerClockOut
+        case .buildingMetricsChanged:
+            return .buildingUpdate
+        case .complianceStatusChanged:
+            return .complianceUpdate
+        default:
+            return .buildingUpdate
         }
     }
 }
