@@ -7,6 +7,7 @@
 //  ✅ REAL-TIME: Integrates live worker compliance actions
 //  ✅ DARK ELEGANCE: Consistent theme with other dashboards
 //  ✅ INTELLIGENT: AI-driven insights and predictions
+//  ✅ FIXED: Renamed conflicting components to avoid redeclaration errors
 //
 
 import SwiftUI
@@ -146,7 +147,7 @@ struct ComplianceOverviewView: View {
         .navigationBarHidden(true)
         .preferredColorScheme(.dark)
         .sheet(item: $selectedIssue) { issue in
-            ComplianceIssueDetailSheet(
+            ComplianceDetailSheet(
                 issue: issue,
                 onResolve: { resolveIssue(issue) },
                 onDismiss: {
@@ -232,7 +233,7 @@ struct ComplianceOverviewView: View {
                             
                             // Live indicator
                             if dashboardSync.isLive {
-                                LiveIndicator()
+                                ComplianceLiveIndicator()
                             }
                         }
                     }
@@ -342,7 +343,7 @@ struct ComplianceOverviewView: View {
                 
                 Spacer()
                 
-                LiveIndicator()
+                ComplianceLiveIndicator()
             }
             
             // Recent compliance-related worker actions
@@ -420,28 +421,28 @@ struct ComplianceOverviewView: View {
             GridItem(.flexible()),
             GridItem(.flexible())
         ], spacing: 12) {
-            QuickActionCard(
+            ComplianceQuickActionCard(
                 title: "Schedule Audit",
                 icon: "calendar.badge.plus",
                 color: FrancoSphereDesign.DashboardColors.info,
                 action: { showingAuditScheduler = true }
             )
             
-            QuickActionCard(
+            ComplianceQuickActionCard(
                 title: "Export Reports",
                 icon: "doc.badge.arrow.up",
                 color: FrancoSphereDesign.DashboardColors.success,
                 action: { showingExportOptions = true }
             )
             
-            QuickActionCard(
+            ComplianceQuickActionCard(
                 title: "View Trends",
                 icon: "chart.line.uptrend.xyaxis",
                 color: FrancoSphereDesign.DashboardColors.warning,
                 action: { showingTrends = true }
             )
             
-            QuickActionCard(
+            ComplianceQuickActionCard(
                 title: "Compliance Guide",
                 icon: "book.fill",
                 color: FrancoSphereDesign.DashboardColors.tertiaryAction,
@@ -1055,7 +1056,8 @@ struct ComplianceMetricCard: View {
     }
 }
 
-struct QuickActionCard: View {
+// Renamed from QuickActionCard to ComplianceQuickActionCard
+struct ComplianceQuickActionCard: View {
     let title: String
     let icon: String
     let color: Color
@@ -1487,7 +1489,8 @@ struct ComplianceInsightCard: View {
 
 // MARK: - Sheet Views
 
-struct ComplianceIssueDetailSheet: View {
+// Renamed from ComplianceIssueDetailSheet to ComplianceDetailSheet
+struct ComplianceDetailSheet: View {
     let issue: ComplianceIssueData
     let onResolve: () -> Void
     let onDismiss: () -> Void
@@ -2067,7 +2070,7 @@ struct AllIssuesListView: View {
                             }
                         }
                     } label: {
-                        FilterChip(
+                        ComplianceFilterChip(
                             title: filterSeverity?.rawValue ?? "All Severities",
                             isActive: filterSeverity != nil
                         )
@@ -2084,7 +2087,7 @@ struct AllIssuesListView: View {
                             }
                         }
                     } label: {
-                        FilterChip(
+                        ComplianceFilterChip(
                             title: filterType?.rawValue ?? "All Types",
                             isActive: filterType != nil
                         )
@@ -2101,7 +2104,7 @@ struct AllIssuesListView: View {
             LazyVStack(spacing: 12) {
                 ForEach(filteredIssues) { issue in
                     Button(action: { onSelectIssue(issue) }) {
-                        ComplianceIssueCard(issue: issue)
+                        ComplianceIssueRowCard(issue: issue)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -2131,7 +2134,8 @@ struct AllIssuesListView: View {
     }
 }
 
-struct ComplianceIssueCard: View {
+// Renamed from ComplianceIssueCard to ComplianceIssueRowCard
+struct ComplianceIssueRowCard: View {
     let issue: ComplianceIssueData
     
     var body: some View {
@@ -2683,7 +2687,8 @@ enum ExportFormat: String, CaseIterable {
 
 // MARK: - Helper Components
 
-struct LiveIndicator: View {
+// Renamed from LiveIndicator to ComplianceLiveIndicator
+struct ComplianceLiveIndicator: View {
     @State private var isAnimating = false
     
     var body: some View {
@@ -2744,7 +2749,8 @@ struct TrendIndicator: View {
     }
 }
 
-struct FilterChip: View {
+// Renamed from FilterChip to ComplianceFilterChip
+struct ComplianceFilterChip: View {
     let title: String
     let isActive: Bool
     

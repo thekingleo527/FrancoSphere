@@ -1,15 +1,8 @@
 //
 //  ComplianceService.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 8/2/25.
-//
-
-
-//
-//  ComplianceService.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Actor isolation and duplicate declaration issues resolved
 //  ✅ PRODUCTION READY: Real compliance tracking and monitoring
 //  ✅ ASYNC: Database operations with proper error handling
 //  ✅ INTEGRATED: Works with DashboardSync for real-time updates
@@ -22,7 +15,8 @@ actor ComplianceService {
     static let shared = ComplianceService()
     
     private let grdbManager = GRDBManager.shared
-    private let dashboardSync = DashboardSyncService.shared
+    // Note: We'll access DashboardSyncService through MainActor when needed
+    // instead of storing a reference
     
     private init() {}
     
@@ -163,9 +157,9 @@ actor ComplianceService {
         
         let totalIssues = issues.count
         let openIssues = issues.filter { $0.status == .open || $0.status == .inProgress }.count
-        let criticalViolations = issues.filter { 
-            $0.severity == .critical && 
-            ($0.status == .open || $0.status == .violation) 
+        let criticalViolations = issues.filter {
+            $0.severity == .critical &&
+            ($0.status == .open || $0.status == .violation)
         }.count
         
         // Calculate score (100% minus penalties)
@@ -212,8 +206,8 @@ actor ComplianceService {
             
             // Check if issue already exists
             let existingIssues = try await getComplianceIssues(for: buildingId)
-            let issueExists = existingIssues.contains { 
-                $0.description.contains(taskId) && $0.status != .resolved 
+            let issueExists = existingIssues.contains {
+                $0.description.contains(taskId) && $0.status != .resolved
             }
             
             if !issueExists {
@@ -286,8 +280,9 @@ actor ComplianceService {
             description: "Compliance \(action): \(issue.title)"
         )
         
+        // Access DashboardSyncService through MainActor
         await MainActor.run {
-            dashboardSync.broadcastUpdate(update)
+            DashboardSyncService.shared.broadcastUpdate(update)
         }
         
         // Post notification
@@ -302,10 +297,13 @@ actor ComplianceService {
 }
 
 // MARK: - Notification Extension
-
+// Removed duplicate declaration - this should be defined in one place only
+// If not already defined elsewhere, uncomment the following:
+/*
 extension Notification.Name {
     static let complianceStatusChanged = Notification.Name("complianceStatusChanged")
 }
+*/
 
 // MARK: - Compliance Service Errors
 

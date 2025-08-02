@@ -4,6 +4,7 @@
 //
 //  ✅ UNIFIED: Single source of truth for all dashboard types
 //  ✅ FIXED: All Codable conformance issues resolved
+//  ✅ FIXED: Removed all duplicate declarations
 //  ✅ ORGANIZED: Clear namespacing to prevent conflicts
 //  ✅ COMPLETE: Includes all client, admin, and worker types
 //
@@ -281,7 +282,7 @@ public struct CoreTypes {
         public let workerId: String
         public let date: Date
         public let stops: [RouteStop]
-        public let buildings: [NamedCoordinate]? // Add buildings property
+        public let buildings: [NamedCoordinate]?
         public let optimization: RouteOptimization?
         public let estimatedDuration: TimeInterval
         public let actualDuration: TimeInterval?
@@ -2259,7 +2260,8 @@ public typealias CostInsight = CoreTypes.CostInsight
 public typealias WorkerProductivityInsight = CoreTypes.WorkerProductivityInsight
 public typealias RealtimeActivity = CoreTypes.RealtimeActivity
 
-    // MARK: - Camera Model for Photo Capture
+// MARK: - Camera Model for Photo Capture
+extension CoreTypes {
     public class CameraModel: NSObject, ObservableObject {
         @Published public var photo: UIImage?
         @Published public var showAlertError = false
@@ -2274,6 +2276,7 @@ public typealias RealtimeActivity = CoreTypes.RealtimeActivity
             super.init()
         }
     }
-    
-    // MARK: - Models Namespace Alias
+}
+
+// MARK: - Models Namespace Alias
 public typealias Models = CoreTypes

@@ -437,7 +437,7 @@ public class DashboardSyncService: ObservableObject {
         let update = CoreTypes.DashboardUpdate(
             source: .admin,
             type: .criticalAlert,
-            buildingId: alert.buildingId,
+            buildingId: alert.affectedBuilding ?? "",
             workerId: "",
             data: [
                 "alertId": alert.id,
