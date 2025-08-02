@@ -2,10 +2,10 @@
 //  GlassLoadingView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Animation syntax errors resolved (AnimationAnimation → Animation)
-//  ✅ FIXED: GlassIntensity .light → .thin, .strong → .thick
-//  ✅ ALIGNED: Updated for v6.0 architecture with proper SwiftUI patterns
-//  ✅ OPTIMIZED: Glass loading system for three-dashboard experience
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ IMPROVED: Glass effects and animations for dark theme
+//  ✅ ADDED: Multiple loading styles with consistent theming
 //
 
 import SwiftUI
@@ -38,21 +38,34 @@ struct GlassLoadingView: View {
     }
     
     var body: some View {
-        GlassCard(intensity: intensity) {
-            VStack(spacing: 24) {
-                // Loading Animation
-                loadingAnimation
-                
-                // Message Text
-                messageText
-                
-                // Progress Bar (if enabled)
-                if showProgress {
-                    progressBar
-                }
+        VStack(spacing: 24) {
+            // Loading Animation
+            loadingAnimation
+            
+            // Message Text
+            messageText
+            
+            // Progress Bar (if enabled)
+            if showProgress {
+                progressBar
             }
-            .padding(32)
         }
+        .padding(32)
+        .francoDarkCardBackground(cornerRadius: 20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.2),
+                            Color.white.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
         .onAppear {
             startAnimations()
         }
@@ -66,7 +79,7 @@ struct GlassLoadingView: View {
         ZStack {
             // Outer Ring
             Circle()
-                .stroke(Color.white.opacity(0.2), lineWidth: 3)
+                .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 3)
                 .frame(width: 60, height: 60)
             
             // Animated Ring
@@ -74,7 +87,12 @@ struct GlassLoadingView: View {
                 .trim(from: 0, to: 0.75)
                 .stroke(
                     AngularGradient(
-                        colors: [.blue, .purple, .pink, .blue],
+                        colors: [
+                            FrancoSphereDesign.DashboardColors.info,
+                            FrancoSphereDesign.DashboardColors.info.opacity(0.5),
+                            FrancoSphereDesign.DashboardColors.glassOverlay,
+                            FrancoSphereDesign.DashboardColors.info
+                        ],
                         center: .center
                     ),
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
@@ -88,7 +106,7 @@ struct GlassLoadingView: View {
             
             // Center Pulse
             Circle()
-                .fill(Color.white.opacity(0.3))
+                .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.3))
                 .frame(width: 20, height: 20)
                 .scaleEffect(pulseScale)
                 .animation(
@@ -101,7 +119,7 @@ struct GlassLoadingView: View {
     private var messageText: some View {
         Text(message)
             .font(.headline)
-            .foregroundColor(.white)
+            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             .opacity(isAnimating ? 1.0 : 0.7)
             .animation(
                 .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
@@ -114,13 +132,16 @@ struct GlassLoadingView: View {
             // Progress Track
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.white.opacity(0.2))
+                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
                     .frame(height: 6)
                 
                 RoundedRectangle(cornerRadius: 4)
                     .fill(
                         LinearGradient(
-                            colors: [.blue, .purple],
+                            colors: [
+                                FrancoSphereDesign.DashboardColors.info,
+                                FrancoSphereDesign.DashboardColors.info.opacity(0.7)
+                            ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -132,7 +153,7 @@ struct GlassLoadingView: View {
             // Progress Text
             Text("\(Int(progress * 100))%")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
         }
     }
     
@@ -178,7 +199,7 @@ struct LoadingDotsView: View {
         HStack(spacing: 8) {
             ForEach(0..<dotCount, id: \.self) { index in
                 Circle()
-                    .fill(Color.white)
+                    .fill(FrancoSphereDesign.DashboardColors.info)
                     .frame(width: 8, height: 8)
                     .scaleEffect(animating ? 1.0 : 0.5)
                     .opacity(animating ? 1.0 : 0.5)
@@ -203,7 +224,7 @@ struct SkeletonLoadingView: View {
     let rows: Int
     let intensity: GlassIntensity
     
-    init(rows: Int = 3, intensity: GlassIntensity = .thin) {  // ✅ FIXED: .light → .thin
+    init(rows: Int = 3, intensity: GlassIntensity = .thin) {
         self.rows = rows
         self.intensity = intensity
     }
@@ -228,7 +249,17 @@ struct SkeletonLoadingView: View {
     
     private func skeletonRow(width: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: 6)
-            .fill(Color.white.opacity(intensity.opacity))
+            .fill(
+                LinearGradient(
+                    colors: [
+                        FrancoSphereDesign.DashboardColors.glassOverlay,
+                        FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.5),
+                        FrancoSphereDesign.DashboardColors.glassOverlay
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
             .frame(width: width, height: 16)
     }
     
@@ -245,9 +276,9 @@ struct SpinnerLoadingView: View {
     let size: CGFloat
     let color: Color
     
-    init(size: CGFloat = 40, color: Color = .white) {
+    init(size: CGFloat = 40, color: Color? = nil) {
         self.size = size
-        self.color = color
+        self.color = color ?? FrancoSphereDesign.DashboardColors.info
     }
     
     var body: some View {
@@ -269,6 +300,31 @@ struct SpinnerLoadingView: View {
     }
 }
 
+// MARK: - Minimal Loading Indicator
+struct MinimalLoadingIndicator: View {
+    @State private var opacity: Double = 0.5
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<3) { index in
+                Circle()
+                    .fill(FrancoSphereDesign.DashboardColors.info)
+                    .frame(width: 4, height: 4)
+                    .opacity(opacity)
+                    .animation(
+                        .easeInOut(duration: 0.8)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.2),
+                        value: opacity
+                    )
+            }
+        }
+        .onAppear {
+            opacity = 1.0
+        }
+    }
+}
+
 // MARK: - View Extensions
 extension View {
     func glassLoading(
@@ -283,7 +339,7 @@ extension View {
                 .blur(radius: isLoading ? 2 : 0)
             
             if isLoading {
-                Color.black.opacity(0.3)
+                FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.5)
                     .ignoresSafeArea()
                 
                 GlassLoadingView(
@@ -296,35 +352,87 @@ extension View {
         }
         .animation(.easeInOut(duration: 0.3), value: isLoading)
     }
+    
+    func minimalLoading(isLoading: Bool) -> some View {
+        self.overlay(
+            Group {
+                if isLoading {
+                    MinimalLoadingIndicator()
+                        .padding(8)
+                        .background(
+                            Capsule()
+                                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.9))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 1)
+                                )
+                        )
+                }
+            },
+            alignment: .bottomTrailing
+        )
+    }
 }
 
 // MARK: - Preview Support
 #if DEBUG
 struct GlassLoadingView_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: 40) {
-            GlassLoadingView()
+        ZStack {
+            // Dark Elegance background
+            FrancoSphereDesign.DashboardColors.baseBackground
+                .ignoresSafeArea()
             
-            GlassLoadingView(
-                message: "Syncing data...",
-                showProgress: true,
-                intensity: .thick  // ✅ FIXED: .strong → .thick
-            )
-            
-            LoadingDotsView()
-            
-            SkeletonLoadingView(rows: 4)
-            
-            SpinnerLoadingView(size: 30, color: .blue)
+            VStack(spacing: 40) {
+                // Standard loading view
+                GlassLoadingView()
+                
+                // Loading with progress
+                GlassLoadingView(
+                    message: "Syncing data...",
+                    showProgress: true,
+                    intensity: .thick
+                )
+                
+                // Different loading styles
+                HStack(spacing: 30) {
+                    VStack(spacing: 20) {
+                        Text("Dots")
+                            .font(.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        LoadingDotsView()
+                    }
+                    
+                    VStack(spacing: 20) {
+                        Text("Spinner")
+                            .font(.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        SpinnerLoadingView()
+                    }
+                    
+                    VStack(spacing: 20) {
+                        Text("Minimal")
+                            .font(.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        MinimalLoadingIndicator()
+                    }
+                }
+                
+                // Skeleton loading
+                VStack(spacing: 20) {
+                    Text("Skeleton Loading")
+                        .font(.caption)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    
+                    SkeletonLoadingView(rows: 4)
+                        .padding()
+                        .francoDarkCardBackground(cornerRadius: 12)
+                }
+                .frame(width: 300)
+            }
+            .padding()
         }
-        .padding()
-        .background(
-            LinearGradient(
-                colors: [.blue, .purple],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .preferredColorScheme(.dark)
     }
 }
 #endif

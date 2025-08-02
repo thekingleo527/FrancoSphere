@@ -2,292 +2,754 @@
 //  ClientDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ ALIGNED: With actual project types and components
-//  ✅ RESPONSIVE: Adaptive layout for all device sizes
-//  ✅ INTEGRATED: Properly uses available public methods from viewModel
+//  ✅ REDESIGNED: Mirrors Worker/Admin dashboard structure
+//  ✅ UNIFIED: Same MapRevealContainer + HeaderV3B pattern
+//  ✅ DYNAMIC: Real-time hero card with live portfolio metrics
+//  ✅ INTELLIGENT: Contextual AI insights at bottom
+//  ✅ STREAMLINED: No tabs, single-scroll prioritized content
 //
 
 import SwiftUI
+import MapKit
+import CoreLocation
 import Combine
 
 struct ClientDashboardView: View {
     @StateObject private var viewModel = ClientDashboardViewModel()
+    @ObservedObject private var contextEngine = ClientContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
+    @EnvironmentObject private var dashboardSync: DashboardSyncService
+    @StateObject private var novaEngine = NovaIntelligenceEngine.shared
     
-    @State private var selectedTabIndex = 0
-    @State private var showingIntelligenceDetail = false
-    @State private var selectedInsight: CoreTypes.IntelligenceInsight?
-    @State private var showingBuildingDetail = false
+    // MARK: - State Variables (Mirroring Worker/Admin)
+    @State private var isHeroCollapsed = false
+    @State private var showProfileView = false
+    @State private var showNovaAssistant = false
     @State private var selectedBuilding: NamedCoordinate?
+    @State private var showBuildingDetail = false
+    @State private var showAllBuildings = false
+    @State private var showComplianceDetails = false
+    @State private var showMainMenu = false
+    @State private var refreshID = UUID()
+    @State private var selectedInsight: CoreTypes.IntelligenceInsight?
+    @State private var selectedComplianceIssue: CoreTypes.ComplianceIssue?
     
-    private let tabs = [
-        GlassTabItem(title: "Overview", icon: "chart.pie", selectedIcon: "chart.pie.fill"),
-        GlassTabItem(title: "Buildings", icon: "building.2", selectedIcon: "building.2.fill"),
-        GlassTabItem(title: "Compliance", icon: "checkmark.shield", selectedIcon: "checkmark.shield.fill"),
-        GlassTabItem(title: "Insights", icon: "brain", selectedIcon: "brain.fill")
+    // Intelligence panel state
+    @State private var currentContext: ViewContext = .dashboard
+    @AppStorage("clientPanelPreference") private var userPanelPreference: IntelPanelState = .collapsed
+    
+    // Future phase states
+    @State private var voiceCommandEnabled = false
+    @State private var arModeEnabled = false
+    
+    // MARK: - Enums (Same as Worker/Admin)
+    enum ViewContext {
+        case dashboard
+        case buildingDetail
+        case complianceReview
+        case portfolioAnalysis
+        case novaChat
+        case emergency
+    }
+    
+    enum IntelPanelState: String {
+        case hidden = "hidden"
+        case minimal = "minimal"
+        case collapsed = "collapsed"
+        case expanded = "expanded"
+        case fullscreen = "fullscreen"
+    }
+    
+    // MARK: - Computed Properties
+    private var intelligencePanelState: IntelPanelState {
+        switch currentContext {
+        case .dashboard:
+            return hasUrgentMatters() ? .expanded : userPanelPreference
+        case .buildingDetail:
+            return .minimal
+        case .complianceReview:
+            return .expanded
+        case .portfolioAnalysis:
+            return .expanded
+        case .novaChat:
+            return .fullscreen
+        case .emergency:
+            return .expanded
+        }
+    }
+    
+    private func hasUrgentMatters() -> Bool {
+        novaEngine.insights.contains { $0.priority == .critical } ||
+        contextEngine.portfolioHealth.criticalIssues > 0 ||
+        contextEngine.realtimeAlerts.contains { $0.severity == .critical }
+    }
+    
+    var body: some View {
+        // EXACT SAME STRUCTURE AS WORKER/ADMIN
+        MapRevealContainer(
+            buildings: contextEngine.clientBuildings,
+            currentBuildingId: selectedBuilding?.id,
+            focusBuildingId: selectedBuilding?.id,
+            showBuildingPerformance: true, // Client sees performance overlay
+            onBuildingTap: { building in
+                selectedBuilding = building
+                showBuildingDetail = true
+            }
+        ) {
+            ZStack {
+                // Dark Elegance Background
+                FrancoSphereDesign.DashboardColors.baseBackground
+                    .ignoresSafeArea()
+                
+                // Main content
+                VStack(spacing: 0) {
+                    // Updated HeaderV3B - Client variant (5-7%)
+                    HeaderV3B(
+                        workerName: authManager.currentUser?.name ?? "Client",
+                        nextTaskName: getMostUrgentItem()?.title,
+                        showClockPill: false, // Clients don't clock in
+                        isNovaProcessing: {
+                            switch novaEngine.processingState {
+                            case .idle: return false
+                            default: return true
+                            }
+                        }(),
+                        onProfileTap: { showProfileView = true },
+                        onNovaPress: { showNovaAssistant = true },
+                        onNovaLongPress: { handleNovaQuickAction() },
+                        onLogoTap: { showMainMenu = true },
+                        onClockAction: nil, // Not applicable for client
+                        onVoiceCommand: voiceCommandEnabled ? handleVoiceCommand : nil,
+                        onARModeToggle: arModeEnabled ? handleARMode : nil,
+                        onWearableSync: nil
+                    )
+                    .zIndex(100)
+                    
+                    // Main content area
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Collapsible Client Hero Status Card - DYNAMIC & REAL-TIME
+                            CollapsibleClientHeroWrapper(
+                                isCollapsed: $isHeroCollapsed,
+                                portfolioHealth: contextEngine.portfolioHealth,
+                                realtimeMetrics: contextEngine.realtimeMetrics,
+                                activeWorkers: contextEngine.activeWorkerStatus,
+                                complianceStatus: contextEngine.complianceOverview,
+                                criticalAlerts: contextEngine.realtimeAlerts,
+                                buildingPerformance: contextEngine.buildingPerformanceMap,
+                                syncStatus: getSyncStatus(),
+                                onPortfolioTap: { currentContext = .portfolioAnalysis },
+                                onComplianceTap: { showComplianceDetails = true },
+                                onWorkersTap: { /* Show worker overview */ },
+                                onAlertsTap: { showCriticalAlerts() },
+                                onSyncTap: { Task { await viewModel.forceRefresh() } }
+                            )
+                            .zIndex(50)
+                            
+                            // Priority Content Cards (replacing tabs)
+                            VStack(spacing: 16) {
+                                // Executive Intelligence Summary
+                                if let executiveSummary = contextEngine.executiveIntelligence {
+                                    ExecutiveIntelligenceCard(
+                                        summary: executiveSummary,
+                                        onDetailTap: { showNovaAssistant = true }
+                                    )
+                                }
+                                
+                                // Critical Compliance Issues
+                                if !contextEngine.criticalComplianceIssues.isEmpty {
+                                    CriticalComplianceCard(
+                                        issues: contextEngine.criticalComplianceIssues,
+                                        onIssueTap: { issue in
+                                            selectedComplianceIssue = issue
+                                            showComplianceDetails = true
+                                        }
+                                    )
+                                }
+                                
+                                // Building Performance Grid
+                                BuildingPerformanceGrid(
+                                    buildings: contextEngine.topPerformanceBuildings,
+                                    onBuildingTap: { building in
+                                        selectedBuilding = building
+                                        showBuildingDetail = true
+                                    }
+                                )
+                                
+                                // Worker Productivity Insights
+                                if !contextEngine.workerProductivityInsights.isEmpty {
+                                    WorkerProductivityCard(
+                                        insights: contextEngine.workerProductivityInsights
+                                    )
+                                }
+                            }
+                            
+                            // Spacer for bottom intelligence bar
+                            Spacer(minLength: intelligencePanelState == .hidden ? 20 : 80)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                    }
+                    .refreshable {
+                        await viewModel.forceRefresh()
+                        await contextEngine.refreshAllData()
+                        refreshID = UUID()
+                    }
+                    
+                    // Intelligence Preview Panel (SAME AS WORKER/ADMIN)
+                    if intelligencePanelState != .hidden && (!novaEngine.insights.isEmpty || hasIntelligenceToShow()) {
+                        IntelligencePreviewPanel(
+                            insights: getCurrentInsights(),
+                            displayMode: intelligencePanelState == .minimal ? .compact : .expanded,
+                            onNavigate: { target in
+                                handleIntelligenceNavigation(target)
+                            },
+                            contextEngine: contextEngine
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
+                    }
+                }
+            }
+        }
+        .navigationBarHidden(true)
+        .preferredColorScheme(.dark)
+        .sheet(isPresented: $showProfileView) {
+            ClientProfileView()
+        }
+        .sheet(isPresented: $showNovaAssistant) {
+            NovaInteractionView()
+                .presentationDetents([.large])
+                .onAppear { currentContext = .novaChat }
+                .onDisappear { currentContext = .dashboard }
+        }
+        .sheet(item: $selectedInsight) { insight in
+            InsightDetailView(insight: insight)
+        }
+        .sheet(isPresented: $showBuildingDetail) {
+            if let building = selectedBuilding {
+                BuildingDetailView(building: building)
+                    .onAppear { currentContext = .buildingDetail }
+                    .onDisappear {
+                        currentContext = .dashboard
+                        Task { await contextEngine.refreshAllData() }
+                    }
+            }
+        }
+        .sheet(isPresented: $showAllBuildings) {
+            NavigationView {
+                ClientBuildingsListView(
+                    buildings: contextEngine.clientBuildings,
+                    performanceMap: contextEngine.buildingPerformanceMap,
+                    onSelectBuilding: { building in
+                        selectedBuilding = building
+                        showBuildingDetail = true
+                        showAllBuildings = false
+                    }
+                )
+                .navigationTitle("Portfolio Buildings")
+                .navigationBarTitleDisplayMode(.large)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
+                            showAllBuildings = false
+                        }
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    }
+                }
+                .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            }
+            .preferredColorScheme(.dark)
+        }
+        .sheet(isPresented: $showComplianceDetails) {
+            NavigationView {
+                ClientComplianceDetailView(
+                    complianceOverview: contextEngine.complianceOverview,
+                    issues: contextEngine.allComplianceIssues,
+                    selectedIssue: selectedComplianceIssue
+                )
+                .navigationTitle("Compliance Details")
+                .navigationBarTitleDisplayMode(.large)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") {
+                            showComplianceDetails = false
+                        }
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    }
+                }
+                .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            }
+            .preferredColorScheme(.dark)
+            .onAppear { currentContext = .complianceReview }
+            .onDisappear { currentContext = .dashboard }
+        }
+        .sheet(isPresented: $showMainMenu) {
+            ClientMainMenuView()
+                .presentationDetents([.medium, .large])
+        }
+        .onAppear {
+            checkFeatureFlags()
+            startRealtimeUpdates()
+        }
+        .onReceive(dashboardSync.$lastUpdate) { _ in
+            // React to real-time updates
+            Task {
+                await contextEngine.refreshAllData()
+            }
+        }
+    }
+    
+    // MARK: - Real-time Update Management
+    
+    private func startRealtimeUpdates() {
+        // Connect to real-time data streams
+        contextEngine.startRealtimeMonitoring()
+        
+        // Subscribe to worker activity updates
+        contextEngine.subscribeToWorkerUpdates()
+        
+        // Monitor compliance changes
+        contextEngine.monitorComplianceChanges()
+    }
+    
+    // MARK: - Intelligence Methods (Client-specific)
+    
+    private func getCurrentInsights() -> [CoreTypes.IntelligenceInsight] {
+        var insights = novaEngine.insights
+        
+        // Add client-specific real-time insights
+        
+        // Compliance insights
+        if contextEngine.complianceOverview.criticalViolations > 0 {
+            insights.append(CoreTypes.IntelligenceInsight(
+                title: "\(contextEngine.complianceOverview.criticalViolations) critical compliance violations",
+                description: "Immediate action required to avoid penalties",
+                type: .compliance,
+                priority: .critical,
+                actionRequired: true,
+                affectedBuildings: contextEngine.buildingsWithViolations
+            ))
+        }
+        
+        // Performance insights
+        let underperformingBuildings = contextEngine.buildingPerformanceMap.filter { $0.value < 0.7 }
+        if underperformingBuildings.count > 0 {
+            insights.append(CoreTypes.IntelligenceInsight(
+                title: "\(underperformingBuildings.count) buildings below 70% performance",
+                description: "Review staffing and task allocation for these properties",
+                type: .efficiency,
+                priority: .high,
+                actionRequired: true,
+                affectedBuildings: Array(underperformingBuildings.keys)
+            ))
+        }
+        
+        // Worker productivity insights
+        if contextEngine.activeWorkerStatus.utilizationRate < 0.6 {
+            insights.append(CoreTypes.IntelligenceInsight(
+                title: "Low worker utilization at \(Int(contextEngine.activeWorkerStatus.utilizationRate * 100))%",
+                description: "Consider optimizing task distribution or adjusting workforce",
+                type: .operations,
+                priority: .medium,
+                actionRequired: false
+            ))
+        }
+        
+        // Cost optimization insights
+        if let costSavingOpportunity = contextEngine.identifyCostSavings() {
+            insights.append(costSavingOpportunity)
+        }
+        
+        return insights
+    }
+    
+    private func handleIntelligenceNavigation(_ target: IntelligencePreviewPanel.NavigationTarget) {
+        switch target {
+        case .buildings(_):
+            showAllBuildings = true
+            
+        case .compliance(_):
+            showComplianceDetails = true
+            
+        case .buildingDetail(let id):
+            if let building = contextEngine.clientBuildings.first(where: { $0.id == id }) {
+                selectedBuilding = building
+                showBuildingDetail = true
+            }
+            
+        case .fullInsights:
+            showNovaAssistant = true
+            
+        case .allBuildings:
+            showAllBuildings = true
+            
+        default:
+            // Handle other navigation targets
+            break
+        }
+    }
+    
+    // MARK: - Action Handlers
+    
+    private func handleNovaQuickAction() {
+        if hasUrgentMatters() {
+            // Focus on urgent matters
+            currentContext = .emergency
+        }
+        showNovaAssistant = true
+    }
+    
+    private func showCriticalAlerts() {
+        currentContext = .emergency
+        showNovaAssistant = true
+    }
+    
+    private func handleVoiceCommand() {
+        print("Client voice command activated")
+    }
+    
+    private func handleARMode() {
+        print("Client AR mode toggled - show portfolio in AR")
+    }
+    
+    private func checkFeatureFlags() {
+        #if DEBUG
+        voiceCommandEnabled = false
+        arModeEnabled = false
+        #else
+        voiceCommandEnabled = UserDefaults.standard.bool(forKey: "feature.voice.enabled")
+        arModeEnabled = UserDefaults.standard.bool(forKey: "feature.ar.enabled")
+        #endif
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func getMostUrgentItem() -> (title: String, urgency: CoreTypes.AIPriority)? {
+        // Check for critical compliance
+        if contextEngine.complianceOverview.criticalViolations > 0 {
+            return ("Critical compliance violations", .critical)
+        }
+        
+        // Check for critical alerts
+        if let criticalAlert = contextEngine.realtimeAlerts.first(where: { $0.severity == .critical }) {
+            return (criticalAlert.title, .critical)
+        }
+        
+        // Check for critical insights
+        if let criticalInsight = novaEngine.insights.first(where: { $0.priority == .critical }) {
+            return (criticalInsight.title, criticalInsight.priority)
+        }
+        
+        return nil
+    }
+    
+    private func getSyncStatus() -> ClientHeroStatusCard.SyncStatus {
+        switch viewModel.dashboardSyncStatus {
+        case .synced: return .synced
+        case .syncing: return .syncing(progress: contextEngine.syncProgress)
+        case .failed: return .error("Sync failed")
+        case .offline: return .offline
+        }
+    }
+    
+    private func hasIntelligenceToShow() -> Bool {
+        return !contextEngine.workerProductivityInsights.isEmpty ||
+               contextEngine.complianceOverview.openIssues > 0 ||
+               hasCostSavingOpportunities()
+    }
+    
+    private func hasCostSavingOpportunities() -> Bool {
+        // Check if there are any cost optimization insights
+        return contextEngine.estimatedMonthlySavings > 1000
+    }
+}
+
+// MARK: - CollapsibleClientHeroWrapper (Dynamic Real-time)
+
+struct CollapsibleClientHeroWrapper: View {
+    @Binding var isCollapsed: Bool
+    
+    let portfolioHealth: CoreTypes.PortfolioHealth
+    let realtimeMetrics: CoreTypes.RealtimePortfolioMetrics
+    let activeWorkers: CoreTypes.ActiveWorkerStatus
+    let complianceStatus: CoreTypes.ComplianceOverview
+    let criticalAlerts: [CoreTypes.ClientAlert]
+    let buildingPerformance: [String: Double]
+    let syncStatus: ClientHeroStatusCard.SyncStatus
+    
+    let onPortfolioTap: () -> Void
+    let onComplianceTap: () -> Void
+    let onWorkersTap: () -> Void
+    let onAlertsTap: () -> Void
+    let onSyncTap: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            if isCollapsed {
+                // Minimal collapsed version with key metrics
+                MinimalClientHeroCard(
+                    portfolioScore: portfolioHealth.overallScore,
+                    activeWorkers: activeWorkers.totalActive,
+                    criticalAlerts: criticalAlerts.filter { $0.severity == .critical }.count,
+                    complianceScore: complianceStatus.overallScore,
+                    onExpand: {
+                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                            isCollapsed = false
+                        }
+                    }
+                )
+                
+            } else {
+                // Full ClientHeroStatusCard with collapse button
+                ZStack(alignment: .topTrailing) {
+                    ClientHeroStatusCard(
+                        portfolioHealth: portfolioHealth,
+                        realtimeMetrics: realtimeMetrics,
+                        activeWorkers: activeWorkers,
+                        complianceStatus: complianceStatus,
+                        criticalAlerts: criticalAlerts,
+                        buildingPerformance: buildingPerformance,
+                        syncStatus: syncStatus,
+                        onPortfolioTap: onPortfolioTap,
+                        onComplianceTap: onComplianceTap,
+                        onWorkersTap: onWorkersTap,
+                        onAlertsTap: onAlertsTap,
+                        onSyncTap: onSyncTap
+                    )
+                    
+                    // Collapse button overlay
+                    Button(action: {
+                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                            isCollapsed = true
+                        }
+                    }) {
+                        Image(systemName: "chevron.up")
+                            .font(.caption)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .padding(8)
+                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.glassOverlay))
+                    }
+                    .padding(8)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - MinimalClientHeroCard
+
+struct MinimalClientHeroCard: View {
+    let portfolioScore: Double
+    let activeWorkers: Int
+    let criticalAlerts: Int
+    let complianceScore: Double
+    let onExpand: () -> Void
+    
+    private var statusColor: Color {
+        if criticalAlerts > 0 {
+            return FrancoSphereDesign.DashboardColors.critical
+        } else if portfolioScore < 0.7 || complianceScore < 0.8 {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else {
+            return FrancoSphereDesign.DashboardColors.success
+        }
+    }
+    
+    private var hasCritical: Bool {
+        criticalAlerts > 0
+    }
+    
+    var body: some View {
+        Button(action: onExpand) {
+            HStack(spacing: 12) {
+                // Status indicator with pulse animation for critical
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                    .overlay(
+                        Circle()
+                            .stroke(statusColor.opacity(0.3), lineWidth: 8)
+                            .scaleEffect(1.5)
+                            .opacity(hasCritical ? 0.6 : 0)
+                            .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: hasCritical)
+                    )
+                
+                // Key metrics in compact form
+                HStack(spacing: 16) {
+                    MetricPill(
+                        value: "\(Int(portfolioScore * 100))%",
+                        label: "Health",
+                        color: portfolioScoreColor
+                    )
+                    
+                    MetricPill(
+                        value: "\(activeWorkers)",
+                        label: "Active",
+                        color: FrancoSphereDesign.DashboardColors.info
+                    )
+                    
+                    if criticalAlerts > 0 {
+                        MetricPill(
+                            value: "\(criticalAlerts)",
+                            label: "Critical",
+                            color: FrancoSphereDesign.DashboardColors.critical
+                        )
+                    }
+                    
+                    MetricPill(
+                        value: "\(Int(complianceScore * 100))%",
+                        label: "Compliance",
+                        color: complianceScoreColor
+                    )
+                }
+                
+                Spacer()
+                
+                // Real-time indicator
+                Image(systemName: "dot.radiowaves.left.and.right")
+                    .font(.caption2)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                    .opacity(0.6)
+                
+                // Expand indicator
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .francoDarkCardBackground(cornerRadius: 12)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var portfolioScoreColor: Color {
+        if portfolioScore > 0.8 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if portfolioScore > 0.6 {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else {
+            return FrancoSphereDesign.DashboardColors.critical
+        }
+    }
+    
+    private var complianceScoreColor: Color {
+        if complianceScore > 0.9 {
+            return FrancoSphereDesign.DashboardColors.compliant
+        } else if complianceScore > 0.7 {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else {
+            return FrancoSphereDesign.DashboardColors.violation
+        }
+    }
+}
+
+// MARK: - Supporting Components
+
+struct ExecutiveIntelligenceCard: View {
+    let summary: CoreTypes.ExecutiveIntelligence
+    let onDetailTap: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Executive Intelligence", systemImage: "brain")
+                    .font(.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                
+                Spacer()
+                
+                Text("Live")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(FrancoSphereDesign.DashboardColors.success)
+                    )
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(summary.keyInsights.prefix(3), id: \.self) { insight in
+                    HStack(alignment: .top, spacing: 8) {
+                        Circle()
+                            .fill(FrancoSphereDesign.DashboardColors.clientAccent)
+                            .frame(width: 4, height: 4)
+                            .padding(.top, 6)
+                        
+                        Text(insight)
+                            .font(.subheadline)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    }
+                }
+            }
+            
+            Button(action: onDetailTap) {
+                Text("View Full Analysis")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+            }
+        }
+        .padding()
+        .francoDarkCardBackground()
+    }
+}
+
+struct CriticalComplianceCard: View {
+    let issues: [CoreTypes.ComplianceIssue]
+    let onIssueTap: (CoreTypes.ComplianceIssue) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Critical Compliance", systemImage: "exclamationmark.shield")
+                    .font(.headline)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                
+                Spacer()
+                
+                Text("\(issues.count) issues")
+                    .font(.caption)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+            }
+            
+            VStack(spacing: 8) {
+                ForEach(issues.prefix(3)) { issue in
+                    Button(action: { onIssueTap(issue) }) {
+                        ComplianceIssueRow(issue: issue)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding()
+        .francoDarkCardBackground()
+    }
+}
+
+struct BuildingPerformanceGrid: View {
+    let buildings: [NamedCoordinate]
+    let onBuildingTap: (NamedCoordinate) -> Void
+    
+    private let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
     ]
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.15),
-                        Color(red: 0.1, green: 0.1, blue: 0.2)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    // Header
-                    clientHeader
-                    
-                    // Content
-                    ScrollView {
-                        tabContent
-                            .padding()
-                    }
-                    
-                    // Tab bar
-                    GlassTabBar(
-                        selectedTab: $selectedTabIndex,
-                        tabs: tabs
-                    )
-                }
-            }
-            .navigationBarHidden(true)
-            .task {
-                await viewModel.loadPortfolioIntelligence()
-            }
-            .refreshable {
-                await viewModel.forceRefresh()
-            }
-            .sheet(isPresented: $showingIntelligenceDetail) {
-                if let insight = selectedInsight {
-                    InsightDetailSheet(insight: insight)
-                }
-            }
-            .sheet(isPresented: $showingBuildingDetail) {
-                if let building = selectedBuilding {
-                    BuildingDetailSheet(building: building, metrics: viewModel.getBuildingMetrics(for: building.id))
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-    
-    // MARK: - Header
-    
-    private var clientHeader: some View {
-        VStack(spacing: 0) {
-            // Main header
-            HStack(alignment: .top) {
-                // Title section
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Portfolio Overview")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    Text("Welcome, \(authManager.currentUser?.name ?? "Client")")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // Nova Avatar
-                NovaAvatar(size: .medium)
-                    .onTapGesture {
-                        HapticManager.impact(.light)
-                        // TODO: Launch Nova AI chat
-                    }
-            }
-            .padding()
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Building Performance")
+                .font(.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
-            // Portfolio summary metrics
-            portfolioSummarySection
-                .padding(.horizontal)
-                .padding(.bottom)
-            
-            // Simple sync status
-            HStack {
-                Image(systemName: syncStatusIcon)
-                    .foregroundColor(syncStatusColor)
-                    .font(.caption)
-                Text(viewModel.dashboardSyncStatus.rawValue)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-        }
-        .background(.ultraThinMaterial)
-    }
-    
-    private var syncStatusIcon: String {
-        switch viewModel.dashboardSyncStatus {
-        case .syncing: return "arrow.triangle.2.circlepath"
-        case .synced: return "checkmark.circle.fill"
-        case .failed: return "exclamationmark.triangle.fill"
-        case .offline: return "wifi.slash"
-        }
-    }
-    
-    private var syncStatusColor: Color {
-        switch viewModel.dashboardSyncStatus {
-        case .syncing: return .blue
-        case .synced: return .green
-        case .failed: return .red
-        case .offline: return .gray
-        }
-    }
-    
-    private var portfolioSummarySection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                // Buildings metric
-                PortfolioMetricCard(
-                    title: "Buildings",
-                    value: "\(viewModel.totalBuildings)",
-                    icon: "building.2.fill",
-                    color: FrancoSphereDesign.DashboardColors.clientPrimary,
-                    trend: nil
-                )
-                
-                // Compliance metric
-                PortfolioMetricCard(
-                    title: "Compliance",
-                    value: "\(viewModel.complianceScore)%",
-                    icon: "checkmark.shield.fill",
-                    color: viewModel.complianceScore >= 90 ? FrancoSphereDesign.DashboardColors.compliant : FrancoSphereDesign.DashboardColors.warning,
-                    trend: viewModel.monthlyTrend
-                )
-                
-                // Active Workers metric
-                PortfolioMetricCard(
-                    title: "Active Workers",
-                    value: "\(viewModel.activeWorkers)",
-                    icon: "person.3.fill",
-                    color: .blue,
-                    trend: nil
-                )
-                
-                // Critical Issues metric
-                PortfolioMetricCard(
-                    title: "Critical Issues",
-                    value: "\(viewModel.criticalIssues)",
-                    icon: "exclamationmark.triangle.fill",
-                    color: viewModel.criticalIssues > 0 ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.compliant,
-                    trend: nil
-                )
-            }
-            .padding(.horizontal, 1)
-        }
-    }
-    
-    // MARK: - Tab Content
-    
-    @ViewBuilder
-    private var tabContent: some View {
-        switch selectedTabIndex {
-        case 0:
-            PortfolioOverviewTab(viewModel: viewModel)
-        case 1:
-            BuildingsTab(
-                viewModel: viewModel,
-                onBuildingTap: { building in
-                    selectedBuilding = building
-                    showingBuildingDetail = true
-                }
-            )
-        case 2:
-            ComplianceTab(viewModel: viewModel)
-        case 3:
-            InsightsTab(
-                viewModel: viewModel,
-                onInsightTap: { insight in
-                    selectedInsight = insight
-                    showingIntelligenceDetail = true
-                }
-            )
-        default:
-            PortfolioOverviewTab(viewModel: viewModel)
-        }
-    }
-}
-
-// MARK: - Tab Content Views
-
-struct PortfolioOverviewTab: View {
-    @ObservedObject var viewModel: ClientDashboardViewModel
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            // Intelligence Preview
-            if !viewModel.intelligenceInsights.isEmpty {
-                IntelligencePreviewPanel(
-                    insights: Array(viewModel.intelligenceInsights.prefix(3)),
-                    onRefresh: {
-                        await viewModel.forceRefresh()
-                    }
-                )
-            }
-            
-            // Performance overview
-            PerformanceOverviewCard(viewModel: viewModel)
-            
-            // Executive Summary - ✅ FIXED: Remove task that calls private method
-            if let summary = viewModel.executiveSummary {
-                ExecutiveSummaryCard(summary: summary)
-            }
-            
-            // Strategic Recommendations - ✅ FIXED: Use loadPortfolioIntelligence which loads these
-            if !viewModel.strategicRecommendations.isEmpty {
-                StrategicRecommendationsCard(recommendations: viewModel.strategicRecommendations)
-            }
-        }
-    }
-}
-
-struct BuildingsTab: View {
-    @ObservedObject var viewModel: ClientDashboardViewModel
-    let onBuildingTap: (NamedCoordinate) -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Header with filter options
-            HStack {
-                Text("Portfolio Buildings")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Menu {
-                    Button("All Buildings") { }
-                    Button("Critical Issues") { }
-                    Button("High Performance") { }
-                } label: {
-                    Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
-            }
-            
-            // Buildings grid
-            LazyVGrid(columns: [
-                GridItem(.adaptive(minimum: 300, maximum: 400))
-            ], spacing: 16) {
-                ForEach(viewModel.buildingsList, id: \.id) { building in
-                    BuildingCard(
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(buildings.prefix(4), id: \.id) { building in
+                    BuildingPerformanceTile(
                         building: building,
-                        metrics: viewModel.getBuildingMetrics(for: building.id),
                         onTap: { onBuildingTap(building) }
                     )
                 }
@@ -296,944 +758,157 @@ struct BuildingsTab: View {
     }
 }
 
-struct ComplianceTab: View {
-    @ObservedObject var viewModel: ClientDashboardViewModel
-    @State private var selectedSeverity: CoreTypes.ComplianceSeverity?
+struct WorkerProductivityCard: View {
+    let insights: [CoreTypes.WorkerProductivityInsight]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Compliance Overview
-            ComplianceOverviewCard(
-                overallScore: Double(viewModel.complianceScore) / 100.0,
-                criticalIssues: viewModel.criticalIssues,
-                openIssues: viewModel.complianceIssues.filter { $0.status == .open }.count
-            )
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Worker Productivity", systemImage: "person.3.fill")
+                .font(.headline)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.info)
             
-            // Filter chips
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    FilterChip(
-                        title: "All",
-                        isSelected: selectedSeverity == nil,
-                        action: { selectedSeverity = nil }
-                    )
-                    
-                    ForEach(CoreTypes.ComplianceSeverity.allCases, id: \.self) { severity in
-                        FilterChip(
-                            title: severity.rawValue,
-                            isSelected: selectedSeverity == severity,
-                            color: severityColor(for: severity),
-                            action: { selectedSeverity = severity }
-                        )
-                    }
-                }
-                .padding(.horizontal, 1)
-            }
-            
-            // Issues list
-            VStack(spacing: 12) {
-                ForEach(filteredComplianceIssues, id: \.id) { issue in
-                    ClientComplianceIssueCard(issue: issue)
-                }
-            }
-        }
-    }
-    
-    private var filteredComplianceIssues: [CoreTypes.ComplianceIssue] {
-        if let severity = selectedSeverity {
-            return viewModel.complianceIssues.filter { $0.severity == severity }
-        }
-        return viewModel.complianceIssues
-    }
-    
-    private func severityColor(for severity: CoreTypes.ComplianceSeverity) -> Color {
-        switch severity {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-}
-
-struct InsightsTab: View {
-    @ObservedObject var viewModel: ClientDashboardViewModel
-    let onInsightTap: (CoreTypes.IntelligenceInsight) -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Header
-            HStack {
-                Text("Portfolio Insights")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                if viewModel.isLoadingInsights {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                }
-            }
-            
-            // Full Intelligence Panel
-            IntelligencePreviewPanel(
-                insights: viewModel.intelligenceInsights,
-                onInsightTap: onInsightTap,
-                onRefresh: {
-                    await viewModel.forceRefresh()
-                }
-            )
-            
-            // Insights by category
-            if !viewModel.intelligenceInsights.isEmpty {
-                InsightsCategoryBreakdown(insights: viewModel.intelligenceInsights)
-            }
-        }
-    }
-}
-
-// MARK: - Supporting Card Components
-
-struct PortfolioMetricCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    let trend: CoreTypes.TrendDirection?
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundColor(color)
-                
-                if let trend = trend {
-                    TrendIndicator(trend: trend)
-                }
-            }
-            
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(minWidth: 100)
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(color.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(color.opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-}
-
-struct PerformanceOverviewCard: View {
-    @ObservedObject var viewModel: ClientDashboardViewModel
-    
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Performance Overview")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                // Metrics grid
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 16) {
-                    PerformanceMetric(
-                        title: "Efficiency",
-                        value: viewModel.portfolioIntelligence?.completionRate ?? 0,
-                        color: .blue
-                    )
-                    
-                    PerformanceMetric(
-                        title: "Task Completion",
-                        value: viewModel.completionRate,
-                        color: .green
-                    )
-                    
-                    PerformanceMetric(
-                        title: "Compliance",
-                        value: Double(viewModel.complianceScore) / 100.0,
-                        color: viewModel.complianceScore >= 90 ? .green : .orange
-                    )
-                }
-            }
-            .padding()
-        }
-    }
-}
-
-struct PerformanceMetric: View {
-    let title: String
-    let value: Double
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text("\(Int(value * 100))%")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            ProgressView(value: value)
-                .progressViewStyle(LinearProgressViewStyle(tint: color))
-                .frame(height: 4)
-        }
-    }
-}
-
-struct BuildingCard: View {
-    let building: NamedCoordinate
-    let metrics: CoreTypes.BuildingMetrics?
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
-                // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(building.name)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                        
-                        Text(building.address)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    Spacer()
-                    
-                    // Status indicator
-                    if let metrics = metrics {
-                        Circle()
-                            .fill(metricsStatusColor(metrics))
-                            .frame(width: 8, height: 8)
-                    }
-                }
-                
-                // Metrics
-                if let metrics = metrics {
-                    HStack(spacing: 20) {
-                        MetricLabel(
-                            title: "Completion",
-                            value: "\(Int(metrics.completionRate * 100))%",
-                            color: metricsStatusColor(metrics)
-                        )
-                        
-                        MetricLabel(
-                            title: "Overdue",
-                            value: "\(metrics.overdueTasks)",
-                            color: metrics.overdueTasks > 0 ? .orange : .green
-                        )
-                        
-                        MetricLabel(
-                            title: "Workers",
-                            value: "\(metrics.activeWorkers)",
-                            color: .blue
-                        )
-                    }
-                } else {
-                    // Loading state
+            VStack(spacing: 8) {
+                ForEach(insights.prefix(3)) { insight in
                     HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Loading metrics...")
+                        Image(systemName: insight.trend.icon)
                             .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            .padding()
-            .francoGlassCard(intensity: GlassIntensity.thin)  // ✅ FIXED: Explicit GlassIntensity type
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    private func metricsStatusColor(_ metrics: CoreTypes.BuildingMetrics) -> Color {
-        if metrics.completionRate >= 0.9 {
-            return .green
-        } else if metrics.completionRate >= 0.7 {
-            return .orange
-        } else {
-            return .red
-        }
-    }
-}
-
-struct MetricLabel: View {
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            Text(value)
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(color)
-        }
-    }
-}
-
-struct ComplianceOverviewCard: View {
-    let overallScore: Double
-    let criticalIssues: Int
-    let openIssues: Int
-    
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Compliance Overview")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                // Overall score gauge
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Overall Score")
+                            .foregroundColor(insight.trend.color)
+                        
+                        Text(insight.description)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         
                         Spacer()
                         
-                        Text("\(Int(overallScore * 100))%")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(scoreColor)
+                        Text(insight.metric)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(insight.trend.color)
                     }
-                    
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.1))
-                                .frame(height: 8)
-                            
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(scoreColor)
-                                .frame(width: geometry.size.width * overallScore, height: 8)
-                        }
-                    }
-                    .frame(height: 8)
-                }
-                
-                // Issue counts
-                HStack(spacing: 20) {
-                    IssueCountBadge(
-                        title: "Critical",
-                        count: criticalIssues,
-                        color: .red
-                    )
-                    
-                    IssueCountBadge(
-                        title: "Open Issues",
-                        count: openIssues,
-                        color: .orange
-                    )
                 }
             }
-            .padding()
         }
-    }
-    
-    private var scoreColor: Color {
-        if overallScore >= 0.9 {
-            return .green
-        } else if overallScore >= 0.7 {
-            return .orange
-        } else {
-            return .red
-        }
+        .padding()
+        .francoDarkCardBackground()
     }
 }
 
-struct IssueCountBadge: View {
-    let title: String
-    let count: Int
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Text("\(count)")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(color.opacity(0.1))
-        )
-    }
-}
+// MARK: - Helper Views
 
-struct ClientComplianceIssueCard: View {
+struct ComplianceIssueRow: View {
     let issue: CoreTypes.ComplianceIssue
     
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            // Severity indicator
+        HStack(spacing: 12) {
             Circle()
                 .fill(severityColor)
-                .frame(width: 8, height: 8)
-                .padding(.top, 6)
+                .frame(width: 6, height: 6)
             
-            // Issue details
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(issue.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                Text(issue.description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .lineLimit(1)
                 
-                HStack {
-                    if let buildingId = issue.buildingId {
-                        Label(buildingId, systemImage: "building.2")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                    }
-                    
-                    if let dueDate = issue.dueDate {
-                        Label(dueDate.formatted(.dateTime.day().month()), systemImage: "calendar")
-                            .font(.caption2)
-                            .foregroundColor(Date() > dueDate ? .red : .secondary)
-                    }
+                if let building = issue.buildingName {
+                    Text(building)
+                        .font(.caption2)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
             }
             
             Spacer()
             
-            // Status badge
-            Text(issue.status.rawValue)
-                .font(.caption2)
-                .fontWeight(.medium)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule()
-                        .fill(statusColor.opacity(0.2))
-                )
-                .foregroundColor(statusColor)
+            if let dueDate = issue.dueDate {
+                Text(dueDate.formatted(.dateTime.day().month()))
+                    .font(.caption2)
+                    .foregroundColor(Date() > dueDate ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+            }
         }
-        .padding()
+        .padding(.vertical, 6)
+        .padding(.horizontal, 12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.03))
         )
     }
     
     private var severityColor: Color {
         switch issue.severity {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-    
-    private var statusColor: Color {
-        switch issue.status {
-        case .open: return .orange
-        case .inProgress: return .blue
-        case .resolved: return .green
-        default: return .gray
+        case .critical: return FrancoSphereDesign.DashboardColors.critical
+        case .high: return FrancoSphereDesign.DashboardColors.warning
+        case .medium: return Color(hex: "fbbf24")
+        case .low: return FrancoSphereDesign.DashboardColors.info
         }
     }
 }
 
-struct ExecutiveSummaryCard: View {
-    let summary: CoreTypes.ExecutiveSummary
-    
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("Executive Summary")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text(summary.generatedAt, style: .time)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    SummaryItem(
-                        icon: "building.2",
-                        title: "Total Buildings",
-                        value: "\(summary.totalBuildings)"
-                    )
-                    
-                    SummaryItem(
-                        icon: "person.3",
-                        title: "Total Workers",
-                        value: "\(summary.totalWorkers)"
-                    )
-                    
-                    SummaryItem(
-                        icon: "heart.circle",
-                        title: "Portfolio Health",
-                        value: "\(Int(summary.portfolioHealth * 100))%"
-                    )
-                    
-                    SummaryItem(
-                        icon: "chart.line.uptrend.xyaxis",
-                        title: "Monthly Performance",
-                        value: summary.monthlyPerformance
-                    )
-                }
-            }
-            .padding()
-        }
-    }
-}
-
-struct SummaryItem: View {
-    let icon: String
-    let title: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(.blue)
-                .frame(width: 20)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-        }
-    }
-}
-
-struct StrategicRecommendationsCard: View {
-    let recommendations: [CoreTypes.StrategicRecommendation]
-    @State private var expandedRecommendation: String?
-    
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Strategic Recommendations")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                
-                VStack(spacing: 12) {
-                    ForEach(recommendations.prefix(3), id: \.id) { recommendation in
-                        RecommendationRow(
-                            recommendation: recommendation,
-                            isExpanded: expandedRecommendation == recommendation.id,
-                            onTap: {
-                                withAnimation(.spring()) {
-                                    expandedRecommendation = expandedRecommendation == recommendation.id ? nil : recommendation.id
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-            .padding()
-        }
-    }
-}
-
-struct RecommendationRow: View {
-    let recommendation: CoreTypes.StrategicRecommendation
-    let isExpanded: Bool
+struct BuildingPerformanceTile: View {
+    let building: NamedCoordinate
     let onTap: () -> Void
+    @ObservedObject private var contextEngine = ClientContextEngine.shared
+    
+    private var performance: Double {
+        contextEngine.buildingPerformanceMap[building.id] ?? 0.0
+    }
+    
+    private var performanceColor: Color {
+        if performance > 0.8 {
+            return FrancoSphereDesign.DashboardColors.success
+        } else if performance > 0.6 {
+            return FrancoSphereDesign.DashboardColors.warning
+        } else {
+            return FrancoSphereDesign.DashboardColors.critical
+        }
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button(action: onTap) {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    // Priority indicator
-                    Circle()
-                        .fill(priorityColor)
-                        .frame(width: 8, height: 8)
-                    
-                    // Title
-                    Text(recommendation.title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.leading)
+                    Image(systemName: "building.2")
+                        .font(.caption)
+                        .foregroundColor(performanceColor)
                     
                     Spacer()
                     
-                    // Expand indicator
-                    Image(systemName: "chevron.right")
+                    Text("\(Int(performance * 100))%")
                         .font(.caption)
-                        .foregroundColor(.secondary)
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .fontWeight(.semibold)
+                        .foregroundColor(performanceColor)
                 }
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(recommendation.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    HStack {
-                        Label(recommendation.timeframe, systemImage: "clock")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
+                
+                Text(building.name)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .lineLimit(1)
+                
+                // Mini progress bar
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white.opacity(0.1))
                         
-                        Label(recommendation.estimatedImpact, systemImage: "chart.line.uptrend.xyaxis")
-                            .font(.caption2)
-                            .foregroundColor(.green)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(performanceColor)
+                            .frame(width: geometry.size.width * performance)
                     }
                 }
-                .padding(.leading, 16)
+                .frame(height: 4)
             }
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.05))
-        )
-    }
-    
-    private var priorityColor: Color {
-        switch recommendation.priority {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-}
-
-struct InsightsCategoryBreakdown: View {
-    let insights: [CoreTypes.IntelligenceInsight]
-    
-    var categoryCounts: [CoreTypes.InsightCategory: Int] {
-        Dictionary(grouping: insights, by: { $0.type })
-            .mapValues { $0.count }
-    }
-    
-    private var insightCategories: [CoreTypes.InsightCategory] {
-        [.efficiency, .maintenance, .compliance, .safety, .cost]
-    }
-    
-    private var gridColumns: [GridItem] {
-        [GridItem(.flexible()), GridItem(.flexible())]
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Insights by Category")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            LazyVGrid(columns: gridColumns, spacing: 12) {
-                ForEach(insightCategories, id: \.self) { category in
-                    CategoryCard(
-                        type: category,
-                        count: categoryCounts[category] ?? 0
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(performanceColor.opacity(0.3), lineWidth: 1)
                     )
-                }
-            }
-        }
-    }
-}
-
-struct CategoryCard: View {
-    let type: CoreTypes.InsightCategory
-    let count: Int
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(type.rawValue)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("\(count)")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(type))
-            }
-            
-            Spacer()
-            
-            Image(systemName: type.icon)
-                .font(.title3)
-                .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(type).opacity(0.6))
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(FrancoSphereDesign.EnumColors.insightCategory(type).opacity(0.1))
-        )
-    }
-}
-
-struct CLientFilterChip: View {
-    let title: String
-    let isSelected: Bool
-    var color: Color = .blue
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : color)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? color : color.opacity(0.2))
-                        .overlay(
-                            Capsule()
-                                .stroke(color.opacity(0.3), lineWidth: 1)
-                        )
-                )
+            )
         }
         .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct TrendIndicator: View {
-    let trend: CoreTypes.TrendDirection
-    
-    var body: some View {
-        Image(systemName: trendIcon)
-            .font(.caption2)
-            .foregroundColor(trendColor)
-    }
-    
-    private var trendIcon: String {
-        switch trend {
-        case .up: return "arrow.up.circle.fill"
-        case .down: return "arrow.down.circle.fill"
-        case .stable: return "minus.circle.fill"
-        case .improving: return "arrow.up.right.circle.fill"
-        case .declining: return "arrow.down.right.circle.fill"
-        case .unknown: return "questionmark.circle.fill"
-        }
-    }
-    
-    private var trendColor: Color {
-        switch trend {
-        case .up, .improving: return .green
-        case .down, .declining: return .red
-        case .stable: return .orange
-        case .unknown: return .gray
-        }
-    }
-}
-
-// MARK: - Detail Sheets
-
-struct InsightDetailSheet: View {
-    let insight: CoreTypes.IntelligenceInsight
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(insight.type.rawValue.uppercased())
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(priorityColor)
-                            
-                            Spacer()
-                            
-                            if insight.actionRequired {
-                                Label("Action Required", systemImage: "exclamationmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundColor(.orange)
-                            }
-                        }
-                        
-                        Text(insight.title)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    
-                    // Content
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(insight.description)
-                            .font(.body)
-                            .foregroundColor(.white)
-                        
-                        if !insight.affectedBuildings.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Affected Buildings")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                
-                                ForEach(insight.affectedBuildings, id: \.self) { buildingId in
-                                    HStack {
-                                        Image(systemName: "building.2")
-                                            .font(.caption)
-                                            .foregroundColor(.blue)
-                                        Text("Building \(buildingId)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.white)
-                                    }
-                                    .padding(8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.white.opacity(0.05))
-                                    )
-                                }
-                            }
-                        }
-                        
-                        // Actions
-                        if insight.actionRequired {
-                            VStack(spacing: 12) {
-                                Button(action: {
-                                    // TODO: Implement action
-                                }) {
-                                    Label("Take Action", systemImage: "arrow.right.circle.fill")
-                                        .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(GlassButtonStyle(style: .primary))
-                                
-                                Button(action: {
-                                    // TODO: Implement dismiss
-                                }) {
-                                    Label("Dismiss", systemImage: "xmark.circle")
-                                        .frame(maxWidth: .infinity)
-                                }
-                                .buttonStyle(GlassButtonStyle(style: .secondary))
-                            }
-                        }
-                    }
-                    .padding()
-                }
-            }
-            .background(Color.black)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-    
-    private var priorityColor: Color {
-        switch insight.priority {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .green
-        }
-    }
-}
-
-// ✅ FIXED: Breaking down complex expression into smaller parts
-struct BuildingDetailSheet: View {
-    let building: NamedCoordinate
-    let metrics: CoreTypes.BuildingMetrics?
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header component
-                    buildingHeader
-                    
-                    // Stats component
-                    if let metrics = metrics {
-                        buildingStatsSection(metrics: metrics)
-                    }
-                    
-                    // Additional details would go here
-                }
-            }
-            .background(Color.black)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-    
-    private var buildingHeader: some View {
-        BuildingHeaderGlassOverlay(
-            building: building,
-            clockedInStatus: (false, nil),  // Client doesn't clock in
-            onClockAction: { }  // No-op for client
-        )
-    }
-    
-    // ✅ FIXED: Simplified stats section to avoid complex expressions
-    @ViewBuilder
-    private func buildingStatsSection(metrics: CoreTypes.BuildingMetrics) -> some View {
-        let completedTasks = metrics.totalTasks - metrics.pendingTasks
-        let weatherRisk = BuildingStatsGlassCard.WeatherRiskLevel.low
-        
-        BuildingStatsGlassCard(
-            pendingTasksCount: metrics.pendingTasks,
-            completedTasksCount: completedTasks,
-            assignedWorkersCount: metrics.activeWorkers,
-            weatherRisk: weatherRisk
-        )
-        .padding()
     }
 }
 
@@ -1243,43 +918,7 @@ struct ClientDashboardView_Previews: PreviewProvider {
     static var previews: some View {
         ClientDashboardView()
             .environmentObject(NewAuthManager.shared)
+            .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)
     }
 }
-
-// MARK: - 📝 COMPILATION FIXES
-/*
- ✅ FIXED ERRORS:
- 
- 1. Line 567: Fixed ambiguous 'thin' error
-    - Changed from: .francoGlassCard(intensity: .thin)
-    - Changed to: .francoGlassCard(intensity: GlassIntensity.thin)
-    - Made the type explicit to avoid ambiguity with other enums
- 
- 2. Line 1076: Fixed complex expression error
-    - Broke down the BuildingStatsGlassCard initialization into separate steps
-    - Pre-calculated completedTasks before using it
-    - Declared weatherRisk variable separately
-    - Used a separate function buildingStatsSection to simplify the view
- 
- 3. Line 249: Removed task calling private generateExecutiveSummary method
-    - The executive summary is automatically generated when loadPortfolioIntelligence() is called
-    - The view just needs to display the already-loaded executiveSummary
- 
- 4. Line 254: Similar fix for loadStrategicRecommendations
-    - This is also loaded automatically as part of loadPortfolioIntelligence()
-    - The view should just display the data, not trigger additional loads
- 
- 🎯 KEY CHANGES:
- - Made GlassIntensity type explicit to avoid ambiguity
- - Broke down complex expressions into simpler, pre-calculated values
- - Aligned with existing viewModel patterns where data is loaded via loadPortfolioIntelligence()
- - Removed unnecessary task blocks that were calling private methods
- - Used forceRefresh() for pull-to-refresh actions
- 
- 🏛️ ARCHITECTURE:
- - The ClientDashboardViewModel loads all data in loadPortfolioIntelligence()
- - Executive summary and strategic recommendations are generated as part of that process
- - The view simply displays the data that's already loaded
- - This matches the pattern used in AdminDashboardView and WorkerDashboardView
- */

@@ -1,14 +1,15 @@
-import Foundation
-import SwiftUI
-
 //
 //  TaskCategoryGlassCard.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ CORRECTED: MaintenanceTask parameter order in initializer
-//  ✅ ALIGNED: With CoreTypes.MaintenanceTask structure
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ IMPROVED: Glass effects and animations
+//  ✅ OPTIMIZED: Better visual hierarchy and contrast
 //
+
+import Foundation
+import SwiftUI
 
 struct TaskCategoryGlassCard: View {
     let title: String
@@ -29,40 +30,56 @@ struct TaskCategoryGlassCard: View {
     }
     
     var body: some View {
-        GlassCard(intensity: GlassIntensity.thin) {
-            VStack(alignment: .leading, spacing: 0) {
-                // Header section
-                categoryHeader
-                
-                // Tasks content (expandable)
-                if isExpanded && !pendingTasks.isEmpty {
-                    VStack(spacing: 12) {
-                        ForEach(pendingTasks.prefix(5)) { task in // Limit to 5 tasks for performance
-                            TaskRowGlassView(
-                                task: task,
-                                isExpanded: expandedTasks.contains(task.id),
-                                isToday: isScheduledForToday(task),
-                                onToggleExpand: { toggleTaskExpanded(task) },
-                                onComplete: { onTaskComplete(task) },
-                                onTap: { onTaskTap(task) }
-                            )
-                        }
-                        
-                        // Show more button if there are additional tasks
-                        if pendingTasks.count > 5 {
-                            showMoreButton
-                        }
+        VStack(alignment: .leading, spacing: 0) {
+            // Header section
+            categoryHeader
+            
+            // Tasks content (expandable)
+            if isExpanded && !pendingTasks.isEmpty {
+                VStack(spacing: 12) {
+                    ForEach(pendingTasks.prefix(5)) { task in
+                        TaskRowGlassView(
+                            task: task,
+                            isExpanded: expandedTasks.contains(task.id),
+                            isToday: isScheduledForToday(task),
+                            onToggleExpand: { toggleTaskExpanded(task) },
+                            onComplete: { onTaskComplete(task) },
+                            onTap: { onTaskTap(task) }
+                        )
                     }
-                    .padding(.top, 16)
+                    
+                    // Show more button if there are additional tasks
+                    if pendingTasks.count > 5 {
+                        showMoreButton
+                    }
                 }
-                
-                // Empty state
-                else if isExpanded && pendingTasks.isEmpty {
-                    emptyStateView
-                }
+                .padding(.top, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            .padding(20)
+            
+            // Empty state
+            else if isExpanded && pendingTasks.isEmpty {
+                emptyStateView
+                    .transition(.opacity.combined(with: .scale))
+            }
         }
+        .padding(20)
+        .francoDarkCardBackground(cornerRadius: 20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .animation(FrancoSphereDesign.Animations.spring, value: isExpanded)
         .onAppear {
             // Auto-expand today's tasks
             for task in pendingTasks {
@@ -83,6 +100,10 @@ struct TaskCategoryGlassCard: View {
                     Circle()
                         .fill(categoryColor.opacity(0.2))
                         .frame(width: 44, height: 44)
+                        .overlay(
+                            Circle()
+                                .stroke(categoryColor.opacity(0.3), lineWidth: 1)
+                        )
                     
                     Image(systemName: icon)
                         .font(.system(size: 20, weight: .medium))
@@ -94,34 +115,34 @@ struct TaskCategoryGlassCard: View {
                     Text(title)
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     
                     HStack(spacing: 12) {
                         Text("\(pendingTasks.count) pending")
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                         
                         if getTodayTasksCount() > 0 {
                             HStack(spacing: 4) {
                                 Circle()
-                                    .fill(Color.orange)
+                                    .fill(FrancoSphereDesign.DashboardColors.warning)
                                     .frame(width: 6, height: 6)
                                 
                                 Text("\(getTodayTasksCount()) today")
                                     .font(.caption)
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                             }
                         }
                         
                         if getOverdueTasksCount() > 0 {
                             HStack(spacing: 4) {
                                 Circle()
-                                    .fill(Color.red)
+                                    .fill(FrancoSphereDesign.DashboardColors.critical)
                                     .frame(width: 6, height: 6)
                                 
                                 Text("\(getOverdueTasksCount()) overdue")
                                     .font(.caption)
-                                    .foregroundColor(.red)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
                             }
                         }
                     }
@@ -133,13 +154,15 @@ struct TaskCategoryGlassCard: View {
                 VStack(spacing: 4) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .rotationEffect(.degrees(isExpanded ? 0 : 0))
+                        .animation(FrancoSphereDesign.Animations.spring, value: isExpanded)
                     
                     if pendingTasks.count > 0 {
                         Text("\(pendingTasks.count)")
                             .font(.caption2)
                             .fontWeight(.semibold)
-                            .foregroundColor(categoryColor)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
                             .background(categoryColor.opacity(0.2))
@@ -162,20 +185,20 @@ struct TaskCategoryGlassCard: View {
             HStack {
                 Text("View all \(pendingTasks.count) tasks")
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
                 Image(systemName: "arrow.right")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(Color.white.opacity(0.05))
+            .background(FrancoSphereDesign.DashboardColors.glassOverlay)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 1)
             )
             .cornerRadius(12)
         }
@@ -186,16 +209,16 @@ struct TaskCategoryGlassCard: View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 32))
-                .foregroundColor(.green)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
             
             Text("All tasks completed!")
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             Text("No pending tasks in this category")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -205,7 +228,7 @@ struct TaskCategoryGlassCard: View {
     // MARK: - Helper Methods
     
     private func toggleTaskExpanded(_ task: MaintenanceTask) {
-        withAnimation(Animation.easeInOut(duration: 0.2)) {
+        withAnimation(FrancoSphereDesign.Animations.spring) {
             if expandedTasks.contains(task.id) {
                 expandedTasks.remove(task.id)
             } else {
@@ -229,17 +252,6 @@ struct TaskCategoryGlassCard: View {
             guard let dueDate = $0.dueDate else { return false }
             return dueDate < today
         }.count
-    }
-    
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = Int(duration) % 3600 / 60
-        
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
-        } else {
-            return "\(minutes)m"
-        }
     }
 }
 
@@ -271,7 +283,7 @@ struct TaskRowGlassView: View {
                     // Expand indicator
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
                 }
                 .contentShape(Rectangle())
             }
@@ -280,23 +292,31 @@ struct TaskRowGlassView: View {
             .padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isToday ? Color.orange.opacity(0.1) : Color.white.opacity(0.05))
+                    .fill(
+                        isToday ?
+                        FrancoSphereDesign.DashboardColors.warning.opacity(0.1) :
+                        FrancoSphereDesign.DashboardColors.glassOverlay
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                isToday ? Color.orange.opacity(0.3) : Color.white.opacity(0.1),
+                                isToday ?
+                                FrancoSphereDesign.DashboardColors.warning.opacity(0.3) :
+                                Color.white.opacity(0.1),
                                 lineWidth: 1
                             )
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(Animation.easeInOut(duration: 0.1), value: isPressed)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
             
             // Expanded content
             if isExpanded {
                 expandedContent
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+        .animation(FrancoSphereDesign.Animations.spring, value: isExpanded)
     }
     
     // MARK: - Sub-components
@@ -306,7 +326,7 @@ struct TaskRowGlassView: View {
             Text(task.title)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 .multilineTextAlignment(.leading)
             
             HStack(spacing: 8) {
@@ -314,15 +334,15 @@ struct TaskRowGlassView: View {
                 if let dueDate = task.dueDate {
                     Text(formatTime(dueDate))
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 } else if task.isRecurring {
                     Text("Recurring")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 } else {
                     Text(formatDuration(task.estimatedDuration))
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                 }
                 
                 // Priority badge
@@ -332,10 +352,10 @@ struct TaskRowGlassView: View {
                     Text("TODAY")
                         .font(.caption2)
                         .fontWeight(.bold)
-                        .foregroundColor(.orange)
+                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.2))
+                        .background(FrancoSphereDesign.DashboardColors.warning.opacity(0.2))
                         .cornerRadius(6)
                 }
             }
@@ -350,7 +370,7 @@ struct TaskRowGlassView: View {
             
             if task.status == .completed {
                 Circle()
-                    .fill(Color.green)
+                    .fill(FrancoSphereDesign.DashboardColors.success)
                     .frame(width: 12, height: 12)
             } else {
                 Circle()
@@ -377,7 +397,7 @@ struct TaskRowGlassView: View {
             if !task.description.isEmpty {
                 Text(task.description)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 16)
             }
@@ -393,10 +413,10 @@ struct TaskRowGlassView: View {
                             .font(.caption)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.1))
+                    .background(FrancoSphereDesign.DashboardColors.glassOverlay)
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -415,7 +435,7 @@ struct TaskRowGlassView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color.green.opacity(0.8))
+                    .background(FrancoSphereDesign.DashboardColors.success)
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -423,7 +443,7 @@ struct TaskRowGlassView: View {
             .padding(.horizontal, 16)
         }
         .padding(.bottom, 12)
-        .background(Color.white.opacity(0.03))
+        .background(FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.5))
         .cornerRadius(12)
     }
     
@@ -431,12 +451,16 @@ struct TaskRowGlassView: View {
     
     private var urgencyColor: Color {
         switch task.urgency {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .orange
-        case .critical: return .red
-        case .emergency: return .red
-        case .urgent: return .purple
+        case .low:
+            return FrancoSphereDesign.DashboardColors.success
+        case .medium:
+            return Color(hex: "fbbf24") // Amber
+        case .high:
+            return FrancoSphereDesign.DashboardColors.warning
+        case .critical, .emergency:
+            return FrancoSphereDesign.DashboardColors.critical
+        case .urgent:
+            return Color(hex: "9333ea") // Purple
         }
     }
     
@@ -507,9 +531,9 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                 VStack(spacing: 24) {
                     TaskCategoryGlassCard(
                         title: "Cleaning Routine",
-                        icon: "spray.and.wipe",
+                        icon: "sparkles",
                         tasks: sampleTasks,
-                        categoryColor: .blue,
+                        categoryColor: FrancoSphereDesign.DashboardColors.info,
                         isExpanded: true,
                         onToggleExpand: {},
                         onTaskTap: { _ in },
@@ -520,7 +544,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                         title: "Sanitation & Garbage",
                         icon: "trash",
                         tasks: [],
-                        categoryColor: .green,
+                        categoryColor: FrancoSphereDesign.DashboardColors.success,
                         isExpanded: true,
                         onToggleExpand: {},
                         onTaskTap: { _ in },

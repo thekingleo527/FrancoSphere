@@ -1,17 +1,14 @@
 //
 //  GlassStatusBadge.swift
-//  FrancoSphere
+//  FrancoSphere v6.0
 //
-//  Created by Shawn Magloire on 6/6/25.
+//  ✅ UPDATED: Dark Elegance theme applied
+//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ IMPROVED: Glass effects optimized for dark theme
+//  ✅ ADDED: Smooth animations and better visual hierarchy
 //
-
-// GlassStatusBadge.swift
-// Glassmorphism status badge component for FrancoSphere
-// Used for task status, weather alerts, and various indicators
 
 import SwiftUI
-// FrancoSphere Types Import
-// (This comment helps identify our import)
 
 // MARK: - Badge Style
 enum GlassBadgeStyle {
@@ -25,15 +22,15 @@ enum GlassBadgeStyle {
     var color: Color {
         switch self {
         case .success:
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         case .warning:
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         case .danger:
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         case .info:
-            return .blue
+            return FrancoSphereDesign.DashboardColors.info
         case .neutral:
-            return .gray
+            return FrancoSphereDesign.DashboardColors.inactive
         case .custom(let color):
             return color
         }
@@ -116,7 +113,7 @@ struct GlassStatusBadge: View {
                 .font(size.fontSize)
                 .fontWeight(.medium)
         }
-        .foregroundColor(.white)
+        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         .padding(size.padding)
         .background(badgeBackground)
         .clipShape(Capsule())
@@ -139,22 +136,25 @@ struct GlassStatusBadge: View {
     // MARK: - Badge Background
     private var badgeBackground: some View {
         ZStack {
-            // Color base
+            // Dark base
+            Capsule()
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
+            
+            // Color overlay
             Capsule()
                 .fill(style.color.opacity(0.3))
             
             // Glass effect
             Capsule()
-                .fill(.ultraThinMaterial)
-                .opacity(0.3)
+                .fill(.ultraThinMaterial.opacity(0.2))
             
-            // Gradient overlay
+            // Gradient overlay for depth
             Capsule()
                 .fill(
                     LinearGradient(
                         colors: [
                             style.color.opacity(0.2),
-                            style.color.opacity(0.1)
+                            style.color.opacity(0.05)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -209,7 +209,7 @@ struct GlassNotificationBadge: View {
             Text(count > 99 ? "99+" : "\(count)")
                 .font(size.fontSize)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 .frame(minWidth: 20)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
@@ -218,13 +218,23 @@ struct GlassNotificationBadge: View {
                         .fill(style.color)
                         .overlay(
                             Capsule()
-                                .fill(.ultraThinMaterial)
-                                .opacity(0.2)
+                                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                                .opacity(0.3)
                         )
                 )
                 .overlay(
                     Capsule()
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.3),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1
+                        )
                 )
         }
     }
@@ -245,11 +255,11 @@ struct GlassProgressBadge: View {
     
     private var progressColor: Color {
         if percentage >= 75 {
-            return .green
+            return FrancoSphereDesign.DashboardColors.success
         } else if percentage >= 50 {
-            return .orange
+            return FrancoSphereDesign.DashboardColors.warning
         } else {
-            return .red
+            return FrancoSphereDesign.DashboardColors.critical
         }
     }
     
@@ -272,7 +282,7 @@ struct GlassProgressBadge: View {
             // Progress ring
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.2), lineWidth: 3)
+                    .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 3)
                     .frame(width: 20, height: 20)
                 
                 Circle()
@@ -280,6 +290,7 @@ struct GlassProgressBadge: View {
                     .stroke(progressColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .frame(width: 20, height: 20)
                     .rotationEffect(.degrees(-90))
+                    .animation(.easeInOut(duration: 0.3), value: percentage)
             }
             
             // Text
@@ -287,22 +298,23 @@ struct GlassProgressBadge: View {
                 Text("\(Int(percentage))%")
                     .font(size.fontSize)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             } else {
                 Text("\(Int(progress))/\(Int(total))")
                     .font(size.fontSize)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             }
         }
         .padding(size.padding)
         .background(
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
                 .overlay(
                     Capsule()
                         .fill(progressColor.opacity(0.2))
                 )
+                .background(.ultraThinMaterial.opacity(0.3))
         )
         .overlay(
             Capsule()
@@ -329,30 +341,31 @@ struct GlassLoadingBadge: View {
     var body: some View {
         HStack(spacing: 6) {
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.info))
                 .scaleEffect(0.7)
             
             Text(text)
                 .font(size.fontSize)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
         }
         .padding(size.padding)
         .background(
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
                 .overlay(
                     Capsule()
-                        .fill(Color.blue.opacity(0.2))
+                        .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.2))
                 )
+                .background(.ultraThinMaterial.opacity(0.3))
         )
         .overlay(
             Capsule()
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color.blue.opacity(isAnimating ? 0.6 : 0.2),
-                            Color.blue.opacity(isAnimating ? 0.2 : 0.6)
+                            FrancoSphereDesign.DashboardColors.info.opacity(isAnimating ? 0.6 : 0.2),
+                            FrancoSphereDesign.DashboardColors.info.opacity(isAnimating ? 0.2 : 0.6)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -406,16 +419,9 @@ extension View {
 struct GlassStatusBadge_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            // Background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.3),
-                    Color(red: 0.2, green: 0.1, blue: 0.4)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Dark Elegance Background
+            FrancoSphereDesign.DashboardColors.baseBackground
+                .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 32) {
@@ -423,7 +429,7 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Status Badges")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 12) {
                             GlassStatusBadge(text: "Active", style: .success, size: .small)
@@ -439,18 +445,18 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                         
                         HStack(spacing: 12) {
                             GlassStatusBadge(text: "Weather Alert", icon: "cloud.rain.fill", style: .warning, size: .large, isPulsing: true)
-                            GlassStatusBadge(text: "Maintenance", style: .custom(color: .purple), size: .large)
+                            GlassStatusBadge(text: "Maintenance", style: .custom(color: Color(hex: "9333ea")), size: .large)
                         }
                     }
                     
                     Divider()
-                        .background(Color.white.opacity(0.3))
+                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
                     
                     // Progress badges
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Progress Badges")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 12) {
                             GlassProgressBadge(progress: 8, total: 10)
@@ -465,73 +471,75 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                     }
                     
                     Divider()
-                        .background(Color.white.opacity(0.3))
+                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
                     
                     // Notification badges
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Notification Badges")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 40) {
                             Image(systemName: "bell.fill")
                                 .font(.title)
-                                .foregroundColor(.white)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                                 .glassNotificationBadge(count: 3)
                             
                             Image(systemName: "envelope.fill")
                                 .font(.title)
-                                .foregroundColor(.white)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                                 .glassNotificationBadge(count: 12, style: .info)
                             
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.title)
-                                .foregroundColor(.white)
+                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                                 .glassNotificationBadge(count: 1, style: .warning)
                         }
                     }
                     
                     Divider()
-                        .background(Color.white.opacity(0.3))
+                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
                     
                     // Badge on cards
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Badges on Cards")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                         
-                        GlassCard(intensity: GlassIntensity.regular) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("12 West 18th Street")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                    
-                                    Text("5 active tasks")
-                                        .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
+                        // Card with badge
+                        HStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("12 West 18th Street")
+                                    .font(.headline)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                                 
-                                Spacer()
+                                Text("5 active tasks")
+                                    .font(.subheadline)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                             }
+                            
+                            Spacer()
                         }
+                        .padding()
+                        .francoDarkCardBackground(cornerRadius: 12)
                         .glassBadge("Onsite", icon: "location.fill", style: .success)
                         
-                        GlassCard(intensity: GlassIntensity.thin) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("HVAC Maintenance")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                    
-                                    Text("Due in 2 hours")
-                                        .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
+                        // Another card with badge
+                        HStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("HVAC Maintenance")
+                                    .font(.headline)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                                 
-                                Spacer()
+                                Text("Due in 2 hours")
+                                    .font(.subheadline)
+                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
                             }
+                            
+                            Spacer()
                         }
+                        .padding()
+                        .francoDarkCardBackground(cornerRadius: 12)
                         .glassBadge("Urgent", style: .danger, size: .large)
                     }
                 }
