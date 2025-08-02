@@ -1348,7 +1348,19 @@ class CameraViewModel: NSObject, ObservableObject {
     
     var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
-    private var captureCompletion: ((UIImage?) -> Void)?
+    private var captureCompletionHandler: ((UIImage?) -> Void)?
+    
+    // Thread-safe access to completion handler
+    private let completionQueue = DispatchQueue(label: "com.francosphere.camera.completion")
+    
+    private var captureCompletion: ((UIImage?) -> Void)? {
+        get {
+            completionQueue.sync { captureCompletionHandler }
+        }
+        set {
+            completionQueue.sync { captureCompletionHandler = newValue }
+        }
+    }
     
     override init() {
         super.init()
@@ -1438,15 +1450,21 @@ class CameraViewModel: NSObject, ObservableObject {
 // MARK: - Camera Delegate
 
 extension CameraViewModel: AVCapturePhotoCaptureDelegate {
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    nonisolated func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard error == nil,
               let imageData = photo.fileDataRepresentation(),
               let image = UIImage(data: imageData) else {
-            captureCompletion?(nil)
+            Task { @MainActor [weak self] in
+                self?.captureCompletion?(nil)
+                self?.captureCompletion = nil
+            }
             return
         }
         
-        captureCompletion?(image)
+        Task { @MainActor [weak self] in
+            self?.captureCompletion?(image)
+            self?.captureCompletion = nil
+        }
     }
 }
 
@@ -1524,7 +1542,7 @@ struct ImagePickerFallback: View {
             }
         }
         .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(image: $inputImage)
+            UnifiedImagePicker(image: $inputImage)
         }
         .onChange(of: inputImage) { newImage in
             if let newImage = newImage {
@@ -1539,9 +1557,9 @@ struct ImagePickerFallback: View {
     }
 }
 
-// MARK: - Image Picker
+// MARK: - Unified Image Picker (Renamed to avoid conflicts)
 
-struct ImagePicker: UIViewControllerRepresentable {
+struct UnifiedImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
     @Environment(\.dismiss) private var dismiss
     
@@ -1559,9 +1577,9 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: ImagePicker
+        let parent: UnifiedImagePicker
         
-        init(_ parent: ImagePicker) {
+        init(_ parent: UnifiedImagePicker) {
             self.parent = parent
         }
         
