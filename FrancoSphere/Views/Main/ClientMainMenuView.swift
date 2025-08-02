@@ -1,18 +1,11 @@
 //
 //  ClientMainMenuView.swift
-//  FrancoSphere
-//
-//  Created by Shawn Magloire on 8/2/25.
-//
-
-
-//
-//  ClientDashboardSupportingViews.swift
 //  FrancoSphere v6.0
 //
-//  ✅ UNIFIED: Consistent Dark Elegance theme
-//  ✅ COMPREHENSIVE: All supporting views for ClientDashboard
-//  ✅ REAL-TIME: Live data updates throughout
+//  ✅ REFACTORED: Aligned with CoreTypes
+//  ✅ FIXED: No duplicate declarations
+//  ✅ NAMESPACED: Prefixed components to avoid conflicts
+//  ✅ INTEGRATED: Works with ClientDashboard architecture
 //
 
 import SwiftUI
@@ -20,30 +13,30 @@ import MapKit
 
 // MARK: - Client Main Menu View
 
-struct ClientMainMenuView: View {
+public struct ClientMainMenuView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var contextEngine = ClientContextEngine.shared
     
-    var body: some View {
+    public var body: some View {
         NavigationView {
             List {
                 // Portfolio Section
                 Section("Portfolio") {
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "building.2",
                         title: "Buildings",
                         subtitle: "\(contextEngine.clientBuildings.count) properties",
                         color: FrancoSphereDesign.DashboardColors.clientPrimary
                     )
                     
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "chart.pie",
                         title: "Analytics",
                         subtitle: "Performance insights",
                         color: FrancoSphereDesign.DashboardColors.info
                     )
                     
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "doc.text",
                         title: "Reports",
                         subtitle: "Monthly summaries",
@@ -54,14 +47,16 @@ struct ClientMainMenuView: View {
                 
                 // Compliance Section
                 Section("Compliance") {
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "checkmark.shield",
                         title: "Compliance Dashboard",
                         subtitle: "\(Int(contextEngine.complianceOverview.overallScore * 100))% compliant",
-                        color: contextEngine.complianceOverview.overallScore > 0.9 ? FrancoSphereDesign.DashboardColors.compliant : FrancoSphereDesign.DashboardColors.warning
+                        color: contextEngine.complianceOverview.overallScore > 0.9 ?
+                            FrancoSphereDesign.DashboardColors.compliant :
+                            FrancoSphereDesign.DashboardColors.warning
                     )
                     
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "doc.badge.clock",
                         title: "Audit History",
                         subtitle: "Past inspections",
@@ -72,32 +67,35 @@ struct ClientMainMenuView: View {
                 
                 // Communication Section
                 Section("Communication") {
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "message",
                         title: "Messages",
                         subtitle: "Team communication",
                         color: FrancoSphereDesign.DashboardColors.info
                     )
                     
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "bell",
                         title: "Notifications",
-                        subtitle: contextEngine.realtimeAlerts.isEmpty ? "No new alerts" : "\(contextEngine.realtimeAlerts.count) new",
-                        color: contextEngine.criticalAlerts.isEmpty ? FrancoSphereDesign.DashboardColors.inactive : FrancoSphereDesign.DashboardColors.warning
+                        subtitle: contextEngine.realtimeAlerts.isEmpty ?
+                            "No new alerts" : "\(contextEngine.realtimeAlerts.count) new",
+                        color: contextEngine.criticalAlerts.isEmpty ?
+                            FrancoSphereDesign.DashboardColors.inactive :
+                            FrancoSphereDesign.DashboardColors.warning
                     )
                 }
                 .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
                 
                 // Support Section
                 Section("Support") {
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "questionmark.circle",
                         title: "Help Center",
                         subtitle: "FAQs and guides",
                         color: FrancoSphereDesign.DashboardColors.tertiaryText
                     )
                     
-                    MenuRow(
+                    ClientMenuRow(
                         icon: "gear",
                         title: "Settings",
                         subtitle: "Account preferences",
@@ -125,29 +123,29 @@ struct ClientMainMenuView: View {
 
 // MARK: - Client Buildings List View
 
-struct ClientBuildingsListView: View {
-    let buildings: [NamedCoordinate]
+public struct ClientBuildingsListView: View {
+    let buildings: [CoreTypes.NamedCoordinate]
     let performanceMap: [String: Double]
-    let onSelectBuilding: (NamedCoordinate) -> Void
+    let onSelectBuilding: (CoreTypes.NamedCoordinate) -> Void
     
     @State private var searchText = ""
     @State private var sortOption: SortOption = .performance
     @State private var filterOption: FilterOption = .all
     
-    enum SortOption: String, CaseIterable {
+    public enum SortOption: String, CaseIterable {
         case name = "Name"
         case performance = "Performance"
         case location = "Location"
     }
     
-    enum FilterOption: String, CaseIterable {
+    public enum FilterOption: String, CaseIterable {
         case all = "All"
         case highPerformance = "High Performance"
         case needsAttention = "Needs Attention"
         case critical = "Critical"
     }
     
-    private var filteredBuildings: [NamedCoordinate] {
+    private var filteredBuildings: [CoreTypes.NamedCoordinate] {
         let filtered = buildings.filter { building in
             searchText.isEmpty || building.name.localizedCaseInsensitiveContains(searchText)
         }.filter { building in
@@ -178,7 +176,7 @@ struct ClientBuildingsListView: View {
         }
     }
     
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             // Search and filters
             VStack(spacing: 12) {
@@ -201,7 +199,7 @@ struct ClientBuildingsListView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(FilterOption.allCases, id: \.self) { option in
-                            FilterChip(
+                            ClientFilterChip(
                                 title: option.rawValue,
                                 isSelected: filterOption == option,
                                 color: chipColor(for: option),
@@ -246,7 +244,7 @@ struct ClientBuildingsListView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(filteredBuildings, id: \.id) { building in
-                        BuildingListRow(
+                        ClientBuildingListRow(
                             building: building,
                             performance: performanceMap[building.id] ?? 0,
                             onTap: { onSelectBuilding(building) }
@@ -308,9 +306,9 @@ struct ClientBuildingsListView: View {
     }
 }
 
-// MARK: - Client Compliance Detail View
+// MARK: - Client Compliance Overview (renamed from ClientComplianceDetailView)
 
-struct ClientComplianceDetailView: View {
+public struct ClientComplianceOverview: View {
     let complianceOverview: CoreTypes.ComplianceOverview
     let issues: [CoreTypes.ComplianceIssue]
     let selectedIssue: CoreTypes.ComplianceIssue?
@@ -327,31 +325,31 @@ struct ClientComplianceDetailView: View {
         }
     }
     
-    var body: some View {
+    public var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 // Compliance Score Card
-                ComplianceScoreCard(overview: complianceOverview)
+                ClientComplianceScoreCard(overview: complianceOverview)
                 
                 // Quick Stats
                 HStack(spacing: 12) {
-                    QuickStatCard(
+                    ClientQuickStatCard(
                         title: "Open Issues",
-                        value: "\(complianceOverview.openIssues)",
+                        value: "\(filteredIssues.filter { $0.status == .open }.count)",
                         icon: "exclamationmark.circle",
                         color: FrancoSphereDesign.DashboardColors.warning
                     )
                     
-                    QuickStatCard(
+                    ClientQuickStatCard(
                         title: "Critical",
                         value: "\(complianceOverview.criticalViolations)",
                         icon: "exclamationmark.triangle.fill",
                         color: FrancoSphereDesign.DashboardColors.critical
                     )
                     
-                    QuickStatCard(
-                        title: "Next Audit",
-                        value: complianceOverview.nextAudit?.formatted(.dateTime.day().month()) ?? "TBD",
+                    ClientQuickStatCard(
+                        title: "Pending",
+                        value: "\(complianceOverview.pendingInspections)",
                         icon: "calendar",
                         color: FrancoSphereDesign.DashboardColors.info
                     )
@@ -366,17 +364,17 @@ struct ClientComplianceDetailView: View {
                     // Severity filter
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            FilterChip(
+                            ClientFilterChip(
                                 title: "All Severities",
                                 isSelected: selectedSeverity == nil,
                                 action: { selectedSeverity = nil }
                             )
                             
                             ForEach(CoreTypes.ComplianceSeverity.allCases, id: \.self) { severity in
-                                FilterChip(
+                                ClientFilterChip(
                                     title: severity.rawValue,
                                     isSelected: selectedSeverity == severity,
-                                    color: FrancoSphereDesign.EnumColors.complianceSeverity(severity),
+                                    color: severityColor(severity),
                                     action: { selectedSeverity = severity }
                                 )
                             }
@@ -386,17 +384,17 @@ struct ClientComplianceDetailView: View {
                     // Status filter
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            FilterChip(
+                            ClientFilterChip(
                                 title: "All Statuses",
                                 isSelected: selectedStatus == nil,
                                 action: { selectedStatus = nil }
                             )
                             
                             ForEach([CoreTypes.ComplianceStatus.open, .inProgress, .resolved], id: \.self) { status in
-                                FilterChip(
+                                ClientFilterChip(
                                     title: status.rawValue,
                                     isSelected: selectedStatus == status,
-                                    color: FrancoSphereDesign.EnumColors.complianceStatus(status),
+                                    color: statusColor(status),
                                     action: { selectedStatus = status }
                                 )
                             }
@@ -421,7 +419,7 @@ struct ClientComplianceDetailView: View {
                     }
                     
                     ForEach(filteredIssues) { issue in
-                        ComplianceIssueCard(issue: issue) {
+                        ClientComplianceIssueCard(issue: issue) {
                             detailIssue = issue
                             showingIssueDetail = true
                         }
@@ -433,7 +431,7 @@ struct ClientComplianceDetailView: View {
         .background(FrancoSphereDesign.DashboardColors.baseBackground)
         .sheet(isPresented: $showingIssueDetail) {
             if let issue = detailIssue {
-                ComplianceIssueDetailSheet(issue: issue)
+                ClientComplianceIssueDetailSheet(issue: issue)
             }
         }
         .onAppear {
@@ -443,11 +441,29 @@ struct ClientComplianceDetailView: View {
             }
         }
     }
+    
+    private func severityColor(_ severity: CoreTypes.ComplianceSeverity) -> Color {
+        switch severity {
+        case .low: return FrancoSphereDesign.DashboardColors.info
+        case .medium: return FrancoSphereDesign.DashboardColors.warning
+        case .high: return FrancoSphereDesign.DashboardColors.critical
+        case .critical: return FrancoSphereDesign.DashboardColors.violation
+        }
+    }
+    
+    private func statusColor(_ status: CoreTypes.ComplianceStatus) -> Color {
+        switch status {
+        case .open: return FrancoSphereDesign.DashboardColors.warning
+        case .inProgress: return FrancoSphereDesign.DashboardColors.info
+        case .resolved: return FrancoSphereDesign.DashboardColors.success
+        default: return FrancoSphereDesign.DashboardColors.inactive
+        }
+    }
 }
 
-// MARK: - Supporting Components
+// MARK: - Supporting Components (All Prefixed)
 
-struct MenuRow: View {
+struct ClientMenuRow: View {
     let icon: String
     let title: String
     let subtitle: String
@@ -481,7 +497,7 @@ struct MenuRow: View {
     }
 }
 
-struct FilterChip: View {
+struct ClientFilterChip: View {
     let title: String
     let isSelected: Bool
     var color: Color = FrancoSphereDesign.DashboardColors.clientPrimary
@@ -508,8 +524,8 @@ struct FilterChip: View {
     }
 }
 
-struct BuildingListRow: View {
-    let building: NamedCoordinate
+struct ClientBuildingListRow: View {
+    let building: CoreTypes.NamedCoordinate
     let performance: Double
     let onTap: () -> Void
     
@@ -597,7 +613,7 @@ struct BuildingListRow: View {
     }
 }
 
-struct ComplianceScoreCard: View {
+struct ClientComplianceScoreCard: View {
     let overview: CoreTypes.ComplianceOverview
     
     private var scoreColor: Color {
@@ -641,16 +657,14 @@ struct ComplianceScoreCard: View {
                 .frame(width: 300)
             }
             
-            // Last audit info
-            if let lastAudit = overview.lastAudit {
-                HStack {
-                    Label(
-                        "Last Audit: \(lastAudit.formatted(.dateTime.day().month()))",
-                        systemImage: "checkmark.seal"
-                    )
-                    .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-                }
+            // Last updated info
+            HStack {
+                Label(
+                    "Updated: \(overview.lastUpdated.formatted(.dateTime.day().month()))",
+                    systemImage: "checkmark.seal"
+                )
+                .font(.caption)
+                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
             }
         }
         .padding(24)
@@ -659,7 +673,7 @@ struct ComplianceScoreCard: View {
     }
 }
 
-struct QuickStatCard: View {
+struct ClientQuickStatCard: View {
     let title: String
     let value: String
     let icon: String
@@ -693,7 +707,7 @@ struct QuickStatCard: View {
     }
 }
 
-struct ComplianceIssueCard: View {
+struct ClientComplianceIssueCard: View {
     let issue: CoreTypes.ComplianceIssue
     let onTap: () -> Void
     
@@ -705,13 +719,13 @@ struct ComplianceIssueCard: View {
                     // Severity indicator
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
+                            .fill(severityColor)
                             .frame(width: 8, height: 8)
                         
                         Text(issue.severity.rawValue.uppercased())
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
+                            .foregroundColor(severityColor)
                     }
                     
                     Spacer()
@@ -724,9 +738,9 @@ struct ComplianceIssueCard: View {
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(FrancoSphereDesign.EnumColors.complianceStatus(issue.status).opacity(0.2))
+                                .fill(statusColor.opacity(0.2))
                         )
-                        .foregroundColor(FrancoSphereDesign.EnumColors.complianceStatus(issue.status))
+                        .foregroundColor(statusColor)
                 }
                 
                 // Title and description
@@ -754,7 +768,9 @@ struct ComplianceIssueCard: View {
                     if let dueDate = issue.dueDate {
                         Label(dueDate.formatted(.dateTime.day().month()), systemImage: "calendar")
                             .font(.caption2)
-                            .foregroundColor(Date() > dueDate ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(Date() > dueDate ?
+                                FrancoSphereDesign.DashboardColors.critical :
+                                FrancoSphereDesign.DashboardColors.secondaryText)
                     }
                     
                     Spacer()
@@ -769,9 +785,27 @@ struct ComplianceIssueCard: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
+    
+    private var severityColor: Color {
+        switch issue.severity {
+        case .low: return FrancoSphereDesign.DashboardColors.info
+        case .medium: return FrancoSphereDesign.DashboardColors.warning
+        case .high: return FrancoSphereDesign.DashboardColors.critical
+        case .critical: return FrancoSphereDesign.DashboardColors.violation
+        }
+    }
+    
+    private var statusColor: Color {
+        switch issue.status {
+        case .open: return FrancoSphereDesign.DashboardColors.warning
+        case .inProgress: return FrancoSphereDesign.DashboardColors.info
+        case .resolved: return FrancoSphereDesign.DashboardColors.success
+        default: return FrancoSphereDesign.DashboardColors.inactive
+        }
+    }
 }
 
-struct ComplianceIssueDetailSheet: View {
+struct ClientComplianceIssueDetailSheet: View {
     let issue: CoreTypes.ComplianceIssue
     @Environment(\.dismiss) private var dismiss
     
@@ -785,7 +819,7 @@ struct ComplianceIssueDetailSheet: View {
                             Label(issue.severity.rawValue.uppercased(), systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption)
                                 .fontWeight(.bold)
-                                .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
+                                .foregroundColor(severityColor)
                             
                             Spacer()
                             
@@ -796,7 +830,7 @@ struct ComplianceIssueDetailSheet: View {
                                 .padding(.vertical, 6)
                                 .background(
                                     Capsule()
-                                        .fill(FrancoSphereDesign.EnumColors.complianceStatus(issue.status))
+                                        .fill(statusColor)
                                 )
                                 .foregroundColor(.white)
                         }
@@ -815,12 +849,12 @@ struct ComplianceIssueDetailSheet: View {
                     
                     // Details section
                     VStack(alignment: .leading, spacing: 16) {
-                        DetailRow(label: "Building", value: issue.buildingName ?? "Not specified", icon: "building.2")
-                        DetailRow(label: "Type", value: issue.type.rawValue, icon: "tag")
-                        DetailRow(label: "Reported", value: issue.reportedDate.formatted(.dateTime.day().month().year()), icon: "calendar")
+                        ClientDetailRow(label: "Building", value: issue.buildingName ?? "Not specified", icon: "building.2")
+                        ClientDetailRow(label: "Type", value: issue.type.rawValue, icon: "tag")
+                        ClientDetailRow(label: "Reported", value: issue.reportedDate.formatted(.dateTime.day().month().year()), icon: "calendar")
                         
                         if let dueDate = issue.dueDate {
-                            DetailRow(
+                            ClientDetailRow(
                                 label: "Due Date",
                                 value: dueDate.formatted(.dateTime.day().month().year()),
                                 icon: "clock",
@@ -829,7 +863,7 @@ struct ComplianceIssueDetailSheet: View {
                         }
                         
                         if let assignedTo = issue.assignedTo {
-                            DetailRow(label: "Assigned To", value: assignedTo, icon: "person")
+                            ClientDetailRow(label: "Assigned To", value: assignedTo, icon: "person")
                         }
                     }
                     .padding()
@@ -865,9 +899,27 @@ struct ComplianceIssueDetailSheet: View {
         }
         .preferredColorScheme(.dark)
     }
+    
+    private var severityColor: Color {
+        switch issue.severity {
+        case .low: return FrancoSphereDesign.DashboardColors.info
+        case .medium: return FrancoSphereDesign.DashboardColors.warning
+        case .high: return FrancoSphereDesign.DashboardColors.critical
+        case .critical: return FrancoSphereDesign.DashboardColors.violation
+        }
+    }
+    
+    private var statusColor: Color {
+        switch issue.status {
+        case .open: return FrancoSphereDesign.DashboardColors.warning
+        case .inProgress: return FrancoSphereDesign.DashboardColors.info
+        case .resolved: return FrancoSphereDesign.DashboardColors.success
+        default: return FrancoSphereDesign.DashboardColors.inactive
+        }
+    }
 }
 
-struct DetailRow: View {
+struct ClientDetailRow: View {
     let label: String
     let value: String
     let icon: String
@@ -889,6 +941,7 @@ struct DetailRow: View {
     }
 }
 
+// Additional helper views
 struct ClientProfileView: View {
     @Environment(\.dismiss) private var dismiss
     
@@ -907,47 +960,60 @@ struct ClientProfileView: View {
     }
 }
 
+struct ClientBuildingDetailView: View {
+    let building: CoreTypes.NamedCoordinate
+    
+    var body: some View {
+        Text("Building Detail: \(building.name)")
+    }
+}
+
 // MARK: - Preview Provider
 
-#Preview("Client Main Menu") {
-    ClientMainMenuView()
-        .preferredColorScheme(.dark)
-}
-
-#Preview("Client Buildings List") {
-    ClientBuildingsListView(
-        buildings: [
-            NamedCoordinate(
-                id: "1",
-                name: "123 Main Street",
-                address: "123 Main St, New York, NY",
-                latitude: 40.7128,
-                longitude: -74.0060,
-                type: .office
-            ),
-            NamedCoordinate(
-                id: "2",
-                name: "456 Park Avenue",
-                address: "456 Park Ave, New York, NY",
-                latitude: 40.7589,
-                longitude: -73.9851,
-                type: .residential
+struct ClientMainMenuView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            ClientMainMenuView()
+                .preferredColorScheme(.dark)
+                .previewDisplayName("Main Menu")
+            
+            ClientBuildingsListView(
+                buildings: [
+                    CoreTypes.NamedCoordinate(
+                        id: "1",
+                        name: "123 Main Street",
+                        address: "123 Main St, New York, NY",
+                        latitude: 40.7128,
+                        longitude: -74.0060
+                    ),
+                    CoreTypes.NamedCoordinate(
+                        id: "2",
+                        name: "456 Park Avenue",
+                        address: "456 Park Ave, New York, NY",
+                        latitude: 40.7589,
+                        longitude: -73.9851
+                    )
+                ],
+                performanceMap: [
+                    "1": 0.85,
+                    "2": 0.65
+                ],
+                onSelectBuilding: { _ in }
             )
-        ],
-        performanceMap: [
-            "1": 0.85,
-            "2": 0.65
-        ],
-        onSelectBuilding: { _ in }
-    )
-    .preferredColorScheme(.dark)
-}
-
-#Preview("Client Compliance Detail") {
-    ClientComplianceDetailView(
-        complianceOverview: .previewWithViolations,
-        issues: CoreTypes.ComplianceIssue.previewSet,
-        selectedIssue: nil
-    )
-    .preferredColorScheme(.dark)
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Buildings List")
+            
+            ClientComplianceOverview(
+                complianceOverview: CoreTypes.ComplianceOverview(
+                    overallScore: 0.85,
+                    criticalViolations: 2,
+                    pendingInspections: 3
+                ),
+                issues: CoreTypes.ComplianceIssue.previewSet,
+                selectedIssue: nil
+            )
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Compliance Overview")
+        }
+    }
 }

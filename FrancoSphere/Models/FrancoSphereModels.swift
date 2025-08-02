@@ -144,6 +144,20 @@ extension CoreTypes.ContextualTask {
     }
 }
 
+// MARK: - TaskUrgency Extension for Priority Value
+extension CoreTypes.TaskUrgency {
+    var priorityValue: Int {
+        switch self {
+        case .low: return 1
+        case .medium: return 2
+        case .high: return 3
+        case .urgent: return 4
+        case .critical: return 5
+        case .emergency: return 6
+        }
+    }
+}
+
 // MARK: - Utility Functions
 
 /// Calculate distance between two coordinates in miles
@@ -470,14 +484,37 @@ extension CoreTypes {
         )
     ]
     
-    /// Kevin's typical daily route (from OperationalDataManager)
-    static let kevinDailyRoute = WorkerDailyRoute(
-        id: "route_kevin_001",
-        workerId: "4",
-        date: Date(),
-        buildings: ["10", "6", "14", "3", "13", "5", "9"], // Perry St, Rubin, 17th St corridor
-        estimatedDuration: 39600 // 11 hours (6am-5pm)
-    )
+    /// Kevin's typical daily route (from OperationalDataManager) - FIXED
+    static let kevinDailyRoute: CoreTypes.WorkerDailyRoute = {
+        // Map building IDs to actual NamedCoordinate objects
+        let buildingIds = ["10", "6", "14", "3", "13", "5", "9"]
+        let routeBuildings = buildingIds.compactMap { buildingId in
+            productionBuildings.first { $0.id == buildingId }
+        }
+        
+        // Create route stops from the buildings
+        let stops = routeBuildings.enumerated().map { index, building in
+            CoreTypes.RouteStop(
+                buildingId: building.id,
+                buildingName: building.name,
+                address: building.address,
+                latitude: building.latitude,
+                longitude: building.longitude,
+                sequenceNumber: index + 1,
+                tasks: [], // Tasks would be populated dynamically
+                estimatedDuration: 3600 // 1 hour per building average
+            )
+        }
+        
+        return CoreTypes.WorkerDailyRoute(
+            id: "route_kevin_001",
+            workerId: "4",
+            date: Date(),
+            stops: stops,
+            buildings: routeBuildings,
+            estimatedDuration: 39600 // 11 hours (6am-5pm)
+        )
+    }()
     
     /// Sample building metrics based on real performance data
     static let rubinMuseumMetrics = BuildingMetrics(

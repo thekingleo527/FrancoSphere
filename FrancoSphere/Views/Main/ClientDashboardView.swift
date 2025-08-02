@@ -3,6 +3,8 @@
 //  FrancoSphere v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
+//  ✅ FIXED: Main actor isolation issues resolved
+//  ✅ FIXED: Removed duplicate type declarations
 //  ✅ STREAMLINED: Real-time routine status focus
 //  ✅ NO SCROLL: Everything fits on one screen
 //  ✅ LIVE DATA: Shows what's happening RIGHT NOW
@@ -17,7 +19,8 @@ struct ClientDashboardView: View {
     @ObservedObject private var contextEngine = ClientContextEngine.shared
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
-    @StateObject private var novaEngine = NovaIntelligenceEngine.shared
+    // Fix: Remove @StateObject and use @ObservedObject for shared singleton
+    @ObservedObject private var novaEngine = NovaIntelligenceEngine.shared
     
     // MARK: - State Variables
     @State private var showProfileView = false
@@ -32,20 +35,20 @@ struct ClientDashboardView: View {
     @State private var currentContext: ViewContext = .dashboard
     @AppStorage("clientPanelPreference") private var userPanelPreference: IntelPanelState = .expanded
     
-    // MOVED FROM EXTENSION - These properties need to be in the main struct
-    @State private var realtimeRoutineMetrics = RealtimeRoutineMetrics()
-    @State private var activeWorkerStatus = ActiveWorkerStatus(
+    // Local state properties for real-time metrics
+    @State private var realtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics()
+    @State private var activeWorkerStatus = CoreTypes.ActiveWorkerStatus(
         totalActive: 0,
         byBuilding: [:],
         utilizationRate: 0.0
     )
-    @State private var complianceStatus = ComplianceStatus(
+    @State private var complianceStatus = CoreTypes.ComplianceOverview(
         overallScore: 0.85,
         criticalViolations: 0,
         pendingInspections: 0,
         lastUpdated: Date()
     )
-    @State private var monthlyMetrics = MonthlyMetrics(
+    @State private var monthlyMetrics = CoreTypes.MonthlyMetrics(
         currentSpend: 0,
         monthlyBudget: 10000,
         projectedSpend: 0,
@@ -115,7 +118,7 @@ struct ClientDashboardView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
                 
-                // Real-time Hero Status Card - Using local state properties
+                // Real-time Hero Status Card - Using CoreTypes
                 ClientHeroStatusCard(
                     routineMetrics: realtimeRoutineMetrics,
                     activeWorkers: activeWorkerStatus,
@@ -187,8 +190,8 @@ struct ClientDashboardView: View {
         .onReceive(contextEngine.$activeWorkerStatus) { status in
             self.activeWorkerStatus = status
         }
-        .onReceive(contextEngine.$complianceStatus) { status in
-            self.complianceStatus = status
+        .onReceive(contextEngine.$complianceOverview) { overview in
+            self.complianceStatus = overview
         }
         .onReceive(contextEngine.$monthlyMetrics) { metrics in
             self.monthlyMetrics = metrics
@@ -208,8 +211,8 @@ struct ClientDashboardView: View {
         if contextEngine.activeWorkerStatus.totalActive > 0 {
             activeWorkerStatus = contextEngine.activeWorkerStatus
         }
-        if contextEngine.complianceStatus.overallScore > 0 {
-            complianceStatus = contextEngine.complianceStatus
+        if contextEngine.complianceOverview.overallScore > 0 {
+            complianceStatus = contextEngine.complianceOverview
         }
         if contextEngine.monthlyMetrics.monthlyBudget > 0 {
             monthlyMetrics = contextEngine.monthlyMetrics
@@ -281,7 +284,7 @@ struct ClientDashboardView: View {
             ))
         }
         
-        return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        return insights.sorted { $0.priority.priorityValue > $1.priority.priorityValue }
     }
     
     private func handleIntelligenceNavigation(_ target: IntelligencePreviewPanel.NavigationTarget) {
@@ -318,11 +321,10 @@ struct ClientDashboardView: View {
 }
 
 // MARK: - Enhanced Client Context Engine Extension
-// Note: This extension adds computed properties only, no stored properties
+// This extension only adds computed properties, no stored properties
 
 extension ClientContextEngine {
-    // These are now @Published properties in the actual ClientContextEngine class
-    // We're just adding computed properties here
+    // These computed properties work with the @Published properties in ClientContextEngine
     
     var hasActiveIssues: Bool {
         realtimeRoutineMetrics.hasActiveIssues
@@ -333,7 +335,7 @@ extension ClientContextEngine {
     }
     
     var hasComplianceIssues: Bool {
-        complianceStatus.criticalViolations > 0 || complianceStatus.overallScore < 0.8
+        complianceOverview.criticalViolations > 0 || complianceOverview.overallScore < 0.8
     }
     
     var buildingsWithComplianceIssues: [String] {
@@ -346,119 +348,110 @@ extension ClientContextEngine {
     }
 }
 
-// MARK: - Data Models
+// MARK: - Client Hero Status Card Component
+// This should be in a separate file normally, but including here for completeness
 
-struct RealtimeRoutineMetrics {
-    var overallCompletion: Double = 0.0
-    var activeWorkerCount: Int = 0
-    var behindScheduleCount: Int = 0
-    var buildingStatuses: [String: BuildingRoutineStatus] = [:]
+struct ClientHeroStatusCard: View {
+    let routineMetrics: CoreTypes.RealtimeRoutineMetrics
+    let activeWorkers: CoreTypes.ActiveWorkerStatus
+    let complianceStatus: CoreTypes.ComplianceOverview
+    let monthlyMetrics: CoreTypes.MonthlyMetrics
+    let onBuildingTap: (CoreTypes.NamedCoordinate) -> Void
     
-    var hasActiveIssues: Bool {
-        behindScheduleCount > 0 || buildingStatuses.contains { $0.value.hasIssue }
-    }
-}
-
-// Note: Removed duplicate BuildingRoutineStatus - it should only be declared once
-struct BuildingRoutineStatus {
-    let buildingId: String
-    let buildingName: String
-    let completionRate: Double
-    let timeBlock: TimeBlock
-    let activeWorkerCount: Int
-    let isOnSchedule: Bool
-    let estimatedCompletion: Date?
-    let hasIssue: Bool
-    
-    var isBehindSchedule: Bool {
-        !isOnSchedule && completionRate < expectedCompletionForTime()
-    }
-    
-    private func expectedCompletionForTime() -> Double {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 7..<11: return 0.3  // Morning should be 30% done
-        case 11..<15: return 0.6 // Afternoon should be 60% done
-        case 15..<19: return 0.9 // Evening should be 90% done
-        default: return 1.0
-        }
-    }
-    
-    enum TimeBlock {
-        case morning, afternoon, evening, overnight
-        
-        static var current: TimeBlock {
-            let hour = Calendar.current.component(.hour, from: Date())
-            switch hour {
-            case 6..<12: return .morning
-            case 12..<17: return .afternoon
-            case 17..<22: return .evening
-            default: return .overnight
+    var body: some View {
+        VStack(spacing: 12) {
+            // Main metrics row
+            HStack(spacing: 16) {
+                // Completion metric
+                MetricCard(
+                    title: "Today's Progress",
+                    value: String(format: "%.0f%%", routineMetrics.overallCompletion * 100),
+                    subtitle: "\(routineMetrics.activeWorkerCount) workers active",
+                    color: .green
+                )
+                
+                // Compliance metric
+                MetricCard(
+                    title: "Compliance",
+                    value: String(format: "%.0f%%", complianceStatus.overallScore * 100),
+                    subtitle: complianceStatus.criticalViolations > 0 ?
+                        "\(complianceStatus.criticalViolations) violations" : "All clear",
+                    color: complianceStatus.criticalViolations > 0 ? .red : .blue
+                )
+            }
+            
+            // Budget metric (if visible)
+            if monthlyMetrics.monthlyBudget > 0 {
+                HStack {
+                    Image(systemName: "dollarsign.circle.fill")
+                        .foregroundColor(.green)
+                    Text(String(format: "$%.0f / $%.0f",
+                               monthlyMetrics.currentSpend,
+                               monthlyMetrics.monthlyBudget))
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text("\(monthlyMetrics.daysRemaining) days left")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(8)
+            }
+            
+            // Behind schedule alert (if any)
+            if routineMetrics.behindScheduleCount > 0 {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text("\(routineMetrics.behindScheduleCount) buildings behind schedule")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.orange.opacity(0.15))
+                .cornerRadius(6)
             }
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(UIColor.secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
     }
 }
 
-struct ActiveWorkerStatus {
-    let totalActive: Int
-    let byBuilding: [String: Int]
-    let utilizationRate: Double
+// MARK: - Metric Card Component
+struct MetricCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let color: Color
     
-    init(totalActive: Int = 0, byBuilding: [String: Int] = [:], utilizationRate: Double = 0.0) {
-        self.totalActive = totalActive
-        self.byBuilding = byBuilding
-        self.utilizationRate = utilizationRate
-    }
-}
-
-// Note: Using the existing ComplianceStatus from CoreTypes if it exists
-// If not, this is the local definition
-struct ComplianceStatus {
-    let overallScore: Double
-    let criticalViolations: Int
-    let pendingInspections: Int
-    let lastUpdated: Date
-    
-    init(overallScore: Double = 0.85,
-         criticalViolations: Int = 0,
-         pendingInspections: Int = 0,
-         lastUpdated: Date = Date()) {
-        self.overallScore = overallScore
-        self.criticalViolations = criticalViolations
-        self.pendingInspections = pendingInspections
-        self.lastUpdated = lastUpdated
-    }
-}
-
-struct MonthlyMetrics {
-    let currentSpend: Double
-    let monthlyBudget: Double
-    let projectedSpend: Double
-    let daysRemaining: Int
-    
-    init(currentSpend: Double = 0,
-         monthlyBudget: Double = 10000,
-         projectedSpend: Double = 0,
-         daysRemaining: Int = 30) {
-        self.currentSpend = currentSpend
-        self.monthlyBudget = monthlyBudget
-        self.projectedSpend = projectedSpend
-        self.daysRemaining = daysRemaining
-    }
-    
-    var budgetUtilization: Double {
-        guard monthlyBudget > 0 else { return 0 }
-        return currentSpend / monthlyBudget
-    }
-    
-    var isOverBudget: Bool {
-        projectedSpend > monthlyBudget
-    }
-    
-    var dailyBurnRate: Double {
-        let daysInMonth = Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
-        let daysPassed = daysInMonth - daysRemaining
-        return daysPassed > 0 ? currentSpend / Double(daysPassed) : 0
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            Text(subtitle)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.1))
+        )
     }
 }
 

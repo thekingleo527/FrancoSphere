@@ -2,19 +2,20 @@
 //  ClientHeroStatusCard.swift
 //  FrancoSphere v6.0
 //
-//  Hero status card specifically designed for client dashboard
-//  Shows real-time routine status across all client buildings
+//  ✅ FIXED: All type conflicts resolved
+//  ✅ NAMESPACED: Using CoreTypes for shared models
+//  ✅ UNIQUE: Component names are prefixed to avoid conflicts
 //
 
 import SwiftUI
 import MapKit
 
 struct ClientHeroStatusCard: View {
-    // Real-time data inputs
-    let routineMetrics: RealtimeRoutineMetrics
-    let activeWorkers: ActiveWorkerStatus
-    let complianceStatus: ClientComplianceStatus  // Renamed to avoid ambiguity
-    let monthlyMetrics: MonthlyMetrics
+    // Real-time data inputs using CoreTypes
+    let routineMetrics: CoreTypes.RealtimeRoutineMetrics
+    let activeWorkers: CoreTypes.ActiveWorkerStatus
+    let complianceStatus: CoreTypes.ComplianceOverview
+    let monthlyMetrics: CoreTypes.MonthlyMetrics
     
     // Callback for building tap
     let onBuildingTap: (CoreTypes.NamedCoordinate) -> Void
@@ -52,10 +53,9 @@ struct ClientHeroStatusCard: View {
         }
     }
     
-    private var priorityBuildings: [ClientBuildingRoutineStatus] {
+    private var priorityBuildings: [CoreTypes.BuildingRoutineStatus] {
         // Get buildings that need attention first
         routineMetrics.buildingStatuses.values
-            .map { ClientBuildingRoutineStatus(from: $0) }
             .sorted { b1, b2 in
                 // Priority order: behind schedule > low completion > alphabetical
                 if b1.isBehindSchedule != b2.isBehindSchedule {
@@ -128,14 +128,14 @@ struct ClientHeroStatusCard: View {
             
             // Overall status pill
             HStack(spacing: 12) {
-                StatusPill(
+                ClientStatusPill(
                     label: overallStatus.displayText,
                     color: statusColor,
                     icon: overallStatus.icon
                 )
                 
                 if routineMetrics.behindScheduleCount > 0 {
-                    StatusPill(
+                    ClientStatusPill(
                         label: "\(routineMetrics.behindScheduleCount) behind schedule",
                         color: FrancoSphereDesign.DashboardColors.warning,
                         icon: "exclamationmark.triangle.fill"
@@ -162,7 +162,7 @@ struct ClientHeroStatusCard: View {
             }
             
             ForEach(priorityBuildings, id: \.buildingId) { building in
-                BuildingStatusRow(
+                ClientBuildingStatusRow(
                     status: building,
                     onTap: {
                         if let coord = buildingToCoordinate(building.buildingId) {
@@ -178,21 +178,21 @@ struct ClientHeroStatusCard: View {
     
     private var metricsRow: some View {
         HStack(spacing: 12) {
-            MetricCard(
+            ClientMetricCard(
                 value: "\(Int(routineMetrics.overallCompletion * 100))%",
                 label: "Complete",
                 color: completionColor,
                 icon: "chart.pie.fill"
             )
             
-            MetricCard(
+            ClientMetricCard(
                 value: "\(activeWorkers.totalActive)",
                 label: "Active Workers",
                 color: FrancoSphereDesign.DashboardColors.info,
                 icon: "person.3.fill"
             )
             
-            MetricCard(
+            ClientMetricCard(
                 value: "\(Int(complianceStatus.overallScore * 100))%",
                 label: "Compliance",
                 color: complianceColor,
@@ -277,7 +277,7 @@ struct ClientHeroStatusCard: View {
     // MARK: - Helper Methods
     
     private func buildingToCoordinate(_ buildingId: String) -> CoreTypes.NamedCoordinate? {
-        // This would need to be implemented based on your data model
+        // This would be implemented based on your data source
         // For now, returning nil
         return nil
     }
@@ -332,10 +332,10 @@ struct ClientHeroStatusCard: View {
     }
 }
 
-// MARK: - Building Status Row Component
+// MARK: - Building Status Row Component (Prefixed)
 
-struct BuildingStatusRow: View {
-    let status: ClientBuildingRoutineStatus
+struct ClientBuildingStatusRow: View {
+    let status: CoreTypes.BuildingRoutineStatus
     let onTap: () -> Void
     
     private var timeBlockColor: Color {
@@ -462,12 +462,18 @@ struct BuildingStatusRow: View {
     }
 }
 
-// MARK: - Supporting Components
+// MARK: - Supporting Components (Prefixed to avoid conflicts)
 
-struct StatusPill: View {
+struct ClientStatusPill: View {
     let label: String
     let color: Color
     let icon: String?
+    
+    init(label: String, color: Color, icon: String? = nil) {
+        self.label = label
+        self.color = color
+        self.icon = icon
+    }
     
     var body: some View {
         HStack(spacing: 4) {
@@ -493,7 +499,7 @@ struct StatusPill: View {
     }
 }
 
-struct MetricCard: View {
+struct ClientMetricCard: View {
     let value: String
     let label: String
     let color: Color
@@ -519,143 +525,24 @@ struct MetricCard: View {
     }
 }
 
-// MARK: - Data Models (Client-specific to avoid ambiguity)
-
-struct RealtimeRoutineMetrics {
-    var overallCompletion: Double = 0.0
-    var activeWorkerCount: Int = 0
-    var behindScheduleCount: Int = 0
-    var buildingStatuses: [String: ClientBuildingRoutineStatus] = [:]
-    
-    var hasActiveIssues: Bool {
-        behindScheduleCount > 0 || buildingStatuses.contains { $0.value.hasIssue }
-    }
-}
-
-struct ClientBuildingRoutineStatus {
-    let buildingId: String
-    let buildingName: String
-    let completionRate: Double
-    let timeBlock: TimeBlock
-    let activeWorkerCount: Int
-    let isOnSchedule: Bool
-    let estimatedCompletion: Date?
-    let hasIssue: Bool
-    
-    var isBehindSchedule: Bool {
-        !isOnSchedule && completionRate < expectedCompletionForTime()
-    }
-    
-    private func expectedCompletionForTime() -> Double {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 7..<11: return 0.3  // Morning should be 30% done
-        case 11..<15: return 0.6 // Afternoon should be 60% done
-        case 15..<19: return 0.9 // Evening should be 90% done
-        default: return 1.0
-        }
-    }
-    
-    init(from status: ClientBuildingRoutineStatus) {
-        self.buildingId = status.buildingId
-        self.buildingName = status.buildingName
-        self.completionRate = status.completionRate
-        self.timeBlock = status.timeBlock
-        self.activeWorkerCount = status.activeWorkerCount
-        self.isOnSchedule = status.isOnSchedule
-        self.estimatedCompletion = status.estimatedCompletion
-        self.hasIssue = status.hasIssue
-    }
-    
-    init(
-        buildingId: String,
-        buildingName: String,
-        completionRate: Double,
-        activeWorkerCount: Int,
-        isOnSchedule: Bool,
-        estimatedCompletion: Date? = nil,
-        hasIssue: Bool = false
-    ) {
-        self.buildingId = buildingId
-        self.buildingName = buildingName
-        self.completionRate = completionRate
-        self.timeBlock = TimeBlock.current
-        self.activeWorkerCount = activeWorkerCount
-        self.isOnSchedule = isOnSchedule
-        self.estimatedCompletion = estimatedCompletion
-        self.hasIssue = hasIssue
-    }
-    
-    enum TimeBlock: String {
-        case morning = "morning"
-        case afternoon = "afternoon"
-        case evening = "evening"
-        case overnight = "overnight"
-        
-        static var current: TimeBlock {
-            let hour = Calendar.current.component(.hour, from: Date())
-            switch hour {
-            case 6..<12: return .morning
-            case 12..<17: return .afternoon
-            case 17..<22: return .evening
-            default: return .overnight
-            }
-        }
-    }
-}
-
-struct ActiveWorkerStatus {
-    let totalActive: Int
-    let byBuilding: [String: Int]
-    let utilizationRate: Double
-}
-
-struct ClientComplianceStatus {
-    let overallScore: Double
-    let criticalViolations: Int
-    let pendingInspections: Int
-    let lastUpdated: Date
-}
-
-struct MonthlyMetrics {
-    let currentSpend: Double
-    let monthlyBudget: Double
-    let projectedSpend: Double
-    let daysRemaining: Int
-    
-    var budgetUtilization: Double {
-        currentSpend / monthlyBudget
-    }
-    
-    var isOverBudget: Bool {
-        projectedSpend > monthlyBudget
-    }
-    
-    var dailyBurnRate: Double {
-        let daysInMonth = Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
-        let daysPassed = daysInMonth - daysRemaining
-        return daysPassed > 0 ? currentSpend / Double(daysPassed) : 0
-    }
-}
-
 // MARK: - Preview
 
 struct ClientHeroStatusCard_Previews: PreviewProvider {
     static var previews: some View {
         ClientHeroStatusCard(
-            routineMetrics: RealtimeRoutineMetrics(
+            routineMetrics: CoreTypes.RealtimeRoutineMetrics(
                 overallCompletion: 0.72,
                 activeWorkerCount: 5,
                 behindScheduleCount: 1,
                 buildingStatuses: [
-                    "building1": ClientBuildingRoutineStatus(
+                    "building1": CoreTypes.BuildingRoutineStatus(
                         buildingId: "building1",
                         buildingName: "123 Main St",
                         completionRate: 0.95,
                         activeWorkerCount: 2,
                         isOnSchedule: true
                     ),
-                    "building2": ClientBuildingRoutineStatus(
+                    "building2": CoreTypes.BuildingRoutineStatus(
                         buildingId: "building2",
                         buildingName: "456 Oak Ave",
                         completionRate: 0.60,
@@ -663,7 +550,7 @@ struct ClientHeroStatusCard_Previews: PreviewProvider {
                         isOnSchedule: false,
                         estimatedCompletion: Date().addingTimeInterval(7200)
                     ),
-                    "building3": ClientBuildingRoutineStatus(
+                    "building3": CoreTypes.BuildingRoutineStatus(
                         buildingId: "building3",
                         buildingName: "789 Park Pl",
                         completionRate: 0.0,
@@ -672,18 +559,17 @@ struct ClientHeroStatusCard_Previews: PreviewProvider {
                     )
                 ]
             ),
-            activeWorkers: ActiveWorkerStatus(
+            activeWorkers: CoreTypes.ActiveWorkerStatus(
                 totalActive: 5,
                 byBuilding: ["building1": 2, "building2": 1, "building3": 2],
                 utilizationRate: 0.83
             ),
-            complianceStatus: ClientComplianceStatus(
+            complianceStatus: CoreTypes.ComplianceOverview(
                 overallScore: 0.92,
                 criticalViolations: 0,
-                pendingInspections: 2,
-                lastUpdated: Date()
+                pendingInspections: 2
             ),
-            monthlyMetrics: MonthlyMetrics(
+            monthlyMetrics: CoreTypes.MonthlyMetrics(
                 currentSpend: 42000,
                 monthlyBudget: 50000,
                 projectedSpend: 48000,
