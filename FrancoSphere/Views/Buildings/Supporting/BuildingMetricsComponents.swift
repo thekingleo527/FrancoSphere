@@ -462,7 +462,7 @@ class BuildingMetricsViewModel: ObservableObject {
         isLoading = true
         
         do {
-            // ✅ FIX: Add 'await' before the async call
+            // ✅ FIXED: Added 'await' before the async call
             metrics = try await BuildingMetricsService.shared.calculateMetrics(for: buildingId)
             
             BuildingMetricsService.shared.subscribeToMetrics(for: buildingId)
@@ -493,7 +493,7 @@ class BuildingMetricsViewModel: ObservableObject {
     }
     
     func refreshMetrics(for buildingId: String) async {
-        // ✅ FIX: Ensure 'await' is present for both async calls
+        // ✅ FIXED: Ensure 'await' is present for both async calls
         await BuildingMetricsService.shared.invalidateCache(for: buildingId)
         await loadMetrics(for: buildingId)
     }

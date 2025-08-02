@@ -500,7 +500,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
     
     static var previews: some View {
         ZStack {
-            FrancoSphereColors.primaryBackground
+            FrancoSphereDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             ScrollView {

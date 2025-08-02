@@ -57,7 +57,6 @@
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
 		23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD82E39885600F4A10F /* TaskDetailView.swift */; };
-		23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F312E39885600F4A10F /* GlassMorphismStyles.swift */; };
 		23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB02E39885600F4A10F /* RouteStatItem.swift */; };
 		23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F062E39885600F4A10F /* MySitesCard.swift */; };
 		23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F362E39885600F4A10F /* GlassTypes.swift */; };
@@ -107,7 +106,6 @@
 		2377A0232E39885600F4A10F /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F572E39885600F4A10F /* MapRevealContainer.swift */; };
 		2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCD2E39885600F4A10F /* TaskScheduleView.swift */; };
 		2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */; };
-		2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F352E39885600F4A10F /* GlassTransitions.swift */; };
 		2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCF2E39885600F4A10F /* AdminDashboardView.swift */; };
 		2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDC2E39885600F4A10F /* WorkerProfileView.swift */; };
 		2377A02B2E39885600F4A10F /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2D2E39885600F4A10F /* GlassCard.swift */; };
@@ -128,7 +126,6 @@
 		2377A0442E39885600F4A10F /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCC2E39885600F4A10F /* TaskFormView.swift */; };
 		2377A0452E39885600F4A10F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD32E39885600F4A10F /* ContentView.swift */; };
 		2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F222E39885600F4A10F /* HeaderV3B.swift */; };
-		2377A0472E39885600F4A10F /* GlassButtonModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2C2E39885600F4A10F /* GlassButtonModifier.swift */; };
 		2377A04A2E39885600F4A10F /* AssignedBuildingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC32E39885600F4A10F /* AssignedBuildingsView.swift */; };
 		2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCA2E39885600F4A10F /* MaintenanceHistoryView.swift */; };
 		2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F452E39885600F4A10F /* V003_WorkerAssignments.swift */; };
@@ -308,16 +305,13 @@
 		23779F292E39885600F4A10F /* BuildingStatsGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingStatsGlassCard.swift; sourceTree = "<group>"; };
 		23779F2A2E39885600F4A10F /* ClockInGlassModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInGlassModal.swift; sourceTree = "<group>"; };
 		23779F2B2E39885600F4A10F /* GlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButton.swift; sourceTree = "<group>"; };
-		23779F2C2E39885600F4A10F /* GlassButtonModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassButtonModifier.swift; sourceTree = "<group>"; };
 		23779F2D2E39885600F4A10F /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
 		23779F2E2E39885600F4A10F /* GlassDeckContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassDeckContainer.swift; sourceTree = "<group>"; };
 		23779F2F2E39885600F4A10F /* GlassLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassLoadingView.swift; sourceTree = "<group>"; };
 		23779F302E39885600F4A10F /* GlassModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassModal.swift; sourceTree = "<group>"; };
-		23779F312E39885600F4A10F /* GlassMorphismStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassMorphismStyles.swift; sourceTree = "<group>"; };
 		23779F322E39885600F4A10F /* GlassNavigationBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassNavigationBar.swift; sourceTree = "<group>"; };
 		23779F332E39885600F4A10F /* GlassStatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStatusBadge.swift; sourceTree = "<group>"; };
 		23779F342E39885600F4A10F /* GlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabBar.swift; sourceTree = "<group>"; };
-		23779F352E39885600F4A10F /* GlassTransitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTransitions.swift; sourceTree = "<group>"; };
 		23779F362E39885600F4A10F /* GlassTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTypes.swift; sourceTree = "<group>"; };
 		23779F372E39885600F4A10F /* PressableGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressableGlassCard.swift; sourceTree = "<group>"; };
 		23779F382E39885600F4A10F /* TaskCategoryGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskCategoryGlassCard.swift; sourceTree = "<group>"; };
@@ -610,16 +604,13 @@
 				23779F292E39885600F4A10F /* BuildingStatsGlassCard.swift */,
 				23779F2A2E39885600F4A10F /* ClockInGlassModal.swift */,
 				23779F2B2E39885600F4A10F /* GlassButton.swift */,
-				23779F2C2E39885600F4A10F /* GlassButtonModifier.swift */,
 				23779F2D2E39885600F4A10F /* GlassCard.swift */,
 				23779F2E2E39885600F4A10F /* GlassDeckContainer.swift */,
 				23779F2F2E39885600F4A10F /* GlassLoadingView.swift */,
 				23779F302E39885600F4A10F /* GlassModal.swift */,
-				23779F312E39885600F4A10F /* GlassMorphismStyles.swift */,
 				23779F322E39885600F4A10F /* GlassNavigationBar.swift */,
 				23779F332E39885600F4A10F /* GlassStatusBadge.swift */,
 				23779F342E39885600F4A10F /* GlassTabBar.swift */,
-				23779F352E39885600F4A10F /* GlassTransitions.swift */,
 				23779F362E39885600F4A10F /* GlassTypes.swift */,
 				23779F372E39885600F4A10F /* PressableGlassCard.swift */,
 				23779F382E39885600F4A10F /* TaskCategoryGlassCard.swift */,
@@ -1313,7 +1304,6 @@
 				23779FE02E39885600F4A10F /* TaskDetailView.swift in Sources */,
 				2326C2122E3B27BB0080F005 /* ConflictResolutionService.swift in Sources */,
 				2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */,
-				23779FE12E39885600F4A10F /* GlassMorphismStyles.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
 				23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */,
 				23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */,
@@ -1408,7 +1398,6 @@
 				2326C2042E3B14920080F005 /* SiteDepartureView.swift in Sources */,
 				23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */,
 				23A1B98D2E3994760011F091 /* WorkerMetricsService.swift in Sources */,
-				2377A0282E39885600F4A10F /* GlassTransitions.swift in Sources */,
 				2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */,
 				2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */,
 				2326C2722E3C36620080F005 /* DSNYAPIService.swift in Sources */,
@@ -1443,7 +1432,6 @@
 				2377A0452E39885600F4A10F /* ContentView.swift in Sources */,
 				23A1B9682E39931D0011F091 /* WorkerManager.swift in Sources */,
 				2377A0462E39885600F4A10F /* HeaderV3B.swift in Sources */,
-				2377A0472E39885600F4A10F /* GlassButtonModifier.swift in Sources */,
 				2377A04A2E39885600F4A10F /* AssignedBuildingsView.swift in Sources */,
 				2326C1EA2E3AAF330080F005 /* BuildingInventoryComponents.swift in Sources */,
 				2377A04C2E39885600F4A10F /* MaintenanceHistoryView.swift in Sources */,
