@@ -8,6 +8,7 @@
 //  ✅ IMPROVED: Better map integration and transitions
 //  ✅ OPTIMIZED: Consistent with other building views
 //  ✅ FIXED: Renamed BuildingMapPin to avoid redeclaration
+//  ✅ FIXED: Preview errors resolved
 //
 
 import SwiftUI
@@ -481,18 +482,47 @@ struct BuildingSelectionMapPin: View {
         onSelect: { building in
             print("Selected: \(building.name)")
         },
-        purpose: .clockIn
+        purpose: BuildingSelectionView.SelectionPurpose.clockIn  // Fixed: Full type path
     )
-    .preferredColorScheme(.dark)
+    .preferredColorScheme(ColorScheme.dark)  // Fixed: Full type path
 }
 
 #Preview("Map View") {
     BuildingSelectionView(
-        buildings: CoreTypes.productionBuildings,
+        buildings: [
+            NamedCoordinate(
+                id: "1",
+                name: "12 West 18th Street",
+                address: "12 West 18th Street, New York, NY",
+                latitude: 40.7389,
+                longitude: -73.9936
+            ),
+            NamedCoordinate(
+                id: "14",
+                name: "Rubin Museum",
+                address: "150 W 17th St, New York, NY 10011",
+                latitude: 40.7401,
+                longitude: -73.9978
+            ),
+            NamedCoordinate(
+                id: "2",
+                name: "111 West 19th Street",
+                address: "111 West 19th Street, New York, NY",
+                latitude: 40.7412,
+                longitude: -73.9951
+            ),
+            NamedCoordinate(
+                id: "3",
+                name: "205 East 12th Street",
+                address: "205 East 12th Street, New York, NY",
+                latitude: 40.7318,
+                longitude: -73.9879
+            )
+        ],
         onSelect: { building in
             print("Selected: \(building.name)")
         },
-        purpose: .navigation
+        purpose: BuildingSelectionView.SelectionPurpose.navigation  // Fixed: Full type path
     )
-    .preferredColorScheme(.dark)
+    .preferredColorScheme(ColorScheme.dark)  // Fixed: Full type path
 }

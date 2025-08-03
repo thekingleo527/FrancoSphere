@@ -39,12 +39,14 @@ final class ClientContextEngine: ObservableObject {
         )
     }()
     
-    @Published var complianceStatus: ComplianceStatus = {
-        return ComplianceStatus(
+    @Published var complianceOverviewStatus: CoreTypes.ComplianceOverview = {
+        return CoreTypes.ComplianceOverview(
             overallScore: 0.85,
             criticalViolations: 0,
             pendingInspections: 0,
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            buildingCompliance: [:],
+            upcomingDeadlines: []
         )
     }()
     
@@ -198,11 +200,13 @@ final class ClientContextEngine: ObservableObject {
     private func updateComplianceStatus() async {
         // Use existing compliance data
         await MainActor.run {
-            self.complianceStatus = ComplianceStatus(
+            self.complianceOverviewStatus = CoreTypes.ComplianceOverview(
                 overallScore: self.complianceOverview.overallScore,
                 criticalViolations: self.complianceOverview.criticalViolations,
-                pendingInspections: self.complianceOverview.openIssues,
-                lastUpdated: Date()
+                pendingInspections: self.complianceOverview.pendingInspections,
+                lastUpdated: Date(),
+                buildingCompliance: [:],
+                upcomingDeadlines: []
             )
             
             // Update compliance data by building
