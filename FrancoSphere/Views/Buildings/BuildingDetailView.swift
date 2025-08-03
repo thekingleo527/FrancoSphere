@@ -3487,3 +3487,4 @@ struct InventorySummary {
     var cleaningLow: Int = 0
     var cleaningTotal: Int = 0
     var equipmentLow:
+}

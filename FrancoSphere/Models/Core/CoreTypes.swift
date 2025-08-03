@@ -2244,3 +2244,16 @@ public struct CoreTypes {
     // MARK: - Models Namespace Alias
     public typealias Models = CoreTypes
 }
+// Core Types
+public typealias WorkerProfile = CoreTypes.WorkerProfile
+public typealias NamedCoordinate = CoreTypes.NamedCoordinate
+public typealias ContextualTask = CoreTypes.ContextualTask
+public typealias ActionEvidence = CoreTypes.ActionEvidence
+
+// Client Dashboard Types
+public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
+public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
+public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
+public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
+public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
+public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
