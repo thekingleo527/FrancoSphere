@@ -302,42 +302,6 @@ struct BuildingMapDetailView: View {
     }
 }
 
-// MARK: - Building Quick Stat Card Component (Renamed from BuildingStatCard)
-
-struct BuildingQuickStatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-            
-            Text(title)
-                .glassCaption()
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(
-            ZStack {
-                color.opacity(0.1)
-                .ultraThinMaterial
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium))
-        .overlay(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
-                .stroke(color.opacity(0.3), lineWidth: 1)
-        )
-    }
-}
 
 // MARK: - Building Task Row Component
 

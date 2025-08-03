@@ -1791,40 +1791,7 @@ struct BuildingEmergencyTab: View {
 
 // MARK: - Supporting Components
 
-struct BuildingMetricCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    let trend: CoreTypes.TrendDirection
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundColor(color)
-                
-                Spacer()
-                
-                Image(systemName: trendIcon)
-                    .font(.caption2)
-                    .foregroundColor(trendColor)
-            }
-            
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .francoDarkCardBackground()
-    }
+
     
     private var trendIcon: String {
         switch trend {
@@ -1838,7 +1805,6 @@ struct BuildingMetricCard: View {
     private var trendColor: Color {
         FrancoSphereDesign.EnumColors.trendDirection(trend)
     }
-}
 
 struct BuildingActivityRow: View {
     let activity: BuildingDetailActivity
@@ -2224,36 +2190,6 @@ struct MaintenanceHistoryRow: View {
     }
 }
 
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundColor(color)
-                Spacer()
-            }
-            
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
-        }
-        .padding()
-        .frame(width: 120)
-        .francoDarkCardBackground()
-    }
-}
-
 struct InventoryStatCard: View {
     let title: String
     let value: String
@@ -2283,62 +2219,6 @@ struct InventoryStatCard: View {
         .francoDarkCardBackground()
     }
 }
-
-struct CategoryButton: View {
-    let category: CoreTypes.InventoryCategory
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(category.rawValue)
-                .font(.caption)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : FrancoSphereDesign.DashboardColors.secondaryText)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? FrancoSphereDesign.DashboardColors.accent : FrancoSphereDesign.glassMorphism())
-                )
-        }
-    }
-}
-
-struct InventoryItemRow: View {
-    let item: CoreTypes.InventoryItem
-    let onUpdate: (CoreTypes.InventoryItem) -> Void
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
-                
-                HStack(spacing: 8) {
-                    Text("\(item.currentStock) \(item.unit)")
-                        .font(.caption)
-                        .foregroundColor(stockColor)
-                    
-                    if item.currentStock < item.minimumStock {
-                        Label("Low Stock", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
-                    }
-                }
-            }
-            
-            Spacer()
-            
-            Text(item.cost.formatted(.currency(code: "USD")))
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.accent)
-        }
-    }
-    
     private var stockColor: Color {
         if item.currentStock < item.minimumStock {
             return FrancoSphereDesign.DashboardColors.warning
@@ -2348,7 +2228,6 @@ struct InventoryItemRow: View {
             return FrancoSphereDesign.DashboardColors.success
         }
     }
-}
 
 struct AccessCodeChip: View {
     let code: AccessCode
@@ -3479,12 +3358,4 @@ class BuildingDetailVM: ObservableObject {
         default: return .taskCompleted
         }
     }
-}
-
-// MARK: - Supporting Models
-
-struct InventorySummary {
-    var cleaningLow: Int = 0
-    var cleaningTotal: Int = 0
-    var equipmentLow:
 }

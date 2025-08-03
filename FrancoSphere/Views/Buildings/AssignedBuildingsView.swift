@@ -310,31 +310,6 @@ struct AssignedBuildingCard: View {
     }
 }
 
-// MARK: - Building Status Badge Component (Renamed to avoid conflict)
-
-struct BuildingStatusBadge: View {
-    let title: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        Label(title, systemImage: icon)
-            .francoTypography(FrancoSphereDesign.Typography.caption2)
-            .fontWeight(.medium)
-            .foregroundColor(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background(
-                Capsule()
-                    .fill(color.opacity(0.15))
-                    .overlay(
-                        Capsule()
-                            .stroke(color.opacity(0.25), lineWidth: 1)
-                    )
-            )
-    }
-}
-
 // MARK: - Preview
 
 struct AssignedBuildingsView_Previews: PreviewProvider {
