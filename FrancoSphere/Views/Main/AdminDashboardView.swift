@@ -4,6 +4,8 @@
 //
 //  ✅ FIXED: ViewBuilder compilation error resolved
 //  ✅ FIXED: MainActor isolation for AdminContextEngine
+//  ✅ FIXED: Renamed MetricCard to AdminMetricCard to avoid conflict
+//  ✅ FIXED: Removed default parameter in init to fix MainActor issue
 //  ✅ REDESIGNED: Mirrors WorkerDashboardView structure
 //  ✅ DARK ELEGANCE: Consistent theme with worker dashboard
 //  ✅ INTELLIGENT: Contextual AI insights at bottom
@@ -49,8 +51,8 @@ struct AdminDashboardView: View {
     @State private var voiceCommandEnabled = false
     @State private var arModeEnabled = false
     
-    // MARK: - Initialization
-    init(viewModel: AdminDashboardViewModel = AdminDashboardViewModel()) {
+    // MARK: - Initialization (FIXED: Removed default parameter)
+    init(viewModel: AdminDashboardViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
     }
     
@@ -864,7 +866,7 @@ struct AdminHeroStatusCard: View {
                 GridItem(.flexible())
             ], spacing: 12) {
                 // Workers metric
-                MetricCard(
+                AdminMetricCard(  // RENAMED from MetricCard
                     value: "\(workersOnSite)/\(activeWorkers.count)",
                     label: "Workers Active",
                     subtitle: "\(activeWorkers.count - workersOnSite) on break",
@@ -883,7 +885,7 @@ struct AdminHeroStatusCard: View {
                 }
                 
                 // Buildings coverage
-                MetricCard(
+                AdminMetricCard(
                     value: "\(buildingsWithCoverage)/\(portfolio.totalBuildings)",
                     label: "Buildings Covered",
                     subtitle: "\(portfolio.totalBuildings - buildingsWithCoverage) need attention",
@@ -893,7 +895,7 @@ struct AdminHeroStatusCard: View {
                 )
                 
                 // Compliance score
-                MetricCard(
+                AdminMetricCard(
                     value: "\(Int(complianceScore))%",
                     label: "Compliance Score",
                     subtitle: portfolio.criticalIssues > 0 ? "\(portfolio.criticalIssues) issues" : "Good standing",
@@ -909,7 +911,7 @@ struct AdminHeroStatusCard: View {
                 }
                 
                 // Task completion (real-time)
-                MetricCard(
+                AdminMetricCard(
                     value: "\(Int(portfolio.overallCompletionRate * 100))%",
                     label: "Completion Rate",
                     color: completionRateColor,
@@ -936,7 +938,7 @@ struct AdminHeroStatusCard: View {
             // Critical alerts
             if !criticalAlerts.isEmpty {
                 HStack(spacing: 12) {
-                    MetricCard(
+                    AdminMetricCard(
                         value: "\(criticalAlerts.count)",
                         label: "Critical Alerts",
                         subtitle: "Action required",
@@ -1004,9 +1006,9 @@ struct AdminHeroStatusCard: View {
     }
 }
 
-// MARK: - Supporting Components (FIXED)
+// MARK: - Supporting Components (FIXED: Renamed to AdminMetricCard)
 
-struct MetricCard<CustomContent: View>: View {
+struct AdminMetricCard<CustomContent: View>: View {
     let value: String
     let label: String
     var subtitle: String? = nil

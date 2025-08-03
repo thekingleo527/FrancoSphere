@@ -1,7 +1,10 @@
 //
-//  AdminDashboardContainerView.swift
+//  AdminDashboardMainView.swift  // RENAMED from AdminDashboardContainerView
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Renamed to AdminDashboardMainView to avoid redeclaration
+//  ✅ FIXED: Renamed conflicting components with Admin prefix
+//  ✅ FIXED: Removed duplicate Color init(hex:) extension
 //  ✅ USES ONLY ACTUAL AdminDashboardViewModel
 //  ✅ NO INVENTED DEPENDENCIES
 //  ✅ FULL PHOTO EVIDENCE INTEGRATION
@@ -12,7 +15,7 @@
 import SwiftUI
 import Combine
 
-struct AdminDashboardContainerView: View {
+struct AdminDashboardMainView: View {  // RENAMED from AdminDashboardContainerView
     // MARK: - Using Actual ViewModel Only
     @StateObject private var viewModel = AdminDashboardViewModel()
     
@@ -68,7 +71,7 @@ struct AdminDashboardContainerView: View {
                 
                 VStack(spacing: 0) {
                     // Header
-                    AdminHeaderView(
+                    AdminMainHeaderView(  // RENAMED from AdminHeaderView
                         adminName: authManager.currentUser?.name ?? "Administrator",
                         syncStatus: viewModel.dashboardSyncStatus,
                         onProfileTap: { showingProfile = true },
@@ -77,7 +80,7 @@ struct AdminDashboardContainerView: View {
                     )
                     
                     // Tab Bar
-                    AdminTabBar(selectedTab: $selectedTab)
+                    AdminMainTabBar(selectedTab: $selectedTab)  // RENAMED from AdminTabBar
                     
                     // Content
                     TabView(selection: $selectedTab) {
@@ -150,7 +153,7 @@ struct AdminDashboardContainerView: View {
         .sheet(isPresented: $showingBuildingDetail) {
             if let buildingId = selectedBuildingId,
                let building = viewModel.buildings.first(where: { $0.id == buildingId }) {
-                BuildingDetailSheet(
+                AdminBuildingDetailSheet(  // RENAMED from BuildingDetailSheet
                     building: building,
                     metrics: viewModel.getBuildingMetrics(for: buildingId),
                     insights: viewModel.getIntelligenceInsights(for: buildingId),
@@ -162,7 +165,7 @@ struct AdminDashboardContainerView: View {
         }
         .sheet(isPresented: $showingWorkerDetail) {
             if let worker = selectedWorker {
-                WorkerDetailSheet(
+                AdminWorkerDetailSheet(  // RENAMED from WorkerDetailSheet
                     worker: worker,
                     capabilities: viewModel.workerCapabilities[worker.id],
                     canPerformAction: { action in
@@ -197,8 +200,8 @@ struct AdminDashboardContainerView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             gradient: Gradient(colors: [
-                Color(hex: "0A0A0A"),
-                Color(hex: "1A1A1A")
+                Color(red: 10/255, green: 10/255, blue: 10/255),
+                Color(red: 26/255, green: 26/255, blue: 26/255)
             ]),
             startPoint: .top,
             endPoint: .bottom
@@ -207,8 +210,8 @@ struct AdminDashboardContainerView: View {
     }
 }
 
-// MARK: - Admin Header View
-struct AdminHeaderView: View {
+// MARK: - Admin Main Header View (RENAMED from AdminHeaderView)
+struct AdminMainHeaderView: View {
     let adminName: String
     let syncStatus: CoreTypes.DashboardSyncStatus
     let onProfileTap: () -> Void
@@ -283,18 +286,18 @@ struct AdminHeaderView: View {
             }
         }
         .padding()
-        .background(Color(hex: "1A1A1A"))
+        .background(Color(red: 26/255, green: 26/255, blue: 26/255))
     }
 }
 
-// MARK: - Admin Tab Bar
-struct AdminTabBar: View {
-    @Binding var selectedTab: AdminDashboardContainerView.AdminTab
+// MARK: - Admin Main Tab Bar (RENAMED from AdminTabBar)
+struct AdminMainTabBar: View {
+    @Binding var selectedTab: AdminDashboardMainView.AdminTab
     @Namespace private var animation
     
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(AdminDashboardContainerView.AdminTab.allCases, id: \.self) { tab in
+            ForEach(AdminDashboardMainView.AdminTab.allCases, id: \.self) { tab in
                 TabBarItem(
                     tab: tab,
                     isSelected: selectedTab == tab,
@@ -308,11 +311,11 @@ struct AdminTabBar: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color(hex: "1A1A1A"))
+        .background(Color(red: 26/255, green: 26/255, blue: 26/255))
     }
     
     struct TabBarItem: View {
-        let tab: AdminDashboardContainerView.AdminTab
+        let tab: AdminDashboardMainView.AdminTab
         let isSelected: Bool
         var animation: Namespace.ID
         let action: () -> Void
@@ -545,28 +548,28 @@ struct AdminMetricsGrid: View {
             GridItem(.flexible()),
             GridItem(.flexible())
         ], spacing: 12) {
-            MetricCard(
+            AdminMetricCard(  // RENAMED from MetricCard
                 icon: "building.2",
                 title: "Buildings",
                 value: "\(buildings)",
                 color: .blue
             )
             
-            MetricCard(
+            AdminMetricCard(
                 icon: "person.3.fill",
                 title: "Workers",
                 value: "\(activeWorkers)/\(workers)",
                 color: .green
             )
             
-            MetricCard(
+            AdminMetricCard(
                 icon: "list.bullet",
                 title: "Ongoing Tasks",
                 value: "\(ongoingTasks)",
                 color: .orange
             )
             
-            MetricCard(
+            AdminMetricCard(
                 icon: "checkmark.circle.fill",
                 title: "Completed Today",
                 value: "\(completedToday)",
@@ -574,7 +577,7 @@ struct AdminMetricsGrid: View {
             )
             
             if criticalInsights > 0 {
-                MetricCard(
+                AdminMetricCard(
                     icon: "exclamationmark.triangle.fill",
                     title: "Critical Insights",
                     value: "\(criticalInsights)",
@@ -596,7 +599,7 @@ struct AdminBuildingsTab: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(buildings) { building in
-                    BuildingRowCard(
+                    AdminBuildingRowCard(  // RENAMED from BuildingRowCard
                         building: building,
                         metrics: buildingMetrics[building.id],
                         onTap: { onBuildingTap(building) }
@@ -626,7 +629,7 @@ struct AdminWorkersTab: View {
                     
                     LazyVStack(spacing: 8) {
                         ForEach(activeWorkers) { worker in
-                            WorkerRowCard(
+                            AdminWorkerRowCard(  // RENAMED from WorkerRowCard
                                 worker: worker,
                                 capabilities: workerCapabilities[worker.id],
                                 isActive: true,
@@ -646,7 +649,7 @@ struct AdminWorkersTab: View {
                 
                 LazyVStack(spacing: 8) {
                     ForEach(workers) { worker in
-                        WorkerRowCard(
+                        AdminWorkerRowCard(
                             worker: worker,
                             capabilities: workerCapabilities[worker.id],
                             isActive: activeWorkers.contains { $0.id == worker.id },
@@ -686,7 +689,7 @@ struct AdminTasksTab: View {
                     
                     LazyVStack(spacing: 8) {
                         ForEach(recentCompletedTasks) { task in
-                            TaskRowCard(
+                            AdminTaskRowCard(  // RENAMED from TaskRowCard
                                 task: task,
                                 showPhotoIndicator: task.requiresPhoto ?? false,
                                 onTap: { onTaskTap(task) }
@@ -707,7 +710,7 @@ struct AdminTasksTab: View {
                     
                     LazyVStack(spacing: 8) {
                         ForEach(ongoingTasks.prefix(10)) { task in
-                            TaskRowCard(
+                            AdminTaskRowCard(
                                 task: task,
                                 showPhotoIndicator: task.requiresPhoto ?? false,
                                 onTap: { onTaskTap(task) }
@@ -744,7 +747,7 @@ struct AdminInsightsTab: View {
                         
                         LazyVStack(spacing: 8) {
                             ForEach(portfolioInsights) { insight in
-                                InsightCard(insight: insight)
+                                AdminInsightCard(insight: insight)  // RENAMED from InsightCard
                             }
                         }
                         .padding(.horizontal)
@@ -760,7 +763,7 @@ struct AdminInsightsTab: View {
                         
                         LazyVStack(spacing: 8) {
                             ForEach(selectedBuildingInsights) { insight in
-                                InsightCard(insight: insight)
+                                AdminInsightCard(insight: insight)
                             }
                         }
                         .padding(.horizontal)
@@ -779,9 +782,9 @@ struct AdminInsightsTab: View {
     }
 }
 
-// MARK: - Supporting Card Views
+// MARK: - Supporting Card Views (All renamed with Admin prefix)
 
-struct BuildingRowCard: View {
+struct AdminBuildingRowCard: View {  // RENAMED from BuildingRowCard
     let building: CoreTypes.NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
     let onTap: () -> Void
@@ -827,7 +830,7 @@ struct BuildingRowCard: View {
     }
 }
 
-struct WorkerRowCard: View {
+struct AdminWorkerRowCard: View {  // RENAMED from WorkerRowCard
     let worker: CoreTypes.WorkerProfile
     let capabilities: AdminDashboardViewModel.WorkerCapabilities?
     let isActive: Bool
@@ -872,7 +875,7 @@ struct WorkerRowCard: View {
     }
 }
 
-struct TaskRowCard: View {
+struct AdminTaskRowCard: View {  // RENAMED from TaskRowCard
     let task: CoreTypes.ContextualTask
     let showPhotoIndicator: Bool
     let onTap: () -> Void
@@ -922,7 +925,7 @@ struct TaskRowCard: View {
     }
 }
 
-struct InsightCard: View {
+struct AdminInsightCard: View {  // RENAMED from InsightCard
     let insight: CoreTypes.IntelligenceInsight
     
     var priorityColor: Color {
@@ -1053,9 +1056,9 @@ struct RecentCompletedTasksSection: View {
     }
 }
 
-// MARK: - Sheet Views (Simplified)
+// MARK: - Sheet Views (Renamed)
 
-struct BuildingDetailSheet: View {
+struct AdminBuildingDetailSheet: View {  // RENAMED from BuildingDetailSheet
     let building: CoreTypes.NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
     let insights: [CoreTypes.IntelligenceInsight]
@@ -1127,7 +1130,7 @@ struct BuildingDetailSheet: View {
     }
 }
 
-struct WorkerDetailSheet: View {
+struct AdminWorkerDetailSheet: View {  // RENAMED from WorkerDetailSheet
     let worker: CoreTypes.WorkerProfile
     let capabilities: AdminDashboardViewModel.WorkerCapabilities?
     let canPerformAction: (WorkerAction) -> Bool
@@ -1150,11 +1153,11 @@ struct WorkerDetailSheet: View {
                         Text("Capabilities")
                             .font(.headline)
                         
-                        CapabilityRow(title: "Upload Photos", enabled: capabilities.canUploadPhotos)
-                        CapabilityRow(title: "Add Notes", enabled: capabilities.canAddNotes)
-                        CapabilityRow(title: "View Map", enabled: capabilities.canViewMap)
-                        CapabilityRow(title: "Emergency Tasks", enabled: capabilities.canAddEmergencyTasks)
-                        CapabilityRow(title: "Simplified UI", enabled: capabilities.simplifiedInterface)
+                        AdminCapabilityRow(title: "Upload Photos", enabled: capabilities.canUploadPhotos)
+                        AdminCapabilityRow(title: "Add Notes", enabled: capabilities.canAddNotes)
+                        AdminCapabilityRow(title: "View Map", enabled: capabilities.canViewMap)
+                        AdminCapabilityRow(title: "Emergency Tasks", enabled: capabilities.canAddEmergencyTasks)
+                        AdminCapabilityRow(title: "Simplified UI", enabled: capabilities.simplifiedInterface)
                     }
                     .padding()
                     .background(Color.gray.opacity(0.1))
@@ -1170,7 +1173,7 @@ struct WorkerDetailSheet: View {
     }
 }
 
-struct CapabilityRow: View {
+struct AdminCapabilityRow: View {  // RENAMED from CapabilityRow
     let title: String
     let enabled: Bool
     
@@ -1267,7 +1270,7 @@ struct AdminSettingsSheet: View {
 
 // MARK: - Supporting Components
 
-struct MetricCard: View {
+struct AdminMetricCard: View {  // RENAMED from MetricCard
     let icon: String
     let title: String
     let value: String
@@ -1298,38 +1301,11 @@ struct MetricCard: View {
     }
 }
 
-// MARK: - Color Extension
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
-
 // MARK: - Preview
 #if DEBUG
-struct AdminDashboardContainerView_Previews: PreviewProvider {
+struct AdminDashboardMainView_Previews: PreviewProvider {
     static var previews: some View {
-        AdminDashboardContainerView()
+        AdminDashboardMainView()
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)

@@ -45,8 +45,8 @@
 		2326C24B2E3B65590080F005 /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C24A2E3B65590080F005 /* LanguageManager.swift */; };
 		2326C25C2E3BFF9B0080F005 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2326C25B2E3BFF9B0080F005 /* Sentry */; };
 		2326C25E2E3BFF9B0080F005 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 2326C25D2E3BFF9B0080F005 /* SentrySwiftUI */; };
-		2326C2602E3C06FD0080F005 /* WorkerDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */; };
-		2326C2622E3C070B0080F005 /* AdminDashboardContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */; };
+		2326C2602E3C06FD0080F005 /* WorkerDashboardMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C25F2E3C06FD0080F005 /* WorkerDashboardMainView.swift */; };
+		2326C2622E3C070B0080F005 /* AdminDashboardMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2612E3C070B0080F005 /* AdminDashboardMainView.swift */; };
 		2326C2642E3C07170080F005 /* ClientDashboardMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */; };
 		2326C2692E3C23A20080F005 /* TestRealDataIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */; };
 		2326C26E2E3C240A0080F005 /* TestMigrationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C26D2E3C240A0080F005 /* TestMigrationFlow.swift */; };
@@ -283,8 +283,8 @@
 		2326C2422E3B3E2B0080F005 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
 		2326C2462E3B468E0080F005 /* WorkerPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerPreferencesView.swift; sourceTree = "<group>"; };
 		2326C24A2E3B65590080F005 /* LanguageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageManager.swift; sourceTree = "<group>"; };
-		2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardContainerView.swift; sourceTree = "<group>"; };
-		2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardContainerView.swift; sourceTree = "<group>"; };
+		2326C25F2E3C06FD0080F005 /* WorkerDashboardMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerDashboardMainView.swift; sourceTree = "<group>"; };
+		2326C2612E3C070B0080F005 /* AdminDashboardMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardMainView.swift; sourceTree = "<group>"; };
 		2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDashboardMainView.swift; sourceTree = "<group>"; };
 		2326C2682E3C23A20080F005 /* TestRealDataIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRealDataIntegration.swift; sourceTree = "<group>"; };
 		2326C26A2E3C23AC0080F005 /* FrancoSphereTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FrancoSphereTests-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -1069,8 +1069,8 @@
 				23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */,
 				23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */,
 				2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */,
-				2326C2612E3C070B0080F005 /* AdminDashboardContainerView.swift */,
-				2326C25F2E3C06FD0080F005 /* WorkerDashboardContainerView.swift */,
+				2326C2612E3C070B0080F005 /* AdminDashboardMainView.swift */,
+				2326C25F2E3C06FD0080F005 /* WorkerDashboardMainView.swift */,
 				2326C2462E3B468E0080F005 /* WorkerPreferencesView.swift */,
 				2326C2132E3B29B10080F005 /* Simplified */,
 				2326C2032E3B14920080F005 /* SiteDepartureView.swift */,
@@ -1375,7 +1375,7 @@
 				23A1B95E2E3992C80011F091 /* Building.swift in Sources */,
 				23A1B95F2E3992C80011F091 /* AdaptiveGlassModifier.swift in Sources */,
 				23A1B9602E3992C80011F091 /* TodaysProgressDetailView.swift in Sources */,
-				2326C2602E3C06FD0080F005 /* WorkerDashboardContainerView.swift in Sources */,
+				2326C2602E3C06FD0080F005 /* WorkerDashboardMainView.swift in Sources */,
 				23A1B9612E3992C80011F091 /* WorkersInlineList.swift in Sources */,
 				23800F732E3DE468006F9E44 /* ClientHeroCard.swift in Sources */,
 				23A1B9622E3992C80011F091 /* WeatherViewModifier.swift in Sources */,
@@ -1386,7 +1386,7 @@
 				2377A00F2E39885600F4A10F /* NovaAPIService.swift in Sources */,
 				2377A0102E39885600F4A10F /* BuildingPreviewPopover.swift in Sources */,
 				2377A0122E39885600F4A10F /* GlassDeckContainer.swift in Sources */,
-				2326C2622E3C070B0080F005 /* AdminDashboardContainerView.swift in Sources */,
+				2326C2622E3C070B0080F005 /* AdminDashboardMainView.swift in Sources */,
 				23A1B99C2E39A0EF0011F091 /* FrancoSphereApp.swift in Sources */,
 				23A1B9902E39949C0011F091 /* WeatherDataAdapter.swift in Sources */,
 				2377A0132E39885600F4A10F /* TaskTimelineView.swift in Sources */,

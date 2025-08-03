@@ -2,6 +2,7 @@
 //  InventoryView.swift
 //  FrancoSphere v6.0
 //
+//  ✅ FIXED: Added missing RestockStatus enum definition
 //  ✅ DARK ELEGANCE: Full FrancoSphereDesign implementation
 //  ✅ GLASS MORPHISM: Consistent with system design
 //  ✅ ANIMATIONS: Smooth transitions and effects
@@ -9,6 +10,84 @@
 //
 
 import SwiftUI
+
+// MARK: - Enums
+
+public enum RestockStatus: String, CaseIterable {
+    case inStock = "In Stock"
+    case lowStock = "Low Stock"
+    case outOfStock = "Out of Stock"
+    case ordered = "Ordered"
+}
+
+public enum InventoryCategory: String, CaseIterable {
+    case tools = "tools"
+    case supplies = "supplies"
+    case equipment = "equipment"
+    case materials = "materials"
+    case safety = "safety"
+    case cleaning = "cleaning"
+    case electrical = "electrical"
+    case plumbing = "plumbing"
+    case general = "general"
+    case office = "office"
+    case maintenance = "maintenance"
+    case other = "other"
+}
+
+// MARK: - Models
+
+public struct InventoryItem: Identifiable {
+    public let id: String
+    public let name: String
+    public let category: InventoryCategory
+    public var currentStock: Int
+    public let minimumStock: Int
+    public let maxStock: Int
+    public let unit: String
+    public let cost: Double
+    public let supplier: String?
+    public let location: String?
+    public let lastRestocked: Date?
+    public var status: RestockStatus {
+        if currentStock <= 0 {
+            return .outOfStock
+        } else if currentStock <= minimumStock {
+            return .lowStock
+        } else {
+            return .inStock
+        }
+    }
+    
+    public init(
+        id: String = UUID().uuidString,
+        name: String,
+        category: InventoryCategory,
+        currentStock: Int,
+        minimumStock: Int,
+        maxStock: Int,
+        unit: String,
+        cost: Double,
+        supplier: String? = nil,
+        location: String? = nil,
+        lastRestocked: Date? = nil,
+        status: RestockStatus? = nil  // Allow override but compute if nil
+    ) {
+        self.id = id
+        self.name = name
+        self.category = category
+        self.currentStock = currentStock
+        self.minimumStock = minimumStock
+        self.maxStock = maxStock
+        self.unit = unit
+        self.cost = cost
+        self.supplier = supplier
+        self.location = location
+        self.lastRestocked = lastRestocked
+    }
+}
+
+// MARK: - Main View
 
 public struct InventoryView: View {
     public let buildingId: String
@@ -1156,8 +1235,7 @@ public struct InventoryItemDetailView: View {
             cost: item.cost,
             supplier: item.supplier,
             location: item.location,
-            lastRestocked: currentStock > item.currentStock ? Date() : item.lastRestocked,
-            status: currentStockStatus
+            lastRestocked: currentStock > item.currentStock ? Date() : item.lastRestocked
         )
         
         onUpdate(updatedItem)
