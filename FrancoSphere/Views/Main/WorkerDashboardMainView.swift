@@ -1,27 +1,20 @@
 //
-//  WorkerDashboardMainView.swift  // RENAMED from WorkerDashboardContainerV6
+//  WorkerDashboardMainView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Renamed to WorkerDashboardMainView to avoid conflicts
-//  ✅ FIXED: Removed @StateObject for ClockInManager (doesn't conform to ObservableObject)
-//  ✅ FIXED: Renamed conflicting components with Worker prefix
-//  ✅ FIXED: Removed duplicate Color init(hex:) extension
-//  ✅ USES ONLY ACTUAL WorkerDashboardViewModel
-//  ✅ NO INVENTED DEPENDENCIES
-//  ✅ FULL WORKER CAPABILITIES INTEGRATION
-//  ✅ LOCATION-BASED CLOCK IN/OUT
-//  ✅ WEATHER & SAFETY FEATURES
-//  ✅ SIMPLIFIED UI SUPPORT
+//  ✅ FIXED: Type reference errors for UrgencyLevel and DashboardSource
+//  ✅ FIXED: Using correct types from CoreTypes
+//  ✅ FIXED: TaskUrgency instead of UrgencyLevel
+//  ✅ FIXED: DashboardUpdate.Source instead of DashboardSource
 //
 
 import SwiftUI
 import Combine
 import CoreLocation
 
-struct WorkerDashboardMainView: View {  // RENAMED from WorkerDashboardContainerV6
+struct WorkerDashboardMainView: View {
     // MARK: - Using Actual ViewModel Only
     @StateObject private var viewModel = WorkerDashboardViewModel()
-    // REMOVED: @StateObject for ClockInManager - use singleton directly
     @StateObject private var locationManager = LocationManager.shared
     
     // MARK: - Environment Objects
@@ -202,7 +195,7 @@ struct StandardWorkerDashboard: View {
             
             VStack(spacing: 0) {
                 // Header with Clock In/Out
-                WorkerMainHeaderView(  // RENAMED from WorkerHeaderView
+                WorkerMainHeaderView(
                     profile: viewModel.workerProfile,
                     isClockedIn: viewModel.isClockedIn,
                     currentBuilding: viewModel.currentBuilding,
@@ -336,7 +329,7 @@ struct SimplifiedWorkerDashboard: View {
     }
 }
 
-// MARK: - Worker Main Header View (RENAMED from WorkerHeaderView)
+// MARK: - Worker Main Header View
 struct WorkerMainHeaderView: View {
     let profile: CoreTypes.WorkerProfile?
     let isClockedIn: Bool
@@ -501,9 +494,11 @@ struct WorkerHeroCard: View {
                         
                         Spacer()
                         
-                        Text(nextTask.urgency.rawValue)
-                            .font(.caption2)
-                            .foregroundColor(urgencyColor(nextTask.urgency))
+                        if let urgency = nextTask.urgency {
+                            Text(urgency.rawValue)
+                                .font(.caption2)
+                                .foregroundColor(urgencyColor(urgency))
+                        }
                     }
                     .padding()
                     .background(Color.blue.opacity(0.1))
@@ -516,11 +511,14 @@ struct WorkerHeroCard: View {
         .cornerRadius(16)
     }
     
-    func urgencyColor(_ urgency: CoreTypes.UrgencyLevel) -> Color {
+    // FIXED: Using TaskUrgency instead of UrgencyLevel
+    func urgencyColor(_ urgency: CoreTypes.TaskUrgency) -> Color {
         switch urgency {
         case .emergency: return .red
+        case .critical: return .red
+        case .urgent: return .orange
         case .high: return .orange
-        case .normal: return .blue
+        case .medium: return .blue
         case .low: return .gray
         }
     }
@@ -535,7 +533,7 @@ struct WeatherAlertBanner: View {
         switch risk {
         case .extreme: return .red
         case .high: return .orange
-        case .moderate: return .yellow
+        case .medium: return .yellow
         case .low: return .green
         }
     }
@@ -551,7 +549,7 @@ struct WeatherAlertBanner: View {
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                 
-                Text("\(weather?.condition ?? "Extreme conditions") - \(weather?.temperature ?? 0)°F")
+                Text("\(weather?.condition.rawValue ?? "Extreme conditions") - \(weather?.temperature ?? 0)°F")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -849,6 +847,7 @@ struct PerformanceSummaryCard: View {
         case .stable: return .blue
         case .declining: return .orange
         case .unknown: return .gray
+        default: return .gray
         }
     }
     
@@ -858,6 +857,7 @@ struct PerformanceSummaryCard: View {
         case .stable: return "minus"
         case .declining: return "arrow.down.right"
         case .unknown: return "questionmark"
+        default: return "questionmark"
         }
     }
     
@@ -925,7 +925,8 @@ struct ActivityRow: View {
         .padding(.vertical, 4)
     }
     
-    func sourceColor(_ source: CoreTypes.DashboardSource) -> Color {
+    // FIXED: Using DashboardUpdate.Source instead of DashboardSource
+    func sourceColor(_ source: CoreTypes.DashboardUpdate.Source) -> Color {
         switch source {
         case .worker: return .green
         case .admin: return .blue
@@ -1193,9 +1194,10 @@ struct TaskDetailSheet: View {
                         
                         Button(action: {
                             let evidence = CoreTypes.ActionEvidence(
-                                description: notes.isEmpty ? "Task completed" : notes,
-                                photoURLs: [],
-                                timestamp: Date()
+                                photoUrl: nil,
+                                notes: notes.isEmpty ? "Task completed" : notes,
+                                taskId: task.id,
+                                workerId: ""  // Would be filled from auth
                             )
                             onComplete(evidence)
                             dismiss()
@@ -1314,7 +1316,7 @@ struct WorkerProfileSheet: View {
     }
 }
 
-struct WorkerCapabilityRow: View {  // RENAMED from CapabilityRow
+struct WorkerCapabilityRow: View {
     let title: String
     let enabled: Bool
     

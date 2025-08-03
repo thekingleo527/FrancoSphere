@@ -2,7 +2,8 @@
 //  InventoryView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ FIXED: Added missing RestockStatus enum definition
+//  ✅ FIXED: Removed duplicate InventoryCategory - now uses CoreTypes version
+//  ✅ FIXED: Added type aliases to avoid conflicts
 //  ✅ DARK ELEGANCE: Full FrancoSphereDesign implementation
 //  ✅ GLASS MORPHISM: Consistent with system design
 //  ✅ ANIMATIONS: Smooth transitions and effects
@@ -11,81 +12,10 @@
 
 import SwiftUI
 
-// MARK: - Enums
-
-public enum RestockStatus: String, CaseIterable {
-    case inStock = "In Stock"
-    case lowStock = "Low Stock"
-    case outOfStock = "Out of Stock"
-    case ordered = "Ordered"
-}
-
-public enum InventoryCategory: String, CaseIterable {
-    case tools = "tools"
-    case supplies = "supplies"
-    case equipment = "equipment"
-    case materials = "materials"
-    case safety = "safety"
-    case cleaning = "cleaning"
-    case electrical = "electrical"
-    case plumbing = "plumbing"
-    case general = "general"
-    case office = "office"
-    case maintenance = "maintenance"
-    case other = "other"
-}
-
-// MARK: - Models
-
-public struct InventoryItem: Identifiable {
-    public let id: String
-    public let name: String
-    public let category: InventoryCategory
-    public var currentStock: Int
-    public let minimumStock: Int
-    public let maxStock: Int
-    public let unit: String
-    public let cost: Double
-    public let supplier: String?
-    public let location: String?
-    public let lastRestocked: Date?
-    public var status: RestockStatus {
-        if currentStock <= 0 {
-            return .outOfStock
-        } else if currentStock <= minimumStock {
-            return .lowStock
-        } else {
-            return .inStock
-        }
-    }
-    
-    public init(
-        id: String = UUID().uuidString,
-        name: String,
-        category: InventoryCategory,
-        currentStock: Int,
-        minimumStock: Int,
-        maxStock: Int,
-        unit: String,
-        cost: Double,
-        supplier: String? = nil,
-        location: String? = nil,
-        lastRestocked: Date? = nil,
-        status: RestockStatus? = nil  // Allow override but compute if nil
-    ) {
-        self.id = id
-        self.name = name
-        self.category = category
-        self.currentStock = currentStock
-        self.minimumStock = minimumStock
-        self.maxStock = maxStock
-        self.unit = unit
-        self.cost = cost
-        self.supplier = supplier
-        self.location = location
-        self.lastRestocked = lastRestocked
-    }
-}
+// MARK: - Type Aliases to use CoreTypes definitions
+public typealias InventoryCategory = CoreTypes.InventoryCategory
+public typealias InventoryItem = CoreTypes.InventoryItem
+public typealias RestockStatus = CoreTypes.RestockStatus
 
 // MARK: - Main View
 
@@ -459,7 +389,7 @@ public struct CategoryButton: View {
                 Image(systemName: category.icon)
                     .font(.subheadline)
                 
-                Text(category.rawValue.capitalized)
+                Text(category.displayName)
                     .font(.subheadline)
                     .fontWeight(.medium)
             }
@@ -622,7 +552,7 @@ public struct EmptyStateView: View {
             }
             
             VStack(spacing: 8) {
-                Text("No \(category.rawValue.capitalized) Items")
+                Text("No \(category.displayName) Items")
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
@@ -749,14 +679,14 @@ public struct AddInventoryItemView: View {
                                     Menu {
                                         ForEach(InventoryCategory.allCases, id: \.self) { category in
                                             Button(action: { selectedCategory = category }) {
-                                                Label(category.rawValue.capitalized, systemImage: category.icon)
+                                                Label(category.displayName, systemImage: category.icon)
                                             }
                                         }
                                     } label: {
                                         HStack {
                                             Image(systemName: selectedCategory.icon)
                                                 .foregroundColor(selectedCategory.color)
-                                            Text(selectedCategory.rawValue.capitalized)
+                                            Text(selectedCategory.displayName)
                                                 .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                                             Image(systemName: "chevron.down")
                                                 .font(.caption)
@@ -1122,7 +1052,7 @@ public struct InventoryItemDetailView: View {
                 .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
             
             VStack(spacing: 12) {
-                DetailRow(label: "Category", value: item.category.rawValue.capitalized, icon: "tag")
+                DetailRow(label: "Category", value: item.category.displayName, icon: "tag")
                 DetailRow(label: "Location", value: item.location ?? "Not specified", icon: "location")
                 DetailRow(label: "Unit", value: item.unit, icon: "scalemass")
                 

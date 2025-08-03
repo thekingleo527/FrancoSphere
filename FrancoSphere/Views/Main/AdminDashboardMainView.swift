@@ -1008,7 +1008,8 @@ struct CrossDashboardUpdatesSection: View {
         }
     }
     
-    func sourceColor(_ source: CoreTypes.DashboardSource) -> Color {
+    // FIXED: Use the correct nested type reference
+    func sourceColor(_ source: CoreTypes.DashboardUpdate.Source) -> Color {
         switch source {
         case .admin: return .blue
         case .worker: return .green
@@ -1267,40 +1268,6 @@ struct AdminSettingsSheet: View {
         }
     }
 }
-
-// MARK: - Supporting Components
-
-struct AdminMetricCard: View {  // RENAMED from MetricCard
-    let icon: String
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
-                .frame(width: 40)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                
-                Text(value)
-                    .font(.headline)
-                    .foregroundColor(.white)
-            }
-            
-            Spacer()
-        }
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
-    }
-}
-
 // MARK: - Preview
 #if DEBUG
 struct AdminDashboardMainView_Previews: PreviewProvider {
