@@ -58,7 +58,7 @@ public final class ReportService: ObservableObject {
     // MARK: - Public Methods
     
     public func generateClientReport(_ data: ClientPortfolioReportData) async throws -> URL {
-        let fileName = "Portfolio_Report_\(ISO8601DateFormatter().string(from: data.generatedAt)).pdf"
+        let fileName = "Portfolio_Report_\(ISO8601DateFormatter.init().string(from: data.generatedAt)).pdf"
         let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
         
         // Create PDF using UIGraphicsPDFRenderer for more control
@@ -70,7 +70,7 @@ public final class ReportService: ObservableObject {
     }
     
     public func generateBuildingReport(buildingId: String, metrics: CoreTypes.BuildingMetrics) async throws -> URL {
-        let fileName = "Building_\(buildingId)_Report_\(ISO8601DateFormatter().string(from: Date())).pdf"
+        let fileName = "Building_\(buildingId)_Report_\(ISO8601DateFormatter.init().string(from: Date())).pdf"
         let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
         
         // Create simple PDF with building metrics
@@ -82,7 +82,7 @@ public final class ReportService: ObservableObject {
     }
     
     public func exportDataAsCSV(buildings: [CoreTypes.NamedCoordinate], metrics: [String: CoreTypes.BuildingMetrics]) async throws -> URL {
-        let fileName = "Portfolio_Data_\(ISO8601DateFormatter().string(from: Date())).csv"
+        let fileName = "Portfolio_Data_\(ISO8601DateFormatter.init().string(from: Date())).csv"
         let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
         
         var csvString = "Building ID,Building Name,Address,Completion Rate,Total Tasks,Pending Tasks,Overdue Tasks,Active Workers,Compliance\n"
@@ -111,7 +111,7 @@ public final class ReportService: ObservableObject {
     }
     
     public func generateComplianceReport(issues: [CoreTypes.ComplianceIssue]) async throws -> URL {
-        let fileName = "Compliance_Report_\(ISO8601DateFormatter().string(from: Date())).pdf"
+        let fileName = "Compliance_Report_\(ISO8601DateFormatter.init().string(from: Date())).pdf"
         let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
         
         // Create PDF with compliance issues

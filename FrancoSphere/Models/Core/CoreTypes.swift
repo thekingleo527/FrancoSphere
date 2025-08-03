@@ -7,6 +7,7 @@
 //  ✅ FIXED: Removed all duplicate declarations
 //  ✅ FIXED: No self-referencing type aliases
 //  ✅ FIXED: No duplicate properties or computed properties
+//  ✅ FIXED: All types accessible via global type aliases
 //  ✅ ORGANIZED: Clear namespacing to prevent conflicts
 //  ✅ COMPLETE: Includes all client, admin, and worker types
 //
@@ -306,7 +307,7 @@ public struct CoreTypes {
         case utilities = "utilities"
     }
     
-    // MARK: - Worker Route Types (FIXED)
+    // MARK: - Worker Route Types
     public struct WorkerDailyRoute: Codable, Identifiable {
         public let id: String
         public let workerId: String
@@ -338,7 +339,6 @@ public struct CoreTypes {
         }
     }
     
-    // FIXED: Removed duplicate buildingName property
     public struct RouteStop: Codable, Identifiable {
         public let id: String
         public let buildingId: String
@@ -1288,7 +1288,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Portfolio Types (FIXED: Keep only one 'empty' declaration)
+    // MARK: - Portfolio Types
     public struct PortfolioHealth: Codable {
         public let overallScore: Double
         public let totalBuildings: Int
@@ -1356,7 +1356,6 @@ public struct CoreTypes {
             self.lastUpdated = lastUpdated
         }
         
-        // FIXED: Keep only this one static property
         public static var empty: PortfolioMetrics {
             PortfolioMetrics(
                 totalBuildings: 0,
@@ -2023,7 +2022,7 @@ public struct CoreTypes {
         }
     }
     
-    // MARK: - Insight Types (FIXED: Keep only one 'icon' property)
+    // MARK: - Insight Types
     public enum InsightCategory: String, Codable, CaseIterable {
         case efficiency = "Efficiency"
         case cost = "Cost"
@@ -2247,6 +2246,175 @@ public struct CoreTypes {
         }
     }
     
+    // MARK: - Compliance Data Type (Missing Type)
+    public struct ComplianceData: Codable, Identifiable {
+        public let id: String
+        public let buildingId: String
+        public let lastInspectionDate: Date?
+        public let nextInspectionDate: Date?
+        public let violations: [ComplianceIssue]
+        public let certificates: [ComplianceCertificate]
+        public let overallStatus: ComplianceStatus
+        
+        public init(
+            id: String = UUID().uuidString,
+            buildingId: String,
+            lastInspectionDate: Date? = nil,
+            nextInspectionDate: Date? = nil,
+            violations: [ComplianceIssue] = [],
+            certificates: [ComplianceCertificate] = [],
+            overallStatus: ComplianceStatus = .compliant
+        ) {
+            self.id = id
+            self.buildingId = buildingId
+            self.lastInspectionDate = lastInspectionDate
+            self.nextInspectionDate = nextInspectionDate
+            self.violations = violations
+            self.certificates = certificates
+            self.overallStatus = overallStatus
+        }
+    }
+    
+    public struct ComplianceCertificate: Codable, Identifiable {
+        public let id: String
+        public let type: String
+        public let issueDate: Date
+        public let expiryDate: Date
+        public let isValid: Bool
+        
+        public init(
+            id: String = UUID().uuidString,
+            type: String,
+            issueDate: Date,
+            expiryDate: Date,
+            isValid: Bool = true
+        ) {
+            self.id = id
+            self.type = type
+            self.issueDate = issueDate
+            self.expiryDate = expiryDate
+            self.isValid = isValid
+        }
+    }
+    
 } // END of CoreTypes namespace
 
-// NO type aliases outside CoreTypes - everything accessed via CoreTypes.TypeName
+// MARK: - Global Type Aliases for Direct Access
+// These allow types to be used without the CoreTypes prefix
+
+// Core Types
+public typealias WorkerProfile = CoreTypes.WorkerProfile
+public typealias ContextualTask = CoreTypes.ContextualTask
+public typealias NamedCoordinate = CoreTypes.NamedCoordinate
+public typealias ActionEvidence = CoreTypes.ActionEvidence
+public typealias BuildingMetrics = CoreTypes.BuildingMetrics
+
+// Task Related
+public typealias TaskCategory = CoreTypes.TaskCategory
+public typealias TaskUrgency = CoreTypes.TaskUrgency
+public typealias TaskStatus = CoreTypes.TaskStatus
+public typealias TaskFrequency = CoreTypes.TaskFrequency
+public typealias TaskProgress = CoreTypes.TaskProgress
+public typealias MaintenanceTask = CoreTypes.MaintenanceTask
+
+// User & Worker Related
+public typealias UserRole = CoreTypes.UserRole
+public typealias User = CoreTypes.User
+public typealias WorkerStatus = CoreTypes.WorkerStatus
+public typealias WorkerCapabilities = CoreTypes.WorkerCapabilities
+public typealias ClockStatus = CoreTypes.ClockStatus
+public typealias WorkerAssignment = CoreTypes.WorkerAssignment
+
+// Building Related
+public typealias BuildingType = CoreTypes.BuildingType
+public typealias BuildingStatistics = CoreTypes.BuildingStatistics
+public typealias BuildingIntelligence = CoreTypes.BuildingIntelligence
+public typealias BuildingAnalytics = CoreTypes.BuildingAnalytics
+public typealias BuildingRoutineStatus = CoreTypes.BuildingRoutineStatus
+public typealias BuildingReport = CoreTypes.BuildingReport
+
+// Compliance Related
+public typealias ComplianceStatus = CoreTypes.ComplianceStatus
+public typealias ComplianceSeverity = CoreTypes.ComplianceSeverity
+public typealias ComplianceIssue = CoreTypes.ComplianceIssue
+public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
+public typealias ComplianceOverview = CoreTypes.ComplianceOverview
+public typealias ComplianceDeadline = CoreTypes.ComplianceDeadline
+public typealias ComplianceData = CoreTypes.ComplianceData
+public typealias ComplianceCertificate = CoreTypes.ComplianceCertificate
+
+// AI & Intelligence Related
+public typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
+public typealias InsightCategory = CoreTypes.InsightCategory
+public typealias InsightType = CoreTypes.InsightType
+public typealias AIPriority = CoreTypes.AIPriority
+public typealias AISuggestion = CoreTypes.AISuggestion
+public typealias AIScenario = CoreTypes.AIScenario
+public typealias AIScenarioType = CoreTypes.AIScenarioType
+
+// Dashboard & Sync Related
+public typealias DashboardUpdate = CoreTypes.DashboardUpdate
+public typealias DashboardSyncStatus = CoreTypes.DashboardSyncStatus
+public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
+
+// Portfolio & Metrics Related
+public typealias PortfolioMetrics = CoreTypes.PortfolioMetrics
+public typealias PortfolioHealth = CoreTypes.PortfolioHealth
+public typealias PortfolioIntelligence = CoreTypes.PortfolioIntelligence
+public typealias PortfolioBenchmark = CoreTypes.PortfolioBenchmark
+public typealias ExecutiveSummary = CoreTypes.ExecutiveSummary
+public typealias StrategicRecommendation = CoreTypes.StrategicRecommendation
+
+// Client Specific
+public typealias ClientPortfolioIntelligence = CoreTypes.ClientPortfolioIntelligence
+public typealias ClientPortfolioReport = CoreTypes.ClientPortfolioReport
+public typealias ClientAlert = CoreTypes.ClientAlert
+public typealias ExecutiveIntelligence = CoreTypes.ExecutiveIntelligence
+public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
+public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
+public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
+public typealias RealtimeActivity = CoreTypes.RealtimeActivity
+public typealias CostInsight = CoreTypes.CostInsight
+public typealias WorkerProductivityInsight = CoreTypes.WorkerProductivityInsight
+
+// Admin Specific
+public typealias AdminAlert = CoreTypes.AdminAlert
+
+// Inventory Related
+public typealias InventoryItem = CoreTypes.InventoryItem
+public typealias InventoryCategory = CoreTypes.InventoryCategory
+public typealias RestockStatus = CoreTypes.RestockStatus
+
+// Weather Related
+public typealias WeatherData = CoreTypes.WeatherData
+public typealias WeatherCondition = CoreTypes.WeatherCondition
+public typealias OutdoorWorkRisk = CoreTypes.OutdoorWorkRisk
+
+// Route & Performance Related
+public typealias WorkerDailyRoute = CoreTypes.WorkerDailyRoute
+public typealias RouteStop = CoreTypes.RouteStop
+public typealias RouteOptimization = CoreTypes.RouteOptimization
+public typealias WorkerRoutineSummary = CoreTypes.WorkerRoutineSummary
+public typealias PerformanceMetrics = CoreTypes.PerformanceMetrics
+
+// Verification & Records
+public typealias VerificationStatus = CoreTypes.VerificationStatus
+public typealias TaskCompletionRecord = CoreTypes.TaskCompletionRecord
+public typealias MaintenanceRecord = CoreTypes.MaintenanceRecord
+
+// Misc Types
+public typealias TrendDirection = CoreTypes.TrendDirection
+public typealias UrgencyLevel = CoreTypes.UrgencyLevel
+public typealias SkillLevel = CoreTypes.SkillLevel
+public typealias DataHealthStatus = CoreTypes.DataHealthStatus
+public typealias FrancoPhotoCategory = CoreTypes.FrancoPhotoCategory
+public typealias FrancoCameraModel = CoreTypes.FrancoCameraModel
+public typealias WorkerInfo = CoreTypes.WorkerInfo
+public typealias TaskInfo = CoreTypes.TaskInfo
+
+// Type Aliases for ID Types
+public typealias WorkerID = CoreTypes.WorkerID
+public typealias BuildingID = CoreTypes.BuildingID
+public typealias TaskID = CoreTypes.TaskID
+public typealias AssignmentID = CoreTypes.AssignmentID
+public typealias RoleID = CoreTypes.RoleID

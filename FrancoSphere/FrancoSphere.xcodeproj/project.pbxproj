@@ -32,7 +32,6 @@
 		2326C2202E3B2B840080F005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2326C21E2E3B2B840080F005 /* Localizable.strings */; };
 		2326C2262E3B36C30080F005 /* BatchedRequestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2252E3B36C30080F005 /* BatchedRequestManager.swift */; };
 		2326C2282E3B36E60080F005 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2272E3B36E60080F005 /* NetworkMonitor.swift */; };
-		2326C22A2E3B396C0080F005 /* ReportGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2292E3B396C0080F005 /* ReportGenerator.swift */; };
 		2326C22C2E3B3BEB0080F005 /* NavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C22B2E3B3BEB0080F005 /* NavigationCoordinator.swift */; };
 		2326C22E2E3B3BFB0080F005 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C22D2E3B3BFB0080F005 /* ThemeManager.swift */; };
 		2326C2302E3B3C0B0080F005 /* AccessibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C22F2E3B3C0B0080F005 /* AccessibilityManager.swift */; };
@@ -189,6 +188,8 @@
 		23800F7B2E3E5125006F9E44 /* ComplianceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7A2E3E5125006F9E44 /* ComplianceService.swift */; };
 		23800F7D2E3E51E4006F9E44 /* BuildingServiceWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */; };
 		23800F7F2E3E53E4006F9E44 /* ReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7E2E3E53E4006F9E44 /* ReportService.swift */; };
+		23800F812E3F55F7006F9E44 /* AdminWorkerManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F802E3F55F7006F9E44 /* AdminWorkerManagementView.swift */; };
+		23800F832E3F5844006F9E44 /* AdminReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F822E3F5844006F9E44 /* AdminReportsView.swift */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
 		23A1B9542E3992C80011F091 /* TaskDisplayHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94C2E3992C80011F091 /* TaskDisplayHelpers.swift */; };
 		23A1B9552E3992C80011F091 /* ProfileBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B94A2E3992C80011F091 /* ProfileBadge.swift */; };
@@ -272,7 +273,6 @@
 		2326C2222E3B2DBF0080F005 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2326C2252E3B36C30080F005 /* BatchedRequestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchedRequestManager.swift; sourceTree = "<group>"; };
 		2326C2272E3B36E60080F005 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
-		2326C2292E3B396C0080F005 /* ReportGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportGenerator.swift; sourceTree = "<group>"; };
 		2326C22B2E3B3BEB0080F005 /* NavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinator.swift; sourceTree = "<group>"; };
 		2326C22D2E3B3BFB0080F005 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		2326C22F2E3B3C0B0080F005 /* AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityManager.swift; sourceTree = "<group>"; };
@@ -429,6 +429,8 @@
 		23800F7A2E3E5125006F9E44 /* ComplianceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceService.swift; sourceTree = "<group>"; };
 		23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingServiceWrapper.swift; sourceTree = "<group>"; };
 		23800F7E2E3E53E4006F9E44 /* ReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportService.swift; sourceTree = "<group>"; };
+		23800F802E3F55F7006F9E44 /* AdminWorkerManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminWorkerManagementView.swift; sourceTree = "<group>"; };
+		23800F822E3F5844006F9E44 /* AdminReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminReportsView.swift; sourceTree = "<group>"; };
 		23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveGlassModifier.swift; sourceTree = "<group>"; };
 		23A1B9442E3992C80011F091 /* Building.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Building.swift; sourceTree = "<group>"; };
 		23A1B9452E3992C80011F091 /* BuildingIntelligencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingIntelligencePanel.swift; sourceTree = "<group>"; };
@@ -951,7 +953,6 @@
 				23800F7E2E3E53E4006F9E44 /* ReportService.swift */,
 				23800F7A2E3E5125006F9E44 /* ComplianceService.swift */,
 				23800F782E3E50DF006F9E44 /* AnalyticsService.swift */,
-				2326C2292E3B396C0080F005 /* ReportGenerator.swift */,
 				2326C2072E3B16760080F005 /* TaskService+DepartureChecklist.swift */,
 				2326C2052E3B15BF0080F005 /* SiteLogService.swift */,
 				2326C1F92E3AEB8D0080F005 /* PhotoEvidenceService.swift */,
@@ -1066,6 +1067,8 @@
 		23779FDD2E39885600F4A10F /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				23800F822E3F5844006F9E44 /* AdminReportsView.swift */,
+				23800F802E3F55F7006F9E44 /* AdminWorkerManagementView.swift */,
 				23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */,
 				23800F702E3DD8D2006F9E44 /* UnifiedTaskDetailView.swift */,
 				2326C2632E3C07170080F005 /* ClientDashboardMainView.swift */,
@@ -1333,6 +1336,7 @@
 				2377A0A02E398AA800F4A10F /* WorkerDashboardViewModel.swift in Sources */,
 				2326C2062E3B15BF0080F005 /* SiteLogService.swift in Sources */,
 				23800F7B2E3E5125006F9E44 /* ComplianceService.swift in Sources */,
+				23800F832E3F5844006F9E44 /* AdminReportsView.swift in Sources */,
 				2377A0A12E398AA800F4A10F /* BuildingIntelligenceViewModel.swift in Sources */,
 				23779FED2E39885600F4A10F /* EnhancedClockInGlassCard.swift in Sources */,
 				23779FF02E39885600F4A10F /* WorkerAssignmentEngine.swift in Sources */,
@@ -1426,6 +1430,7 @@
 				2377A0322E39885600F4A10F /* FrancoSphereImports.swift in Sources */,
 				2326C1E82E3AAB860080F005 /* BuildingDetailComponents.swift in Sources */,
 				2377A0342E39885600F4A10F /* WorkerAssignmentGlassCard.swift in Sources */,
+				23800F812E3F55F7006F9E44 /* AdminWorkerManagementView.swift in Sources */,
 				2377A0362E39885600F4A10F /* ComplianceIssue.swift in Sources */,
 				2326C2302E3B3C0B0080F005 /* AccessibilityManager.swift in Sources */,
 				2326C22E2E3B3BFB0080F005 /* ThemeManager.swift in Sources */,
@@ -1458,7 +1463,6 @@
 				2326C1EE2E3AB0D10080F005 /* BuildingTeamComponents.swift in Sources */,
 				2326C2022E3B14390080F005 /* SiteDepartureViewModel.swift in Sources */,
 				2377A04D2E39885600F4A10F /* V003_WorkerAssignments.swift in Sources */,
-				2326C22A2E3B396C0080F005 /* ReportGenerator.swift in Sources */,
 				2326C2742E3C43E50080F005 /* DSNYMigrationOneShot.swift in Sources */,
 				2326C22C2E3B3BEB0080F005 /* NavigationCoordinator.swift in Sources */,
 				2377A04E2E39885600F4A10F /* TaskCategoryGlassCard.swift in Sources */,
