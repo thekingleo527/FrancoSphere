@@ -186,12 +186,13 @@ struct BuildingIntelligencePanel: View {
             VStack {
                 switch selectedTab {
                 case .overview:
-                    BuildingOverviewTab(
+                    BuildingOverviewTabView(  // Rename to avoid conflict
                         building: building,
                         metrics: viewModel.metrics,
                         isMyBuilding: isMyBuilding,
                         isLoading: viewModel.isLoading
                     )
+
                     
                 case .allWorkers:
                     AllWorkersTab(
@@ -235,7 +236,7 @@ struct BuildingIntelligencePanel: View {
 
 // MARK: - Building Overview Tab
 
-struct BuildingOverviewTab: View {
+struct BuildingOverviewTabView: View {
     let building: NamedCoordinate
     let metrics: CoreTypes.BuildingMetrics?
     let isMyBuilding: Bool
@@ -769,9 +770,9 @@ struct TaskHistoryRow: View {
                     .fontWeight(.medium)
                     .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
                 
-                if let completedDate = task.completedDate {
-                    Text("Completed: \(completedDate.formatted(.dateTime.month().day().hour().minute()))")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                if let completedAt = task.completedAt {
+                    Text("Completed: \(completedAt.formatted(.dateTime.month().day().hour().minute()))")
+   .francoTypography(FrancoSphereDesign.Typography.caption)
                         .foregroundColor(FrancoSphereDesign.DashboardColors.success)
                 }
             }

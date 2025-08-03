@@ -9,34 +9,33 @@
 import Foundation
 import Combine
 
+typealias NamedCoordinate = CoreTypes.NamedCoordinate
+
 @MainActor
-final class BuildingServiceWrapper: ObservableObject {
+class BuildingServiceWrapper: ObservableObject {
     static let shared = BuildingServiceWrapper()
     
-    private let service = BuildingService.shared
-    
     @Published var buildings: [NamedCoordinate] = []
+    @Published var buildingMetrics: [String: CoreTypes.BuildingMetrics] = [:]
     @Published var isLoading = false
-    @Published var error: Error?
     
     private init() {}
     
-    // MARK: - Wrapped Methods
-    
-    func getAllBuildings() async throws -> [NamedCoordinate] {
-        isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            let result = try await service.getAllBuildings()
-            self.buildings = result
-            return result
-        } catch {
-            self.error = error
-            throw error
-        }
+    func fetchBuildings() async -> [NamedCoordinate] {
+        // Implementation
+        return buildings
     }
     
+    func getBuildingMetrics(for buildingId: String) -> CoreTypes.BuildingMetrics {
+        return buildingMetrics[buildingId] ?? CoreTypes.BuildingMetrics.empty
+    }
+    
+    func refreshBuildings() async {
+        isLoading = true
+        buildings = await fetchBuildings()
+        isLoading = false
+    }
+}
     func getBuilding(buildingId: String) async throws -> NamedCoordinate {
         return try await service.getBuilding(buildingId: buildingId)
     }
@@ -100,7 +99,6 @@ final class BuildingServiceWrapper: ObservableObject {
     func getBuildingAnalytics(for buildingId: String) async throws -> BuildingAnalytics {
         return try await service.getBuildingAnalytics(for: buildingId)
     }
-}
 
 // Add these additional method wrappers that ClientContextEngine needs:
 extension BuildingService {

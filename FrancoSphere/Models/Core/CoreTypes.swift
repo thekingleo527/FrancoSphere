@@ -2254,6 +2254,3 @@ public typealias ActionEvidence = CoreTypes.ActionEvidence
 public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
 public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
 public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
-public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
-public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
-public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics

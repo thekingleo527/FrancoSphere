@@ -1319,7 +1319,7 @@ struct PreviewHelpers {
     )
 }
 
-// MARK: - Previews
+// MARK: - Previews (FIXED)
 #Preview("Standard UI - Clocked In") {
     ZStack {
         FrancoSphereDesign.DashboardColors.baseBackground.ignoresSafeArea()
@@ -1330,7 +1330,7 @@ struct PreviewHelpers {
             weather: CoreTypes.WeatherData(
                 id: UUID().uuidString,
                 temperature: 32,
-                condition: .snow,  // Fixed: Using enum value instead of string
+                condition: .snow,
                 humidity: 0.85,
                 windSpeed: 15,
                 outdoorWorkRisk: .high,
@@ -1342,7 +1342,7 @@ struct PreviewHelpers {
                 completedTasks: 3,
                 lastUpdated: Date()
             ),
-            clockInStatus: .clockedIn(
+            clockInStatus: HeroStatusCard.ClockInStatus.clockedIn(  // Fixed: Full enum path
                 building: "Rubin Museum",
                 buildingId: "14",
                 time: Date().addingTimeInterval(-3600),
@@ -1356,7 +1356,7 @@ struct PreviewHelpers {
                 requiresPhotoForSanitation: true,
                 simplifiedInterface: false
             ),
-            syncStatus: .syncing(progress: 0.45),
+            syncStatus: HeroStatusCard.SyncStatus.syncing(progress: 0.45),  // Fixed: Full enum path
             onClockInTap: { print("Clock out") },
             onBuildingTap: { print("Building details") },
             onTasksTap: { print("Task list") },
@@ -1373,15 +1373,15 @@ struct PreviewHelpers {
         
         HeroStatusCard(
             worker: PreviewHelpers.mercedesProfile,
-            building: nil,
-            weather: nil,
+            building: nil as NamedCoordinate?,  // Fixed: Explicit type
+            weather: nil as CoreTypes.WeatherData?,  // Fixed: Explicit type
             progress: CoreTypes.TaskProgress(
                 id: UUID().uuidString,
                 totalTasks: 8,
                 completedTasks: 2,
                 lastUpdated: Date()
             ),
-            clockInStatus: .notClockedIn,
+            clockInStatus: HeroStatusCard.ClockInStatus.notClockedIn,  // Fixed: Full enum path
             capabilities: HeroStatusCard.WorkerCapabilities(
                 canUploadPhotos: false,
                 canAddNotes: false,
@@ -1390,7 +1390,7 @@ struct PreviewHelpers {
                 requiresPhotoForSanitation: false,
                 simplifiedInterface: true
             ),
-            syncStatus: .synced,
+            syncStatus: HeroStatusCard.SyncStatus.synced,  // Fixed: Full enum path
             onClockInTap: { print("Clock in") },
             onBuildingTap: { print("Building") },
             onTasksTap: { print("Tasks") },
@@ -1407,17 +1407,17 @@ struct PreviewHelpers {
         
         HeroStatusCard(
             worker: PreviewHelpers.kevinProfile,
-            building: nil,
-            weather: nil,
+            building: nil as NamedCoordinate?,  // Fixed: Explicit type
+            weather: nil as CoreTypes.WeatherData?,  // Fixed: Explicit type
             progress: CoreTypes.TaskProgress(
                 id: UUID().uuidString,
                 totalTasks: 0,
                 completedTasks: 0,
                 lastUpdated: Date()
             ),
-            clockInStatus: .notClockedIn,
-            capabilities: nil,
-            syncStatus: .pendingMigration,
+            clockInStatus: HeroStatusCard.ClockInStatus.notClockedIn,  // Fixed: Full enum path
+            capabilities: nil as HeroStatusCard.WorkerCapabilities?,  // Fixed: Explicit type
+            syncStatus: HeroStatusCard.SyncStatus.pendingMigration,  // Fixed: Full enum path
             onClockInTap: { print("Disabled during migration") },
             onBuildingTap: { },
             onTasksTap: { },
