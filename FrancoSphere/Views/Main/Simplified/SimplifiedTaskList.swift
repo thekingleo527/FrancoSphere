@@ -1,4 +1,3 @@
-
 //
 //  SimplifiedTaskList.swift
 //  FrancoSphere
@@ -10,6 +9,7 @@
 //  ✅ SPANISH-READY: All text is localizable.
 //  ✅ ACCESSIBLE: Clear visual hierarchy and simple interactions.
 //  ✅ FUNCTIONAL: Includes swipe-to-complete and tap-to-view actions.
+//  ✅ FIXED: Renamed SimplifiedTaskCard to SimplifiedTaskListCard to avoid conflict
 //
 
 import SwiftUI
@@ -28,7 +28,7 @@ struct SimplifiedTaskList: View {
             ScrollView {
                 LazyVStack(spacing: 16) {
                     ForEach(tasks) { task in
-                        SimplifiedTaskCard(
+                        SimplifiedTaskListCard(  // RENAMED from SimplifiedTaskCard
                             task: task,
                             onTap: { onTaskTap(task) },
                             onComplete: { onTaskComplete(task) }
@@ -60,9 +60,9 @@ struct SimplifiedTaskList: View {
     }
 }
 
-// MARK: - Simplified Task Card (Sub-view)
+// MARK: - Simplified Task List Card (Sub-view) - RENAMED
 
-fileprivate struct SimplifiedTaskCard: View {
+fileprivate struct SimplifiedTaskListCard: View {  // RENAMED from SimplifiedTaskCard
     let task: ContextualTask
     let onTap: () -> Void
     let onComplete: () -> Void
