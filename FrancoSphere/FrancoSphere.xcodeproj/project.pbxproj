@@ -109,7 +109,6 @@
 		2377A02E2E39885600F4A10F /* GlassLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2F2E39885600F4A10F /* GlassLoadingView.swift */; };
 		2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F042E39885600F4A10F /* CoverageInfoCard.swift */; };
 		2377A0312E39885600F4A10F /* GlassModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F302E39885600F4A10F /* GlassModal.swift */; };
-		2377A0322E39885600F4A10F /* FrancoSphereImports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F652E39885600F4A10F /* FrancoSphereImports.swift */; };
 		2377A0342E39885600F4A10F /* WorkerAssignmentGlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F392E39885600F4A10F /* WorkerAssignmentGlassCard.swift */; };
 		2377A0362E39885600F4A10F /* ComplianceIssue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F622E39885600F4A10F /* ComplianceIssue.swift */; };
 		2377A0372E39885600F4A10F /* BuildingMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F9E2E39885600F4A10F /* BuildingMetricsService.swift */; };
@@ -347,7 +346,6 @@
 		23779F622E39885600F4A10F /* ComplianceIssue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceIssue.swift; sourceTree = "<group>"; };
 		23779F632E39885600F4A10F /* FilteredTaskResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredTaskResult.swift; sourceTree = "<group>"; };
 		23779F642E39885600F4A10F /* FrancoSphereExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereExtensions.swift; sourceTree = "<group>"; };
-		23779F652E39885600F4A10F /* FrancoSphereImports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereImports.swift; sourceTree = "<group>"; };
 		23779F662E39885600F4A10F /* FrancoSphereModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereModels.swift; sourceTree = "<group>"; };
 		23779F672E39885600F4A10F /* ImportHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportHelper.swift; sourceTree = "<group>"; };
 		23779F682E39885600F4A10F /* ModelExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExtensions.swift; sourceTree = "<group>"; };
@@ -803,7 +801,6 @@
 				23779F622E39885600F4A10F /* ComplianceIssue.swift */,
 				23779F632E39885600F4A10F /* FilteredTaskResult.swift */,
 				23779F642E39885600F4A10F /* FrancoSphereExtensions.swift */,
-				23779F652E39885600F4A10F /* FrancoSphereImports.swift */,
 				23779F662E39885600F4A10F /* FrancoSphereModels.swift */,
 				23779F672E39885600F4A10F /* ImportHelper.swift */,
 				23779F682E39885600F4A10F /* ModelExtensions.swift */,
@@ -1459,7 +1456,6 @@
 				2377A02E2E39885600F4A10F /* GlassLoadingView.swift in Sources */,
 				2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */,
 				2377A0312E39885600F4A10F /* GlassModal.swift in Sources */,
-				2377A0322E39885600F4A10F /* FrancoSphereImports.swift in Sources */,
 				2326C1E82E3AAB860080F005 /* BuildingDetailComponents.swift in Sources */,
 				2377A0342E39885600F4A10F /* WorkerAssignmentGlassCard.swift in Sources */,
 				23800F812E3F55F7006F9E44 /* AdminWorkerManagementView.swift in Sources */,
